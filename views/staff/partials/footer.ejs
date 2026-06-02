@@ -1,0 +1,78 @@
+      </div><!-- /.container-fluid -->
+    </div><!-- End of Main Content -->
+
+    <!-- Footer -->
+    <footer class="sticky-footer bg-white">
+      <div class="container my-auto">
+        <div class="copyright text-center my-auto">
+          <span>Copyright &copy; NHA HANG BD <%= new Date().getFullYear() %></span>
+        </div>
+      </div>
+    </footer>
+  </div><!-- End of Content Wrapper -->
+</div><!-- End of #wrapper -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+
+<!-- Socket.io & Notifications -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // Setup role from server
+  const staffRole = '<%= typeof session !== "undefined" && session.staffRole ? session.staffRole : "" %>';
+  if(staffRole) {
+    const socket = io();
+    socket.emit('join-room', { role: staffRole });
+
+    // Audio Object
+    const notifSound = new Audio('/sounds/notification.mp3');
+
+    // Món đã xong báo cho Phục vụ / Kế toán
+    if(staffRole === 'Phuc vu' || staffRole === 'Ke toan') {
+      socket.on('dish-ready', function(data) {
+        notifSound.play().catch(e => console.log('Autoplay prevent on audio'));
+        Swal.fire({
+          title: 'Món ăn đã sẵn sàng!',
+          text: data.message,
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 8000,
+          timerProgressBar: true
+        });
+        // Tự động tải lại trang nếu đang ở module bếp/đơn hàng
+        if(window.location.pathname.includes('/staff/kitchen')) {
+             setTimeout(() => { window.location.reload(); }, 2000);
+        }
+      });
+    }
+
+    // Đơn mới báo cho Bếp
+    if(staffRole === 'Bep') {
+      socket.on('new-order-to-kitchen', function(data) {
+        notifSound.play().catch(e => console.log('Autoplay prevent on audio'));
+        Swal.fire({
+          title: 'Có Đơn Hàng Mới!',
+          text: data.message,
+          icon: 'info',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 8000,
+          timerProgressBar: true
+        });
+        
+        if(window.location.pathname.includes('/staff/kitchen')) {
+             setTimeout(() => { window.location.reload(); }, 2000);
+        }
+      });
+    }
+  }
+</script>
+</body>
+</html>

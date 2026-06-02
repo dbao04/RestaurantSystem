@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread">Tin Tức</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Tin tức <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section bg-light">
+  <div class="container">
+    <div class="row">
+      <% if (posts && posts.length > 0) { %>
+        <% posts.forEach(p => { %>
+          <div class="col-md-4 ftco-animate">
+            <div class="blog-entry">
+              <a href="#" class="block-20" style="background-image: url('/food/<%= p.hinh_anh || 'image_1.jpg' %>');">
+              </a>
+              <div class="text pt-3 pb-4 px-4">
+                <div class="meta">
+                  <div><a href="#"><%= new Date(p.created_at).toLocaleDateString('vi-VN') %></a></div>
+                  <div><a href="#">Quản trị viên</a></div>
+                </div>
+                <h3 class="heading"><a href="#"><%= p.tieu_de %></a></h3>
+                <p class="clearfix">
+                  <span class="float-left read"><%= p.noi_dung ? p.noi_dung.substring(0, 150) + '...' : '' %></span>
+                </p>
+                <p class="clearfix">
+                  <a href="#" class="float-left btn btn-primary btn-sm mt-2">Đọc thêm</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="col-md-12 text-center">
+          <p>Hiện tại chưa có bài viết nào.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

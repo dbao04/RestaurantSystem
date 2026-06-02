@@ -1,0 +1,91 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
+    data-stellar-background-ratio="0.5">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate text-center mb-4">
+                <h1 class="mb-2 bread">Giỏ hàng</h1>
+                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
+                                class="ion-ios-arrow-forward"></i></a></span> <span>Giỏ hàng <i
+                            class="ion-ios-arrow-forward"></i></span></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section ftco-cart">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 ftco-animate">
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="alert alert-warning"><%= error %></div>
+        <% } %>
+        <div class="cart-list">
+          <table class="table">
+            <thead class="thead-primary">
+              <tr class="text-center">
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>Món ăn</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Tổng cộng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (cartItems && cartItems.length > 0) { %>
+                <% cartItems.forEach(item => { %>
+                  <tr class="text-center">
+                    <td class="product-remove">
+                      <a onclick="return confirm('Bạn có muốn xóa món ăn này khỏi giỏ hàng?')" href="/del-cart?delid=<%= item.cart_id %>">X</a>
+                    </td>
+                    <td class="image-prod">
+                      <img width="100" height="50" src="/food/<%= item.images %>" alt="<%= item.name_mon %>">
+                    </td>
+                    <td class="product-name">
+                      <h3><%= item.name_mon %></h3>
+                    </td>
+                    <td class="price"><%= formatMoney(item.gia_mon) %> VNĐ</td>
+                    <td class="quantity">
+                        <form action="/update-cart" method="post" style="display: flex;">
+                          <input type="hidden" name="cartid" value="<%= item.cart_id %>">
+                          <input type="number" name="soluong" class="form-control" value="<%= item.soluong %>" min="1" max="50">
+                          <input type="submit" value="Cập nhật" class="btn btn-primary ml-2">
+                        </form>
+                    </td>
+                    <td class="total">
+                      <%= formatMoney(item.soluong * item.gia_mon) %> VNĐ
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-end">
+      <div class="col col-lg-3 col-md-6 mt-5 cart-wrap ftco-animate">
+        <div class="cart-total mb-3">
+          <h3>Tổng hợp giỏ hàng</h3>
+          <p class="d-flex">
+            <span>Tạm tính:</span>
+            <span><%= formatMoney(subtotal) %> VNĐ</span>
+          </p>
+          <hr>
+          <p class="d-flex total-price">
+            <span>Tổng cộng:</span>
+            <span><%= formatMoney(subtotal) %> VNĐ</span>
+          </p>
+        </div>
+        <p class="text-center"><a href="/datban" class="btn btn-primary py-3 px-4">Tiến hành đặt bàn</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

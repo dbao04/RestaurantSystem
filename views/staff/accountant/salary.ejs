@@ -1,0 +1,261 @@
+<%
+  var activePage = 'salary';
+  var staffName = session.staffName || 'Kế toán';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-money-check-alt mr-2"></i> Quản lý Lương nhân viên</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <form class="form-inline justify-content-end" method="GET" action="/staff/accountant/salary">
+            <select name="month" class="form-control mr-2">
+                <% for(let m=1; m<=12; m++) { %>
+                    <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
+                <% } %>
+            </select>
+            <select name="year" class="form-control mr-2">
+                <% for(let y=2024; y<=2026; y++) { %>
+                    <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
+                <% } %>
+            </select>
+            <button type="submit" class="btn btn-primary">Xem</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Bảng lương tháng <%= month %>/<%= year %></h6>
+        <div>
+            <button class="btn btn-sm btn-info mr-2" data-toggle="modal" data-target="#exportExcelModal">
+                <i class="fas fa-file-excel mr-1"></i> Xuất Excel Chấm Công
+            </button>
+            <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#setupSalaryModal">
+                <i class="fas fa-plus mr-1"></i> Thiết lập lương
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th class="text-center">Ngày công</th>
+                        <th>Lương cứng</th>
+                        <th>Thưởng</th>
+                        <th>Phụ cấp</th>
+                        <th>Tổng cộng</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (salaryList.length === 0) { %>
+                        <tr><td colspan="8" class="text-center py-4">Chưa có dữ liệu lương tháng này.</td></tr>
+                    <% } %>
+                    <% salaryList.forEach(s => { %>
+                    <tr>
+                        <td class="font-weight-bold"><%= s.ten %></td>
+                        <td><%= s.chucvu %></td>
+                        <td class="text-center font-weight-bold text-info"><%= s.songaycong || 0 %></td>
+                        <td><%= formatMoney(s.luong_cung) %></td>
+                        <td class="text-success">+<%= formatMoney(s.thuong) %></td>
+                        <td><%= formatMoney(s.phu_cap) %></td>
+                        <td class="font-weight-bold text-primary"><%= formatMoney(s.tong_luong) %></td>
+                        <td>
+                            <% if(s.trang_thai == 0) { %>
+                                <span class="badge badge-secondary shadow-sm"><i class="fas fa-edit mr-1"></i> Dự thảo</span>
+                            <% } else if(s.trang_thai == 1) { %>
+                                <span class="badge badge-warning text-dark shadow-sm"><i class="fas fa-clock mr-1"></i> Chờ Admin duyệt</span>
+                            <% } else if(s.trang_thai == 2) { %>
+                                <span class="badge badge-info shadow-sm"><i class="fas fa-check-circle mr-1"></i> Sẵn sàng chi</span>
+                            <% } else if(s.trang_thai == 3) { %>
+                                <span class="badge badge-success shadow-sm"><i class="fas fa-check-double mr-1"></i> Đã chi lương</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/staff/accountant/salary/print/<%= s.id_luong %>" class="btn btn-sm btn-info mr-1" title="In phiếu lương" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                
+                                <% if(s.trang_thai == 0) { %>
+                                    <form action="/staff/accountant/salary/submit/<%= s.id_luong %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-primary" title="Gửi duyệt" onclick="return confirm('Gửi yêu cầu phê duyệt lương cho Admin?')">
+                                            <i class="fas fa-paper-plane mr-1"></i> Gửi duyệt
+                                        </button>
+                                    </form>
+                                <% } else if(s.trang_thai == 2) { %>
+                                    <form action="/staff/accountant/salary/pay/<%= s.id_luong %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Chi lương" onclick="return confirm('Xác nhận đã chi lương cho nhân viên này?')">
+                                            <i class="fas fa-money-bill-wave mr-1"></i> Chi lương
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng Danh Sách Chấm Công -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-info"><i class="fas fa-clock mr-2"></i> Chi tiết Chấm công tháng <%= month %>/<%= year %></h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover" id="attendanceTable" width="100%" cellspacing="0">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="12%">Ngày</th>
+                        <th>Nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th width="15%">Giờ vào</th>
+                        <th width="15%">Giờ ra</th>
+                        <th width="12%" class="text-center">Tổng giờ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!attendanceList || attendanceList.length === 0) { %>
+                        <tr><td colspan="6" class="text-center py-4">Chưa có dữ liệu chấm công trong tháng này.</td></tr>
+                    <% } else { %>
+                        <% attendanceList.forEach(a => { 
+                            let dateStr = '';
+                            if (a.ngay) {
+                                const d = new Date(a.ngay);
+                                dateStr = `${('0'+d.getDate()).slice(-2)}/${('0'+(d.getMonth() + 1)).slice(-2)}/${d.getFullYear()}`;
+                            }
+                            
+                            let vaoStr = '';
+                            if (a.gio_vao) {
+                                const d = new Date(a.gio_vao);
+                                vaoStr = `${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;
+                            }
+                            
+                            let raStr = '';
+                            if (a.gio_ra) {
+                                const d = new Date(a.gio_ra);
+                                raStr = `${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;
+                            }
+                        %>
+                        <tr>
+                            <td class="font-weight-bold text-dark"><i class="far fa-calendar-alt mr-1 text-muted"></i><%= dateStr %></td>
+                            <td class="font-weight-bold text-primary"><%= a.ten %></td>
+                            <td><span class="badge badge-secondary"><%= a.chucvu %></span></td>
+                            <td class="text-success font-weight-bold"><i class="fas fa-sign-in-alt mr-1"></i><%= vaoStr || '--:--' %></td>
+                            <td class="text-danger font-weight-bold"><i class="fas fa-sign-out-alt mr-1"></i><%= raStr || '--:--' %></td>
+                            <td class="text-center">
+                                <span class="badge badge-pill badge-info px-3 py-2" style="font-size: 0.9rem;">
+                                    <%= a.tong_gio != null ? a.tong_gio : '0' %> h
+                                </span>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Setup Salary Modal -->
+<div class="modal fade" id="setupSalaryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/staff/accountant/salary/upsert" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thiết lập lương nhân viên</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="thang" value="<%= month %>">
+          <input type="hidden" name="nam" value="<%= year %>">
+          <div class="form-group">
+            <label>Chọn nhân viên</label>
+            <select name="id_nv" class="form-control" required>
+                <% staffList.forEach(st => { %>
+                    <option value="<%= st.id_nv %>"><%= st.ten %> (<%= st.chucvu %>)</option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lương cứng</label>
+            <input type="number" name="luong_cung" class="form-control" placeholder="0" min="0" required />
+          </div>
+          <div class="row">
+              <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Thưởng</label>
+                    <input type="number" name="thuong" class="form-control" value="0" min="0" />
+                  </div>
+              </div>
+              <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Phụ cấp</label>
+                    <input type="number" name="phu_cap" class="form-control" value="0" min="0" />
+                  </div>
+              </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu bảng lương</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Export Excel Modal -->
+<div class="modal fade" id="exportExcelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-left-info shadow-lg">
+      <form action="/staff/accountant/attendance/export" method="GET">
+        <div class="modal-header bg-info text-white py-3">
+          <h5 class="modal-title font-weight-bold"><i class="fas fa-file-excel mr-2"></i> Xuất Báo Cáo Chấm Công Excel</h5>
+          <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Vui lòng chọn Khoảng thời gian (Tháng/Năm) bạn muốn xuất báo cáo chấm công chi tiết cho tất cả nhân viên.</p>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="font-weight-bold">Chọn Tháng</label>
+                <select name="month" class="form-control" required>
+                  <% for(let m=1; m<=12; m++) { %>
+                    <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
+                  <% } %>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="font-weight-bold">Chọn Năm</label>
+                <select name="year" class="form-control" required>
+                  <% for(let y=2024; y<=2026; y++) { %>
+                    <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
+                  <% } %>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary rounded-pill" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-info rounded-pill px-4 shadow-sm"><i class="fas fa-download mr-1"></i> Tải xuống (.xls)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

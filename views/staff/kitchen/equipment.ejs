@@ -1,0 +1,139 @@
+<%
+  var activePage = 'equipment';
+  var staffName = session.staffName || 'Bếp trưởng';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800">Quản lý Trang thiết bị Bếp</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addEquipModal"><i class="fas fa-plus mr-1"></i> Thêm trang thiết bị</button>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách tài sản & công cụ dụng cụ</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Tên thiết bị</th>
+                        <th>Số lượng</th>
+                        <th>Tình trạng</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% equipment.forEach(e => { %>
+                    <tr>
+                        <td class="font-weight-bold"><%= e.ten_ttb %></td>
+                        <td class="text-center"><%= e.so_luong %></td>
+                        <td>
+                            <% if(e.tinh_trang === 'Tốt') { %>
+                                <span class="badge badge-success"><%= e.tinh_trang %></span>
+                            <% } else if(e.tinh_trang === 'Hỏng') { %>
+                                <span class="badge badge-danger"><%= e.tinh_trang %></span>
+                            <% } else { %>
+                                <span class="badge badge-warning"><%= e.tinh_trang %></span>
+                            <% } %>
+                        </td>
+                        <td><%= e.ghi_chu %></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary mr-1" title="Sửa"
+                              data-toggle="modal" data-target="#editEquipModal<%= e.id_ttb %>">
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            <a href="/staff/kitchen/equipment/delete/<%= e.id_ttb %>" class="btn btn-sm btn-outline-danger"
+                              onclick="return confirm('Xóa thiết bị này?')" title="Xóa">
+                              <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- Edit Modal for equipment -->
+                    <div class="modal fade" id="editEquipModal<%= e.id_ttb %>" tabindex="-1">
+                      <div class="modal-dialog"><div class="modal-content">
+                        <form action="/staff/kitchen/equipment/edit/<%= e.id_ttb %>" method="POST">
+                          <div class="modal-header"><h5 class="modal-title">Sửa thiết bị</h5>
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="form-group"><label>Tên thiết bị</label>
+                              <input type="text" name="ten_ttb" class="form-control" value="<%= e.ten_ttb %>" required />
+                            </div>
+                            <div class="form-group"><label>Số lượng</label>
+                              <input type="number" name="so_luong" class="form-control" value="<%= e.so_luong %>" required />
+                            </div>
+                            <div class="form-group"><label>Tình trạng</label>
+                              <select name="tinh_trang" class="form-control">
+                                <option value="Tốt" <%= e.tinh_trang === 'Tốt' ? 'selected' : '' %>>Tốt</option>
+                                <option value="Bình thường" <%= e.tinh_trang === 'Bình thường' ? 'selected' : '' %>>Bình thường</option>
+                                <option value="Hỏng" <%= e.tinh_trang === 'Hỏng' ? 'selected' : '' %>>Hỏng</option>
+                                <option value="Cần bảo trì" <%= e.tinh_trang === 'Cần bảo trì' ? 'selected' : '' %>>Cần bảo trì</option>
+                              </select>
+                            </div>
+                            <div class="form-group"><label>Ghi chú</label>
+                              <textarea name="ghi_chu" class="form-control" rows="2"><%= e.ghi_chu %></textarea>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                          </div>
+                        </form>
+                      </div></div>
+                    </div>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Equipment Modal -->
+<div class="modal fade" id="addEquipModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/staff/kitchen/equipment/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm thiết bị mới</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Tên thiết bị</label>
+            <input type="text" name="ten_ttb" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Số lượng</label>
+            <input type="number" name="so_luong" class="form-control" value="1" required />
+          </div>
+          <div class="form-group">
+            <label>Tình trạng</label>
+            <select name="tinh_trang" class="form-control">
+                <option value="Tốt">Tốt</option>
+                <option value="Bình thường">Bình thường</option>
+                <option value="Hỏng">Hỏng</option>
+                <option value="Cần bảo trì">Cần bảo trì</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea name="ghi_chu" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Lưu thiết bị</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

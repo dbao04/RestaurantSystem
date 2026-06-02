@@ -1,0 +1,66 @@
+<%
+  var activePage = 'bookings';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Tạo Đặt Bàn Mới</h1>
+  <a href="/staff/bookings" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại Danh sách
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Thông tin Khách & Thời gian đến</h6>
+      </div>
+      <div class="card-body">
+        <form action="/staff/bookings/create" method="POST">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Họ và Tên Khách</label>
+              <input type="text" class="form-control" name="ten" placeholder="Nguyễn Văn A" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Số Điện Thoại</label>
+              <input type="text" class="form-control" name="sodienthoai" placeholder="0123456789" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Ngày đến</label>
+              <input type="date" class="form-control" name="dates" id="dates" required>
+...
+<script>
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dates').setAttribute('min', today);
+</script>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Giờ đến</label>
+              <input type="time" class="form-control" name="tg" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-12">
+              <label>Số lượng Khách tới</label>
+              <input type="number" class="form-control" name="so_user" min="1" max="100" placeholder="Số lượng khách..." required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Yêu cầu Đặc biệt / Ghi chú</label>
+            <textarea name="noidung" class="form-control" rows="4" placeholder="Ví dụ: Cần chuẩn bị ghế trẻ em, trang trí hoa hồng..."></textarea>
+          </div>
+          <hr>
+          <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save mr-2"></i> XÁC NHẬN TẠO PHIẾU ĐẶT BÀN</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

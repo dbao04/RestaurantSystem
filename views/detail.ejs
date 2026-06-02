@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
+    data-stellar-background-ratio="0.5">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate text-center mb-4">
+                <h1 class="mb-2 bread">Chi tiết món ăn</h1>
+                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
+                                class="ion-ios-arrow-forward"></i></a></span> <span>Chi tiết <i
+                            class="ion-ios-arrow-forward"></i></span></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section">
+    <div class="container">
+        <% if (dish) { %>
+            <div class="row">
+                <div class="col-lg-6 mb-5 ftco-animate">
+                    <a href="/food/<%= dish.images %>" class="image-popup"><img src="/food/<%= dish.images %>" class="img-fluid" alt="<%= dish.name_mon %>"></a>
+                </div>
+                <div class="col-lg-6 product-details pl-md-5 ftco-animate">
+                    <h3><%= dish.name_mon %></h3>
+                    <p class="price"><span><%= formatMoney(dish.gia_mon) %> VNĐ</span></p>
+                    <p><%= dish.ghichu_mon %></p>
+                    <div class="row mt-4">
+                        <div class="w-100"></div>
+                        <div class="input-group col-md-6 d-flex mb-3">
+                            <form action="/add-to-cart" method="post">
+                                <input type="hidden" name="monid" value="<%= dish.id_mon %>">
+                                <input type="number" name="soluong" class="form-control" value="1" min="1" max="100">
+                                <p class="mt-4"><input type="submit" value="Thêm vào giỏ hàng" class="btn btn-primary py-3 px-5"></p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<%- include('partials/footer') %>

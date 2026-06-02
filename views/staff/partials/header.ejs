@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nhân viên - NHA HANG BD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8f9fc; }
+    .sidebar { background: linear-gradient(180deg,#4e342e 0%,#2c1810 100%) !important; min-height:100vh; }
+    .sidebar .nav-item .nav-link { color: rgba(255,255,255,.8); }
+    .sidebar .nav-item.active .nav-link, .sidebar .nav-item .nav-link:hover { color:#fff; }
+    .sidebar-brand { color:#fff !important; font-weight:800; }
+    .badge-unread { background:#e74a3b; color:#fff; border-radius:50%; padding:2px 6px; font-size:11px; }
+    .staff-avatar { width:40px; height:40px; border-radius:50%; background:#c8a951; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:18px; }
+    .card { border:none; box-shadow:0 .15rem 1.75rem 0 rgba(58,59,69,.15); }
+  </style>
+</head>
+<body id="page-top">
+<div id="wrapper">
+  <!-- Sidebar -->
+  <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center py-3" href="/staff">
+      <span style="font-size:20px;">🍽️ NHA HANG BD</span>
+    </a>
+    <hr class="sidebar-divider my-0">
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff"><i class="fas fa-fw fa-tachometer-alt"></i><span>Tổng quan</span></a>
+    </li>
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Nghiệp vụ</div>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/bookings"><i class="fas fa-fw fa-book"></i><span>Quản lý Đặt bàn</span></a>
+    </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/kitchen">
+        <i class="fas fa-fw fa-utensils"></i>
+        <span><%= session.staffRole === 'Phuc vu' ? 'Món đã xong' : 'Quản lý Đơn bàn' %></span>
+      </a>
+    </li>
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Làm việc</div>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='schedule' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/schedule"><i class="fas fa-fw fa-calendar-alt"></i><span>Lịch làm việc</span></a>
+    </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='attendance' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/attendance"><i class="fas fa-fw fa-clock"></i><span>Chấm công</span></a>
+    </li>
+
+    <% if (['Ke toan', 'Quay', 'Thu ngan'].includes(session.staffRole)) { %>
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Quản trị Tài chính & Khách hàng</div>
+      
+      <% if (session.staffRole === 'Ke toan') { %>
+        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>">
+          <a class="nav-link" href="/staff/accountant/salary"><i class="fas fa-fw fa-money-check-alt"></i><span>Quản lý Lương</span></a>
+        </li>
+        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>">
+          <a class="nav-link" href="/staff/accountant/reports"><i class="fas fa-fw fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
+        </li>
+      <% } %>
+
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='customers' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/customers"><i class="fas fa-fw fa-users"></i><span>Khách hàng</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='shift' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/shift"><i class="fas fa-fw fa-calculator"></i><span>Chốt ca làm việc</span></a>
+      </li>
+
+      <% if (session.staffRole === 'Ke toan') { %>
+        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='staff-manage' ? 'active' : '' %>">
+          <a class="nav-link" href="/staff/accountant/staff"><i class="fas fa-fw fa-users-cog"></i><span>Danh sách Nhân viên</span></a>
+        </li>
+      <% } %>
+
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp</div>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/chat"><i class="fas fa-fw fa-comments"></i><span>Chat khách hàng</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='emails' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/emails"><i class="fas fa-fw fa-envelope"></i><span>Gửi Email</span></a>
+      </li>
+
+    <% } else if (session.staffRole === 'Bep') { %>
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Quản lý kho & Sản xuất</div>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='inventory' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/kitchen/inventory"><i class="fas fa-fw fa-boxes"></i><span>Nguyên liệu & Kho</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/kitchen/recipes"><i class="fas fa-fw fa-scroll"></i><span>Công thức nấu ăn</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen-menu' ? 'active' : '' %>">
+          <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseMenu" aria-expanded="true" aria-controls="collapseMenu">
+              <i class="fas fa-fw fa-list"></i><span>Thực đơn & Combo</span>
+          </a>
+          <div id="collapseMenu" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+              <div class="bg-white py-2 collapse-inner rounded">
+                  <a class="collapse-item" href="/staff/kitchen/categories">Loại món</a>
+                  <a class="collapse-item" href="/staff/kitchen/dishes">Món ăn</a>
+                  <a class="collapse-item" href="/staff/kitchen/combos">Combo</a>
+              </div>
+          </div>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='equipment' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/kitchen/equipment"><i class="fas fa-fw fa-tools"></i><span>Trang thiết bị</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen-shift' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/kitchen/shift"><i class="fas fa-fw fa-stopwatch"></i><span>Chốt ca Bếp</span></a>
+      </li>
+
+    <% } else if (session.staffRole === 'Phuc vu') { %>
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp & Dịch vụ</div>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/qr-codes"><i class="fas fa-fw fa-qrcode"></i><span>Mã QR Đặt Món</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/chat"><i class="fas fa-fw fa-comments"></i><span>Chat khách hàng</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='emails' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/emails"><i class="fas fa-fw fa-envelope"></i><span>Gửi Email</span></a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='notifications' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/notifications"><i class="fas fa-fw fa-bell"></i><span>Thông báo</span></a>
+      </li>
+
+    <% } else { %>
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp</div>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='notifications' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/notifications"><i class="fas fa-fw fa-bell"></i><span>Thông báo</span></a>
+      </li>
+    <% } %>
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Tài khoản</div>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='leave' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/leave"><i class="fas fa-fw fa-calendar-minus"></i><span>Xin nghỉ phép</span></a>
+    </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='profile' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/profile"><i class="fas fa-fw fa-user"></i><span>Thông tin cá nhân</span></a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/staff/logout"><i class="fas fa-fw fa-sign-out-alt"></i><span>Đăng xuất</span></a>
+    </li>
+    <hr class="sidebar-divider d-none d-md-block">
+  </ul>
+  <!-- End Sidebar -->
+
+  <!-- Content Wrapper -->
+  <div id="content-wrapper" class="d-flex flex-column">
+    <div id="content">
+      <!-- Topbar -->
+      <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+          <i class="fa fa-bars"></i>
+        </button>
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item d-flex align-items-center">
+            <div class="staff-avatar mr-2"><%= typeof staffName !== 'undefined' ? staffName.charAt(0).toUpperCase() : 'N' %></div>
+            <span class="mr-2 d-none d-lg-inline text-gray-600 small"><%= typeof staffName !== 'undefined' ? staffName : 'Nhân viên' %></span>
+          </li>
+        </ul>
+      </nav>
+      <!-- End of Topbar -->
+      <div class="container-fluid">

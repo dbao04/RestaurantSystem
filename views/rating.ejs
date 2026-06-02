@@ -1,0 +1,91 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread">Đánh giá dịch vụ</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Đánh giá <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section">
+  <div class="container">
+    <% if (msg) { %>
+      <div class="alert alert-<%= msgType || 'success' %> text-center"><%= msg %></div>
+    <% } %>
+    <div class="row justify-content-center">
+      <!-- Form đánh giá -->
+      <div class="col-md-6 mb-4">
+        <% if (canRate) { %>
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white"><i class="ion-ios-star mr-2"></i>Gửi đánh giá của bạn</div>
+          <div class="card-body">
+            <form action="/rating" method="POST">
+              <div class="form-group text-center">
+                <label class="d-block mb-2">Chất lượng dịch vụ</label>
+                <div id="star-rating" class="mb-2">
+                  <% for(let i = 1; i <= 5; i++) { %>
+                    <input type="radio" id="star<%= i %>" name="sao" value="<%= i %>" <%= i === 5 ? 'checked' : '' %> style="display:none;">
+                    <label for="star<%= i %>" style="font-size:32px; color:#ddd; cursor:pointer;" class="star-label">&#9733;</label>
+                  <% } %>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Nhận xét của bạn</label>
+                <textarea class="form-control" name="noi_dung" rows="4" placeholder="Chia sẻ trải nghiệm của bạn về nhà hàng..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá</button>
+            </form>
+          </div>
+        </div>
+        <% } else { %>
+          <div class="alert alert-info text-center mt-3" style="padding: 2em; border-radius: 8px;">
+            <i class="ion-ios-information-circle-outline" style="font-size: 40px; color: #17a2b8; display: block; margin-bottom: 10px;"></i>
+            <h5>Rất tiếc!</h5>
+            <p class="mb-0">Bạn cần trải nghiệm cấu trúc dịch vụ của chúng tôi bằng cách hoàn thành ít nhất một đơn đặt bàn mới có thể gửi đánh giá dịch vụ.</p>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Danh sách đánh giá -->
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white"><i class="ion-ios-list mr-2"></i>Đánh giá gần đây</div>
+          <div class="card-body" style="max-height:400px; overflow-y:auto;">
+            <% if (ratings && ratings.length > 0) { %>
+              <% ratings.forEach(r => { %>
+                <div class="media mb-3 pb-3 border-bottom">
+                  <div class="media-body">
+                    <h6 class="mb-1"><strong><%= r.ten %></strong>
+                      <span class="ml-2" style="color:#c8a951;">
+                        <% for(let i=1; i<=5; i++) { %><% if(i<=r.sao) { %>&#9733;<% } else { %>&#9734;<% } %><% } %>
+                      </span>
+                    </h6>
+                    <p class="mb-1 text-muted"><%= r.noi_dung || '<em>Không có nhận xét</em>' %></p>
+                    <small class="text-muted"><%= new Date(r.thoigian).toLocaleDateString('vi-VN') %></small>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <p class="text-center text-muted">Chưa có đánh giá nào.</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  #star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
+  #star-rating label { color: #ddd; }
+  #star-rating input:checked ~ label,
+  #star-rating label:hover,
+  #star-rating label:hover ~ label { color: #c8a951 !important; }
+</style>
+
+<%- include('partials/footer') %>

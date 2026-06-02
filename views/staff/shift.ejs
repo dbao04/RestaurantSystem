@@ -1,0 +1,85 @@
+<%
+  var activePage = 'shift';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Chốt ca làm việc</h1>
+</div>
+
+<div class="row">
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Biểu mẫu Chốt ca</h6>
+      </div>
+      <div class="card-body">
+        <form action="/staff/shift/close" method="POST">
+          <div class="form-group">
+            <label>Ngày</label>
+            <input type="date" name="ngay" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+          </div>
+          <div class="form-group">
+            <label>Ca làm việc</label>
+            <select name="ca" class="form-control" required>
+              <option value="Sáng">Sáng (7h - 12h)</option>
+              <option value="Chiều">Chiều (12h - 17h)</option>
+              <option value="Tối">Tối (17h - 22h)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tổng tiền (Doanh thu ca)</label>
+            <input type="number" name="tong_tien" class="form-control" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea name="ghi_chu" class="form-control" rows="3" placeholder="Ví dụ: Bàn giao tiền mặt, sự cố phát sinh..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-success btn-block">Xác nhận Chốt ca</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lịch sử Chốt ca</h6>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Ca</th>
+                <th>Nhân viên</th>
+                <th>Tổng tiền</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if(history && history.length > 0) { %>
+                <% history.forEach(h => { %>
+                  <tr>
+                    <td><%= h.ngay ? new Date(h.ngay).toLocaleDateString('vi-VN') : '-' %></td>
+                    <td><%= h.ca %></td>
+                    <td><%= h.ten_nv %></td>
+                    <td><%= formatMoney(h.tong_tien) %></td>
+                    <td><%= h.ghi_chu %></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr><td colspan="5" class="text-center">Chưa có lịch sử chốt ca</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

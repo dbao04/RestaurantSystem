@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Danh sách đơn xin nghỉ phép</h2>
+        <div class="block">
+            <table class="data display datatable" id="example">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th>Ngày nghỉ</th>
+                        <th>Lý do</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% requests.forEach(r => { %>
+                    <tr class="odd gradeX">
+                        <td><%= r.id_np %></td>
+                        <td><%= r.ten_nhanvien %></td>
+                        <td><%= r.chucvu %></td>
+                        <td>
+                            <%= new Date(r.ngay_bat_dau).toLocaleDateString('vi-VN') %> - 
+                            <%= new Date(r.ngay_ket_thuc).toLocaleDateString('vi-VN') %>
+                        </td>
+                        <td><%= r.ly_do %></td>
+                        <td>
+                            <% if (r.trang_thai == 0) { %>
+                                <span class="badge badge-secondary" style="background: grey; color: white; padding: 2px 5px; border-radius: 3px;">Chờ duyệt</span>
+                            <% } else if (r.trang_thai == 1) { %>
+                                <span class="badge badge-success" style="background: green; color: white; padding: 2px 5px; border-radius: 3px;">Đã duyệt</span>
+                            <% } else { %>
+                                <span class="badge badge-danger" style="background: red; color: white; padding: 2px 5px; border-radius: 3px;">Từ chối</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (r.trang_thai == 0) { %>
+                                <a href="/admin/leaveapprove/<%= r.id_np %>" style="color: green; font-weight: bold;">Duyệt</a> || 
+                                <a href="/admin/leavereject/<%= r.id_np %>" style="color: red; font-weight: bold;">Từ chối</a>
+                            <% } else { %>
+                                --
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

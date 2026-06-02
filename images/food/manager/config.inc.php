@@ -1,0 +1,1 @@
+<?php if (!defined('ACCESS')) die('Not access'); else $configs = array('username' => 'admin', 'password' => 'aa13e3334bb1a12b1f60323d0c039ceb', 'page_list' => '0', 'page_file_edit' => '0', 'page_file_edit_line' => '0', 'page_database_list_rows' => '0'); ?>

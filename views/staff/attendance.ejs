@@ -1,0 +1,104 @@
+<%
+  var activePage = 'attendance';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Chấm công</h1>
+</div>
+
+<% if (typeof msg !== 'undefined' && msg) { %>
+  <div class="alert alert-<%= msgType||'info' %> alert-dismissible fade show"><%= msg %>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+<% } %>
+
+<div class="row">
+  <!-- Clock In/Out -->
+  <div class="col-md-4 mb-4">
+    <div class="card shadow text-center">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Chấm công hôm nay</h6></div>
+      <div class="card-body">
+        <div class="mb-3" style="font-size:48px;">🕐</div>
+        <h4 id="clock" class="text-gray-800 mb-3"></h4>
+        <p class="text-muted"><%= new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) %></p>
+        <% if (todayAttendance) { %>
+          <div class="mb-3">
+            <p class="mb-1"><strong>Giờ vào:</strong>
+              <span class="badge badge-success"><%= todayAttendance.gio_vao ? new Date(todayAttendance.gio_vao).toLocaleTimeString('vi-VN') : 'Chưa chấm' %></span>
+            </p>
+            <p class="mb-1"><strong>Giờ ra:</strong>
+              <span class="badge badge-danger"><%= todayAttendance.gio_ra ? new Date(todayAttendance.gio_ra).toLocaleTimeString('vi-VN') : 'Chưa chấm' %></span>
+            </p>
+          </div>
+          <% if (!todayAttendance.gio_vao) { %>
+            <form action="/staff/clock-in" method="POST">
+              <button type="submit" class="btn btn-success btn-block btn-lg">✅ Chấm công VÀO</button>
+            </form>
+          <% } else if (!todayAttendance.gio_ra) { %>
+            <p class="text-success small">Đã vào lúc <%= new Date(todayAttendance.gio_vao).toLocaleTimeString('vi-VN') %></p>
+            <form action="/staff/clock-out" method="POST">
+              <button type="submit" class="btn btn-danger btn-block btn-lg">🚪 Chấm công RA</button>
+            </form>
+          <% } else { %>
+            <div class="alert alert-success">✅ Đã hoàn thành chấm công hôm nay!</div>
+            <p><strong>Tổng giờ:</strong> <%= todayAttendance.tong_gio %> giờ</p>
+          <% } %>
+        <% } else { %>
+          <form action="/staff/clock-in" method="POST">
+            <button type="submit" class="btn btn-success btn-block btn-lg">✅ Chấm công VÀO</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lịch sử chấm công -->
+  <div class="col-md-8 mb-4">
+    <div class="card shadow">
+      <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Lịch sử chấm công</h6>
+        <form method="GET" class="d-flex">
+          <input type="month" class="form-control form-control-sm mr-2" name="thang" value="<%= currentMonth %>">
+          <button type="submit" class="btn btn-sm btn-outline-primary">Xem</button>
+        </form>
+      </div>
+      <div class="card-body">
+        <% if (attendance && attendance.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead class="thead-light">
+                <tr><th>Ngày</th><th>Giờ vào</th><th>Giờ ra</th><th>Tổng giờ</th></tr>
+              </thead>
+              <tbody>
+                <% attendance.forEach(a => { %>
+                  <tr>
+                    <td><%= new Date(a.ngay).toLocaleDateString('vi-VN') %></td>
+                    <td><%= a.gio_vao ? new Date(a.gio_vao).toLocaleTimeString('vi-VN') : '–' %></td>
+                    <td><%= a.gio_ra ? new Date(a.gio_ra).toLocaleTimeString('vi-VN') : '–' %></td>
+                    <td><%= a.tong_gio ? a.tong_gio + 'h' : '–' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-center text-muted">Không có dữ liệu chấm công.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateClock() {
+    var now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('vi-VN');
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+</script>
+
+<%- include('partials/footer') %>

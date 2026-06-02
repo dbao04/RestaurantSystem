@@ -1,0 +1,92 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread">Thông tin cá nhân</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Tài khoản <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section">
+  <div class="container">
+    <% if (msg) { %>
+      <div class="alert alert-<%= msgType || 'info' %> text-center"><%= msg %></div>
+    <% } %>
+    <div class="row">
+      <!-- Cập nhật thông tin -->
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-dark text-white"><i class="icon-person mr-2"></i>Thông tin cá nhân</div>
+          <div class="card-body">
+            <form action="/profile" method="POST">
+              <input type="hidden" name="action" value="update">
+              <div class="form-group">
+                <label>Họ và tên</label>
+                <input type="text" class="form-control" name="ten" value="<%= user.ten %>" required>
+              </div>
+              <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" class="form-control" value="<%= user.sodienthoai %>" readonly disabled>
+                <small class="text-muted">Không thể thay đổi số điện thoại</small>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" name="email" value="<%= user.email || '' %>" required>
+              </div>
+              <div class="form-group">
+                <label>Địa chỉ</label>
+                <input type="text" class="form-control" name="diachi" value="<%= user.diachi || '' %>">
+              </div>
+              <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Đổi mật khẩu -->
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-dark text-white"><i class="icon-lock mr-2"></i>Đổi mật khẩu</div>
+          <div class="card-body">
+            <form action="/profile" method="POST">
+              <input type="hidden" name="action" value="password">
+              <div class="form-group">
+                <label>Mật khẩu cũ</label>
+                <input type="password" class="form-control" name="old_pass" required>
+              </div>
+              <div class="form-group">
+                <label>Mật khẩu mới</label>
+                <input type="password" class="form-control" name="new_pass" minlength="6" required>
+              </div>
+              <div class="form-group">
+                <label>Xác nhận mật khẩu mới</label>
+                <input type="password" class="form-control" name="re_pass" minlength="6" required>
+              </div>
+              <button type="submit" class="btn btn-warning">Đổi mật khẩu</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liên kết nhanh -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white"><i class="icon-menu mr-2"></i>Tài khoản</div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><a href="/my-orders"><i class="ion-ios-list mr-2"></i>Đơn đặt bàn của tôi</a></li>
+              <li class="list-group-item"><a href="/chat"><i class="ion-ios-chatbubbles mr-2"></i>Chat với nhân viên</a></li>
+              <li class="list-group-item"><a href="/rating"><i class="ion-ios-star mr-2"></i>Đánh giá dịch vụ</a></li>
+              <li class="list-group-item text-danger"><a href="/logout" class="text-danger"><i class="ion-ios-power mr-2"></i>Đăng xuất</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

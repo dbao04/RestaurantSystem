@@ -1,0 +1,134 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread">Chat với nhân viên</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white d-flex align-items-center">
+            <i class="ion-ios-chatbubbles mr-2" style="font-size:20px;"></i>
+            <strong>Hỗ trợ trực tuyến</strong>
+            <span class="ml-auto badge badge-success">Đang hoạt động</span>
+          </div>
+          <!-- Khu vực hiển thị tin nhắn -->
+          <div class="card-body" id="chat-box" style="height:420px; overflow-y:auto; background:#f8f9fa;">
+            <% if (messages && messages.length > 0) { %>
+              <% messages.forEach(m => { %>
+                <% if (m.nguoi_gui === 'khach') { %>
+                  <div class="d-flex justify-content-end mb-3">
+                    <div class="p-2 px-3 rounded" style="background:#c8a951; color:#fff; max-width:70%;">
+                      <div><%= m.noi_dung %></div>
+                      <small style="opacity:0.8; font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div class="d-flex justify-content-start mb-3">
+                    <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
+                      <small class="text-muted d-block"><strong><%= m.ten_nv || 'Nhân viên' %></strong></small>
+                      <div><%= m.noi_dung %></div>
+                      <small style="color:#999; font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
+                    </div>
+                  </div>
+                <% } %>
+              <% }) %>
+            <% } else { %>
+              <div class="text-center text-muted mt-5">
+                <i class="ion-ios-chatbubbles" style="font-size:48px; color:#ddd;"></i>
+                <p class="mt-2">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+              </div>
+            <% } %>
+          </div>
+          <!-- Form gửi tin nhắn -->
+          <div class="card-footer">
+            <form action="/chat/send" method="POST" class="d-flex">
+              <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập tin nhắn..." required autocomplete="off">
+              <button type="submit" class="btn btn-primary px-4">Gửi</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const userId = '<%= session.userId %>';
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.querySelector('form[action="/chat/send"]');
+  const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
+
+  // Join room cá nhân
+  if (userId) {
+    socket.emit('join-room', userId);
+  }
+
+  // Cuộn xuống cuối chat box
+  function scrollToBottom() {
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  scrollToBottom();
+
+  // Xử lý gửi tin nhắn qua AJAX
+  chatForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const content = inputMsg.value.trim();
+    if (!content) return;
+
+    try {
+      const response = await fetch('/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+        body: new URLSearchParams({ 'noi_dung': content })
+      });
+      if (response.ok) {
+        inputMsg.value = '';
+      }
+    } catch (err) {
+      console.error('Lỗi gửi tin nhắn:', err);
+    }
+  };
+
+  // Lắng nghe tin nhắn mới
+  socket.on('new-message', (data) => {
+    const isMe = data.nguoi_gui === 'khach';
+    const msgHtml = isMe ? `
+      <div class="d-flex justify-content-end mb-3">
+        <div class="p-2 px-3 rounded" style="background:#c8a951; color:#fff; max-width:70%;">
+          <div>${data.noi_dung}</div>
+          <small style="opacity:0.8; font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
+        </div>
+      </div>
+    ` : `
+      <div class="d-flex justify-content-start mb-3">
+        <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
+          <small class="text-muted d-block"><strong>${data.ten_nv || 'Nhân viên'}</strong></small>
+          <div>${data.noi_dung}</div>
+          <small style="color:#999; font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
+        </div>
+      </div>
+    `;
+    
+    // Xóa thông báo "chưa có tin nhắn" nếu có
+    const emptyMsg = chatBox.querySelector('.text-center.text-muted');
+    if (emptyMsg) emptyMsg.remove();
+
+    chatBox.insertAdjacentHTML('beforeend', msgHtml);
+    scrollToBottom();
+  });
+</script>
+
+<%- include('partials/footer') %>

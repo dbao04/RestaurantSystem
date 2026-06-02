@@ -1,0 +1,436 @@
+<%
+  var activePage = 'bookings';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Quản lý Đặt bàn</h1>
+  <div class="d-flex gap-2" style="gap:8px;">
+    <a href="/staff/qr-codes" class="d-none d-sm-inline-block btn btn-sm btn-outline-info shadow-sm">
+      <i class="fas fa-qrcode fa-sm"></i> Quản lý QR Đặt Món
+    </a>
+    <a href="/staff/bookings/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+      <i class="fas fa-plus fa-sm text-white-50"></i> Tạo Đặt bàn nhanh
+    </a>
+  </div>
+</div>
+
+<% if (typeof msg !== 'undefined' && msg) { %>
+<div class="alert alert-<%= msgType || 'info' %> alert-dismissible fade show" role="alert">
+  <%= msg %>
+  <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+</div>
+<% } %>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Danh sách các Đơn đặt bàn</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Mã (Sesis)</th>
+            <th>Khách hàng</th>
+            <th>Lịch đến</th>
+            <th>Số lượng</th>
+            <th>Yêu cầu</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th width="180" class="text-center">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(bookings && bookings.length > 0) { %>
+            <% bookings.forEach(b => { %>
+              <tr>
+                <td><%= b.sesis.substring(0,6).toUpperCase() %></td>
+                <td>
+                  <strong><%= b.ten_khach %></strong>
+                  <% if (b.table_name) { %>
+                    <span class="badge badge-warning" style="font-size: 11px;">🪑 <%= b.table_name %></span>
+                  <% } %>
+                  <br>
+                  <small class="text-muted"><%= b.sodienthoai %></small>
+                </td>
+                <td><%= new Date(b.dates).toLocaleDateString('vi-VN') %> <%= b.tg %></td>
+                <td><%= b.so_user %> người</td>
+                <td><%= b.noidung || 'Không có' %></td>
+                <td class="text-danger font-weight-bold"><%= parseInt(b.tong_tien).toLocaleString('vi-VN') %>đ</td>
+                <td>
+                  <% if(b.tinhtrang == 0) { %>
+                    <span class="badge badge-secondary">Chờ xác nhận</span>
+                  <% } else if(b.tinhtrang == 1) { %>
+                    <span class="badge badge-primary">Đã xác nhận</span>
+                  <% } else if(b.tinhtrang == 5) { %>
+                    <span class="badge badge-info">Khách đã đến</span>
+                  <% } else if(b.tinhtrang == 6) { %>
+                    <span class="badge badge-warning">Đang dùng món</span>
+                  <% } else if (b.tinhtrang == 2) { %>
+                    <span class="badge badge-danger">Đã hủy</span>
+                  <% } else if (b.tinhtrang == 3) { %>
+                    <span class="badge badge-success">Đã thanh toán</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <!-- In Hóa đơn btn -->
+                  <button type="button" class="btn btn-sm btn-outline-info mb-1" title="In Hóa Đơn" onclick="window.open('/staff/bookings/print/<%= b.sesis %>', '', 'width=600,height=800')"><i class="fas fa-print"></i></button>
+
+                  <% if(b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
+                    <!-- Update form via Modal trigger -->
+                    <button class="btn btn-sm btn-outline-warning mb-1" data-toggle="modal" data-target="#editModal<%= b.sesis %>" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
+
+                    <% if (b.tinhtrang == 0) { %>
+                      <!-- Xác nhận đơn -->
+                      <form action="/staff/bookings/confirm/<%= b.sesis %>" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-success mb-1" title="Xác nhận đơn"><i class="fas fa-check"></i></button>
+                      </form>
+                    <% } %>
+
+                    <!-- ✅ NÚT THÊM MÓN (mới) -->
+                    <button class="btn btn-sm btn-outline-success mb-1" title="Thêm món cho khách"
+                      onclick="openAddDishModal('<%= b.sesis %>', '<%= b.ten_khach %>')">
+                      <i class="fas fa-plus"></i>
+                    </button>
+
+                    <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
+                      <!-- Gán bàn / Xác nhận khách đến -->
+                      <button class="btn btn-sm btn-outline-primary mb-1" data-toggle="modal" data-target="#tableModal<%= b.sesis %>" title="Gán bàn / Khách đến">
+                        <i class="fas fa-chair"></i>
+                      </button>
+                    <% } %>
+
+                    <!-- Pay -->
+                    <form action="/staff/bookings/pay/<%= b.sesis %>" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-success mb-1" title="Thanh Toán" onclick="return confirm('Xác nhận thanh toán cho đơn này?')"><i class="fas fa-check-double"></i></button>
+                    </form>
+                  <% } %>
+
+                  <% if(b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
+                    <!-- Table Assign Modal -->
+                    <div class="modal fade text-left" id="tableModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <form action="/staff/bookings/arrive/<%= b.sesis %>" method="POST">
+                            <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff;">
+                              <h5 class="modal-title">Gán bàn & Xác nhận khách đến</h5>
+                              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body text-dark">
+                              <div class="alert alert-info">
+                                <strong>Khách hàng:</strong> <%= b.ten_khach %><br>
+                                <strong>Trạng thái hiện tại:</strong> 
+                                <% if (b.tinhtrang == 1) { %>
+                                  Chờ khách đến (Sau khi gán bàn, trạng thái sẽ chuyển thành "Khách đã đến")
+                                <% } else if (b.tinhtrang == 5) { %>
+                                  Khách đã đến
+                                <% } else { %>
+                                  Đang dùng món
+                                <% } %>
+                              </div>
+                              <div class="form-group text-dark">
+                                <label class="font-weight-bold">Chọn bàn phục vụ (Mã QR)</label>
+                                <select name="table_id" class="form-control" required>
+                                  <option value="">-- Chọn bàn --</option>
+                                  <% qrCodes.forEach(qr => { %>
+                                    <option value="<%= qr.table_id %>" <%= b.table_name === qr.table_name ? 'selected' : '' %>>
+                                      <%= qr.table_name %> <%= qr.active_sesis ? '(Đang có khách: ' + qr.active_sesis.substring(0,6).toUpperCase() + ')' : '(Bàn trống)' %>
+                                    </option>
+                                  <% }) %>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                              <button type="submit" class="btn btn-primary">Xác nhận</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  <% } %>
+
+                    <!-- Edit Modal -->
+                    <div class="modal fade text-left" id="editModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <form action="/staff/bookings/edit/<%= b.sesis %>" method="POST">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Sửa thông tin Đặt bàn</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="form-group">
+                                <label>Ngày đến</label>
+                                <% 
+                                  let formattedDate = '';
+                                  try { 
+                                    if(b.dates) formattedDate = (b.dates instanceof Date ? b.dates : new Date(b.dates)).toISOString().split('T')[0]; 
+                                  } catch(e) {} 
+                                %>
+                                <input type="date" name="dates" class="form-control" value="<%= formattedDate %>" required>
+                              </div>
+                              <div class="form-group">
+                                <label>Giờ đến</label>
+                                <input type="time" name="tg" class="form-control" value="<%= b.tg %>" required>
+                              </div>
+                              <div class="form-group">
+                                <label>Số khách</label>
+                                <input type="number" name="so_user" class="form-control" value="<%= b.so_user %>" required>
+                              </div>
+                              <div class="form-group">
+                                <label>Ghi chú / Yêu cầu đặc biệt</label>
+                                <textarea name="noidung" class="form-control" rows="3"><%= b.noidung %></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                              <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="8" class="text-center">Chưa có dữ liệu đặt bàn</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ MODAL THÊM MÓN CHO KHÁCH (mới) -->
+<div class="modal fade" id="addDishModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff;">
+        <h5 class="modal-title"><i class="fas fa-utensils"></i> Thêm món cho khách: <span id="addDishCustomerName"></span></h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Search bar -->
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+          </div>
+          <input type="text" id="dishSearchInput" class="form-control" placeholder="Tìm kiếm món ăn..." oninput="filterModalDishes()">
+        </div>
+        <!-- Category filter -->
+        <div id="modalCatFilter" class="mb-3" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        <!-- Dish list -->
+        <div id="modalDishList" style="max-height:400px; overflow-y:auto;">
+          <div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Đang tải thực đơn...</div>
+        </div>
+        <!-- Selected items summary -->
+        <div id="selectedSummary" style="display:none; margin-top:16px; border-top:1px solid #eee; padding-top:12px;">
+          <h6 class="font-weight-bold text-success"><i class="fas fa-check-circle"></i> Món đã chọn</h6>
+          <div id="selectedList"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-success" id="btnConfirmAddDish" onclick="confirmAddDishes()">
+          <i class="fas fa-plus-circle"></i> Thêm vào đơn
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentSesis = '';
+  let allDishes = [];
+  let allCats = [];
+  let selectedDishes = {}; // { id_mon: { dish, qty } }
+  let currentModalCat = 'all';
+  let dishesLoaded = false;
+
+  async function openAddDishModal(sesis, customerName) {
+    currentSesis = sesis;
+    document.getElementById('addDishCustomerName').textContent = customerName;
+    selectedDishes = {};
+    renderSelectedSummary();
+    $('#addDishModal').modal('show');
+
+    if (!dishesLoaded) {
+      try {
+        const res = await fetch('/staff/bookings/dishes', { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (data.success) {
+          allDishes = data.dishes;
+          allCats = data.categories;
+          dishesLoaded = true;
+          renderCategoryFilter();
+          renderModalDishes();
+        }
+      } catch(e) {
+        document.getElementById('modalDishList').innerHTML = '<div class="alert alert-danger">Lỗi tải thực đơn!</div>';
+      }
+    } else {
+      renderCategoryFilter();
+      renderModalDishes();
+    }
+  }
+
+  function renderCategoryFilter() {
+    const container = document.getElementById('modalCatFilter');
+    let html = '<button class="btn btn-sm btn-primary" onclick="filterModalByCategory(this, \'all\')">Tất cả</button>';
+    allCats.forEach(c => {
+      html += `<button class="btn btn-sm btn-outline-secondary" onclick="filterModalByCategory(this, '${c.id_loai}')">${c.name_loai}</button>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function filterModalByCategory(btn, cat) {
+    document.querySelectorAll('#modalCatFilter button').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-outline-secondary');
+    });
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add('btn-primary');
+    currentModalCat = cat;
+    renderModalDishes();
+  }
+
+  function filterModalDishes() {
+    renderModalDishes();
+  }
+
+  function renderModalDishes() {
+    const search = document.getElementById('dishSearchInput').value.toLowerCase();
+    const filtered = allDishes.filter(d => {
+      const matchCat = currentModalCat === 'all' || String(d.id_loai) === String(currentModalCat);
+      const matchSearch = !search || d.name_mon.toLowerCase().includes(search);
+      return matchCat && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      document.getElementById('modalDishList').innerHTML = '<div class="text-center text-muted py-3">Không tìm thấy món nào</div>';
+      return;
+    }
+
+    let html = '<div class="row">';
+    filtered.forEach(d => {
+      const selected = selectedDishes[d.id_mon];
+      const qty = selected ? selected.qty : 0;
+      html += `
+        <div class="col-md-6 mb-2 dish-modal-item" data-cat="${d.id_loai}" data-name="${d.name_mon.toLowerCase()}">
+          <div class="card border-${qty > 0 ? 'success' : 'light'}" style="cursor:pointer; transition:all 0.2s;">
+            <div class="card-body py-2 px-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center" style="flex:1; min-width:0;">
+                  ${d.images ? `<img src="/food/${d.images}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-right:10px;flex-shrink:0;" onerror="this.style.display='none'">` : '<div style="width:44px;height:44px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;">🍜</div>'}
+                  <div style="min-width:0;">
+                    <div class="font-weight-bold" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name_mon}</div>
+                    <div class="text-danger" style="font-size:12px;">${d.gia_mon.toLocaleString('vi-VN')}đ</div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center ml-2">
+                  <button class="btn btn-outline-danger btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, -1)" style="font-size:16px; line-height:1;">−</button>
+                  <span id="qty_${d.id_mon}" class="mx-2 font-weight-bold" style="min-width:20px;text-align:center;">${qty}</span>
+                  <button class="btn btn-outline-success btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, 1, ${JSON.stringify(d).replace(/"/g, '&quot;')})" style="font-size:16px; line-height:1;">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    document.getElementById('modalDishList').innerHTML = html;
+  }
+
+  function changeModalQty(dishId, delta, dishObj) {
+    if (!selectedDishes[dishId] && delta > 0 && dishObj) {
+      selectedDishes[dishId] = { dish: dishObj, qty: 0 };
+    }
+    if (!selectedDishes[dishId]) return;
+
+    selectedDishes[dishId].qty += delta;
+    if (selectedDishes[dishId].qty <= 0) {
+      delete selectedDishes[dishId];
+    }
+
+    // Update qty display
+    const qtyEl = document.getElementById('qty_' + dishId);
+    if (qtyEl) qtyEl.textContent = selectedDishes[dishId] ? selectedDishes[dishId].qty : 0;
+
+    renderSelectedSummary();
+  }
+
+  function renderSelectedSummary() {
+    const summary = document.getElementById('selectedSummary');
+    const list = document.getElementById('selectedList');
+    const items = Object.values(selectedDishes);
+
+    if (items.length === 0) {
+      summary.style.display = 'none';
+      document.getElementById('btnConfirmAddDish').disabled = true;
+      return;
+    }
+
+    summary.style.display = 'block';
+    document.getElementById('btnConfirmAddDish').disabled = false;
+
+    let total = 0;
+    let html = '<ul class="list-unstyled mb-1">';
+    items.forEach(item => {
+      const subtotal = item.dish.gia_mon * item.qty;
+      total += subtotal;
+      html += `<li><i class="fas fa-check text-success"></i> <strong>${item.dish.name_mon}</strong> x${item.qty} = <span class="text-danger">${subtotal.toLocaleString('vi-VN')}đ</span></li>`;
+    });
+    html += `</ul><div class="font-weight-bold">Tổng thêm: <span class="text-danger">${total.toLocaleString('vi-VN')}đ</span></div>`;
+    list.innerHTML = html;
+  }
+
+  async function confirmAddDishes() {
+    const items = Object.values(selectedDishes);
+    if (items.length === 0) return alert('Vui lòng chọn ít nhất 1 món!');
+
+    const btn = document.getElementById('btnConfirmAddDish');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
+
+    try {
+      for (const item of items) {
+        const formData = new FormData();
+        formData.append('id_mon', item.dish.id_mon);
+        formData.append('soluong', item.qty);
+        const res = await fetch('/staff/bookings/add-dish/' + currentSesis, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: new URLSearchParams({ id_mon: item.dish.id_mon, soluong: item.qty })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Lỗi thêm món');
+      }
+
+      $('#addDishModal').modal('hide');
+      selectedDishes = {};
+      dishesLoaded = false; // force reload next time
+      alert('✅ Đã thêm ' + items.length + ' món vào đơn thành công!');
+      location.reload();
+    } catch (err) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-plus-circle"></i> Thêm vào đơn';
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>
+

@@ -1,0 +1,51 @@
+<%
+  var activePage = 'notifications';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Thông báo</h1>
+  <% if (notifications && notifications.some(n => !n.da_doc)) { %>
+    <a href="/staff/notifications/read-all" class="btn btn-sm btn-outline-secondary">Đánh dấu tất cả đã đọc</a>
+  <% } %>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-body">
+    <% if (notifications && notifications.length > 0) { %>
+      <% notifications.forEach(n => { %>
+        <div class="d-flex align-items-start mb-4 pb-3 border-bottom" style="<%= !n.da_doc ? 'background:#fffbf0;' : '' %> padding:12px; border-radius:6px;">
+          <div class="mr-3 mt-1">
+            <% if (!n.da_doc) { %>
+              <span class="badge badge-warning p-2">🔔</span>
+            <% } else { %>
+              <span class="badge badge-light p-2">🔕</span>
+            <% } %>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-1 font-weight-bold <%= !n.da_doc ? 'text-dark' : 'text-muted' %>">
+                <%= n.tieu_de %>
+                <% if (!n.da_doc) { %><span class="badge badge-warning ml-2" style="font-size:10px;">Mới</span><% } %>
+              </h6>
+              <small class="text-muted"><%= new Date(n.created_at).toLocaleDateString('vi-VN') %></small>
+            </div>
+            <p class="mb-1 text-secondary"><%= n.noi_dung %></p>
+            <% if (!n.da_doc) { %>
+              <a href="/staff/notifications/read/<%= n.id_tb %>" class="btn btn-sm btn-outline-warning mt-1">Đánh dấu đã đọc</a>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="text-center py-5">
+        <div style="font-size:48px;">🔕</div>
+        <p class="text-muted mt-2">Không có thông báo nào.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

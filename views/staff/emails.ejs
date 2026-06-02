@@ -1,0 +1,68 @@
+<%
+  var activePage = 'emails';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Lịch sử Gửi Email</h1>
+  <a href="/staff/emails/send" class="btn btn-sm btn-primary shadow-sm">
+    <i class="fas fa-paper-plane fa-sm text-white-50"></i> Soạn Email mới
+  </a>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Các email đã gửi cho khách hàng</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Người nhận</th>
+            <th>Tiêu đề</th>
+            <th>Nội dung</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(logs && logs.length > 0) { %>
+            <% logs.forEach(log => { %>
+              <tr>
+                <td><%= new Date(log.sent_at).toLocaleString('vi-VN') %></td>
+                <td><%= log.recipient %></td>
+                <td><%= log.subject %></td>
+                <td>
+                   <button class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#contentModal<%= log.id %>">Xem nội dung</button>
+                   
+                   <!-- Content Modal -->
+                   <div class="modal fade" id="contentModal<%= log.id %>" tabindex="-1" role="dialog" aria-hidden="true">
+                     <div class="modal-dialog" role="document">
+                       <div class="modal-content">
+                         <div class="modal-header">
+                           <h5 class="modal-title">Nội dung Email</h5>
+                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                             <span aria-hidden="true">&times;</span>
+                           </button>
+                         </div>
+                         <div class="modal-body">
+                           <div class="p-2 border rounded bg-light" style="white-space: pre-wrap;"><%= log.content %></div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="4" class="text-center">Chưa có lịch sử gửi mail</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

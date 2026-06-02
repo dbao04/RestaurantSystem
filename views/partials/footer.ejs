@@ -1,0 +1,105 @@
+    <footer class="ftco-footer ftco-bg-dark ftco-section">
+      <div class="container">
+        <div class="row mb-5">
+          <div class="col-md-6 col-lg-3">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">NHA HANG BD</h2>
+              <p>Trải nghiệm ẩm thực tinh túy giữa lòng Sài Gòn. Nơi hội tụ các món ăn Pháp - Việt độc đáo.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-3">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Thông tin liên hệ</h2>
+              <div class="block-23 mb-3">
+                <ul class="list-unstyled">
+                  <li><span class="icon icon-map-marker"></span><span class="text">12 Nguyen Trai, District 1, Ho Chi Minh City</span></li>
+                  <li><a href="#"><span class="icon icon-phone"></span><span class="text">0918.453632</span></a></li>
+                  <li><a href="#"><span class="icon icon-envelope"></span><span class="text">nhahangbd@gmail.com</span></a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Giờ mở cửa</h2>
+              <ul class="list-unstyled open-hours">
+                <li class="d-flex"><span>Thứ Hai - Chủ Nhật</span></li>
+                <li class="d-flex"><span>8:00 giờ - 21:00 giờ</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+            <p>Copyright &copy;<script>document.write(new Date().getFullYear());</script> Tất cả quyền được bảo lưu | NHA HANG BD</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  
+
+  <script src="/jquery.min.js"></script>
+  <script src="/jquery-migrate-3.0.1.min.js"></script>
+  <script src="/popper.min.js"></script>
+  <script src="/bootstrap.min.js"></script>
+  <script src="/jquery.easing.1.3.js"></script>
+  <script src="/jquery.waypoints.min.js"></script>
+  <script src="/jquery.stellar.min.js"></script>
+  <script src="/owl.carousel.min.js"></script>
+  <script src="/jquery.magnific-popup.min.js"></script>
+  <script src="/aos.js"></script>
+  <script src="/jquery.animateNumber.min.js"></script>
+  <script src="/bootstrap-datepicker.js"></script>
+  <script src="/jquery.timepicker.min.js"></script>
+  <script src="/scrollax.min.js"></script>
+  <script src="/main.js"></script>
+
+  <!-- Socket.io & Notifications cho Khách hàng -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const userId = '<%= typeof session !== "undefined" && session.userId ? session.userId : "" %>';
+    if(userId) {
+      const socket = io();
+      socket.emit('join-room', userId);
+
+      const notifSound = new Audio('/sounds/notification.mp3');
+
+      // Nhận thông báo thanh toán thành công
+      socket.on('payment-success', function(data) {
+        notifSound.play().catch(e => console.log('Autoplay prevent on audio'));
+        Swal.fire({
+          title: data.title,
+          text: data.message,
+          icon: 'success',
+          confirmButtonText: 'Đóng',
+          timer: 10000,
+          timerProgressBar: true
+        });
+      });
+      
+      // Nếu có chat event (new-message) - Đã xử lý ở trang Chat nhưng gắn để nếu ngoài trang vẫn có popup tin mới (opt)
+      socket.on('new-message', function(data) {
+        if(!window.location.pathname.includes('/chat') && data.nguoi_gui !== 'khach') {
+            notifSound.play().catch(e=>console.log(e));
+            Swal.fire({
+              title: "Tin nhắn mới!",
+              text: data.noi_dung,
+              icon: 'info',
+              toast: true,
+              position: 'bottom-end',
+              showConfirmButton: false,
+              timer: 5000
+            });
+        }
+      });
+    }
+  </script>
+    
+  </body>
+</html>

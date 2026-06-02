@@ -1,0 +1,175 @@
+<%
+  var activePage = 'inventory';
+  var staffName = session.staffName || 'Bếp trưởng';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800">Quản lý Kho nguyên liệu</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addIngredientModal"><i class="fas fa-plus mr-1"></i> Thêm nguyên liệu</button>
+        <button class="btn btn-success" data-toggle="modal" data-target="#stockInModal"><i class="fas fa-download mr-1"></i> Nhập kho</button>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Tồn kho hiện tại</h6>
+        <a href="/staff/kitchen/stock-history" class="btn btn-sm btn-outline-info">Xem lịch sử nhập kho</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Tên nguyên liệu</th>
+                        <th>Đơn vị tính</th>
+                        <th>Tồn kho</th>
+                        <th>Định mức tối thiểu</th>
+                        <th>Tình trạng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% ingredients.forEach(i => { %>
+                    <tr>
+                        <td class="font-weight-bold"><%= i.ten_nl %></td>
+                        <td><%= i.ten_dvt %></td>
+                        <td class="<%= i.so_luong <= i.dinh_muc_min ? 'text-danger font-weight-bold' : '' %>">
+                            <%= i.so_luong %>
+                        </td>
+                        <td><%= i.dinh_muc_min %></td>
+                        <td>
+                            <% if(i.so_luong <= i.dinh_muc_min) { %>
+                                <span class="badge badge-danger">Sắp hết hàng</span>
+                            <% } else { %>
+                                <span class="badge badge-success">Ổn định</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary mr-1" title="Sửa"
+                              data-toggle="modal" data-target="#editIngModal<%= i.id_nl %>">
+                              <i class="fas fa-edit"></i>
+                            </button>
+                            <a href="/staff/kitchen/ingredient/delete/<%= i.id_nl %>" class="btn btn-sm btn-outline-danger"
+                              onclick="return confirm('Xóa nguyên liệu này?')" title="Xóa">
+                              <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- Edit Modal for ingredient -->
+                    <div class="modal fade" id="editIngModal<%= i.id_nl %>" tabindex="-1">
+                      <div class="modal-dialog"><div class="modal-content">
+                        <form action="/staff/kitchen/ingredient/edit/<%= i.id_nl %>" method="POST">
+                          <div class="modal-header"><h5 class="modal-title">Sửa nguyên liệu</h5>
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="form-group">
+                              <label>Tên nguyên liệu</label>
+                              <input type="text" name="ten_nl" class="form-control" value="<%= i.ten_nl %>" required />
+                            </div>
+                            <div class="form-group">
+                              <label>Đơn vị tính</label>
+                              <select name="id_dvt" class="form-control mb-2">
+                                <% units.forEach(u => { %>
+                                  <option value="<%= u.id_dvt %>" <%= i.id_dvt == u.id_dvt ? 'selected' : '' %>><%= u.ten_dvt %></option>
+                                <% }) %>
+                              </select>
+                              <input type="text" name="new_dvt" class="form-control" placeholder="Hoặc nhập đơn vị tính mới (nếu chưa có)" />
+                            </div>
+                            <div class="form-group">
+                              <label>Định mức tối thiểu</label>
+                              <input type="number" step="0.1" name="dinh_muc_min" class="form-control" value="<%= i.dinh_muc_min %>" />
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                          </div>
+                        </form>
+                      </div></div>
+                    </div>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Ingredient Modal -->
+<div class="modal fade" id="addIngredientModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form action="/staff/kitchen/ingredient/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm nguyên liệu mới</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Tên nguyên liệu</label>
+            <input type="text" name="ten_nl" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Đơn vị tính</label>
+            <select name="id_dvt" class="form-control mb-2">
+                <% units.forEach(u => { %>
+                    <option value="<%= u.id_dvt %>"><%= u.ten_dvt %></option>
+                <% }) %>
+            </select>
+            <input type="text" name="new_dvt" class="form-control" placeholder="Hoặc nhập đơn vị tính mới (nếu chưa có)" />
+          </div>
+          <div class="form-group">
+            <label>Định mức tối thiểu</label>
+            <input type="number" step="0.1" name="dinh_muc_min" class="form-control" value="0" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Lưu lại</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Stock In Modal -->
+<div class="modal fade" id="stockInModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form action="/staff/kitchen/inventory/stock-in" method="POST">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Phiếu nhập kho</h5>
+          <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nguyên liệu</label>
+            <select name="id_nl" class="form-control" required>
+                <% ingredients.forEach(i => { %>
+                    <option value="<%= i.id_nl %>"><%= i.ten_nl %> (<%= i.ten_dvt %>)</option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Số lượng nhập</label>
+            <input type="number" step="0.1" name="so_luong" class="form-control" min="0.1" required />
+          </div>
+          <div class="form-group">
+            <label>Giá nhập (đơn vị)</label>
+            <input type="number" name="gia_nhap" class="form-control" placeholder="VND" min="1" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success">Xác nhận nhập kho</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

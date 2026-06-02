@@ -1,0 +1,59 @@
+<%
+  var activePage = 'emails';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Soạn Email Gửi Khách Hàng</h1>
+  <a href="/staff/emails" class="btn btn-sm btn-secondary shadow-sm">
+    <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại Lịch sử
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Nội dung Email</h6>
+      </div>
+      <div class="card-body">
+        <form action="/staff/emails/send" method="POST">
+          <div class="form-group">
+            <label>Địa chỉ Email người nhận</label>
+            <input type="email" name="recipient" class="form-control" placeholder="khachhang@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Tiêu đề</label>
+            <input type="text" name="subject" class="form-control" placeholder="Thông báo từ Nhà hàng BD" required>
+          </div>
+          <div class="form-group">
+            <label>Nội dung</label>
+            <textarea name="content" class="form-control" rows="10" placeholder="Kính gửi quý khách..." required></textarea>
+          </div>
+          <hr>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane mr-2"></i> GỬI EMAIL NGAY</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-info">Gợi ý nội dung</h6>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted">Sử dụng Email để thông báo cho khách hàng về:</p>
+        <ul>
+          <li>Xác nhận đặt bàn thành công.</li>
+          <li>Thông báo chương trình khuyến mãi.</li>
+          <li>Cảm ơn sau khi khách dùng bữa.</li>
+          <li>Nhắc lịch sự kiện sắp tới.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,178 @@
+<%
+  var activePage = 'chat';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Chat với khách hàng</h1>
+</div>
+
+<div class="row" style="height:calc(100vh - 200px);">
+  <!-- Danh sách khách -->
+  <div class="col-md-4 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Khách hàng</h6></div>
+      <div class="card-body p-0" style="overflow-y:auto;">
+        <% if (customers && customers.length > 0) { %>
+          <div class="list-group list-group-flush">
+            <% customers.forEach(c => { %>
+              <a href="/staff/chat/<%= c.id %>" class="list-group-item list-group-item-action <%= selectedId == c.id ? 'active' : '' %>">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width:36px;height:36px;flex-shrink:0">
+                    <%= c.ten.charAt(0).toUpperCase() %>
+                  </div>
+                  <div class="flex-grow-1 overflow-hidden">
+                    <div class="d-flex justify-content-between">
+                      <strong style="font-size:14px;"><%= c.ten %></strong>
+                      <% if (c.unread > 0) { %><span class="badge badge-danger"><%= c.unread %></span><% } %>
+                    </div>
+                    <small class="text-truncate d-block" style="max-width:180px; color:<%= selectedId == c.id ? 'rgba(255,255,255,.7)' : '#999' %>"><%= c.last_msg || 'Chưa có tin nhắn' %></small>
+                  </div>
+                </div>
+              </a>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-center text-muted p-4">Chưa có khách nào nhắn tin.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Khu vực chat -->
+  <div class="col-md-8 mb-4">
+    <div class="card shadow h-100 d-flex flex-column">
+      <% if (selectedCustomer) { %>
+        <div class="card-header py-3 d-flex align-items-center">
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width:36px;height:36px;">
+            <%= selectedCustomer.ten.charAt(0).toUpperCase() %>
+          </div>
+          <div>
+            <h6 class="m-0 font-weight-bold"><%= selectedCustomer.ten %></h6>
+            <small class="text-muted"><%= selectedCustomer.sodienthoai %></small>
+          </div>
+        </div>
+        <div class="card-body flex-grow-1" id="chat-box" style="overflow-y:auto; background:#f8f9fc; max-height:450px;">
+          <% if (messages && messages.length > 0) { %>
+            <% messages.forEach(m => { %>
+              <% if (m.nguoi_gui === 'khach') { %>
+                <div class="d-flex justify-content-start mb-3">
+                  <div class="p-2 px-3 rounded" style="background:#fff;border:1px solid #ddd;max-width:75%;">
+                    <small class="text-muted d-block"><strong><%= m.ten_kh %></strong></small>
+                    <div><%= m.noi_dung %></div>
+                    <small style="color:#999;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
+                  </div>
+                </div>
+              <% } else { %>
+                <div class="d-flex justify-content-end mb-3">
+                  <div class="p-2 px-3 rounded" style="background:#4e342e;color:#fff;max-width:75%;">
+                    <div><%= m.noi_dung %></div>
+                    <small style="opacity:.7;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
+                  </div>
+                </div>
+              <% } %>
+            <% }) %>
+          <% } else { %>
+            <div class="text-center text-muted mt-5">
+              <i class="fas fa-comments fa-3x text-gray-300"></i>
+              <p class="mt-2">Hãy bắt đầu cuộc trò chuyện</p>
+            </div>
+          <% } %>
+        </div>
+        <div class="card-footer">
+          <form action="/staff/chat/send" method="POST" class="d-flex">
+            <input type="hidden" name="id_kh" value="<%= selectedCustomer.id %>">
+            <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập phản hồi..." required autocomplete="off">
+            <button type="submit" class="btn btn-primary px-4">Gửi</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div class="text-center text-muted">
+            <i class="fas fa-comments fa-4x text-gray-300"></i>
+            <p class="mt-3">Chọn khách hàng để bắt đầu chat</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const selectedCustomerId = '<%= selectedId %>';
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.querySelector('form[action="/staff/chat/send"]');
+
+  // Join room của khách đang chọn
+  if (selectedCustomerId && selectedCustomerId !== '0') {
+    socket.emit('join-room', selectedCustomerId);
+  }
+
+  function scrollToBottom() {
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  scrollToBottom();
+
+  // Xử lý gửi tin nhắn qua AJAX
+  if (chatForm) {
+    chatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
+      const idKh = chatForm.querySelector('input[name="id_kh"]').value;
+      const content = inputMsg.value.trim();
+      if (!content) return;
+
+      try {
+        const response = await fetch('/staff/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: new URLSearchParams({ 'id_kh': idKh, 'noi_dung': content })
+        });
+        if (response.ok) {
+          inputMsg.value = '';
+        }
+      } catch (err) {
+        console.error('Lỗi gửi tin nhắn (Nhân viên):', err);
+      }
+    };
+  }
+
+  // Lắng nghe tin nhắn mới
+  socket.on('new-message', (data) => {
+    // Chỉ hiển thị nếu tin nhắn thuộc về khách đang chat
+    // (Vì đã join vào room_${selectedId} nên socket mặc định chỉ nhận tin từ phòng đó)
+    
+    const isMe = data.nguoi_gui === 'nhanvien';
+    const msgHtml = isMe ? `
+      <div class="d-flex justify-content-end mb-3">
+        <div class="p-2 px-3 rounded" style="background:#4e342e;color:#fff;max-width:75%;">
+          <div>${data.noi_dung}</div>
+          <small style="opacity:.7;font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
+        </div>
+      </div>
+    ` : `
+      <div class="d-flex justify-content-start mb-3">
+        <div class="p-2 px-3 rounded" style="background:#fff;border:1px solid #ddd;max-width:75%;">
+          <small class="text-muted d-block"><strong>${data.ten_kh || 'Khách hàng'}</strong></small>
+          <div>${data.noi_dung}</div>
+          <small style="color:#999;font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
+        </div>
+      </div>
+    `;
+
+    if (chatBox) {
+      // Xóa loading/empty state nếu có
+      const emptyMsg = chatBox.querySelector('.text-center.text-muted');
+      if (emptyMsg) emptyMsg.remove();
+
+      chatBox.insertAdjacentHTML('beforeend', msgHtml);
+      scrollToBottom();
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

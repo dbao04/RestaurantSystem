@@ -1,0 +1,64 @@
+<%
+  var activePage = 'kitchen-menu';
+  var staffName = session.staffName || 'Bếp trưởng';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800">Quản lý Món ăn</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addDishModal"><i class="fas fa-plus mr-1"></i> Thêm món mới</button>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách các món ăn chính</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th width="50px">ID</th>
+                        <th>Hình ảnh</th>
+                        <th>Tên món</th>
+                        <th>Loại món</th>
+                        <th>Giá bán</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% dishes.forEach(d => { %>
+                    <tr>
+                        <td><%= d.id_mon %></td>
+                        <td class="text-center">
+                            <% if(d.images) { %>
+                                <img src="/food/<%= d.images %>" height="50px" style="border-radius:5px;" />
+                            <% } %>
+                        </td>
+                        <td class="font-weight-bold"><%= d.name_mon %></td>
+                        <td><%= d.name_loai %></td>
+                        <td class="text-primary font-weight-bold"><%= formatMoney(d.gia_mon) %></td>
+                        <td>
+                            <% if(d.tinhtrang == 1) { %>
+                                <span class="badge badge-success">Sẵn sàng</span>
+                            <% } else { %>
+                                <span class="badge badge-secondary">Tạm hết</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-circle btn-primary"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

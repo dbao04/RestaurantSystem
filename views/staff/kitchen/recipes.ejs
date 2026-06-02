@@ -1,0 +1,148 @@
+<%
+  var activePage = 'recipes';
+  var staffName = session.staffName || 'Bếp trưởng';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-scroll mr-2"></i> Định mức Công thức (Recipe)</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addRecipeModal"><i class="fas fa-plus mr-1"></i> Thêm thành phần</button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chọn món ăn -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-dark text-white">
+                <h6 class="m-0 font-weight-bold">Chọn món ăn</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="dishList">
+                    <% dishes.forEach(d => { %>
+                        <a href="javascript:void(0)" class="list-group-item list-group-item-action dish-item" 
+                           onclick="loadRecipe(<%= d.id_mon %>, '<%= d.name_mon %>')">
+                            <%= d.name_mon %> <i class="fas fa-chevron-right float-right mt-1 small"></i>
+                        </a>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hiển thị công thức -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4 h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Nguyên liệu tiêu hao: <span id="selectedDishName" class="text-dark">Chưa chọn</span></h6>
+                <div id="recipeActions" style="display:none;">
+                    <button class="btn btn-sm btn-outline-primary" onclick="showAddModal()">Thêm nguyên liệu</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Tên Nguyên liệu</th>
+                                <th>Định mức (1 phần)</th>
+                                <th>Đơn vị</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recipeTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Vui lòng chọn một món ăn ở danh sách bên trái để lấy công thức.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Recipe Item Modal -->
+<div class="modal fade" id="addRecipeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/staff/kitchen/recipe/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm nguyên liệu vào món</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Món ăn</label>
+            <select name="id_mon" id="modalDishId" class="form-control" required>
+                <% dishes.forEach(d => { %>
+                    <option value="<%= d.id_mon %>"><%= d.name_mon %></option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nguyên liệu</label>
+            <select name="id_nl" class="form-control" required>
+                <% ingredients.forEach(i => { %>
+                    <option value="<%= i.id_nl %>"><%= i.ten_nl %> (<%= i.ten_dvt %>)</option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Số lượng tiêu hao (cho 1 xuất)</label>
+            <input type="number" step="0.01" name="so_luong_tieu_hao" class="form-control" placeholder="Ví dụ: 0.2" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Xác nhận thêm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    function loadRecipe(dishId, dishName) {
+        document.getElementById('selectedDishName').innerText = dishName;
+        document.getElementById('recipeActions').style.display = 'block';
+        document.getElementById('modalDishId').value = dishId;
+        
+        // Cập nhật class active
+        document.querySelectorAll('.dish-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        fetch('/staff/kitchen/recipe/' + dishId)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('recipeTableBody');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Món ăn này chưa được thiết lập công thức.</td></tr>';
+                } else {
+                    data.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="font-weight-bold text-dark">${item.ten_nl}</td>
+                                <td>${item.so_luong_tieu_hao}</td>
+                                <td>${item.ten_dvt || 'N/A'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function showAddModal() {
+        $('#addRecipeModal').modal('show');
+    }
+</script>
+
+<%- include('../partials/footer') %>

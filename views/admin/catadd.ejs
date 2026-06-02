@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Thêm Loại món</h2>
+        <div class="block copyblock"> 
+            <form action="/admin/catadd" method="post">
+                <table class="form">					
+                    <tr>
+                        <td>
+                            <input type="text" name="name_loai" placeholder="Thêm loại món" class="medium" required />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" name="ghichu" placeholder="Thêm ghi chú" class="medium" />
+                        </td>
+                    </tr>
+                    <tr> 
+                        <td>
+                            <input type="submit" name="submit" Value="Save" />
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

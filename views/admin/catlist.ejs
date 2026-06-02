@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Danh sách loại </h2>
+        <div class="block">
+            <table class="data display datatable" id="example">
+                <thead>
+                    <tr>
+                        <th>Serial No.</th>
+                        <th>Category Name</th>
+                        <th>Note</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (categories && categories.length > 0) { %>
+                        <% categories.forEach((cat, index) => { %>
+                            <tr class="odd gradeX">
+                                <td><%= index + 1 %></td>
+                                <td><%= cat.name_loai %></td>
+                                <td><%= cat.ghichu %></td>
+                                <td>
+                                    <a href="/admin/catedit/<%= cat.id_loai %>">Edit</a> 
+                                    || 
+                                    <a onclick="return confirm('Bạn muốn xóa?')" href="/admin/catdel/<%= cat.id_loai %>">Delete</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.datatable').dataTable();
+    });
+</script>
+
+<%- include('partials/footer') %>

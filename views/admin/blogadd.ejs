@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Thêm bài viết mới</h2>
+        <div class="block">
+            <form action="/admin/blogadd" method="POST" enctype="multipart/form-data">
+                <table class="form">
+                    <tr>
+                        <td><label>Tiêu đề</label></td>
+                        <td><input type="text" name="tieu_de" placeholder="Nhập tiêu đề..." class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Hình ảnh</label></td>
+                        <td><input type="file" name="hinh_anh" /></td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding-top: 9px;"><label>Nội dung</label></td>
+                        <td><textarea name="noi_dung" style="width: 500px; height: 300px;" required></textarea></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Đăng bài" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

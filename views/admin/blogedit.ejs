@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Sửa bài viết</h2>
+        <div class="block">
+            <form action="/admin/blogedit/<%= post.id_bv %>" method="POST" enctype="multipart/form-data">
+                <table class="form">
+                    <tr>
+                        <td><label>Tiêu đề</label></td>
+                        <td><input type="text" name="tieu_de" value="<%= post.tieu_de %>" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Hình ảnh hiện tại</label></td>
+                        <td>
+                            <% if (post.hinh_anh) { %>
+                                <img src="/food/<%= post.hinh_anh %>" width="200" /><br />
+                            <% } %>
+                            <input type="file" name="hinh_anh" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding-top: 9px;"><label>Nội dung</label></td>
+                        <td><textarea name="noi_dung" style="width: 500px; height: 300px;" required><%= post.noi_dung %></textarea></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Cập nhật" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,62 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Sửa thông tin nhân viên</h2>
+        <div class="block">
+            <form action="/admin/staffedit/<%= staff.id_nv %>" method="POST">
+                <table class="form">
+                    <tr>
+                        <td><label>Tên nhân viên</label></td>
+                        <td><input type="text" name="ten" value="<%= staff.ten %>" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Chức vụ</label></td>
+                        <td>
+                            <select name="chucvu" required>
+                                <option value="Phuc vu" <%= staff.chucvu === 'Phuc vu' ? 'selected' : '' %>>Phục vụ</option>
+                                <option value="Thu ngan" <%= staff.chucvu === 'Thu ngan' ? 'selected' : '' %>>Thu ngân</option>
+                                <option value="Bep" <%= staff.chucvu === 'Bep' ? 'selected' : '' %>>Bếp</option>
+                                <option value="Quan ly" <%= staff.chucvu === 'Quan ly' ? 'selected' : '' %>>Quản lý</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>Số điện thoại</label></td>
+                        <td><input type="text" name="sodienthoai" value="<%= staff.sodienthoai %>" class="medium" /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Email</label></td>
+                        <td><input type="email" name="email" value="<%= staff.email %>" class="medium" /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Địa chỉ</label></td>
+                        <td><textarea name="diachi" style="width: 300px; height: 100px;"><%= staff.diachi %></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><label>Username</label></td>
+                        <td><input type="text" name="username" value="<%= staff.username %>" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Mật khẩu (Bỏ trống nếu không đổi)</label></td>
+                        <td><input type="password" name="passwords" class="medium" /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Trạng thái</label></td>
+                        <td>
+                            <select name="trangthai">
+                                <option value="1" <%= staff.trangthai == 1 ? 'selected' : '' %>>Đang làm</option>
+                                <option value="0" <%= staff.trangthai == 0 ? 'selected' : '' %>>Đã nghỉ</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Cập nhật" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

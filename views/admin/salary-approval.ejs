@@ -1,0 +1,47 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Phê duyệt lương nhân viên</h2>
+        <div class="block">
+            <table class="data display datatable" id="example">
+                <thead>
+                    <tr>
+                        <th>Tháng/Năm</th>
+                        <th>Nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th>Tổng cộng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(pendingSalaries && pendingSalaries.length > 0) { %>
+                        <% pendingSalaries.forEach(s => { %>
+                        <tr class="odd gradeX">
+                            <td><%= s.thang %>/<%= s.nam %></td>
+                            <td><strong><%= s.ten %></strong></td>
+                            <td><%= s.chucvu %></td>
+                            <td class="font-weight-bold" style="color: blue;"><%= formatMoney(s.tong_luong) %></td>
+                            <td>
+                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST" style="display:inline;">
+                                    <input type="hidden" name="status" value="2">
+                                    <button type="submit" style="color: green; border: none; background: none; cursor: pointer; text-decoration: underline;" onclick="return confirm('Xác nhận duyệt?')">Duyệt</button>
+                                </form> | 
+                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST" style="display:inline;">
+                                    <input type="hidden" name="status" value="0">
+                                    <button type="submit" style="color: red; border: none; background: none; cursor: pointer; text-decoration: underline;" onclick="return confirm('Xác nhận hủy?')">Hủy</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="5" class="text-center">Số liệu lương đã được xử lý hết.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

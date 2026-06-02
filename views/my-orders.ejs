@@ -1,0 +1,78 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread">Đơn hàng của tôi</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Đơn hàng <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 ftco-animate">
+        <div class="cart-list">
+          <table class="table">
+            <thead class="thead-primary">
+              <tr class="text-center">
+                <th>Ngày đặt</th>
+                <th>Thời gian</th>
+                <th>Nội dung</th>
+                <th>Số khách</th>
+                <th>Tổng cộng</th>
+                <th>Tình trạng</th>
+                <th>Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (orders && orders.length > 0) { %>
+                <% orders.forEach(order => { %>
+                  <tr class="text-center">
+                    <td><%= order.dates %></td>
+                    <td><%= order.tg %></td>
+                    <td><%= order.noidung %></td>
+                    <td><%= order.so_user %></td>
+                    <td><%= formatMoney(order.tong_tien) %> VNĐ</td>
+                    <td>
+                      <% if (order.tinhtrang == 0) { %>
+                        <span class="badge badge-warning">Chờ xử lý</span>
+                      <% } else if (order.tinhtrang == 1) { %>
+                        <span class="badge badge-success">Đã xác nhận</span>
+                      <% } else if (order.tinhtrang == 5) { %>
+                        <span class="badge badge-info">Khách đã đến</span>
+                      <% } else if (order.tinhtrang == 6) { %>
+                        <span class="badge badge-primary">Đang dùng món</span>
+                      <% } else if (order.tinhtrang == 2) { %>
+                        <span class="badge badge-danger">Yêu cầu hủy</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/contract?sesis=<%= order.sesis %>" class="btn btn-primary btn-sm">Xem</a>
+                      <% if (order.tinhtrang == 0) { %>
+                        <form action="/cancel-order" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn yêu cầu hủy đơn này?')">
+                          <input type="hidden" name="sesis" value="<%= order.sesis %>">
+                          <button type="submit" class="btn btn-danger btn-sm">Hủy</button>
+                        </form>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr class="text-center">
+                  <td colspan="7">Bạn chưa có đơn đặt bàn nào.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

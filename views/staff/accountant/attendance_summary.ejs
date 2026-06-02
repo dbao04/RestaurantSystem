@@ -1,0 +1,82 @@
+<%
+  var activePage = 'attendance';
+  var staffName = session.staffName || 'Kế toán';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calculator mr-2"></i> Tổng hợp Chấm công tháng <%= month %>/<%= year %></h1>
+        <p class="text-muted">Căn cứ để tính lương thực tế dựa trên số ngày đi làm.</p>
+    </div>
+    <div class="col-md-4 text-right">
+        <form class="form-inline justify-content-end" method="GET" action="/staff/accountant/attendance/summary">
+            <select name="month" class="form-control mr-2">
+                <% for(let m=1; m<=12; m++) { %>
+                    <option value="<%= m %>" <%= month == m ? 'selected' : '' %>>Tháng <%= m %></option>
+                <% } %>
+            </select>
+            <select name="year" class="form-control mr-2">
+                <% for(let y=2024; y<=2026; y++) { %>
+                    <option value="<%= y %>" <%= year == y ? 'selected' : '' %>>Năm <%= y %></option>
+                <% } %>
+            </select>
+            <button type="submit" class="btn btn-primary">Lọc</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold">Bảng tổng hợp ngày công</h6>
+        <a href="/staff/accountant/attendance?date=<%= new Date().toISOString().split('T')[0] %>" class="btn btn-sm btn-light"><i class="fas fa-eye mr-1"></i> Xem chi tiết ngày</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID NV</th>
+                        <th>Họ tên</th>
+                        <th>Chức vụ</th>
+                        <th class="text-center">Số ngày đi làm</th>
+                        <th class="text-center">Tình trạng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(summary && summary.length > 0) { %>
+                        <% summary.forEach(s => { %>
+                        <tr>
+                            <td>NV<%= s.id_nv %></td>
+                            <td class="font-weight-bold"><%= s.ten %></td>
+                            <td><%= s.chucvu %></td>
+                            <td class="text-center">
+                                <span class="h5 font-weight-bold text-primary"><%= s.total_days %></span> ngày
+                            </td>
+                            <td class="text-center">
+                                <% if(s.total_days >= 22) { %>
+                                    <span class="badge badge-success">Đạt chỉ tiêu</span>
+                                <% } else if(s.total_days > 0) { %>
+                                    <span class="badge badge-warning">Chưa đủ công</span>
+                                <% } else { %>
+                                    <span class="badge badge-danger">Không có dữ liệu</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <a href="/staff/accountant/salary?month=<%= month %>&year=<%= year %>" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-money-bill-wave mr-1"></i> Tính lương
+                                </a>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="6" class="text-center">Không có dữ liệu chấm công cho tháng này</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

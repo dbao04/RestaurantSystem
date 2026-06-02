@@ -1,0 +1,226 @@
+<%
+  var activePage = 'reports';
+  var staffName = session.staffName || 'Kế toán';
+%>
+<%- include('../partials/header') %>
+
+<!-- Custom Dashboard Styles -->
+<style>
+    .dashboard-card {
+        border-radius: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    }
+    .icon-circle-bg {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .trend-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-7">
+        <h1 class="h3 mb-0 text-gray-800 font-weight-bold"><i class="fas fa-wallet mr-2 text-primary"></i> Tổng quan Tài chính</h1>
+        <p class="text-muted small mb-0">Dữ liệu tổng hợp cho tháng <%= month %> năm <%= year %></p>
+    </div>
+    <div class="col-md-5">
+        <form class="form-inline justify-content-end bg-white p-2 rounded shadow-sm border" method="GET" action="/staff/accountant/reports">
+            <select name="month" class="form-control form-control-sm border-0 bg-light mr-2">
+                <% for(let m=1; m<=12; m++) { %>
+                    <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
+                <% } %>
+            </select>
+            <select name="year" class="form-control form-control-sm border-0 bg-light mr-2">
+                <% for(let y=2024; y<=2026; y++) { %>
+                    <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
+                <% } %>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm px-3 shadow-none">Lọc dữ liệu</button>
+        </form>
+    </div>
+</div>
+
+<!-- Premium Summary Grid -->
+<div class="row">
+    <!-- Revenue -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card shadow-sm border-0 border-left-success border-top-success h-100 py-2">
+            <div class="card-body">
+                <div class="icon-circle-bg bg-success-soft" style="background: #e1f5fe;">
+                    <i class="fas fa-coins text-success fa-lg"></i>
+                </div>
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tổng Doanh thu</div>
+                <div class="h4 mb-0 font-weight-bold text-gray-800"><%= formatMoney(report?.revenue || 0) %></div>
+                <div class="mt-2 text-muted small">Nguồn: Hợp đồng & Chốt ca</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card shadow-sm border-0 border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="icon-circle-bg" style="background: #fff3e0;">
+                    <i class="fas fa-boxes text-warning fa-lg"></i>
+                </div>
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Chi phí Nhập kho</div>
+                <div class="h4 mb-0 font-weight-bold text-gray-800"><%= formatMoney(report.inventoryCosts) %></div>
+                <div class="mt-2 text-muted small">Từ phiếu nhập nguyên liệu</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payroll -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card shadow-sm border-0 border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="icon-circle-bg" style="background: #e0f7fa;">
+                    <i class="fas fa-user-tie text-info fa-lg"></i>
+                </div>
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Chi phí Nhân sự</div>
+                <div class="h4 mb-0 font-weight-bold text-gray-800"><%= formatMoney(report.salaryCosts) %></div>
+                <div class="mt-2 text-muted small">Lương & Phụ cấp nhân viên</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card shadow-sm border-0 h-100 py-2 <%= (report?.netProfit || 0) >= 0 ? 'bg-gradient-success' : 'bg-gradient-danger' %>" 
+             style="background: <%= (report?.netProfit || 0) >= 0 ? 'linear-gradient(45deg, #1cc88a, #13855c)' : 'linear-gradient(45deg, #e74a3b, #be2617)' %>">
+            <div class="card-body text-white">
+                <div class="text-xs font-weight-bold text-white-50 text-uppercase mb-1">Lợi nhuận ròng</div>
+                <div class="h4 mb-0 font-weight-bold text-white"><%= formatMoney(report?.netProfit || 0) %></div>
+                <div class="mt-3">
+                    <% 
+                        let margin = (report?.revenue || 0) > 0 ? ((report?.netProfit || 0) / (report?.revenue || 0) * 100).toFixed(1) : 0;
+                    %>
+                    <span class="trend-badge bg-white text-dark small">TỶ LỆ LÃI: <%= margin %>%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Visual Trends (Chart.js) -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow-sm border-0 dashboard-card mb-4">
+            <div class="card-header py-3 bg-white border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Biểu đồ Phân tích Tài chính</h6>
+                <div class="dropdown no-arrow">
+                    <span class="badge badge-info"><i class="fas fa-eye mr-1"></i> Theo tháng</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="financialChart"></canvas>
+                </div>
+                <hr>
+                <div class="text-xs text-muted">
+                    <i class="fas fa-info-circle mr-1"></i> Số liệu dựa trên các giao dịch thực tế đã phát sinh và được phê duyệt.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Expenses Breakdown -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow-sm border-0 dashboard-card mb-4">
+            <div class="card-header py-3 bg-white border-bottom">
+                <h6 class="m-0 font-weight-bold text-primary">Chi phí phát sinh khác</h6>
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="display-4 text-dark font-weight-bold mb-2"><%= formatMoney(report.otherExpenses) %></div>
+                <p class="text-muted small">Vận hành, Điện/Nước, Sửa chữa...</p>
+                <div class="mt-4">
+                    <a href="/staff/accountant/expenses" class="btn btn-outline-primary btn-block btn-sm rounded-pill"><i class="fas fa-plus-circle mr-2"></i> Chi tiết các khoản chi</a>
+                    <a href="/staff/accountant/reports/print?month=<%= month %>&year=<%= year %>" class="btn btn-primary btn-block btn-sm rounded-pill shadow-sm" target="_blank">
+                        <i class="fas fa-print mr-2"></i> Tải Báo cáo (PDF/In)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('financialChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Doanh thu', 'Nhập kho', 'Nhân sự', 'Vận hành (Khác)'],
+            datasets: [{
+                label: 'Giá trị (VNĐ)',
+                data: [
+                    <%= Number(report?.revenue || 0) %>,
+                    <%= Number(report?.inventoryCosts || 0) %>,
+                    <%= Number(report?.salaryCosts || 0) %>,
+                    <%= Number(report?.otherExpenses || 0) %>
+                ],
+                backgroundColor: [
+                    'rgba(28, 200, 138, 0.8)',
+                    'rgba(246, 194, 62, 0.8)',
+                    'rgba(54, 185, 204, 0.8)',
+                    'rgba(133, 135, 150, 0.8)'
+                ],
+                borderColor: [
+                    '#1cc88a',
+                    '#f6c23e',
+                    '#36b9cc',
+                    '#858796'
+                ],
+                borderWidth: 1,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('vi-VN') + ' đ';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.toLocaleString('vi-VN') + ' đ';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<%- include('../partials/footer') %>

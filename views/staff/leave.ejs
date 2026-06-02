@@ -1,0 +1,98 @@
+<%- include('partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-minus mr-2"></i> Xin nghỉ phép</h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Form xin nghỉ phép -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tạo đơn xin nghỉ</h6>
+            </div>
+            <div class="card-body">
+                <form action="/staff/leave/add" method="POST">
+                    <div class="form-group">
+                        <label>Ngày bắt đầu</label>
+                        <input type="date" name="ngay_bat_dau" id="ngay_bat_dau" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày kết thúc</label>
+                        <input type="date" name="ngay_ket_thuc" id="ngay_ket_thuc" class="form-control" required>
+                    </div>
+...
+<script>
+    // Thiết lập ngày tối thiểu là hôm nay cho các ô chọn ngày
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ngay_bat_dau').setAttribute('min', today);
+    document.getElementById('ngay_ket_thuc').setAttribute('min', today);
+
+    // Đảm bảo ngày kết thúc không được nhỏ hơn ngày bắt đầu
+    document.getElementById('ngay_bat_dau').addEventListener('change', function() {
+        document.getElementById('ngay_ket_thuc').setAttribute('min', this.value);
+    });
+</script>
+                    <div class="form-group">
+                        <label>Lý do nghỉ</label>
+                        <textarea name="ly_do" class="form-control" rows="4" placeholder="Nhập lý do nghỉ phép..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Gửi đơn xin nghỉ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử nghỉ phép -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Lịch sử nghỉ phép của bạn</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Ngày bắt đầu</th>
+                                <th>Ngày kết thúc</th>
+                                <th>Lý do</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày gửi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (leaves && leaves.length > 0) { %>
+                                <% leaves.forEach(l => { %>
+                                    <tr>
+                                        <td><%= new Date(l.ngay_bat_dau).toLocaleDateString('vi-VN') %></td>
+                                        <td><%= new Date(l.ngay_ket_thuc).toLocaleDateString('vi-VN') %></td>
+                                        <td><%= l.ly_do %></td>
+                                        <td>
+                                            <% if (l.trang_thai == 0) { %>
+                                                <span class="badge badge-warning">Chờ duyệt</span>
+                                            <% } else if (l.trang_thai == 1) { %>
+                                                <span class="badge badge-success">Đã duyệt</span>
+                                            <% } else { %>
+                                                <span class="badge badge-danger">Từ chối</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= new Date(l.created_at).toLocaleDateString('vi-VN') %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center">Bạn chưa có đơn xin nghỉ nào.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

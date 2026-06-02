@@ -1,0 +1,92 @@
+<%
+  var activePage = 'reports';
+  var staffName = session.staffName || 'Kế toán';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-wallet mr-2"></i> Quản lý Chi phí phát sinh</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#addExpenseModal"><i class="fas fa-plus"></i> Thêm khoản chi</button>
+    </div>
+</div>
+
+<div class="card shadow mb-4 border-left-danger">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách các khoản chi (Thuê mặt bằng, điện nước, sửa chữa...)</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="120px">Ngày</th>
+                        <th>Lý do chi</th>
+                        <th>Số tiền</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (expenses.length === 0) { %>
+                        <tr><td colspan="5" class="text-center py-4">Chưa có dữ liệu chi phí.</td></tr>
+                    <% } %>
+                    <% expenses.forEach(e => { %>
+                    <tr>
+                        <td class="font-weight-bold"><%= new Date(e.ngay).toLocaleDateString('vi-VN') %></td>
+                        <td class="text-danger font-weight-bold"><%= formatMoney(e.so_tien) %></td>
+                        <td><%= e.ghi_chu %></td>
+                        <td>
+                            <a href="/staff/accountant/expenses/delete/<%= e.id_chi %>" 
+                               class="btn btn-sm btn-circle btn-outline-danger"
+                               onclick="return confirm('Bạn có chắc muốn xóa khoản chi này?')">
+                               <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/staff/accountant/expenses/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Lập phiếu chi mới</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Ngày chi</label>
+            <input type="date" name="ngay" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>" required />
+          </div>
+          <div class="form-group">
+            <label>Lý do chi</label>
+            <input type="text" name="ly_do" class="form-control" placeholder="Ví dụ: Tiền điện tháng 4" required />
+          </div>
+          <div class="form-group">
+            <label>Số tiền</label>
+            <input type="number" name="so_tien" class="form-control" placeholder="VND" required />
+          </div>
+          <div class="form-group">
+            <label>Ghi chú thêm</label>
+            <textarea name="ghi_chu" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Xác nhận chi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

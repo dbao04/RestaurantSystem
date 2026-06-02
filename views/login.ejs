@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+    
+    <section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+      <div class="overlay"></div>
+      <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-center">
+          <div class="col-md-9 ftco-animate text-center mb-4">
+            <h1 class="mb-2 bread">Đăng nhập</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+		
+		<section class="ftco-section ftco-no-pt ftco-no-pb contact-section">
+			<div class="container">
+				<div class="row d-flex align-items-stretch no-gutters">
+					<div class="col-md-6 pt-5 px-2 pb-2 p-md-5 order-md-last">
+            <h2 class="h4 mb-2 mb-md-5 font-weight-bold">Đăng nhập</h2>
+            <% if (typeof error !== 'undefined') { %>
+              <div class="alert alert-danger"><%- error %></div>
+            <% } %>
+						<form action="/login" method="post">
+              <div class="form-group">
+                <input type="text" name="sdt" class="form-control" placeholder="Số điện thoại" required>
+              </div>
+              <div class="form-group">
+                <input type="password" name="pass" class="form-control" placeholder="Mật khẩu" required>
+              </div>
+              <div class="form-group">
+                <input type="submit" value="Đăng nhập" class="btn btn-primary py-3 px-5">
+              </div>
+              <p><a href="/forgot-password">Quên mật khẩu?</a></p>
+              <p>Chưa có tài khoản? <a href="/register">Đăng ký tại đây</a></p>
+            </form>
+					</div>
+				</div>
+			</div>
+		</section>
+	
+<%- include('partials/footer') %>

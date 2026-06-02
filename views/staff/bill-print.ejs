@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Phiếu Thanh Toán - Nhà hàng BD</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; margin: 0; padding: 20px; color: #000; font-size: 14px; }
+    .receipt { max-width: 350px; margin: 0 auto; padding: 10px; border: 1px dashed #333; }
+    h2, h4 { text-align: center; margin: 5px 0; }
+    .info { margin-top: 15px; margin-bottom: 15px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th, td { padding: 5px 0; border-bottom: 1px dotted #ccc; }
+    th { text-align: left; }
+    .text-right { text-align: right; }
+    .total-row { font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; }
+    .thanks { text-align: center; font-style: italic; margin-top: 20px; }
+    @media print {
+      body { padding: 0; }
+      .receipt { border: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="receipt">
+  <h2>NHÀ HÀNG BD</h2>
+  <h4>Đ/c: 12 Nguyễn Văn Bảo, Gò Vấp, TP.HCM</h4>
+  <h4>SĐT: 0123.456.789</h4>
+  <hr>
+  <h3 style="text-align: center;">PHIẾU THANH TOÁN</h3>
+  
+  <div class="info">
+    <div><strong>Mã HĐ:</strong> <%= details[0].sesis.substring(0,6).toUpperCase() %></div>
+    <div><strong>Ngày lập:</strong> <%= new Date().toLocaleDateString('vi-VN') %></div>
+    <div><strong>Khách hàng:</strong> <%= details[0].ten_khach %></div>
+    <div><strong>SĐT Khách:</strong> <%= details[0].sodienthoai %></div>
+    <div><strong>Số khách:</strong> <%= details[0].so_user %> người</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Món</th>
+        <th class="text-right">SL</th>
+        <th class="text-right">T.Tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% 
+        let grandTotal = 0;
+        details.forEach(item => { 
+          // Chỉ in những món thực sự có trong thực đơn (id_mon > 0)
+          if(item.id_mon > 0) {
+            grandTotal += parseInt(item.thanhtien);
+      %>
+      <tr>
+        <td><%= item.name_mon %></td>
+        <td class="text-right"><%= item.soluong %></td>
+        <td class="text-right"><%= parseInt(item.thanhtien).toLocaleString('vi-VN') %>đ</td>
+      </tr>
+      <% 
+          } 
+        }) 
+      %>
+    </tbody>
+  </table>
+
+  <% if(grandTotal === 0) { %>
+    <p style="text-align:center;"><em>(Đơn dịch vụ Đặt bàn thuần - Không gọi món trước)</em></p>
+  <% } else { %>
+    <div class="total-row d-flex justify-content-between">
+      <span>TỔNG CỘNG:</span>
+      <span class="text-right float-right"><%= grandTotal.toLocaleString('vi-VN') %> VNĐ</span>
+    </div>
+  <% } %>
+
+  <div class="thanks">
+    <p>Cảm ơn quý khách và hẹn gặp lại!</p>
+    <p>*** Trân trọng ***</p>
+  </div>
+</div>
+
+<script>
+  window.onload = function() {
+    window.print();
+  }
+</script>
+
+</body>
+</html>

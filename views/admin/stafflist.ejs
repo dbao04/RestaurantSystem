@@ -1,0 +1,39 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Danh sách nhân viên</h2>
+        <div class="block">
+            <table class="data display datatable" id="example">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th>Username</th>
+                        <th>SĐT</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% staff.forEach(s => { %>
+                    <tr class="odd gradeX">
+                        <td><%= s.id_nv %></td>
+                        <td><%= s.ten %></td>
+                        <td><%= s.chucvu %></td>
+                        <td><%= s.username %></td>
+                        <td><%= s.sodienthoai %></td>
+                        <td><%= s.trangthai == 1 ? 'Đang làm' : 'Đã nghỉ' %></td>
+                        <td>
+                            <a href="/admin/staffedit/<%= s.id_nv %>">Sửa</a> || 
+                            <a onclick="return confirm('Bạn có chắc muốn chuyển nhân viên này sang trạng thái Đã nghỉ?')" href="/admin/staffdel/<%= s.id_nv %>">Xóa</a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

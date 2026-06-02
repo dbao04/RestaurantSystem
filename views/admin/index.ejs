@@ -1,0 +1,50 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Dashboard</h2>
+        <div class="block">               
+          <div style="margin-bottom: 20px;">
+            Chào mừng bạn đến với trang quản trị nhà hàng <strong>NHA HANG BD</strong>
+          </div>
+
+          <!-- Tóm tắt số liệu nhanh -->
+          <div class="stat-cards" style="display: flex; gap: 20px; margin-bottom: 30px;">
+            <div class="card" style="flex: 1; background: #4e73df; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Doanh thu</div>
+                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= formatMoney(stats.revenue) %></div>
+            </div>
+            <div class="card" style="flex: 1; background: #1cc88a; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Đơn hàng</div>
+                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.orders %></div>
+            </div>
+            <div class="card" style="flex: 1; background: #36b9cc; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Khách hàng</div>
+                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.customers %></div>
+            </div>
+            <div class="card" style="flex: 1; background: #f6c23e; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Nhân viên</div>
+                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.staff %></div>
+            </div>
+          </div>
+
+          <div class="row" style="display: flex; gap: 20px;">
+            <div style="flex: 1; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background: #f9f9f9;">
+              <h4>Lối tắt quản lý</h4>
+              <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px;"><a href="/admin/productlist" class="btn btn-blue" style="text-decoration: none; display: block; padding: 8px; background: #007bff; color: white; border-radius: 4px; text-align: center;">Quản lý Thực đơn</a></li>
+                <li style="margin-bottom: 10px;"><a href="/admin/stafflist" class="btn btn-green" style="text-decoration: none; display: block; padding: 8px; background: #28a745; color: white; border-radius: 4px; text-align: center;">Quản lý Nhân sự</a></li>
+                <li style="margin-bottom: 10px;"><a href="/admin/hopdonglist" class="btn btn-yellow" style="text-decoration: none; display: block; padding: 8px; background: #ffc107; color: #212529; border-radius: 4px; text-align: center;">Đơn hàng mới</a></li>
+              </ul>
+            </div>
+            <div style="flex: 2; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+              <h4>Nhật ký hoạt động</h4>
+              <p style="color: #666; font-style: italic;">Hệ thống đang hoạt động ổn định...</p>
+            </div>
+          </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

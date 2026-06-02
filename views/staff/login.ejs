@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập - Nhân viên NHA HANG BD</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { background: linear-gradient(135deg, #4e342e 0%, #2c1810 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .login-card { max-width:420px; width:100%; border-radius:12px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.4); }
+    .login-header { background: rgba(255,255,255,.08); padding:30px; text-align:center; color:#fff; border-bottom:1px solid rgba(255,255,255,.1); }
+    .login-header h2 { font-weight:800; margin:0; letter-spacing:1px; }
+    .login-body { background:#fff; padding:30px; }
+    .btn-login { background:#c8a951; border:none; color:#fff; width:100%; padding:12px; font-weight:700; font-size:15px; border-radius:6px; }
+    .btn-login:hover { background:#b8943b; }
+    .form-control:focus { border-color:#c8a951; box-shadow:0 0 0 .2rem rgba(200,169,81,.25); }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <div style="font-size:40px; margin-bottom:8px;">🍽️</div>
+      <h2>NHA HANG BD</h2>
+      <p style="opacity:.7; margin:4px 0 0; font-size:14px;">Cổng nhân viên</p>
+    </div>
+    <div class="login-body">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+      <form action="/staff/login" method="POST">
+        <div class="form-group">
+          <label style="font-weight:600;">Tên đăng nhập</label>
+          <input type="text" class="form-control" name="username" placeholder="Nhập tên đăng nhập" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label style="font-weight:600;">Mật khẩu</label>
+          <input type="password" class="form-control" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-login mt-2">Đăng nhập</button>
+      </form>
+      <div class="text-center mt-3">
+        <small class="text-muted">Tài khoản mẫu: <strong>nv001 / 123456</strong></small>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

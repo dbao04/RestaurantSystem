@@ -1,0 +1,106 @@
+<%
+  var activePage = 'kitchen-menu';
+  var staffName = session.staffName || 'Bếp trưởng';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800">Quản lý Loại món</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#addCategoryModal"><i class="fas fa-plus mr-1"></i> Thêm loại món</button>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách các loại món hiện có</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên loại</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% categories.forEach(c => { %>
+                    <tr>
+                        <td><%= c.id_loai %></td>
+                        <td class="font-weight-bold"><%= c.name_loai %></td>
+                        <td><%= c.ghichu %></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary mr-1" title="Sửa" data-toggle="modal" data-target="#editCatModal<%= c.id_loai %>"><i class="fas fa-edit"></i></button>
+                            <a href="/staff/kitchen/categories/delete/<%= c.id_loai %>" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn có chắc muốn xóa loại món này?')"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Modal Sửa Loại món -->
+                    <div class="modal fade" id="editCatModal<%= c.id_loai %>" tabindex="-1">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <form action="/staff/kitchen/categories/edit/<%= c.id_loai %>" method="POST">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Sửa loại món</h5>
+                              <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="form-group">
+                                <label>Tên loại món</label>
+                                <input type="text" name="name_loai" class="form-control" value="<%= c.name_loai %>" required />
+                              </div>
+                              <div class="form-group">
+                                <label>Ghi chú</label>
+                                <textarea name="ghichu" class="form-control" rows="3"><%= c.ghichu %></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                              <button type="submit" class="btn btn-primary">Cập nhật</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm Loại món -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/staff/kitchen/categories/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm loại món mới</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Tên loại món</label>
+            <input type="text" name="name_loai" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea name="ghichu" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Lưu lại</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+

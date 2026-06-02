@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Thông tin cá nhân</h2>
+        <div class="block">
+            <% if (msg) { %>
+                <div style="padding: 10px; margin-bottom: 20px; border-radius: 4px; background-color: <%= msgType === 'success' ? '#d4edda' : '#f8d7da' %>; color: <%= msgType === 'success' ? '#155724' : '#721c24' %>; border: 1px solid <%= msgType === 'success' ? '#c3e6cb' : '#f5c6cb' %>;">
+                    <%= msg %>
+                </div>
+            <% } %>
+            <form action="/admin/profile" method="POST">
+                <table class="form">
+                    <tr>
+                        <td><label>Tên hiển thị</label></td>
+                        <td><input type="text" name="Name_admin" value="<%= admin.Name_admin %>" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Tên đăng nhập</label></td>
+                        <td><input type="text" name="adminuser" value="<%= admin.adminuser %>" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Cập nhật thông tin" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

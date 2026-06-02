@@ -1,0 +1,84 @@
+[dotenv@17.3.1] injecting env (6) from .env -- tip: ?? prevent committing .env to code: https://dotenvx.com/precommit
+[
+  {
+    "Tables_in_gs_restaurant": "bai_viet"
+  },
+  {
+    "Tables_in_gs_restaurant": "ban"
+  },
+  {
+    "Tables_in_gs_restaurant": "cart"
+  },
+  {
+    "Tables_in_gs_restaurant": "cham_cong"
+  },
+  {
+    "Tables_in_gs_restaurant": "chat"
+  },
+  {
+    "Tables_in_gs_restaurant": "chi_phi_khac"
+  },
+  {
+    "Tables_in_gs_restaurant": "chot_ca"
+  },
+  {
+    "Tables_in_gs_restaurant": "combos"
+  },
+  {
+    "Tables_in_gs_restaurant": "cong_thuc"
+  },
+  {
+    "Tables_in_gs_restaurant": "danh_gia"
+  },
+  {
+    "Tables_in_gs_restaurant": "dichvu"
+  },
+  {
+    "Tables_in_gs_restaurant": "don_vi_tinh"
+  },
+  {
+    "Tables_in_gs_restaurant": "email_history"
+  },
+  {
+    "Tables_in_gs_restaurant": "hopdong"
+  },
+  {
+    "Tables_in_gs_restaurant": "khach_hang"
+  },
+  {
+    "Tables_in_gs_restaurant": "lich_lam_viec"
+  },
+  {
+    "Tables_in_gs_restaurant": "loai_mon"
+  },
+  {
+    "Tables_in_gs_restaurant": "loyalty_transactions"
+  },
+  {
+    "Tables_in_gs_restaurant": "luong"
+  },
+  {
+    "Tables_in_gs_restaurant": "monan"
+  },
+  {
+    "Tables_in_gs_restaurant": "nghi_phep"
+  },
+  {
+    "Tables_in_gs_restaurant": "nguyen_lieu"
+  },
+  {
+    "Tables_in_gs_restaurant": "nhan_vien"
+  },
+  {
+    "Tables_in_gs_restaurant": "nhap_kho"
+  },
+  {
+    "Tables_in_gs_restaurant": "tb_admin"
+  },
+  {
+    "Tables_in_gs_restaurant": "thong_bao"
+  },
+  {
+    "Tables_in_gs_restaurant": "vitri"
+  }
+]

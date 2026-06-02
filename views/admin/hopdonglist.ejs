@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Danh sách hợp đồng</h2>
+        <div class="block">  
+            <table class="data display datatable" id="example">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Ngày đặt</th>
+                        <th>Khách hàng</th>
+                        <th>Số người</th>
+                        <th>Nội dung</th>
+                        <th>Thời gian</th>
+                        <th>Tổng tiền</th>
+                        <th>Tình trạng</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (contracts && contracts.length > 0) { %>
+                        <% contracts.forEach((order, index) => { %>
+                            <tr class="odd gradeX">
+                                <td><%= index + 1 %></td>
+                                <td><%= order.dates %></td>
+                                <td><%= order.ten %></td>
+                                <td><%= order.so_user %></td>
+                                <td><%= order.noidung %></td>
+                                <td><%= order.tg %></td>
+                                <td><%= formatMoney(order.tong_tien) %> VNĐ</td>
+                                <td>
+                                    <% if (order.tinhtrang == 0) { %>
+                                        <span style="color: red;">Đang chờ...</span>
+                                    <% } else { %>
+                                        <span style="color: green;">Đã xác nhận</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (order.tinhtrang == 0) { %>
+                                        <a class="btn btn-sm btn-success" href="/admin/hopdongconfirm/<%= order.sesis %>" onclick="return confirm('Xác nhận đơn hàng này và chuyển xuống bếp?')">Xác nhận</a>
+                                    <% } %>
+                                    <a class="btn btn-sm btn-danger" onclick="return confirm('Bạn muốn xóa hợp đồng này?')" href="/admin/hopdongdel/<%= order.sesis %>">Delete</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.datatable').dataTable();
+    });
+</script>
+
+<%- include('partials/footer') %>

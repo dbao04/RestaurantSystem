@@ -1,0 +1,53 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Thêm nhân viên mới</h2>
+        <div class="block">
+            <form action="/admin/staffadd" method="POST">
+                <table class="form">
+                    <tr>
+                        <td><label>Tên nhân viên</label></td>
+                        <td><input type="text" name="ten" placeholder="Nhập tên..." class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Chức vụ</label></td>
+                        <td>
+                            <select name="chucvu" required>
+                                <option value="Phuc vu">Phục vụ</option>
+                                <option value="Thu ngan">Thu ngân</option>
+                                <option value="Bep">Bếp</option>
+                                <option value="Quan ly">Quản lý</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>Số điện thoại</label></td>
+                        <td><input type="text" name="sodienthoai" class="medium" /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Email</label></td>
+                        <td><input type="email" name="email" class="medium" /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Địa chỉ</label></td>
+                        <td><textarea name="diachi" style="width: 300px; height: 100px;"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><label>Username</label></td>
+                        <td><input type="text" name="username" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Mật khẩu</label></td>
+                        <td><input type="password" name="passwords" class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Lưu nhân viên" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

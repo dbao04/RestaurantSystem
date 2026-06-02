@@ -1,0 +1,58 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<div class="grid_10">
+    <div class="box round first grid">
+        <h2>Thêm món ăn</h2>
+        <div class="block">   
+            <form action="/admin/productadd" method="post" enctype="multipart/form-data">
+                <table class="form">
+                    <tr>
+                        <td><label>Tên món</label></td>
+                        <td><input type="text" name="name_mon" placeholder="Enter Name..." class="medium" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Loại món</label></td>
+                        <td>
+                            <select id="select" name="loaimon" required>
+                                <option value="">-----Chọn loại món-----</option>
+                                <% if (categories) { %>
+                                    <% categories.forEach(cat => { %>
+                                        <option value="<%= cat.id_loai %>"><%= cat.name_loai %></option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>Giá</label></td>
+                        <td><input type="number" name="gia" placeholder="Enter Price..." class="medium" min="1" required /></td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding-top: 9px;"><label>Ghi chú</label></td>
+                        <td><textarea name="ghichu" class="tinymce" style="width: 100%; height: 100px;"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td><label>Tải hình</label></td>
+                        <td><input type="file" name="image" required /></td>
+                    </tr>
+                    <tr>
+                        <td><label>Trạng thái</label></td>
+                        <td>
+                            <select id="select" name="tinhtrang">
+                                <option value="1">Phục vụ</option>
+                                <option value="0">Ngưng phục vụ</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="submit" name="submit" Value="Save" /></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

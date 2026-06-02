@@ -1,0 +1,83 @@
+<%
+  var activePage = 'schedule';
+  var staffName = session.staffName || 'Kế toán';
+%>
+<%- include('../partials/header') %>
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-alt mr-2"></i> Quản lý Lịch làm việc Toàn bộ nhân sự</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <form class="form-inline justify-content-end" method="GET" action="/staff/accountant/schedule">
+            <select name="month" class="form-control mr-2">
+                <% for(let m=1; m<=12; m++) { %>
+                    <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
+                <% } %>
+            </select>
+            <select name="year" class="form-control mr-2">
+                <% for(let y=2024; y<=2026; y++) { %>
+                    <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
+                <% } %>
+            </select>
+            <button type="submit" class="btn btn-primary">Xem</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 bg-dark text-white">
+        <h6 class="m-0 font-weight-bold">Bảng lịch trực tháng <%= month %>/<%= year %></h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Nhân viên</th>
+                        <th>Chức vụ</th>
+                        <th>Ngày trực</th>
+                        <th>Ca trực</th>
+                        <th>Ghi chú</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (schedules.length === 0) { %>
+                        <tr><td colspan="6" class="text-center py-4">Chưa có lịch trực nào được đăng ký trong tháng này.</td></tr>
+                    <% } %>
+                    <% schedules.forEach(s => { %>
+                    <tr>
+                        <td class="font-weight-bold"><%= s.ten_nhanvien %></td>
+                        <td><span class="badge badge-secondary"><%= s.chucvu %></span></td>
+                        <td><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></td>
+                        <td>
+                            <% if(s.ca == 'Sáng') { %>
+                                <span class="badge badge-info px-3">Sáng</span>
+                            <% } else if(s.ca == 'Chiều') { %>
+                                <span class="badge badge-primary px-3">Chiều</span>
+                            <% } else { %>
+                                <span class="badge badge-dark px-3">Tối</span>
+                            <% } %>
+                        </td>
+                        <td class="small opacity-75"><%= s.ghi_chu || '-' %></td>
+                        <td>
+                            <span class="badge badge-success">Đã xác nhận</span>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="alert alert-info shadow-sm border-left-info">
+            <i class="fas fa-info-circle mr-2"></i> Dành cho Kế toán: Bảng này liệt kê mọi nhân viên đã đăng ký lịch làm việc. Nếu nhân viên đi làm đầy đủ theo lịch này, hãy tính đủ lương cơ bản. Mọi ca tăng cường phát sinh sẽ được cộng thêm vào phần Tiền thưởng khi chốt lương.
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

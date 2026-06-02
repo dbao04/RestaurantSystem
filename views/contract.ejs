@@ -1,0 +1,82 @@
+<%- include('partials/header') %>
+<style>
+h1, h2, h3, h4, h5, h6 { text-align: center; padding: 10px; }
+label { font-weight: bold; }
+.table { width: 100% !important; max-width: 800px; margin: 0 auto; }
+.text1 { color: red; }
+</style>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+            <div class="col-md-9 ftco-animate text-center mb-4">
+                <h1 class="mb-2 bread">Kiểm tra đơn hàng</h1>
+                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
+                                 class="ion-ios-arrow-forward"></i></a></span> <span>Đơn hàng <i
+                             class="ion-ios-arrow-forward"></i></span></p>
+            </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container py-5">
+  <h1><label>NHA HANG BD</label></h1>
+  <h2><label>HỢP ĐỒNG NHẬN TIỆC</label></h2>
+  
+  <div class="text-center mb-4">
+    <h4>
+      <label>Người đặt tiệc:</label> <label class="text1"><%= orderDetails && orderDetails.length > 0 ? orderDetails[0].ten_khach : session.username %></label>
+      &nbsp;&nbsp; SĐT: <label class="text1"><%= orderDetails && orderDetails.length > 0 ? orderDetails[0].sodienthoai : session.usersdt %></label>
+    </h4>
+    <% if (orderDetails && orderDetails.length > 0) { %>
+      <h4>
+        <label>Nội dung tiệc:</label> <label class="text1"><%= orderDetails[0].noidung %></label>
+        &nbsp;&nbsp; Số khách: <label class="text1"><%= orderDetails[0].so_user %></label>
+      </h4>
+      <h4>
+        <label>Thời gian:</label> <label class="text1"><%= orderDetails[0].tg %> | <%= orderDetails[0].dates %></label>
+      </h4>
+    <% } %>
+  </div>
+
+  <hr>
+
+  <h2><label>THỰC ĐƠN TIỆC</label></h2>
+
+  <div class="cart-list">
+    <table class="table">
+      <thead class="thead-primary">
+        <tr class="text-center">
+          <th>Món ăn</th>
+          <th>Giá</th>
+          <th>Số lượng</th>
+          <th>Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% let total = 0; %>
+        <% if (orderDetails) { %>
+            <% orderDetails.forEach(item => { %>
+              <% total += item.thanhtien; %>
+              <tr class="text-center">
+                <td><%= item.name_mon %></td>
+                <td><%= formatMoney(item.gia) %> VNĐ</td>
+                <td><%= item.soluong %></td>
+                <td><%= formatMoney(item.thanhtien) %> VNĐ</td>
+              </tr>
+            <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+    <h4 class="text-right mt-3"><label>Tổng cộng: <%= formatMoney(total) %> VNĐ</label></h4>
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="/success" class="btn btn-primary py-3 px-5">Xác Nhận</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

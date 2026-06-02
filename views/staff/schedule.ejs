@@ -1,0 +1,102 @@
+<%
+  var activePage = 'schedule';
+  var staffName = session.staffName || 'Nhân viên';
+  var unreadCount = unread || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Lịch làm việc</h1>
+</div>
+
+<div class="row">
+  <!-- Form đăng ký lịch -->
+  <div class="col-md-4 mb-4">
+    <div class="card shadow">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Đăng ký ca làm</h6></div>
+      <div class="card-body">
+        <% if (typeof msg !== 'undefined' && msg) { %>
+          <div class="alert alert-<%= msgType||'info' %>"><%= msg %></div>
+        <% } %>
+        <form action="/staff/schedule" method="POST">
+          <div class="form-group">
+            <label>Ngày làm việc</label>
+            <input type="date" class="form-control" name="ngay" min="<%= new Date().toISOString().slice(0,10) %>" required>
+          </div>
+          <div class="form-group">
+            <label>Ca làm việc</label>
+            <select class="form-control" name="ca">
+              <option value="sang">Sáng (7:00 - 12:00)</option>
+              <option value="chieu">Chiều (12:00 - 17:00)</option>
+              <option value="toi">Tối (17:00 - 21:00)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea class="form-control" name="ghi_chu" rows="2" placeholder="(Không bắt buộc)"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Đăng ký</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bảng lịch làm việc -->
+  <div class="col-md-8 mb-4">
+    <div class="card shadow">
+      <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Lịch làm việc của tôi</h6>
+        <form method="GET" class="d-flex">
+          <input type="month" class="form-control form-control-sm mr-2" name="thang" value="<%= currentMonth %>">
+          <button type="submit" class="btn btn-sm btn-outline-primary">Xem</button>
+        </form>
+      </div>
+      <div class="card-body">
+        <% if (schedule && schedule.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead class="thead-light">
+                <tr>
+                  <th>Ngày</th>
+                  <th>Ca</th>
+                  <th>Giờ</th>
+                  <th>Trạng thái</th>
+                  <th>Ghi chú</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% schedule.forEach(s => { %>
+                  <tr>
+                    <td><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></td>
+                    <td>
+                      <span class="badge badge-<%= s.ca==='sang'?'info':s.ca==='chieu'?'warning':'dark' %>">
+                        <%= s.ca==='sang'?'Sáng':s.ca==='chieu'?'Chiều':'Tối' %>
+                      </span>
+                    </td>
+                    <td><small><%= s.gio_bat_dau ? s.gio_bat_dau.slice(0,5) : '–' %> – <%= s.gio_ket_thuc ? s.gio_ket_thuc.slice(0,5) : '–' %></small></td>
+                    <td>
+                      <span class="badge badge-<%= s.trangthai==1?'success':s.trangthai==2?'danger':'secondary' %>">
+                        <%= s.trangthai==1?'Đã duyệt':s.trangthai==2?'Từ chối':'Chờ duyệt' %>
+                      </span>
+                    </td>
+                    <td><small><%= s.ghi_chu || '–' %></small></td>
+                    <td>
+                      <% if (s.trangthai == 0) { %>
+                        <a href="/staff/schedule/cancel/<%= s.id_lich %>" class="btn btn-sm btn-danger" onclick="return confirm('Hủy đăng ký ca này?')">Hủy</a>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-center text-muted">Chưa có lịch làm việc trong tháng này.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

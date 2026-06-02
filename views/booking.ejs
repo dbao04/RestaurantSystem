@@ -1,0 +1,102 @@
+<%- include('partials/header') %>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate text-center mb-4">
+        <h1 class="mb-2 bread" style="margin-left: 70px;">Đặt Bàn</h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang Chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Đặt Bàn <i class="ion-ios-arrow-forward"></i></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section ftco-no-pt ftco-no-pb">
+  <div class="container-fluid px-0">
+    <div class="row d-flex no-gutters">
+      <div class="col-md-6 order-md-last ftco-animate makereservation p-4 p-md-5 pt-5">
+        <div class="py-md-5">
+          <div class="heading-section ftco-animate mb-5">
+            <span class="subheading">Đặt Bàn</span>
+          </div>
+          <form action="/datban" method="post">
+            <!-- Hidden inputs: lấy tên và SĐT từ session, không cho người dùng thay đổi -->
+            <input type="hidden" name="hoten" value="<%= session.username %>">
+            <input type="hidden" name="sdt" value="<%= session.usersdt %>">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Họ Tên <span class="badge badge-secondary" style="font-size:0.7em;">Tự động</span></label>
+                  <input type="text" class="form-control" value="<%= session.username %>" readonly
+                    style="background-color:#f0f0f0; cursor:not-allowed; font-weight:600; color:#333;">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Số Điện Thoại <span class="badge badge-secondary" style="font-size:0.7em;">Tự động</span></label>
+                  <input type="text" class="form-control" value="<%= session.usersdt %>" readonly
+                    style="background-color:#f0f0f0; cursor:not-allowed; font-weight:600; color:#333;">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Ngày đặt</label>
+                  <input type="text" name="datebook" class="form-control" id="book_date" placeholder="Ngày" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Thời gian</label>
+                  <input type="time" name="timebook" class="form-control" placeholder="Giờ" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Số Người</label>
+                  <div class="select-wrap one-third">
+                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+                    <select name="khach" id="" class="form-control" required>
+                      <option value="">Số Người</option>
+                      <option value="2">2</option>
+                      <option value="4">4</option>
+                      <option value="10-15">10-15</option>
+                      <option value="15-20">15-20</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="">Đặt tiệc</label>
+                  <div class="select-wrap one-third">
+                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+                    <select name="noidung" id="" class="form-control" required>
+                      <option value="">Loại Tiệc</option>
+                      <option value="Birthday">Sinh nhật</option>
+                      <option value="Meeting">Cuộc họp</option>
+                      <option value="Wedding">Tiệc cưới</option>
+                      <option value="Other">Khác</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-12 mt-3">
+                <div class="form-group">
+                  <input type="submit" value="Đặt Bàn" class="btn btn-primary py-3 px-5">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="col-md-6 d-flex align-items-stretch pb-5 pb-md-0">
+        <div id="map">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.8582379826526!2d106.68427047480563!3d10.822158889329419!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174deb3ef536f31%3A0x8b7bb8b7c956157b!2sIndustrial%20University%20of%20Ho%20Chi%20Minh%20City!5e0!3m2!1sen!2s!4v1745303010390!5m2!1sen!2s" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
