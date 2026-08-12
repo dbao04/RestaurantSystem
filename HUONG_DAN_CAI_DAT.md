@@ -268,10 +268,10 @@ gửi email" trên giao diện.
 | Nhóm quyền | Đường dẫn đăng nhập | Tên đăng nhập (Username) | Mật khẩu (Password) | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **Quản trị viên (Admin)** | `http://localhost:3000/admin` | `admin` | `123456` | Toàn quyền cấu hình |
-| **Kế toán** | `http://localhost:3000/login` | `ketoan` | `123` | Quản lý lương, thu chi |
-| **Phục vụ** | `http://localhost:3000/login` | `nv001` | `123456` | Gán bàn, gọi món |
-| **Nhà bếp (Đầu bếp)** | `http://localhost:3000/login` | `nv003` | `123456` | Điều phối chế biến món |
-| **Khách hàng đặt bàn** | `http://localhost:3000/login` | `0918484042` | `123456` | Đặt bàn online |
+| **Kế toán** | `http://localhost:3000/login` | `ketoan` | `123456` | Quản lý lương, thu chi |
+| **Phục vụ** | `http://localhost:3000/login` | `phucvu` | `123456` | Gán bàn, gọi món |
+| **Nhà bếp (Đầu bếp)** | `http://localhost:3000/login` | `bep` | `123456` | Điều phối chế biến món |
+| **Khách hàng đặt bàn** | `http://localhost:3000/login` | `0388328423` | `123456` | Đặt bàn online |
 
 ---
 *Chúc bạn có trải nghiệm tuyệt vời với hệ thống Quản lý nhà hàng Bảo Đoàn!*
