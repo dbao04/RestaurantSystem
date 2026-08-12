@@ -19,7 +19,7 @@ Mở terminal (CMD / PowerShell) tại thư mục dự án, bảo đảm **MySQL
 ```bash
 copy .env.example .env     # 1. Tạo file cấu hình (Linux/macOS: cp .env.example .env)
 npm install                # 2. Cài thư viện Node.js
-npm run db:setup           # 3. Tạo & nạp toàn bộ cơ sở dữ liệu (62 bảng)
+npm run db:setup           # 3. Tạo & nạp toàn bộ cơ sở dữ liệu 
 npm start                  # 4. Khởi động website
 ```
 
