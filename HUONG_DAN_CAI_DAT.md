@@ -49,7 +49,7 @@ Giải nén file `restaurant.zip` vào thư mục làm việc của bạn (ví d
    DB_NAME=gs_restaurant
 
    PORT=3000         # Cổng website (HTTP)
-   HTTPS_PORT=3443   # Cổng HTTPS — cần cho chấm công bằng điện thoại
+   HTTPS_PORT=3443   # Cổng HTTPS — cần cho camera chấm công khuôn mặt
    BAT_HTTPS=1       # Đặt 0 để tắt hẳn HTTPS
    ```
 
@@ -96,10 +96,6 @@ Terminal sẽ in ra bảng địa chỉ. Nếu thấy bảng đó thì dự án 
    ╚══════════════════════════════════════════════════════════╝
      Máy tại chỗ:      http://localhost:3000
      Máy tại chỗ (bảo mật): https://localhost:3443
-
-     Điện thoại trong cùng mạng Wi-Fi — CHẤM CÔNG KHUÔN MẶT
-     phải dùng địa chỉ https:// dưới đây, http:// sẽ không mở được camera:
-        https://192.168.1.50:3443
    ```
 
 ### Bước 6 *(tuỳ chọn)*: Bật phân hệ AI / Machine Learning
@@ -163,49 +159,6 @@ npm run ml
 | Màn hình bếp (KDS) | http://localhost:3000/kds |
 | Sơ đồ bàn | http://localhost:3000/so-do-ban |
 | Tài liệu API của ML | http://127.0.0.1:8000/docs |
-
----
-
-## 📱 DÙNG TRÊN ĐIỆN THOẠI (bắt buộc với chấm công khuôn mặt)
-
-### Vì sao phải là `https://`
-
-Mọi trình duyệt hiện nay chỉ cho phép trang web dùng **camera** và **định vị GPS**
-khi trang đó chạy trong "ngữ cảnh bảo mật" — tức là `https://`, hoặc `localhost`
-ngay trên chính máy đó.
-
-Điện thoại mở `http://192.168.1.50:3000` thì đối tượng `navigator.mediaDevices`
-**không tồn tại**. Đây không phải là bị từ chối quyền — nó đơn giản là không có
-sẵn, và không có cách nào lách bằng JavaScript. Trang sẽ báo lỗi camera dù bạn
-bấm "Cho phép" bao nhiêu lần.
-
-Các trang khác (đơn hàng, thực đơn, báo cáo) vẫn chạy bình thường trên `http://`.
-
-### Các bước
-
-1. **Máy chủ và điện thoại phải cùng một mạng Wi-Fi.**
-2. Chạy `node server.js`, đọc địa chỉ `https://...` trong bảng terminal in ra.
-   Máy chủ tự sinh chứng chỉ vào `config/chung-chi/` ở lần chạy đầu tiên.
-3. Trên điện thoại, mở đúng địa chỉ `https://<IP>:3443` đó.
-4. Lần đầu mỗi máy sẽ hiện cảnh báo **"Kết nối của bạn không phải là kết nối
-   riêng tư"**. Đây là do chứng chỉ tự ký, không phải lỗi hệ thống:
-   - **Chrome / Edge (Android):** bấm *Nâng cao* → *Tiếp tục truy cập ... (không an toàn)*
-   - **Safari (iPhone):** bấm *Chi tiết* (Show Details) → *Truy cập trang web này*
-5. Đăng nhập rồi vào trang chấm công. Lần sau vào lại sẽ không hỏi nữa.
-
-### Những lỗi hay gặp
-
-| Hiện tượng | Nguyên nhân | Cách xử lý |
-|---|---|---|
-| Điện thoại không mở được trang | Tường lửa Windows chặn cổng 3443 | Mở cổng 3443 cho Node.js trong Windows Defender Firewall |
-| Vào được nhưng không hiện camera | Đang mở bằng `http://` | Đổi sang `https://` và đúng cổng 3443 |
-| Safari không cho bấm "Truy cập" | Chứng chỉ cũ, không còn chứa IP hiện tại | Xóa thư mục `config/chung-chi/` rồi chạy lại server |
-| Cảnh báo hiện lại sau khi đổi Wi-Fi | Router cấp IP mới cho máy chủ | Bình thường — chứng chỉ tự sinh lại, bấm qua cảnh báo một lần nữa |
-| Ảnh gửi rất lâu | Wi-Fi yếu (mỗi lượt ~1 MB) | Đứng gần điểm phát sóng; quá 45 giây hệ thống tự báo lỗi |
-
-> **Muốn IP máy chủ cố định:** đặt IP tĩnh cho máy chủ trong phần cài đặt router
-> (DHCP reservation). Không thì mỗi lần router đổi IP là nhân viên phải bấm qua
-> cảnh báo chứng chỉ lại từ đầu.
 
 ---
 
