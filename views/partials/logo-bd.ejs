@@ -1,0 +1,24 @@
+<%
+/**
+ * Bieu tuong NHA HANG BAO DOAN - dia + dao + nia, ve bang SVG noi tuyen.
+ *
+ * Truoc day cho la emoji 🍽️. Emoji phu thuoc font he thong: tren Windows no roi
+ * ve Segoe UI Emoji va hien ra mot khoi mo nhat lech mau, co may khong co font
+ * thi thanh o vuong. SVG noi tuyen thi moi may ve giong nhau, an theo mau chu
+ * dao cua giao dien, va khong can tai tu CDN nen khong hong khi mat mang.
+ *
+ * Tham so: cao (px, mac dinh 24), mau (mac dinh vang dong thuong hieu).
+ */
+var _cao = typeof cao !== 'undefined' ? cao : 24;
+var _mau = typeof mau !== 'undefined' ? mau : '#c8a951';
+%><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="<%= _cao %>" height="<%= _cao %>"
+     fill="none" stroke="<%= _mau %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     role="img" aria-label="Nhà Hàng Bảo Đoàn" style="flex:none; vertical-align:middle">
+  <circle cx="16" cy="16" r="8.5"/>
+  <circle cx="16" cy="16" r="4.5" stroke-width="1.5" opacity=".55"/>
+  <path d="M4 3.5v6a2.5 2.5 0 0 0 2.5 2.5v0a2.5 2.5 0 0 0 2.5-2.5v-6"/>
+  <path d="M6.5 3.5v5"/>
+  <path d="M6.5 12v16.5"/>
+  <path d="M25.5 3.5c1.6 1.6 2.2 4 2 7.2-.1 1.6-.9 2.5-2 2.5"/>
+  <path d="M25.5 13.2v15.3"/>
+</svg>

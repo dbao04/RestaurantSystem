@@ -1,0 +1,165 @@
+<%
+  var activePage = 'thanh-toan';
+  var staffName = session.staffName || 'Nhân viên';
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="h3 mb-0 text-gray-800">Thu ngân</h1>
+    <div class="small text-muted">Chọn một bàn để tính tiền. Bàn có mã QR đang chờ khách quét được xếp lên đầu.</div>
+  </div>
+  <div class="d-flex" style="gap:8px;">
+    <a href="/staff/thanh-toan/doi-soat" class="btn btn-sm btn-outline-info shadow-sm">
+      <i class="fas fa-university fa-sm"></i> Đối soát ngân hàng
+    </a>
+    <a href="/staff/thanh-toan/lich-su" class="btn btn-sm btn-outline-secondary shadow-sm">
+      <i class="fas fa-receipt fa-sm"></i> Lịch sử
+    </a>
+  </div>
+</div>
+
+<!-- ====================================================== Tổng quan ca -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Thu hôm nay</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800" id="tong-hom-nay">
+          <%= formatMoney(tongHomNay) %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% tongHop.forEach(function (t) { %>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card shadow h-100 py-2" style="border-left:.25rem solid <%= t.type === 'cash' ? '#1cc88a' : (t.type === 'online' ? '#4e73df' : '#6f42c1') %>">
+        <div class="card-body py-2">
+          <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted"><%= t.name %></div>
+          <div class="h5 mb-0 font-weight-bold text-gray-800"><%= formatMoney(t.tong_tien) %></div>
+          <div class="small text-muted"><%= t.so_giao_dich %> giao dịch</div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<!-- ====================================================== Danh sách bàn -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex align-items-center justify-content-between">
+    <h6 class="m-0 font-weight-bold text-primary">
+      Đơn đang mở <span class="badge badge-secondary ml-1"><%= danhSach.length %></span>
+    </h6>
+    <input type="search" id="tim" class="form-control form-control-sm" style="max-width:260px"
+           placeholder="Tìm theo bàn, tên khách, SĐT...">
+  </div>
+  <div class="card-body">
+    <% if (danhSach.length === 0) { %>
+      <div class="text-center text-muted py-5">
+        <i class="fas fa-mug-hot fa-3x mb-3 d-block" style="opacity:.3"></i>
+        Chưa có đơn nào đang mở. Đơn sẽ hiện ở đây khi khách gọi món.
+      </div>
+    <% } else { %>
+      <div class="row" id="luoi-ban">
+        <% danhSach.forEach(function (d) { %>
+          <div class="col-lg-4 col-md-6 mb-3 o-ban"
+               data-tim="<%= ((d.ten_ban || '') + ' ' + (d.ten_khach || '') + ' ' + (d.sodienthoai || '')).toLowerCase() %>">
+            <a href="/staff/thanh-toan/<%= d.sesis %>" class="text-decoration-none">
+              <div class="card h-100 shadow-sm the-ban <%= d.phien_dang_cho > 0 ? 'dang-cho' : '' %>">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <div class="h5 mb-0 text-gray-800 font-weight-bold">
+                        <i class="fas fa-chair text-muted mr-1"></i>
+                        <%= d.ten_ban || 'Chưa gán bàn' %>
+                      </div>
+                      <div class="small text-muted"><%= d.ten_khach || 'Khách lẻ' %></div>
+                    </div>
+                    <% if (d.phien_dang_cho > 0) { %>
+                      <span class="badge badge-warning nhap-nhay">
+                        <i class="fas fa-hourglass-half"></i> Chờ chuyển khoản
+                      </span>
+                    <% } else if (d.da_thanh_toan > 0) { %>
+                      <span class="badge badge-info">Đã trả một phần</span>
+                    <% } else { %>
+                      <span class="badge badge-light border">Chưa thu</span>
+                    <% } %>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-end">
+                    <div class="small text-muted">
+                      <%= d.so_mon %> món · <%= d.tg || '' %>
+                    </div>
+                    <div class="text-right">
+                      <% if (d.da_thanh_toan > 0) { %>
+                        <div class="small text-success">đã thu <%= formatMoney(d.da_thanh_toan) %></div>
+                      <% } %>
+                      <div class="h5 mb-0 font-weight-bold text-primary"><%= formatMoney(d.con_phai_tra) %></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+  .the-ban { transition: transform .15s ease, box-shadow .15s ease; border:1px solid #e3e6f0; }
+  .the-ban:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1.5rem rgba(58,59,69,.2) !important; }
+  .the-ban.dang-cho { border-color:#f6c23e; background:#fffdf5; }
+  .nhap-nhay { animation: nn 1.4s ease-in-out infinite; }
+  @keyframes nn { 0%,100%{opacity:1} 50%{opacity:.45} }
+</style>
+
+<script>
+  // Lọc tại chỗ - danh sách bàn luôn ngắn nên không cần gọi lại máy chủ.
+  document.getElementById('tim').addEventListener('input', function () {
+    var tu = this.value.trim().toLowerCase();
+    document.querySelectorAll('.o-ban').forEach(function (o) {
+      o.style.display = !tu || o.dataset.tim.indexOf(tu) >= 0 ? '' : 'none';
+    });
+  });
+
+  // Thời gian thực: có bàn nào vừa trả tiền / vừa tạo mã QR thì nạp lại danh
+  // sách. Dùng debounce vì giờ cao điểm nhiều bàn trả cùng lúc, nạp lại liên
+  // tục sẽ giật màn hình đúng lúc thu ngân đang thao tác.
+  (function () {
+    if (!window.RT || !RT.socket) return;
+    RT.socket.emit('tt:vao-phong-quay');
+
+    var hen = null;
+    function napLai() {
+      clearTimeout(hen);
+      hen = setTimeout(function () { location.reload(); }, 1500);
+    }
+
+    RT.khi('tt:da-thanh-toan', function (d) {
+      RT.keu && RT.keu();
+      Swal.fire({
+        title: 'Đã nhận ' + Number(d.soTien).toLocaleString('vi-VN') + 'đ',
+        text: d.tuWebhook ? 'Ngân hàng vừa báo có, đối soát tự động thành công.' : 'Thanh toán thành công.',
+        icon: 'success', toast: true, position: 'top-end',
+        showConfirmButton: false, timer: 6000, timerProgressBar: true
+      });
+      napLai();
+    });
+
+    RT.khi('tt:phien-moi', function (d) {
+      if (d.tuKhach) {
+        Swal.fire({
+          title: 'Khách tự thanh toán',
+          text: 'Một bàn vừa mở mã QR để chuyển khoản.',
+          icon: 'info', toast: true, position: 'top-end',
+          showConfirmButton: false, timer: 5000
+        });
+      }
+      napLai();
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>

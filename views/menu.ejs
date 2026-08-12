@@ -1,72 +1,58 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Thực đơn', activeNav: 'menu' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
-    data-stellar-background-ratio="0.5">
-    <div class="overlay"></div>
-    <div class="container">
-        <div class="row no-gutters slider-text align-items-end justify-content-center">
-            <div class="col-md-9 ftco-animate text-center mb-4">
-                <h1 class="mb-2 bread">Món đặc sắc</h1>
-                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
-                                class="ion-ios-arrow-forward"></i></a></span> <span>Menu <i
-                            class="ion-ios-arrow-forward"></i></span></p>
-            </div>
-        </div>
-    </div>
+<!-- ================= HERO NHỎ ================= -->
+<section class="nh-subhero">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Tinh hoa từ căn bếp</span>
+    <h1>Thực đơn</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Thực đơn</div>
+  </div>
 </section>
 
+<!-- ================= DANH MỤC + MÓN ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
 
-<section class="ftco-section">
-    <div class="container">
-        <div class="ftco-search">
-        <form action="/menu" method="post">
-                <input name="key" type="search" placeholder="Tìm kiếm món ăn..." value="<%= key %>">
-                <button type="submit" >Tìm kiếm</button>
-            </form>
-            <div class="row">
-                <div class="col-md-12 nav-link-wrap">
-                    <div class="nav nav-pills d-flex text-center" id="v-pills-tab" role="tablist"
-                        aria-orientation="vertical">
-                        <% categories.forEach(category => { %>
-                          <a class="nav-link ftco-animate <%= currentCategory == category.id_loai ? 'active' : '' %>" 
-                             href="/menu?id_loai=<%= category.id_loai %>"
-                             role="tab"><%= category.name_loai %></a>
-                        <% }) %>
-                    </div>
-                </div>
-                <div class="col-md-12 tab-wrap">
-                    <div class="tab-content" id="v-pills-tabContent">
-                        <div class="tab-pane fade show active" id="v-pills-1" role="tabpanel">
-                            <div class="row no-gutters d-flex align-items-stretch">
-                                <% if (dishes && dishes.length > 0) { %>
-                                  <% dishes.forEach(dish => { %>
-                                    <div class="col-md-12 col-lg-6 d-flex align-self-stretch">
-                                        <div class="menus d-sm-flex ftco-animate align-items-stretch">
-                                            <div class="menu-img img"
-                                                style="background-image: url(/food/<%= dish.images %>);"></div>
-                                            <div class="text d-flex align-items-center">
-                                                <div>
-                                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                                        <h3 class="mb-0" style="font-weight: 600; margin-right: 15px;"><%= dish.name_mon %></h3>
-                                                        <span class="price" style="font-size: 20px; color: #c8a97e; font-weight: 600; white-space: nowrap;"><%= formatMoney(dish.gia_mon) %></span>
-                                                    </div> 
-                                                    <p><%= dish.ghichu_mon %></p>
-                                                    <p><a href="/detail?monid=<%= dish.id_mon %>" class="btn btn-primary">Đặt món ngay</a></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                  <% }) %>
-                                <% } else { %>
-                                  <p class="text-center w-100">Không tìm thấy món ăn nào.</p>
-                                <% } %>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <form class="nh-search" action="/menu" method="post">
+      <input name="key" type="search" placeholder="Tìm kiếm món ăn..." value="<%= key %>">
+      <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+
+    <div class="nh-cats nh-reveal">
+      <% categories.forEach(function(category){ %>
+        <a class="nh-cat <%= currentCategory == category.id_loai ? 'is-active' : '' %>"
+           href="/menu?id_loai=<%= category.id_loai %>"><%= category.name_loai %></a>
+      <% }) %>
     </div>
+
+    <% if (dishes && dishes.length > 0) { %>
+      <div class="nh-grid">
+        <% dishes.forEach(function(dish, i){ %>
+          <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
+            <div class="nh-dish__media">
+              <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>" loading="lazy"
+                   onerror="this.src='/bg_<%= (i % 5) + 1 %>.jpg'">
+              <span class="nh-dish__price"><%= formatMoney(dish.gia_mon) %></span>
+            </div>
+            <div class="nh-dish__body">
+              <h3><%= (dish.name_mon || '').trim() %></h3>
+              <p><%= dish.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất.' %></p>
+              <a href="/detail?monid=<%= dish.id_mon %>" class="nh-dish__cta">Đặt món ngay <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="nh-center" style="padding:3rem 0">
+        <i class="fas fa-utensils" style="font-size:2.4rem;color:var(--nh-gold)"></i>
+        <p class="nh-lead" style="margin-top:1rem">Không tìm thấy món ăn nào phù hợp.</p>
+      </div>
+    <% } %>
+  </div>
 </section>
+
+<%- include('partials/goi-y-mon') %>
 
 <%- include('partials/footer') %>

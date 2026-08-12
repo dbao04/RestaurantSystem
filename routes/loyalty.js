@@ -8,7 +8,9 @@ const router = express.Router();
 const { requireCustomerLogin } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const loyaltyService = require('../services/loyaltyService');
-const discountService = require('../services/discountService');
+// Module nay xuat ra { discountService, paymentService } chu khong phai mot
+// service duy nhat - lay thang se ra undefined va moi loi goi deu no.
+const { discountService } = require('../services/discountService');
 const auditService = require('../services/auditService');
 
 /**

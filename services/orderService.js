@@ -5,6 +5,30 @@
 
 const db = require('../config/db');
 const md5 = require('md5');
+// Moi don ghi vao `hopdong` phai dien `ngay_dat`/`gio_dat`, xem utils/thoiGian.js.
+const {
+  chuanHoaNgay, chuanHoaGio, ngayCucBo, gioCucBo, ngayChoMonThem,
+} = require('../utils/thoiGian');
+
+/**
+ * Mat khau danh dau tai khoan khach vang lai QR la KHONG DANG NHAP DUOC.
+ *
+ * Tai khoan QR (`sodienthoai` = 'QR_' + tableId) chi ton tai de gan don cua
+ * ban vao mot `id_user`, khong bao gio co nguoi that dang nhap bang no. Truoc
+ * day mat khau la md5('qr' + tableId) - ma tableId thi in ngay tren ma QR dan
+ * o ban, nen ai quet ma cung suy ra duoc.
+ *
+ * Chuoi nay khong phai 32 ky tu hex nen md5() khong the sinh ra => phep so
+ * sanh trong `userLogin` khong bao gio khop.
+ *
+ * Phai trung voi hang so cung ten trong config/migrations/017_qr_dat_mon.js.
+ */
+const MAT_KHAU_VO_HIEU = '!QR_KHONG_DANG_NHAP';
+
+/** Tai khoan sinh tu ma QR - khong cho dang nhap. */
+function laTaiKhoanQR(sdt) {
+  return String(sdt || '').startsWith('QR_');
+}
 
 const orderService = {
   // ============ CART OPERATIONS ============
@@ -24,7 +48,9 @@ const orderService = {
     } else {
       await db.query(
         'INSERT INTO cart (id_mon, sesid, name_mon, gia_mon, soluong, images) VALUES (?, ?, ?, ?, ?, ?)',
-        [dishId, sessionId, dish.name_mon, dish.gia_mon, quantity, dish.images]
+        // Mon nuoc uong co the khong co anh (images = NULL) trong khi cot cart.images
+        // la NOT NULL -> ep ve chuoi rong de INSERT khong that bai.
+        [dishId, sessionId, dish.name_mon, dish.gia_mon, quantity, dish.images || '']
       );
     }
   },
@@ -52,15 +78,17 @@ const orderService = {
     if (cartItems.length === 0) throw new Error('Giỏ hàng của bạn trống');
     // Tạo một sesis duy nhất cho mỗi đơn hàng (không dùng sessionID vì cố định)
     const uniqueSesis = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 8);
+    const ngayDat = chuanHoaNgay(date) || ngayCucBo();
+    const gioDat = chuanHoaGio(time) || chuanHoaGio(gioCucBo());
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
       for (const item of cartItems) {
         const thanhtien = item.gia_mon * item.soluong;
         await connection.query(
-          `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
-          [uniqueSesis, item.id_mon, item.name_mon, userId, date, time, item.soluong, partyType, numPeople, item.gia_mon, thanhtien, item.images]
+          `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+          [uniqueSesis, item.id_mon, item.name_mon, userId, date, time, item.soluong, partyType, numPeople, item.gia_mon, thanhtien, item.images || '', ngayDat, gioDat]
         );
       }
       await connection.query('DELETE FROM cart WHERE sesid = ?', [sessionId]);
@@ -74,14 +102,58 @@ const orderService = {
     }
   },
 
-  getUserOrders: async (userId) => {
-    const [rows] = await db.query(
-      `SELECT sesis, dates, so_user, noidung, tg, tinhtrang, SUM(thanhtien) AS tong_tien 
-       FROM hopdong WHERE id_user = ? 
-       GROUP BY sesis, dates, so_user, noidung, tg, tinhtrang`,
-      [userId]
+  /**
+   * Don dat ban cua mot khach, MOI NHAT TRUOC va chia trang.
+   *
+   * Truy van cu khong co ORDER BY nen MySQL tra ve theo thu tu tuy y - khach vua
+   * dat xong vao xem thi don moi nam lan giua danh sach, tuong nhu chua dat
+   * duoc. Cung khong co LIMIT: tai khoan lau nam trong CSDL demo co hon 600 don,
+   * dung het vao mot trang thi cuon mai khong het ma trinh duyet cung nang.
+   *
+   * Sap xep theo ngay_dat/gio_dat (cot DATE/TIME that) chu khong theo `dates` -
+   * cot do la TEXT luu nguyen chuoi khach gui len nen sap xep chuoi se sai.
+   */
+  getUserOrders: async (userId, { gioiHan = 20, trang = 1 } = {}) => {
+    const soMoiTrang = Math.min(100, Math.max(1, Number(gioiHan) || 20));
+    const trangHienTai = Math.max(1, Number(trang) || 1);
+    const boQua = (trangHienTai - 1) * soMoiTrang;
+
+    const [[dem]] = await db.query(
+      'SELECT COUNT(DISTINCT sesis) AS tong FROM hopdong WHERE id_user = ?', [userId]
     );
-    return rows;
+    const [rows] = await db.query(
+      `SELECT sesis, dates, so_user, noidung, tg, tinhtrang,
+              SUM(thanhtien) AS tong_tien,
+              MAX(ngay_dat) AS ngay_sap, MAX(gio_dat) AS gio_sap, MAX(id) AS id_cuoi
+       FROM hopdong WHERE id_user = ?
+       GROUP BY sesis, dates, so_user, noidung, tg, tinhtrang
+       ORDER BY ngay_sap DESC, gio_sap DESC, id_cuoi DESC
+       LIMIT ? OFFSET ?`,
+      [userId, soMoiTrang, boQua]
+    );
+
+    const tong = Number(dem.tong || 0);
+    return {
+      danhSach: rows,
+      tong,
+      trang: trangHienTai,
+      soMoiTrang,
+      soTrang: Math.max(1, Math.ceil(tong / soMoiTrang)),
+    };
+  },
+
+  /**
+   * Khach da co it nhat mot don DA XAC NHAN chua - dieu kien de duoc danh gia.
+   *
+   * Hoi thang CSDL thay vi loc tren danh sach getUserOrders(): danh sach do gio
+   * da chia trang, don da xac nhan nam o trang thu ba thi loc kieu cu se ket
+   * luan sai la khach chua tung dat.
+   */
+  coDonDaXacNhan: async (userId) => {
+    const [[r]] = await db.query(
+      'SELECT COUNT(*) AS n FROM hopdong WHERE id_user = ? AND tinhtrang = 1 LIMIT 1', [userId]
+    );
+    return Number(r.n || 0) > 0;
   },
 
   getOrderDetails: async (sessionId) => {
@@ -137,9 +209,10 @@ const orderService = {
       }
       const sesis = Math.random().toString(36).substring(2, 15);
       await connection.query(
-        `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [sesis, 0, 'Chưa chọn món', userId, dates, tg, 0, noidung, so_user, 0, 0, '', 0]
+        `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [sesis, 0, 'Chưa chọn món', userId, dates, tg, 0, noidung, so_user, 0, 0, '', 0,
+         chuanHoaNgay(dates) || ngayCucBo(), chuanHoaGio(tg) || chuanHoaGio(gioCucBo())]
       );
       await connection.commit();
       return sesis; // Return to enable socket notify
@@ -159,6 +232,17 @@ const orderService = {
     );
   },
 
+  /**
+   * @deprecated Dung services/thanhToanService.js thay cho ham nay.
+   *
+   * Ham nay chi doi trang thai don chu KHONG ghi lai da thu bao nhieu tien,
+   * bang hinh thuc gi, ai thu - nen khong the in bien lai, khong doi soat
+   * duoc voi sao ke ngan hang, va bao cao doanh thu se khong khop voi tien
+   * thuc te. Giu lai de code cu khong vo, khong goi trong luong moi.
+   *
+   * Thay bang: thanhToanService.taoPhien() -> xacNhan(), hai ham do tu dat
+   * tinhtrang = 3 khi (va chi khi) da thu du tien.
+   */
   payBill: async (sesis) => {
     // 3 = Paid (Đã thanh toán)
     await db.query('UPDATE hopdong SET tinhtrang = 3 WHERE sesis = ?', [sesis]);
@@ -212,6 +296,12 @@ const orderService = {
 
   // ============ USER/CUSTOMER MANAGEMENT ============
   userLogin: async (sdt, password) => {
+    // Chan tai khoan sinh tu ma QR ngay tu dau. Day la lop thu hai, doc lap
+    // voi viec mat khau da bi vo hieu trong CSDL - de neu sau nay co doan ma
+    // nao lo ghi mat khau that vao mot tai khoan QR thi van khong dang nhap
+    // duoc. Xem MAT_KHAU_VO_HIEU o dau tep.
+    if (laTaiKhoanQR(sdt)) return null;
+
     const hashedPassword = md5(password);
     const [rows] = await db.query(
       'SELECT * FROM khach_hang WHERE sodienthoai = ? AND passwords = ? LIMIT 1',
@@ -343,8 +433,9 @@ const orderService = {
    */
   addDishToOrder: async (sesis, dishId, qty) => {
     // Lấy thông tin đơn để lấy id_user, dates, tg, noidung, so_user
+    // ngay_dat/gio_dat/id_ban lấy theo đơn gốc để món thêm sau nằm cùng ca với đơn.
     const [orderRows] = await db.query(
-      'SELECT id_user, dates, tg, noidung, so_user, tinhtrang FROM hopdong WHERE sesis = ? LIMIT 1',
+      'SELECT id_user, dates, tg, noidung, so_user, tinhtrang, ngay_dat, gio_dat, id_ban FROM hopdong WHERE sesis = ? LIMIT 1',
       [sesis]
     );
     if (orderRows.length === 0) throw new Error('Không tìm thấy đơn hàng với mã này');
@@ -360,10 +451,13 @@ const orderService = {
 
     const thanhtien = dish.gia_mon * qty;
     await db.query(
-      `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep, ngay_dat, gio_dat, id_ban)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
       [sesis, dish.id_mon, dish.name_mon, order.id_user, order.dates, order.tg,
-       qty, order.noidung || '', order.so_user || '', dish.gia_mon, thanhtien, dish.images || '', order.tinhtrang]
+       qty, order.noidung || '', order.so_user || '', dish.gia_mon, thanhtien, dish.images || '', order.tinhtrang,
+       ngayChoMonThem(order.ngay_dat || order.dates),
+       chuanHoaGio(order.gio_dat) || chuanHoaGio(order.tg) || chuanHoaGio(gioCucBo()),
+       order.id_ban || null]
     );
   },
 
@@ -372,7 +466,7 @@ const orderService = {
    */
   addMultipleDishesToOrder: async (sesis, items) => {
     const [orderRows] = await db.query(
-      'SELECT id_user, dates, tg, noidung, so_user, tinhtrang FROM hopdong WHERE sesis = ? LIMIT 1',
+      'SELECT id_user, dates, tg, noidung, so_user, tinhtrang, ngay_dat, gio_dat, id_ban FROM hopdong WHERE sesis = ? LIMIT 1',
       [sesis]
     );
     if (orderRows.length === 0) throw new Error('Không tìm thấy đơn hàng với mã này');
@@ -380,6 +474,9 @@ const orderService = {
     if (order.tinhtrang === 3 || order.tinhtrang === 4) {
       throw new Error('Đơn hàng này đã hoàn thành hoặc đã hủy');
     }
+
+    const ngayDat = ngayChoMonThem(order.ngay_dat || order.dates);
+    const gioDat = chuanHoaGio(order.gio_dat) || chuanHoaGio(order.tg) || chuanHoaGio(gioCucBo());
 
     const connection = await db.getConnection();
     try {
@@ -389,11 +486,16 @@ const orderService = {
         if (dishes.length === 0) continue;
         const dish = dishes[0];
         const thanhtien = dish.gia_mon * item.qty;
+        // Ghi chu cua khach cho rieng mon nay. Cat 255 ky tu cho khop do rong
+        // cot; bo chuoi rong ve NULL de bep phan biet "khong ghi chu" voi
+        // "ghi chu rong".
+        const ghiChu = String(item.ghi_chu || '').trim().slice(0, 255) || null;
         await connection.query(
-          `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+          `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep, ngay_dat, gio_dat, id_ban, ghi_chu_mon)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
           [sesis, dish.id_mon, dish.name_mon, order.id_user, order.dates, order.tg,
-           item.qty, order.noidung || '', order.so_user || '', dish.gia_mon, thanhtien, dish.images || '', order.tinhtrang]
+           item.qty, order.noidung || '', order.so_user || '', dish.gia_mon, thanhtien, dish.images || '', order.tinhtrang,
+           ngayDat, gioDat, order.id_ban || null, ghiChu]
         );
       }
       await connection.commit();
@@ -409,12 +511,93 @@ const orderService = {
    * Tạo đơn mới cho QR khi chưa có đơn nào (tạo khách vãng lai)
    * // [BẢO VỆ]: Khởi tạo đơn hàng khi quét mã QR (Khách vãng lai)
    */
-  createQROrder: async (tableId, tableName) => {
+  /**
+   * Tra ve dong `qr_tables` cua mot ma QR, hoac null neu ma khong co that.
+   *
+   * Day la CUA DUY NHAT de doi ma QR sang thong tin ban. Moi thu khac (ten
+   * ban, id ban) deu phai di qua day, khong duoc lay tu tham so nguoi dung
+   * gui len - xem ghi chu o `createQROrder`.
+   */
+  layBanQR: async (tableId) => {
+    if (!tableId) return null;
+    const [rows] = await db.query(
+      'SELECT id, table_id, table_name, active_sesis FROM qr_tables WHERE table_id = ? LIMIT 1',
+      [String(tableId)]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Phien dang mo cua mot ban QR, hoac null neu ban dang trong.
+   *
+   * Vi sao can: truoc day trang QR nhan `?sesis=` tu thanh dia chi va
+   * `/qr/add-dish` chi kiem tra "sesis nay co ton tai trong hopdong khong".
+   * Nghia la neu doan/biet duoc ma phien cua ban khac (dinh dang
+   * `QR_<tableId>_<thoi diem base36>`, ma tableId thi in tren ma QR) thi goi
+   * duoc mon vao hoa don ban do. Gio ma phien luon do may chu tu tra theo
+   * ban, khong lay tu client nua.
+   *
+   * Dieu kien "dang mo" dung dung dinh nghia cua man hinh bep
+   * (`kdsService.DON_DANG_HOAT_DONG`) de hai noi khong lech nhau.
+   */
+  phienDangMoCuaBan: async (tableId) => {
+    const ban = await orderService.layBanQR(tableId);
+    if (!ban) return null;
+    const idBan = await orderService.timIdBanTheoTen(ban.table_name);
+    if (!idBan) return null;
+    const [rows] = await db.query(
+      `SELECT sesis FROM hopdong
+       WHERE id_ban = ? AND tinhtrang IN (1, 5, 6) AND ngay_dat = CURDATE()
+       ORDER BY id DESC LIMIT 1`,
+      [idBan]
+    );
+    return rows.length ? rows[0].sesis : null;
+  },
+
+  /**
+   * Cac mon ma mot ban QR da goi trong phien dang mo, kem trang thai bep.
+   *
+   * Dung cho buoc "Bep che bien" o trang dat mon: khach thay mon minh goi dang
+   * o dau (cho / dang nau / xong / da mang ra) thay vi phai hoi nhan vien.
+   *
+   * Nhan `tableId` chu khong nhan `sesis`: ma phien phai do may chu tra theo
+   * ban, dung nguyen tac cua `phienDangMoCuaBan` - neu nhan sesis tu client
+   * thi doan duoc ma phien ban khac la xem duoc don cua ho.
+   */
+  donCuaBanQR: async (tableId) => {
+    const sesis = await orderService.phienDangMoCuaBan(tableId);
+    if (!sesis) return { sesis: null, mon: [], tam_tinh: 0 };
+    const [rows] = await db.query(
+      `SELECT id, id_mon, name_mon, soluong, gia, thanhtien, images,
+              trangthai_bep, ghi_chu_mon, gio_dat
+       FROM hopdong
+       WHERE sesis = ? AND id_mon > 0
+       ORDER BY id ASC`,
+      [sesis]
+    );
+    const tamTinh = rows.reduce((s, r) => s + Number(r.thanhtien || 0), 0);
+    return { sesis, mon: rows, tam_tinh: tamTinh };
+  },
+
+  /**
+   * Tao don moi cho mot ban quet QR.
+   *
+   * KHONG nhan ten ban tu ben ngoai. Truoc day ham nay nhan `tableName` do
+   * `server.js` lay tu `req.query.name || req.body.tableName`, tuc la do CHINH
+   * KHACH gui len. Khach chi can sua thanh dia chi thanh `?name=12` la don
+   * duoc gan sang ban 12: mon ra nham ban va ban 12 bi danh dau dang phuc vu
+   * bang phien cua nguoi khac. Gio ten ban luon tra tu `qr_tables`.
+   */
+  createQROrder: async (tableId) => {
+    const ban = await orderService.layBanQR(tableId);
+    if (!ban) throw new Error('Mã bàn không hợp lệ');
+    const tableName = ban.table_name;
+
     // Tìm hoặc tạo khách vãng lai cho bàn này
     const guestSdt = 'QR_' + tableId;
     const [existing] = await db.query('SELECT id FROM khach_hang WHERE sodienthoai = ?', [guestSdt]);
     let userId;
-    
+
     // Đảm bảo tên hiển thị đẹp dạng "Bàn X"
     let displayName = tableName;
     if (displayName && !displayName.startsWith('Bàn')) {
@@ -428,20 +611,84 @@ const orderService = {
     } else {
       const [res] = await db.query(
         'INSERT INTO khach_hang (ten, sodienthoai, passwords) VALUES (?, ?, ?)',
-        [displayName, guestSdt, md5('qr' + tableId)]
+        [displayName, guestSdt, MAT_KHAU_VO_HIEU]
       );
       userId = res.insertId;
     }
 
     const sesis = 'QR_' + tableId + '_' + Date.now().toString(36);
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date().toTimeString().slice(0, 5);
+    // Ngay gio theo mui gio may chu (khong dung toISOString - xem utils/thoiGian.js).
+    const today = ngayCucBo();
+    const now = gioCucBo();
+
+    // Noi don QR voi ban that de man hinh bep biet mon nay cua ban nao.
+    const idBan = await orderService.timIdBanTheoTen(tableName);
+
     await db.query(
-      `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-      [sesis, 0, 'Đặt qua QR', userId, today, now, 0, 'QR Order - ' + displayName, '', 0, 0, '']
+      `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat, id_ban)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      [sesis, 0, 'Đặt qua QR', userId, today, now, 0, 'QR Order - ' + displayName, '', 0, 0, '',
+       today, chuanHoaGio(now), idBan]
     );
+
+    // Ban co khach -> so do ban chuyen sang "dang phuc vu".
+    if (idBan) {
+      await db.query(
+        'UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?',
+        [sesis, idBan]
+      );
+    }
     return sesis;
+  },
+
+  /**
+   * Bao dam mot phien QR duoc noi voi ban that.
+   *
+   * Phien tao truoc khi co cot `id_ban` se de trong o do, man hinh bep khong
+   * biet mon cua ban nao. Ham nay va lai lien ket truoc khi them mon moi.
+   */
+  lienKetPhienVoiBan: async (sesis, tableId) => {
+    const [daCo] = await db.query(
+      'SELECT id_ban FROM hopdong WHERE sesis = ? AND id_ban IS NOT NULL LIMIT 1',
+      [sesis]
+    );
+    // Nhan MA QR chu khong nhan ten ban, vi ten ban do client gui len thi sua
+    // duoc - xem ghi chu o `createQROrder`.
+    let idBan = daCo.length ? daCo[0].id_ban : null;
+    if (!idBan) {
+      const ban = await orderService.layBanQR(tableId);
+      idBan = ban ? await orderService.timIdBanTheoTen(ban.table_name) : null;
+    }
+    if (!idBan) return null;
+
+    await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ? AND id_ban IS NULL', [idBan, sesis]);
+    await db.query(
+      'UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?',
+      [sesis, idBan]
+    );
+    return idBan;
+  },
+
+  /**
+   * Doi ten ban tren ma QR ('5', 'Bàn 5', 'Vip1') sang `ban.Id_ban`.
+   *
+   * `qr_tables` khong co khoa ngoai sang `ban` nen phai do theo ten. Ten ban
+   * trong bang `ban` luu dang '01'..'05' con QR thuong ghi '1'..'5', vi vay
+   * ngoai so sanh nguyen van con so sanh theo gia tri so. Khong khop thi tra
+   * ve null - don van vao bep, chi la khong hien so ban.
+   */
+  timIdBanTheoTen: async (tenBan) => {
+    const ten = String(tenBan || '').replace(/^\s*bàn\s*/i, '').trim();
+    if (!ten) return null;
+    const [rows] = await db.query(
+      `SELECT Id_ban FROM ban
+       WHERE number_ban = ?
+          OR (? REGEXP '^[0-9]+$' AND number_ban REGEXP '^[0-9]+$'
+              AND CAST(number_ban AS UNSIGNED) = CAST(? AS UNSIGNED))
+       LIMIT 1`,
+      [ten, ten, ten]
+    );
+    return rows.length ? rows[0].Id_ban : null;
   },
 
   // ============ QR TABLE MANAGEMENT ============
@@ -458,7 +705,10 @@ const orderService = {
 
   createQRCode: async (tableName, note, baseUrl) => {
     const tableId = 'T' + Date.now().toString(36).toUpperCase();
-    const url = baseUrl + '/qr/table/' + tableId + '?name=' + encodeURIComponent(tableName);
+    // Khong gan `?name=` nua: may chu tra ten ban tu `qr_tables` theo `table_id`,
+    // tham so nay bi bo qua. Cac ma QR da in truoc day con mang `?name=` van
+    // chay binh thuong, chi la phan thua. Xem ghi chu o server.js muc QR.
+    const url = baseUrl + '/qr/table/' + tableId;
 
     // Ensure table exists
     await db.query(`

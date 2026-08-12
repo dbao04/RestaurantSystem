@@ -18,7 +18,9 @@ const errorHandler = (err, req, res, next) => {
   }
   
   // Send error response
-  if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+  // Lưu ý: req.headers.accept có thể không tồn tại (curl, một số client),
+  // nên phải bọc || '' trước khi gọi indexOf.
+  if (req.xhr || (req.headers.accept || '').indexOf('json') > -1 || req.path.includes('/api/')) {
     return res.status(status).json({
       error: true,
       message: message,

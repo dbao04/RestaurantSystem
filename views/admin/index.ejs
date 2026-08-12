@@ -1,48 +1,109 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Dashboard</h2>
-        <div class="block">               
-          <div style="margin-bottom: 20px;">
-            Chào mừng bạn đến với trang quản trị nhà hàng <strong>NHA HANG BD</strong>
-          </div>
+<div class="qt-stats">
+    <div class="qt-stat qt-stat--gold">
+        <div class="qt-stat__icon"><i class="fas fa-sack-dollar"></i></div>
+        <div class="qt-stat__label">Doanh thu</div>
+        <div class="qt-stat__value"><%= formatMoney(stats.revenue) %></div>
+        <div class="qt-stat__note">Tổng doanh thu đã ghi nhận</div>
+    </div>
+    <div class="qt-stat qt-stat--green">
+        <div class="qt-stat__icon"><i class="fas fa-receipt"></i></div>
+        <div class="qt-stat__label">Đơn hàng</div>
+        <div class="qt-stat__value"><%= stats.orders %></div>
+        <div class="qt-stat__note">Hợp đồng / đơn đặt tiệc</div>
+    </div>
+    <div class="qt-stat qt-stat--blue">
+        <div class="qt-stat__icon"><i class="fas fa-user-group"></i></div>
+        <div class="qt-stat__label">Khách hàng</div>
+        <div class="qt-stat__value"><%= stats.customers %></div>
+        <div class="qt-stat__note">Tài khoản đã đăng ký</div>
+    </div>
+    <div class="qt-stat qt-stat--plum">
+        <div class="qt-stat__icon"><i class="fas fa-user-tie"></i></div>
+        <div class="qt-stat__label">Nhân viên</div>
+        <div class="qt-stat__value"><%= stats.staff %></div>
+        <div class="qt-stat__note">Đang trong danh sách nhân sự</div>
+    </div>
+</div>
 
-          <!-- Tóm tắt số liệu nhanh -->
-          <div class="stat-cards" style="display: flex; gap: 20px; margin-bottom: 30px;">
-            <div class="card" style="flex: 1; background: #4e73df; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Doanh thu</div>
-                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= formatMoney(stats.revenue) %></div>
+<div class="qt-grid qt-grid--2-1">
+    <div class="qt-card" style="margin:0">
+        <div class="qt-card__head">
+            <div>
+                <h2>Chào mừng trở lại, <%= session.adminname || 'Quản trị viên' %></h2>
+                <p>Chọn một tác vụ để bắt đầu quản lý nhà hàng.</p>
             </div>
-            <div class="card" style="flex: 1; background: #1cc88a; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Đơn hàng</div>
-                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.orders %></div>
+        </div>
+        <div class="qt-card__body">
+            <div class="qt-links">
+                <a class="qt-link" href="/admin/productlist">
+                    <span class="qt-link__ico"><i class="fas fa-bowl-food"></i></span>
+                    <span>
+                        <span class="qt-link__t">Quản lý thực đơn</span>
+                        <span class="qt-link__d">Thêm, sửa, ngưng phục vụ món ăn và đồ uống</span>
+                    </span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/admin/hopdongmoi">
+                    <span class="qt-link__ico"><i class="fas fa-bell-concierge"></i></span>
+                    <span>
+                        <span class="qt-link__t">Hợp đồng mới</span>
+                        <span class="qt-link__d">Xác nhận đơn đặt tiệc và chuyển xuống bếp</span>
+                    </span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/admin/stafflist">
+                    <span class="qt-link__ico"><i class="fas fa-user-group"></i></span>
+                    <span>
+                        <span class="qt-link__t">Quản lý nhân sự</span>
+                        <span class="qt-link__d">Hồ sơ nhân viên, lịch làm việc, lương và nghỉ phép</span>
+                    </span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/admin/stats">
+                    <span class="qt-link__ico"><i class="fas fa-chart-pie"></i></span>
+                    <span>
+                        <span class="qt-link__t">Báo cáo thống kê</span>
+                        <span class="qt-link__d">Doanh thu theo tháng và món ăn bán chạy</span>
+                    </span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
             </div>
-            <div class="card" style="flex: 1; background: #36b9cc; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Khách hàng</div>
-                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.customers %></div>
-            </div>
-            <div class="card" style="flex: 1; background: #f6c23e; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase;">Nhân viên</div>
-                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;"><%= stats.staff %></div>
-            </div>
-          </div>
+        </div>
+    </div>
 
-          <div class="row" style="display: flex; gap: 20px;">
-            <div style="flex: 1; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background: #f9f9f9;">
-              <h4>Lối tắt quản lý</h4>
-              <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 10px;"><a href="/admin/productlist" class="btn btn-blue" style="text-decoration: none; display: block; padding: 8px; background: #007bff; color: white; border-radius: 4px; text-align: center;">Quản lý Thực đơn</a></li>
-                <li style="margin-bottom: 10px;"><a href="/admin/stafflist" class="btn btn-green" style="text-decoration: none; display: block; padding: 8px; background: #28a745; color: white; border-radius: 4px; text-align: center;">Quản lý Nhân sự</a></li>
-                <li style="margin-bottom: 10px;"><a href="/admin/hopdonglist" class="btn btn-yellow" style="text-decoration: none; display: block; padding: 8px; background: #ffc107; color: #212529; border-radius: 4px; text-align: center;">Đơn hàng mới</a></li>
-              </ul>
+    <div class="qt-card" style="margin:0">
+        <div class="qt-card__head">
+            <div>
+                <h2>Công cụ nâng cao</h2>
+                <p>Phân tích và vận hành thời gian thực.</p>
             </div>
-            <div style="flex: 2; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
-              <h4>Nhật ký hoạt động</h4>
-              <p style="color: #666; font-style: italic;">Hệ thống đang hoạt động ổn định...</p>
+        </div>
+        <div class="qt-card__body">
+            <div class="qt-links">
+                <a class="qt-link" href="/analytics">
+                    <span class="qt-link__ico"><i class="fas fa-chart-line"></i></span>
+                    <span><span class="qt-link__t">Dashboard phân tích</span></span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/du-bao">
+                    <span class="qt-link__ico"><i class="fas fa-wand-magic-sparkles"></i></span>
+                    <span><span class="qt-link__t">Dự báo AI</span></span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/so-do-ban">
+                    <span class="qt-link__ico"><i class="fas fa-chair"></i></span>
+                    <span><span class="qt-link__t">Sơ đồ bàn</span></span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/kds">
+                    <span class="qt-link__ico"><i class="fas fa-fire-burner"></i></span>
+                    <span><span class="qt-link__t">Màn hình bếp</span></span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
             </div>
-          </div>
         </div>
     </div>
 </div>

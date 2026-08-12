@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sơ đồ bàn thời gian thực - Nhà Hàng Bảo Đoàn</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --bg:#f1f5f9; --card:#fff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
+      --trong:#22c55e; --phucvu:#ef4444; --dat:#f59e0b; --don:#64748b;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text);
+           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
+    header { background:linear-gradient(135deg,#0f766e,#115e59); color:#fff;
+             padding:16px 26px; display:flex; justify-content:space-between;
+             align-items:center; flex-wrap:wrap; gap:12px; }
+    header h1 { margin:0; font-size:19px; }
+    header .sub { font-size:12.5px; opacity:.85; margin-top:2px; }
+    header nav a { color:#fff; text-decoration:none; font-size:13px; padding:7px 13px;
+                   border:1px solid rgba(255,255,255,.35); border-radius:7px; margin-left:8px; }
+    header nav a:hover { background:rgba(255,255,255,.16); }
+    .cham { display:inline-block; width:9px; height:9px; border-radius:50%;
+            background:#4ade80; margin-right:6px; }
+    .cham.tat { background:#f87171; }
+
+    .wrap { padding:18px 26px 50px; max-width:1500px; margin:0 auto; }
+
+    .chiso { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+             gap:13px; margin-bottom:18px; }
+    .o { background:var(--card); border:1px solid var(--line); border-radius:10px;
+         padding:13px 16px; border-left:4px solid var(--line); }
+    .o .n { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .o .v { font-size:25px; font-weight:700; margin-top:5px; }
+    .o.t { border-left-color:var(--trong); }
+    .o.p { border-left-color:var(--phucvu); }
+    .o.d { border-left-color:var(--dat); }
+
+    .thanh { background:var(--card); border:1px solid var(--line); border-radius:10px;
+             padding:12px 16px; margin-bottom:16px; display:flex; gap:16px;
+             align-items:center; flex-wrap:wrap; }
+    .chu-thich { display:flex; gap:15px; flex-wrap:wrap; font-size:13px; }
+    .chu-thich span { display:flex; align-items:center; gap:6px; }
+    .vuong { width:14px; height:14px; border-radius:4px; display:inline-block; }
+    .tab { display:flex; gap:8px; }
+    .tab button { padding:7px 15px; border:1px solid var(--line); background:#fff;
+                  border-radius:7px; cursor:pointer; font-size:13.5px; font-family:inherit; }
+    .tab button.on { background:#0f766e; color:#fff; border-color:#0f766e; }
+    .btn { background:#0f766e; color:#fff; border:0; padding:8px 15px; border-radius:7px;
+           cursor:pointer; font-size:13.5px; font-family:inherit; }
+    .btn.ghost { background:#fff; color:#0f766e; border:1px solid #0f766e; }
+
+    .san { position:relative; background:var(--card); border:1px solid var(--line);
+           border-radius:12px; min-height:520px; overflow:auto;
+           background-image:radial-gradient(#e2e8f0 1px, transparent 1px);
+           background-size:20px 20px; }
+
+    /* Dai tieu de ngan cach cac khu khi xem tab "Tất cả". */
+    .dai-khu { position:absolute; left:0; right:0; height:34px; display:flex;
+               align-items:center; gap:10px; padding:0 18px; font-size:13px;
+               font-weight:600; color:#0f766e; background:#f0fdfa;
+               border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .dai-khu .dem { font-weight:400; color:var(--muted); font-size:12px; }
+
+    .ban { position:absolute; width:138px; border-radius:11px; padding:11px 12px;
+           color:#fff; cursor:pointer; user-select:none; transition:transform .12s, box-shadow .12s;
+           box-shadow:0 2px 8px rgba(0,0,0,.13); }
+    .ban:hover { transform:translateY(-2px); box-shadow:0 7px 18px rgba(0,0,0,.2); }
+    .ban.keo { cursor:grab; }
+    .ban.dang-keo { opacity:.75; cursor:grabbing; z-index:50; }
+    .ban .so { font-size:17px; font-weight:700; }
+    .ban .tt { font-size:11.5px; opacity:.92; margin-top:3px; }
+    .ban .ct { font-size:11px; opacity:.9; margin-top:7px; border-top:1px solid rgba(255,255,255,.3);
+               padding-top:6px; line-height:1.5; }
+    .ban.s0 { background:var(--trong); }
+    .ban.s1 { background:var(--phucvu); }
+    .ban.s2 { background:var(--dat); }
+    .ban.s3 { background:var(--don); }
+
+    .lop { position:fixed; inset:0; background:rgba(15,23,42,.55); display:none;
+           align-items:center; justify-content:center; z-index:100; }
+    .hop { background:#fff; border-radius:12px; padding:24px 26px; width:min(420px,92vw); }
+    .hop h3 { margin:0 0 4px; font-size:18px; }
+    .hop .p { color:var(--muted); font-size:13px; margin-bottom:16px; }
+    .hop .nut { display:grid; gap:9px; }
+    .hop .nut button { padding:11px; border:0; border-radius:8px; cursor:pointer;
+                       font-size:14px; color:#fff; font-family:inherit; text-align:left;
+                       padding-left:16px; }
+    /* Nut ra man hinh thu tien - viec chinh o hop thoai nay nen de noi bat va
+       tach khoi nhom nut doi trang thai ben duoi. */
+    #hopNutThuTien { display:none; margin-bottom:14px; padding-bottom:14px;
+                     border-bottom:1px solid var(--line); }
+    .hop .nut a.thu-tien { padding:12px; border-radius:8px; font-size:14.5px;
+                           font-weight:600; color:#fff; background:#0f766e;
+                           text-decoration:none; text-align:center; display:block; }
+    .hop .nut a.thu-tien:hover { background:#115e59; }
+    .hop .dong { margin-top:14px; width:100%; padding:10px; background:#e2e8f0;
+                 border:0; border-radius:8px; cursor:pointer; font-family:inherit; font-size:14px; }
+    .ghi-chu { font-size:12.5px; color:var(--muted); margin-top:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Sơ đồ bàn thời gian thực</h1>
+      <div class="sub">
+        <span class="cham" id="chamKN"></span><span id="ttKetNoi">Đang kết nối...</span>
+        &nbsp;|&nbsp; <%= tenNguoiDung %>
+      </div>
+    </div>
+    <nav>
+      <a href="/kds">Màn hình bếp</a>
+      <a href="/analytics">Dashboard</a>
+      <a href="/staff">Trang nhân viên</a>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div class="chiso" id="chiSo"></div>
+
+    <div class="thanh">
+      <div class="tab" id="tabViTri"></div>
+      <div class="chu-thich" style="margin-left:auto">
+        <span><i class="vuong" style="background:var(--trong)"></i> Trống</span>
+        <span><i class="vuong" style="background:var(--phucvu)"></i> Đang phục vụ</span>
+        <span><i class="vuong" style="background:var(--dat)"></i> Đã đặt trước</span>
+        <span><i class="vuong" style="background:var(--don)"></i> Đang dọn</span>
+      </div>
+      <% if (choPhepKeoTha) { %>
+        <button class="btn ghost" id="btnSapXep" onclick="batSapXep()">Sắp xếp sơ đồ</button>
+        <button class="btn" id="btnLuu" onclick="luuViTri()" style="display:none">Lưu vị trí</button>
+      <% } %>
+    </div>
+
+    <div class="san" id="san"></div>
+    <% if (choPhepKeoTha) { %>
+      <p class="ghi-chu">Bấm <b>Sắp xếp sơ đồ</b> để kéo thả bàn về đúng vị trí thực tế trong nhà hàng, sau đó bấm <b>Lưu vị trí</b>.</p>
+    <% } %>
+  </div>
+
+  <div class="lop" id="lop">
+    <div class="hop">
+      <h3 id="hopTieuDe">Bàn</h3>
+      <div class="p" id="hopMoTa"></div>
+      <!-- Loi ra man hinh thu tien. Chi hien khi ban dang co don, vi khong co
+           `sesis` thi khong co gi de tinh. Day la duong di tu nhien nhat cua
+           thu ngan: khach o ban 7 goi tinh tien -> bam ban 7 tren so do. -->
+      <div class="nut" id="hopNutThuTien"><a class="thu-tien" id="hopLinkThuTien" href="#">Tính tiền bàn này</a></div>
+      <div class="nut">
+        <button style="background:var(--trong)"  onclick="doiTrangThai(0)">Đặt là Trống</button>
+        <button style="background:var(--phucvu)" onclick="doiTrangThai(1)">Đặt là Đang phục vụ</button>
+        <button style="background:var(--dat)"    onclick="doiTrangThai(2)">Đặt là Đã đặt trước</button>
+        <button style="background:var(--don)"    onclick="doiTrangThai(3)">Đặt là Đang dọn</button>
+      </div>
+      <button class="dong" onclick="dongHop()">Đóng</button>
+    </div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tien = (v) => Number(v || 0).toLocaleString('vi-VN');
+
+let duLieu = { ban: [], vi_tri: [], thong_ke: {} };
+let viTriDangXem = 'tat_ca';
+let dangSapXep = false;
+let banDangChon = null;
+
+// `ban.toa_do_x/y` trong CSDL la toa do TRONG TUNG KHU. Khi ve, moi khu duoc day
+// xuong mot doan theo chieu doc de 4 khu khong chong len nhau; `doLechKhu` giu
+// lai doan day do de tru nguoc ra luc luu ket qua keo tha.
+let doLechKhu = {};
+const CAO_TIEU_DE = 34;  // chieu cao dai ten khu
+// The ban cao 78px khi trong va ~109px khi dang phuc vu (co them dong so mon /
+// tien / so khach). Lay du 120 de hang cuoi cua mot khu khong bao gio thoc
+// xuong dai tieu de cua khu ke tiep.
+const CAO_BAN = 120;
+const DEM_KHU = 26;      // khoang ho duoi moi khu
+
+async function tai() {
+  try {
+    const r = await fetch('/so-do-ban/api/du-lieu');
+    if (!r.ok) throw new Error(r.status);
+    duLieu = await r.json();
+  } catch (e) {
+    console.error('Không tải được sơ đồ:', e);
+    return;
+  }
+  veChiSo();
+  veTab();
+  veSan();
+}
+
+function veChiSo() {
+  const t = duLieu.thong_ke || {};
+  $('chiSo').innerHTML = `
+    <div class="o t"><div class="n">Bàn trống</div><div class="v">${t.trong || 0}<span style="font-size:15px;color:var(--muted)">/${t.tong || 0}</span></div></div>
+    <div class="o p"><div class="n">Đang phục vụ</div><div class="v">${t.dang_phuc_vu || 0}</div></div>
+    <div class="o d"><div class="n">Đã đặt trước</div><div class="v">${t.da_dat || 0}</div></div>
+    <div class="o"><div class="n">Tỷ lệ lấp đầy</div><div class="v">${t.ty_le_lap_day || 0}<span style="font-size:15px;color:var(--muted)">% · ${t.so_cho || 0} chỗ</span></div></div>
+    <div class="o"><div class="n">Doanh thu đang mở</div><div class="v" style="font-size:20px">${tien(t.doanh_thu_dang_mo)}đ</div></div>
+    <div class="o"><div class="n">Doanh thu hôm nay</div><div class="v" style="font-size:20px">${tien(t.doanh_thu_hom_nay)}đ</div></div>`;
+}
+
+const tenKhu = (v) => v.Name_vitri || v.name_vitri || 'Khu';
+
+function veTab() {
+  const tong = (duLieu.ban || []).length;
+  const ds = [{ id_vitri: 'tat_ca', Name_vitri: 'Tất cả', so_ban: tong }, ...(duLieu.vi_tri || [])];
+  $('tabViTri').innerHTML = ds.map(v => `
+    <button class="${String(v.id_vitri) === String(viTriDangXem) ? 'on' : ''}"
+            onclick="chonViTri('${v.id_vitri}')">${tenKhu(v)}
+      <span style="opacity:.7">(${v.so_ban || 0})</span></button>`).join('');
+}
+
+function chonViTri(id) { viTriDangXem = id; veTab(); veSan(); }
+
+function theBan(b, doLech) {
+  const ct = b.trangthai === 1 && b.so_mon
+    ? `<div class="ct">${b.so_mon} món &middot; ${tien(b.tong_tien)}đ${b.so_khach ? ' &middot; ' + b.so_khach + ' khách' : ''}</div>`
+    : (b.trangthai === 2 ? '<div class="ct">Giữ chỗ</div>' : '');
+  return `
+    <div class="ban s${b.trangthai} ${dangSapXep ? 'keo' : ''}"
+         data-id="${b.Id_ban}" data-khu="${b.id_vitri}"
+         style="left:${b.toa_do_x}px; top:${Number(b.toa_do_y) + doLech}px"
+         onclick="moHop(${b.Id_ban})">
+      <div class="so">Bàn ${b.number_ban}</div>
+      <div class="tt">${b.ten_trang_thai} &middot; ${b.so_cho} chỗ</div>
+      ${ct}
+    </div>`;
+}
+
+/**
+ * Ve so do theo tung khu, xep chong theo chieu doc.
+ *
+ * Toa do trong CSDL tinh rieng cho moi khu nen neu ve thang se co 4 khu de len
+ * nhau. Moi khu duoc cap mot dai tieu de va mot doan lech Y bang tong chieu cao
+ * cac khu phia tren.
+ */
+function veSan() {
+  const tatCa = viTriDangXem === 'tat_ca';
+  const khuHienThi = (duLieu.vi_tri || []).filter(
+    v => tatCa || String(v.id_vitri) === String(viTriDangXem));
+
+  const html = [];
+  let y = 0;
+  doLechKhu = {};
+
+  for (const v of khuHienThi) {
+    const ds = (duLieu.ban || []).filter(b => String(b.id_vitri) === String(v.id_vitri));
+    const trong = ds.filter(b => b.trangthai === 0).length;
+    doLechKhu[v.id_vitri] = y + CAO_TIEU_DE;
+
+    html.push(`
+      <div class="dai-khu" style="top:${y}px">${tenKhu(v)}
+        <span class="dem">${ds.length} bàn &middot; ${v.so_cho || 0} chỗ &middot; ${trong} bàn trống</span>
+      </div>`);
+    html.push(...ds.map(b => theBan(b, y + CAO_TIEU_DE)));
+
+    // Chieu cao khu = day nhat cua ban trong khu, toi thieu du cho mot hang.
+    const day = ds.reduce((m, b) => Math.max(m, Number(b.toa_do_y) + CAO_BAN), CAO_BAN);
+    y += CAO_TIEU_DE + day + DEM_KHU;
+  }
+
+  $('san').innerHTML = html.join('') ||
+    '<div style="padding:40px;color:var(--muted);text-align:center">Khu vực này chưa có bàn nào</div>';
+  $('san').style.height = Math.max(520, y + 10) + 'px';
+
+  if (dangSapXep) ganKeoTha();
+}
+
+// --- Kéo thả ---
+function batSapXep() {
+  dangSapXep = !dangSapXep;
+  $('btnSapXep').textContent = dangSapXep ? 'Hủy sắp xếp' : 'Sắp xếp sơ đồ';
+  $('btnLuu').style.display = dangSapXep ? '' : 'none';
+  veSan();
+}
+
+function ganKeoTha() {
+  document.querySelectorAll('.ban').forEach(el => {
+    el.onmousedown = (e) => {
+      if (!dangSapXep) return;
+      e.preventDefault();
+      const san = $('san').getBoundingClientRect();
+      const the = el.getBoundingClientRect();
+      const lechX = e.clientX - the.left;
+      const lechY = e.clientY - the.top;
+      el.classList.add('dang-keo');
+
+      // Khong cho keo ban len tren dai tieu de cua chinh khu do - neu khong,
+      // toa do luu lai se am va ban nhay sang khu ben tren o lan ve sau.
+      const dayKhu = doLechKhu[el.dataset.khu] || 0;
+
+      const dichuyen = (ev) => {
+        // Giu bàn nam trong khung san va trong dung khu cua no.
+        const x = Math.max(0, ev.clientX - san.left - lechX);
+        const y = Math.max(dayKhu, ev.clientY - san.top - lechY);
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+      };
+      const tha = () => {
+        el.classList.remove('dang-keo');
+        document.removeEventListener('mousemove', dichuyen);
+        document.removeEventListener('mouseup', tha);
+      };
+      document.addEventListener('mousemove', dichuyen);
+      document.addEventListener('mouseup', tha);
+    };
+  });
+}
+
+async function luuViTri() {
+  // Tru nguoc doan lech cua khu de tra ve toa do trong khu - dung dang dang duoc
+  // luu trong CSDL.
+  const ban = [...document.querySelectorAll('.ban')].map(el => ({
+    id: Number(el.dataset.id),
+    x: Math.max(0, parseInt(el.style.left) || 0),
+    y: Math.max(0, (parseInt(el.style.top) || 0) - (doLechKhu[el.dataset.khu] || 0)),
+  }));
+  try {
+    const r = await fetch('/so-do-ban/api/vi-tri', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ban }),
+    });
+    const kq = await r.json();
+    if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    dangSapXep = false;
+    $('btnSapXep').textContent = 'Sắp xếp sơ đồ';
+    $('btnLuu').style.display = 'none';
+    await tai();
+  } catch (e) {
+    alert('Không lưu được vị trí: ' + e.message);
+  }
+}
+
+// --- Đổi trạng thái ---
+function moHop(id) {
+  if (dangSapXep) return; // dang keo tha thi khong mo hop thoai
+  const b = (duLieu.ban || []).find(x => x.Id_ban === id);
+  if (!b) return;
+  banDangChon = b;
+  $('hopTieuDe').textContent = 'Bàn ' + b.number_ban;
+  $('hopMoTa').innerHTML = `Trạng thái hiện tại: <b>${b.ten_trang_thai}</b> &middot; ${b.so_cho} chỗ` +
+    (b.so_mon ? `<br>Đang có ${b.so_mon} món, tổng ${tien(b.tong_tien)}đ` : '');
+
+  // Bàn chưa có đơn thì không có gì để tính tiền - giấu nút đi thay vì để nó
+  // dẫn tới một trang lỗi "không tìm thấy đơn hàng".
+  if (b.sesis_hien_tai) {
+    $('hopLinkThuTien').href = '/staff/thanh-toan/' + encodeURIComponent(b.sesis_hien_tai);
+    $('hopNutThuTien').style.display = 'grid';
+  } else {
+    $('hopNutThuTien').style.display = 'none';
+  }
+
+  $('lop').style.display = 'flex';
+}
+function dongHop() { $('lop').style.display = 'none'; banDangChon = null; }
+
+async function doiTrangThai(tt) {
+  if (!banDangChon) return;
+  try {
+    const r = await fetch('/so-do-ban/api/trang-thai/' + banDangChon.Id_ban, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trangthai: tt, sesis: banDangChon.sesis_hien_tai }),
+    });
+    const kq = await r.json();
+    if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    dongHop();
+    await tai();
+  } catch (e) {
+    alert('Không đổi được trạng thái: ' + e.message);
+  }
+}
+
+$('lop').addEventListener('click', (e) => { if (e.target.id === 'lop') dongHop(); });
+
+// --- Realtime ---
+const socket = io();
+socket.on('connect', () => {
+  socket.emit('join-room', { role: 'Phuc vu' });
+  $('ttKetNoi').textContent = 'Đã kết nối thời gian thực';
+  $('chamKN').classList.remove('tat');
+});
+socket.on('disconnect', () => {
+  $('ttKetNoi').textContent = 'Mất kết nối - đang thử lại';
+  $('chamKN').classList.add('tat');
+});
+socket.on('ban-cap-nhat', tai);
+socket.on('kds-cap-nhat', tai);
+socket.on('so-do-thay-doi', tai);
+
+tai();
+setInterval(() => { if (!dangSapXep) tai(); }, 20000);
+</script>
+</body>
+</html>

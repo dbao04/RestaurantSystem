@@ -1,52 +1,87 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách món ăn</h2>
-        <div class="block">  
-            <table class="data display datatable" id="example">
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Danh sách món ăn</h2>
+            <p><%= products ? products.length : 0 %> món trong thực đơn</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/catlist"><i class="fas fa-layer-group"></i> Loại món</a>
+            <a class="qt-btn qt-btn--primary" href="/admin/productadd"><i class="fas fa-plus"></i> Thêm món ăn</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (products && products.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Tên</th>
+                        <th>#</th>
+                        <th>Ảnh</th>
+                        <th>Tên món</th>
                         <th>Loại</th>
                         <th>Giá</th>
                         <th>Ghi chú</th>
-                        <th>Hình ảnh</th>
                         <th>Trạng thái</th>
-                        <th>Action</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (products && products.length > 0) { %>
-                        <% products.forEach((prod, index) => { %>
-                            <tr class="odd gradeX">
-                                <td><%= index + 1 %></td>
-                                <td><%= prod.name_mon %></td>
-                                <td><%= prod.name_loai %></td>
-                                <td><%= formatMoney(prod.gia_mon) %></td>
-                                <td><%- prod.ghichu_mon.substring(0, 50) %>...</td>
-                                <td class="center"><img height="80" width="80" src="/food/<%= prod.images %>"></td>
-                                <td><%= prod.tinhtrang == 1 ? "Phục vụ" : "Ngưng phục vụ" %></td>
-                                <td>
-                                    <a href="/admin/productedit/<%= prod.id_mon %>">Edit</a> 
-                                    || 
-                                    <a onclick="return confirm('Bạn muốn xóa?')" href="/admin/productdel/<%= prod.id_mon %>">Delete</a>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } %>
+                    <% products.forEach((prod, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
+                        <td>
+                            <% if (prod.images) { %>
+                                <img class="qt-thumb" src="/food/<%= prod.images %>" alt="<%= prod.name_mon %>"
+                                     onerror="this.src='/logo.png'">
+                            <% } else { %>
+                                <span class="qt-thumb--none"><i class="fas fa-image"></i></span>
+                            <% } %>
+                        </td>
+                        <td class="qt-strong"><%= (prod.name_mon || '').trim() %></td>
+                        <td><span class="qt-pill qt-pill--muted"><%= prod.name_loai %></span></td>
+                        <td class="qt-money"><%= formatMoney(prod.gia_mon) %></td>
+                        <td>
+                            <% var gc = (prod.ghichu_mon || '').replace(/<[^>]*>/g, '').trim(); %>
+                            <%= gc.length > 60 ? gc.substring(0, 60) + '…' : (gc || '—') %>
+                        </td>
+                        <td>
+                            <% if (prod.tinhtrang == 1) { %>
+                                <span class="qt-pill qt-pill--ok">Đang phục vụ</span>
+                            <% } else { %>
+                                <span class="qt-pill qt-pill--muted">Ngưng phục vụ</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/productedit/<%= prod.id_mon %>">
+                                    <i class="fas fa-pen"></i> Sửa
+                                </a>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/productdel/<%= prod.id_mon %>"
+                                   onclick="return confirm('Xóa món &quot;<%= (prod.name_mon || '').trim() %>&quot;?')">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-bowl-food"></i>
+            <p>Chưa có món ăn nào trong thực đơn.</p>
+            <a class="qt-btn qt-btn--primary" href="/admin/productadd"><i class="fas fa-plus"></i> Thêm món đầu tiên</a>
+        </div>
+        <% } %>
     </div>
 </div>
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('.datatable').dataTable();
-    });
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
 </script>
 
 <%- include('partials/footer') %>

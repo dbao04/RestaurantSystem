@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng ký khuôn mặt</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:'Nunito','Segoe UI',system-ui,sans-serif;
+           background:linear-gradient(135deg,#2c1810,#4e342e); color:#fff;
+           display:flex; align-items:center; justify-content:center; padding:20px; }
+    .the { width:100%; max-width:520px; text-align:center; }
+    .chao { font-size:15px; opacity:.8; }
+    h1 { font-size:24px; margin:6px 0 4px; font-weight:800; }
+    .phu { opacity:.75; font-size:14px; margin-bottom:16px; }
+
+    .video-boc { position:relative; width:100%; max-width:400px; margin:0 auto; aspect-ratio:1;
+                 border-radius:50%; overflow:hidden; background:#000;
+                 border:5px solid rgba(255,255,255,.2); box-shadow:0 1rem 3rem rgba(0,0,0,.5);
+                 transition:border-color .3s; }
+    .video-boc.thu { border-color:#c8a951; }
+    .video-boc.xong { border-color:#1cc88a; }
+    video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+
+    .vong { position:absolute; inset:0; border-radius:50%; pointer-events:none; }
+    .vong svg { width:100%; height:100%; transform:rotate(-90deg); }
+    .vong circle { fill:none; stroke:#1cc88a; stroke-width:5; stroke-linecap:round;
+                   transition:stroke-dashoffset .2s; }
+
+    .huong-dan { font-size:20px; font-weight:700; margin:18px 0 6px; min-height:28px; }
+    .huong-dan i { color:#c8a951; }
+    .trang-thai { font-size:14px; opacity:.8; min-height:20px; }
+
+    .nut { margin-top:20px; padding:14px 40px; font-size:17px; font-weight:700; border:none;
+           border-radius:12px; background:#c8a951; color:#2c1810; cursor:pointer; }
+    .nut:disabled { opacity:.5; cursor:default; }
+    .bo-qua { display:block; margin-top:16px; color:rgba(255,255,255,.65); font-size:13px; }
+    .bo-qua:hover { color:#fff; }
+    .canh-bao { background:#58151c; border-radius:10px; padding:12px 16px; margin:14px 0; font-size:14px; }
+    .thanh-cong-box { background:#0f5132; border-radius:12px; padding:24px; }
+    .thanh-cong-box .bt { font-size:56px; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+  <div class="the">
+    <div class="chao">Xin chào lần đầu 👋</div>
+    <h1 id="ten"><%= session.staffName || 'Nhân viên' %></h1>
+    <div class="phu">
+      Hãy đăng ký khuôn mặt để lần sau chấm công chỉ cần nhìn vào camera.<br>
+      Hệ thống <strong>tự chụp</strong> — bạn chỉ cần làm theo hướng dẫn.
+    </div>
+
+    <%
+      /*
+        Dieu kien de DANG KY khac dieu kien de CHAM CONG.
+        `trangThai.san_sang` cua Python = co mo hinh VA da co it nhat mot nguoi
+        dang ky. Dung no de khoa nut dang ky thi khong ai dang ky duoc nguoi dau
+        tien - he thong tu khoa chinh minh. Dang ky chi can: Python song va da
+        tai mo hinh.
+      */
+      var coKetNoi = trangThai && trangThai.ket_noi !== false;
+      var coMoHinh = trangThai && trangThai.co_mo_hinh !== false;
+      var coTheDangKy = coKetNoi && coMoHinh;
+    %>
+    <% if (!coTheDangKy) { %>
+      <div class="canh-bao">
+        <i class="fas fa-exclamation-triangle"></i>
+        <% if (!coKetNoi) { %>
+          Dịch vụ nhận diện (Python, cổng 8000) chưa bật. Bạn có thể bỏ qua và đăng ký sau.
+        <% } else { %>
+          Máy chủ chưa có mô hình nhận diện. Chạy <code>python -m ml_service.tai_mo_hinh</code>
+          rồi quay lại. Bạn có thể bỏ qua và đăng ký sau.
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="video-boc" id="video-boc">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="vong"><svg viewBox="0 0 100 100"><circle id="vong-tron" cx="50" cy="50" r="46"
+        stroke-dasharray="289" stroke-dashoffset="289"></circle></svg></div>
+    </div>
+
+    <div class="huong-dan" id="huong-dan">Nhấn nút để bắt đầu</div>
+    <div class="trang-thai" id="trang-thai">Ngồi ngay ngắn, khuôn mặt nằm gọn trong vòng tròn</div>
+
+    <button class="nut" id="nut-bat-dau"><i class="fas fa-camera"></i> Bắt đầu đăng ký</button>
+    <a class="bo-qua" href="/staff" id="bo-qua">Bỏ qua, để đăng ký sau &rarr;</a>
+  </div>
+
+  <canvas id="canvas" style="display:none"></canvas>
+  <script src="/cham-cong-khuon-mat.js"></script>
+  <script>
+  (function () {
+    var idNv = <%= hoSo ? hoSo.id_nv : 'null' %>;
+    var CO_THE_DANG_KY = <%= coTheDangKy ? 'true' : 'false' %>;
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var boc = document.getElementById('video-boc');
+    var vong = document.getElementById('vong-tron');
+    var hd = document.getElementById('huong-dan');
+    var tt = document.getElementById('trang-thai');
+    var nut = document.getElementById('nut-bat-dau');
+
+    var CHU_VI = 289;
+
+    // Camera mo ngay, nhung nut chi bat khi DA co khung hinh that - chup som
+    // hon thi chi thu duoc anh den.
+    var camSanSang = false;
+    nut.disabled = true;
+    tt.textContent = 'Đang mở camera...';
+    CamCC.moCamera(video)
+      .then(function () {
+        camSanSang = true;
+        tt.textContent = 'Ngồi ngay ngắn, khuôn mặt nằm gọn trong vòng tròn';
+        nut.disabled = !CO_THE_DANG_KY;
+      })
+      .catch(function (e) {
+        tt.textContent = e.message;
+        nut.disabled = true;
+        hd.innerHTML = '<span style="color:#ff8f87"><i class="fas fa-video-slash"></i> Chưa dùng được camera</span>';
+      });
+
+    function chup() {
+      // cắt vuông giữa khung hình + lật lại cho khớp ảnh thật
+      // Anh mau phai chup o cung do phan giai voi anh cham cong (640x480). Neu
+      // anh mau net hon han anh cham cong thi vector dac trung hai ben lech
+      // nhau mot chut, do tuong dong tut oan - nguoi that bi bao "khong khop".
+      return CamCC.chup(video, canvas, { rong: 640, cao: 640, vuong: true, chatLuong: 0.92 });
+    }
+
+    // Ba tư thế, mỗi tư thế tự chụp vài ảnh -> đủ góc mà không cần bấm.
+    var BUOC = [
+      { mo_ta:'Nhìn THẲNG vào camera',  icon:'fa-user',            so:3 },
+      { mo_ta:'Quay mặt sang TRÁI một chút', icon:'fa-arrow-left', so:2 },
+      { mo_ta:'Quay mặt sang PHẢI một chút', icon:'fa-arrow-right', so:2 },
+    ];
+
+    function batDau() {
+      nut.disabled = true;
+      document.getElementById('bo-qua').style.display = 'none';
+      boc.classList.add('thu');
+      var anh = [];
+      var tongAnh = BUOC.reduce(function(s,b){return s+b.so;},0);
+      var daChup = 0;
+
+      var iBuoc = 0;
+      function chayBuoc() {
+        if (iBuoc >= BUOC.length) { return hoanTat(anh); }
+        var b = BUOC[iBuoc];
+        hd.innerHTML = '<i class="fas ' + b.icon + '"></i> ' + b.mo_ta;
+        tt.textContent = 'Giữ yên...';
+
+        // Đếm ngược 1.2s cho người dùng vào tư thế, rồi tự chụp b.so ảnh.
+        var doi = 1200;
+        setTimeout(function () {
+          var j = 0;
+          var hen = setInterval(function () {
+            try {
+              anh.push(chup());
+            } catch (e) {
+              clearInterval(hen);
+              return thatBai(e.message);
+            }
+            daChup++; j++;
+            vong.style.strokeDashoffset = CHU_VI * (1 - daChup / tongAnh);
+            tt.textContent = 'Đã chụp ' + daChup + '/' + tongAnh;
+            if (j >= b.so) { clearInterval(hen); iBuoc++; chayBuoc(); }
+          }, 450);
+        }, doi);
+      }
+      chayBuoc();
+    }
+
+    function hoanTat(anh) {
+      boc.classList.remove('thu'); boc.classList.add('xong');
+      hd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+      tt.textContent = 'Vui lòng đợi một chút';
+
+      fetch('/api/khuon-mat/dang-ky', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id_nv: idNv, anh: anh, thay_the: true }),
+      }).then(function(r){return r.json();}).then(function (kq) {
+        if (kq.ok && kq.tong_mau_hien_co > 0) {
+          xongXuoi(kq);
+        } else {
+          thatBai(kq.thong_bao || (kq.chi_tiet_loai && kq.chi_tiet_loai.length
+            ? 'Ảnh chưa đạt: ' + kq.chi_tiet_loai.map(function(l){return l.ly_do;}).join('; ')
+            : 'Chưa nhận được khuôn mặt rõ. Hãy thử lại nơi đủ sáng.'));
+        }
+      }).catch(function(e){ thatBai('Lỗi kết nối: ' + e.message); });
+    }
+
+    function xongXuoi(kq) {
+      document.querySelector('.the').innerHTML =
+        '<div class="thanh-cong-box"><div class="bt"><i class="fas fa-check-circle"></i></div>' +
+        '<h1 style="margin:0">Đăng ký thành công!</h1>' +
+        '<div class="phu" style="margin-top:8px">Đã lưu ' + kq.tong_mau_hien_co + ' mẫu khuôn mặt' +
+        (kq.du_dieu_kien ? '. Lần sau bạn chấm công chỉ cần nhìn vào camera.' :
+          '. Nên đăng ký thêm để nhận diện chính xác hơn.') + '</div>' +
+        '<a class="nut" href="/staff" style="display:inline-block;text-decoration:none;margin-top:16px">Vào hệ thống</a></div>';
+      setTimeout(function(){ location.href='/staff'; }, 3500);
+    }
+
+    function thatBai(msg) {
+      boc.classList.remove('xong');
+      vong.style.strokeDashoffset = CHU_VI;
+      hd.innerHTML = '<span style="color:#ff8f87"><i class="fas fa-times-circle"></i> Chưa đăng ký được</span>';
+      tt.textContent = msg;
+      nut.disabled = !(camSanSang && CO_THE_DANG_KY);
+      nut.innerHTML = '<i class="fas fa-redo"></i> Thử lại';
+      document.getElementById('bo-qua').style.display = 'block';
+    }
+
+    nut.onclick = function () {
+      if (!camSanSang) { return; }
+      batDau();
+    };
+    if (!CO_THE_DANG_KY) { hd.textContent = 'Dịch vụ nhận diện chưa bật'; }
+  })();
+  </script>
+</body>
+</html>

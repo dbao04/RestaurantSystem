@@ -1,0 +1,162 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1338 812" role="img" aria-label="Sơ đồ tuần tự luồng thanh toán chuyển khoản VietQR và đối soát tự động khi ngân hàng gọi webhook"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-sqB" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-sqB" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><line class="duong-doi" x1="82" y1="56" x2="82" y2="754"/><line class="duong-doi" x1="241.5" y1="56" x2="241.5" y2="754"/><line class="duong-doi" x1="470.7899999999999" y1="56" x2="470.7899999999999" y2="754"/><line class="duong-doi" x1="754.0499999999997" y1="56" x2="754.0499999999997" y2="754"/><line class="duong-doi" x1="1103.4599999999994" y1="56" x2="1103.4599999999994" y2="754"/><line class="duong-doi" x1="1255.4599999999994" y1="56" x2="1255.4599999999994" y2="754"/><g class="khoi">
+    <rect class="khung-tt" x="156" y="558" width="1025.4599999999994" height="180"/>
+    <path class="the" d="M156,558 h38 l10,14 v6 h-48 z"/>
+    <text class="tx-khoi" style="text-anchor:start" x="163" y="572">opt</text>
+    <text class="tx-dk" style="text-anchor:start" x="216" y="573">[nội dung chuyển khoản khớp một phiên đang chờ]</text>
+    
+  </g><rect class="kich-hoat" x="1097.4599999999994" y="251" width="12" height="57"/><rect class="kich-hoat" x="748.0499999999997" y="167" width="12" height="183"/><rect class="kich-hoat" x="464.7899999999999" y="125" width="12" height="267"/><rect class="kich-hoat" x="748.0499999999997" y="503" width="12" height="141"/><rect class="kich-hoat" x="235.5" y="671" width="12" height="57"/><rect class="kich-hoat" x="235.5" y="83" width="12" height="645"/><rect class="kich-hoat" x="464.7899999999999" y="461" width="12" height="267"/><rect class="kich-hoat" x="1097.4599999999994" y="545" width="12" height="183"/><rect class="kich-hoat" x="1097.4599999999994" y="587" width="12" height="141"/><rect class="kich-hoat" x="1249.4599999999994" y="419" width="12" height="309"/><g class="td">
+    <line class="tin" x1="88" y1="90" x2="234.5" y2="90" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="161.25" y="84">bấm “Thanh toán”</text>
+  </g><g class="td">
+    <line class="tin" x1="247.5" y1="132" x2="463.7899999999999" y2="132" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="355.645" y="126">POST /qr/thanh-toan/:sesis/tao-phien</text>
+  </g><g class="td">
+    <line class="tin" x1="476.7899999999999" y1="174" x2="747.0499999999997" y2="174" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="611.9199999999998" y="168">taoPhien({sesis, soTien, maPhuongThuc: 'vietqr'})</text>
+  </g><g class="td"><polyline class="tin" points="760.0499999999997,207 788.0499999999997,207 788.0499999999997,225 762.0499999999997,225"
+      marker-end="url(#mui-sqB)"/><text class="tx-tin" style="text-anchor:start" x="796.0499999999997" y="220">sinhMaDoiSoat()</text><text class="tx-tin" style="text-anchor:start" x="796.0499999999997" y="232">vietQR.tlv() → chuỗi EMVCo</text></g><g class="td">
+    <line class="tin" x1="760.0499999999997" y1="258" x2="1096.4599999999994" y2="258" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="928.2549999999995" y="252">INSERT payments (status = 'cho_thanh_toan')</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="1097.4599999999994" y1="300" x2="761.0499999999997" y2="300" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="929.2549999999995" y="294">id phiên thanh toán</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="748.0499999999997" y1="342" x2="477.7899999999999" y2="342" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="612.9199999999998" y="336">{ payment, anhQR, het_han_luc }</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="464.7899999999999" y1="384" x2="248.5" y2="384" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="356.645" y="378">ảnh mã QR + đồng hồ đếm ngược</text>
+  </g><g class="td">
+    <line class="tin" x1="88" y1="426" x2="1248.4599999999994" y2="426" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="668.2299999999997" y="420">quét mã, chuyển khoản trên app ngân hàng</text>
+  </g><g class="td">
+    <line class="tin" x1="1249.4599999999994" y1="468" x2="477.7899999999999" y2="468" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="863.6249999999997" y="462">POST /api/webhook/ngan-hang (Apikey)</text>
+  </g><g class="td">
+    <line class="tin" x1="476.7899999999999" y1="510" x2="747.0499999999997" y2="510" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="611.9199999999998" y="504">ghiNhanGiaoDichNganHang({so_tien, noi_dung})</text>
+  </g><g class="td">
+    <line class="tin" x1="760.0499999999997" y1="552" x2="1096.4599999999994" y2="552" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="928.2549999999995" y="546">INSERT giao_dich_ngan_hang</text>
+  </g><g class="td">
+    <line class="tin" x1="760.0499999999997" y1="594" x2="1096.4599999999994" y2="594" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="928.2549999999995" y="588">UPDATE payments SET status = thanh_cong (khớp ma_doi_soat)</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="748.0499999999997" y1="636" x2="477.7899999999999" y2="636" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="612.9199999999998" y="630">{ khop: true, payment }</text>
+  </g><g class="td">
+    <line class="tin" x1="464.7899999999999" y1="678" x2="248.5" y2="678" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="356.645" y="672">emit 'tt:da-thanh-toan' (Socket.IO)</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="235.5" y1="720" x2="89" y2="720" marker-end="url(#mui-sqB)"/>
+    <text class="tx-tin" x="162.25" y="714">màn hình “Đã thanh toán”</text>
+  </g><g class="doi-tuong ngoai">
+      <rect x="26" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="82" y="30">Khách</text><text class="tx-dt" x="82" y="45">(điện thoại)</text>
+    </g><g class="doi-tuong ">
+      <rect x="178" y="10" width="127" height="46" rx="4"/>
+      <text class="tx-dt" x="241.5" y="30">Trang thanh toán</text><text class="tx-dt" x="241.5" y="45">thanh-toan-qr.ejs</text>
+    </g><g class="doi-tuong ">
+      <rect x="400.2899999999999" y="10" width="141" height="46" rx="4"/>
+      <text class="tx-dt" x="470.7899999999999" y="30">Web (Node)</text><text class="tx-dt" x="470.7899999999999" y="45">routes/thanhToan.js</text>
+    </g><g class="doi-tuong ">
+      <rect x="691.0499999999997" y="10" width="126" height="40" rx="4"/>
+      <text class="tx-dt" x="754.0499999999997" y="34.5">thanhToanService</text>
+    </g><g class="doi-tuong ngoai">
+      <rect x="1047.4599999999994" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="1103.4599999999994" y="30">MySQL</text><text class="tx-dt" x="1103.4599999999994" y="45">payments</text>
+    </g><g class="doi-tuong ngoai">
+      <rect x="1199.4599999999994" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="1255.4599999999994" y="30">Ngân hàng</text><text class="tx-dt" x="1255.4599999999994" y="45">(webhook)</text>
+    </g><g class="ghi-chu">
+    <text class="tx-ghi" x="26" y="780">Webhook luôn được trả HTTP 200 khi giao dịch đã được ghi vào hộp thư, kể cả khi không khớp phiên nào:</text><text class="tx-ghi" x="26" y="793">ngân hàng sẽ bắn lại liên tục nếu nhận mã khác 200, mà giao dịch đó thì vẫn đối soát tay được sau.</text>
+  </g></svg>

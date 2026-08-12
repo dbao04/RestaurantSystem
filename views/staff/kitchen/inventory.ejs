@@ -1,6 +1,20 @@
 <%
   var activePage = 'inventory';
   var staffName = session.staffName || 'Bếp trưởng';
+
+  /*
+   * `soLuongKho` duoc gan vao res.locals trong server.js. File .ejs duoc doc
+   * lai moi lan render, con server.js chi nap MOT LAN luc khoi dong - nen sau
+   * khi them helper ma quen khoi dong lai server, view moi se goi mot ham chua
+   * ton tai va ca trang do loi 500 "soLuongKho is not defined".
+   *
+   * Mot bang ton kho khong duoc phep chet ca trang chi vi thieu ham dinh dang.
+   * Dong duoi tu lo lay ban du phong: van hien so, chi la chua lam tron theo
+   * don vi. Khoi dong lai server la tu dong dung lai ban day du.
+   */
+  var slKho = (typeof soLuongKho === 'function')
+    ? soLuongKho
+    : function (v) { return String(v == null ? 0 : v); };
 %>
 <%- include('../partials/header') %>
 
@@ -37,10 +51,17 @@
                     <tr>
                         <td class="font-weight-bold"><%= i.ten_nl %></td>
                         <td><%= i.ten_dvt %></td>
+                        <%
+                          /* In qua soLuongKho: don vi dem duoc (lon/chai/cai...)
+                             luon ra so nguyen, kg/lit toi da 2 chu so thap phan.
+                             Truoc day in thang gia tri float nen cot nay hien
+                             "156.84" cho Bia Tiger - khong ai dem duoc 0,84 lon. */
+                        %>
                         <td class="<%= i.so_luong <= i.dinh_muc_min ? 'text-danger font-weight-bold' : '' %>">
-                            <%= i.so_luong %>
+                            <%= slKho(i.so_luong, i.ten_dvt) %>
+                            <span class="text-muted small"><%= i.ten_dvt %></span>
                         </td>
-                        <td><%= i.dinh_muc_min %></td>
+                        <td><%= slKho(i.dinh_muc_min, i.ten_dvt) %></td>
                         <td>
                             <% if(i.so_luong <= i.dinh_muc_min) { %>
                                 <span class="badge badge-danger">Sắp hết hàng</span>
@@ -148,15 +169,21 @@
         <div class="modal-body">
           <div class="form-group">
             <label>Nguyên liệu</label>
-            <select name="id_nl" class="form-control" required>
+            <select name="id_nl" class="form-control" id="nhap-chon-nl" required>
                 <% ingredients.forEach(i => { %>
-                    <option value="<%= i.id_nl %>"><%= i.ten_nl %> (<%= i.ten_dvt %>)</option>
+                    <option value="<%= i.id_nl %>" data-dvt="<%= i.ten_dvt %>"><%= i.ten_nl %> (<%= i.ten_dvt %>)</option>
                 <% }) %>
             </select>
           </div>
           <div class="form-group">
-            <label>Số lượng nhập</label>
-            <input type="number" step="0.1" name="so_luong" class="form-control" min="0.1" required />
+            <label>Số lượng nhập <span class="text-muted small" id="nhap-dvt"></span></label>
+            <%
+              /* step doi theo don vi: chon "lon" thi o nhap chi cho so nguyen.
+                 Truoc day step luon la 0.1 nen thu kho go duoc "2,5 lon". */
+            %>
+            <input type="number" step="0.1" name="so_luong" id="nhap-so-luong"
+                   class="form-control" min="0.1" required />
+            <small class="form-text text-muted" id="nhap-goi-y"></small>
           </div>
           <div class="form-group">
             <label>Giá nhập (đơn vị)</label>
@@ -171,5 +198,38 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  // Đơn vị đếm được thì ô nhập chỉ cho số nguyên. Không có bước này, thủ kho
+  // gõ được "2,5 lon" và tồn kho lại lệch trở lại như trước.
+  var DEM_DUOC = ['lon', 'chai', 'cai', 'cái', 'bo', 'bó', 'hop', 'hộp', 'goi', 'gói'];
+  var NGUYEN = ['gram', 'g', 'ml'];
+
+  var chon = document.getElementById('nhap-chon-nl');
+  var oSo = document.getElementById('nhap-so-luong');
+  var nhan = document.getElementById('nhap-dvt');
+  var goiY = document.getElementById('nhap-goi-y');
+  if (!chon || !oSo) return;
+
+  function capNhat() {
+    var dvt = (chon.options[chon.selectedIndex].dataset.dvt || '').trim().toLowerCase();
+    var nguyen = DEM_DUOC.indexOf(dvt) >= 0 || NGUYEN.indexOf(dvt) >= 0;
+    oSo.step = nguyen ? '1' : '0.01';
+    oSo.min = nguyen ? '1' : '0.01';
+    if (nguyen && oSo.value) oSo.value = Math.max(1, Math.round(Number(oSo.value)));
+    nhan.textContent = dvt ? '(' + dvt + ')' : '';
+    goiY.textContent = nguyen
+      ? 'Đơn vị "' + dvt + '" chỉ nhận số nguyên.'
+      : 'Đơn vị "' + dvt + '" cho phép số lẻ, ví dụ 2,5.';
+  }
+
+  chon.addEventListener('change', capNhat);
+  oSo.addEventListener('blur', function () {
+    if (this.step === '1' && this.value) this.value = Math.max(1, Math.round(Number(this.value)));
+  });
+  capNhat();
+})();
+</script>
 
 <%- include('../partials/footer') %>

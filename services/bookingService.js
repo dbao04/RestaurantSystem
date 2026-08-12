@@ -12,7 +12,7 @@ const bookingService = {
         await connection.query(
           `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang) 
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
-          [sessionId, item.id_mon, item.name_mon, userId, date, time, item.soluong, partyType, numPeople, item.gia_mon, thanhtien, item.images]
+          [sessionId, item.id_mon, item.name_mon, userId, date, time, item.soluong, partyType, numPeople, item.gia_mon, thanhtien, item.images || '']
         );
       }
       await connection.query('DELETE FROM cart WHERE sesid = ?', [sessionId]);

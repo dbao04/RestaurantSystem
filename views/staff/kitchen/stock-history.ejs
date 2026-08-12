@@ -1,6 +1,12 @@
 <%
   var activePage = 'inventory';
   var staffName = session.staffName || 'Bếp trưởng';
+
+  /* Ban du phong khi server chua nap lai server.js - xem chu thich
+     cung loai o views/staff/kitchen/inventory.ejs. */
+  var slKho = (typeof soLuongKho === 'function')
+    ? soLuongKho
+    : function (v) { return String(v == null ? 0 : v); };
 %>
 <%- include('../partials/header') %>
 
@@ -28,7 +34,7 @@
                     <tr>
                         <td><%= new Date(h.ngay_nhap).toLocaleString('vi-VN') %></td>
                         <td class="font-weight-bold"><%= h.ten_nl %></td>
-                        <td class="text-success">+<%= h.so_luong %></td>
+                        <td class="text-success">+<%= slKho(h.so_luong, h.ten_dvt) %></td>
                         <td><%= h.ten_dvt %></td>
                         <td><%= formatMoney(h.gia_nhap) %></td>
                         <td class="font-weight-bold"><%= formatMoney(h.gia_nhap * h.so_luong) %></td>

@@ -1,61 +1,186 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách hợp đồng</h2>
-        <div class="block">  
-            <table class="data display datatable" id="example">
+<%
+  /* Phan trang o phia may chu: bang `hopdong` co hang chuc nghin dong nen
+     khong the do het ra mot trang roi de DataTables cat o trinh duyet. */
+  var tuSo  = total === 0 ? 0 : (page - 1) * limit + 1;
+  var denSo = Math.min(page * limit, total);
+
+  function duongDan(trang) {
+    var q = ['page=' + trang, 'limit=' + limit];
+    if (keyword) q.push('q=' + encodeURIComponent(keyword));
+    if (status !== '') q.push('status=' + status);
+    return '/admin/hopdonglist?' + q.join('&');
+  }
+
+  /* Chi hien toi da 7 so trang quanh trang dang xem. */
+  var dau = Math.max(1, page - 3);
+  var cuoi = Math.min(totalPages, dau + 6);
+  dau = Math.max(1, cuoi - 6);
+
+  /* Bang trang thai dung chung voi trang nhan vien (views/staff/bookings.ejs). */
+  var BANG_TRANG_THAI = {
+    0: { nhan: 'Chờ xác nhận',  lop: 'qt-pill--warn'   },
+    1: { nhan: 'Đã xác nhận',   lop: 'qt-pill--info'   },
+    2: { nhan: 'Đã hủy',        lop: 'qt-pill--danger' },
+    3: { nhan: 'Đã thanh toán', lop: 'qt-pill--ok'     },
+    5: { nhan: 'Khách đã đến',  lop: 'qt-pill--info'   },
+    6: { nhan: 'Đang dùng món', lop: 'qt-pill--warn'   }
+  };
+%>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Danh sách hợp đồng</h2>
+            <p>
+                <% if (total > 0) { %>
+                    Hiển thị <%= tuSo %>–<%= denSo %> trên tổng <%= total.toLocaleString('vi-VN') %> hợp đồng
+                <% } else { %>
+                    Không có hợp đồng nào khớp điều kiện lọc
+                <% } %>
+            </p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--primary" href="/admin/hopdongmoi"><i class="fas fa-bell-concierge"></i> Hợp đồng mới</a>
+        </div>
+    </div>
+
+    <div class="qt-card__body" style="border-bottom:1px solid var(--qt-line-soft)">
+        <form class="qt-filter" method="get" action="/admin/hopdonglist">
+            <div class="qt-field" style="margin:0;flex:2;min-width:220px">
+                <label for="q">Tìm kiếm</label>
+                <input class="qt-input" type="text" id="q" name="q" value="<%= keyword %>"
+                       placeholder="Tên khách hàng hoặc nội dung tiệc" />
+            </div>
+            <div class="qt-field" style="margin:0;flex:1;min-width:160px">
+                <label for="status">Trạng thái</label>
+                <select class="qt-select" id="status" name="status">
+                    <option value="">Tất cả</option>
+                    <% Object.keys(BANG_TRANG_THAI).forEach(function (ma) { %>
+                        <option value="<%= ma %>" <%= status === ma ? 'selected' : '' %>><%= BANG_TRANG_THAI[ma].nhan %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="qt-field" style="margin:0;flex:0 0 130px">
+                <label for="limit">Mỗi trang</label>
+                <select class="qt-select" id="limit" name="limit">
+                    <% [25, 50, 100, 200].forEach(function (n) { %>
+                        <option value="<%= n %>" <%= limit === n ? 'selected' : '' %>><%= n %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="qt-filter__act">
+                <button class="qt-btn qt-btn--primary" type="submit"><i class="fas fa-magnifying-glass"></i> Lọc</button>
+                <% if (keyword || status !== '') { %>
+                    <a class="qt-btn qt-btn--ghost" href="/admin/hopdonglist">Xóa lọc</a>
+                <% } %>
+            </div>
+        </form>
+    </div>
+
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (contracts && contracts.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table">
                 <thead>
                     <tr>
-                        <th>STT</th>
+                        <th>#</th>
                         <th>Ngày đặt</th>
                         <th>Khách hàng</th>
-                        <th>Số người</th>
+                        <th>Số khách</th>
                         <th>Nội dung</th>
                         <th>Thời gian</th>
                         <th>Tổng tiền</th>
-                        <th>Tình trạng</th>
-                        <th>Action</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (contracts && contracts.length > 0) { %>
-                        <% contracts.forEach((order, index) => { %>
-                            <tr class="odd gradeX">
-                                <td><%= index + 1 %></td>
-                                <td><%= order.dates %></td>
-                                <td><%= order.ten %></td>
-                                <td><%= order.so_user %></td>
-                                <td><%= order.noidung %></td>
-                                <td><%= order.tg %></td>
-                                <td><%= formatMoney(order.tong_tien) %> VNĐ</td>
-                                <td>
-                                    <% if (order.tinhtrang == 0) { %>
-                                        <span style="color: red;">Đang chờ...</span>
-                                    <% } else { %>
-                                        <span style="color: green;">Đã xác nhận</span>
-                                    <% } %>
-                                </td>
-                                <td>
-                                    <% if (order.tinhtrang == 0) { %>
-                                        <a class="btn btn-sm btn-success" href="/admin/hopdongconfirm/<%= order.sesis %>" onclick="return confirm('Xác nhận đơn hàng này và chuyển xuống bếp?')">Xác nhận</a>
-                                    <% } %>
-                                    <a class="btn btn-sm btn-danger" onclick="return confirm('Bạn muốn xóa hợp đồng này?')" href="/admin/hopdongdel/<%= order.sesis %>">Delete</a>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } %>
+                    <% contracts.forEach((order, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= tuSo + index %></td>
+                        <td><%= order.dates %></td>
+                        <td>
+                            <span class="qt-strong"><%= order.ten %></span>
+                            <% if (order.sodienthoai) { %><span class="qt-sub"><%= order.sodienthoai %></span><% } %>
+                        </td>
+                        <td class="qt-num"><%= order.so_user %></td>
+                        <td><%= order.noidung %></td>
+                        <td><%= order.tg %></td>
+                        <td class="qt-money"><%= formatMoney(order.tong_tien) %></td>
+                        <td>
+                            <% var tt = BANG_TRANG_THAI[order.tinhtrang]; %>
+                            <% if (tt) { %>
+                                <span class="qt-pill <%= tt.lop %>"><%= tt.nhan %></span>
+                            <% } else { %>
+                                <span class="qt-pill qt-pill--muted">Không rõ (<%= order.tinhtrang %>)</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="qt-actions">
+                                <% if (order.tinhtrang == 0) { %>
+                                <a class="qt-btn qt-btn--ok qt-btn--sm" href="/admin/hopdongconfirm/<%= order.sesis %>"
+                                   onclick="return confirm('Xác nhận đơn hàng này và chuyển xuống bếp?')">
+                                    <i class="fas fa-check"></i> Xác nhận
+                                </a>
+                                <% } %>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/hopdongdel/<%= order.sesis %>"
+                                   onclick="return confirm('Xóa hợp đồng của khách &quot;<%= order.ten %>&quot;?')">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+
+        <% if (totalPages > 1) { %>
+        <div class="qt-pager">
+            <span class="qt-pager__info">Trang <%= page %> / <%= totalPages %></span>
+            <nav class="qt-pager__nav">
+                <% if (page > 1) { %>
+                    <a class="qt-pager__btn" href="<%= duongDan(1) %>" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+                    <a class="qt-pager__btn" href="<%= duongDan(page - 1) %>" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+                <% } else { %>
+                    <span class="qt-pager__btn is-off"><i class="fas fa-angles-left"></i></span>
+                    <span class="qt-pager__btn is-off"><i class="fas fa-angle-left"></i></span>
+                <% } %>
+
+                <% for (var t = dau; t <= cuoi; t++) { %>
+                    <% if (t === page) { %>
+                        <span class="qt-pager__btn is-current"><%= t %></span>
+                    <% } else { %>
+                        <a class="qt-pager__btn" href="<%= duongDan(t) %>"><%= t %></a>
+                    <% } %>
+                <% } %>
+
+                <% if (page < totalPages) { %>
+                    <a class="qt-pager__btn" href="<%= duongDan(page + 1) %>" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+                    <a class="qt-pager__btn" href="<%= duongDan(totalPages) %>" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+                <% } else { %>
+                    <span class="qt-pager__btn is-off"><i class="fas fa-angle-right"></i></span>
+                    <span class="qt-pager__btn is-off"><i class="fas fa-angles-right"></i></span>
+                <% } %>
+            </nav>
+        </div>
+        <% } %>
+
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-file-signature"></i>
+            <% if (keyword || status !== '') { %>
+                <p>Không tìm thấy hợp đồng nào khớp điều kiện lọc.</p>
+                <a class="qt-btn qt-btn--primary" href="/admin/hopdonglist"><i class="fas fa-rotate-left"></i> Xóa bộ lọc</a>
+            <% } else { %>
+                <p>Chưa có hợp đồng nào.</p>
+            <% } %>
+        </div>
+        <% } %>
     </div>
 </div>
-
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('.datatable').dataTable();
-    });
-</script>
 
 <%- include('partials/footer') %>

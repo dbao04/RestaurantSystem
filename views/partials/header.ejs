@@ -1,108 +1,71 @@
 <!DOCTYPE html>
 <html lang="vi">
   <head>
-    <title>NHA HANG BD</title>
+    <title><%= typeof title !== 'undefined' ? title + ' — Nhà Hàng Bảo Đoàn' : 'Nhà Hàng Bảo Đoàn' %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Great+Vibes&family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Great+Vibes&family=Dancing+Script:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <!-- Template cũ (giữ để các trang chưa thiết kế lại vẫn chạy) -->
     <link rel="stylesheet" href="/open-iconic-bootstrap.min.css">
     <link rel="stylesheet" href="/animate.css">
-    
     <link rel="stylesheet" href="/owl.carousel.min.css">
     <link rel="stylesheet" href="/owl.theme.default.min.css">
     <link rel="stylesheet" href="/magnific-popup.css">
-
     <link rel="stylesheet" href="/aos.css">
-
     <link rel="stylesheet" href="/ionicons.min.css">
-
     <link rel="stylesheet" href="/bootstrap-datepicker.css">
     <link rel="stylesheet" href="/jquery.timepicker.css">
-
-    
     <link rel="stylesheet" href="/flaticon.css">
     <link rel="stylesheet" href="/icomoon.css">
-	<link rel="stylesheet" href="/style.css">
-	<style>
-		.text{
-			color: white;
-		}
-	</style>
+    <link rel="stylesheet" href="/style.css">
+    <!-- Hệ thống giao diện mới (nạp sau cùng để ưu tiên) -->
+    <link rel="stylesheet" href="/nhahang.css">
+    <style>
+      @media (max-width: 760px) { .d-none-mobile { display: none !important; } }
+    </style>
   </head>
- 
-  <body>
-    <div class="py-1  top">
-    	<div class="container">
-    		<div class="row no-gutters d-flex align-items-start align-items-center px-md-0">
-	    		<div class="col-lg-12 d-block">
-		    		<div class="row d-flex">
-		    			<div class="col-md pr-4 d-flex topper align-items-center">
-				    		<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-phone2"></span></div>
-					    	<span class="text">+0918.453632</span>
-					    </div>
-				    	<div class="col-md pr-4 d-flex topper align-items-center">
-				    		<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-paper-plane"></span></div>
-						<a href="#"><span class="text"><%= session.username || '' %></span></a>
-				    	</div>
-				    	<div class="col-md-5 pr-4 d-flex topper align-items-center text-lg-right justify-content-end">
-					    	<p class="mb-0 text"><span>Mở cửa:</span> <span>Thứ Hai - Chủ Nhật</span> <span>8:00 giờ - 21:00 giờ</span></p>
-				    	</div>
-			    	</div>
-		    	</div>
-		    </div>
-		  </div>
-    </div>
-	  <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
-	    <div class="container">
-	      <a class="navbar-brand" href="/" style="font-size: 24px; font-weight: bold; display: flex; align-items: center;">
-          <img src="/admin-img/new_logo.png" alt="Logo" style="height: 40px; margin-right: 10px;">
-          NHA HANG BD
-        </a>
-	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-	        <span class="oi oi-menu"></span> Menu
-	      </button>
 
-	      <div class="collapse navbar-collapse" id="ftco-nav">
-	        <ul class="navbar-nav ml-auto">
-	        	<li class="nav-item"><a href="/" class="nav-link">Trang Chủ</a></li>
-	        	<li class="nav-item"><a href="/about" class="nav-link">Về Chúng Tôi</a></li>
-	        	<li class="nav-item"><a href="/menu" class="nav-link">Thực Đơn</a></li>
-	        	<li class="nav-item "><a href="/blog" class="nav-link">Tin Tức</a></li>
-           
-		  	  <li class="nav-item cta"><a href="/cart" class="nav-link"><img src="/cart.png" height="28" width="50">
-		  	  <% if (session.sum) { %>
-          <%= formatMoney(session.sum) %>
-        <% } %>
-		  	  </a></li>
-		  	  <li class="nav-item cta"><a href="/datban" class="nav-link">Đặt Bàn</a></li>
-		  	  <li class="nav-item cta"> 
-		  	    <% if(session.username){ %>
-			  	  <a class="nav-link" href="/my-orders"><span>Đơn hàng</span></a>
-			  	<% } else { %>
-			  	  <a class="nav-link" href="#">Liên Hệ</a>
-			  	<% } %>
-		  	  </li>			
-              <li class="nav-item cta"> 
-		  	    <% if(session.username){ %>
-                  <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <span>👤 <%= session.username %></span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                      <a class="dropdown-item" href="/profile">Thông tin cá nhân</a>
-                      <a class="dropdown-item" href="/my-orders">Đơn đặt bàn</a>
-                      <a class="dropdown-item" href="/chat">Chat nhân viên</a>
-                      <a class="dropdown-item" href="/rating">Đánh giá dịch vụ</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item text-danger" href="/logout">Đăng xuất</a>
-                    </div>
-                  </div>
-		  	    <% } else { %>
-		  	      <a class="nav-link" href="/login">Đăng nhập</a>
-		  	    <% } %>
-		    	</li>
-	        </ul>
-	      </div>
-	    </div>
-	  </nav>
+  <body class="nh">
+    <% var heroNav = (typeof heroNav !== 'undefined' && heroNav); %>
+    <nav class="nh-nav <%= heroNav ? '' : 'is-solid' %>" id="nh-nav">
+      <div class="nh-container nh-nav__inner">
+        <a class="nh-brand" href="/">
+          <img src="/admin-img/new_logo.png" alt="Logo" onerror="this.style.display='none'">
+          <span class="nh-brand__name">Nhà Hàng Bảo Đoàn</span>
+        </a>
+
+        <ul class="nh-nav__links" id="nh-menu">
+          <li><a href="/" class="<%= (typeof activeNav !== 'undefined' && activeNav==='home') ? 'is-active' : '' %>">Trang Chủ</a></li>
+          <li><a href="/about" class="<%= (typeof activeNav !== 'undefined' && activeNav==='about') ? 'is-active' : '' %>">Về Chúng Tôi</a></li>
+          <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>">Thực Đơn</a></li>
+          <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>">Tin Tức</a></li>
+          <% if (session.username) { %>
+            <li><a href="/my-orders">Đơn Của Tôi</a></li>
+          <% } %>
+        </ul>
+
+        <div class="nh-nav__actions">
+          <a href="/cart" class="nh-cart" title="Giỏ hàng">
+            <i class="fas fa-shopping-bag"></i>
+            <% if (session.sum) { %><span class="nh-cart__badge">•</span><% } %>
+          </a>
+          <% if (session.username) { %>
+            <a href="/profile" class="nh-user" title="Tài khoản">
+              <span class="nh-user__avatar"><%= session.username.charAt(0).toUpperCase() %></span>
+              <span class="nh-user__name d-none-mobile"><%= session.username %></span>
+            </a>
+          <% } %>
+          <a href="/datban" class="nh-btn nh-btn--gold nh-btn--sm d-none-mobile"><i class="fas fa-utensils"></i> Đặt Bàn</a>
+          <% if (!session.username) { %>
+            <a href="/login" class="nh-user d-none-mobile" title="Đăng nhập"><i class="fas fa-user"></i></a>
+          <% } else { %>
+            <a href="/logout" class="nh-user d-none-mobile" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></a>
+          <% } %>
+        </div>
+
+        <button class="nh-burger" id="nh-burger" aria-label="Menu"><i class="fas fa-bars"></i></button>
+      </div>
+    </nav>
+    <% if (!heroNav) { %><div style="height:66px"></div><% } %>

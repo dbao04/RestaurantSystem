@@ -12,3 +12,36 @@ food/*.csv
 *.zip
 *.rar
 
+
+# AI/ML
+ml_service.log
+server_run.log
+__pycache__/
+*.pyc
+ml_service/__pycache__/
+backup/
+.shots/
+
+# Du lieu sinh trac hoc - khong dua vao git
+du_lieu_khuon_mat/
+ml_service/mo_hinh_khuon_mat/*.onnx
+
+# Chung chi HTTPS tu ky - chua KHOA RIENG, va gan voi dia chi IP cua tung may.
+# Server tu sinh lai khi thieu, nen khong can luu.
+config/chung-chi/
+
+# Script/dump tam trong qua trinh phat trien - dung tao lai o thu muc goc
+_tmp_*
+_face_test/
+*_schema.json
+schema_info.*
+schema_output.txt
+schema.txt
+all_tables.json
+test_out*.html
+
+# Script debug tam
+_test_server.js
+_xem.js
+_e2e_chotca.js
+cap_nhat_bai_viet.js

@@ -5,7 +5,7 @@
     <footer class="sticky-footer bg-white">
       <div class="container my-auto">
         <div class="copyright text-center my-auto">
-          <span>Copyright &copy; NHA HANG BD <%= new Date().getFullYear() %></span>
+          <span>Copyright &copy; Nhà Hàng Bảo Đoàn <%= new Date().getFullYear() %></span>
         </div>
       </div>
     </footer>
@@ -17,62 +17,260 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
 
-<!-- Socket.io & Notifications -->
-<script src="/socket.io/socket.io.js"></script>
+<!-- Socket.io da nap trong header.ejs (truoc noi dung trang) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<% if (typeof coQuyen === 'function' && coQuyen('dieu_hanh.viec.tao')) { %>
+<!--
+  Nút báo việc toàn cục.
+  Nhân viên tuyến đầu (phục vụ, phụ bếp, lễ tân) không có quyền vào /dieu-hanh
+  nhưng lại chính là người phát hiện sự cố sớm nhất. Đặt nút ở đây để họ báo
+  được từ bất kỳ trang nào đang làm việc.
+-->
+<button id="nut-bao-viec" class="btn btn-danger shadow rounded-circle"
+        title="Báo việc lên cấp trên"
+        style="position:fixed;right:22px;bottom:22px;width:54px;height:54px;z-index:9998">
+  <i class="fas fa-bullhorn"></i>
+</button>
+
+<div class="modal fade" id="modal-bao-viec" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-bullhorn text-danger"></i> Báo việc lên cấp trên</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="small font-weight-bold">Loại việc</label>
+          <select class="form-control" id="bv-loai">
+            <option value="het_mon">Báo hết món / hết nguyên liệu</option>
+            <option value="khach_phan_nan">Khách phàn nàn</option>
+            <option value="thiet_bi">Sự cố thiết bị</option>
+            <option value="xin_duyet">Xin duyệt (giảm giá / hủy đơn)</option>
+            <option value="thieu_nguoi">Thiếu người</option>
+            <option value="khac" selected>Khác</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="small font-weight-bold">Nội dung <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="bv-tieu-de" maxlength="200"
+                 placeholder="VD: Hết cá hồi phi lê, còn 2 phần">
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label class="small font-weight-bold">Bộ phận xử lý</label>
+            <select class="form-control" id="bv-bo-phan">
+              <option value="">— Bộ phận của tôi —</option>
+            </select>
+            <small class="form-text text-muted">
+              Chọn đúng bộ phận thì việc mới đến tay người xử lý được.
+            </small>
+          </div>
+          <div class="form-group col-md-3">
+            <label class="small font-weight-bold">Mức độ</label>
+            <select class="form-control" id="bv-muc-do">
+              <option value="thap">Thấp</option>
+              <option value="binh_thuong" selected>Bình thường</option>
+              <option value="cao">Cao</option>
+              <option value="khan">Khẩn</option>
+            </select>
+          </div>
+          <div class="form-group col-md-3">
+            <label class="small font-weight-bold">Báo lên cấp</label>
+            <select class="form-control" id="bv-cap">
+              <option value="4" selected>Tổ trưởng ↑</option>
+              <option value="3">Giám sát ↑</option>
+              <option value="2">Trưởng bộ phận ↑</option>
+              <option value="1">Quản lý nhà hàng</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button class="btn btn-danger" id="bv-gui"><i class="fas fa-paper-plane"></i> Gửi ngay</button>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Thư viện thời gian thực (RT) nạp trong header.ejs; ở đây chỉ xử lý sự kiện -->
 <script>
-  // Setup role from server
-  const staffRole = '<%= typeof session !== "undefined" && session.staffRole ? session.staffRole : "" %>';
-  if(staffRole) {
-    const socket = io();
-    socket.emit('join-room', { role: staffRole });
+  // Trước đây client tự khai vai trò qua socket.emit('join-room', {role}) - ai
+  // cũng có thể tự xưng 'Bep' để nghe đơn bếp. Nay server đọc phiên đăng nhập
+  // và tự cho vào đúng phòng, nên ở đây chỉ còn việc xử lý sự kiện nhận được.
+  (function () {
+    if (!window.RT || !RT.socket) return;
 
-    // Audio Object
-    const notifSound = new Audio('/sounds/notification.mp3');
+    var den = document.getElementById('rt-den');
+    if (den) RT.ganDauHieu(den);
 
-    // Món đã xong báo cho Phục vụ / Kế toán
-    if(staffRole === 'Phuc vu' || staffRole === 'Ke toan') {
-      socket.on('dish-ready', function(data) {
-        notifSound.play().catch(e => console.log('Autoplay prevent on audio'));
-        Swal.fire({
-          title: 'Món ăn đã sẵn sàng!',
-          text: data.message,
-          icon: 'success',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 8000,
-          timerProgressBar: true
-        });
-        // Tự động tải lại trang nếu đang ở module bếp/đơn hàng
-        if(window.location.pathname.includes('/staff/kitchen')) {
-             setTimeout(() => { window.location.reload(); }, 2000);
-        }
+    // Món đã xong — chỉ những phòng liên quan mới nhận được sự kiện này.
+    //
+    // Trước đây hai chỗ này còn kèm `setTimeout(location.reload, 2000)` khi
+    // đang ở /staff/kitchen. Tải lại cả trang sau đúng 2 giây là cách thô: nó
+    // xoá cả ô tìm kiếm đang gõ dở và giật màn hình giữa giờ cao điểm. Nay việc
+    // làm mới do bản đồ trang bên dưới lo, đúng vùng và biết chờ khi người dùng
+    // đang thao tác.
+    RT.khi('dish-ready', function (d) {
+      RT.keu();
+      Swal.fire({
+        title: 'Món ăn đã sẵn sàng!',
+        text: d.name_mon ? (d.name_mon + (d.number_ban ? ' — bàn ' + d.number_ban : '')) : (d.message || ''),
+        icon: 'success', toast: true, position: 'top-end',
+        showConfirmButton: false, timer: 8000, timerProgressBar: true
       });
+    });
+
+    // Đơn mới xuống bếp.
+    RT.khi('new-order-to-kitchen', function (d) {
+      RT.keu();
+      Swal.fire({
+        title: 'Có đơn hàng mới!',
+        text: d.message || 'Đơn vừa được gửi xuống bếp.',
+        icon: 'info', toast: true, position: 'top-end',
+        showConfirmButton: false, timer: 8000, timerProgressBar: true
+      });
+    });
+
+    // Huy hiệu "việc đang chờ" trên thanh bên + nạp danh sách bộ phận cho modal.
+    var huyHieu = document.getElementById('sl-viec-cho');
+    var chonBp = document.getElementById('bv-bo-phan');
+    if (huyHieu || chonBp) {
+      RT.dongBo('/api/to-chuc/tong-quan', function (tq) {
+        if (huyHieu) {
+          var n = tq.viec ? tq.viec.cho : 0;
+          huyHieu.textContent = n;
+          huyHieu.classList.toggle('d-none', !n);
+        }
+        // Chỉ nạp một lần, tránh xoá lựa chọn người dùng đang mở dở.
+        if (chonBp && chonBp.options.length <= 1) {
+          (tq.theo_bo_phan || []).forEach(function (b) {
+            var o = document.createElement('option');
+            o.value = b.id_bp;
+            o.textContent = b.ten_bp;
+            chonBp.appendChild(o);
+          });
+        }
+      }, ['viec:moi', 'viec:cap-nhat']);
     }
 
-    // Đơn mới báo cho Bếp
-    if(staffRole === 'Bep') {
-      socket.on('new-order-to-kitchen', function(data) {
-        notifSound.play().catch(e => console.log('Autoplay prevent on audio'));
-        Swal.fire({
-          title: 'Có Đơn Hàng Mới!',
-          text: data.message,
-          icon: 'info',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 8000,
-          timerProgressBar: true
-        });
-        
-        if(window.location.pathname.includes('/staff/kitchen')) {
-             setTimeout(() => { window.location.reload(); }, 2000);
-        }
-      });
+    // Gửi báo việc từ bất kỳ trang nào.
+    var nutBv = document.getElementById('nut-bao-viec');
+    if (nutBv) {
+      nutBv.onclick = function () { $('#modal-bao-viec').modal('show'); };
+      document.getElementById('bv-gui').onclick = function () {
+        var nut = this;
+        var tieuDe = document.getElementById('bv-tieu-de').value.trim();
+        if (!tieuDe) return RT.thongBao('Chưa nhập nội dung.', 'canh-bao');
+        nut.disabled = true;
+        RT.gui('/api/to-chuc/viec', {
+          loai: document.getElementById('bv-loai').value,
+          tieu_de: tieuDe,
+          muc_do: document.getElementById('bv-muc-do').value,
+          cap_bac_toi_thieu: Number(document.getElementById('bv-cap').value),
+          id_bp_xu_ly: document.getElementById('bv-bo-phan').value || null,
+        }).then(function () {
+          document.getElementById('bv-tieu-de').value = '';
+          $('#modal-bao-viec').modal('hide');
+          RT.thongBao('Đã báo lên cấp trên. Họ nhận được ngay trên màn hình.', 'thanh-cong');
+        }).catch(function (e) { RT.thongBao(e.message, 'loi'); })
+          .then(function () { nut.disabled = false; });
+      };
     }
-  }
+
+    /* ====================================================================
+       BẢN ĐỒ TRANG → SỰ KIỆN
+
+       Phần lớn màn hình nhân viên là trang EJS render sẵn, không có API JSON
+       để mà gọi lại. Trước đây chúng đứng yên: sửa tồn kho ở máy này thì máy
+       kia vẫn hiện số cũ cho tới khi ai đó bấm F5, và hai người sửa cùng lúc
+       sẽ đè lên nhau mà không ai biết.
+
+       Khai báo ở ĐÂY chứ không rải vào từng view vì như vậy toàn bộ chính
+       sách "trang nào nghe gì" nhìn được trong một màn hình, và thêm một
+       trang mới chỉ là thêm một dòng.
+
+       HAI CHẾ ĐỘ, KHÁC NHAU CHỖ NÀO
+       - `trao`: đổi thẳng phần nội dung, người dùng không thấy trang nhấp
+         nháy. Chỉ dùng được cho trang KHÔNG có <script> riêng bên trong, vì
+         tráo innerHTML không chạy lại script.
+       - `nhac`: hiện dải "bấm để xem bản mới". Dùng cho trang có script
+         riêng — an toàn tuyệt đối, không bao giờ mất thứ đang làm dở.
+
+       Không có ở đây: KDS, sơ đồ bàn, thanh toán, tổ chức, điều hành, chấm
+       công, khuôn mặt, chat. Những trang đó đã tự vẽ lại từ API riêng.
+       ==================================================================== */
+    var duongDan = location.pathname.replace(/\/+$/, '') || '/';
+
+    // Khớp theo thứ tự, cái đầu tiên trúng thì thắng — nên quy tắc hẹp phải
+    // đứng trước quy tắc rộng (vd /staff/kitchen/inventory trước /staff/kitchen).
+    var BAN_DO = [
+      // --- Bếp: kho, công thức, thiết bị, thực đơn ---
+      { mau: /^\/staff\/kitchen\/inventory/,      che_do: 'nhac', sk: ['kho:doi'] },
+      { mau: /^\/staff\/kitchen\/stock-history/,  che_do: 'trao', sk: ['kho:doi'] },
+      { mau: /^\/staff\/kitchen\/recipes/,        che_do: 'nhac', sk: ['kho:doi', 'thuc-don:doi'] },
+      { mau: /^\/staff\/kitchen\/equipment/,      che_do: 'trao', sk: ['thiet-bi:doi'] },
+      { mau: /^\/staff\/kitchen\/combos/,         che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/staff\/kitchen\/categories/,     che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/staff\/kitchen\/dishes/,         che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/staff\/kitchen\/shift/,          che_do: 'trao', sk: ['ca-bep:doi', 'don-hang:doi'] },
+      { mau: /^\/staff\/kitchen$/,                che_do: 'nhac',
+        sk: ['don-hang:doi', 'new-order-to-kitchen', 'dish-ready', 'kds-cap-nhat'] },
+
+      // --- Nghiệp vụ tuyến trước ---
+      { mau: /^\/staff\/bookings/,   che_do: 'nhac', sk: ['dat-ban:doi', 'don-hang:doi'] },
+      { mau: /^\/staff\/customers/,  che_do: 'trao', sk: ['khach-hang:doi'] },
+      { mau: /^\/staff\/qr-codes/,   che_do: 'nhac', sk: ['qr-ban:doi'] },
+      { mau: /^\/staff\/emails/,     che_do: 'trao', sk: ['email:doi'] },
+
+      // --- Chốt ca / két ---
+      { mau: /^\/staff\/chot-ca/,    che_do: 'nhac', sk: ['chot-ca:doi'] },
+      { mau: /^\/staff\/shift/,      che_do: 'trao', sk: ['chot-ca:doi'] },
+      { mau: /^\/staff\/thanh-toan\/lich-su/, che_do: 'trao',
+        sk: ['tt:da-thanh-toan', 'chot-ca:doi'] },
+
+      // --- Nhân sự của chính mình ---
+      { mau: /^\/staff\/schedule/,      che_do: 'trao', sk: ['lich-lam:doi'] },
+      { mau: /^\/staff\/leave/,         che_do: 'nhac', sk: ['nghi-phep:doi'] },
+      { mau: /^\/staff\/attendance/,    che_do: 'nhac', sk: ['cham-cong:moi'] },
+      { mau: /^\/staff\/notifications/, che_do: 'trao', sk: ['thong-bao:moi', 'viec:moi', 'viec:cap-nhat'] },
+
+      // --- Kế toán ---
+      { mau: /^\/staff\/accountant\/salary/,     che_do: 'trao', sk: ['luong:doi'] },
+      { mau: /^\/staff\/accountant\/expenses/,   che_do: 'trao', sk: ['chi-phi:doi'] },
+      { mau: /^\/staff\/accountant\/attendance/, che_do: 'trao', sk: ['cham-cong:moi'] },
+      { mau: /^\/staff\/accountant\/leave/,      che_do: 'nhac', sk: ['nghi-phep:doi'] },
+      { mau: /^\/staff\/accountant\/schedule/,   che_do: 'trao', sk: ['lich-lam:doi'] },
+      { mau: /^\/staff\/accountant\/staff/,      che_do: 'trao', sk: ['nhan-su:doi'] },
+      { mau: /^\/staff\/accountant\/reports/,    che_do: 'nhac',
+        sk: ['chi-phi:doi', 'luong:doi', 'don-hang:doi'] },
+
+      // --- Trang tổng quan ---
+      { mau: /^\/staff$/, che_do: 'trao',
+        sk: ['dat-ban:doi', 'don-hang:doi', 'viec:moi', 'viec:cap-nhat'] },
+    ];
+
+    for (var i = 0; i < BAN_DO.length; i++) {
+      if (!BAN_DO[i].mau.test(duongDan)) continue;
+      if (BAN_DO[i].che_do === 'trao') RT.dongBoTrang('#rt-noi-dung', BAN_DO[i].sk);
+      else RT.nhacTaiLai(BAN_DO[i].sk);
+      break;
+    }
+
+    // Được cấp trên tiếp nhận / xử lý xong thì người báo biết ngay.
+    RT.khi('viec:cap-nhat', function (d) {
+      if (!RT.hoSo || d.id_nv_tao !== RT.hoSo.id_nv) return;
+      var ten = { dang_xu_ly: 'đang được xử lý', xong: 'đã xử lý xong', tu_choi: 'bị từ chối' }[d.trang_thai];
+      if (ten) {
+        RT.thongBao('Việc bạn báo "' + d.tieu_de + '" ' + ten +
+          (d.ten_nguoi_xu_ly ? ' bởi ' + d.ten_nguoi_xu_ly : '') + '.',
+          d.trang_thai === 'tu_choi' ? 'canh-bao' : 'thanh-cong');
+      }
+    });
+  })();
 </script>
 </body>
 </html>

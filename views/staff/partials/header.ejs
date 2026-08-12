@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nhân viên - NHA HANG BD</title>
+  <title>Nhân viên - Nhà Hàng Bảo Đoàn</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -12,18 +12,35 @@
     .sidebar { background: linear-gradient(180deg,#4e342e 0%,#2c1810 100%) !important; min-height:100vh; }
     .sidebar .nav-item .nav-link { color: rgba(255,255,255,.8); }
     .sidebar .nav-item.active .nav-link, .sidebar .nav-item .nav-link:hover { color:#fff; }
-    .sidebar-brand { color:#fff !important; font-weight:800; }
+    /* sb-admin-2 in hoa ten thuong hieu o sidebar; tat di de hien dung hoa/thuong nhu thiet ke */
+    .sidebar-brand { color:#fff !important; font-weight:800; text-transform: none !important; }
     .badge-unread { background:#e74a3b; color:#fff; border-radius:50%; padding:2px 6px; font-size:11px; }
     .staff-avatar { width:40px; height:40px; border-radius:50%; background:#c8a951; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:18px; }
     .card { border:none; box-shadow:0 .15rem 1.75rem 0 rgba(58,59,69,.15); }
   </style>
 </head>
 <body id="page-top">
+
+<!--
+  Socket.io + thu vien RT phai nap O DAY, truoc noi dung trang.
+
+  Truoc day hai the nay nam trong footer.ejs - tuc la SAU cac khoi <script> cua
+  tung trang. Nhung trang goi RT ngay dau khoi (vi du `var E = RT.escapeHtml`
+  o /to-chuc/khuon-mat va /dieu-hanh) nem ReferenceError va CHET CA KHOI: bang
+  danh sach khong ve, dong bo thoi gian thuc khong chay. Chinh comment dau file
+  realtime-to-chuc.js cung ghi "nap mot lan trong header.ejs" - o day moi dung.
+
+  Dat sau <body> chu khong trong <head> vi thu vien co dung document.body.
+-->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/realtime-to-chuc.js"></script>
+
 <div id="wrapper">
   <!-- Sidebar -->
   <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
     <a class="sidebar-brand d-flex align-items-center justify-content-center py-3" href="/staff">
-      <span style="font-size:20px;">🍽️ NHA HANG BD</span>
+      <%- include('../../partials/logo-bd', { cao: 26, mau: '#c8a951' }) %>
+      <span style="font-size:20px; margin-left:8px;">Nhà Hàng Bảo Đoàn</span>
     </a>
     <hr class="sidebar-divider my-0">
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>">
@@ -34,20 +51,96 @@
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>">
       <a class="nav-link" href="/staff/bookings"><i class="fas fa-fw fa-book"></i><span>Quản lý Đặt bàn</span></a>
     </li>
+<%
+     /* Dung `dongVaiDuoc` chu khong so sanh `session.staffRole`: staffRole la
+        chucvu_legacy, ma "Quan ly nha hang" mang legacy 'Quan ly' nen se bi
+        an mat menu Thu ngan du ho vao duoc trang. */
+  %>
+    <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Thu ngan', 'Quay', 'Ke toan', 'Phuc vu'])) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='thanh-toan' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/thanh-toan">
+          <i class="fas fa-fw fa-cash-register"></i><span>Thu ngân</span>
+        </a>
+      </li>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chot-ca' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/chot-ca">
+          <i class="fas fa-fw fa-calculator"></i><span>Chốt ca thu ngân</span>
+        </a>
+      </li>
+    <% } %>
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen' ? 'active' : '' %>">
       <a class="nav-link" href="/staff/kitchen">
         <i class="fas fa-fw fa-utensils"></i>
         <span><%= session.staffRole === 'Phuc vu' ? 'Món đã xong' : 'Quản lý Đơn bàn' %></span>
       </a>
     </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>">
+      <a class="nav-link" href="/kds"><i class="fas fa-fw fa-fire"></i><span>Màn hình bếp (KDS)</span></a>
+    </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>">
+      <a class="nav-link" href="/so-do-ban"><i class="fas fa-fw fa-th"></i><span>Sơ đồ bàn</span></a>
+    </li>
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Tổ chức</div>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='to-chuc' ? 'active' : '' %>">
+      <a class="nav-link" href="/to-chuc"><i class="fas fa-fw fa-sitemap"></i><span>Sơ đồ tổ chức</span></a>
+    </li>
+    <% if (typeof coQuyen === 'function' && coQuyen('dieu_hanh.bang_dieu_khien')) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='dieu-hanh' ? 'active' : '' %>">
+        <a class="nav-link" href="/dieu-hanh">
+          <i class="fas fa-fw fa-satellite-dish"></i><span>Bảng điều hành</span>
+          <span class="badge badge-danger badge-unread ml-1 d-none" id="sl-viec-cho">0</span>
+        </a>
+      </li>
+    <% } %>
+    <%
+      /* Quản lý chấm công: chỉ cấp 1 (Quản lý nhà hàng).
+         Điều kiện phải trùng khớp với canCapBac(1) ở routes/chamCong.js —
+         nếu ở đây rộng hơn route thì người dùng thấy mục menu rồi bấm vào
+         nhận 403, tệ hơn là không thấy gì. */
+    %>
+    <% if (typeof tuCapBac === 'function' && tuCapBac(1)) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='cham-cong-quan-ly' ? 'active' : '' %>">
+        <a class="nav-link" href="/to-chuc/cham-cong">
+          <i class="fas fa-fw fa-user-clock"></i><span>Quản lý chấm công</span>
+        </a>
+      </li>
+    <% } %>
+    <% if (typeof coQuyen === 'function' && coQuyen(['to_chuc.chuc_danh','to_chuc.bo_nhiem','to_chuc.phan_quyen'])) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='to-chuc-quan-ly' ? 'active' : '' %>">
+        <a class="nav-link" href="/to-chuc/quan-ly"><i class="fas fa-fw fa-user-cog"></i><span>Quản lý tổ chức</span></a>
+      </li>
+    <% } %>
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Phân tích &amp; AI</div>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics"><i class="fas fa-fw fa-chart-bar"></i><span>Dashboard phân tích</span></a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/du-bao"><i class="fas fa-fw fa-brain"></i><span>Dự báo AI</span></a>
+    </li>
     <hr class="sidebar-divider">
     <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Làm việc</div>
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='schedule' ? 'active' : '' %>">
       <a class="nav-link" href="/staff/schedule"><i class="fas fa-fw fa-calendar-alt"></i><span>Lịch làm việc</span></a>
     </li>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='attendance' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/attendance"><i class="fas fa-fw fa-clock"></i><span>Chấm công</span></a>
+    <%
+      /* MỘT mục cho chấm công, không phải hai.
+
+         Trước đây ở đây có thêm mục "Khuôn mặt của tôi" trỏ tới /staff/khuon-mat.
+         Hai mục cạnh nhau nhưng cùng dẫn tới một việc — cả hai trang đều có máy
+         tự chấm công 1:1 — nên nhân viên phải đoán. Nay đăng ký khuôn mặt nằm
+         ngay trong trang chấm công, và /staff/khuon-mat chuyển hướng về đó. */
+    %>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && (activePage==='attendance' || activePage==='khuon-mat') ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/attendance"><i class="fas fa-fw fa-clock"></i><span>Chấm công (khuôn mặt)</span></a>
     </li>
+    <% if (typeof coQuyen === 'function' && coQuyen(['nhansu.cham_cong.sua','nhansu.cham_cong.xem'])) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='khuon-mat-quan-ly' ? 'active' : '' %>">
+        <a class="nav-link" href="/to-chuc/khuon-mat"><i class="fas fa-fw fa-users-cog"></i><span>QL chấm công khuôn mặt</span></a>
+      </li>
+    <% } %>
 
     <% if (['Ke toan', 'Quay', 'Thu ngan'].includes(session.staffRole)) { %>
       <hr class="sidebar-divider">
@@ -64,9 +157,6 @@
 
       <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='customers' ? 'active' : '' %>">
         <a class="nav-link" href="/staff/customers"><i class="fas fa-fw fa-users"></i><span>Khách hàng</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='shift' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/shift"><i class="fas fa-fw fa-calculator"></i><span>Chốt ca làm việc</span></a>
       </li>
 
       <% if (session.staffRole === 'Ke toan') { %>
@@ -159,12 +249,39 @@
         <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
           <i class="fa fa-bars"></i>
         </button>
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ml-auto align-items-center">
+          <li class="nav-item mr-3 d-none d-md-block">
+            <span id="rt-den" title="Kết nối thời gian thực"
+                  style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b7b9cc"></span>
+            <span class="small text-gray-500 ml-1">thời gian thực</span>
+          </li>
           <li class="nav-item d-flex align-items-center">
-            <div class="staff-avatar mr-2"><%= typeof staffName !== 'undefined' ? staffName.charAt(0).toUpperCase() : 'N' %></div>
-            <span class="mr-2 d-none d-lg-inline text-gray-600 small"><%= typeof staffName !== 'undefined' ? staffName : 'Nhân viên' %></span>
+            <div class="staff-avatar mr-2"
+                 style="<%= locals.hoSo && locals.hoSo.mau_bp ? 'background:' + locals.hoSo.mau_bp : '' %>">
+              <%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %>
+            </div>
+            <div class="d-none d-lg-block mr-2" style="line-height:1.25">
+              <div class="text-gray-700 small font-weight-bold">
+                <%= typeof staffName !== 'undefined' ? staffName : 'Nhân viên' %>
+              </div>
+              <div class="text-gray-500" style="font-size:11px">
+                <% if (locals.hoSo && locals.hoSo.ten_cd) { %>
+                  <%= locals.hoSo.ten_cd %><% if (locals.hoSo.ten_bp) { %> · <%= locals.hoSo.ten_bp %><% } %>
+                  <% if (locals.hoSo.uy_quyen && locals.hoSo.uy_quyen.length) { %>
+                    <i class="fas fa-user-shield text-warning" title="Đang giữ ủy quyền tạm thời"></i>
+                  <% } %>
+                <% } else { %>
+                  <span class="text-warning">chưa có chức danh</span>
+                <% } %>
+              </div>
+            </div>
           </li>
         </ul>
       </nav>
       <!-- End of Topbar -->
-      <div class="container-fluid">
+      <!--
+        id="rt-noi-dung": vung ma RT.dongBoTrang() se trao khi du lieu doi.
+        Chi phan nay duoc thay, con thanh ben / thanh tren / cuon trang giu
+        nguyen - nguoi dung khong thay man hinh nhay nhu khi bam F5.
+      -->
+      <div class="container-fluid" id="rt-noi-dung">

@@ -1,91 +1,149 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Giỏ hàng' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
-    data-stellar-background-ratio="0.5">
-    <div class="overlay"></div>
-    <div class="container">
-        <div class="row no-gutters slider-text align-items-end justify-content-center">
-            <div class="col-md-9 ftco-animate text-center mb-4">
-                <h1 class="mb-2 bread">Giỏ hàng</h1>
-                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
-                                class="ion-ios-arrow-forward"></i></a></span> <span>Giỏ hàng <i
-                            class="ion-ios-arrow-forward"></i></span></p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="ftco-section ftco-cart">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12 ftco-animate">
-        <% if (typeof error !== 'undefined' && error) { %>
-          <div class="alert alert-warning"><%= error %></div>
-        <% } %>
-        <div class="cart-list">
-          <table class="table">
-            <thead class="thead-primary">
-              <tr class="text-center">
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th>&nbsp;</th>
-                <th>Món ăn</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Tổng cộng</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (cartItems && cartItems.length > 0) { %>
-                <% cartItems.forEach(item => { %>
-                  <tr class="text-center">
-                    <td class="product-remove">
-                      <a onclick="return confirm('Bạn có muốn xóa món ăn này khỏi giỏ hàng?')" href="/del-cart?delid=<%= item.cart_id %>">X</a>
-                    </td>
-                    <td class="image-prod">
-                      <img width="100" height="50" src="/food/<%= item.images %>" alt="<%= item.name_mon %>">
-                    </td>
-                    <td class="product-name">
-                      <h3><%= item.name_mon %></h3>
-                    </td>
-                    <td class="price"><%= formatMoney(item.gia_mon) %> VNĐ</td>
-                    <td class="quantity">
-                        <form action="/update-cart" method="post" style="display: flex;">
-                          <input type="hidden" name="cartid" value="<%= item.cart_id %>">
-                          <input type="number" name="soluong" class="form-control" value="<%= item.soluong %>" min="1" max="50">
-                          <input type="submit" value="Cập nhật" class="btn btn-primary ml-2">
-                        </form>
-                    </td>
-                    <td class="total">
-                      <%= formatMoney(item.soluong * item.gia_mon) %> VNĐ
-                    </td>
-                  </tr>
-                <% }) %>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="row justify-content-end">
-      <div class="col col-lg-3 col-md-6 mt-5 cart-wrap ftco-animate">
-        <div class="cart-total mb-3">
-          <h3>Tổng hợp giỏ hàng</h3>
-          <p class="d-flex">
-            <span>Tạm tính:</span>
-            <span><%= formatMoney(subtotal) %> VNĐ</span>
-          </p>
-          <hr>
-          <p class="d-flex total-price">
-            <span>Tổng cộng:</span>
-            <span><%= formatMoney(subtotal) %> VNĐ</span>
-          </p>
-        </div>
-        <p class="text-center"><a href="/datban" class="btn btn-primary py-3 px-4">Tiến hành đặt bàn</a></p>
-      </div>
-    </div>
+<section class="nh-subhero" style="min-height:38vh">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Thực đơn của bạn</span>
+    <h1>Giỏ hàng</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Giỏ hàng</div>
   </div>
 </section>
 
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <%- include('partials/nh-steps', { buoc: 2 }) %>
+
+    <%
+      /* `error` xuất hiện khi khách bấm "Đặt bàn" lúc giỏ còn trống — server
+         đưa về đây kèm lời nhắc. Trình bày như một lời hướng dẫn ngay trên đầu
+         chứ không phải một khối báo lỗi đỏ, vì khách không làm gì sai cả. */
+      var coMon = cartItems && cartItems.length > 0;
+    %>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="nh-panel nh-reveal" style="border-left:4px solid var(--nh-gold); margin-bottom:1.4rem">
+        <div style="display:flex; gap:.9rem; align-items:flex-start">
+          <i class="fas fa-circle-info" style="color:var(--nh-gold); font-size:1.3rem; margin-top:.2rem"></i>
+          <div>
+            <strong style="color:var(--nh-espresso)">Hãy chọn món trước khi đặt bàn</strong>
+            <p class="nh-note" style="margin-top:.3rem"><%= error %></p>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (coMon) { %>
+      <div class="nh-checkout">
+        <!-- Danh sách món -->
+        <div>
+          <div class="nh-panel nh-reveal">
+            <h3 class="nh-panel__title">
+              <i class="fas fa-utensils"></i>
+              Món đã chọn
+              <span class="nh-locked" style="margin-left:auto"><%= cartItems.length %> món</span>
+            </h3>
+
+            <% cartItems.forEach(function (item) { %>
+              <div class="nh-line">
+                <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= item.name_mon %>"
+                     onerror="this.src='/bg_2.jpg'">
+
+                <div class="nh-line__info">
+                  <h4 class="nh-line__name"><%= (item.name_mon || '').trim() %></h4>
+                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ / phần</div>
+                </div>
+
+                <!-- Đổi số lượng: gửi ngay khi bấm +/- nên không cần nút "Cập nhật" riêng. -->
+                <form action="/update-cart" method="post" class="nh-line__qty js-qty">
+                  <input type="hidden" name="cartid" value="<%= item.cart_id %>">
+                  <div class="nh-qty">
+                    <button type="button" data-buoc="-1" aria-label="Bớt một phần"
+                      <%= item.soluong <= 1 ? 'disabled' : '' %>><i class="fas fa-minus"></i></button>
+                    <input type="number" name="soluong" value="<%= item.soluong %>" min="1" max="50"
+                           aria-label="Số phần <%= item.name_mon %>">
+                    <button type="button" data-buoc="1" aria-label="Thêm một phần"><i class="fas fa-plus"></i></button>
+                  </div>
+                  <noscript><button type="submit" class="nh-btn nh-btn--sm nh-btn--dark">Cập nhật</button></noscript>
+                </form>
+
+                <div class="nh-line__sum"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
+
+                <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>"
+                   title="Bỏ món này"
+                   onclick="return confirm('Bỏ &quot;<%= (item.name_mon||'').trim() %>&quot; khỏi giỏ hàng?')">
+                  <i class="fas fa-times"></i>
+                </a>
+              </div>
+            <% }) %>
+          </div>
+
+          <div style="margin-top:1.2rem">
+            <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
+              <i class="fas fa-plus"></i> Chọn thêm món
+            </a>
+          </div>
+        </div>
+
+        <!-- Tóm tắt -->
+        <aside class="nh-summary nh-reveal">
+          <div class="nh-panel">
+            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> Tạm tính</h3>
+
+            <div class="nh-summary__row">
+              <span>Số món</span><span><%= cartItems.length %></span>
+            </div>
+            <div class="nh-summary__row">
+              <span>Tổng số phần</span>
+              <span><%= cartItems.reduce(function (s, i) { return s + Number(i.soluong); }, 0) %></span>
+            </div>
+
+            <div class="nh-summary__total">
+              <span>Tổng cộng</span>
+              <b><%= formatMoney(subtotal) %> ₫</b>
+            </div>
+
+            <a href="/datban" class="nh-btn nh-btn--gold">
+              Tiến hành đặt bàn <i class="fas fa-arrow-right"></i>
+            </a>
+
+            <p class="nh-note">
+              Bước sau bạn chọn ngày, giờ và số khách. Nhà hàng gọi lại xác nhận trước khi giữ bàn —
+              chưa thanh toán gì ở bước này.
+            </p>
+          </div>
+        </aside>
+      </div>
+    <% } else { %>
+      <div class="nh-empty nh-reveal">
+        <i class="fas fa-shopping-bag"></i>
+        <h3>Giỏ hàng đang trống</h3>
+        <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
+          Hãy chọn vài món trong thực đơn. Bạn có thể đổi số lượng hoặc bỏ bớt bất cứ lúc nào
+          trước khi đặt bàn.
+        </p>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<script>
+  // Bấm +/- là gửi form luôn, khỏi phải bấm thêm nút "Cập nhật" như trước.
+  // Chờ 500ms để người bấm nhanh nhiều lần chỉ tốn một lần tải lại trang.
+  document.querySelectorAll('.js-qty').forEach(function (form) {
+    var o = form.querySelector('input[name="soluong"]');
+    var hen = null;
+    function guiSau() { clearTimeout(hen); hen = setTimeout(function () { form.submit(); }, 500); }
+    form.querySelectorAll('[data-buoc]').forEach(function (n) {
+      n.onclick = function () {
+        var v = (parseInt(o.value, 10) || 1) + Number(n.getAttribute('data-buoc'));
+        o.value = Math.min(50, Math.max(1, v));
+        guiSau();
+      };
+    });
+    o.onchange = guiSau;
+  });
+</script>
+
+<%- include('partials/goi-y-mon') %>
 <%- include('partials/footer') %>

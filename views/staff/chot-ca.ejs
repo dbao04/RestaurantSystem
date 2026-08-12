@@ -1,0 +1,413 @@
+<%
+  var activePage = 'chot-ca';
+  var staffName = session.staffName || 'Nhân viên';
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="h3 mb-0 text-gray-800">Chốt ca thu ngân</h1>
+    <div class="small text-muted">
+      Ca tính từ <b id="moc-tu"><%= new Date(tongHop.tu).toLocaleString('vi-VN') %></b>
+      đến bây giờ — tức là từ lần chốt ca gần nhất của bạn.
+    </div>
+  </div>
+  <a href="/staff/chot-ca/lich-su" class="btn btn-sm btn-outline-secondary shadow-sm">
+    <i class="fas fa-history fa-sm"></i> Lịch sử chốt ca
+  </a>
+</div>
+
+<% if (tongHop.so_phien_cho > 0) { %>
+  <div class="alert alert-warning">
+    <i class="fas fa-hourglass-half"></i>
+    Bạn còn <b><%= tongHop.so_phien_cho %></b> phiên chuyển khoản đang chờ tiền về.
+    Nếu khách quét mã sau khi bạn chốt ca, khoản đó sẽ rơi vào ca sau.
+    <a href="/staff/thanh-toan" class="alert-link">Xem lại</a> trước khi chốt.
+  </div>
+<% } %>
+
+<div class="row">
+  <!-- ================================================ Hệ thống ghi nhận -->
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Hệ thống ghi nhận trong ca</h6>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm mb-0" id="bang-he-thong">
+          <tbody>
+            <tr>
+              <td class="text-muted">Quỹ lẻ đầu ca</td>
+              <td class="text-right"><span id="ht-quy">0</span>đ</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Tiền mặt đã thu
+                <span class="badge badge-light border" id="ht-so-phien"><%= tongHop.so_phien_tien_mat %></span>
+              </td>
+              <td class="text-right text-success">+ <span id="ht-thu"><%= formatMoney(tongHop.tien_mat_thu) %></span>đ</td>
+            </tr>
+            <% if (tongHop.tien_mat_hoan > 0) { %>
+              <tr>
+                <td class="text-muted">Tiền mặt đã hoàn khách</td>
+                <td class="text-right text-danger">− <span id="ht-hoan"><%= formatMoney(tongHop.tien_mat_hoan) %></span>đ</td>
+              </tr>
+            <% } %>
+            <tr class="border-top">
+              <th>Két phải có</th>
+              <th class="text-right h5 mb-0 text-primary"><span id="ht-ket"><%= formatMoney(tongHop.tien_mat_he_thong) %></span>đ</th>
+            </tr>
+          </tbody>
+        </table>
+
+        <hr>
+        <div class="small text-uppercase text-muted font-weight-bold mb-2">Không nằm trong két</div>
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr>
+              <td class="text-muted">Chuyển khoản VietQR</td>
+              <td class="text-right"><%= formatMoney(tongHop.tien_chuyen_khoan) %>đ</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Thẻ ngân hàng (POS)</td>
+              <td class="text-right"><%= formatMoney(tongHop.tien_the) %>đ</td>
+            </tr>
+            <% if (tongHop.tien_khach_tu_tra > 0) { %>
+              <tr>
+                <td class="text-muted">
+                  Khách tự quét QR trả
+                  <i class="fas fa-question-circle text-muted" data-toggle="tooltip"
+                     title="Tiền vào thẳng tài khoản nhà hàng, không qua tay thu ngân nào nên không tính vào trách nhiệm của bạn."></i>
+                </td>
+                <td class="text-right"><%= formatMoney(tongHop.tien_khach_tu_tra) %>đ</td>
+              </tr>
+            <% } %>
+            <% if (tongHop.tien_tip > 0) { %>
+              <tr>
+                <td class="text-muted">Tiền tip</td>
+                <td class="text-right"><%= formatMoney(tongHop.tien_tip) %>đ</td>
+              </tr>
+            <% } %>
+            <% if (tongHop.tien_dat_coc > 0) { %>
+              <tr>
+                <td class="text-muted">Trong đó là đặt cọc</td>
+                <td class="text-right"><%= formatMoney(tongHop.tien_dat_coc) %>đ</td>
+              </tr>
+            <% } %>
+            <tr class="border-top">
+              <th>Tổng doanh thu ca</th>
+              <th class="text-right"><%= formatMoney(tongHop.tong_doanh_thu) %>đ</th>
+            </tr>
+            <tr>
+              <td class="text-muted">Số hóa đơn</td>
+              <td class="text-right"><%= tongHop.so_hoa_don %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== Đếm két thật -->
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Đếm két thực tế</h6>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="small font-weight-bold text-uppercase text-muted">Quỹ lẻ đầu ca</label>
+          <input type="number" class="form-control" id="tien-dau-ca" value="0" step="1000" min="0">
+          <small class="form-text text-muted">
+            Tiền lẻ có sẵn trong két trước khi bạn thu đồng nào. Không trừ ra thì két
+            lúc nào cũng "thừa" đúng bằng số này.
+          </small>
+        </div>
+
+        <label class="small font-weight-bold text-uppercase text-muted">Bảng đếm theo mệnh giá</label>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-2" id="bang-menh-gia">
+            <thead class="thead-light">
+              <tr>
+                <th>Mệnh giá</th><th style="width:120px">Số tờ</th><th class="text-right">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% tongHop.menh_gia.forEach(function (m) { %>
+                <tr>
+                  <td class="align-middle"><%= formatMoney(m) %>đ</td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm o-to" data-menh-gia="<%= m %>"
+                           min="0" step="1" placeholder="0">
+                  </td>
+                  <td class="text-right align-middle o-thanh-tien" data-menh-gia="<%= m %>">0đ</td>
+                </tr>
+              <% }); %>
+            </tbody>
+            <tfoot>
+              <tr class="font-weight-bold">
+                <td colspan="2">Tổng đếm được</td>
+                <td class="text-right" id="tong-dem">0đ</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="small text-muted mb-3">
+          Không bắt buộc điền bảng này — bạn có thể gõ thẳng tổng số vào ô dưới.
+          Nhưng nếu điền thì bảng được lưu vào biên bản, sau này có tranh chấp còn lần lại được.
+        </div>
+
+        <div class="form-group">
+          <label class="small font-weight-bold text-uppercase text-muted">Tiền mặt đếm được trong két</label>
+          <div class="input-group">
+            <input type="number" class="form-control form-control-lg" id="tien-dem" step="1000" min="0" required>
+            <div class="input-group-append"><span class="input-group-text">đ</span></div>
+          </div>
+        </div>
+
+        <!-- Chênh lệch: con số quan trọng nhất của cả màn hình -->
+        <div class="card mb-3" id="the-chenh-lech" style="border-left:.3rem solid #858796">
+          <div class="card-body py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs text-uppercase font-weight-bold text-muted">Chênh lệch</div>
+                <div class="small text-muted" id="chenh-lech-mo-ta">Nhập số đếm được để so sánh</div>
+              </div>
+              <div class="h3 mb-0 font-weight-bold" id="chenh-lech-so">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" id="nhom-ly-do" style="display:none">
+          <label class="small font-weight-bold text-uppercase text-danger">
+            Lý do chênh lệch <span class="text-danger">*</span>
+          </label>
+          <textarea class="form-control" id="ly-do" rows="2"
+                    placeholder="VD: trả nhầm tiền thừa cho khách bàn 12, đã báo giám sát"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-5">
+            <label class="small font-weight-bold text-uppercase text-muted">Tên ca</label>
+            <input type="text" class="form-control" id="ten-ca" value="<%= tongHop.tenCaGoiY %>">
+          </div>
+          <div class="form-group col-md-7">
+            <label class="small font-weight-bold text-uppercase text-muted">Ghi chú bàn giao</label>
+            <input type="text" class="form-control" id="ghi-chu" placeholder="Bàn giao cho ai, sự cố trong ca...">
+          </div>
+        </div>
+
+        <button class="btn btn-success btn-lg btn-block" id="nut-chot">
+          <i class="fas fa-lock"></i> Chốt ca và ký biên bản
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================= Vài ca gần đây -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Ca gần đây của bạn</h6>
+  </div>
+  <div class="card-body">
+    <% if (!lichSu.length) { %>
+      <div class="text-muted text-center py-4">Bạn chưa chốt ca lần nào.</div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Ngày</th><th>Ca</th><th class="text-right">Két phải có</th>
+              <th class="text-right">Đếm được</th><th class="text-right">Chênh lệch</th>
+              <th>Trạng thái</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lichSu.forEach(function (s) { %>
+              <tr>
+                <td><%= new Date(s.shift_date).toLocaleDateString('vi-VN') %></td>
+                <td><%= s.ten_ca || '—' %></td>
+                <td class="text-right"><%= formatMoney(s.tien_mat_he_thong) %>đ</td>
+                <td class="text-right"><%= formatMoney(s.tien_mat_dem_duoc) %>đ</td>
+                <td class="text-right <%= Number(s.chenh_lech) === 0 ? 'text-success' : (Number(s.chenh_lech) < 0 ? 'text-danger font-weight-bold' : 'text-warning') %>">
+                  <%= Number(s.chenh_lech) > 0 ? '+' : '' %><%= formatMoney(s.chenh_lech) %>đ
+                </td>
+                <td>
+                  <% if (s.status === 'verified') { %>
+                    <span class="badge badge-success">Đã duyệt</span>
+                  <% } else { %>
+                    <span class="badge badge-secondary">Chờ duyệt</span>
+                  <% } %>
+                </td>
+                <td class="text-right"><a href="/staff/chot-ca/<%= s.id %>" class="small">biên bản</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (v) { return Number(v || 0).toLocaleString('vi-VN'); };
+
+  // Két hệ thống hiện tại. Cập nhật lại mỗi khi đổi quỹ đầu ca.
+  var ketHeThong = <%= tongHop.tien_mat_he_thong %>;
+  var quyBanDau = 0;
+
+  /* ---- Bảng đếm mệnh giá -> tự cộng vào ô tổng --------------------------- */
+  function tinhBangDem() {
+    var tong = 0;
+    document.querySelectorAll('.o-to').forEach(function (o) {
+      var mg = Number(o.dataset.menhGia);
+      var soTo = Number(o.value) || 0;
+      var thanh = mg * soTo;
+      tong += thanh;
+      document.querySelector('.o-thanh-tien[data-menh-gia="' + mg + '"]').textContent = tien(thanh) + 'đ';
+    });
+    $('tong-dem').textContent = tien(tong) + 'đ';
+
+    // Chỉ ghi đè ô tổng khi thu ngân thực sự có đếm - nếu bảng trống mà vẫn ghi
+    // đè thì con số họ gõ tay sẽ bị xóa mất.
+    if (coDemBang()) { $('tien-dem').value = tong; soSanh(); }
+    return tong;
+  }
+
+  function coDemBang() {
+    return [...document.querySelectorAll('.o-to')].some(function (o) { return o.value !== ''; });
+  }
+
+  function bangMenhGia() {
+    var b = {};
+    document.querySelectorAll('.o-to').forEach(function (o) {
+      var n = Number(o.value) || 0;
+      if (n > 0) b[o.dataset.menhGia] = n;
+    });
+    return Object.keys(b).length ? b : null;
+  }
+
+  /* ---- So sánh két -------------------------------------------------------- */
+  function soSanh() {
+    var demDuoc = $('tien-dem').value;
+    var the = $('the-chenh-lech');
+    var so = $('chenh-lech-so');
+    var moTa = $('chenh-lech-mo-ta');
+
+    if (demDuoc === '') {
+      the.style.borderLeftColor = '#858796';
+      so.textContent = '—'; so.className = 'h3 mb-0 font-weight-bold';
+      moTa.textContent = 'Nhập số đếm được để so sánh';
+      $('nhom-ly-do').style.display = 'none';
+      return null;
+    }
+
+    var lech = Math.round(Number(demDuoc)) - ketHeThong;
+    so.textContent = (lech > 0 ? '+' : '') + tien(lech) + 'đ';
+    $('nhom-ly-do').style.display = lech === 0 ? 'none' : 'block';
+
+    if (lech === 0) {
+      the.style.borderLeftColor = '#1cc88a';
+      so.className = 'h3 mb-0 font-weight-bold text-success';
+      moTa.textContent = 'Két khớp đúng với hệ thống.';
+    } else if (lech < 0) {
+      the.style.borderLeftColor = '#e74a3b';
+      so.className = 'h3 mb-0 font-weight-bold text-danger';
+      moTa.textContent = 'Két THIẾU so với hệ thống — bắt buộc ghi rõ lý do.';
+    } else {
+      the.style.borderLeftColor = '#f6c23e';
+      so.className = 'h3 mb-0 font-weight-bold text-warning';
+      moTa.textContent = 'Két THỪA — thường do quên trả lại tiền thừa cho khách.';
+    }
+    return lech;
+  }
+
+  /* ---- Đổi quỹ đầu ca thì hỏi lại máy chủ -------------------------------- */
+  // Tính lại ở máy chủ chứ không cộng ở trình duyệt: trong lúc thu ngân ngồi
+  // đếm tiền có thể vẫn còn bàn trả tiền, con số phải là mới nhất.
+  var henTinhLai = null;
+  $('tien-dau-ca').addEventListener('input', function () {
+    clearTimeout(henTinhLai);
+    henTinhLai = setTimeout(function () {
+      var quy = Number($('tien-dau-ca').value) || 0;
+      fetch('/staff/chot-ca/tong-hop?quy=' + encodeURIComponent(quy))
+        .then(function (r) { return r.json(); })
+        .then(function (t) {
+          ketHeThong = t.tien_mat_he_thong;
+          quyBanDau = t.tien_dau_ca;
+          $('ht-quy').textContent = tien(t.tien_dau_ca);
+          $('ht-thu').textContent = tien(t.tien_mat_thu);
+          $('ht-ket').textContent = tien(t.tien_mat_he_thong);
+          soSanh();
+        })
+        .catch(function () { /* giữ nguyên số cũ, không phá màn hình */ });
+    }, 400);
+  });
+
+  document.querySelectorAll('.o-to').forEach(function (o) {
+    o.addEventListener('input', tinhBangDem);
+  });
+  $('tien-dem').addEventListener('input', soSanh);
+
+  /* ---- Chốt ca ------------------------------------------------------------ */
+  $('nut-chot').onclick = function () {
+    var lech = soSanh();
+    if (lech === null) {
+      Swal.fire('Chưa đếm két', 'Hãy nhập số tiền mặt đếm được trong két.', 'warning');
+      $('tien-dem').focus();
+      return;
+    }
+    if (lech !== 0 && !$('ly-do').value.trim()) {
+      Swal.fire('Thiếu lý do', 'Két lệch thì bắt buộc phải ghi rõ lý do trước khi chốt ca.', 'warning');
+      $('ly-do').focus();
+      return;
+    }
+
+    Swal.fire({
+      title: 'Chốt ca?',
+      html: 'Két phải có <b>' + tien(ketHeThong) + 'đ</b>, bạn đếm được <b>' + tien($('tien-dem').value) + 'đ</b>.'
+        + (lech === 0 ? '<br>Khớp đúng.' : '<br><b class="text-danger">Lệch ' + tien(lech) + 'đ.</b>')
+        + '<br><br>Biên bản đã ký thì không sửa được.',
+      icon: lech === 0 ? 'question' : 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Chốt ca',
+      cancelButtonText: 'Để tôi đếm lại',
+      confirmButtonColor: '#1cc88a',
+    }).then(function (kq) {
+      if (!kq.isConfirmed) return;
+      var nut = $('nut-chot');
+      nut.disabled = true;
+      nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang ghi biên bản...';
+
+      fetch('/staff/chot-ca', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tien_dau_ca: Number($('tien-dau-ca').value) || 0,
+          tien_mat_dem_duoc: Number($('tien-dem').value),
+          bang_menh_gia: bangMenhGia(),
+          ten_ca: $('ten-ca').value,
+          ly_do_chenh_lech: $('ly-do').value,
+          ghi_chu: $('ghi-chu').value,
+        }),
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (kq) {
+          if (!kq.ok || !kq.d.thanhCong) throw new Error(kq.d.loi || 'Không chốt ca được');
+          window.location.href = '/staff/chot-ca/' + kq.d.id;
+        })
+        .catch(function (e) {
+          nut.disabled = false;
+          nut.innerHTML = '<i class="fas fa-lock"></i> Chốt ca và ký biên bản';
+          Swal.fire('Chưa chốt được ca', e.message, 'error');
+        });
+    });
+  };
+
+  if (window.jQuery) jQuery('[data-toggle="tooltip"]').tooltip();
+})();
+</script>
+
+<%- include('partials/footer') %>

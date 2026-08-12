@@ -1,41 +1,74 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách bài viết</h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Danh sách bài viết</h2>
+            <p><%= posts ? posts.length : 0 %> bài viết đã đăng</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--primary" href="/admin/blogadd"><i class="fas fa-pen-nib"></i> Thêm bài viết</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (posts && posts.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th width="5%">ID</th>
-                        <th width="30%">Tiêu đề</th>
-                        <th width="20%">Hình ảnh</th>
-                        <th width="30%">Nội dung (rút gọn)</th>
-                        <th width="15%">Thao tác</th>
+                        <th>#</th>
+                        <th>Ảnh</th>
+                        <th>Tiêu đề</th>
+                        <th>Nội dung rút gọn</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% posts.forEach(p => { %>
-                    <tr class="odd gradeX">
-                        <td><%= p.id_bv %></td>
-                        <td><%= p.tieu_de %></td>
+                    <% posts.forEach((p, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
                         <td>
                             <% if (p.hinh_anh) { %>
-                                <img src="/food/<%= p.hinh_anh %>" width="80" height="auto" />
+                                <img class="qt-thumb" src="/food/<%= p.hinh_anh %>" alt="<%= p.tieu_de %>"
+                                     onerror="this.src='/logo.png'">
                             <% } else { %>
-                                No image
+                                <span class="qt-thumb--none"><i class="fas fa-image"></i></span>
                             <% } %>
                         </td>
-                        <td><%= p.noi_dung ? p.noi_dung.substring(0, 100) + '...' : '' %></td>
+                        <td class="qt-strong"><%= p.tieu_de %></td>
                         <td>
-                            <a href="/admin/blogedit/<%= p.id_bv %>">Sửa</a> || 
-                            <a onclick="return confirm('Bạn có chắc muốn xóa?')" href="/admin/blogdel/<%= p.id_bv %>">Xóa</a>
+                            <% var nd = (p.noi_dung || '').replace(/<[^>]*>/g, '').trim(); %>
+                            <%= nd.length > 100 ? nd.substring(0, 100) + '…' : (nd || '—') %>
+                        </td>
+                        <td>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/blogedit/<%= p.id_bv %>">
+                                    <i class="fas fa-pen"></i> Sửa
+                                </a>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/blogdel/<%= p.id_bv %>"
+                                   onclick="return confirm('Xóa bài viết &quot;<%= p.tieu_de %>&quot;?')">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-newspaper"></i>
+            <p>Chưa có bài viết nào.</p>
+            <a class="qt-btn qt-btn--primary" href="/admin/blogadd"><i class="fas fa-pen-nib"></i> Viết bài đầu tiên</a>
+        </div>
+        <% } %>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
+</script>
+
 <%- include('partials/footer') %>

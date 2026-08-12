@@ -1,0 +1,148 @@
+<%
+  var activePage = 'thanh-toan';
+  var staffName = session.staffName || 'Nhân viên';
+  var tongTien = tongHop.reduce(function (t, r) { return t + Number(r.tong_tien || 0); }, 0);
+  var tongTip = tongHop.reduce(function (t, r) { return t + Number(r.tong_tip || 0); }, 0);
+  var nhanTrangThai = {
+    success: ['success', 'Thành công'], pending: ['warning', 'Đang chờ'],
+    failed: ['secondary', 'Thất bại'], refunded: ['danger', 'Đã hoàn'],
+  };
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <a href="/staff/thanh-toan" class="small text-muted"><i class="fas fa-arrow-left"></i> Về thu ngân</a>
+    <h1 class="h3 mb-0 text-gray-800">Lịch sử thanh toán</h1>
+  </div>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+    <i class="fas fa-print"></i> In danh sách
+  </button>
+</div>
+
+<!-- Bộ lọc -->
+<div class="card shadow mb-4">
+  <div class="card-body py-3">
+    <form class="form-row align-items-end" method="get">
+      <div class="col-md-3 mb-2">
+        <label class="small font-weight-bold text-uppercase text-muted mb-1">Từ ngày</label>
+        <input type="date" name="tu_ngay" class="form-control form-control-sm" value="<%= loc.tu_ngay || '' %>">
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="small font-weight-bold text-uppercase text-muted mb-1">Đến ngày</label>
+        <input type="date" name="den_ngay" class="form-control form-control-sm" value="<%= loc.den_ngay || '' %>">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="small font-weight-bold text-uppercase text-muted mb-1">Phương thức</label>
+        <select name="phuong_thuc" class="form-control form-control-sm">
+          <option value="">Tất cả</option>
+          <% phuongThuc.forEach(function (p) { %>
+            <option value="<%= p.code %>" <%= loc.phuong_thuc === p.code ? 'selected' : '' %>><%= p.name %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="small font-weight-bold text-uppercase text-muted mb-1">Trạng thái</label>
+        <select name="trang_thai" class="form-control form-control-sm">
+          <option value="success" <%= (!loc.trang_thai || loc.trang_thai === 'success') ? 'selected' : '' %>>Thành công</option>
+          <option value="pending" <%= loc.trang_thai === 'pending' ? 'selected' : '' %>>Đang chờ</option>
+          <option value="refunded" <%= loc.trang_thai === 'refunded' ? 'selected' : '' %>>Đã hoàn</option>
+          <option value="failed" <%= loc.trang_thai === 'failed' ? 'selected' : '' %>>Thất bại</option>
+          <option value="tat_ca" <%= loc.trang_thai === 'tat_ca' ? 'selected' : '' %>>Tất cả</option>
+        </select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <button class="btn btn-sm btn-primary btn-block"><i class="fas fa-filter"></i> Lọc</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tổng hợp theo phương thức -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng thu</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800"><%= formatMoney(tongTien) %>đ</div>
+        <% if (tongTip > 0) { %><div class="small text-muted">tip <%= formatMoney(tongTip) %>đ</div><% } %>
+      </div>
+    </div>
+  </div>
+  <% tongHop.forEach(function (t) { %>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card shadow h-100 py-2" style="border-left:.25rem solid <%= t.type === 'cash' ? '#1cc88a' : (t.type === 'online' ? '#4e73df' : '#6f42c1') %>">
+        <div class="card-body py-2">
+          <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted"><%= t.name %></div>
+          <div class="h5 mb-0 font-weight-bold text-gray-800"><%= formatMoney(t.tong_tien) %>đ</div>
+          <div class="small text-muted">
+            <%= t.so_giao_dich %> giao dịch ·
+            <%= tongTien > 0 ? Math.round(Number(t.tong_tien) / tongTien * 100) : 0 %>%
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      Giao dịch <span class="badge badge-secondary"><%= lichSu.length %></span>
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <% if (lichSu.length === 0) { %>
+      <div class="text-center text-muted py-5">Không có giao dịch nào khớp bộ lọc.</div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>#</th><th>Thời gian</th><th>Khách / Bàn</th>
+              <th>Phương thức</th><th>Mã đối soát</th>
+              <th class="text-right">Số tiền</th><th>Trạng thái</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lichSu.forEach(function (p) { %>
+              <tr>
+                <td class="small text-muted"><%= String(p.id).padStart(5, '0') %></td>
+                <td class="small text-nowrap">
+                  <%= new Date(p.thanh_cong_luc || p.created_at).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) %>
+                </td>
+                <td class="small">
+                  <%= p.ten_khach || '—' %>
+                  <div class="text-muted"><code><%= p.sesis.substring(0, 10) %></code></div>
+                </td>
+                <td class="small">
+                  <%= p.ten_phuong_thuc %>
+                  <% if (p.loai === 'dat_coc') { %><span class="badge badge-info">cọc</span><% } %>
+                  <% if (p.nguon === 'khach_qr') { %><span class="badge badge-light border" title="Khách tự thanh toán tại bàn">tự trả</span><% } %>
+                  <% if (p.ten_nhan_vien) { %><div class="text-muted"><%= p.ten_nhan_vien %></div><% } %>
+                </td>
+                <td class="small"><% if (p.ma_doi_soat) { %><code><%= p.ma_doi_soat %></code><% } else { %>—<% } %></td>
+                <td class="text-right font-weight-bold text-nowrap"><%= formatMoney(p.amount) %>đ</td>
+                <td>
+                  <span class="badge badge-<%= (nhanTrangThai[p.status] || ['secondary','?'])[0] %>">
+                    <%= (nhanTrangThai[p.status] || ['secondary','?'])[1] %>
+                  </span>
+                </td>
+                <td class="text-right text-nowrap">
+                  <a href="/staff/thanh-toan/bien-lai/<%= p.id %>" target="_blank" class="small" title="Biên lai">
+                    <i class="fas fa-receipt"></i>
+                  </a>
+                  <a href="/staff/thanh-toan/<%= p.sesis %>" class="small ml-2" title="Mở hóa đơn">
+                    <i class="fas fa-external-link-alt"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

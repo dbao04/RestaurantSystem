@@ -1,82 +1,127 @@
-<%- include('partials/header') %>
-<style>
-h1, h2, h3, h4, h5, h6 { text-align: center; padding: 10px; }
-label { font-weight: bold; }
-.table { width: 100% !important; max-width: 800px; margin: 0 auto; }
-.text1 { color: red; }
-</style>
+<%- include('partials/header', { title: 'Phiếu đặt bàn' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-            <div class="col-md-9 ftco-animate text-center mb-4">
-                <h1 class="mb-2 bread">Kiểm tra đơn hàng</h1>
-                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
-                                 class="ion-ios-arrow-forward"></i></a></span> <span>Đơn hàng <i
-                             class="ion-ios-arrow-forward"></i></span></p>
-            </div>
-      </div>
-    </div>
+<%
+  var co = orderDetails && orderDetails.length > 0;
+  var d = co ? orderDetails[0] : null;
+  var tong = 0;
+  if (co) orderDetails.forEach(function (i) { tong += Number(i.thanhtien) || 0; });
+%>
+
+<section class="nh-subhero" style="min-height:38vh">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Đã ghi nhận</span>
+    <h1>Phiếu đặt bàn</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Phiếu đặt bàn</div>
   </div>
 </section>
 
-<div class="container py-5">
-  <h1><label>NHA HANG BD</label></h1>
-  <h2><label>HỢP ĐỒNG NHẬN TIỆC</label></h2>
-  
-  <div class="text-center mb-4">
-    <h4>
-      <label>Người đặt tiệc:</label> <label class="text1"><%= orderDetails && orderDetails.length > 0 ? orderDetails[0].ten_khach : session.username %></label>
-      &nbsp;&nbsp; SĐT: <label class="text1"><%= orderDetails && orderDetails.length > 0 ? orderDetails[0].sodienthoai : session.usersdt %></label>
-    </h4>
-    <% if (orderDetails && orderDetails.length > 0) { %>
-      <h4>
-        <label>Nội dung tiệc:</label> <label class="text1"><%= orderDetails[0].noidung %></label>
-        &nbsp;&nbsp; Số khách: <label class="text1"><%= orderDetails[0].so_user %></label>
-      </h4>
-      <h4>
-        <label>Thời gian:</label> <label class="text1"><%= orderDetails[0].tg %> | <%= orderDetails[0].dates %></label>
-      </h4>
+<section class="nh-section nh-section--cream">
+  <div class="nh-container-narrow">
+    <%- include('partials/nh-steps', { buoc: 4 }) %>
+
+    <% if (co) { %>
+      <!-- Lời xác nhận đặt TRƯỚC phiếu: câu khách cần đọc đầu tiên là "đã đặt
+           được chưa và tiếp theo thế nào", không phải bảng số liệu. -->
+      <div class="nh-done nh-reveal" style="margin-bottom:2.4rem">
+        <div class="nh-done__seal"><i class="fas fa-check"></i></div>
+        <h2 class="nh-section-title" style="font-size:clamp(1.6rem,3.4vw,2.3rem)">Đã nhận yêu cầu đặt bàn</h2>
+        <p class="nh-lead" style="margin-top:.8rem">
+          Nhà hàng sẽ gọi lại số <strong><%= d.sodienthoai || session.usersdt %></strong>
+          để xác nhận và giữ bàn cho bạn. Bạn chưa cần thanh toán gì lúc này.
+        </p>
+      </div>
+
+      <div class="nh-receipt nh-reveal">
+        <div class="nh-receipt__head">
+          <span class="nh-eyebrow">Nhà Hàng Bảo Đoàn</span>
+          <h2>PHIẾU ĐẶT BÀN</h2>
+          <div style="font-size:.78rem; letter-spacing:1.4px; opacity:.75; margin-top:.5rem">
+            MÃ ĐƠN &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(d.sesis).slice(0, 10).toUpperCase() %></strong>
+          </div>
+        </div>
+
+        <div class="nh-receipt__facts">
+          <div class="nh-receipt__fact">Người đặt
+            <b><%= d.ten_khach || d.ten || session.username %></b></div>
+          <div class="nh-receipt__fact">Số điện thoại
+            <b><%= d.sodienthoai || session.usersdt %></b></div>
+          <div class="nh-receipt__fact">Ngày đến
+            <b><%= ngayVN(d.dates) %></b></div>
+          <div class="nh-receipt__fact">Giờ đến
+            <b><%= gioVN(d.tg) %></b></div>
+          <div class="nh-receipt__fact">Số khách
+            <b><%= d.so_user %> người</b></div>
+          <div class="nh-receipt__fact">Dịp
+            <b><%= d.noidung %></b></div>
+        </div>
+
+        <div class="nh-receipt__body">
+          <h3 class="nh-panel__title"><i class="fas fa-utensils"></i> Thực đơn đã chọn</h3>
+
+          <% orderDetails.forEach(function (item) { %>
+            <div class="nh-line" style="grid-template-columns:1fr auto auto">
+              <div class="nh-line__info">
+                <h4 class="nh-line__name"><%= (item.name_mon || '').trim() %></h4>
+                <div class="nh-line__unit"><%= formatMoney(item.gia) %> ₫ × <%= item.soluong %></div>
+              </div>
+              <div></div>
+              <div class="nh-line__sum"><%= formatMoney(item.thanhtien) %> ₫</div>
+            </div>
+          <% }) %>
+
+          <div class="nh-summary__total">
+            <span>Tổng cộng</span>
+            <b><%= formatMoney(tong) %> ₫</b>
+          </div>
+
+          <p class="nh-note">
+            <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
+            Số tiền trên là giá trị các món đã đặt trước, thanh toán tại nhà hàng sau khi dùng bữa.
+            Muốn đổi món hay đổi giờ, hãy gọi cho nhà hàng trước giờ đến.
+          </p>
+        </div>
+      </div>
+
+      <div class="nh-done__actions">
+        <%
+          /* Chi moi don CO GOI MON truoc moi cho dat coc: don dat ban thuan
+             (tong = 0) thi khong co gi de tinh phan tram coc. */
+        %>
+        <% if (tong > 0 && Number(d.tinhtrang) !== 3 && Number(d.tinhtrang) !== 4) { %>
+          <a href="/thanh-toan/dat-coc/<%= d.sesis %>" class="nh-btn nh-btn--gold">
+            <i class="fas fa-shield-halved"></i> Đặt cọc giữ bàn
+          </a>
+        <% } %>
+        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> Xem đơn của tôi</a>
+        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-book-open"></i> Về thực đơn</a>
+        <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="window.print()">
+          <i class="fas fa-print"></i> In phiếu
+        </button>
+      </div>
+    <% } else { %>
+      <div class="nh-empty">
+        <i class="fas fa-file-circle-question"></i>
+        <h3>Không tìm thấy phiếu đặt bàn</h3>
+        <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
+          Đường dẫn có thể không đúng, hoặc đơn đã bị xoá.
+        </p>
+        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> Xem đơn của tôi</a>
+      </div>
     <% } %>
   </div>
+</section>
 
-  <hr>
-
-  <h2><label>THỰC ĐƠN TIỆC</label></h2>
-
-  <div class="cart-list">
-    <table class="table">
-      <thead class="thead-primary">
-        <tr class="text-center">
-          <th>Món ăn</th>
-          <th>Giá</th>
-          <th>Số lượng</th>
-          <th>Thành tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% let total = 0; %>
-        <% if (orderDetails) { %>
-            <% orderDetails.forEach(item => { %>
-              <% total += item.thanhtien; %>
-              <tr class="text-center">
-                <td><%= item.name_mon %></td>
-                <td><%= formatMoney(item.gia) %> VNĐ</td>
-                <td><%= item.soluong %></td>
-                <td><%= formatMoney(item.thanhtien) %> VNĐ</td>
-              </tr>
-            <% }) %>
-        <% } %>
-      </tbody>
-    </table>
-    <h4 class="text-right mt-3"><label>Tổng cộng: <%= formatMoney(total) %> VNĐ</label></h4>
-  </div>
-
-  <div class="text-center mt-4">
-    <a href="/success" class="btn btn-primary py-3 px-5">Xác Nhận</a>
-  </div>
-</div>
+<style>
+  /* Bản in: chỉ giữ phiếu, bỏ thanh điều hướng, thanh bước, nút và chân trang. */
+  @media print {
+    .nh-nav, .nh-subhero, .nh-steps, .nh-done__actions, .nh-footer, .nh-done__seal { display: none !important; }
+    .nh-section { padding: 0 !important; background: #fff !important; }
+    .nh-receipt { box-shadow: none !important; border: 1px solid #ddd; }
+    .nh-receipt__head { background: #fff !important; color: #000 !important; border-bottom: 2px solid #000; }
+    .nh-receipt__head h2, .nh-receipt__head .nh-eyebrow { color: #000 !important; }
+  }
+</style>
 
 <%- include('partials/footer') %>

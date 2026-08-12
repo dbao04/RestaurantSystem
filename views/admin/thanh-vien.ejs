@@ -1,0 +1,136 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  var HANG = ['bronze', 'silver', 'gold', 'platinum'];
+  var MAU  = { bronze: 'muted', silver: 'info', gold: 'warn', platinum: 'ok' };
+  var TONE = { bronze: 'plum', silver: 'blue', gold: 'gold', platinum: 'green' };
+%>
+
+<!-- ====================================================== Theo hạng -->
+<div class="qt-stats">
+  <% HANG.forEach(function (h) { var t = thongKe.theoHang[h]; %>
+    <div class="qt-stat qt-stat--<%= TONE[h] %>">
+      <span class="qt-stat__icon"><i class="fas fa-medal"></i></span>
+      <div class="qt-stat__label">Hạng <%= TEN_HANG[h] %></div>
+      <div class="qt-stat__value"><%= t.so_khach %></div>
+      <div class="qt-stat__note">
+        <% if (NGUONG_HANG[h] > 0) { %>từ <%= formatMoney(NGUONG_HANG[h]) %>đ · <% } %>
+        chi <%= formatMoney(t.tong_chi) %>đ
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<div class="qt-alert qt-alert--info" style="margin-top:1rem">
+  <i class="fas fa-circle-info"></i>
+  <span>
+    Hạng và điểm do luồng thanh toán tự tính sau mỗi hóa đơn, không sửa tay được ở đây.
+    Ngoài danh sách này còn <strong><%= thongKe.vangLai %></strong> khách vãng lai quét QR —
+    không có tài khoản thật nên không tính hạng và không dùng được mã giới hạn theo khách.
+  </span>
+</div>
+
+<!-- ====================================================== Danh sách -->
+<div class="qt-card" style="margin-top:1.5rem">
+  <div class="qt-card__head">
+    <div>
+      <h2>Thành viên</h2>
+      <p><%= danhSach.length %> khách<%= loc.tuKhoa || loc.hang ? ' khớp bộ lọc' : '' %></p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/khuyen-mai"><i class="fas fa-ticket"></i> Khuyến mãi</a>
+    </div>
+  </div>
+
+  <div class="qt-card__body" style="padding-bottom:0">
+    <form class="qt-filter" method="GET" action="/admin/thanh-vien">
+      <input class="qt-input" type="text" name="q" placeholder="Tìm theo tên, số điện thoại, email…"
+             value="<%= loc.tuKhoa %>" style="max-width:320px">
+      <select class="qt-select" name="hang" style="max-width:200px">
+        <option value="">Tất cả các hạng</option>
+        <% HANG.forEach(function (h) { %>
+          <option value="<%= h %>" <%= loc.hang === h ? 'selected' : '' %>>Hạng <%= TEN_HANG[h] %></option>
+        <% }); %>
+      </select>
+      <label class="tv-check">
+        <input type="checkbox" name="vang_lai" value="1" <%= loc.keCaVangLai ? 'checked' : '' %>>
+        <span>Kể cả khách QR</span>
+      </label>
+      <div class="qt-filter__act">
+        <button class="qt-btn qt-btn--ghost" type="submit"><i class="fas fa-filter"></i> Lọc</button>
+        <% if (loc.tuKhoa || loc.hang || loc.keCaVangLai) { %>
+          <a class="qt-btn qt-btn--ghost" href="/admin/thanh-vien"><i class="fas fa-xmark"></i> Bỏ lọc</a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+
+  <div class="qt-card__body qt-card__body--flush">
+    <% if (danhSach.length > 0) { %>
+    <div class="qt-tablewrap">
+      <table class="qt-table">
+        <thead>
+          <tr>
+            <th>Khách hàng</th>
+            <th>Hạng</th>
+            <th>Điểm</th>
+            <th>Tổng chi tiêu</th>
+            <th>Còn thiếu để lên hạng</th>
+            <th>Mã đã dùng</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% danhSach.forEach(function (k) {
+               var i = HANG.indexOf(k.tier);
+               var ke = i >= 0 && i < 3 ? HANG[i + 1] : null;
+               var thieu = ke ? Math.max(0, NGUONG_HANG[ke] - Number(k.total_spent)) : 0;
+          %>
+          <tr>
+            <td>
+              <div class="qt-strong"><%= k.ten || '(chưa có tên)' %></div>
+              <div class="tv-phu">
+                <%= k.sodienthoai || '—' %><%= k.email ? ' · ' + k.email : '' %>
+              </div>
+            </td>
+            <td><span class="qt-pill qt-pill--<%= MAU[k.tier] %>"><%= TEN_HANG[k.tier] %></span></td>
+            <td class="qt-num"><%= Number(k.points).toLocaleString('vi-VN') %></td>
+            <td class="qt-money"><%= formatMoney(k.total_spent) %>đ</td>
+            <td class="tv-phu">
+              <% if (!ke) { %>
+                Cao nhất rồi
+              <% } else { %>
+                còn <%= formatMoney(thieu) %>đ → <%= TEN_HANG[ke] %>
+              <% } %>
+            </td>
+            <td class="qt-num"><%= k.so_ma_da_dung %></td>
+            <td>
+              <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/thanh-vien/<%= k.id %>">
+                <i class="fas fa-eye"></i> Chi tiết
+              </a>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="qt-empty">
+      <i class="fas fa-users"></i>
+      <p>Không có khách hàng nào<%= loc.tuKhoa || loc.hang ? ' khớp bộ lọc' : '' %>.</p>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+  .tv-phu { font-size: .74rem; color: var(--qt-muted); margin-top: .15rem; }
+  .tv-check {
+    display: inline-flex; align-items: center; gap: .4rem; cursor: pointer;
+    font-size: .82rem; padding: .35rem .7rem; border: 1px solid var(--qt-line);
+    border-radius: 10px; background: #fff;
+  }
+</style>
+
+<%- include('partials/footer') %>

@@ -1,77 +1,126 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Đơn của tôi' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Đơn hàng của tôi</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Đơn hàng <i class="ion-ios-arrow-forward"></i></span></p>
-      </div>
-    </div>
+<section class="nh-subhero" style="min-height:38vh">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Theo dõi đặt bàn</span>
+    <h1>Đơn của tôi</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Đơn của tôi</div>
   </div>
 </section>
 
-<section class="ftco-section">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12 ftco-animate">
-        <div class="cart-list">
-          <table class="table">
-            <thead class="thead-primary">
-              <tr class="text-center">
-                <th>Ngày đặt</th>
-                <th>Thời gian</th>
-                <th>Nội dung</th>
-                <th>Số khách</th>
-                <th>Tổng cộng</th>
-                <th>Tình trạng</th>
-                <th>Chi tiết</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (orders && orders.length > 0) { %>
-                <% orders.forEach(order => { %>
-                  <tr class="text-center">
-                    <td><%= order.dates %></td>
-                    <td><%= order.tg %></td>
-                    <td><%= order.noidung %></td>
-                    <td><%= order.so_user %></td>
-                    <td><%= formatMoney(order.tong_tien) %> VNĐ</td>
-                    <td>
-                      <% if (order.tinhtrang == 0) { %>
-                        <span class="badge badge-warning">Chờ xử lý</span>
-                      <% } else if (order.tinhtrang == 1) { %>
-                        <span class="badge badge-success">Đã xác nhận</span>
-                      <% } else if (order.tinhtrang == 5) { %>
-                        <span class="badge badge-info">Khách đã đến</span>
-                      <% } else if (order.tinhtrang == 6) { %>
-                        <span class="badge badge-primary">Đang dùng món</span>
-                      <% } else if (order.tinhtrang == 2) { %>
-                        <span class="badge badge-danger">Yêu cầu hủy</span>
-                      <% } %>
-                    </td>
-                    <td>
-                      <a href="/contract?sesis=<%= order.sesis %>" class="btn btn-primary btn-sm">Xem</a>
-                      <% if (order.tinhtrang == 0) { %>
-                        <form action="/cancel-order" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn yêu cầu hủy đơn này?')">
-                          <input type="hidden" name="sesis" value="<%= order.sesis %>">
-                          <button type="submit" class="btn btn-danger btn-sm">Hủy</button>
-                        </form>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }) %>
-              <% } else { %>
-                <tr class="text-center">
-                  <td colspan="7">Bạn chưa có đơn đặt bàn nào.</td>
-                </tr>
-              <% } %>
-            </tbody>
-          </table>
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+
+    <%
+      /* Trang huy don chuyen ve day kem ?msg=... nhung ban cu khong he hien ra,
+         nen khach bam Huy xong khong biet da gui duoc yeu cau chua. */
+      var thongBao = typeof msg !== 'undefined' ? msg : null;
+      var loaiTB = (typeof msgType !== 'undefined' && msgType) ? msgType : 'success';
+
+      /* tinhtrang la so trong CSDL. Gom vao mot cho de nhan, mau va loi giai
+         thich luon di cung nhau - truoc day rai rac trong nam nhanh if. */
+      var TRANG_THAI = {
+        0: { lop: 'cho',     ten: 'Chờ xác nhận', y: 'Nhà hàng sẽ gọi lại cho bạn để xác nhận.' },
+        1: { lop: 'xacnhan', ten: 'Đã xác nhận',  y: 'Bàn đã được giữ. Hẹn gặp bạn đúng giờ!' },
+        2: { lop: 'huy',     ten: 'Yêu cầu hủy',  y: 'Yêu cầu hủy đang chờ nhà hàng duyệt.' },
+        3: { lop: 'xong',    ten: 'Đã hủy',       y: 'Đơn này đã được hủy.' },
+        5: { lop: 'den',     ten: 'Khách đã đến', y: 'Bạn đã được xếp bàn.' },
+        6: { lop: 'dungmon', ten: 'Đang dùng món', y: 'Bếp đang phục vụ thực đơn của bạn.' },
+      };
+    %>
+
+    <% if (thongBao) { %>
+      <div class="nh-panel nh-reveal" style="border-left:4px solid <%= loaiTB === 'danger' ? '#c0392b' : 'var(--nh-gold)' %>; margin-bottom:1.6rem">
+        <div style="display:flex; gap:.9rem; align-items:center">
+          <i class="fas <%= loaiTB === 'danger' ? 'fa-circle-exclamation' : 'fa-circle-check' %>"
+             style="color:<%= loaiTB === 'danger' ? '#c0392b' : 'var(--nh-gold)' %>; font-size:1.3rem"></i>
+          <span><%= thongBao %></span>
         </div>
       </div>
-    </div>
+    <% } %>
+
+    <% if (orders && orders.length > 0) { %>
+      <% if (typeof phanTrang !== 'undefined' && phanTrang.tong > phanTrang.soMoiTrang) { %>
+        <p class="nh-hint" style="margin-bottom:1rem">
+          Hiển thị <strong><%= (phanTrang.trang - 1) * phanTrang.soMoiTrang + 1 %>–<%= (phanTrang.trang - 1) * phanTrang.soMoiTrang + orders.length %></strong>
+          trong tổng số <strong><%= phanTrang.tong %></strong> đơn · mới nhất trước
+        </p>
+      <% } %>
+
+      <div class="nh-orders">
+        <% orders.forEach(function (order, i) {
+             var tt = TRANG_THAI[order.tinhtrang] || { lop: 'xong', ten: 'Không rõ', y: '' };
+        %>
+          <article class="nh-order nh-reveal" data-delay="<%= (i % 3) + 1 %>">
+            <div class="nh-order__head">
+              <div>
+                <div class="nh-order__when">
+                  <i class="fas fa-calendar-day" style="color:var(--nh-gold); font-size:.9rem"></i>
+                  <%= ngayVN(order.dates) %> &nbsp;·&nbsp; <%= gioVN(order.tg) %>
+                </div>
+                <div class="nh-order__code">MÃ ĐƠN <%= String(order.sesis).slice(0, 10).toUpperCase() %></div>
+              </div>
+              <span class="nh-status nh-status--<%= tt.lop %>" style="margin-left:auto"><%= tt.ten %></span>
+            </div>
+
+            <div class="nh-order__body">
+              <div class="nh-order__fact">Số khách <b><%= order.so_user %> người</b></div>
+              <div class="nh-order__fact">Dịp <b><%= order.noidung %></b></div>
+              <div class="nh-order__fact">Giá trị món <b><%= formatMoney(order.tong_tien) %> ₫</b></div>
+
+              <div class="nh-order__actions">
+                <a href="/contract?sesis=<%= order.sesis %>" class="nh-btn nh-btn--dark nh-btn--sm">
+                  <i class="fas fa-receipt"></i> Xem phiếu
+                </a>
+                <% if (order.tinhtrang == 0) { %>
+                  <form action="/cancel-order" method="POST" style="display:inline"
+                        onsubmit="return confirm('Gửi yêu cầu hủy đơn ngày <%= ngayVN(order.dates) %>?')">
+                    <input type="hidden" name="sesis" value="<%= order.sesis %>">
+                    <button type="submit" class="nh-btn nh-btn--sm"
+                            style="background:transparent; border-color:#c0392b; color:#c0392b">
+                      <i class="fas fa-xmark"></i> Hủy đơn
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+
+            <% if (tt.y) { %>
+              <div style="padding:.7rem clamp(1.1rem,3vw,1.6rem); background:var(--nh-cream); font-size:.85rem; color:var(--nh-muted)">
+                <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i> <%= tt.y %>
+              </div>
+            <% } %>
+          </article>
+        <% }) %>
+      </div>
+
+      <% if (typeof phanTrang !== 'undefined' && phanTrang.soTrang > 1) { %>
+        <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:2.2rem">
+          <% if (phanTrang.trang > 1) { %>
+            <a href="/my-orders?trang=<%= phanTrang.trang - 1 %>" class="nh-btn nh-btn--dark nh-btn--sm">
+              <i class="fas fa-arrow-left"></i> Mới hơn
+            </a>
+          <% } %>
+          <span class="nh-hint">Trang <%= phanTrang.trang %> / <%= phanTrang.soTrang %></span>
+          <% if (phanTrang.trang < phanTrang.soTrang) { %>
+            <a href="/my-orders?trang=<%= phanTrang.trang + 1 %>" class="nh-btn nh-btn--dark nh-btn--sm">
+              Cũ hơn <i class="fas fa-arrow-right"></i>
+            </a>
+          <% } %>
+        </div>
+      <% } %>
+    <% } else { %>
+      <div class="nh-empty nh-reveal">
+        <i class="fas fa-calendar-check"></i>
+        <h3>Bạn chưa đặt bàn lần nào</h3>
+        <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:480px">
+          Chọn món trong thực đơn rồi đặt bàn — đơn của bạn sẽ hiện ở đây để theo dõi.
+        </p>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+      </div>
+    <% } %>
   </div>
 </section>
 

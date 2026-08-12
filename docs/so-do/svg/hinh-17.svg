@@ -1,0 +1,125 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1250 790" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ bán hàng: thực đơn, đơn hàng, bàn và thanh toán"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-erdA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-erdA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bang "><rect class="vien" x="30" y="40" width="124" height="78" rx="3"/><rect class="ngan-ten" x="30" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="56">loai_mon</text><line x1="30" y1="64" x2="154" y2="64"/><text class="tx-khoa" x="38" y="77">PK</text><text class="tx-cot" x="60" y="77">id_loai</text><text class="tx-cot" x="40" y="93">name_loai</text><text class="tx-cot" x="40" y="109">ghichu</text></g><g class="bang "><rect class="vien" x="30" y="190" width="124" height="126" rx="3"/><rect class="ngan-ten" x="30" y="190" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="206">monan</text><line x1="30" y1="214" x2="154" y2="214"/><text class="tx-khoa" x="38" y="227">PK</text><text class="tx-cot" x="60" y="227">id_mon</text><text class="tx-khoa" x="38" y="243">FK</text><text class="tx-cot" x="60" y="243">id_loai</text><text class="tx-cot" x="40" y="259">name_mon</text><text class="tx-cot" x="40" y="275">gia_mon</text><text class="tx-cot" x="40" y="291">images</text><text class="tx-cot" x="40" y="307">tinhtrang</text></g><g class="bang "><rect class="vien" x="30" y="430" width="124" height="94" rx="3"/><rect class="ngan-ten" x="30" y="430" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="446">cart</text><line x1="30" y1="454" x2="154" y2="454"/><text class="tx-khoa" x="38" y="467">PK</text><text class="tx-cot" x="60" y="467">id</text><text class="tx-khoa" x="38" y="483">FK</text><text class="tx-cot" x="60" y="483">id_mon</text><text class="tx-cot" x="40" y="499">session_id</text><text class="tx-cot" x="40" y="515">soluong</text></g><g class="bang "><rect class="vien" x="30" y="590" width="124" height="110" rx="3"/><rect class="ngan-ten" x="30" y="590" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="606">qr_tables</text><line x1="30" y1="614" x2="154" y2="614"/><text class="tx-khoa" x="38" y="627">PK</text><text class="tx-cot" x="60" y="627">id</text><text class="tx-cot" x="40" y="643">table_id</text><text class="tx-cot" x="40" y="659">table_name</text><text class="tx-cot" x="40" y="675">active_sesis</text><text class="tx-cot" x="40" y="691">url</text></g><g class="bang "><rect class="vien" x="300" y="40" width="124" height="126" rx="3"/><rect class="ngan-ten" x="300" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="362" y="56">khach_hang</text><line x1="300" y1="64" x2="424" y2="64"/><text class="tx-khoa" x="308" y="77">PK</text><text class="tx-cot" x="330" y="77">id</text><text class="tx-cot" x="310" y="93">ten</text><text class="tx-cot" x="310" y="109">sodienthoai</text><text class="tx-cot" x="310" y="125">gioitinh</text><text class="tx-cot" x="310" y="141">solandat</text><text class="tx-cot" x="310" y="157">passwords</text></g><g class="bang "><rect class="vien" x="300" y="250" width="124" height="62" rx="3"/><rect class="ngan-ten" x="300" y="250" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="362" y="266">vitri</text><line x1="300" y1="274" x2="424" y2="274"/><text class="tx-khoa" x="308" y="287">PK</text><text class="tx-cot" x="330" y="287">id_vitri</text><text class="tx-cot" x="310" y="303">name_vitri</text></g><g class="bang "><rect class="vien" x="300" y="360" width="124" height="110" rx="3"/><rect class="ngan-ten" x="300" y="360" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="362" y="376">ban</text><line x1="300" y1="384" x2="424" y2="384"/><text class="tx-khoa" x="308" y="397">PK</text><text class="tx-cot" x="330" y="397">Id_ban</text><text class="tx-khoa" x="308" y="413">FK</text><text class="tx-cot" x="330" y="413">id_vitri</text><text class="tx-cot" x="310" y="429">number_ban</text><text class="tx-cot" x="310" y="445">trangthai</text><text class="tx-cot" x="310" y="461">sesis_hien_tai</text></g><g class="bang "><rect class="vien" x="600" y="40" width="124" height="254" rx="3"/><rect class="ngan-ten" x="600" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="662" y="56">hopdong</text><line x1="600" y1="64" x2="724" y2="64"/><text class="tx-khoa" x="608" y="77">PK</text><text class="tx-cot" x="630" y="77">id</text><text class="tx-cot" x="610" y="93">sesis</text><text class="tx-khoa" x="608" y="109">FK</text><text class="tx-cot" x="630" y="109">id_mon</text><text class="tx-khoa" x="608" y="125">FK</text><text class="tx-cot" x="630" y="125">id_user</text><text class="tx-khoa" x="608" y="141">FK</text><text class="tx-cot" x="630" y="141">id_ban</text><text class="tx-cot" x="610" y="157">name_mon</text><text class="tx-cot" x="610" y="173">soluong</text><text class="tx-cot" x="610" y="189">gia</text><text class="tx-cot" x="610" y="205">thanhtien</text><text class="tx-cot" x="610" y="221">ngay_dat</text><text class="tx-cot" x="610" y="237">gio_dat</text><text class="tx-cot" x="610" y="253">tinhtrang</text><text class="tx-cot" x="610" y="269">trangthai_bep</text><text class="tx-cot" x="610" y="285">ghi_chu_mon</text></g><g class="bang "><rect class="vien" x="900" y="40" width="140" height="174" rx="3"/><rect class="ngan-ten" x="900" y="40" width="140" height="24" rx="3"/><text class="tx-bang-ten" x="970" y="56">payments</text><line x1="900" y1="64" x2="1040" y2="64"/><text class="tx-khoa" x="908" y="77">PK</text><text class="tx-cot" x="930" y="77">id</text><text class="tx-khoa" x="908" y="93">FK</text><text class="tx-cot" x="930" y="93">sesis</text><text class="tx-khoa" x="908" y="109">FK</text><text class="tx-cot" x="930" y="109">payment_method_id</text><text class="tx-cot" x="910" y="125">amount</text><text class="tx-cot" x="910" y="141">status</text><text class="tx-cot" x="910" y="157">loai</text><text class="tx-cot" x="910" y="173">ma_doi_soat</text><text class="tx-cot" x="910" y="189">transaction_id</text><text class="tx-cot" x="910" y="205">created_at</text></g><g class="bang "><rect class="vien" x="900" y="300" width="124" height="110" rx="3"/><rect class="ngan-ten" x="900" y="300" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="962" y="316">payment_methods</text><line x1="900" y1="324" x2="1024" y2="324"/><text class="tx-khoa" x="908" y="337">PK</text><text class="tx-cot" x="930" y="337">id</text><text class="tx-cot" x="910" y="353">name</text><text class="tx-cot" x="910" y="369">code</text><text class="tx-cot" x="910" y="385">type</text><text class="tx-cot" x="910" y="401">is_active</text></g><g class="bang "><rect class="vien" x="900" y="440" width="144" height="126" rx="3"/><rect class="ngan-ten" x="900" y="440" width="144" height="24" rx="3"/><text class="tx-bang-ten" x="972" y="456">giao_dich_ngan_hang</text><line x1="900" y1="464" x2="1044" y2="464"/><text class="tx-khoa" x="908" y="477">PK</text><text class="tx-cot" x="930" y="477">id</text><text class="tx-cot" x="910" y="493">ma_giao_dich</text><text class="tx-cot" x="910" y="509">so_tien</text><text class="tx-cot" x="910" y="525">noi_dung</text><text class="tx-cot" x="910" y="541">thoi_diem</text><text class="tx-cot" x="910" y="557">da_khop</text></g><g class="bang "><rect class="vien" x="900" y="620" width="124" height="110" rx="3"/><rect class="ngan-ten" x="900" y="620" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="962" y="636">discount_codes</text><line x1="900" y1="644" x2="1024" y2="644"/><text class="tx-khoa" x="908" y="657">PK</text><text class="tx-cot" x="930" y="657">id</text><text class="tx-cot" x="910" y="673">code</text><text class="tx-cot" x="910" y="689">loai_giam</text><text class="tx-cot" x="910" y="705">gia_tri</text><text class="tx-cot" x="910" y="721">han_dung</text></g><g class="noi-bang">
+    <polyline class="qh-lop" points="92,118 92,190"/>
+    <line x1="99" y1="129" x2="85" y2="129"/><line x1="92" y1="190" x2="92" y2="179"/><line x1="92" y1="190" x2="99" y2="179"/><line x1="92" y1="190" x2="85" y2="179"/><text class="tx-boi" x="126" y="144">thuộc</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="92,316 92,430"/>
+    <line x1="99" y1="327" x2="85" y2="327"/><line x1="92" y1="430" x2="92" y2="419"/><line x1="92" y1="430" x2="99" y2="419"/><line x1="92" y1="430" x2="85" y2="419"/><text class="tx-boi" x="124" y="342">chọn</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="154,250 265,250 265,240 600,240"/>
+    <line x1="165" y1="243" x2="165" y2="257"/><line x1="600" y1="240" x2="589" y2="240"/><line x1="600" y1="240" x2="589" y2="233"/><line x1="600" y1="240" x2="589" y2="247"/><text class="tx-boi" x="420" y="234">gồm món</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="424,100 600,100"/>
+    <line x1="435" y1="93" x2="435" y2="107"/><line x1="600" y1="100" x2="589" y2="100"/><line x1="600" y1="100" x2="589" y2="93"/><line x1="600" y1="100" x2="589" y2="107"/><text class="tx-boi" x="512" y="92">đặt</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="362,312 362,360"/>
+    <line x1="369" y1="323" x2="355" y2="323"/><line x1="362" y1="360" x2="362" y2="349"/><line x1="362" y1="360" x2="369" y2="349"/><line x1="362" y1="360" x2="355" y2="349"/><text class="tx-boi" x="390" y="338">khu</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="424,420 545,420 545,300 600,300"/>
+    <line x1="435" y1="413" x2="435" y2="427"/><line x1="600" y1="300" x2="589" y2="300"/><line x1="600" y1="300" x2="589" y2="293"/><line x1="600" y1="300" x2="589" y2="307"/><text class="tx-boi" x="478" y="412">phục vụ tại</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="154,646 328,646 328,470"/>
+    <line x1="165" y1="639" x2="165" y2="653"/><line x1="335" y1="481" x2="321" y2="481"/><text class="tx-boi" x="265" y="638">table_name = number_ban</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="724,130 900,130"/>
+    <line x1="735" y1="123" x2="735" y2="137"/><line x1="900" y1="130" x2="889" y2="130"/><line x1="900" y1="130" x2="889" y2="123"/><line x1="900" y1="130" x2="889" y2="137"/><text class="tx-boi" x="812" y="122">sesis</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="962,300 962,214"/>
+    <line x1="955" y1="289" x2="969" y2="289"/><line x1="962" y1="214" x2="962" y2="225"/><line x1="962" y1="214" x2="955" y2="225"/><line x1="962" y1="214" x2="969" y2="225"/><text class="tx-boi" x="1008" y="288">hình thức</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="900,480 860,480 860,188 900,188"/>
+    <line x1="889" y1="487" x2="889" y2="473"/><line x1="889" y1="195" x2="889" y2="181"/><text class="tx-boi" x="768" y="472">đối soát theo ma_doi_soat</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="900,660 845,660 845,226 900,226"/>
+    <line x1="889" y1="667" x2="889" y2="653"/><line x1="900" y1="226" x2="889" y2="226"/><line x1="900" y1="226" x2="889" y2="219"/><line x1="900" y1="226" x2="889" y2="233"/><text class="tx-boi" x="800" y="652">giảm giá</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="30" y="748">Mỗi dòng hopdong là MỘT MÓN, không phải một hoá đơn. Các dòng cùng một lần đặt dùng chung mã phiên sesis, nhờ vậy mỗi món</text><text class="tx-ghi" x="30" y="761">giữ được trạng thái bếp riêng (trangthai_bep) trong khi cả đơn vẫn có một trạng thái chung (tinhtrang).</text>
+  </g></svg>

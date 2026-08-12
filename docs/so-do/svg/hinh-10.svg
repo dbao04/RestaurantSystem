@@ -1,0 +1,147 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình phục vụ và chế biến tại bàn với bốn lằn: khách hàng, phục vụ, bếp và hệ thống"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-bpA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Phục vụ</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Bếp (KDS)</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Hệ thống</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Khách tới nhà hàng</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">Xếp bàn, xác nhận</text><text class="tx-viec" x="268" y="244.5">khách đã đặt trước</text>
+  </g><g class="cong">
+    <polygon points="416,209 440,233 416,257 392,233"/>
+    <line x1="408" y1="225" x2="424" y2="241"/>
+    <line x1="408" y1="241" x2="424" y2="225"/>
+    <text class="tx-sk" x="416" y="201">Khách tự gọi món?</text>
+  </g><g class="viec ">
+    <rect x="495" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="80.5">Quét mã QR tại bàn,</text><text class="tx-viec" x="564" y="94.5">chọn món</text>
+  </g><g class="viec ">
+    <rect x="495" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="230.5">Nhập đơn hộ khách</text><text class="tx-viec" x="564" y="244.5">trên máy POS</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="530.5">Ghi đơn, gắn bàn,</text><text class="tx-viec" x="712" y="544.5">bàn → Đang phục vụ</text>
+  </g><g class="viec ">
+    <rect x="791" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="380.5">Nhận món,</text><text class="tx-viec" x="860" y="394.5">bắt đầu chế biến</text>
+  </g><g class="viec ">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="387.5">Hoàn thành chế biến</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="530.5">Trừ tồn kho theo</text><text class="tx-viec" x="1008" y="544.5">công thức, ghi xuất kho</text>
+  </g><g class="viec ">
+    <rect x="1087" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="237.5">Mang món ra bàn</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Món đã lên bàn</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="337,233 392,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="416,209 416,83 495,83" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="430" y="141">Có</text><polyline class="luong " points="440,233 495,233" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="458" y="224">Không</text><polyline class="luong " points="633,83 672,83 672,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="633,233 752,233 752,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="781,533 791,533 791,383 791,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="929,383 939,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1008,410 1008,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1077,533 1082,533 1082,233 1087,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1156,206 1156,102" marker-end="url(#mui-bpA)"/></svg>

@@ -1,0 +1,322 @@
+<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800">
+    <i class="fas fa-satellite-dish text-danger"></i> Bảng điều hành
+    <span id="dau-hieu-rt" title="Đang kết nối"
+          style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b7b9cc;vertical-align:middle;margin-left:6px"></span>
+  </h1>
+  <div class="text-muted small">
+    <i class="fas fa-user-shield"></i>
+    <%= hoSo ? hoSo.ten_cd : 'Quản trị' %> · cập nhật thời gian thực
+  </div>
+</div>
+
+<!-- ================= Hàng số liệu ================= -->
+<div class="row">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Nhân sự đang trực</div>
+        <div class="h4 mb-0 font-weight-bold text-gray-800">
+          <span id="sl-online"><%= tongQuan.nhan_su.dang_online %></span>
+          <span class="text-muted h6">/ <%= tongQuan.nhan_su.tong %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Việc đang chờ</div>
+        <div class="h4 mb-0 font-weight-bold text-gray-800" id="sl-cho"><%= tongQuan.viec.cho %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-danger shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Việc khẩn</div>
+        <div class="h4 mb-0 font-weight-bold text-gray-800" id="sl-khan"><%= tongQuan.viec.khan %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Đang xử lý</div>
+        <div class="h4 mb-0 font-weight-bold text-gray-800" id="sl-dang"><%= tongQuan.viec.dang_xu_ly %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- ================= Nhân sự theo bộ phận ================= -->
+  <div class="col-lg-5">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Nhân sự theo bộ phận</h6>
+        <span class="small text-muted" id="cap-nhat-luc">—</span>
+      </div>
+      <div class="card-body p-0">
+        <div id="bang-bo-phan"></div>
+      </div>
+    </div>
+
+    <!-- ================= Gửi thông báo ================= -->
+    <% if (coQuyen('dieu_hanh.thong_bao.gui')) { %>
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-bullhorn"></i> Gửi thông báo tức thì
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <select class="form-control form-control-sm" id="tb-nguoi-nhan">
+            <option value="">— Toàn bộ nhà hàng —</option>
+            <% tongQuan.theo_bo_phan.forEach(function (b) { %>
+              <option value="bp:<%= b.ma_bp %>">Bộ phận: <%= b.ten_bp %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control form-control-sm" id="tb-noi-dung" rows="2"
+                    placeholder="Nội dung thông báo gửi ngay tới màn hình của họ..."></textarea>
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="custom-control custom-switch mr-auto">
+            <input type="checkbox" class="custom-control-input" id="tb-khan">
+            <label class="custom-control-label small text-danger" for="tb-khan">Khẩn (có chuông)</label>
+          </div>
+          <button class="btn btn-sm btn-primary" id="tb-gui">
+            <i class="fas fa-paper-plane"></i> Gửi
+          </button>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- ================= Việc cần xử lý ================= -->
+  <div class="col-lg-7">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-tasks"></i> Việc cần xử lý
+        </h6>
+        <div>
+          <% if (coQuyen('dieu_hanh.viec.tao')) { %>
+            <%# Dùng chung modal báo việc toàn cục ở partials/footer.ejs %>
+            <button class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#modal-bao-viec">
+              <i class="fas fa-plus"></i> Báo việc
+            </button>
+          <% } %>
+          <div class="custom-control custom-switch d-inline-block ml-2 align-middle">
+            <input type="checkbox" class="custom-control-input" id="hien-tat-ca">
+            <label class="custom-control-label small" for="hien-tat-ca">Cả đã xong</label>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div id="ds-viec" style="max-height:640px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- ================= Tổ làm việc ================= -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-users"></i> Tổ làm việc</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr><th>Tổ</th><th>Bộ phận</th><th>Tổ trưởng</th><th class="text-center">Thành viên</th><th>Ca</th></tr>
+            </thead>
+            <tbody id="bang-to"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dong-bp { display:flex; align-items:center; padding:9px 16px; border-bottom:1px solid #eaecf4; }
+  .dong-bp:last-child { border-bottom:none; }
+  .thanh { flex:1; height:7px; background:#eaecf4; border-radius:4px; margin:0 12px; overflow:hidden; }
+  .thanh > i { display:block; height:100%; border-radius:4px; transition:width .4s; }
+
+  .viec { padding:11px 16px; border-bottom:1px solid #eaecf4; border-left:4px solid transparent; }
+  .viec:last-child { border-bottom:none; }
+  .viec.khan { border-left-color:#e74a3b; background:#fdf3f2; }
+  .viec.cao  { border-left-color:#f6c23e; }
+  .viec.xong { opacity:.55; }
+  .viec .tieu-de { font-weight:700; font-size:13.5px; }
+  .viec .phu { font-size:11.5px; color:#858796; }
+  .nhan-moi { animation: chop 1.1s ease-in-out 3; }
+  @keyframes chop { 0%,100% { background:transparent } 50% { background:#fff3cd } }
+</style>
+
+<script>
+(function () {
+  var E = RT.escapeHtml;
+  var hienTatCa = false;
+
+  function nhan(muc) {
+    return { khan:'badge-danger', cao:'badge-warning', binh_thuong:'badge-secondary', thap:'badge-light' }[muc] || 'badge-secondary';
+  }
+  function tenMuc(m) {
+    return { khan:'KHẨN', cao:'Cao', binh_thuong:'Bình thường', thap:'Thấp' }[m] || m;
+  }
+  function tenTrangThai(t) {
+    return { cho:'Đang chờ', dang_xu_ly:'Đang xử lý', xong:'Đã xong', tu_choi:'Từ chối' }[t] || t;
+  }
+  function gioPhut(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  // ---------------------------------------------------------- Bảng bộ phận
+  function veBoPhan(tq) {
+    document.getElementById('sl-online').textContent = tq.nhan_su.dang_online;
+    document.getElementById('sl-cho').textContent = tq.viec.cho;
+    document.getElementById('sl-khan').textContent = tq.viec.khan;
+    document.getElementById('sl-dang').textContent = tq.viec.dang_xu_ly;
+    document.getElementById('cap-nhat-luc').textContent =
+      'lúc ' + new Date().toLocaleTimeString('vi-VN');
+
+    document.getElementById('bang-bo-phan').innerHTML = (tq.theo_bo_phan || []).map(function (b) {
+      var ty = b.tong ? Math.round(b.online / b.tong * 100) : 0;
+      return '<div class="dong-bp">' +
+        '<div style="width:118px;font-size:12.5px;font-weight:600;color:' + E(b.mau_sac) + '">' +
+          '<i class="fas ' + E(b.icon) + '"></i> ' + E(b.ten_bp) + '</div>' +
+        '<div class="thanh"><i style="width:' + ty + '%;background:' + E(b.mau_sac) + '"></i></div>' +
+        '<div style="width:74px;text-align:right;font-size:12px">' +
+          '<strong>' + b.online + '</strong><span class="text-muted">/' + b.tong + '</span>' +
+          (b.dinh_bien > b.tong ? '<div class="text-danger" style="font-size:10px">thiếu ' + (b.dinh_bien - b.tong) + '</div>' : '') +
+        '</div></div>';
+    }).join('') || '<div class="text-center text-muted py-4">Chưa có dữ liệu bộ phận.</div>';
+  }
+
+  // ------------------------------------------------------------- Danh sách việc
+  function veViec(d) {
+    var ds = d.viec || [];
+    if (!hienTatCa) ds = ds.filter(function (v) { return v.trang_thai !== 'xong' && v.trang_thai !== 'tu_choi'; });
+
+    if (!ds.length) {
+      document.getElementById('ds-viec').innerHTML =
+        '<div class="text-center text-muted py-5"><i class="fas fa-check-circle fa-2x mb-2 text-success"></i>' +
+        '<br>Không có việc nào đang chờ.</div>';
+      return;
+    }
+
+    document.getElementById('ds-viec').innerHTML = ds.map(function (v) {
+      var xong = v.trang_thai === 'xong' || v.trang_thai === 'tu_choi';
+      return '<div class="viec ' + E(v.muc_do) + (xong ? ' xong' : '') + '" data-id="' + v.id + '">' +
+        '<div class="d-flex align-items-start">' +
+          '<div style="flex:1">' +
+            '<div class="tieu-de">' +
+              '<span class="badge ' + nhan(v.muc_do) + ' mr-1">' + tenMuc(v.muc_do) + '</span>' +
+              E(v.tieu_de) + '</div>' +
+            (v.noi_dung ? '<div class="small text-gray-700 mt-1">' + E(v.noi_dung) + '</div>' : '') +
+            '<div class="phu mt-1">' +
+              (v.ten_bp ? '<span style="color:' + E(v.mau_sac) + '">● ' + E(v.ten_bp) + '</span> · ' : '') +
+              (v.ten_nguoi_tao ? E(v.ten_nguoi_tao) + (v.chuc_danh_nguoi_tao ? ' (' + E(v.chuc_danh_nguoi_tao) + ')' : '') : 'Hệ thống') +
+              ' · ' + gioPhut(v.tao_luc) +
+              ' · <strong>' + tenTrangThai(v.trang_thai) + '</strong>' +
+              (v.ten_nguoi_xu_ly ? ' bởi ' + E(v.ten_nguoi_xu_ly) : '') +
+            '</div>' +
+          '</div>' +
+          (xong ? '' :
+            '<div class="ml-2 text-nowrap">' +
+              (v.trang_thai === 'cho'
+                ? '<button class="btn btn-xs btn-outline-primary py-0 px-2" data-tt="dang_xu_ly">Nhận</button> '
+                : '') +
+              '<button class="btn btn-xs btn-outline-success py-0 px-2" data-tt="xong">Xong</button> ' +
+              '<button class="btn btn-xs btn-outline-secondary py-0 px-2" data-tt="tu_choi">Bỏ</button>' +
+            '</div>') +
+        '</div></div>';
+    }).join('');
+
+    document.querySelectorAll('#ds-viec [data-tt]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.closest('.viec').getAttribute('data-id');
+        b.disabled = true;
+        RT.gui('/api/to-chuc/viec/' + id, { trang_thai: b.getAttribute('data-tt') })
+          .then(function () { taiViec(); })
+          .catch(function (e) { RT.thongBao(e.message, 'loi'); b.disabled = false; });
+      };
+    });
+  }
+
+  // ------------------------------------------------------------------ Tổ
+  function veTo(d) {
+    document.getElementById('bang-to').innerHTML = (d.to || []).map(function (t) {
+      return '<tr>' +
+        '<td><strong>' + E(t.ten_to) + '</strong><div class="small text-muted">' + E(t.khu_vuc || '') + '</div></td>' +
+        '<td><span class="badge" style="background:' + E(t.mau_sac) + ';color:#fff">' + E(t.ten_bp) + '</span></td>' +
+        '<td>' + (t.ten_to_truong
+          ? E(t.ten_to_truong) + '<div class="small text-muted">' + E(t.chuc_danh_to_truong || '') + '</div>'
+          : '<span class="text-danger small">chưa có tổ trưởng</span>') + '</td>' +
+        '<td class="text-center">' + t.so_thanh_vien + '</td>' +
+        '<td class="small">' + E(t.ca_lam || '—') + '</td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Chưa có tổ nào.</td></tr>';
+  }
+
+  // ------------------------------------------------------------- Kết nối
+  RT.ganDauHieu(document.getElementById('dau-hieu-rt'));
+
+  RT.dongBo('/api/to-chuc/tong-quan', veBoPhan,
+    ['hien-dien:thay-doi', 'to-chuc:cap-nhat', 'viec:moi', 'viec:cap-nhat']);
+
+  var taiViec = RT.dongBo('/api/to-chuc/viec', veViec, ['viec:moi', 'viec:cap-nhat']);
+
+  RT.dongBo('/api/to-chuc/to', veTo, ['to-chuc:to-doi', 'to-chuc:cap-nhat']);
+
+  document.getElementById('hien-tat-ca').onchange = function () {
+    hienTatCa = this.checked;
+    fetch('/api/to-chuc/viec' + (hienTatCa ? '?tat_ca=1' : ''), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); }).then(veViec);
+  };
+
+  // Việc mới bay vào thì nhấp nháy để không bị bỏ sót giữa lúc bận.
+  RT.khi('viec:moi', function () {
+    setTimeout(function () {
+      var d = document.querySelector('#ds-viec .viec');
+      if (d) { d.classList.add('nhan-moi'); setTimeout(function () { d.classList.remove('nhan-moi'); }, 3400); }
+    }, 400);
+  });
+
+  // ------------------------------------------------------------- Gửi thông báo
+  var nutGui = document.getElementById('tb-gui');
+  if (nutGui) {
+    nutGui.onclick = function () {
+      var noiDung = document.getElementById('tb-noi-dung').value.trim();
+      if (!noiDung) return RT.thongBao('Chưa nhập nội dung.', 'canh-bao');
+
+      var chon = document.getElementById('tb-nguoi-nhan').value;
+      var goi = { noi_dung: noiDung, muc_do: document.getElementById('tb-khan').checked ? 'khan' : 'binh_thuong' };
+      if (!chon) goi.toan_bo = true;
+      else if (chon.indexOf('bp:') === 0) goi.ma_bp = chon.slice(3);
+
+      nutGui.disabled = true;
+      RT.gui('/api/to-chuc/thong-bao', goi)
+        .then(function () {
+          document.getElementById('tb-noi-dung').value = '';
+          document.getElementById('tb-khan').checked = false;
+          RT.thongBao('Đã gửi tới màn hình của những người liên quan.', 'thanh-cong');
+        })
+        .catch(function (e) { RT.thongBao(e.message, 'loi'); })
+        .then(function () { nutGui.disabled = false; });
+    };
+  }
+
+})();
+</script>
+
+<%- include('partials/footer') %>

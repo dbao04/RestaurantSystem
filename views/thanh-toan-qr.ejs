@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Thanh toán - Nhà Hàng Bảo Đoàn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Dùng lại đúng bảng màu của trang đặt món qua QR để khách thấy liền mạch. */
+    :root {
+      --primary: #c8813a; --primary-dark: #a0612a;
+      --bg: #0f0e0c; --bg2: #1a1815; --bg3: #242220;
+      --card: #1e1c1a; --border: rgba(200,129,58,0.2);
+      --text: #f0ece6; --text-muted: #998c7e;
+      --success: #2dba6e; --gold: #c8a951; --danger: #e05a4c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding-bottom: 120px;
+    }
+    .boc { max-width: 560px; margin: 0 auto; }
+
+    .dau {
+      background: linear-gradient(135deg,#1a1815 0%,#2c1810 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px; position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hieu { font-size: 17px; font-weight: 700; color: var(--gold); display:flex; align-items:center; gap:8px; }
+    .the-ban {
+      background: linear-gradient(135deg,var(--primary),var(--gold));
+      color:#fff; padding:6px 14px; border-radius:20px; font-size:13px; font-weight:600;
+    }
+
+    .khoi {
+      background: var(--card); border:1px solid var(--border);
+      border-radius:16px; margin:16px 20px; padding:18px;
+    }
+    .khoi h2 { font-size:14px; text-transform:uppercase; letter-spacing:.6px;
+               color:var(--text-muted); font-weight:600; margin-bottom:14px; }
+
+    .mon { display:flex; justify-content:space-between; gap:12px; padding:9px 0;
+           border-bottom:1px solid rgba(255,255,255,.05); font-size:15px; }
+    .mon:last-child { border-bottom:none; }
+    .mon .sl { color:var(--text-muted); font-size:13px; }
+    .mon .tien { white-space:nowrap; font-variant-numeric: tabular-nums; }
+
+    .dong-tien { display:flex; justify-content:space-between; padding:7px 0; font-size:15px; }
+    .dong-tien.mo { color:var(--text-muted); }
+    .dong-tien.giam { color:var(--success); }
+    .dong-tien.tong {
+      border-top:1px solid var(--border); margin-top:10px; padding-top:14px;
+      font-size:20px; font-weight:800;
+    }
+    .dong-tien.tong .tien { color:var(--gold); }
+
+    .o-ma { display:flex; gap:8px; }
+    .o-ma input {
+      flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+      padding:12px 14px; color:var(--text); font-size:15px; outline:none; text-transform:uppercase;
+    }
+    .o-ma input:focus { border-color:var(--primary); }
+    .o-ma button {
+      background:var(--bg3); border:1px solid var(--primary); color:var(--primary);
+      border-radius:10px; padding:0 18px; font-size:14px; font-weight:600; cursor:pointer;
+    }
+    .bao { font-size:13px; margin-top:8px; }
+    .bao.loi { color:var(--danger); } .bao.ok { color:var(--success); }
+
+    #goi-y-ma { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .nut-goi-y {
+      background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--success);
+      border-radius:99px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer;
+    }
+    .nut-goi-y:active { background:rgba(255,255,255,.12); }
+
+    /* --- màn hình QR --- */
+    .qr-boc { text-align:center; }
+    .qr-anh { background:#fff; padding:14px; border-radius:16px; display:inline-block; line-height:0; }
+    .qr-anh img { width:min(260px,64vw); height:min(260px,64vw); display:block; }
+    .qr-tien { font-size:30px; font-weight:800; color:var(--gold); margin:16px 0 4px; }
+    .qr-nh { font-size:14px; color:var(--text-muted); }
+    .qr-nd {
+      margin-top:14px; background:var(--bg3); border:1px dashed var(--border);
+      border-radius:10px; padding:12px;
+    }
+    .qr-nd .nhan { font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
+    .qr-nd .ma { font-size:19px; font-weight:800; letter-spacing:2px; color:var(--gold); margin-top:4px;
+                 font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .cho {
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      background:rgba(200,169,81,.1); border:1px solid rgba(200,169,81,.3);
+      border-radius:12px; padding:14px; margin-top:16px; font-size:14px; color:var(--gold);
+    }
+    .vong { width:16px;height:16px;border:2px solid var(--gold);border-right-color:transparent;
+            border-radius:50%; animation: quay .8s linear infinite; }
+    @keyframes quay { to { transform: rotate(360deg); } }
+
+    .huong-dan { text-align:left; margin-top:16px; font-size:13.5px; color:var(--text-muted); line-height:1.8; }
+    .huong-dan li { margin-left:18px; }
+
+    /* --- thanh đáy --- */
+    .day {
+      position:fixed; left:0; right:0; bottom:0; z-index:200;
+      background:linear-gradient(180deg, rgba(15,14,12,.6), var(--bg) 40%);
+      padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+      backdrop-filter: blur(10px);
+    }
+    .day .boc { display:flex; align-items:center; gap:14px; }
+    .nut {
+      flex:1; background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      color:#fff; border:none; border-radius:14px; padding:16px;
+      font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;
+      box-shadow:0 8px 22px rgba(200,129,58,.35);
+    }
+    .nut:disabled { opacity:.55; box-shadow:none; }
+    .nut.phu { background:transparent; border:1px solid var(--border); color:var(--text-muted); flex:0 0 auto; padding:16px 20px; box-shadow:none; }
+
+    .xong { text-align:center; padding:50px 24px; }
+    .xong .dau-tich {
+      width:88px;height:88px;border-radius:50%;background:rgba(45,186,110,.15);
+      border:2px solid var(--success); color:var(--success);
+      display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 22px;
+      animation: bung .45s cubic-bezier(.2,1.4,.5,1);
+    }
+    @keyframes bung { from { transform: scale(.4); opacity:0 } to { transform: scale(1); opacity:1 } }
+    .xong h1 { font-size:24px; margin-bottom:10px; }
+    .xong p { color:var(--text-muted); font-size:15px; line-height:1.7; }
+
+    .an { display:none !important; }
+  </style>
+</head>
+<body>
+
+<div class="dau">
+  <div class="boc" style="display:flex;align-items:center;justify-content:space-between;width:100%">
+    <div class="hieu"><i class="fas fa-utensils"></i> Nhà Hàng Bảo Đoàn</div>
+    <div class="the-ban"><%= hoaDon.thongTin.ten_ban || 'Hóa đơn' %></div>
+  </div>
+</div>
+
+<!-- =========================================== MÀN 1: xem hóa đơn -->
+<div id="man-hoa-don" class="boc">
+  <% if (hoaDon.tien.da_tra_du) { %>
+    <div class="xong">
+      <div class="dau-tich"><i class="fas fa-check"></i></div>
+      <h1>Hóa đơn đã thanh toán</h1>
+      <p>Cảm ơn quý khách đã dùng bữa tại Nhà Hàng Bảo Đoàn.<br>Hẹn gặp lại quý khách!</p>
+    </div>
+  <% } else { %>
+    <div class="khoi">
+      <h2>Bàn của bạn đã gọi</h2>
+      <% hoaDon.mon.forEach(function (m) { %>
+        <div class="mon">
+          <div><%= m.name_mon %> <span class="sl">× <%= m.soluong %></span></div>
+          <div class="tien"><%= formatMoney(m.thanhtien) %>đ</div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="khoi">
+      <h2>Mã giảm giá</h2>
+      <div class="o-ma">
+        <input type="text" id="ma-giam-gia" placeholder="Nhập mã nếu có" autocomplete="off" autocapitalize="characters">
+        <button id="nut-ap-ma">Áp dụng</button>
+      </div>
+      <div class="bao" id="bao-ma"></div>
+      <!-- Chương trình quản trị đang cho chạy và hợp lệ với chính đơn này. -->
+      <div id="goi-y-ma"></div>
+    </div>
+
+    <div class="khoi">
+      <h2>Tổng cộng</h2>
+      <div class="dong-tien mo"><span>Tạm tính</span><span class="tien" id="o-tam-tinh"><%= formatMoney(hoaDon.tien.tam_tinh) %>đ</span></div>
+      <div class="dong-tien giam an" id="hang-giam"><span>Giảm giá</span><span class="tien" id="o-giam">0đ</span></div>
+      <% if (hoaDon.tyLe.phi_phuc_vu > 0) { %>
+        <div class="dong-tien mo"><span>Phí phục vụ <%= hoaDon.tyLe.phi_phuc_vu %>%</span><span class="tien"><%= formatMoney(hoaDon.tien.phi_phuc_vu) %>đ</span></div>
+      <% } %>
+      <% if (hoaDon.tyLe.thue_vat > 0) { %>
+        <div class="dong-tien mo"><span>VAT <%= hoaDon.tyLe.thue_vat %>%</span><span class="tien"><%= formatMoney(hoaDon.tien.thue_vat) %>đ</span></div>
+      <% } %>
+      <% if (hoaDon.tien.da_thanh_toan > 0) { %>
+        <div class="dong-tien giam"><span>Đã thanh toán</span><span class="tien">− <%= formatMoney(hoaDon.tien.da_thanh_toan) %>đ</span></div>
+      <% } %>
+      <div class="dong-tien tong"><span>Cần thanh toán</span><span class="tien" id="o-con-lai"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span></div>
+    </div>
+
+    <div class="khoi">
+      <h2>Bạn trả bao nhiêu?</h2>
+      <div class="o-ma">
+        <input type="number" id="so-tien" value="<%= hoaDon.tien.con_phai_tra %>" step="1000" style="text-transform:none">
+        <button id="nut-tat-ca">Tất cả</button>
+      </div>
+      <div class="bao" style="color:var(--text-muted)">
+        Đi cùng bạn bè? Nhập đúng phần của bạn, người còn lại quét mã lần nữa để trả tiếp.
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- =========================================== MÀN 2: quét mã chuyển khoản -->
+<div id="man-qr" class="boc an">
+  <div class="khoi qr-boc">
+    <div class="qr-anh"><img id="anh-qr" alt="Mã VietQR"></div>
+    <div class="qr-tien" id="qr-tien"></div>
+    <div class="qr-nh"><span id="qr-ngan-hang"></span> · <span id="qr-stk"></span></div>
+    <div class="qr-nh" id="qr-ten-tk" style="margin-top:2px"></div>
+
+    <div class="qr-nd">
+      <div class="nhan">Nội dung chuyển khoản</div>
+      <div class="ma" id="qr-noi-dung"></div>
+    </div>
+
+    <div class="cho" id="o-cho">
+      <div class="vong"></div>
+      <span>Đang chờ xác nhận từ ngân hàng<span id="dem"></span></span>
+    </div>
+
+    <ul class="huong-dan">
+      <li>Mở app ngân hàng bất kỳ, chọn <b>Quét mã QR</b></li>
+      <li>Số tiền và nội dung đã điền sẵn — <b>không sửa nội dung</b></li>
+      <li>Chuyển xong, màn hình này tự chuyển sang trang cảm ơn</li>
+    </ul>
+  </div>
+</div>
+
+<!-- =========================================== MÀN 3: xong -->
+<div id="man-xong" class="boc an">
+  <div class="xong">
+    <div class="dau-tich"><i class="fas fa-check"></i></div>
+    <h1>Thanh toán thành công</h1>
+    <p id="loi-cam-on">Cảm ơn quý khách đã dùng bữa tại Nhà Hàng Bảo Đoàn.<br>Hẹn gặp lại quý khách!</p>
+  </div>
+</div>
+
+<!-- =========================================== Thanh đáy -->
+<div class="day" id="thanh-day" <%= hoaDon.tien.da_tra_du ? 'style="display:none"' : '' %>>
+  <div class="boc">
+    <button class="nut phu an" id="nut-quay-lai">Quay lại</button>
+    <button class="nut" id="nut-tra">
+      Chuyển khoản <span id="nut-so-tien"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span>
+    </button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  var SESIS = <%- JSON.stringify(hoaDon.sesis) %>;
+  var phienId = null;
+  var demHen = null, pollHen = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
+  if (<%= hoaDon.tien.da_tra_du ? 'true' : 'false' %>) return;
+
+  var conPhaiTra = <%= hoaDon.tien.con_phai_tra %>;
+
+  /* ------------------------------------------------- mã giảm giá ------ */
+  function tinhLai() {
+    return fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS) + '/hoa-don?ma_giam_gia='
+      + encodeURIComponent($('ma-giam-gia').value.trim()))
+      .then(function (r) { return r.json(); })
+      .then(function (hd) {
+        var t = hd.tien;
+        conPhaiTra = t.con_phai_tra;
+        $('hang-giam').classList.toggle('an', !(t.giam_gia > 0));
+        $('o-giam').textContent = '− ' + tien(t.giam_gia) + 'đ';
+        $('o-con-lai').textContent = tien(t.con_phai_tra) + 'đ';
+        $('so-tien').value = t.con_phai_tra;
+        $('nut-so-tien').textContent = tien(t.con_phai_tra) + 'đ';
+
+        var bao = $('bao-ma');
+        if (t.loi_ma_giam_gia) { bao.className = 'bao loi'; bao.textContent = t.loi_ma_giam_gia; }
+        else if (t.ma_giam_gia) { bao.className = 'bao ok'; bao.textContent = 'Đã giảm ' + tien(t.giam_gia) + 'đ'; }
+        else { bao.textContent = ''; }
+        veGoiYMa(hd.khuyenMai || []);
+      });
+  }
+
+  /* Mã khách bấm được thay vì phải gõ - và chỉ hiện mã thật sự áp được cho
+     đơn này, nên không có cảnh bấm vào rồi báo "không đủ điều kiện". */
+  function veGoiYMa(ds) {
+    var o = $('goi-y-ma');
+    if (!o) return;
+    var dangDung = $('ma-giam-gia').value.trim().toUpperCase();
+    var conLai = ds.filter(function (k) { return k.code !== dangDung; });
+    if (conLai.length === 0) { o.innerHTML = ''; return; }
+
+    o.innerHTML = conLai.map(function (k) {
+      return '<button type="button" class="nut-goi-y" data-ma="' + k.code + '">'
+        + k.code + ' · −' + tien(k.so_tien_giam) + 'đ</button>';
+    }).join('');
+    o.querySelectorAll('.nut-goi-y').forEach(function (b) {
+      b.onclick = function () { $('ma-giam-gia').value = this.dataset.ma; tinhLai(); };
+    });
+  }
+  veGoiYMa(<%- JSON.stringify(hoaDon.khuyenMai || []) %>);
+
+  $('nut-ap-ma').onclick = tinhLai;
+  $('ma-giam-gia').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); this.blur(); tinhLai(); }
+  });
+
+  $('nut-tat-ca').onclick = function () {
+    $('so-tien').value = conPhaiTra;
+    $('nut-so-tien').textContent = tien(conPhaiTra) + 'đ';
+  };
+  $('so-tien').addEventListener('input', function () {
+    $('nut-so-tien').textContent = tien(Number(this.value) || 0) + 'đ';
+  });
+
+  /* ------------------------------------------------- tạo mã QR -------- */
+  $('nut-tra').onclick = function () {
+    var soTien = Number($('so-tien').value) || 0;
+    if (soTien <= 0) return alert('Số tiền không hợp lệ.');
+    if (soTien > conPhaiTra) {
+      $('so-tien').value = conPhaiTra;
+      return alert('Số tiền vượt quá phần còn phải trả.');
+    }
+
+    var nut = this;
+    nut.disabled = true;
+    nut.textContent = 'Đang tạo mã...';
+
+    fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS) + '/tao-phien', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ so_tien: soTien, ma_giam_gia: $('ma-giam-gia').value.trim() || null }),
+    })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || j.loi || 'Lỗi'); return j; }); })
+      .then(function (kq) {
+        phienId = kq.payment.id;
+        $('anh-qr').src = kq.qr.anh;
+        $('qr-tien').textContent = tien(kq.qr.soTien) + 'đ';
+        $('qr-ngan-hang').textContent = kq.qr.nganHang;
+        $('qr-stk').textContent = kq.qr.soTaiKhoan;
+        $('qr-ten-tk').textContent = kq.qr.tenTaiKhoan || '';
+        $('qr-noi-dung').textContent = kq.qr.noiDung;
+
+        $('man-hoa-don').classList.add('an');
+        $('man-qr').classList.remove('an');
+        $('thanh-day').style.display = 'none';
+        window.scrollTo(0, 0);
+
+        demNguoc(kq.hanGiay || 900);
+        hoiTrangThai();
+        theoDoi();
+      })
+      .catch(function (e) {
+        alert(e.message);
+        nut.disabled = false;
+        nut.innerHTML = 'Chuyển khoản <span id="nut-so-tien">' + tien(soTien) + 'đ</span>';
+      });
+  };
+
+  function demNguoc(giay) {
+    clearInterval(demHen);
+    var conLai = giay;
+    demHen = setInterval(function () {
+      conLai--;
+      var p = Math.floor(conLai / 60), g = conLai % 60;
+      $('dem').textContent = ' (' + p + ':' + String(g).padStart(2, '0') + ')';
+      if (conLai <= 0) {
+        clearInterval(demHen); clearInterval(pollHen);
+        $('o-cho').innerHTML = '<span style="color:var(--danger)">Mã đã hết hạn. Vui lòng tải lại trang để tạo mã mới.</span>';
+      }
+    }, 1000);
+  }
+
+  // Hỏi máy chủ mỗi 4 giây. Điện thoại khách hay bị chặn WebSocket khi dùng
+  // wifi công cộng của quán, nên đây mới là đường đáng tin nhất ở phía khách.
+  function hoiTrangThai() {
+    clearInterval(pollHen);
+    pollHen = setInterval(function () {
+      if (!phienId) return;
+      fetch('/qr/phien/' + phienId + '/trang-thai')
+        .then(function (r) { return r.json(); })
+        .then(function (p) { if (p.status === 'success') thanhCong(p); })
+        .catch(function () {});
+    }, 4000);
+  }
+
+  function theoDoi() {
+    if (!window.io) return;
+    try {
+      var socket = io();
+      socket.on('connect', function () { socket.emit('tt:theo-doi-don', SESIS); });
+      socket.on('tt:da-thanh-toan', function (d) {
+        if (d.sesis === SESIS) thanhCong({ da_tra_du: d.donDaTraDu });
+      });
+    } catch (e) { /* không có socket thì đã có polling ở trên */ }
+  }
+
+  var daXong = false;
+  function thanhCong(p) {
+    if (daXong) return;
+    daXong = true;
+    clearInterval(demHen); clearInterval(pollHen);
+    if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+    if (p && p.da_tra_du === false && p.con_phai_tra > 0) {
+      $('loi-cam-on').innerHTML = 'Đã ghi nhận phần thanh toán của bạn.<br>'
+        + 'Hóa đơn còn <b>' + tien(p.con_phai_tra) + 'đ</b> cho những người còn lại.';
+    }
+    $('man-qr').classList.add('an');
+    $('man-xong').classList.remove('an');
+    window.scrollTo(0, 0);
+  }
+})();
+</script>
+</body>
+</html>

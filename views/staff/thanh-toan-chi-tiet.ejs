@@ -1,0 +1,659 @@
+<%
+  var activePage = 'thanh-toan';
+  var staffName = session.staffName || 'Nhân viên';
+  var t = hoaDon.tien;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <a href="/staff/thanh-toan" class="small text-muted"><i class="fas fa-arrow-left"></i> Về danh sách</a>
+    <h1 class="h3 mb-0 text-gray-800">
+      <%= hoaDon.thongTin.ten_ban || 'Đơn lẻ' %>
+      <span class="text-muted h6">· <%= hoaDon.thongTin.ten_khach || 'Khách lẻ' %></span>
+    </h1>
+    <div class="small text-muted">
+      Mã đơn <code><%= hoaDon.sesis %></code> ·
+      <%= hoaDon.soMon %> món ·
+      <%= ngayVN(hoaDon.thongTin.dates) %> <%= gioVN(hoaDon.thongTin.tg) %>
+    </div>
+  </div>
+  <div>
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.open('/staff/bookings/print/<%= hoaDon.sesis %>','','width=620,height=800')">
+      <i class="fas fa-print"></i> In tạm tính
+    </button>
+  </div>
+</div>
+
+<% if (t.da_tra_du) { %>
+  <div class="alert alert-success shadow-sm">
+    <i class="fas fa-check-circle"></i> <strong>Hóa đơn này đã thu đủ tiền.</strong>
+    Tổng thu <%= formatMoney(t.da_thanh_toan) %>đ.
+  </div>
+<% } %>
+
+<div class="row">
+  <!-- ================================================== CỘT TRÁI: hóa đơn -->
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Chi tiết hóa đơn</h6>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>Món</th>
+              <th class="text-center" style="width:70px">SL</th>
+              <th class="text-right" style="width:110px">Đơn giá</th>
+              <th class="text-right" style="width:120px">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% hoaDon.mon.forEach(function (m) { %>
+              <tr>
+                <td>
+                  <%= m.name_mon %>
+                  <% if (m.trangthai_bep === 0) { %>
+                    <span class="badge badge-warning ml-1" title="Bếp chưa làm xong">đang chế biến</span>
+                  <% } %>
+                </td>
+                <td class="text-center"><%= m.soluong %></td>
+                <td class="text-right"><%= formatMoney(m.gia) %></td>
+                <td class="text-right font-weight-bold"><%= formatMoney(m.thanhtien) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-body border-top">
+        <!-- Mã giảm giá + điểm tích lũy -->
+        <div class="form-row">
+          <div class="form-group col-md-6 mb-2">
+            <label class="small font-weight-bold text-uppercase text-muted">Mã giảm giá</label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control text-uppercase" id="ma-giam-gia"
+                     placeholder="VD: BAODOAN10" <%= t.da_tra_du ? 'disabled' : '' %>>
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" id="nut-ap-ma" <%= t.da_tra_du ? 'disabled' : '' %>>Áp dụng</button>
+              </div>
+            </div>
+            <small id="bao-ma" class="form-text"></small>
+            <!-- Các mã quản trị đang cho chạy và HỢP LỆ với chính đơn này.
+                 Thu ngân bấm là áp, không phải nhớ mã bằng tay. -->
+            <div id="goi-y-ma" class="mt-1"></div>
+          </div>
+          <div class="form-group col-md-6 mb-2">
+            <label class="small font-weight-bold text-uppercase text-muted">
+              Điểm tích lũy
+              <span class="text-muted font-weight-normal">
+                (có <span id="diem-co"><%= t.diem_dang_co %></span> điểm,
+                tối đa dùng <span id="diem-max"><%= t.diem_toi_da_dung %></span>)
+              </span>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control" id="diem-dung" min="0"
+                     max="<%= t.diem_toi_da_dung %>" value="0"
+                     <%= (t.diem_toi_da_dung <= 0 || t.da_tra_du) ? 'disabled' : '' %>>
+              <div class="input-group-append">
+                <button class="btn btn-outline-primary" id="nut-dung-het"
+                        <%= (t.diem_toi_da_dung <= 0 || t.da_tra_du) ? 'disabled' : '' %>>Dùng tối đa</button>
+              </div>
+            </div>
+            <small class="form-text text-muted">
+              1 điểm = <%= formatMoney(hoaDon.tyLe.gia_tri_1_diem) %>đ
+            </small>
+          </div>
+        </div>
+
+        <!-- Bảng tiền -->
+        <table class="table table-sm mb-0 mt-2" id="bang-tien">
+          <tr><td class="text-muted">Tạm tính</td><td class="text-right" id="o-tam-tinh"><%= formatMoney(t.tam_tinh) %></td></tr>
+          <tr class="d-none" id="hang-giam-gia"><td class="text-success">Giảm giá <span id="o-ten-ma"></span></td><td class="text-right text-success" id="o-giam-gia">0</td></tr>
+          <tr class="d-none" id="hang-diem"><td class="text-success">Trừ bằng điểm</td><td class="text-right text-success" id="o-tien-diem">0</td></tr>
+          <% if (hoaDon.tyLe.phi_phuc_vu > 0) { %>
+            <tr><td class="text-muted">Phí phục vụ <%= hoaDon.tyLe.phi_phuc_vu %>%</td><td class="text-right" id="o-phi"><%= formatMoney(t.phi_phuc_vu) %></td></tr>
+          <% } %>
+          <% if (hoaDon.tyLe.thue_vat > 0) { %>
+            <tr><td class="text-muted">VAT <%= hoaDon.tyLe.thue_vat %>%</td><td class="text-right" id="o-vat"><%= formatMoney(t.thue_vat) %></td></tr>
+          <% } %>
+          <% if (t.da_thanh_toan > 0) { %>
+            <tr><td class="text-info">Đã thu trước đó (<%= t.so_lan_da_tra %> lần)</td><td class="text-right text-info">− <%= formatMoney(t.da_thanh_toan) %></td></tr>
+          <% } %>
+          <tr class="border-top">
+            <td class="h5 mb-0 font-weight-bold">Còn phải trả</td>
+            <td class="text-right h4 mb-0 font-weight-bold text-primary" id="o-con-lai"><%= formatMoney(t.con_phai_tra) %>đ</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Lịch sử thu tiền của hóa đơn này -->
+    <% if (hoaDon.lichSuThanhToan.length > 0) { %>
+      <div class="card shadow mt-3">
+        <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary">Đã thu</h6></div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <% hoaDon.lichSuThanhToan.forEach(function (p) { %>
+              <tr class="<%= p.status === 'refunded' ? 'text-muted' : '' %>">
+                <td>
+                  <span class="badge badge-<%= p.status === 'refunded' ? 'secondary' : 'success' %>">
+                    <%= p.status === 'refunded' ? 'Đã hoàn' : 'Thành công' %>
+                  </span>
+                  <%= p.ten_phuong_thuc %>
+                  <% if (p.loai === 'dat_coc') { %><span class="badge badge-info">đặt cọc</span><% } %>
+                  <% if (p.ghi_chu_phan_chia) { %><span class="small text-muted">· <%= p.ghi_chu_phan_chia %></span><% } %>
+                  <div class="small text-muted">
+                    <%= formatTime(p.created_at) %>
+                    <% if (p.ma_doi_soat) { %> · <code><%= p.ma_doi_soat %></code><% } %>
+                    <% if (p.ten_nhan_vien) { %> · <%= p.ten_nhan_vien %><% } %>
+                  </div>
+                </td>
+                <td class="text-right align-middle">
+                  <strong <%= p.status === 'refunded' ? 'style="text-decoration:line-through"' : '' %>><%= formatMoney(p.amount) %>đ</strong>
+                  <div>
+                    <a href="/staff/thanh-toan/bien-lai/<%= p.id %>" target="_blank" class="small">biên lai</a>
+                    <% if (p.status === 'success') { %>
+                      · <a href="#" class="small text-danger nut-hoan" data-id="<%= p.id %>">hoàn tiền</a>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </table>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ================================================ CỘT PHẢI: thu tiền -->
+  <div class="col-lg-5">
+    <div class="card shadow mb-3" id="khoi-thu-tien" <%= t.da_tra_du ? 'style="display:none"' : '' %>>
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Thu tiền</h6></div>
+      <div class="card-body">
+
+        <!-- Số tiền thu (cho phép chia bill) -->
+        <div class="form-group">
+          <label class="small font-weight-bold text-uppercase text-muted">Số tiền thu lần này</label>
+          <div class="input-group">
+            <input type="number" class="form-control form-control-lg text-right font-weight-bold"
+                   id="so-tien" value="<%= t.con_phai_tra %>" min="1000" step="1000">
+            <div class="input-group-append"><span class="input-group-text">đ</span></div>
+          </div>
+          <div class="mt-2 d-flex flex-wrap" style="gap:6px">
+            <button class="btn btn-sm btn-outline-primary nut-chia" data-phan="1">Toàn bộ</button>
+            <button class="btn btn-sm btn-outline-secondary nut-chia" data-phan="2">Chia 2</button>
+            <button class="btn btn-sm btn-outline-secondary nut-chia" data-phan="3">Chia 3</button>
+            <button class="btn btn-sm btn-outline-secondary nut-chia" data-phan="4">Chia 4</button>
+          </div>
+          <small class="form-text text-muted">
+            Thu ít hơn tổng thì đơn vẫn mở để thu tiếp — dùng khi khách chia bill.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="small font-weight-bold text-uppercase text-muted">Ghi chú phần chia <span class="font-weight-normal">(không bắt buộc)</span></label>
+          <input type="text" class="form-control form-control-sm" id="ghi-chu-chia" placeholder="VD: Anh Nam trả phần của mình">
+        </div>
+
+        <hr>
+
+        <!-- Chọn phương thức -->
+        <label class="small font-weight-bold text-uppercase text-muted">Phương thức</label>
+        <div class="row mb-3" id="chon-pt">
+          <% phuongThuc.forEach(function (p, i) { %>
+            <div class="col-4 pr-1 pl-1">
+              <button class="btn btn-block the-pt <%= i === 0 ? 'chon' : '' %>" data-ma="<%= p.code %>" data-loai="<%= p.type %>">
+                <i class="fas <%= p.cauHinh.icon || 'fa-wallet' %> fa-lg d-block mb-1"></i>
+                <span class="small"><%= p.name %></span>
+              </button>
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- Tiền mặt -->
+        <div id="o-tien-mat" class="d-none">
+          <div class="form-group">
+            <label class="small font-weight-bold text-uppercase text-muted">Khách đưa</label>
+            <input type="number" class="form-control form-control-lg text-right" id="khach-dua" step="1000" placeholder="0">
+            <div class="mt-2 d-flex flex-wrap" style="gap:6px">
+              <button class="btn btn-sm btn-light border nut-menh-gia" data-v="50000">50k</button>
+              <button class="btn btn-sm btn-light border nut-menh-gia" data-v="100000">100k</button>
+              <button class="btn btn-sm btn-light border nut-menh-gia" data-v="200000">200k</button>
+              <button class="btn btn-sm btn-light border nut-menh-gia" data-v="500000">500k</button>
+              <button class="btn btn-sm btn-outline-secondary" id="nut-dung-du">Đúng tiền</button>
+            </div>
+          </div>
+          <div class="alert alert-info py-2 mb-0 d-none" id="o-thoi-lai">
+            Tiền thối lại: <strong id="so-thoi-lai">0</strong>đ
+          </div>
+        </div>
+
+        <!-- Thẻ POS -->
+        <div id="o-the" class="d-none">
+          <div class="form-group mb-0">
+            <label class="small font-weight-bold text-uppercase text-muted">Mã chuẩn chi từ máy POS</label>
+            <input type="text" class="form-control" id="ma-chuan-chi" placeholder="VD: 004512">
+            <small class="form-text text-muted">Nhập mã in trên hóa đơn máy POS để sau này đối chiếu.</small>
+          </div>
+        </div>
+
+        <div class="form-group mt-3 mb-2">
+          <label class="small font-weight-bold text-uppercase text-muted">Tiền tip <span class="font-weight-normal">(không bắt buộc)</span></label>
+          <input type="number" class="form-control form-control-sm" id="tien-tip" value="0" min="0" step="1000">
+        </div>
+
+        <button class="btn btn-success btn-lg btn-block mt-3" id="nut-thu">
+          <i class="fas fa-check-double"></i> <span id="chu-nut-thu">Xác nhận thu tiền</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Khung QR (hiện sau khi tạo phiên) -->
+    <div class="card shadow mb-3 d-none" id="khoi-qr">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Quét mã để chuyển khoản</h6>
+        <span class="badge badge-warning" id="dem-nguoc">--:--</span>
+      </div>
+      <div class="card-body text-center">
+        <div class="p-2 bg-white d-inline-block rounded shadow-sm" style="border:1px solid #e3e6f0">
+          <img id="anh-qr" alt="Mã VietQR" style="width:260px;height:260px;display:block">
+        </div>
+        <div class="mt-3">
+          <div class="h4 font-weight-bold text-primary mb-0" id="qr-so-tien"></div>
+          <div class="small text-muted mt-1">
+            <span id="qr-ngan-hang"></span> · <span id="qr-stk"></span>
+          </div>
+          <div class="small text-muted" id="qr-ten-tk"></div>
+          <div class="mt-2">
+            <span class="small text-muted d-block">Nội dung chuyển khoản</span>
+            <code class="h5" id="qr-noi-dung"></code>
+            <button class="btn btn-sm btn-link p-0 ml-1" id="nut-chep" title="Chép nội dung"><i class="far fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-3 mb-0 py-2 small" id="trang-thai-cho">
+          <i class="fas fa-circle-notch fa-spin"></i>
+          Đang chờ ngân hàng báo có... Hệ thống sẽ tự ghi nhận khi tiền vào.
+        </div>
+
+        <div class="mt-3 d-flex" style="gap:8px">
+          <button class="btn btn-outline-success btn-block mt-0" id="nut-xac-nhan-tay">
+            <i class="fas fa-hand-pointer"></i> Đã nhận tiền
+          </button>
+          <button class="btn btn-outline-secondary btn-block mt-0" id="nut-huy-phien">Hủy</button>
+        </div>
+        <small class="form-text text-muted mt-2">
+          Bấm "Đã nhận tiền" khi bạn tự kiểm tra thấy tiền đã vào tài khoản (dùng khi chưa đấu webhook ngân hàng).
+        </small>
+      </div>
+    </div>
+
+    <!-- Gửi link cho khách tự trả -->
+    <div class="card shadow">
+      <div class="card-body">
+        <div class="small font-weight-bold text-uppercase text-muted mb-2">Khách tự thanh toán</div>
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" id="link-khach" readonly
+                 value="<%= '/qr/thanh-toan/' + hoaDon.sesis %>">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" id="nut-chep-link"><i class="far fa-copy"></i></button>
+            <a class="btn btn-outline-primary" href="/qr/thanh-toan/<%= hoaDon.sesis %>" target="_blank">Mở</a>
+          </div>
+        </div>
+        <small class="form-text text-muted">
+          Khách quét mã QR dán ở bàn cũng vào đúng trang này và tự trả được.
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .the-pt { border:2px solid #e3e6f0; background:#fff; padding:12px 4px; border-radius:10px; transition:.15s; }
+  .the-pt:hover { border-color:#bac8f3; }
+  .the-pt.chon { border-color:#4e73df; background:#eef2ff; color:#2e59d9; font-weight:600; }
+  #anh-qr { image-rendering: pixelated; }
+</style>
+
+<script>
+(function () {
+  var SESIS = <%- JSON.stringify(hoaDon.sesis) %>;
+  var GIA_TRI_1_DIEM = <%= hoaDon.tyLe.gia_tri_1_diem %>;
+  var phienHienTai = null;   // id phiên QR đang chờ
+  var demHen = null;         // timer đếm ngược
+  var pollHen = null;        // timer hỏi trạng thái dự phòng
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
+
+  /* ---------------------------------------------- tính lại bảng tiền --- */
+  var conPhaiTra = <%= t.con_phai_tra %>;
+
+  function tinhLai() {
+    var url = '/staff/thanh-toan/' + encodeURIComponent(SESIS) + '/hoa-don'
+      + '?ma_giam_gia=' + encodeURIComponent($('ma-giam-gia').value.trim())
+      + '&diem_dung=' + (Number($('diem-dung').value) || 0);
+
+    return fetch(url).then(function (r) { return r.json(); }).then(function (hd) {
+      var t = hd.tien;
+      conPhaiTra = t.con_phai_tra;
+
+      $('hang-giam-gia').classList.toggle('d-none', !(t.giam_gia > 0));
+      $('o-giam-gia').textContent = '− ' + tien(t.giam_gia);
+      $('o-ten-ma').textContent = t.ma_giam_gia ? '(' + t.ma_giam_gia + ')' : '';
+
+      $('hang-diem').classList.toggle('d-none', !(t.tien_tu_diem > 0));
+      $('o-tien-diem').textContent = '− ' + tien(t.tien_tu_diem);
+
+      $('o-con-lai').textContent = tien(t.con_phai_tra) + 'đ';
+      $('so-tien').value = t.con_phai_tra;
+      $('diem-max').textContent = t.diem_toi_da_dung;
+      $('diem-dung').max = t.diem_toi_da_dung;
+
+      var bao = $('bao-ma');
+      if (t.loi_ma_giam_gia) {
+        bao.className = 'form-text text-danger';
+        bao.textContent = t.loi_ma_giam_gia;
+      } else if (t.ma_giam_gia) {
+        bao.className = 'form-text text-success';
+        bao.textContent = 'Đã áp mã ' + t.ma_giam_gia + ', giảm ' + tien(t.giam_gia) + 'đ';
+      } else {
+        bao.textContent = '';
+      }
+      veGoiYMa(hd.khuyenMai || []);
+      capNhatThoiLai();
+      return hd;
+    });
+  }
+
+  /* --------------------------------------------- gợi ý mã khuyến mãi --- */
+  function veGoiYMa(ds) {
+    var o = $('goi-y-ma');
+    if (!o) return;
+    var dangDung = $('ma-giam-gia').value.trim().toUpperCase();
+    // Mã đang áp thì không gợi ý lại chính nó nữa cho đỡ rối.
+    var conLai = ds.filter(function (k) { return k.code !== dangDung; });
+    if (conLai.length === 0) { o.innerHTML = ''; return; }
+
+    o.innerHTML = '<div class="small text-muted mb-1">Mã dùng được cho đơn này:</div>'
+      + conLai.map(function (k) {
+        return '<button type="button" class="btn btn-sm btn-outline-success mr-1 mb-1 nut-goi-y" '
+          + 'data-ma="' + k.code + '" title="' + (k.dieu_kien || []).join(' · ') + '">'
+          + k.code + ' <span class="badge badge-success">−' + tien(k.so_tien_giam) + 'đ</span>'
+          + '</button>';
+      }).join('');
+
+    o.querySelectorAll('.nut-goi-y').forEach(function (b) {
+      b.onclick = function () { $('ma-giam-gia').value = this.dataset.ma; tinhLai(); };
+    });
+  }
+  veGoiYMa(<%- JSON.stringify(hoaDon.khuyenMai || []) %>);
+
+  $('nut-ap-ma').onclick = tinhLai;
+  $('ma-giam-gia').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tinhLai(); } });
+  $('diem-dung').addEventListener('change', tinhLai);
+  $('nut-dung-het').onclick = function () {
+    $('diem-dung').value = $('diem-dung').max;
+    tinhLai();
+  };
+
+  /* ------------------------------------------------------- chia bill --- */
+  document.querySelectorAll('.nut-chia').forEach(function (b) {
+    b.onclick = function () {
+      var phan = Number(this.dataset.phan);
+      // Làm tròn LÊN bội số 1.000đ để không bao giờ thu thiếu tổng do chia lẻ.
+      var moiPhan = Math.ceil(conPhaiTra / phan / 1000) * 1000;
+      $('so-tien').value = Math.min(moiPhan, conPhaiTra);
+      capNhatThoiLai();
+    };
+  });
+
+  /* -------------------------------------------------- phương thức TT --- */
+  var maPT = document.querySelector('.the-pt') ? document.querySelector('.the-pt').dataset.ma : 'tien_mat';
+  var loaiPT = document.querySelector('.the-pt') ? document.querySelector('.the-pt').dataset.loai : 'cash';
+
+  document.querySelectorAll('.the-pt').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('.the-pt').forEach(function (x) { x.classList.remove('chon'); });
+      this.classList.add('chon');
+      maPT = this.dataset.ma;
+      loaiPT = this.dataset.loai;
+      $('o-tien-mat').classList.toggle('d-none', loaiPT !== 'cash');
+      $('o-the').classList.toggle('d-none', loaiPT !== 'card');
+      $('chu-nut-thu').textContent = loaiPT === 'online' ? 'Tạo mã QR' : 'Xác nhận thu tiền';
+    };
+  });
+  // Kích hoạt trạng thái ban đầu cho phương thức đầu tiên.
+  if (document.querySelector('.the-pt')) document.querySelector('.the-pt').click();
+
+  /* ------------------------------------------------------- tiền mặt --- */
+  function capNhatThoiLai() {
+    var dua = Number($('khach-dua').value) || 0;
+    var can = Number($('so-tien').value) || 0;
+    var lai = dua - can;
+    $('o-thoi-lai').classList.toggle('d-none', !(dua > 0));
+    $('so-thoi-lai').textContent = lai >= 0 ? tien(lai) : 'thiếu ' + tien(-lai);
+    $('o-thoi-lai').className = 'alert py-2 mb-0 ' + (lai >= 0 ? 'alert-info' : 'alert-danger');
+  }
+  $('khach-dua').addEventListener('input', capNhatThoiLai);
+  $('so-tien').addEventListener('input', capNhatThoiLai);
+  document.querySelectorAll('.nut-menh-gia').forEach(function (b) {
+    b.onclick = function () {
+      $('khach-dua').value = (Number($('khach-dua').value) || 0) + Number(this.dataset.v);
+      capNhatThoiLai();
+    };
+  });
+  $('nut-dung-du').onclick = function () { $('khach-dua').value = $('so-tien').value; capNhatThoiLai(); };
+
+  /* --------------------------------------------------------- thu tiền --- */
+  $('nut-thu').onclick = function () {
+    var nut = this;
+    var soTien = Number($('so-tien').value) || 0;
+    if (soTien <= 0) return Swal.fire('Số tiền không hợp lệ', 'Nhập số tiền lớn hơn 0.', 'warning');
+
+    if (loaiPT === 'cash') {
+      var dua = Number($('khach-dua').value) || 0;
+      if (dua > 0 && dua < soTien) {
+        return Swal.fire('Khách đưa chưa đủ', 'Khách đưa ' + tien(dua) + 'đ nhưng cần ' + tien(soTien) + 'đ.', 'warning');
+      }
+    }
+
+    nut.disabled = true;
+    fetch('/staff/thanh-toan/' + encodeURIComponent(SESIS) + '/tao-phien', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        so_tien: soTien,
+        phuong_thuc: maPT,
+        ma_giam_gia: $('ma-giam-gia').value.trim() || null,
+        diem_dung: Number($('diem-dung').value) || 0,
+        tien_khach_dua: loaiPT === 'cash' ? ($('khach-dua').value || null) : null,
+        tien_tip: Number($('tien-tip').value) || 0,
+        ghi_chu_phan_chia: $('ghi-chu-chia').value.trim() || null,
+        ghi_chu: loaiPT === 'card' && $('ma-chuan-chi').value ? 'Mã chuẩn chi POS: ' + $('ma-chuan-chi').value : null,
+      }),
+    })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || j.loi || 'Lỗi'); return j; }); })
+      .then(function (kq) {
+        if (kq.qr) { hienQR(kq); return; }
+        if (kq.payment.status === 'success') { xongXuoi(kq.payment); return; }
+        // Thẻ POS: phiên pending, xác nhận ngay bằng mã chuẩn chi.
+        phienHienTai = kq.payment.id;
+        return xacNhanTay();
+      })
+      .catch(function (e) { Swal.fire('Không thu được', e.message, 'error'); })
+      .then(function () { nut.disabled = false; });
+  };
+
+  /* --------------------------------------------------------- khung QR --- */
+  function hienQR(kq) {
+    phienHienTai = kq.payment.id;
+    $('anh-qr').src = kq.qr.anh;
+    $('qr-so-tien').textContent = tien(kq.qr.soTien) + 'đ';
+    $('qr-ngan-hang').textContent = kq.qr.nganHang;
+    $('qr-stk').textContent = kq.qr.soTaiKhoan;
+    $('qr-ten-tk').textContent = kq.qr.tenTaiKhoan || '';
+    $('qr-noi-dung').textContent = kq.qr.noiDung;
+    $('khoi-qr').classList.remove('d-none');
+    $('khoi-thu-tien').style.display = 'none';
+    $('khoi-qr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    demNguoc(kq.hanGiay || 900);
+    batDauHoiTrangThai();
+  }
+
+  function demNguoc(giay) {
+    clearInterval(demHen);
+    var conLai = giay;
+    function ve() {
+      var p = Math.floor(conLai / 60), g = conLai % 60;
+      $('dem-nguoc').textContent = p + ':' + String(g).padStart(2, '0');
+      if (conLai <= 60) $('dem-nguoc').className = 'badge badge-danger';
+      if (conLai <= 0) {
+        clearInterval(demHen);
+        clearInterval(pollHen);
+        $('trang-thai-cho').className = 'alert alert-danger mt-3 mb-0 py-2 small';
+        $('trang-thai-cho').innerHTML = '<i class="fas fa-times-circle"></i> Mã QR đã hết hạn. Hãy tạo mã mới.';
+      }
+      conLai--;
+    }
+    ve();
+    demHen = setInterval(ve, 1000);
+  }
+
+  // Socket là đường chính, hỏi trạng thái mỗi 5 giây là đường dự phòng cho
+  // trường hợp WebSocket bị chặn (mạng nhà hàng dùng captive portal, proxy...).
+  function batDauHoiTrangThai() {
+    clearInterval(pollHen);
+    pollHen = setInterval(function () {
+      if (!phienHienTai) return;
+      fetch('/staff/thanh-toan/phien/' + phienHienTai + '/trang-thai')
+        .then(function (r) { return r.json(); })
+        .then(function (p) {
+          if (p.status === 'success') xongXuoi(p);
+          else if (p.status === 'failed') { clearInterval(pollHen); }
+        })
+        .catch(function () { /* mất mạng tạm thời, lần sau hỏi lại */ });
+    }, 5000);
+  }
+
+  function xongXuoi(p) {
+    clearInterval(demHen);
+    clearInterval(pollHen);
+    phienHienTai = null;
+    Swal.fire({
+      title: 'Đã thu ' + tien(p.amount || p.so_tien) + 'đ',
+      html: p.da_tra_du === false
+        ? 'Hóa đơn còn phải thu <b>' + tien(p.con_phai_tra) + 'đ</b>.'
+        : 'Hóa đơn đã thanh toán đủ.',
+      icon: 'success',
+      confirmButtonText: 'In biên lai',
+      showCancelButton: true,
+      cancelButtonText: 'Đóng',
+    }).then(function (r) {
+      if (r.isConfirmed && (p.id || p.paymentId)) {
+        window.open('/staff/thanh-toan/bien-lai/' + (p.id || p.paymentId), '', 'width=420,height=700');
+      }
+      location.reload();
+    });
+  }
+
+  function xacNhanTay() {
+    if (!phienHienTai) return;
+    return fetch('/staff/thanh-toan/phien/' + phienHienTai + '/xac-nhan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ma_giao_dich: $('ma-chuan-chi') ? $('ma-chuan-chi').value : null }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (kq) { if (kq.thanhCong) xongXuoi(kq.payment); });
+  }
+
+  $('nut-xac-nhan-tay').onclick = function () {
+    Swal.fire({
+      title: 'Xác nhận đã nhận tiền?',
+      text: 'Chỉ bấm khi bạn đã tự kiểm tra thấy tiền vào tài khoản. Thao tác này được ghi nhật ký.',
+      icon: 'question', showCancelButton: true,
+      confirmButtonText: 'Đã nhận, xác nhận', cancelButtonText: 'Chưa',
+    }).then(function (r) { if (r.isConfirmed) xacNhanTay(); });
+  };
+
+  $('nut-huy-phien').onclick = function () {
+    if (!phienHienTai) return location.reload();
+    fetch('/staff/thanh-toan/phien/' + phienHienTai + '/huy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+    }).then(function () { location.reload(); });
+  };
+
+  /* --------------------------------------------------------- hoàn tiền --- */
+  document.querySelectorAll('.nut-hoan').forEach(function (a) {
+    a.onclick = function (e) {
+      e.preventDefault();
+      var id = this.dataset.id;
+      Swal.fire({
+        title: 'Hoàn tiền phiên này?',
+        input: 'text', inputLabel: 'Lý do hoàn tiền', inputPlaceholder: 'VD: khách trả nhầm bàn',
+        showCancelButton: true, confirmButtonText: 'Hoàn tiền', confirmButtonColor: '#e74a3b',
+        inputValidator: function (v) { return !v && 'Phải ghi lý do'; },
+      }).then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/staff/thanh-toan/phien/' + id + '/hoan-tien', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ly_do: r.value }),
+        }).then(function (x) { return x.json(); })
+          .then(function () { location.reload(); });
+      });
+    };
+  });
+
+  /* ------------------------------------------------------------ chép --- */
+  function chep(chuoi, nut) {
+    var xong = function () {
+      var cu = nut.innerHTML;
+      nut.innerHTML = '<i class="fas fa-check text-success"></i>';
+      setTimeout(function () { nut.innerHTML = cu; }, 1500);
+    };
+    // navigator.clipboard chỉ chạy trên HTTPS hoặc localhost. Máy POS trong
+    // nhà hàng thường vào bằng IP nội bộ (http://192.168.x.x) nên phải có
+    // đường lùi bằng textarea + execCommand.
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(chuoi).then(xong);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = chuoi; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); xong(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+  $('nut-chep').onclick = function () { chep($('qr-noi-dung').textContent, this); };
+  $('nut-chep-link').onclick = function () {
+    chep(location.origin + $('link-khach').value, this);
+  };
+
+  /* --------------------------------------------------- thời gian thực --- */
+  if (window.RT && RT.socket) {
+    RT.socket.emit('tt:theo-doi-don', SESIS);
+    RT.khi('tt:da-thanh-toan', function (d) {
+      if (d.sesis !== SESIS) return;
+      if (RT.keu) RT.keu();
+      xongXuoi({ id: d.paymentId, amount: d.soTien, da_tra_du: d.donDaTraDu });
+    });
+    RT.khi('tt:phien-moi', function (d) {
+      // Khách vừa tự mở mã QR trên điện thoại -> thu ngân biết để khỏi tạo trùng.
+      if (d.sesis === SESIS && d.tuKhach) {
+        Swal.fire({
+          title: 'Khách đang tự thanh toán',
+          text: 'Khách vừa mở mã QR ' + tien(d.soTien) + 'đ trên điện thoại.',
+          icon: 'info', toast: true, position: 'top-end',
+          showConfirmButton: false, timer: 6000,
+        });
+      }
+    });
+  }
+})();
+</script>
+
+<%- include('partials/footer') %>

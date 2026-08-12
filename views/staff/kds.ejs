@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Màn hình bếp (KDS) - Nhà Hàng Bảo Đoàn</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --bg:#0f172a; --cot:#1e293b; --the:#334155; --vien:#475569;
+      --chu:#f1f5f9; --mo:#94a3b8;
+      --cho:#f59e0b; --lam:#3b82f6; --xong:#22c55e; --phucvu:#64748b; --tre:#ef4444;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--chu);
+           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
+    header { background:#020617; padding:14px 24px; display:flex;
+             justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+             border-bottom:2px solid var(--vien); }
+    header h1 { margin:0; font-size:20px; }
+    header .sub { font-size:12.5px; color:var(--mo); margin-top:2px; }
+    header nav a { color:var(--chu); text-decoration:none; font-size:13px; padding:7px 13px;
+                   border:1px solid var(--vien); border-radius:7px; margin-left:8px; }
+    header nav a:hover { background:var(--the); }
+    .cham { display:inline-block; width:9px; height:9px; border-radius:50%;
+            background:var(--xong); margin-right:6px; }
+    .cham.tat { background:var(--tre); }
+
+    .chiso { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+             gap:12px; padding:16px 24px 4px; }
+    .chiso .o { background:var(--cot); border-radius:9px; padding:12px 15px;
+                border-left:4px solid var(--vien); }
+    .chiso .o .n { font-size:11px; color:var(--mo); text-transform:uppercase; letter-spacing:.4px; }
+    .chiso .o .v { font-size:26px; font-weight:700; margin-top:4px; }
+    .chiso .o.c { border-left-color:var(--cho); }
+    .chiso .o.l { border-left-color:var(--lam); }
+    .chiso .o.x { border-left-color:var(--xong); }
+
+    .bang { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:16px 24px 40px; }
+    @media (max-width:1200px) { .bang { grid-template-columns:repeat(2,1fr); } }
+    .cot { background:var(--cot); border-radius:11px; padding:13px; min-height:70vh; }
+    .cot h2 { margin:0 0 12px; font-size:14px; text-transform:uppercase;
+              letter-spacing:.7px; display:flex; justify-content:space-between;
+              align-items:center; padding-bottom:10px; border-bottom:2px solid var(--vien); }
+    .cot h2 .dem { background:var(--the); padding:2px 10px; border-radius:20px; font-size:13px; }
+    .cot.cho  h2 { color:var(--cho); }  .cot.cho  h2 .dem { background:rgba(245,158,11,.2); }
+    .cot.lam  h2 { color:var(--lam); }  .cot.lam  h2 .dem { background:rgba(59,130,246,.2); }
+    .cot.xong h2 { color:var(--xong); } .cot.xong h2 .dem { background:rgba(34,197,94,.2); }
+    .cot.pv   h2 { color:var(--phucvu); }
+
+    .the { background:var(--the); border-radius:9px; padding:13px 14px; margin-bottom:11px;
+           border-left:4px solid var(--vien); }
+    .the.cho  { border-left-color:var(--cho); }
+    .the.lam  { border-left-color:var(--lam); }
+    .the.xong { border-left-color:var(--xong); }
+    .the.tre  { border-left-color:var(--tre); background:#4c1d24; }
+    .the .dong1 { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+    .the .ten { font-size:16px; font-weight:600; line-height:1.3; }
+    .the .sl { background:#0f172a; padding:3px 11px; border-radius:7px;
+               font-weight:700; font-size:15px; white-space:nowrap; }
+    .the .meta { font-size:12px; color:var(--mo); margin-top:7px; line-height:1.6; }
+    /* Ghi chu cua khach - phai noi bat, dau bep bo sot la lam sai mon. */
+    .the .ghi-chu {
+      margin-top:8px; padding:7px 10px; border-radius:7px;
+      background:rgba(234,179,8,0.13); border-left:3px solid #eab308;
+      color:#fde68a; font-size:13.5px; font-weight:600; line-height:1.4;
+    }
+    .the .meta b { color:var(--chu); }
+    .the .cho-lau { color:var(--tre); font-weight:600; }
+    .the button { width:100%; margin-top:10px; padding:9px; border:0; border-radius:7px;
+                  font-size:13.5px; font-weight:600; cursor:pointer; color:#fff;
+                  font-family:inherit; }
+    .the button.b-lam  { background:var(--lam); }
+    .the button.b-xong { background:var(--xong); }
+    .the button.b-pv   { background:var(--phucvu); }
+    .the button:hover { filter:brightness(1.15); }
+    .the button:disabled { opacity:.5; cursor:not-allowed; }
+
+    .rong { color:var(--mo); font-size:13px; text-align:center; padding:34px 10px; }
+    .toast { position:fixed; right:22px; bottom:22px; background:var(--xong); color:#03260f;
+             padding:13px 18px; border-radius:9px; font-weight:600; font-size:14px;
+             box-shadow:0 8px 26px rgba(0,0,0,.4); display:none; z-index:99; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Màn hình bếp &mdash; Kitchen Display System</h1>
+      <div class="sub">
+        <span class="cham" id="chamKN"></span><span id="ttKetNoi">Đang kết nối...</span>
+        &nbsp;|&nbsp; <%= tenNguoiDung %><%= vaiTro ? ' (' + vaiTro + ')' : '' %>
+      </div>
+    </div>
+    <nav>
+      <a href="/so-do-ban">Sơ đồ bàn</a>
+      <a href="/staff">Trang nhân viên</a>
+      <a href="/analytics">Dashboard</a>
+    </nav>
+  </header>
+
+  <div class="chiso" id="chiSo"></div>
+
+  <div class="bang">
+    <div class="cot cho">
+      <h2>1. Chờ chế biến <span class="dem" id="dCho">0</span></h2>
+      <div id="colCho"></div>
+    </div>
+    <div class="cot lam">
+      <h2>2. Đang chế biến <span class="dem" id="dLam">0</span></h2>
+      <div id="colLam"></div>
+    </div>
+    <div class="cot xong">
+      <h2>3. Hoàn thành <span class="dem" id="dXong">0</span></h2>
+      <div id="colXong"></div>
+    </div>
+    <div class="cot pv">
+      <h2>4. Đã phục vụ <span class="dem" id="dPv">0</span></h2>
+      <div id="colPv"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function baoNho(chu) {
+  const t = $('toast');
+  t.textContent = chu;
+  t.style.display = 'block';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.style.display = 'none'; }, 3200);
+}
+
+/** Mon cho qua 20 phut duoc to do de bep uu tien xu ly. */
+const LA_TRE = (p) => Number(p) >= 20;
+
+// Ghi chu mon do khach tu go tren dien thoai, khong phai du lieu cua nha hang.
+function thoat(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function veThe(m, loai) {
+  const tre = (loai === 'cho' || loai === 'lam') && LA_TRE(m.cho_phut);
+  const ban = m.number_ban ? `Bàn <b>${m.number_ban}</b>` : 'Mang về / giao hàng';
+  const nut = {
+    cho:  `<button class="b-lam"  onclick="doi(${m.id},'bat-dau',this)">Bắt đầu chế biến</button>`,
+    lam:  `<button class="b-xong" onclick="doi(${m.id},'hoan-thanh',this)">Hoàn thành</button>`,
+    xong: `<button class="b-pv"   onclick="doi(${m.id},'da-phuc-vu',this)">Đã mang ra bàn</button>`,
+  }[loai] || '';
+
+  // Ghi chu khach go tren dien thoai -> phai thoat truoc khi do vao innerHTML.
+  const ghiChu = m.ghi_chu_mon
+    ? `<div class="ghi-chu">📝 ${thoat(m.ghi_chu_mon)}</div>`
+    : '';
+
+  return `
+    <div class="the ${tre ? 'tre' : loai}">
+      <div class="dong1">
+        <div class="ten">${String(m.name_mon).trim()}</div>
+        <div class="sl">x${m.soluong}</div>
+      </div>
+      ${ghiChu}
+      <div class="meta">
+        ${ban} &middot; ${m.ten_khach || 'Khách lẻ'}<br>
+        Giờ order: <b>${m.tg || '—'}</b>
+        ${m.cho_phut !== null && m.cho_phut !== undefined
+          ? ` &middot; <span class="${tre ? 'cho-lau' : ''}">chờ ${m.cho_phut} phút${tre ? ' ⚠' : ''}</span>`
+          : ''}
+      </div>
+      ${nut}
+    </div>`;
+}
+
+async function tai() {
+  let d;
+  try {
+    const r = await fetch('/kds/api/don');
+    if (!r.ok) throw new Error(r.status);
+    d = await r.json();
+  } catch (e) {
+    console.error('Không tải được đơn:', e);
+    return;
+  }
+
+  const tk = d.thong_ke || {};
+  $('chiSo').innerHTML = `
+    <div class="o c"><div class="n">Chờ chế biến</div><div class="v">${tk.cho || 0}</div></div>
+    <div class="o l"><div class="n">Đang chế biến</div><div class="v">${tk.dang_lam || 0}</div></div>
+    <div class="o x"><div class="n">Chờ mang ra</div><div class="v">${tk.xong || 0}</div></div>
+    <div class="o"><div class="n">Đã phục vụ hôm nay</div><div class="v">${tk.da_phuc_vu_hom_nay || 0}</div></div>
+    <div class="o"><div class="n">Thời gian TB hôm nay</div><div class="v">${tk.phut_tb_hom_nay || 0}<span style="font-size:14px"> phút</span></div></div>`;
+
+  const dat = (col, dem, ds, loai, rong) => {
+    $(dem).textContent = ds.length;
+    $(col).innerHTML = ds.length ? ds.map(m => veThe(m, loai)).join('') : `<div class="rong">${rong}</div>`;
+  };
+  dat('colCho', 'dCho', d.cho || [], 'cho', 'Không có món chờ');
+  dat('colLam', 'dLam', d.dang_lam || [], 'lam', 'Bếp đang rảnh');
+  dat('colXong', 'dXong', d.xong || [], 'xong', 'Không có món chờ mang ra');
+
+  const pv = d.da_phuc_vu || [];
+  $('dPv').textContent = pv.length;
+  $('colPv').innerHTML = pv.length
+    ? pv.map(m => `
+        <div class="the">
+          <div class="dong1">
+            <div class="ten" style="font-size:14px;color:var(--mo)">${String(m.name_mon).trim()}</div>
+            <div class="sl" style="font-size:13px">x${m.soluong}</div>
+          </div>
+          <div class="meta">${m.number_ban ? 'Bàn <b>' + m.number_ban + '</b>' : 'Mang về'}</div>
+        </div>`).join('')
+    : '<div class="rong">Chưa phục vụ món nào hôm nay</div>';
+}
+
+async function doi(id, buoc, nut) {
+  nut.disabled = true;
+  const cu = nut.textContent;
+  nut.textContent = 'Đang xử lý...';
+  try {
+    const r = await fetch(`/kds/api/${buoc}/${id}`, { method: 'POST' });
+    const kq = await r.json();
+    if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    if (buoc === 'hoan-thanh') baoNho('Đã hoàn thành, đã trừ kho theo công thức');
+    await tai();
+  } catch (e) {
+    alert('Không đổi được trạng thái: ' + e.message);
+    nut.disabled = false;
+    nut.textContent = cu;
+  }
+}
+
+// --- Realtime qua Socket.IO ---
+const socket = io();
+socket.on('connect', () => {
+  // server.js phan phong theo { role: ... }; man hinh bep vao kitchen_room.
+  socket.emit('join-room', { role: 'Bep' });
+  $('ttKetNoi').textContent = 'Đã kết nối thời gian thực';
+  $('chamKN').classList.remove('tat');
+});
+socket.on('disconnect', () => {
+  $('ttKetNoi').textContent = 'Mất kết nối - đang thử lại';
+  $('chamKN').classList.add('tat');
+});
+socket.on('new-order-to-kitchen', () => { baoNho('Có order mới!'); tai(); });
+socket.on('kds-cap-nhat', tai);
+
+tai();
+// Luoi an toan: neu socket co van de thi van tu lam moi.
+setInterval(tai, 20000);
+</script>
+</body>
+</html>

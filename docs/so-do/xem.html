@@ -1,0 +1,1495 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Sơ đồ Use Case &amp; BPMN — Hệ thống quản lý nhà hàng thông minh</title><style>
+:root{
+  --sans:"Segoe UI","Segoe UI Variable Text",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --serif:Cambria,Constantia,"Palatino Linotype","Book Antiqua",Georgia,serif;
+  --mono:Consolas,"Cascadia Mono","SF Mono",ui-monospace,Menlo,monospace;
+
+  --nen:#f4f7f5;
+  --giay:#ffffff;
+  --giay-2:#e9efec;
+  --muc:#141c1a;
+  --muc-mo:#5b6b66;
+  --vien:#d8e0dc;
+  --vien-dam:#a6b6b0;
+  --nhan:#0f6b62;
+  --nhan-nen:#e2efec;
+  --canh:#9a5312;
+  --canh-nen:#f6ebde;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --nen:#0d1412;
+    --giay:#151e1b;
+    --giay-2:#1d2825;
+    --muc:#e6efec;
+    --muc-mo:#94a6a1;
+    --vien:#293733;
+    --vien-dam:#4b5f59;
+    --nhan:#63cabc;
+    --nhan-nen:#123230;
+    --canh:#dda45f;
+    --canh-nen:#2f2519;
+  }
+}
+:root[data-theme="dark"]{
+  --nen:#0d1412;
+  --giay:#151e1b;
+  --giay-2:#1d2825;
+  --muc:#e6efec;
+  --muc-mo:#94a6a1;
+  --vien:#293733;
+  --vien-dam:#4b5f59;
+  --nhan:#63cabc;
+  --nhan-nen:#123230;
+  --canh:#dda45f;
+  --canh-nen:#2f2519;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--nen); color:var(--muc);
+  font-family:var(--sans); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.trang{max-width:1320px; margin:0 auto; padding:0 30px 110px;}
+.van{max-width:74ch;}
+
+/* ---- dau trang ---- */
+.dau{
+  border-bottom:1px solid var(--vien); padding:60px 0 34px; margin-bottom:44px;
+  display:flex; flex-direction:column; gap:16px;
+}
+.mac{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--nhan);
+}
+h1{
+  font-family:var(--serif); font-weight:700; font-size:clamp(30px,4.4vw,48px);
+  line-height:1.14; margin:0; text-wrap:balance; letter-spacing:-.01em;
+}
+.phu-de{font-size:17.5px; color:var(--muc-mo); max-width:66ch; margin:0;}
+.mo-ta-du-an{
+  display:flex; flex-wrap:wrap; gap:8px 28px; font-size:13.5px; color:var(--muc-mo);
+  font-family:var(--mono);
+}
+.mo-ta-du-an b{color:var(--muc); font-weight:600;}
+
+/* ---- muc luc ---- */
+.muc-luc{
+  background:var(--giay); border:1px solid var(--vien); border-radius:10px;
+  padding:20px 24px; margin-bottom:56px; max-width:74ch;
+}
+.muc-luc h2{font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muc-mo); margin:0 0 12px; font-family:var(--sans); font-weight:700;}
+.muc-luc ol{margin:0; padding-left:20px; columns:2; column-gap:36px; font-size:14.5px;}
+.muc-luc li{margin:0 0 5px; break-inside:avoid;}
+.muc-luc a{color:var(--muc); text-decoration:none; border-bottom:1px solid transparent;}
+.muc-luc a:hover,.muc-luc a:focus-visible{border-bottom-color:var(--nhan); color:var(--nhan);}
+
+/* ---- muc ---- */
+section{margin-bottom:72px; scroll-margin-top:20px;}
+h2.muc{
+  font-family:var(--serif); font-size:28px; font-weight:700; margin:0 0 8px;
+  display:flex; align-items:baseline; gap:14px; text-wrap:balance;
+}
+h2.muc .so{
+  font-family:var(--mono); font-size:14px; color:var(--nhan); font-weight:400;
+  letter-spacing:.05em; flex:none;
+}
+h3{font-family:var(--serif); font-size:20px; font-weight:700; margin:44px 0 6px; text-wrap:balance;}
+p{margin:0 0 14px;}
+.van p:last-child{margin-bottom:0;}
+a{color:var(--nhan);}
+code{font-family:var(--mono); font-size:.87em; background:var(--giay-2);
+  padding:1px 5px; border-radius:4px; word-break:break-word;}
+strong{font-weight:650;}
+
+/* ---- hinh ---- */
+.khoi-hinh{margin:26px 0 8px;}
+.cap{
+  font-size:13.5px; font-weight:650; margin-bottom:10px; display:flex;
+  gap:12px; align-items:baseline; text-wrap:balance;
+}
+.cap-so{
+  font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--nhan); background:var(--nhan-nen); padding:3px 8px; border-radius:4px; flex:none;
+}
+.hinh-hop{
+  background:var(--giay); border:1px solid var(--vien); border-radius:10px;
+  padding:20px 22px; overflow-x:auto;
+}
+.cap-duoi{font-size:13.5px; color:var(--muc-mo); margin:10px 0 0; max-width:82ch;}
+.hinh{color:var(--muc); display:block; max-width:100%; height:auto; min-width:640px;}
+
+/* ---- ky hieu trong SVG (dung chung voi file SVG roi) ---- */
+
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* ---- bang ---- */
+.bang-hop{overflow-x:auto; margin:22px 0 8px; border:1px solid var(--vien);
+  border-radius:10px; background:var(--giay);}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:620px;}
+caption{
+  text-align:left; padding:14px 18px 0; font-size:14px; color:var(--muc);
+}
+th,td{padding:10px 18px; text-align:left; vertical-align:top;
+  border-bottom:1px solid var(--vien);}
+thead th{
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muc-mo);
+  font-weight:700; background:var(--giay-2); border-bottom:1px solid var(--vien-dam);
+}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0;}
+.vai{font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  padding:2px 8px; border-radius:20px; white-space:nowrap;}
+.vai-chinh{background:var(--nhan-nen); color:var(--nhan);}
+.vai-phu{background:var(--canh-nen); color:var(--canh);}
+
+.dac-ta{min-width:560px;}
+.dac-ta caption{padding:16px 18px 10px; border-bottom:1px solid var(--vien);
+  font-family:var(--serif); font-size:16.5px;}
+.dac-ta th{width:150px; color:var(--muc-mo); font-weight:600; font-size:13px;
+  background:var(--giay-2); white-space:nowrap;}
+.dac-ta ol,.dac-ta ul{margin:0; padding-left:20px;}
+.dac-ta li{margin-bottom:3px;}
+.dac-ta li:last-child{margin-bottom:0;}
+
+/* ---- ghi chu ---- */
+.luu-y{
+  border-left:3px solid var(--nhan); background:var(--giay);
+  padding:14px 20px; border-radius:0 8px 8px 0; margin:24px 0; max-width:80ch;
+  font-size:14.5px;
+}
+.luu-y p{margin:0 0 8px;} .luu-y p:last-child{margin:0;}
+
+footer{border-top:1px solid var(--vien); padding-top:24px; color:var(--muc-mo);
+  font-size:13.5px; max-width:74ch;}
+
+@media (max-width:760px){
+  .trang{padding:0 18px 80px;}
+  .muc-luc ol{columns:1;}
+  .dau{padding-top:36px;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+</style><div class="trang">
+<header class="dau">
+  <div class="mac">Tài liệu phân tích thiết kế &middot; Khoá luận Hệ thống thông tin</div>
+  <h1>Sơ đồ Use Case &amp; BPMN<br>Hệ thống quản lý nhà hàng thông minh</h1>
+  <p class="phu-de">Bảy sơ đồ ca sử dụng và bốn sơ đồ quy trình nghiệp vụ, dựng trực tiếp
+  từ mã nguồn đang chạy: <b>Node/Express + EJS + MySQL</b> cho phần nghiệp vụ và
+  <b>Python/FastAPI</b> tách riêng cho phần học máy.</p>
+  <div class="mo-ta-du-an">
+    <span>Tác nhân: <b>8 người dùng + 2 hệ thống ngoài</b></span>
+    <span>Ca sử dụng: <b>58</b></span>
+    <span>Quy trình: <b>4</b></span>
+    <span>Quy mô: <b>40 bàn / 4 khu</b></span>
+  </div>
+</header><nav class="muc-luc"><h2>Nội dung</h2><ol><li><a href="#pham-vi">Phạm vi và cách lập sơ đồ</a></li><li><a href="#tac-nhan">Tác nhân của hệ thống</a></li><li><a href="#uc-tong-quat">Sơ đồ use case tổng quát</a></li><li><a href="#uc-phan-ra">Sơ đồ use case phân rã theo phân hệ</a></li><li><a href="#dac-ta">Đặc tả ba use case tiêu biểu</a></li><li><a href="#bpmn">Sơ đồ quy trình nghiệp vụ (BPMN)</a></li><li><a href="#anh-xa">Ánh xạ sơ đồ sang mã nguồn</a></li></ol></nav><section id="pham-vi"><h2 class="muc"><span class="so">01</span>Phạm vi và cách lập sơ đồ</h2>
+<div class="van">
+<p>Tài liệu này mô tả hệ thống ở hai mức khác nhau và cố ý không trộn chúng vào nhau.
+<b>Sơ đồ use case</b> trả lời câu hỏi <i>ai làm được gì</i> — nó liệt kê chức năng theo
+tác nhân, không nói thứ tự. <b>Sơ đồ BPMN</b> trả lời câu hỏi <i>công việc chạy qua
+những ai theo thứ tự nào</i> — nó cho thấy điểm bàn giao giữa khách, phục vụ, bếp,
+thu ngân và các bước hệ thống tự chạy.</p>
+
+<p>Mọi chức năng vẽ ở đây đều lấy từ mã nguồn đang chạy, chủ yếu là các đường dẫn
+khai báo trong <code>server.js</code> và thư mục <code>routes/</code>, cùng nghiệp vụ
+trong <code>services/</code>. Phần &sect;7 ánh xạ ngược từng nhóm chức năng về đúng
+tệp mã, để có thể đối chiếu khi bảo vệ.</p>
+
+<p>Hai điều được vẽ đúng như hệ thống thật chứ không lý tưởng hoá. Thứ nhất, việc
+<b>trừ tồn kho</b> đặt ở bước bếp <i>hoàn thành chế biến</i> chứ không phải lúc khách
+gọi món — đó là thời điểm nguyên liệu thực sự bị tiêu hao. Thứ hai, khi <b>dịch vụ ML
+không phản hồi</b>, hệ thống không sập mà quay về dùng kết quả dự báo đã lưu; nhánh
+này được vẽ thành một rẽ nhánh thật trong Hình 12.</p>
+</div></section><section id="tac-nhan"><h2 class="muc"><span class="so">02</span>Tác nhân của hệ thống</h2>
+<div class="van"><p>Vai trò trong hệ thống không gán cứng vào mã mà lấy từ bảng
+<code>chuc_danh</code> (23 chức danh, 6 cấp bậc, 8 bộ phận) và bảng phân quyền
+<code>chuc_danh_quyen</code>. Bảng dưới gom các chức danh đó thành tám tác nhân người
+dùng — mức trừu tượng vừa đủ để sơ đồ đọc được — cộng hai hệ thống ngoài.</p></div>
+<div class="bang-hop"><table>
+<thead><tr><th>Tác nhân</th><th>Loại</th><th>Trách nhiệm trong hệ thống</th><th>Nguồn dữ liệu</th></tr></thead>
+<tbody><tr>
+    <td><b>Khách hàng</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Đặt bàn, quét mã QR gọi món tại bàn, theo dõi và huỷ đơn, đánh giá, tích điểm. Khách quét QR không cần đăng nhập — hệ thống tạo tài khoản vãng lai theo mã bàn.</td><td><code>khach_hang</code></td></tr><tr>
+    <td><b>Nhân viên phục vụ</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Xếp bàn, tạo đơn tại quầy, theo dõi sơ đồ 40 bàn, mang món ra bàn, trả lời tin nhắn khách.</td><td>Bộ phận <i>Phục vụ</i>, <i>Lễ tân</i></td></tr><tr>
+    <td><b>Nhân viên bếp</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Nhận và chế biến món trên màn hình bếp, quản lý công thức, món, combo, thiết bị, chốt ca bếp.</td><td>Bộ phận <i>Bếp</i></td></tr><tr>
+    <td><b>Thủ kho</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Quản lý nguyên liệu, đơn vị tính, nhập kho theo lô và hạn sử dụng.</td><td>Bộ phận <i>Kho &ndash; Mua hàng</i></td></tr><tr>
+    <td><b>Thu ngân</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Mở phiên thanh toán, thu tiền mặt hoặc sinh mã VietQR, in biên lai, đối soát, chốt ca.</td><td>Bộ phận <i>Thu ngân</i></td></tr><tr>
+    <td><b>Kế toán</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Bảng lương, chi phí khác, báo cáo, duyệt nghỉ phép, đối soát doanh thu.</td><td>Bộ phận <i>Kế toán</i></td></tr><tr>
+    <td><b>Quản lý nhà hàng</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Xem dashboard phân tích, chạy dự báo AI, bổ nhiệm nhân sự, phân quyền, uỷ quyền, sắp xếp sơ đồ bàn.</td><td>Chức danh cấp 1&ndash;2</td></tr><tr>
+    <td><b>Quản trị hệ thống</b></td>
+    <td><span class="vai vai-chinh">Chính</span></td>
+    <td>Quản lý danh mục, món ăn, bài viết, nhân viên, hợp đồng, mã giảm giá, cấu hình thanh toán và khoá webhook.</td><td><code>tb_admin</code></td></tr><tr>
+    <td><b>Dịch vụ ML</b></td>
+    <td><span class="vai vai-phu">Phụ</span></td>
+    <td>Dịch vụ Python/FastAPI tách riêng: dự báo lượt khách và nguyên liệu, khai phá luật kết hợp, nhận diện khuôn mặt.</td><td><code>ml_service/</code> cổng 8000</td></tr><tr>
+    <td><b>Ngân hàng</b></td>
+    <td><span class="vai vai-phu">Phụ</span></td>
+    <td>Gửi thông báo báo có về hệ thống để đối soát tự động phiên thanh toán chuyển khoản.</td><td><code>POST /api/webhook/ngan-hang</code></td></tr></tbody></table></div></section><section id="uc-tong-quat"><h2 class="muc"><span class="so">03</span>Sơ đồ use case tổng quát</h2>
+<div class="van"><p>Sơ đồ tổng quát vẽ <b>toàn bộ ca sử dụng</b> của hệ thống, không
+gộp nhóm. Chín gói tương ứng chín tác nhân chính: bốn gói tuyến trực tiếp phục vụ khách
+(khách hàng, phục vụ, bếp, kho), hai gói tuyến tiền (thu ngân, kế toán) và ba gói tuyến
+nội bộ (chấm công, phân tích &amp; dự báo, quản trị).</p>
+
+<p>Bố cục đặt tác nhân bên trái gói của mình thay vì xếp hai bên một khung hệ thống duy
+nhất. Đây là đánh đổi có chủ đích: với hơn bảy mươi ca sử dụng, bố cục kinh điển sinh ra
+hàng chục đường chéo cắt nhau và không còn đọc được. Cách xếp theo gói giữ được
+<b>không một đường liên kết nào cắt qua e-líp khác</b> — điều đã được kiểm tra tự động
+trên toàn bộ mười ba hình của tài liệu này.</p></div>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 1</span>Sơ đồ use case tổng quát đầy đủ của hệ thống</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1500 1814" role="img" aria-label="Sơ đồ use case tổng quát: 58 ca sử dụng, chín tác nhân với quan hệ kế thừa, mọi chức năng cần phiên đăng nhập đều include về ca sử dụng Đăng nhập ở giữa"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-uc0" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-uc0" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien"><rect x="210" y="24" width="1120" height="1716" rx="4"/></g><text class="tx-bien" x="770" y="48">HỆ THỐNG QUẢN LÝ NHÀ HÀNG THÔNG MINH</text><g class="uc ">
+    <ellipse cx="370" cy="178" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="183">Xem thực đơn, tìm món</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="230" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="235">Xem tin tức, bài viết</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="282" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="287">Quét mã QR gọi món tại bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="334" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="339">Đăng ký tài khoản</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="236" r="11"/>
+    <line x1="140" y1="247" x2="140" y2="273"/>
+    <line x1="123" y1="256" x2="157" y2="256"/>
+    <line x1="140" y1="273" x2="127" y2="295"/>
+    <line x1="140" y1="273" x2="153" y2="295"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="253">Khách</text><text class="tx-tn" style="text-anchor:end" x="116" y="267">vãng lai</text>
+  </g><line class="lk" x1="140" y1="256" x2="220" y2="178"/><line class="lk" x1="140" y1="256" x2="220" y2="230"/><line class="lk" x1="140" y1="256" x2="220" y2="282"/><line class="lk" x1="140" y1="256" x2="220" y2="334"/><g class="uc ">
+    <ellipse cx="370" cy="386" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="391">Quản lý thông tin cá nhân</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="438" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="443">Quản lý giỏ hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="490" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="495">Đặt bàn trực tuyến</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="542" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="547">Đặt cọc bằng mã VietQR</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="594" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="599">Quản lý đơn đặt bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="646" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="643">Đánh giá, bình luận sau khi</text><text class="tx-uc" x="370" y="659">hoàn thành đơn hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="698" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="703">Chat với nhân viên tư vấn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="750" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="755">Đổi điểm tích luỹ, áp mã giảm giá</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="548" r="11"/>
+    <line x1="140" y1="559" x2="140" y2="585"/>
+    <line x1="123" y1="568" x2="157" y2="568"/>
+    <line x1="140" y1="585" x2="127" y2="607"/>
+    <line x1="140" y1="585" x2="153" y2="607"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="565">Khách hàng</text><text class="tx-tn" style="text-anchor:end" x="116" y="579">thành viên</text>
+  </g><line class="lk" x1="140" y1="568" x2="220" y2="386"/><line class="lk" x1="140" y1="568" x2="220" y2="438"/><line class="lk" x1="140" y1="568" x2="220" y2="490"/><line class="lk" x1="140" y1="568" x2="220" y2="542"/><line class="lk" x1="140" y1="568" x2="220" y2="594"/><line class="lk" x1="140" y1="568" x2="220" y2="646"/><line class="lk" x1="140" y1="568" x2="220" y2="698"/><line class="lk" x1="140" y1="568" x2="220" y2="750"/><g class="uc ">
+    <ellipse cx="370" cy="802" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="807">Quản lý bảng lương</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="854" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="859">Quản lý thu chi</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="906" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="911">Quản lý nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="958" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="963">Quản lý email gửi khách</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1010" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1015">Xem báo cáo kế toán</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="886" r="11"/>
+    <line x1="140" y1="897" x2="140" y2="923"/>
+    <line x1="123" y1="906" x2="157" y2="906"/>
+    <line x1="140" y1="923" x2="127" y2="945"/>
+    <line x1="140" y1="923" x2="153" y2="945"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="910">Kế toán</text>
+  </g><line class="lk" x1="140" y1="906" x2="220" y2="802"/><line class="lk" x1="140" y1="906" x2="220" y2="854"/><line class="lk" x1="140" y1="906" x2="220" y2="906"/><line class="lk" x1="140" y1="906" x2="220" y2="958"/><line class="lk" x1="140" y1="906" x2="220" y2="1010"/><g class="uc ">
+    <ellipse cx="370" cy="1062" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1067">Xem báo cáo doanh thu tổng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1114" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1119">Xem dashboard phân tích vận hành</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1166" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1171">Dự báo lượt khách</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1218" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1223">Dự báo nhu cầu nguyên liệu</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1270" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1275">Khai phá luật kết hợp (Apriori)</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1322" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1327">Xem đánh giá mô hình dự báo</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1374" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1379">Quản lý nhân sự, phân quyền</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="1198" r="11"/>
+    <line x1="140" y1="1209" x2="140" y2="1235"/>
+    <line x1="123" y1="1218" x2="157" y2="1218"/>
+    <line x1="140" y1="1235" x2="127" y2="1257"/>
+    <line x1="140" y1="1235" x2="153" y2="1257"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="1215">Quản lý</text><text class="tx-tn" style="text-anchor:end" x="116" y="1229">nhà hàng</text>
+  </g><line class="lk" x1="140" y1="1218" x2="220" y2="1062"/><line class="lk" x1="140" y1="1218" x2="220" y2="1114"/><line class="lk" x1="140" y1="1218" x2="220" y2="1166"/><line class="lk" x1="140" y1="1218" x2="220" y2="1218"/><line class="lk" x1="140" y1="1218" x2="220" y2="1270"/><line class="lk" x1="140" y1="1218" x2="220" y2="1322"/><line class="lk" x1="140" y1="1218" x2="220" y2="1374"/><g class="uc ">
+    <ellipse cx="370" cy="1426" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1431">Quản lý danh mục, món ăn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1478" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1483">Quản lý bài viết</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1530" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1535">Quản lý nhân viên, hợp đồng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1582" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1579">Quản lý mã giảm giá,</text><text class="tx-uc" x="370" y="1595">phương thức thanh toán</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1634" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1631">Cấu hình tài khoản nhận tiền,</text><text class="tx-uc" x="370" y="1647">khoá webhook</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1686" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1691">Quản lý cơ cấu tổ chức</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="1536" r="11"/>
+    <line x1="140" y1="1547" x2="140" y2="1573"/>
+    <line x1="123" y1="1556" x2="157" y2="1556"/>
+    <line x1="140" y1="1573" x2="127" y2="1595"/>
+    <line x1="140" y1="1573" x2="153" y2="1595"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="1553">Quản trị</text><text class="tx-tn" style="text-anchor:end" x="116" y="1567">hệ thống</text>
+  </g><line class="lk" x1="140" y1="1556" x2="220" y2="1426"/><line class="lk" x1="140" y1="1556" x2="220" y2="1478"/><line class="lk" x1="140" y1="1556" x2="220" y2="1530"/><line class="lk" x1="140" y1="1556" x2="220" y2="1582"/><line class="lk" x1="140" y1="1556" x2="220" y2="1634"/><line class="lk" x1="140" y1="1556" x2="220" y2="1686"/><g class="uc ">
+    <ellipse cx="1160" cy="178" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="183">Quản lý sơ đồ bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="230" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="235">Quản lý đơn đặt bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="282" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="287">Quản lý mã QR của bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="334" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="339">Mang món ra bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="386" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="391">Nhắn tin với khách hàng để tư vấn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="438" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="443">In phiếu đặt bàn</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="288" r="11"/>
+    <line x1="1400" y1="299" x2="1400" y2="325"/>
+    <line x1="1383" y1="308" x2="1417" y2="308"/>
+    <line x1="1400" y1="325" x2="1387" y2="347"/>
+    <line x1="1400" y1="325" x2="1413" y2="347"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="305">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="319">phục vụ</text>
+  </g><line class="lk" x1="1400" y1="308" x2="1310" y2="178"/><line class="lk" x1="1400" y1="308" x2="1310" y2="230"/><line class="lk" x1="1400" y1="308" x2="1310" y2="282"/><line class="lk" x1="1400" y1="308" x2="1310" y2="334"/><line class="lk" x1="1400" y1="308" x2="1310" y2="386"/><line class="lk" x1="1400" y1="308" x2="1310" y2="438"/><g class="uc ">
+    <ellipse cx="1160" cy="490" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="495">Thanh toán cho khách hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="542" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="547">Sinh mã VietQR theo số tiền</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="594" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="599">Xuất hoá đơn, in biên lai</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="646" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="651">Hoàn tiền / huỷ phiên</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="698" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="703">Đối soát giao dịch ngân hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="750" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="755">Chốt ca thu ngân</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="600" r="11"/>
+    <line x1="1400" y1="611" x2="1400" y2="637"/>
+    <line x1="1383" y1="620" x2="1417" y2="620"/>
+    <line x1="1400" y1="637" x2="1387" y2="659"/>
+    <line x1="1400" y1="637" x2="1413" y2="659"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="624">Thu ngân</text>
+  </g><line class="lk" x1="1400" y1="620" x2="1310" y2="490"/><line class="lk" x1="1400" y1="620" x2="1310" y2="542"/><line class="lk" x1="1400" y1="620" x2="1310" y2="594"/><line class="lk" x1="1400" y1="620" x2="1310" y2="646"/><line class="lk" x1="1400" y1="620" x2="1310" y2="698"/><line class="lk" x1="1400" y1="620" x2="1310" y2="750"/><g class="uc ">
+    <ellipse cx="1160" cy="802" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="807">Quản lý màn hình bếp (KDS)</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="854" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="859">Quản lý loại món, món, combo</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="906" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="911">Quản lý công thức, đơn vị tính</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="958" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="963">Quản lý trang thiết bị bếp</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1010" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1015">Chốt ca bếp</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="886" r="11"/>
+    <line x1="1400" y1="897" x2="1400" y2="923"/>
+    <line x1="1383" y1="906" x2="1417" y2="906"/>
+    <line x1="1400" y1="923" x2="1387" y2="945"/>
+    <line x1="1400" y1="923" x2="1413" y2="945"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="903">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="917">bếp</text>
+  </g><line class="lk" x1="1400" y1="906" x2="1310" y2="802"/><line class="lk" x1="1400" y1="906" x2="1310" y2="854"/><line class="lk" x1="1400" y1="906" x2="1310" y2="906"/><line class="lk" x1="1400" y1="906" x2="1310" y2="958"/><line class="lk" x1="1400" y1="906" x2="1310" y2="1010"/><g class="uc ">
+    <ellipse cx="1160" cy="1062" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1067">Quản lý nguyên liệu, nhập kho</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1114" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1119">Cảnh báo lô sắp hết hạn</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="1068" r="11"/>
+    <line x1="1400" y1="1079" x2="1400" y2="1105"/>
+    <line x1="1383" y1="1088" x2="1417" y2="1088"/>
+    <line x1="1400" y1="1105" x2="1387" y2="1127"/>
+    <line x1="1400" y1="1105" x2="1413" y2="1127"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="1092">Thủ kho</text>
+  </g><line class="lk" x1="1400" y1="1088" x2="1310" y2="1062"/><line class="lk" x1="1400" y1="1088" x2="1310" y2="1114"/><g class="uc ">
+    <ellipse cx="1160" cy="1166" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1171">Xem lịch làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1218" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1223">Đăng ký lịch làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1270" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1275">Quản lý thông tin cá nhân</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1322" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1327">Xem thông báo</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1374" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1379">Chấm công bằng khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1426" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1431">Xin nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1478" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1483">Đổi mật khẩu</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="1302" r="11"/>
+    <line x1="1400" y1="1313" x2="1400" y2="1339"/>
+    <line x1="1383" y1="1322" x2="1417" y2="1322"/>
+    <line x1="1400" y1="1339" x2="1387" y2="1361"/>
+    <line x1="1400" y1="1339" x2="1413" y2="1361"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="1319">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="1333">chung</text>
+  </g><line class="lk" x1="1400" y1="1322" x2="1310" y2="1166"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1218"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1270"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1322"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1374"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1426"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1478"/><g class="uc uc-dn">
+    <ellipse cx="765" cy="882" rx="116" ry="50"/>
+    <text class="tx-uc" x="765" y="862">Đăng nhập</text>
+    <line class="dn-ngan" x1="669" y1="874" x2="861" y2="874"/>
+    <text class="tx-khuon" x="765" y="890">extension points</text>
+    <text class="tx-uc" x="765" y="908">Đăng xuất</text>
+  </g><g class="uc ">
+    <ellipse cx="765" cy="104" rx="82" ry="28"/>
+    <text class="tx-uc" x="765" y="109">Đăng xuất</text>
+  </g><line class="lk-dut" x1="765" y1="132" x2="765" y2="832"
+        marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="809" y="196">&#171;extend&#187;</text><line class="lk-dut" x1="520" y1="386" x2="741" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="551" y="441">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="438" x2="738" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="554" y="491">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="490" x2="735" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="557" y="541">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="542" x2="731" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="561" y="591">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="594" x2="725" y2="835"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="565" y="639">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="646" x2="718" y2="836"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="571" y="686">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="698" x2="707" y2="839"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="576" y="732">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="750" x2="693" y2="843"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="582" y="775">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="802" x2="673" y2="852"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="587" y="816">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="854" x2="653" y2="869"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="590" y="854">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="906" x2="652" y2="893"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="590" y="891">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="958" x2="671" y2="911"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="587" y="929">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1010" x2="691" y2="921"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="582" y="970">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1062" x2="706" y2="925"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="576" y="1012">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1114" x2="717" y2="928"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="571" y="1058">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1166" x2="725" y2="929"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="566" y="1105">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1218" x2="730" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="561" y="1153">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1270" x2="735" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="557" y="1203">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1322" x2="738" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="554" y="1253">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1374" x2="741" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="551" y="1303">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1426" x2="743" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="549" y="1354">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1478" x2="745" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="547" y="1405">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1530" x2="746" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="545" y="1457">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1582" x2="748" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="543" y="1508">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1634" x2="749" y2="932"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="542" y="1559">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1686" x2="750" y2="932"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="540" y="1611">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="178" x2="782" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="987" y="236">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="230" x2="784" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="985" y="288">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="282" x2="785" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="984" y="339">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="334" x2="787" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="981" y="390">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="386" x2="789" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="979" y="441">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="438" x2="792" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="976" y="491">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="490" x2="795" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="973" y="541">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="542" x2="799" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="969" y="591">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="594" x2="805" y2="835"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="965" y="639">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="646" x2="812" y2="836"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="959" y="686">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="698" x2="823" y2="839"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="954" y="732">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="750" x2="837" y2="843"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="948" y="775">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="802" x2="857" y2="852"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="943" y="816">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="854" x2="877" y2="869"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="940" y="854">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="906" x2="878" y2="893"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="940" y="891">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="958" x2="859" y2="911"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="943" y="929">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1010" x2="839" y2="921"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="948" y="970">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1062" x2="824" y2="925"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="954" y="1012">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1114" x2="813" y2="928"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="959" y="1058">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1166" x2="805" y2="929"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="964" y="1105">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1218" x2="800" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="969" y="1153">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1270" x2="795" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="973" y="1203">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1322" x2="792" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="976" y="1253">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1374" x2="789" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="979" y="1303">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1426" x2="787" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="981" y="1354">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1478" x2="785" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="983" y="1405">&#171;include&#187;</text><line class="lk" x1="140" y1="537" x2="140" y2="295" marker-end="url(#mui-rong-uc0)"/><polyline class="lk" points="1380,308 1352,308"/><polyline class="lk" points="1380,620 1352,620"/><polyline class="lk" points="1380,906 1352,906"/><polyline class="lk" points="1380,1088 1352,1088"/><polyline class="lk" points="118,906 40,906 40,1768 1352,1768"/><polyline class="lk" points="118,1218 56,1218 56,1788 1352,1788"/><line class="lk" x1="1352" y1="1322" x2="1352" y2="1788"/><line class="lk" x1="1352" y1="1322" x2="1420" y2="1322" marker-end="url(#mui-rong-uc0)"/></svg></div>
+  <p class="cap-duoi">Chín gói ứng với chín tác nhân chính. E-líp viền nét đứt là ca sử dụng có gọi ra hệ thống ngoài — Dịch vụ ML hoặc ngân hàng. Một số ca dùng chung cho nhiều tác nhân (chấm công, xem thông báo) chỉ vẽ một lần ở gói của tác nhân chính; quan hệ <code>«include»</code> và <code>«extend»</code> được thể hiện đầy đủ ở các sơ đồ phân rã Hình 3–8.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 2</span>Chú giải ký hiệu use case (UML)</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1260 122" role="img" aria-label="Chú giải ký hiệu sơ đồ use case"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-cg1" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-cg1" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="tn ">
+    <circle cx="60" cy="29" r="11"/>
+    <line x1="60" y1="40" x2="60" y2="66"/>
+    <line x1="43" y1="49" x2="77" y2="49"/>
+    <line x1="60" y1="66" x2="47" y2="88"/>
+    <line x1="60" y1="66" x2="73" y2="88"/>
+    <text class="tx-tn" x="60" y="106">Tác nhân</text>
+  </g><g class="uc ">
+    <ellipse cx="268" cy="52" rx="104" ry="26"/>
+    <text class="tx-uc" x="268" y="57">Ca sử dụng</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="520" cy="52" rx="112" ry="26"/>
+    <text class="tx-uc" x="520" y="57">Ca sử dụng được gọi</text>
+  </g><g class="uc uc-ngoai">
+    <ellipse cx="768" cy="52" rx="112" ry="26"/>
+    <text class="tx-uc" x="768" y="57">Có gọi hệ thống ngoài</text>
+  </g><line class="lk" x1="910" y1="40" x2="1030" y2="40"/><text class="tx-ghi" x="970" y="30" text-anchor="middle">liên kết</text><g class="qh">
+    <line class="lk-dut" x1="910" y1="84" x2="1030" y2="84" marker-end="url(#mui-cg1)"/>
+    <text class="tx-khuon" x="970" y="76">&#171;include&#187;</text>
+  </g><g class="ht-ngoai"><rect x="1070" y="30" width="170" height="44" rx="3"/>
+    <text class="tx-khuon" x="1155" y="48">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1155" y="64">T&#225;c nh&#226;n ph&#7909;</text></g></svg></div>
+  
+</figure></section><section id="uc-phan-ra"><h2 class="muc"><span class="so">04</span>Sơ đồ use case phân rã theo phân hệ</h2>
+<div class="van"><p>Sáu sơ đồ dưới đây phân rã các nhóm chức năng của Hình 1. Ca sử dụng
+tô nền là ca được gọi lại từ ca khác qua quan hệ <code>&laquo;include&raquo;</code>
+(luôn xảy ra) hoặc <code>&laquo;extend&raquo;</code> (chỉ xảy ra trong điều kiện nhất định).</p></div>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 3</span>Phân hệ khách hàng</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ khách hàng: chín chức năng từ xem thực đơn tới đổi điểm tích luỹ, kèm các quan hệ include và extend"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ KHÁCH HÀNG</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Đăng ký tài khoản</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Xem thực đơn, tìm và xem chi tiết món</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Quản lý giỏ hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Đặt bàn trực tuyến</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Quét mã QR gọi món tại bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Theo dõi và huỷ đơn của tôi</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Đánh giá món ăn &amp; dịch vụ</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Nhắn tin với nhân viên</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="705">Xem điểm tích luỹ, đổi ưu đãi</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="76" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="81">Đăng nhập</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="229">Nhận gợi ý món đi kèm</text><text class="tx-uc" x="812" y="245">(luật kết hợp Apriori)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="388" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="385">Mở phiên đơn theo bàn</text><text class="tx-uc" x="812" y="401">(khách vãng lai, không đăng nhập)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="544" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="549">Đặt cọc bằng mã VietQR</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="700" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="705">Áp mã giảm giá</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="456.2" y1="284.2" x2="768" y2="101.7" marker-end="url(#mui-ucA)"/>
+    <text class="tx-khuon" x="612.1" y="186.95">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="232" x2="666" y2="232" marker-end="url(#mui-ucA)"/>
+    <text class="tx-khuon" x="615" y="223">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="388" x2="666" y2="388" marker-end="url(#mui-ucA)"/>
+    <text class="tx-khuon" x="615" y="379">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="456.2" y1="335.8" x2="768" y2="518.3" marker-end="url(#mui-ucA)"/>
+    <text class="tx-khuon" x="638.1" y="443.04999999999995">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="700" x2="666" y2="700" marker-end="url(#mui-ucA)"/>
+    <text class="tx-khuon" x="615" y="691">&#171;extend&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="311" r="11"/>
+    <line x1="84" y1="322" x2="84" y2="348"/>
+    <line x1="67" y1="331" x2="101" y2="331"/>
+    <line x1="84" y1="348" x2="71" y2="370"/>
+    <line x1="84" y1="348" x2="97" y2="370"/>
+    <text class="tx-tn" x="84" y="288">Khách hàng</text>
+  </g><line class="lk" x1="84" y1="331" x2="260" y2="76"/><line class="lk" x1="84" y1="331" x2="260" y2="154"/><line class="lk" x1="84" y1="331" x2="260" y2="232"/><line class="lk" x1="84" y1="331" x2="260" y2="310"/><line class="lk" x1="84" y1="331" x2="260" y2="388"/><line class="lk" x1="84" y1="331" x2="260" y2="466"/><line class="lk" x1="84" y1="331" x2="260" y2="544"/><line class="lk" x1="84" y1="331" x2="260" y2="622"/><line class="lk" x1="84" y1="331" x2="260" y2="700"/><g class="ht-ngoai">
+    <rect x="1101" y="204" width="150" height="56" rx="3"/>
+    <text class="tx-khuon" x="1176" y="219">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="235">Dịch vụ ML</text><text class="tx-ht" x="1176" y="250">(gợi ý Apriori)</text>
+  </g><line class="lk" x1="1101" y1="232" x2="958" y2="232"/></svg></div>
+  <p class="cap-duoi">Khách quét mã QR tại bàn không cần đăng nhập: hệ thống tự tạo một tài khoản vãng lai gắn với mã bàn, nên vẫn ghi nhận được đơn về đúng bàn.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 4</span>Phân hệ phục vụ và sơ đồ bàn</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ phục vụ: theo dõi sơ đồ 40 bàn, tạo đơn tại quầy, quản lý mã QR và mang món ra bàn"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucB" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucB" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ PHỤC VỤ &amp; SƠ ĐỒ BÀN</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Đăng nhập nhân viên</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="151">Xem sơ đồ bàn thời gian thực</text><text class="tx-uc" x="412" y="167">(40 bàn / 4 khu)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Đổi trạng thái bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Tạo đơn tại quầy cho khách</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Thêm món vào đơn đang mở</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Xác nhận khách đến, in phiếu đặt bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Quản lý mã QR của bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Mang món ra bàn (đánh dấu Đã phục vụ)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="705">Trả lời tin nhắn của khách</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="237">Sắp xếp lại sơ đồ bằng kéo thả</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="388" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="393">Xem gợi ý món bán kèm</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="232" x2="666" y2="232" marker-end="url(#mui-ucB)"/>
+    <text class="tx-khuon" x="615" y="223">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="388" x2="666" y2="388" marker-end="url(#mui-ucB)"/>
+    <text class="tx-khuon" x="615" y="379">&#171;extend&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="311" r="11"/>
+    <line x1="84" y1="322" x2="84" y2="348"/>
+    <line x1="67" y1="331" x2="101" y2="331"/>
+    <line x1="84" y1="348" x2="71" y2="370"/>
+    <line x1="84" y1="348" x2="97" y2="370"/>
+    <text class="tx-tn" x="84" y="274">Nhân viên</text><text class="tx-tn" x="84" y="288">phục vụ</text>
+  </g><line class="lk" x1="84" y1="331" x2="260" y2="76"/><line class="lk" x1="84" y1="331" x2="260" y2="154"/><line class="lk" x1="84" y1="331" x2="260" y2="232"/><line class="lk" x1="84" y1="331" x2="260" y2="310"/><line class="lk" x1="84" y1="331" x2="260" y2="388"/><line class="lk" x1="84" y1="331" x2="260" y2="466"/><line class="lk" x1="84" y1="331" x2="260" y2="544"/><line class="lk" x1="84" y1="331" x2="260" y2="622"/><line class="lk" x1="84" y1="331" x2="260" y2="700"/><g class="tn ">
+    <circle cx="1176" cy="153" r="11"/>
+    <line x1="1176" y1="164" x2="1176" y2="190"/>
+    <line x1="1159" y1="173" x2="1193" y2="173"/>
+    <line x1="1176" y1="190" x2="1163" y2="212"/>
+    <line x1="1176" y1="190" x2="1189" y2="212"/>
+    <text class="tx-tn" x="1176" y="116">Quản lý</text><text class="tx-tn" x="1176" y="130">nhà hàng</text>
+  </g><line class="lk" x1="1176" y1="173" x2="958" y2="232"/><g class="ghi-chu">
+    <text class="tx-ghi" x="660" y="268">Chỉ Quản lý và Quản trị hệ thống mới lưu được toạ độ bàn.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Sơ đồ bàn hiển thị 40 bàn chia 4 khu theo thời gian thực qua Socket.IO. Chỉ Quản lý và Quản trị hệ thống mới lưu được toạ độ sau khi kéo thả.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 5</span>Phân hệ bếp và kho</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ bếp và kho: bốn trạng thái chế biến trên màn hình bếp, trừ tồn kho tự động theo công thức và quản lý nguyên liệu theo lô"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucC" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucC" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ BẾP &amp; KHO</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Xem màn hình bếp (KDS)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Nhận món, bắt đầu chế biến</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Hoàn thành chế biến</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Quản lý công thức món</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Quản lý nguyên liệu &amp; đơn vị tính</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Nhập kho theo lô (FIFO, hạn dùng)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Quản lý món, danh mục, combo</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Quản lý thiết bị bếp</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="705">Chốt ca bếp</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="154" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="159">Trừ tồn kho theo công thức</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="229">Ghi nhật ký xuất kho</text><text class="tx-uc" x="812" y="245">(dữ liệu cho mô hình dự báo)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="466" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="471">Cảnh báo lô sắp hết hạn</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="212" x2="711.5" y2="173.6" marker-end="url(#mui-ucC)"/>
+    <text class="tx-khuon" x="612.95" y="186.8">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="232" x2="666" y2="232" marker-end="url(#mui-ucC)"/>
+    <text class="tx-khuon" x="615" y="223">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="466" x2="666" y2="466" marker-end="url(#mui-ucC)"/>
+    <text class="tx-khuon" x="615" y="457">&#171;extend&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="201" r="11"/>
+    <line x1="84" y1="212" x2="84" y2="238"/>
+    <line x1="67" y1="221" x2="101" y2="221"/>
+    <line x1="84" y1="238" x2="71" y2="260"/>
+    <line x1="84" y1="238" x2="97" y2="260"/>
+    <text class="tx-tn" x="84" y="178">Nhân viên bếp</text>
+  </g><line class="lk" x1="84" y1="221" x2="260" y2="76"/><line class="lk" x1="84" y1="221" x2="260" y2="154"/><line class="lk" x1="84" y1="221" x2="260" y2="232"/><line class="lk" x1="84" y1="221" x2="260" y2="310"/><line class="lk" x1="84" y1="221" x2="260" y2="544"/><line class="lk" x1="84" y1="221" x2="260" y2="622"/><line class="lk" x1="84" y1="221" x2="260" y2="700"/><g class="tn ">
+    <circle cx="84" cy="489" r="11"/>
+    <line x1="84" y1="500" x2="84" y2="526"/>
+    <line x1="67" y1="509" x2="101" y2="509"/>
+    <line x1="84" y1="526" x2="71" y2="548"/>
+    <line x1="84" y1="526" x2="97" y2="548"/>
+    <text class="tx-tn" x="84" y="466">Thủ kho</text>
+  </g><line class="lk" x1="84" y1="509" x2="260" y2="388"/><line class="lk" x1="84" y1="509" x2="260" y2="466"/><g class="ghi-chu">
+    <text class="tx-ghi" x="642" y="232">Trừ kho đặt đúng ở bước Hoàn thành chế biến —</text><text class="tx-ghi" x="642" y="245">thời điểm nguyên liệu thực sự bị tiêu hao.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Món trên màn hình bếp đi qua bốn trạng thái: chờ chế biến, đang chế biến, hoàn thành, đã phục vụ. Trừ kho gắn vào bước hoàn thành và ghi lại nhật ký xuất kho — chính dữ liệu này nuôi mô hình dự báo nguyên liệu.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 6</span>Phân hệ thanh toán và kế toán</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ thanh toán: máy POS của thu ngân, thanh toán VietQR, đối soát tự động với webhook ngân hàng và các chức năng kế toán"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucD" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucD" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ THANH TOÁN &amp; KẾ TOÁN</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Mở màn hình thu ngân (POS)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Tạo phiên thanh toán cho bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Xác nhận đã thu tiền</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Hoàn tiền / huỷ phiên</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">In biên lai, xuất hoá đơn</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Đối soát giao dịch ngân hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Chốt ca thu ngân</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Lập &amp; duyệt bảng lương</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="705">Ghi chi phí khác, lập báo cáo</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="154" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="159">Sinh mã VietQR theo số tiền</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="466" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="463">Nhận thông báo báo có</text><text class="tx-uc" x="812" y="479">(webhook ngân hàng)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="622" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="627">Xuất bảng công từ dữ liệu chấm công</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="154" x2="666" y2="154" marker-end="url(#mui-ucD)"/>
+    <text class="tx-khuon" x="615" y="145">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="466" x2="666" y2="466" marker-end="url(#mui-ucD)"/>
+    <text class="tx-khuon" x="615" y="457">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="622" x2="666" y2="622" marker-end="url(#mui-ucD)"/>
+    <text class="tx-khuon" x="615" y="613">&#171;include&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="201" r="11"/>
+    <line x1="84" y1="212" x2="84" y2="238"/>
+    <line x1="67" y1="221" x2="101" y2="221"/>
+    <line x1="84" y1="238" x2="71" y2="260"/>
+    <line x1="84" y1="238" x2="97" y2="260"/>
+    <text class="tx-tn" x="84" y="178">Thu ngân</text>
+  </g><line class="lk" x1="84" y1="221" x2="260" y2="76"/><line class="lk" x1="84" y1="221" x2="260" y2="154"/><line class="lk" x1="84" y1="221" x2="260" y2="232"/><line class="lk" x1="84" y1="221" x2="260" y2="310"/><line class="lk" x1="84" y1="221" x2="260" y2="388"/><line class="lk" x1="84" y1="221" x2="260" y2="466"/><line class="lk" x1="84" y1="221" x2="260" y2="544"/><g class="tn ">
+    <circle cx="84" cy="521" r="11"/>
+    <line x1="84" y1="532" x2="84" y2="558"/>
+    <line x1="67" y1="541" x2="101" y2="541"/>
+    <line x1="84" y1="558" x2="71" y2="580"/>
+    <line x1="84" y1="558" x2="97" y2="580"/>
+    <text class="tx-tn" x="84" y="498">Kế toán</text>
+  </g><line class="lk" x1="84" y1="541" x2="260" y2="466"/><line class="lk" x1="84" y1="541" x2="260" y2="622"/><line class="lk" x1="84" y1="541" x2="260" y2="700"/><g class="ht-ngoai">
+    <rect x="1101" y="445.5" width="150" height="41" rx="3"/>
+    <text class="tx-khuon" x="1176" y="460.5">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="476.5">Ngân hàng</text>
+  </g><line class="lk" x1="1101" y1="466" x2="958" y2="466"/></svg></div>
+  <p class="cap-duoi">Nhánh chuyển khoản sinh mã VietQR theo đúng số tiền phải trả; khi ngân hàng gửi thông báo báo có, hệ thống tự khớp với phiên đang chờ nên thu ngân không phải xác nhận tay.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 7</span>Phân hệ nhân sự, chấm công và tổ chức</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ nhân sự: chấm công bằng khuôn mặt kèm kiểm tra chống giả mạo và ràng buộc vị trí GPS, quản lý ca làm việc và phân quyền theo chức danh"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucE" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucE" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ NHÂN SỰ, CHẤM CÔNG &amp; TỔ CHỨC</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Đăng ký khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Chấm công bằng khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Xem bảng công của tôi</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Đăng ký / huỷ ca làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Xin nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Xem thông báo nội bộ</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Sửa &amp; bổ sung chấm công</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Bổ nhiệm nhân sự, quản lý chức danh</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="697">Phân quyền theo chức danh,</text><text class="tx-uc" x="412" y="713">uỷ quyền tạm thời</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="76" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="73">Kiểm tra chống giả mạo</text><text class="tx-uc" x="812" y="89">(liveness: gật đầu / quay trái phải)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="154" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="151">Kiểm tra vị trí GPS</text><text class="tx-uc" x="812" y="167">(bán kính quanh nhà hàng)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="237">Ghi nhật ký nhận diện</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="388" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="393">Duyệt / từ chối nghỉ phép</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="134" x2="711.5" y2="95.6" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="612.95" y="108.8">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="154" x2="666" y2="154" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="615" y="145">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="174" x2="711.5" y2="212.4" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="612.95" y="187.2">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="388" x2="666" y2="388" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="615" y="379">&#171;extend&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="201" r="11"/>
+    <line x1="84" y1="212" x2="84" y2="238"/>
+    <line x1="67" y1="221" x2="101" y2="221"/>
+    <line x1="84" y1="238" x2="71" y2="260"/>
+    <line x1="84" y1="238" x2="97" y2="260"/>
+    <text class="tx-tn" x="84" y="178">Nhân viên</text>
+  </g><line class="lk" x1="84" y1="221" x2="260" y2="76"/><line class="lk" x1="84" y1="221" x2="260" y2="154"/><line class="lk" x1="84" y1="221" x2="260" y2="232"/><line class="lk" x1="84" y1="221" x2="260" y2="310"/><line class="lk" x1="84" y1="221" x2="260" y2="388"/><line class="lk" x1="84" y1="221" x2="260" y2="466"/><g class="tn ">
+    <circle cx="1176" cy="381" r="11"/>
+    <line x1="1176" y1="392" x2="1176" y2="418"/>
+    <line x1="1159" y1="401" x2="1193" y2="401"/>
+    <line x1="1176" y1="418" x2="1163" y2="440"/>
+    <line x1="1176" y1="418" x2="1189" y2="440"/>
+    <text class="tx-tn" x="1176" y="344">Quản lý</text><text class="tx-tn" x="1176" y="358">nhà hàng</text>
+  </g><line class="lk" x1="1176" y1="401" x2="958" y2="388"/><g class="tn ">
+    <circle cx="1176" cy="571" r="11"/>
+    <line x1="1176" y1="582" x2="1176" y2="608"/>
+    <line x1="1159" y1="591" x2="1193" y2="591"/>
+    <line x1="1176" y1="608" x2="1163" y2="630"/>
+    <line x1="1176" y1="608" x2="1189" y2="630"/>
+    <text class="tx-tn" x="1176" y="534">Quản trị</text><text class="tx-tn" x="1176" y="548">hệ thống</text>
+  </g><line class="lk" x1="1176" y1="591" x2="564" y2="544"/><line class="lk" x1="1176" y1="591" x2="564" y2="622"/><line class="lk" x1="1176" y1="591" x2="564" y2="700"/><g class="ht-ngoai">
+    <rect x="1101" y="72" width="150" height="56" rx="3"/>
+    <text class="tx-khuon" x="1176" y="87">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="103">Dịch vụ ML</text><text class="tx-ht" x="1176" y="118">(nhận diện khuôn mặt)</text>
+  </g><line class="lk" x1="1101" y1="100" x2="958" y2="76"/></svg></div>
+  <p class="cap-duoi">Chấm công bằng khuôn mặt luôn kèm hai kiểm tra bắt buộc: ảnh sống (chống chụp lại ảnh) và vị trí GPS trong bán kính cho phép quanh nhà hàng.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 8</span>Phân hệ phân tích, dự báo AI và quản trị</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ phân tích và AI: dashboard vận hành, dự báo lượt khách và nguyên liệu, khai phá luật kết hợp, cùng các chức năng quản trị hệ thống"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-ucF" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucF" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ PHÂN TÍCH, DỰ BÁO AI &amp; QUẢN TRỊ</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Xem dashboard phân tích vận hành</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Chạy dự báo lượt khách</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Chạy dự báo nhu cầu nguyên liệu</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Khai phá luật kết hợp (Apriori)</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Xem bảng đánh giá mô hình</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Quản lý danh mục, món ăn, bài viết</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Quản lý nhân viên &amp; hợp đồng</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="619">Quản lý mã giảm giá,</text><text class="tx-uc" x="412" y="635">phương thức thanh toán</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="697">Cấu hình tài khoản nhận tiền</text><text class="tx-uc" x="412" y="713">và khoá webhook</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="154" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="159">Huấn luyện và chọn mô hình theo MAE</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="229">Quy đổi qua công thức món</text><text class="tx-uc" x="812" y="245">→ lượng cần nhập thêm</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="388" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="393">So sánh với baseline SeasonalNaive</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="154" x2="666" y2="154" marker-end="url(#mui-ucF)"/>
+    <text class="tx-khuon" x="615" y="145">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="232" x2="666" y2="232" marker-end="url(#mui-ucF)"/>
+    <text class="tx-khuon" x="615" y="223">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="388" x2="666" y2="388" marker-end="url(#mui-ucF)"/>
+    <text class="tx-khuon" x="615" y="379">&#171;include&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="165" r="11"/>
+    <line x1="84" y1="176" x2="84" y2="202"/>
+    <line x1="67" y1="185" x2="101" y2="185"/>
+    <line x1="84" y1="202" x2="71" y2="224"/>
+    <line x1="84" y1="202" x2="97" y2="224"/>
+    <text class="tx-tn" x="84" y="128">Quản lý</text><text class="tx-tn" x="84" y="142">nhà hàng</text>
+  </g><line class="lk" x1="84" y1="185" x2="260" y2="76"/><line class="lk" x1="84" y1="185" x2="260" y2="154"/><line class="lk" x1="84" y1="185" x2="260" y2="232"/><line class="lk" x1="84" y1="185" x2="260" y2="310"/><line class="lk" x1="84" y1="185" x2="260" y2="388"/><g class="tn ">
+    <circle cx="84" cy="531" r="11"/>
+    <line x1="84" y1="542" x2="84" y2="568"/>
+    <line x1="67" y1="551" x2="101" y2="551"/>
+    <line x1="84" y1="568" x2="71" y2="590"/>
+    <line x1="84" y1="568" x2="97" y2="590"/>
+    <text class="tx-tn" x="84" y="494">Quản trị</text><text class="tx-tn" x="84" y="508">hệ thống</text>
+  </g><line class="lk" x1="84" y1="551" x2="260" y2="466"/><line class="lk" x1="84" y1="551" x2="260" y2="544"/><line class="lk" x1="84" y1="551" x2="260" y2="622"/><line class="lk" x1="84" y1="551" x2="260" y2="700"/><g class="ht-ngoai">
+    <rect x="1101" y="166" width="150" height="56" rx="3"/>
+    <text class="tx-khuon" x="1176" y="181">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="197">Dịch vụ ML</text><text class="tx-ht" x="1176" y="212">(Python/FastAPI)</text>
+  </g><line class="lk" x1="1101" y1="194" x2="958" y2="154"/><line class="lk" x1="1101" y1="194" x2="958" y2="232"/></svg></div>
+  <p class="cap-duoi">Mọi lần chạy dự báo đều so kết quả với baseline SeasonalNaive và ghi lại chỉ số vào bảng <code>danh_gia_mo_hinh</code>, để luôn trả lời được câu hỏi mô hình có thật sự tốt hơn cách làm ngây thơ hay không.</p>
+</figure></section><section id="dac-ta"><h2 class="muc"><span class="so">05</span>Đặc tả ba use case tiêu biểu</h2>
+<div class="van"><p>Ba ca sử dụng dưới đây được đặc tả chi tiết vì chúng chứa phần lớn
+rủi ro nghiệp vụ của hệ thống: một ca không có đăng nhập, một ca thay đổi tồn kho, và
+một ca liên quan tới dữ liệu sinh trắc học.</p></div>
+<div class="bang-hop">
+<table class="dac-ta">
+  <caption><b>UC-05</b> &middot; Quét mã QR gọi món tại bàn</caption>
+  <tbody>
+    <tr><th>Tác nhân</th><td>Khách hàng (không cần đăng nhập)</td></tr>
+    <tr><th>Mô tả</th><td>Khách dùng camera điện thoại quét mã QR dán trên bàn, chọn món và gửi đơn thẳng xuống bếp.</td></tr>
+    <tr><th>Tiền điều kiện</th><td>Bàn đã được sinh mã QR; mã QR còn hiệu lực và trùng tên với mã bàn trong bảng <code>ban</code>.</td></tr>
+    <tr><th>Luồng chính</th><td><ol><li>Khách quét mã, trình duyệt mở <code>/qr/table/:tableId?name=&lt;mã bàn&gt;</code>.</li><li>Hệ thống tra <code>qr_tables</code> theo <code>table_id</code> và hiển thị thực đơn kèm tên bàn.</li><li>Khách chọn món, số lượng rồi gửi đơn.</li><li>Hệ thống tìm hoặc tạo tài khoản vãng lai theo mã bàn, mở phiên <code>QR_&lt;tableId&gt;_&lt;mã&gt;</code>.</li><li>Hệ thống đổi tên bàn trên mã QR sang <code>ban.Id_ban</code> và ghi các dòng món vào <code>hopdong</code>.</li><li>Bàn chuyển sang trạng thái <i>Đang phục vụ</i>; món hiện trên màn hình bếp qua Socket.IO.</li></ol></td></tr>
+    <tr><th>Luồng thay thế</th><td><ul><li>Tên bàn trên mã QR không khớp bàn nào: đơn vẫn vào bếp nhưng không gắn số bàn — vì vậy đổi tên bàn bắt buộc phải đồng bộ lại mã QR.</li><li>Phiên đã thanh toán hoặc đã huỷ: hệ thống từ chối thêm món và yêu cầu mở phiên mới.</li><li>Khách quét lại mã trong cùng bữa: hệ thống nối vào phiên đang mở thay vì tạo phiên mới.</li></ul></td></tr>
+    <tr><th>Hậu điều kiện</th><td>Đơn nằm trong <code>hopdong</code> với <code>id_ban</code> đúng; bàn ở trạng thái <i>Đang phục vụ</i>; món chờ bếp xử lý.</td></tr>
+  </tbody>
+</table></div><div class="bang-hop">
+<table class="dac-ta">
+  <caption><b>UC-14</b> &middot; Hoàn thành chế biến món</caption>
+  <tbody>
+    <tr><th>Tác nhân</th><td>Nhân viên bếp</td></tr>
+    <tr><th>Mô tả</th><td>Bếp đánh dấu món đã nấu xong. Đây là điểm duy nhất trong hệ thống tự động trừ tồn kho.</td></tr>
+    <tr><th>Tiền điều kiện</th><td>Món đang ở trạng thái <i>chờ chế biến</i> hoặc <i>đang chế biến</i> của ca hôm nay.</td></tr>
+    <tr><th>Luồng chính</th><td><ol><li>Bếp bấm <i>Hoàn thành</i> trên màn hình bếp.</li><li>Hệ thống mở một giao dịch CSDL.</li><li>Đổi <code>trangthai_bep</code> sang 2 và ghi mốc <code>bep_ket_thuc</code>.</li><li>Đọc công thức của món, tính lượng tiêu hao = định mức &times; số lượng.</li><li>Trừ <code>nguyen_lieu.so_luong</code> và ghi một dòng <code>xuat_kho</code> cho mỗi nguyên liệu.</li><li>Xác nhận giao dịch, phát sự kiện cho màn hình bếp và sơ đồ bàn.</li></ol></td></tr>
+    <tr><th>Luồng thay thế</th><td><ul><li>Món không còn ở trạng thái hợp lệ (đã có người bấm trước): hệ thống báo lỗi, không trừ kho lần hai.</li><li>Lỗi bất kỳ trong lúc trừ kho: toàn bộ giao dịch quay lui, trạng thái món giữ nguyên.</li><li>Món không có công thức: chỉ đổi trạng thái, không trừ kho.</li></ul></td></tr>
+    <tr><th>Hậu điều kiện</th><td>Tồn kho giảm đúng định mức; nhật ký <code>xuat_kho</code> có dữ liệu tiêu hao thực tế cho mô hình dự báo nguyên liệu.</td></tr>
+  </tbody>
+</table></div><div class="bang-hop">
+<table class="dac-ta">
+  <caption><b>UC-38</b> &middot; Chấm công bằng khuôn mặt</caption>
+  <tbody>
+    <tr><th>Tác nhân</th><td>Nhân viên (chính) &middot; Dịch vụ ML (phụ)</td></tr>
+    <tr><th>Mô tả</th><td>Nhân viên chấm công vào/ra bằng khuôn mặt trước webcam, kèm ràng buộc vị trí để không chấm công từ xa được.</td></tr>
+    <tr><th>Tiền điều kiện</th><td>Nhân viên đã đăng ký khuôn mặt; trình duyệt được cấp quyền camera và định vị.</td></tr>
+    <tr><th>Luồng chính</th><td><ol><li>Nhân viên mở trang chấm công; trình duyệt lấy toạ độ GPS và bật webcam.</li><li>Trình duyệt gửi chuỗi khung hình kèm toạ độ lên máy chủ.</li><li>Máy chủ kiểm tra khoảng cách tới nhà hàng <b>trước khi</b> gọi dịch vụ nhận diện.</li><li>Dịch vụ ML kiểm tra ảnh sống bằng thử thách (gật đầu / quay trái phải).</li><li>Dịch vụ ML nhận diện 1:N ở chế độ kiosk, hoặc xác minh 1:1 khi đã đăng nhập.</li><li>Máy chủ ghi bản ghi vào/ra vào <code>cham_cong</code>, lưu ảnh và toạ độ.</li></ol></td></tr>
+    <tr><th>Luồng thay thế</th><td><ul><li>Ngoài bán kính cho phép: chặn ngay ở bước 3, ghi <code>nhat_ky_nhan_dien</code> với lý do sai vị trí và ghi <code>cham_cong_gps</code>. Không gọi tới dịch vụ nhận diện.</li><li>Không qua được kiểm tra ảnh sống hoặc độ tương đồng dưới ngưỡng: từ chối, ghi nhật ký, chuyển sang luồng quản lý duyệt thủ công.</li><li>Dịch vụ ML không chạy: chấm công khuôn mặt tạm ngưng, quản lý bổ sung công bằng tay.</li></ul></td></tr>
+    <tr><th>Hậu điều kiện</th><td>Có bản ghi chấm công kèm bằng chứng ảnh và toạ độ; hoặc có bản ghi nhật ký giải thích vì sao bị từ chối.</td></tr>
+  </tbody>
+</table></div></section><section id="bpmn"><h2 class="muc"><span class="so">06</span>Sơ đồ quy trình nghiệp vụ (BPMN)</h2>
+<div class="van"><p>Bốn quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
+cũng là nơi dễ đứt gãy nhất khi vận hành. Mỗi sơ đồ là một pool chia thành bốn lằn;
+lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ việc người làm với việc máy làm.</p></div>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 9</span>Chú giải ký hiệu BPMN</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1160 100" role="img" aria-label="Chú giải ký hiệu sơ đồ BPMN"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-cg2" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-cg2" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="sk sk-dau"><circle cx="60" cy="46" r="19"/><text class="tx-sk" x="60" y="80">Bắt đầu</text></g><g class="sk sk-giua"><circle cx="220" cy="46" r="19"/><circle cx="220" cy="46" r="15"/><path class="thu" d="M212,41 h16 v10 h-16 z M212,41 l8,6 l8,-6"/><text class="tx-sk" x="220" y="80">Trung gian</text></g><g class="sk sk-cuoi"><circle cx="380" cy="46" r="19"/><text class="tx-sk" x="380" y="80">Kết thúc</text></g><g class="viec ">
+    <rect x="491" y="19" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="560" y="50.5">Công việc của người</text>
+  </g><g class="viec tu-dong">
+    <rect x="691" y="19" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="697" y="25" width="11" height="11" rx="1.5"/>
+       <line x1="699.5" y1="28" x2="705.5" y2="28"/>
+       <line x1="699.5" y1="30.5" x2="705.5" y2="30.5"/></g>
+    <text class="tx-viec" x="760" y="50.5">Bước hệ thống tự chạy</text>
+  </g><g class="cong">
+    <polygon points="940,22 964,46 940,70 916,46"/>
+    <line x1="932" y1="38" x2="948" y2="54"/>
+    <line x1="932" y1="54" x2="948" y2="38"/>
+    <text class="tx-sk" x="940" y="14">Rẽ nhánh loại trừ</text>
+  </g><polyline class="luong " points="1010,46 1120,46" marker-end="url(#mui-cg2)"/><text class="tx-sk" x="1065" y="72">luồng trình tự</text></svg></div>
+  
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 10</span>Quy trình phục vụ và chế biến tại bàn</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình phục vụ và chế biến tại bàn với bốn lằn: khách hàng, phục vụ, bếp và hệ thống"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Phục vụ</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Bếp (KDS)</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Hệ thống</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Khách tới nhà hàng</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">Xếp bàn, xác nhận</text><text class="tx-viec" x="268" y="244.5">khách đã đặt trước</text>
+  </g><g class="cong">
+    <polygon points="416,209 440,233 416,257 392,233"/>
+    <line x1="408" y1="225" x2="424" y2="241"/>
+    <line x1="408" y1="241" x2="424" y2="225"/>
+    <text class="tx-sk" x="416" y="201">Khách tự gọi món?</text>
+  </g><g class="viec ">
+    <rect x="495" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="80.5">Quét mã QR tại bàn,</text><text class="tx-viec" x="564" y="94.5">chọn món</text>
+  </g><g class="viec ">
+    <rect x="495" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="230.5">Nhập đơn hộ khách</text><text class="tx-viec" x="564" y="244.5">trên máy POS</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="530.5">Ghi đơn, gắn bàn,</text><text class="tx-viec" x="712" y="544.5">bàn → Đang phục vụ</text>
+  </g><g class="viec ">
+    <rect x="791" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="380.5">Nhận món,</text><text class="tx-viec" x="860" y="394.5">bắt đầu chế biến</text>
+  </g><g class="viec ">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="387.5">Hoàn thành chế biến</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="530.5">Trừ tồn kho theo</text><text class="tx-viec" x="1008" y="544.5">công thức, ghi xuất kho</text>
+  </g><g class="viec ">
+    <rect x="1087" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="237.5">Mang món ra bàn</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Món đã lên bàn</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="337,233 392,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="416,209 416,83 495,83" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="430" y="141">Có</text><polyline class="luong " points="440,233 495,233" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="458" y="224">Không</text><polyline class="luong " points="633,83 672,83 672,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="633,233 752,233 752,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="781,533 791,533 791,383 791,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="929,383 939,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1008,410 1008,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1077,533 1082,533 1082,233 1087,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1156,206 1156,102" marker-end="url(#mui-bpA)"/></svg></div>
+  <p class="cap-duoi">Vòng lặp gọi thêm món trong cùng một bữa lặp lại từ bước quét mã QR và không vẽ lại để giữ sơ đồ đọc được. Bước trừ tồn kho nằm trong cùng giao dịch với bước hoàn thành chế biến: hoặc cả hai cùng thành công, hoặc cả hai cùng quay lui.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 11</span>Quy trình thanh toán và đối soát ngân hàng</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình thanh toán với nhánh tiền mặt và nhánh chuyển khoản VietQR được đối soát tự động từ thông báo của ngân hàng"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpB" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpB" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Thu ngân</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Hệ thống</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Ngân hàng</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="233" r="19"/><text class="tx-sk" x="120" y="267">Khách xin tính tiền</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">Mở phiên thanh toán</text><text class="tx-viec" x="268" y="244.5">cho bàn</text>
+  </g><g class="cong">
+    <polygon points="416,209 440,233 416,257 392,233"/>
+    <line x1="408" y1="225" x2="424" y2="241"/>
+    <line x1="408" y1="241" x2="424" y2="225"/>
+    <text class="tx-sk" x="416" y="201">Hình thức trả?</text>
+  </g><g class="viec ">
+    <rect x="495" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="230.5">Thu tiền mặt,</text><text class="tx-viec" x="564" y="244.5">xác nhận trên POS</text>
+  </g><g class="viec tu-dong">
+    <rect x="495" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
+       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
+    <text class="tx-viec" x="564" y="380.5">Sinh mã VietQR</text><text class="tx-viec" x="564" y="394.5">đúng số tiền</text>
+  </g><g class="viec ">
+    <rect x="791" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="80.5">Quét mã, chuyển</text><text class="tx-viec" x="860" y="94.5">khoản trên app</text>
+  </g><g class="sk sk-giua"><circle cx="860" cy="533" r="19"/><circle cx="860" cy="533" r="15"/><path class="thu" d="M852,528 h16 v10 h-16 z M852,528 l8,6 l8,-6"/><text class="tx-sk" x="860" y="567">Ngân hàng báo có</text></g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="380.5">Đối soát tự động,</text><text class="tx-viec" x="1008" y="394.5">khớp phiên đang chờ</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
+       <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1156" y="380.5">Đóng đơn, bàn trống,</text><text class="tx-viec" x="1156" y="394.5">cộng điểm tích luỹ</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đã thanh toán</text></g><polyline class="luong " points="139,233 199,233" marker-end="url(#mui-bpB)"/><polyline class="luong " points="337,233 392,233" marker-end="url(#mui-bpB)"/><polyline class="luong " points="440,233 495,233" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="458" y="224">Tiền mặt</text><polyline class="luong " points="416,257 416,383 495,383" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="462" y="299">Chuyển khoản</text><polyline class="luong " points="633,383 712,383 712,83 791,83" marker-end="url(#mui-bpB)"/><polyline class="luong " points="860,110 860,514" marker-end="url(#mui-bpB)"/><polyline class="luong " points="879,533 920,533 920,383 939,383" marker-end="url(#mui-bpB)"/><polyline class="luong " points="633,233 1116,233 1116,356" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="1060" y="224">đã thu đủ</text><polyline class="luong " points="1077,383 1087,383" marker-end="url(#mui-bpB)"/><polyline class="luong " points="1156,356 1156,102" marker-end="url(#mui-bpB)"/></svg></div>
+  <p class="cap-duoi">Điểm đáng chú ý là sự kiện trung gian ở lằn ngân hàng: hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào, nên phiên thanh toán chuyển trạng thái ngay trên cả điện thoại khách lẫn màn hình thu ngân trong cùng một khoảnh khắc.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 12</span>Quy trình dự báo bằng học máy</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1279 638" role="img" aria-label="Sơ đồ BPMN quy trình dự báo bằng học máy: web gọi dịch vụ Python, dịch vụ đọc lịch sử, huấn luyện bốn mô hình rồi chọn mô hình có sai số thấp nhất"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpC" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpC" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1233" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Quản lý</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1233" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Web (Node)</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1233" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Dịch vụ ML</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1233" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">CSDL</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Mở trang Dự báo AI</text></g><g class="viec ">
+    <rect x="199" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="80.5">Chọn số ngày,</text><text class="tx-viec" x="268" y="94.5">bấm Chạy dự báo</text>
+  </g><g class="viec ">
+    <rect x="347" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="416" y="230.5">Gọi API dịch vụ ML</text><text class="tx-viec" x="416" y="244.5">POST /du-bao/luot-khach</text>
+  </g><g class="cong">
+    <polygon points="564,209 588,233 564,257 540,233"/>
+    <line x1="556" y1="225" x2="572" y2="241"/>
+    <line x1="556" y1="241" x2="572" y2="225"/>
+    <text class="tx-sk" x="564" y="201">Dịch vụ ML trả lời?</text>
+  </g><g class="viec ">
+    <rect x="643" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="712" y="230.5">Hiện dự báo đã lưu,</text><text class="tx-viec" x="712" y="244.5">báo dịch vụ chưa bật</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="530.5">Đọc 368 ngày</text><text class="tx-viec" x="712" y="544.5">lịch sử bán hàng</text>
+  </g><g class="viec ">
+    <rect x="791" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="373.5">Sinh đặc trưng: thứ,</text><text class="tx-viec" x="860" y="387.5">tháng, lễ Tết,</text><text class="tx-viec" x="860" y="401.5">trung bình trượt</text>
+  </g><g class="viec ">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="380.5">Huấn luyện 4 mô hình</text><text class="tx-viec" x="1008" y="394.5">trên 60 ngày cuối</text>
+  </g><g class="viec ">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="380.5">Chọn mô hình MAE</text><text class="tx-viec" x="1156" y="394.5">thấp nhất, dự báo</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="515" x2="1101.5" y2="515"/>
+       <line x1="1095.5" y1="517.5" x2="1101.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1156" y="530.5">Lưu dự báo và</text><text class="tx-viec" x="1156" y="544.5">chỉ số đánh giá</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Xem dự báo</text></g><polyline class="luong " points="139,83 199,83" marker-end="url(#mui-bpC)"/><polyline class="luong " points="268,110 268,233 347,233" marker-end="url(#mui-bpC)"/><polyline class="luong " points="485,233 540,233" marker-end="url(#mui-bpC)"/><polyline class="luong " points="588,233 643,233" marker-end="url(#mui-bpC)"/><text class="tx-luong" x="606" y="224">Không</text><polyline class="luong " points="564,257 564,533 643,533" marker-end="url(#mui-bpC)"/><text class="tx-luong" x="578" y="299">Có</text><polyline class="luong " points="781,533 786,533 786,383 791,383" marker-end="url(#mui-bpC)"/><polyline class="luong " points="929,383 939,383" marker-end="url(#mui-bpC)"/><polyline class="luong " points="1077,383 1087,383" marker-end="url(#mui-bpC)"/><polyline class="luong " points="1156,410 1156,506" marker-end="url(#mui-bpC)"/><polyline class="luong " points="1225,533 1267,533 1267,83 1175,83" marker-end="url(#mui-bpC)"/><polyline class="luong " points="781,233 1110,233 1110,83 1137,83" marker-end="url(#mui-bpC)"/></svg></div>
+  <p class="cap-duoi">Rẽ nhánh đầu tiên là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python không được phép làm sập web. Khi nó không trả lời, trang vẫn hiển thị dự báo đã lưu lần chạy trước. Bốn mô hình được chấm điểm gồm SeasonalNaive (baseline), Ridge, RandomForest và GradientBoosting; mô hình có MAE thấp nhất trên 60 ngày cuối được chọn rồi huấn luyện lại trên toàn bộ dữ liệu.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 13</span>Quy trình chấm công bằng khuôn mặt và GPS</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó kiểm tra ảnh sống rồi nhận diện khuôn mặt"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpD" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpD" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Nhân viên</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Trình duyệt</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Web (Node)</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Dịch vụ ML</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Nhân viên tới ca</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">Mở trang chấm công,</text><text class="tx-viec" x="268" y="244.5">lấy GPS + webcam</text>
+  </g><g class="cong">
+    <polygon points="416,359 440,383 416,407 392,383"/>
+    <line x1="408" y1="375" x2="424" y2="391"/>
+    <line x1="408" y1="391" x2="424" y2="375"/>
+    <text class="tx-sk" x="416" y="338">Trong bán kính</text><text class="tx-sk" x="416" y="351">cho phép?</text>
+  </g><g class="viec tu-dong">
+    <rect x="495" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
+       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
+    <text class="tx-viec" x="564" y="380.5">Ghi nhật ký</text><text class="tx-viec" x="564" y="394.5">sai vị trí</text>
+  </g><g class="sk sk-cuoi"><circle cx="712" cy="383" r="19"/><text class="tx-sk" x="712" y="417">Bị chặn vì sai vị trí</text></g><g class="viec ">
+    <rect x="495" y="506" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="530.5">Kiểm tra ảnh sống</text><text class="tx-viec" x="564" y="544.5">(thử thách gật đầu)</text>
+  </g><g class="viec ">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="712" y="530.5">Nhận diện 1:N</text><text class="tx-viec" x="712" y="544.5">hoặc xác minh 1:1</text>
+  </g><g class="cong">
+    <polygon points="860,509 884,533 860,557 836,533"/>
+    <line x1="852" y1="525" x2="868" y2="541"/>
+    <line x1="852" y1="541" x2="868" y2="525"/>
+    <text class="tx-sk" x="860" y="573">Đạt ngưỡng</text><text class="tx-sk" x="860" y="586">tin cậy?</text>
+  </g><g class="viec ">
+    <rect x="791" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="230.5">Báo thất bại, mời</text><text class="tx-viec" x="860" y="244.5">chấm công thủ công</text>
+  </g><g class="sk sk-cuoi"><circle cx="1008" cy="233" r="19"/><text class="tx-sk" x="1008" y="267">Chờ quản lý duyệt</text></g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="380.5">Ghi bảng công,</text><text class="tx-viec" x="1008" y="394.5">lưu ảnh và toạ độ</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đã chấm công</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="268,260 268,383 392,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="440,383 495,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="458" y="374">Không</text><polyline class="luong " points="416,407 416,533 495,533" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="430" y="449">Có</text><polyline class="luong " points="633,383 693,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="633,533 643,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="781,533 836,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="860,509 860,260" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="906" y="387">Không đạt</text><polyline class="luong " points="929,233 989,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="884,533 920,533 920,383 939,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="902" y="524">Đạt</text><polyline class="luong " points="1077,383 1112,383 1112,83 1137,83" marker-end="url(#mui-bpD)"/></svg></div>
+  <p class="cap-duoi">Thứ tự hai kiểm tra là có chủ đích: kiểm tra vị trí đặt trước kiểm tra khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây thay vì phải đợi hết lượt nhận diện, và câu trả lời "bạn đang ở cách nhà hàng 4 km" không cần biết người đó là ai.</p>
+</figure></section><section id="anh-xa"><h2 class="muc"><span class="so">07</span>Ánh xạ sơ đồ sang mã nguồn</h2>
+<div class="van"><p>Bảng đối chiếu để tìm nhanh phần mã tương ứng với từng nhóm chức
+năng trên sơ đồ.</p></div>
+<div class="bang-hop"><table>
+<thead><tr><th>Nhóm chức năng</th><th>Vị trí trong mã nguồn</th></tr></thead>
+<tbody><tr><td><b>Đặt bàn, giỏ hàng, đơn của tôi</b></td><td><code>server.js</code>, <code>services/orderService.js</code>, <code>services/bookingService.js</code></td></tr><tr><td><b>Quét mã QR gọi món tại bàn</b></td><td><code>GET /qr/table/:tableId</code>, <code>POST /qr/add-dish</code>, <code>orderService.timIdBanTheoTen()</code></td></tr><tr><td><b>Sơ đồ bàn thời gian thực</b></td><td><code>routes/kds.js</code>, <code>services/kdsService.js</code>, <code>views/staff/so-do-ban.ejs</code></td></tr><tr><td><b>Màn hình bếp và trừ kho</b></td><td><code>kdsService.hoanThanhCheBien()</code> &rarr; bảng <code>nguyen_lieu</code>, <code>xuat_kho</code></td></tr><tr><td><b>Thanh toán, VietQR, đối soát</b></td><td><code>routes/thanhToan.js</code>, <code>services/thanhToanService.js</code>, <code>services/vietQR.js</code></td></tr><tr><td><b>Dashboard phân tích</b></td><td><code>routes/analytics.js</code> (13 endpoint JSON), <code>services/analyticsService.js</code></td></tr><tr><td><b>Dự báo và gợi ý AI</b></td><td><code>routes/forecast.js</code>, <code>services/mlService.js</code>, <code>ml_service/forecast.py</code>, <code>ml_service/apriori.py</code></td></tr><tr><td><b>Chấm công khuôn mặt và GPS</b></td><td><code>routes/khuonMat.js</code>, <code>services/faceService.js</code>, <code>ml_service/khuon_mat.py</code></td></tr><tr><td><b>Cơ cấu tổ chức, phân quyền</b></td><td><code>routes/toChuc.js</code>, <code>services/toChucService.js</code>, <code>services/phanQuyenService.js</code></td></tr><tr><td><b>Điểm tích luỹ, mã giảm giá</b></td><td><code>routes/loyalty.js</code>, <code>routes/adminLoyalty.js</code>, <code>services/loyaltyService.js</code></td></tr></tbody></table></div>
+
+<div class="luu-y">
+<p><b>Về dữ liệu trong hệ thống.</b> Dữ liệu lịch sử 368 ngày dùng để huấn luyện là
+<b>dữ liệu mô phỏng</b>, sinh bằng bộ sinh có seed cố định và được đánh dấu bằng cột
+<code>hopdong.la_du_lieu_mo_phong</code>. Các sơ đồ trên mô tả đúng luồng xử lý của hệ
+thống; còn kết quả dự báo và các luật kết hợp tìm được chỉ chứng minh <i>thuật toán
+chạy đúng</i>, chưa phải quy luật tiêu dùng thật.</p>
+</div></section><footer>Sơ đồ dựng từ mã nguồn hệ thống quản lý nhà hàng — Node/Express, EJS,
+MySQL, Socket.IO và dịch vụ Python/FastAPI cho phần học máy.</footer></div></body></html>

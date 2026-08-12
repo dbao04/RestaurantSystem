@@ -1,53 +1,180 @@
-<%- include('partials/header') %>
-    
-<section class="home-slider owl-carousel">
-    <div class="slider-item" style="background-image: url(/bg_3.jpg);" data-stellar-background-ratio="0.5">
-        <div class="overlay"></div>
-        <div class="container">
-            <div class="row slider-text justify-content-center align-items-center">
-                <div class="col-md-7 col-sm-12 text-center ftco-animate">
-                    <h1 class="mb-3 mt-5 bread">NHA HANG BD</h1>
-                </div>
-            </div>
-        </div>
+<%- include('partials/header', { heroNav: true, activeNav: 'home' }) %>
+
+<!-- ================= HERO ================= -->
+<header class="nh-hero">
+  <div class="nh-hero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-hero__veil"></div>
+  <div class="nh-container nh-hero__inner">
+    <span class="nh-eyebrow">Tinh hoa ẩm thực Pháp – Việt</span>
+    <h1>Hương vị <span>tinh tế</span><br>trong từng khoảnh khắc</h1>
+    <p>Không gian ấm cúng, sang trọng giữa lòng Sài Gòn. Nơi mỗi món ăn là một câu chuyện, mỗi bữa tiệc là một kỷ niệm đáng nhớ.</p>
+    <div class="nh-hero__actions">
+      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+      <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
     </div>
+  </div>
+  <div class="nh-hero__scroll">Cuộn xuống<span></span></div>
+</header>
+
+<!-- ================= GIỚI THIỆU ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container nh-about">
+    <div class="nh-about__imgs nh-reveal">
+      <img src="/about.jpg" alt="Không gian nhà hàng" onerror="this.src='/bg_1.jpg'">
+      <img src="/about-1.jpg" alt="Món ăn đặc sắc" onerror="this.src='/bg_2.jpg'">
+      <div class="nh-about__badge"><b><%= (typeof thongKe!=='undefined'&&thongKe)?thongKe.soMon:'' %></b><span>Món<br>đặc sắc</span></div>
+    </div>
+    <div class="nh-about__text nh-reveal" data-delay="1">
+      <span class="nh-eyebrow">Về chúng tôi</span>
+      <h2 class="nh-section-title">Câu chuyện của<br>Nhà Hàng Bảo Đoàn</h2>
+      <div class="nh-divider" style="margin-left:0"></div>
+      <p>Những giá trị lịch sử, văn hóa và ẩm thực độc đáo của Pháp – Việt hòa quyện một cách hoàn hảo, đem đến trải nghiệm khó quên giữa lòng Sài Gòn.</p>
+      <p>Chúng tôi tôn vinh từng nguyên liệu tươi ngon nhất, chế biến bởi đội ngũ đầu bếp tận tâm, phục vụ trong không gian đậm chất nghệ thuật.</p>
+      <div class="nh-sign">— Bếp trưởng Nhà Hàng Bảo Đoàn</div>
+      <div style="margin-top:1.6rem"><a href="/about" class="nh-btn nh-btn--dark">Tìm hiểu thêm</a></div>
+    </div>
+  </div>
 </section>
 
-<section class="ftco-section ftco-wrap-about">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-7 d-flex">
-                <div class="img img-1 mr-md-2" style="background-image: url(/about.jpg);"></div>
-                <div class="img img-2 ml-md-2" style="background-image: url(/about-1.jpg);"></div>
-            </div>
-            <div class="col-md-5 wrap-about pt-5 pt-md-5 pb-md-3 ftco-animate">
-                <div class="heading-section mb-4 my-5 my-md-0">
-                    <span class="subheading">Giới Thiệu</span>
-                    <h2 class="mb-4">NHA HANG BD</h2>
-                </div>
-                <p>Những giá trị lịch sử, văn hóa và ẩm thực độc đáo của Pháp - Việt hòa quyện một cách hoàn hảo, đem đến trải nghiệm độc đáo giữa lòng Sài Gòn. Square One đưa bạn đến với hành trình khám phá nét tinh túy Đông – Tây trong không gian ấm cúng, sang trọng và đậm chất nghệ thuật.</p>
-            </div>
-        </div>
+<!-- ================= MÓN NỔI BẬT ================= -->
+<section class="nh-section nh-section--cream2">
+  <div class="nh-container">
+    <div class="nh-head nh-center nh-reveal">
+      <span class="nh-eyebrow">Được yêu thích nhất</span>
+      <h2 class="nh-section-title">Món ăn đặc sắc</h2>
+      <div class="nh-divider"></div>
+      <p class="nh-lead">Những món ăn ghi dấu ấn trong lòng thực khách — được tuyển chọn kỹ lưỡng từ thực đơn của chúng tôi.</p>
     </div>
+
+    <% var ds = (typeof mons !== 'undefined' && mons) ? mons : []; %>
+    <% if (ds.length) { %>
+      <div class="nh-grid">
+        <% ds.forEach(function(m, i){ %>
+          <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
+            <div class="nh-dish__media">
+              <img src="/food/<%= m.images %>" alt="<%= m.name_mon %>" loading="lazy"
+                   onerror="this.src='/bg_<%= (i % 5) + 1 %>.jpg'">
+              <span class="nh-dish__price"><%= formatMoney(m.gia_mon) %></span>
+            </div>
+            <div class="nh-dish__body">
+              <h3><%= (m.name_mon || '').trim() %></h3>
+              <p><%= m.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất.' %></p>
+              <a href="/detail?monid=<%= m.id_mon %>" class="nh-dish__cta">Đặt món ngay <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="nh-center nh-lead">Thực đơn đang được cập nhật. Vui lòng quay lại sau.</p>
+    <% } %>
+
+    <div class="nh-center nh-reveal" style="margin-top:3rem">
+      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Xem toàn bộ thực đơn</a>
+    </div>
+  </div>
 </section>
 
-<section class="ftco-section ftco-counter img ftco-no-pt" id="section-counter">
-    <div class="container">
-        <div class="row d-md-flex">
-            <div class="col-md-9">
-                <div class="row d-md-flex align-items-center">
-                    <div class="col-md-6 col-lg-3 mb-4 mb-lg-0 d-flex justify-content-center counter-wrap ftco-animate">
-                        <div class="block-18">
-                            <div class="text">
-                                <strong class="number" data-number="18">0</strong>
-                                <span>Năm Kinh Nghiệm</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- ================= VÌ SAO CHỌN CHÚNG TÔI ================= -->
+<section class="nh-section nh-section--dark">
+  <div class="nh-container">
+    <div class="nh-head nh-center nh-reveal">
+      <span class="nh-eyebrow">Trải nghiệm khác biệt</span>
+      <h2 class="nh-section-title">Vì sao chọn chúng tôi</h2>
+      <div class="nh-divider"></div>
     </div>
+    <div class="nh-features">
+      <div class="nh-feature nh-reveal" data-delay="1">
+        <div class="nh-feature__icon"><i class="fas fa-leaf"></i></div>
+        <h3>Nguyên liệu tươi</h3>
+        <p>Tuyển chọn mỗi ngày từ những nhà cung cấp uy tín, đảm bảo độ tươi ngon.</p>
+      </div>
+      <div class="nh-feature nh-reveal" data-delay="2">
+        <div class="nh-feature__icon"><i class="fas fa-award"></i></div>
+        <h3>Đầu bếp tài hoa</h3>
+        <p>Đội ngũ đầu bếp giàu kinh nghiệm, tận tâm trong từng chi tiết món ăn.</p>
+      </div>
+      <div class="nh-feature nh-reveal" data-delay="3">
+        <div class="nh-feature__icon"><i class="fas fa-wine-glass-alt"></i></div>
+        <h3>Không gian sang trọng</h3>
+        <p>Kiến trúc tinh tế, ấm cúng — lý tưởng cho mọi dịp gặp gỡ quan trọng.</p>
+      </div>
+      <div class="nh-feature nh-reveal" data-delay="3">
+        <div class="nh-feature__icon"><i class="fas fa-concierge-bell"></i></div>
+        <h3>Phục vụ tận tâm</h3>
+        <p>Đội ngũ chuyên nghiệp, chu đáo mang đến trải nghiệm trọn vẹn.</p>
+      </div>
+    </div>
+
+    <% var tk = (typeof thongKe !== 'undefined' && thongKe) ? thongKe : {soMon:0,soDanhMuc:0,soNhanVien:0,soDon:0}; %>
+    <div class="nh-stats nh-reveal" style="margin-top:4rem">
+      <div class="nh-stat"><b data-count="<%= tk.soMon %>"><%= tk.soMon %></b><span>Món trong thực đơn</span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soDanhMuc %>"><%= tk.soDanhMuc %></b><span>Danh mục ẩm thực</span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soNhanVien %>"><%= tk.soNhanVien %></b><span>Đầu bếp &amp; nhân viên</span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soDon %>"><%= tk.soDon.toLocaleString('vi-VN') %></b><span>Đơn đã phục vụ</span></div>
+    </div>
+  </div>
 </section>
-    
+
+<!-- ================= THƯ VIỆN ẢNH ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <div class="nh-head nh-center nh-reveal">
+      <span class="nh-eyebrow">Khoảnh khắc</span>
+      <h2 class="nh-section-title">Không gian &amp; ẩm thực</h2>
+      <div class="nh-divider"></div>
+    </div>
+    <div class="nh-gallery nh-reveal">
+      <a href="/bg_1.jpg" class="tall"><img src="/bg_1.jpg" alt="Không gian"></a>
+      <a href="/bg_2.jpg"><img src="/bg_2.jpg" alt="Món ăn"></a>
+      <a href="/bg_4.jpg"><img src="/bg_4.jpg" alt="Bàn tiệc"></a>
+      <a href="/about.jpg" class="tall"><img src="/about.jpg" alt="Nhà hàng"></a>
+      <a href="/bg_5.jpg"><img src="/bg_5.jpg" alt="Đồ uống"></a>
+      <a href="/about-1.jpg"><img src="/about-1.jpg" alt="Chi tiết"></a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CẢM NHẬN ================= -->
+<section class="nh-section nh-section--dark">
+  <div class="nh-container-narrow nh-quote nh-reveal">
+    <div class="nh-quote__mark">&ldquo;</div>
+    <p>Một trong những trải nghiệm ẩm thực đáng nhớ nhất của tôi tại Sài Gòn. Món ăn tinh tế, không gian sang trọng và phục vụ chu đáo đến từng chi tiết.</p>
+    <cite>— Minh Anh, thực khách thân thiết</cite>
+  </div>
+</section>
+
+<!-- ================= CTA ĐẶT BÀN ================= -->
+<section class="nh-cta">
+  <div class="nh-cta__bg" style="background-image:url('/bg_4.jpg')"></div>
+  <div class="nh-cta__veil"></div>
+  <div class="nh-container nh-cta__inner nh-reveal">
+    <span class="nh-eyebrow">Đặt chỗ hôm nay</span>
+    <h2>Sẵn sàng cho bữa tiệc<br>khó quên?</h2>
+    <p>Đặt bàn trước để chúng tôi chuẩn bị chu đáo nhất cho trải nghiệm của bạn.</p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
+  </div>
+</section>
+
+<script>
+  // Đếm số cho phần thống kê khi cuộn tới.
+  (function () {
+    var stats = document.querySelectorAll('.nh-stat b[data-count]');
+    if (!('IntersectionObserver' in window) || !stats.length) return;
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var el = e.target, dich = +el.getAttribute('data-count'), t0 = null, gt = el.textContent;
+        function step(ts) {
+          if (!t0) t0 = ts; var p = Math.min((ts - t0) / 1600, 1);
+          var val = Math.floor(p * dich);
+          el.textContent = dich >= 50000 ? (val.toLocaleString('vi-VN') + (p === 1 ? '+' : '')) : val;
+          if (p < 1) requestAnimationFrame(step); else el.textContent = gt;
+        }
+        requestAnimationFrame(step); io.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    stats.forEach(function (s) { io.observe(s); });
+  })();
+</script>
+
 <%- include('partials/footer') %>

@@ -1,45 +1,84 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: dish ? dish.name_mon : 'Chi tiết món', activeNav: 'menu' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
-    data-stellar-background-ratio="0.5">
-    <div class="overlay"></div>
-    <div class="container">
-        <div class="row no-gutters slider-text align-items-end justify-content-center">
-            <div class="col-md-9 ftco-animate text-center mb-4">
-                <h1 class="mb-2 bread">Chi tiết món ăn</h1>
-                <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i
-                                class="ion-ios-arrow-forward"></i></a></span> <span>Chi tiết <i
-                            class="ion-ios-arrow-forward"></i></span></p>
-            </div>
+<section class="nh-subhero" style="min-height:38vh">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Tinh hoa từ căn bếp</span>
+    <h1>Chi tiết món</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/menu">Thực đơn</a> &nbsp;/&nbsp; Chi tiết</div>
+  </div>
+</section>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <%- include('partials/nh-steps', { buoc: 1 }) %>
+
+    <% if (dish) { %>
+      <div class="nh-detail nh-reveal">
+        <div class="nh-detail__media">
+          <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>"
+               onerror="this.src='/bg_2.jpg'">
         </div>
-    </div>
-</section>
 
-<section class="ftco-section">
-    <div class="container">
-        <% if (dish) { %>
-            <div class="row">
-                <div class="col-lg-6 mb-5 ftco-animate">
-                    <a href="/food/<%= dish.images %>" class="image-popup"><img src="/food/<%= dish.images %>" class="img-fluid" alt="<%= dish.name_mon %>"></a>
-                </div>
-                <div class="col-lg-6 product-details pl-md-5 ftco-animate">
-                    <h3><%= dish.name_mon %></h3>
-                    <p class="price"><span><%= formatMoney(dish.gia_mon) %> VNĐ</span></p>
-                    <p><%= dish.ghichu_mon %></p>
-                    <div class="row mt-4">
-                        <div class="w-100"></div>
-                        <div class="input-group col-md-6 d-flex mb-3">
-                            <form action="/add-to-cart" method="post">
-                                <input type="hidden" name="monid" value="<%= dish.id_mon %>">
-                                <input type="number" name="soluong" class="form-control" value="1" min="1" max="100">
-                                <p class="mt-4"><input type="submit" value="Thêm vào giỏ hàng" class="btn btn-primary py-3 px-5"></p>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+        <div>
+          <span class="nh-eyebrow nh-eyebrow--sm">Món đặc sắc</span>
+          <h2 class="nh-section-title" style="font-size:clamp(1.7rem,3.4vw,2.5rem)">
+            <%= (dish.name_mon || '').trim() %>
+          </h2>
+          <div class="nh-divider" style="margin-left:0"></div>
+
+          <p class="nh-detail__price"><%= formatMoney(dish.gia_mon) %> ₫</p>
+
+          <p class="nh-lead" style="margin-top:1rem">
+            <%= dish.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất, phục vụ nóng ngay khi rời bếp.' %>
+          </p>
+
+          <form action="/add-to-cart" method="post" class="nh-detail__buy">
+            <input type="hidden" name="monid" value="<%= dish.id_mon %>">
+            <div class="nh-qty">
+              <button type="button" data-buoc="-1" aria-label="Bớt một phần"><i class="fas fa-minus"></i></button>
+              <input type="number" name="soluong" id="sl" value="1" min="1" max="100" aria-label="Số phần">
+              <button type="button" data-buoc="1" aria-label="Thêm một phần"><i class="fas fa-plus"></i></button>
             </div>
-        <% } %>
-    </div>
+            <button type="submit" class="nh-btn nh-btn--gold">
+              <i class="fas fa-shopping-bag"></i> Thêm vào giỏ
+            </button>
+            <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
+              <i class="fas fa-arrow-left"></i> Chọn thêm món
+            </a>
+          </form>
+
+          <p class="nh-note">
+            <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
+            Món ăn được chuẩn bị theo đơn đặt bàn. Bạn chọn xong toàn bộ thực đơn rồi mới đặt bàn ở bước sau.
+          </p>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="nh-empty">
+        <i class="fas fa-utensils"></i>
+        <h3>Không tìm thấy món ăn này</h3>
+        <p class="nh-lead" style="margin:.6rem 0 1.6rem">Món có thể đã ngừng phục vụ hoặc đường dẫn không đúng.</p>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+      </div>
+    <% } %>
+  </div>
 </section>
 
+<script>
+  // Bộ tăng giảm số phần. Gõ tay vẫn được, nút chỉ là lối đi nhanh hơn.
+  (function () {
+    var o = document.getElementById('sl');
+    if (!o) return;
+    document.querySelectorAll('.nh-qty [data-buoc]').forEach(function (n) {
+      n.onclick = function () {
+        var v = (parseInt(o.value, 10) || 1) + Number(n.getAttribute('data-buoc'));
+        o.value = Math.min(100, Math.max(1, v));
+      };
+    });
+  })();
+</script>
+
+<%- include('partials/goi-y-mon') %>
 <%- include('partials/footer') %>

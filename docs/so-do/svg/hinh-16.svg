@@ -1,0 +1,98 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1260 760" role="img" aria-label="Sơ đồ lớp phân hệ học máy: mô-đun phía Node gọi sang tiến trình Python và các mô-đun dự báo, khai phá luật, nhận diện khuôn mặt, trợ lý ảo"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-lopB" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-lopB" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect class="khung-bien" x="20" y="30" width="380" height="250" rx="6"/>
+    <text class="tx-bien" x="210" y="56">TIẾN TRÌNH WEB (Node.js)</text>
+  </g><g class="bien">
+    <rect class="khung-bien" x="430" y="30" width="810" height="620" rx="6"/>
+    <text class="tx-bien" x="835" y="56">TIẾN TRÌNH HỌC MÁY (Python / FastAPI)</text>
+  </g><g class="lop "><rect class="vien" x="50" y="80" width="164" height="177" rx="3"/><rect class="ngan-ten" x="50" y="80" width="164" height="37" rx="3"/><text class="tx-khuon" x="132" y="94">&#171;module&#187;</text><text class="tx-lop-ten" x="132" y="109">mlService</text><line x1="50" y1="117" x2="214" y2="117"/><text class="tx-lop" x="61" y="129">− urlCache: string</text><text class="tx-lop" x="61" y="145">− TIMEOUT_MS = 30000</text><line x1="50" y1="155" x2="214" y2="155"/><text class="tx-lop pt" x="61" y="167">+ duBaoLuotKhach(soNgay)</text><text class="tx-lop pt" x="61" y="183">+ duBaoNguyenLieu(soNgay)</text><text class="tx-lop pt" x="61" y="199">+ khaiPhaLuat(thamSo)</text><text class="tx-lop pt" x="61" y="215">+ goiYMon(idMon, soLuong)</text><text class="tx-lop pt" x="61" y="231">+ kiemTra()</text><text class="tx-lop pt" x="61" y="247">− goi(duongDan, opts)</text></g><g class="lop "><rect class="vien" x="460" y="80" width="175" height="145" rx="3"/><rect class="ngan-ten" x="460" y="80" width="175" height="37" rx="3"/><text class="tx-khuon" x="547.5" y="94">&#171;service&#187;</text><text class="tx-lop-ten" x="547.5" y="109">ml_service/main.py</text><line x1="460" y1="117" x2="635" y2="117"/><text class="tx-lop" x="471" y="129">− app: FastAPI</text><line x1="460" y1="139" x2="635" y2="139"/><text class="tx-lop pt" x="471" y="151">+ POST /du-bao/luot-khach</text><text class="tx-lop pt" x="471" y="167">+ POST /du-bao/nguyen-lieu</text><text class="tx-lop pt" x="471" y="183">+ POST /goi-y/khai-pha</text><text class="tx-lop pt" x="471" y="199">+ POST /khuon-mat/cham-cong</text><text class="tx-lop pt" x="471" y="215">+ POST /chatbot/hoi</text></g><g class="lop "><rect class="vien" x="790" y="80" width="179" height="123" rx="3"/><rect class="ngan-ten" x="790" y="80" width="179" height="37" rx="3"/><text class="tx-khuon" x="879.5" y="94">&#171;module&#187;</text><text class="tx-lop-ten" x="879.5" y="109">forecast.py</text><line x1="790" y1="117" x2="969" y2="117"/><text class="tx-lop pt" x="801" y="129">+ du_bao_luot_khach(so_ngay)</text><text class="tx-lop pt" x="801" y="145">+ du_bao_nguyen_lieu(so_ngay)</text><text class="tx-lop pt" x="801" y="161">− _nap_chuoi_ngay()</text><text class="tx-lop pt" x="801" y="177">− _du_bao_de_quy(...)</text><text class="tx-lop pt" x="801" y="193">− _luu_du_bao_khach(...)</text></g><g class="lop "><rect class="vien" x="1060" y="80" width="172" height="129" rx="3"/><rect class="ngan-ten" x="1060" y="80" width="172" height="37" rx="3"/><text class="tx-khuon" x="1146" y="94">&#171;module&#187;</text><text class="tx-lop-ten" x="1146" y="109">models.py</text><line x1="1060" y1="117" x2="1232" y2="117"/><text class="tx-lop" x="1071" y="129">+ KetQua</text><line x1="1060" y1="139" x2="1232" y2="139"/><text class="tx-lop pt" x="1071" y="151">+ danh_sach_mo_hinh()</text><text class="tx-lop pt" x="1071" y="167">+ huan_luyen_va_danh_gia(...)</text><text class="tx-lop pt" x="1071" y="183">+ huan_luyen_lai_toan_bo(...)</text><text class="tx-lop pt" x="1071" y="199">+ tinh_chi_so(y, y_hat)</text></g><g class="lop "><rect class="vien" x="790" y="300" width="157" height="107" rx="3"/><rect class="ngan-ten" x="790" y="300" width="157" height="37" rx="3"/><text class="tx-khuon" x="868.5" y="314">&#171;module&#187;</text><text class="tx-lop-ten" x="868.5" y="329">features.py</text><line x1="790" y1="337" x2="947" y2="337"/><text class="tx-lop pt" x="801" y="349">+ chuan_bi(df, cot, ngay)</text><text class="tx-lop pt" x="801" y="365">+ cot_dac_trung(...)</text><text class="tx-lop pt" x="801" y="381">+ them_dac_trung_lich(df)</text><text class="tx-lop pt" x="801" y="397">+ them_dac_trung_tre(df)</text></g><g class="lop "><rect class="vien" x="460" y="300" width="172" height="129" rx="3"/><rect class="ngan-ten" x="460" y="300" width="172" height="37" rx="3"/><text class="tx-khuon" x="546" y="314">&#171;module&#187;</text><text class="tx-lop-ten" x="546" y="329">apriori.py</text><line x1="460" y1="337" x2="632" y2="337"/><text class="tx-lop" x="471" y="349">− min_support, min_confidence</text><line x1="460" y1="359" x2="632" y2="359"/><text class="tx-lop pt" x="471" y="371">+ khai_pha_va_luu(...)</text><text class="tx-lop pt" x="471" y="387">+ goi_y(id_mon, so_luong)</text><text class="tx-lop pt" x="471" y="403">− apriori(giao_dich)</text><text class="tx-lop pt" x="471" y="419">− sinh_luat(pho_bien)</text></g><g class="lop "><rect class="vien" x="460" y="470" width="146" height="145" rx="3"/><rect class="ngan-ten" x="460" y="470" width="146" height="37" rx="3"/><text class="tx-khuon" x="533" y="484">&#171;module&#187;</text><text class="tx-lop-ten" x="533" y="499">khuon_mat.py</text><line x1="460" y1="507" x2="606" y2="507"/><text class="tx-lop" x="471" y="519">− bo_phat_hien: YuNet</text><text class="tx-lop" x="471" y="535">− bo_trich: SFace</text><line x1="460" y1="545" x2="606" y2="545"/><text class="tx-lop pt" x="471" y="557">+ nhan_dien(khung)</text><text class="tx-lop pt" x="471" y="573">+ xac_minh(khung, id_nv)</text><text class="tx-lop pt" x="471" y="589">+ kiem_tra_song(...)</text><text class="tx-lop pt" x="471" y="605">+ dang_ky(id_nv, anh)</text></g><g class="lop "><rect class="vien" x="790" y="470" width="140" height="97" rx="3"/><rect class="ngan-ten" x="790" y="470" width="140" height="37" rx="3"/><text class="tx-khuon" x="860" y="484">&#171;module&#187;</text><text class="tx-lop-ten" x="860" y="499">chatbot/bot.py</text><line x1="790" y1="507" x2="930" y2="507"/><text class="tx-lop" x="801" y="519">− nguong_tin_cay: float</text><line x1="790" y1="529" x2="930" y2="529"/><text class="tx-lop pt" x="801" y="541">+ hoi(cau, boi_canh)</text><text class="tx-lop pt" x="801" y="557">+ trang_thai()</text></g><g class="lop "><rect class="vien" x="1060" y="470" width="140" height="97" rx="3"/><rect class="ngan-ten" x="1060" y="470" width="140" height="37" rx="3"/><text class="tx-khuon" x="1130" y="484">&#171;module&#187;</text><text class="tx-lop-ten" x="1130" y="499">ml_service/db.py</text><line x1="1060" y1="507" x2="1200" y2="507"/><text class="tx-lop" x="1071" y="519">− engine: SQLAlchemy</text><line x1="1060" y1="529" x2="1200" y2="529"/><text class="tx-lop pt" x="1071" y="541">+ doc_sql(sql, tham_so)</text><text class="tx-lop pt" x="1071" y="557">+ ghi(sql, tham_so)</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="214,140 460,140" fill="none" marker-end="url(#mui-lopB)"/><text class="tx-boi" x="337" y="132">HTTP JSON :8000</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="635,130 790,130" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="547.5,225 546,300" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="460,150 440,150 440,510 460,510" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="460,180 450,180 450,632 860,632 860,567" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="969,130 1060,130" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="879.5,203 868.5,300" fill="none" marker-end="url(#mui-lopB)"/><text class="tx-boi" x="941.5" y="227">sinh đặc trưng</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="930,520 1060,520" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="632,424 1035,424 1035,470" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="606,600 1020,600 1020,567" fill="none" marker-end="url(#mui-lopB)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="969,180 1046,180 1046,470" fill="none" marker-end="url(#mui-lopB)"/><text class="tx-boi" x="1150" y="400">lưu dự báo và chỉ số</text></g><g class="ghi-chu">
+    <text class="tx-ghi" x="30" y="690">Hai tiến trình chỉ nói chuyện với nhau qua HTTP JSON, không dùng chung bộ nhớ. mlService luôn đặt hạn 30 giây và bắt lỗi:</text><text class="tx-ghi" x="30" y="703">khi tiến trình Python tắt, tầng web vẫn chạy bình thường và hiển thị kết quả đã lưu trong cơ sở dữ liệu của lần chạy trước.</text>
+  </g></svg>

@@ -1,47 +1,68 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách đơn xin nghỉ phép</h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+
+<%
+  var choDuyetNP = (requests || []).filter(function (r) { return r.trang_thai == 0; }).length;
+%>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Đơn xin nghỉ phép</h2>
+            <p><%= requests ? requests.length : 0 %> đơn · <%= choDuyetNP %> đơn chờ duyệt</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/stafflist"><i class="fas fa-user-group"></i> Danh sách nhân viên</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (requests && requests.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>#</th>
                         <th>Nhân viên</th>
                         <th>Chức vụ</th>
-                        <th>Ngày nghỉ</th>
+                        <th>Thời gian nghỉ</th>
                         <th>Lý do</th>
                         <th>Trạng thái</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% requests.forEach(r => { %>
-                    <tr class="odd gradeX">
-                        <td><%= r.id_np %></td>
-                        <td><%= r.ten_nhanvien %></td>
-                        <td><%= r.chucvu %></td>
+                    <% requests.forEach((r, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
+                        <td class="qt-strong"><%= r.ten_nhanvien %></td>
+                        <td><span class="qt-pill qt-pill--muted"><%= r.chucvu %></span></td>
                         <td>
-                            <%= new Date(r.ngay_bat_dau).toLocaleDateString('vi-VN') %> - 
-                            <%= new Date(r.ngay_ket_thuc).toLocaleDateString('vi-VN') %>
+                            <%= new Date(r.ngay_bat_dau).toLocaleDateString('vi-VN') %> – <%= new Date(r.ngay_ket_thuc).toLocaleDateString('vi-VN') %>
                         </td>
-                        <td><%= r.ly_do %></td>
+                        <td><%= (r.ly_do || '').trim() || '—' %></td>
                         <td>
                             <% if (r.trang_thai == 0) { %>
-                                <span class="badge badge-secondary" style="background: grey; color: white; padding: 2px 5px; border-radius: 3px;">Chờ duyệt</span>
+                                <span class="qt-pill qt-pill--warn">Chờ duyệt</span>
                             <% } else if (r.trang_thai == 1) { %>
-                                <span class="badge badge-success" style="background: green; color: white; padding: 2px 5px; border-radius: 3px;">Đã duyệt</span>
+                                <span class="qt-pill qt-pill--ok">Đã duyệt</span>
                             <% } else { %>
-                                <span class="badge badge-danger" style="background: red; color: white; padding: 2px 5px; border-radius: 3px;">Từ chối</span>
+                                <span class="qt-pill qt-pill--danger">Từ chối</span>
                             <% } %>
                         </td>
                         <td>
                             <% if (r.trang_thai == 0) { %>
-                                <a href="/admin/leaveapprove/<%= r.id_np %>" style="color: green; font-weight: bold;">Duyệt</a> || 
-                                <a href="/admin/leavereject/<%= r.id_np %>" style="color: red; font-weight: bold;">Từ chối</a>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ok qt-btn--sm" href="/admin/leaveapprove/<%= r.id_np %>"
+                                   onclick="return confirm('Duyệt đơn nghỉ phép của <%= r.ten_nhanvien %>?')">
+                                    <i class="fas fa-check"></i> Duyệt
+                                </a>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/leavereject/<%= r.id_np %>"
+                                   onclick="return confirm('Từ chối đơn nghỉ phép này?')">
+                                    <i class="fas fa-xmark"></i> Từ chối
+                                </a>
+                            </div>
                             <% } else { %>
-                                --
+                                <span class="qt-sub">Đã xử lý</span>
                             <% } %>
                         </td>
                     </tr>
@@ -49,6 +70,17 @@
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-plane-departure"></i>
+            <p>Chưa có đơn xin nghỉ phép nào.</p>
+        </div>
+        <% } %>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
+</script>
+
 <%- include('partials/footer') %>

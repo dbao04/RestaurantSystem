@@ -1,0 +1,37 @@
+<%
+/**
+ * Thanh bon buoc cua luong dat mon + dat ban.
+ *
+ * Dung chung o ca bon trang de khach luon biet minh dang o dau va con may buoc
+ * nua. Truoc day khong trang nao noi ra dieu do: xem gio hang xong bam "dat ban"
+ * ma khong ro se toi dau, den luc dien form moi biet con phai xac nhan.
+ *
+ * Goi: include('partials/nh-steps', { buoc: 2 })   // 1..4
+ *
+ * Buoc DA QUA thi bam duoc de quay lai sua; buoc CHUA toi thi khong, vi quay
+ * toi khi chua xong buoc truoc chi dan den trang bao loi.
+ */
+var _buoc = typeof buoc !== 'undefined' ? Number(buoc) : 1;
+var CAC_BUOC = [
+  { ten: 'Chọn món',  duongDan: '/menu' },
+  { ten: 'Giỏ hàng',  duongDan: '/cart' },
+  { ten: 'Đặt bàn',   duongDan: '/datban' },
+  { ten: 'Xác nhận',  duongDan: null },
+];
+%>
+<div class="nh-steps">
+  <% CAC_BUOC.forEach(function (b, i) {
+       var so = i + 1;
+       var lop = so < _buoc ? 'is-done' : (so === _buoc ? 'is-active' : '');
+       var quayLaiDuoc = so < _buoc && b.duongDan;
+  %>
+    <div class="nh-step <%= lop %>">
+      <% if (quayLaiDuoc) { %><a href="<%= b.duongDan %>" title="Quay lại bước này"><% } %>
+        <div class="nh-step__dot">
+          <% if (so < _buoc) { %><i class="fas fa-check"></i><% } else { %><%= so %><% } %>
+        </div>
+        <div class="nh-step__label"><%= b.ten %></div>
+      <% if (quayLaiDuoc) { %></a><% } %>
+    </div>
+  <% }) %>
+</div>

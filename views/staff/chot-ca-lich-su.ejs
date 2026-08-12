@@ -1,0 +1,126 @@
+<%
+  var activePage = 'chot-ca';
+  var staffName = session.staffName || 'Nhân viên';
+
+  // Tổng hợp nhanh để nhìn ra ngay ca nào có vấn đề.
+  var soLech = lichSu.filter(function (s) { return Number(s.chenh_lech) !== 0; }).length;
+  var tongThieu = lichSu.reduce(function (t, s) {
+    var c = Number(s.chenh_lech) || 0; return c < 0 ? t + Math.abs(c) : t;
+  }, 0);
+  var choDuyet = lichSu.filter(function (s) { return s.status !== 'verified'; }).length;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <a href="/staff/chot-ca" class="small text-muted"><i class="fas fa-arrow-left"></i> Về màn hình chốt ca</a>
+    <h1 class="h3 mb-0 text-gray-800">Lịch sử chốt ca</h1>
+    <div class="small text-muted">
+      <%= xemHet ? 'Bạn xem được biên bản của mọi thu ngân.' : 'Bạn chỉ xem được biên bản ca của mình.' %>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-primary shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Số ca</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800"><%= lichSu.length %></div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-warning shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Ca lệch két</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800"><%= soLech %></div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-danger shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Tổng thiếu hụt</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800"><%= formatMoney(tongThieu) %>đ</div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-secondary shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Chờ duyệt</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800"><%= choDuyet %></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <form class="form-inline" method="get">
+      <label class="small text-muted mr-2">Từ ngày</label>
+      <input type="date" name="tu_ngay" class="form-control form-control-sm mr-3" value="<%= loc.tu_ngay || '' %>">
+      <label class="small text-muted mr-2">Đến ngày</label>
+      <input type="date" name="den_ngay" class="form-control form-control-sm mr-3" value="<%= loc.den_ngay || '' %>">
+      <div class="custom-control custom-checkbox mr-3">
+        <input type="checkbox" class="custom-control-input" id="chua-duyet" name="chua_duyet" value="1"
+               <%= loc.chua_duyet === '1' ? 'checked' : '' %>>
+        <label class="custom-control-label small" for="chua-duyet">Chỉ ca chưa duyệt</label>
+      </div>
+      <button class="btn btn-sm btn-primary">Lọc</button>
+      <a href="/staff/chot-ca/lich-su" class="btn btn-sm btn-link">Bỏ lọc</a>
+    </form>
+  </div>
+  <div class="card-body">
+    <% if (!lichSu.length) { %>
+      <div class="text-center text-muted py-5">
+        <i class="fas fa-cash-register fa-3x mb-3 d-block" style="opacity:.3"></i>
+        Chưa có biên bản chốt ca nào khớp bộ lọc.
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Ngày</th><th>Ca</th>
+              <% if (xemHet) { %><th>Thu ngân</th><% } %>
+              <th class="text-right">Doanh thu</th>
+              <th class="text-right">Két phải có</th>
+              <th class="text-right">Đếm được</th>
+              <th class="text-right">Chênh lệch</th>
+              <th>Trạng thái</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lichSu.forEach(function (s) {
+                 var c = Number(s.chenh_lech) || 0; %>
+              <tr>
+                <td><%= new Date(s.shift_date).toLocaleDateString('vi-VN') %></td>
+                <td><%= s.ten_ca || '—' %></td>
+                <% if (xemHet) { %><td><%= s.ten_nhan_vien || '—' %></td><% } %>
+                <td class="text-right"><%= formatMoney(s.total_revenue) %>đ</td>
+                <td class="text-right"><%= formatMoney(s.tien_mat_he_thong) %>đ</td>
+                <td class="text-right"><%= formatMoney(s.tien_mat_dem_duoc) %>đ</td>
+                <td class="text-right <%= c === 0 ? 'text-success' : (c < 0 ? 'text-danger font-weight-bold' : 'text-warning font-weight-bold') %>">
+                  <%= c > 0 ? '+' : '' %><%= formatMoney(c) %>đ
+                  <% if (c !== 0 && s.ly_do_chenh_lech) { %>
+                    <i class="fas fa-comment-dots text-muted" data-toggle="tooltip"
+                       title="<%= s.ly_do_chenh_lech %>"></i>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (s.status === 'verified') { %>
+                    <span class="badge badge-success">Đã duyệt</span>
+                    <div class="small text-muted"><%= s.ten_nguoi_duyet || '' %></div>
+                  <% } else { %>
+                    <span class="badge badge-secondary">Chờ duyệt</span>
+                  <% } %>
+                </td>
+                <td class="text-right"><a href="/staff/chot-ca/<%= s.id %>" class="small">biên bản</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  if (window.jQuery) jQuery('[data-toggle="tooltip"]').tooltip();
+</script>
+
+<%- include('partials/footer') %>

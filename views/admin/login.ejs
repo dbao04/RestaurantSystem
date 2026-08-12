@@ -1,36 +1,44 @@
 <!DOCTYPE html>
+<html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <title>Admin Login - NHA HANG BD</title>
-    <style>
-        body { background: #f0f0f0; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; }
-        h1 { text-align: center; color: #333; }
-        .error { color: red; text-align: center; margin-bottom: 20px; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        input[type="submit"] { width: 100%; padding: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-        input[type="submit"]:hover { background: #555; }
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đăng nhập quản trị · Nhà Hàng Bảo Đoàn</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/admin/quantri.css" />
 </head>
-<body>
-<div class="container">
-    <section id="content">
+<body class="qt-login">
+    <div class="qt-login__card">
+        <div class="qt-login__mark"><i class="fas fa-utensils"></i></div>
+        <h1>Nhà Hàng Bảo Đoàn</h1>
+        <p class="qt-login__sub">Khu vực quản trị</p>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="qt-alert qt-alert--danger">
+                <i class="fas fa-circle-exclamation"></i>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
         <form action="/admin/login" method="post">
-            <h1>NHA HANG BD - Admin Login</h1>
-            <% if (typeof error !== 'undefined') { %>
-                <div class="error"><%= error %></div>
-            <% } %>
-            <div>
-                <input type="text" placeholder="Username" required="" name="adminuser"/>
+            <div class="qt-login__field">
+                <i class="fas fa-user"></i>
+                <input type="text" name="adminuser" placeholder="Tên đăng nhập" required autofocus />
             </div>
-            <div>
-                <input type="password" placeholder="Password" required="" name="adminpass"/>
+            <div class="qt-login__field">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="adminpass" placeholder="Mật khẩu" required />
             </div>
-            <div>
-                <input type="submit" value="Log in" />
-            </div>
+            <button type="submit" class="qt-login__btn">
+                <i class="fas fa-right-to-bracket"></i>&nbsp; Đăng nhập
+            </button>
         </form>
-    </section>
-</div>
+
+        <a class="qt-login__back" href="/"><i class="fas fa-arrow-left"></i>&nbsp; Quay lại website</a>
+    </div>
 </body>
 </html>

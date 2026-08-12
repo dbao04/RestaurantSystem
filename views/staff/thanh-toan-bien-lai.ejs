@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Biên lai #<%= p.id %> - Nhà Hàng Bảo Đoàn</title>
+  <style>
+    /*
+      Khổ 80mm là chuẩn của máy in nhiệt trong nhà hàng. Vùng in thực tế của
+      loại giấy này chỉ khoảng 72mm, phần còn lại là lề cơ khí của đầu in -
+      đặt đúng 72mm thì chữ không bị cắt mép phải.
+    */
+    @page { size: 80mm auto; margin: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0; padding: 6mm 4mm; color: #000; background: #fff;
+      width: 72mm; font-size: 12px; line-height: 1.45;
+    }
+    .giua { text-align: center; }
+    .phai { text-align: right; }
+    h1 { font-size: 15px; margin: 0 0 2px; letter-spacing: .5px; }
+    .phu { font-size: 11px; color: #333; }
+    .vach { border-top: 1px dashed #000; margin: 8px 0; }
+    .tieu-de {
+      text-align: center; font-weight: 700; font-size: 13px;
+      letter-spacing: 1px; margin: 6px 0;
+    }
+    .hang { display: flex; justify-content: space-between; gap: 8px; }
+    .hang .nhan { color: #333; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 2px 0; vertical-align: top; }
+    .tong { font-size: 15px; font-weight: 800; }
+    .ma-ds {
+      text-align: center; font-family: ui-monospace, Consolas, monospace;
+      font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+      border: 1px dashed #000; padding: 5px; margin-top: 6px;
+    }
+    .cam-on { text-align: center; font-style: italic; margin-top: 10px; font-size: 11px; }
+    .in-lai { text-align:center; margin-top:14px; }
+    @media print { .in-lai { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="giua">
+  <h1>Nhà Hàng Bảo Đoàn</h1>
+  <div class="phu">12 Nguyễn Văn Bảo, Gò Vấp, TP.HCM</div>
+  <div class="phu">ĐT: 0123.456.789</div>
+</div>
+
+<div class="tieu-de">
+  <%= p.loai === 'dat_coc' ? 'PHIẾU THU ĐẶT CỌC'
+      : (p.status === 'refunded' ? 'PHIẾU HOÀN TIỀN' : 'BIÊN LAI THANH TOÁN') %>
+</div>
+
+<div class="vach"></div>
+
+<div class="hang"><span class="nhan">Số biên lai</span><span><b>#<%= String(p.id).padStart(6, '0') %></b></span></div>
+<div class="hang"><span class="nhan">Mã hóa đơn</span><span><%= p.sesis.substring(0, 10).toUpperCase() %></span></div>
+<div class="hang"><span class="nhan">Thời gian</span><span><%= new Date(p.thanh_cong_luc || p.created_at).toLocaleString('vi-VN') %></span></div>
+<% if (hoaDon.thongTin.ten_ban) { %>
+  <div class="hang"><span class="nhan">Bàn</span><span><%= hoaDon.thongTin.ten_ban %></span></div>
+<% } %>
+<div class="hang"><span class="nhan">Khách hàng</span><span><%= hoaDon.thongTin.ten_khach || 'Khách lẻ' %></span></div>
+<% if (p.ten_nhan_vien) { %>
+  <div class="hang"><span class="nhan">Thu ngân</span><span><%= p.ten_nhan_vien %></span></div>
+<% } %>
+<% if (p.ghi_chu_phan_chia) { %>
+  <div class="hang"><span class="nhan">Phần chia</span><span><%= p.ghi_chu_phan_chia %></span></div>
+<% } %>
+
+<div class="vach"></div>
+
+<table>
+  <% hoaDon.mon.forEach(function (m) { %>
+    <tr>
+      <td colspan="2"><%= m.name_mon %></td>
+    </tr>
+    <tr>
+      <td style="padding-left:6px; color:#333">
+        <%= m.soluong %> × <%= Number(m.gia).toLocaleString('vi-VN') %>
+      </td>
+      <td class="phai"><%= Number(m.thanhtien).toLocaleString('vi-VN') %></td>
+    </tr>
+  <% }); %>
+</table>
+
+<div class="vach"></div>
+
+<div class="hang"><span class="nhan">Tạm tính</span><span><%= Number(hoaDon.tien.tam_tinh).toLocaleString('vi-VN') %>đ</span></div>
+<% if (Number(p.discount_amount) > 0) { %>
+  <div class="hang"><span class="nhan">Giảm giá <%= p.discount_code_used || '' %></span><span>− <%= Number(p.discount_amount).toLocaleString('vi-VN') %>đ</span></div>
+<% } %>
+<% if (Number(p.loyalty_points_used) > 0) { %>
+  <div class="hang"><span class="nhan">Dùng <%= p.loyalty_points_used %> điểm</span><span>− <%= (Number(p.loyalty_points_used) * hoaDon.tyLe.gia_tri_1_diem).toLocaleString('vi-VN') %>đ</span></div>
+<% } %>
+<% if (Number(hoaDon.tien.phi_phuc_vu) > 0) { %>
+  <div class="hang"><span class="nhan">Phí phục vụ <%= hoaDon.tyLe.phi_phuc_vu %>%</span><span><%= Number(hoaDon.tien.phi_phuc_vu).toLocaleString('vi-VN') %>đ</span></div>
+<% } %>
+<% if (Number(hoaDon.tien.thue_vat) > 0) { %>
+  <div class="hang"><span class="nhan">VAT <%= hoaDon.tyLe.thue_vat %>%</span><span><%= Number(hoaDon.tien.thue_vat).toLocaleString('vi-VN') %>đ</span></div>
+<% } %>
+<% if (Number(p.tien_tip) > 0) { %>
+  <div class="hang"><span class="nhan">Tiền tip</span><span><%= Number(p.tien_tip).toLocaleString('vi-VN') %>đ</span></div>
+<% } %>
+
+<div class="vach"></div>
+
+<div class="hang tong">
+  <span>ĐÃ THU</span>
+  <span><%= Number(p.amount).toLocaleString('vi-VN') %>đ</span>
+</div>
+<div class="hang"><span class="nhan">Hình thức</span><span><%= p.ten_phuong_thuc %></span></div>
+
+<% if (p.tien_khach_dua != null) { %>
+  <div class="hang"><span class="nhan">Khách đưa</span><span><%= Number(p.tien_khach_dua).toLocaleString('vi-VN') %>đ</span></div>
+  <div class="hang"><span class="nhan">Tiền thối</span><span><b><%= Number(p.tien_thoi_lai || 0).toLocaleString('vi-VN') %>đ</b></span></div>
+<% } %>
+
+<% if (hoaDon.tien.con_phai_tra > 0) { %>
+  <div class="vach"></div>
+  <div class="hang"><span class="nhan">Hóa đơn còn lại</span><span><b><%= Number(hoaDon.tien.con_phai_tra).toLocaleString('vi-VN') %>đ</b></span></div>
+  <div class="phu giua" style="margin-top:4px">(Hóa đơn được chia cho nhiều người)</div>
+<% } %>
+
+<% if (p.ma_doi_soat) { %>
+  <div class="ma-ds"><%= p.ma_doi_soat %></div>
+  <div class="phu giua" style="margin-top:3px">Mã đối soát chuyển khoản</div>
+<% } %>
+<% if (p.transaction_id) { %>
+  <div class="phu giua" style="margin-top:3px">Mã GD: <%= p.transaction_id %></div>
+<% } %>
+
+<div class="cam-on">
+  Cảm ơn quý khách và hẹn gặp lại!<br>
+  *** Trân trọng ***
+</div>
+
+<div class="in-lai">
+  <button onclick="window.print()" style="padding:8px 16px;cursor:pointer">In lại</button>
+</div>
+
+<script>
+  window.onload = function () { window.print(); };
+</script>
+</body>
+</html>

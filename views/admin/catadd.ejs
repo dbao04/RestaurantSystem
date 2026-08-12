@@ -1,30 +1,34 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Thêm Loại món</h2>
-        <div class="block copyblock"> 
-            <form action="/admin/catadd" method="post">
-                <table class="form">					
-                    <tr>
-                        <td>
-                            <input type="text" name="name_loai" placeholder="Thêm loại món" class="medium" required />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="text" name="ghichu" placeholder="Thêm ghi chú" class="medium" />
-                        </td>
-                    </tr>
-                    <tr> 
-                        <td>
-                            <input type="submit" name="submit" Value="Save" />
-                        </td>
-                    </tr>
-                </table>
-            </form>
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Thêm loại món</h2>
+            <p>Tạo một nhóm mới để phân loại món ăn trong thực đơn.</p>
         </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/catlist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
+        </div>
+    </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/catadd" method="post">
+            <div class="qt-field">
+                <label for="name_loai">Tên loại món <span class="qt-req">*</span></label>
+                <input type="text" id="name_loai" name="name_loai" placeholder="Ví dụ: Món khai vị" required />
+            </div>
+
+            <div class="qt-field">
+                <label for="ghichu">Ghi chú</label>
+                <input type="text" id="ghichu" name="ghichu" placeholder="Mô tả ngắn về loại món này" />
+                <div class="qt-field__hint">Không bắt buộc — chỉ hiển thị trong trang quản trị.</div>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Lưu loại món</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/catlist">Hủy</a>
+            </div>
+        </form>
     </div>
 </div>
 

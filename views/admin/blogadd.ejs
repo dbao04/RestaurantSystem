@@ -1,30 +1,44 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Thêm bài viết mới</h2>
-        <div class="block">
-            <form action="/admin/blogadd" method="POST" enctype="multipart/form-data">
-                <table class="form">
-                    <tr>
-                        <td><label>Tiêu đề</label></td>
-                        <td><input type="text" name="tieu_de" placeholder="Nhập tiêu đề..." class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Hình ảnh</label></td>
-                        <td><input type="file" name="hinh_anh" /></td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top; padding-top: 9px;"><label>Nội dung</label></td>
-                        <td><textarea name="noi_dung" style="width: 500px; height: 300px;" required></textarea></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Đăng bài" /></td>
-                    </tr>
-                </table>
-            </form>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Thêm bài viết</h2>
+            <p>Đăng tin tức, khuyến mãi hoặc câu chuyện của nhà hàng.</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/bloglist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
         </div>
     </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/blogadd" method="POST" enctype="multipart/form-data">
+            <div class="qt-field">
+                <label for="tieu_de">Tiêu đề <span class="qt-req">*</span></label>
+                <input type="text" id="tieu_de" name="tieu_de" placeholder="Nhập tiêu đề bài viết" required />
+            </div>
+
+            <div class="qt-field">
+                <label>Hình ảnh</label>
+                <label class="qt-file">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                    <span>Chọn ảnh từ máy tính</span>
+                    <input type="file" name="hinh_anh" accept="image/*" />
+                </label>
+                <div class="qt-field__hint">Không bắt buộc — bài viết không có ảnh vẫn hiển thị bình thường.</div>
+            </div>
+
+            <div class="qt-field">
+                <label for="noi_dung">Nội dung <span class="qt-req">*</span></label>
+                <textarea id="noi_dung" name="noi_dung" style="min-height:300px" placeholder="Nhập nội dung bài viết…" required></textarea>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-paper-plane"></i> Đăng bài</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/bloglist">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
 <%- include('partials/footer') %>

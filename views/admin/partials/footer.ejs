@@ -1,8 +1,123 @@
-    <div class="clear"></div>
-    </div>
-    <div class="clear"></div>
-    <div id="site_info">
-        <p>&copy; GS Restaurant Admin Panel</p>
-    </div>
+        </main>
+
+        <footer class="qt-foot">
+            <span>&copy; <%= new Date().getFullYear() %> Nhà Hàng Bảo Đoàn · Hệ thống quản trị nhà hàng</span>
+            <span>Phiên đăng nhập: <strong><%= session.adminname || 'Quản trị viên' %></strong></span>
+        </footer>
+    </div><!-- /.qt-main -->
+</div><!-- /.qt-shell -->
+
+<script>
+(function () {
+  // --- Danh dau muc dang xem tren thanh ben ------------------------------
+  var duongDan = window.location.pathname.replace(/\/+$/, '') || '/';
+  var muc = document.querySelectorAll('#qtNav .qt-nav__item');
+  var totNhat = null, doDaiTotNhat = -1;
+
+  for (var i = 0; i < muc.length; i++) {
+    var mau = muc[i].getAttribute('data-match');
+    if (!mau) continue;
+    var cacMau = mau.split(',');
+    for (var j = 0; j < cacMau.length; j++) {
+      var m = cacMau[j].trim();
+      if (!m) continue;
+      var khop = (duongDan === m) || (m !== '/admin' && duongDan.indexOf(m + '/') === 0);
+      if (khop && m.length > doDaiTotNhat) { doDaiTotNhat = m.length; totNhat = muc[i]; }
+    }
+  }
+  if (totNhat) {
+    totNhat.className += ' is-active';
+    var nhan = totNhat.querySelector('span');
+    var tieuDe = document.getElementById('qtTitle');
+    if (nhan && tieuDe) tieuDe.textContent = nhan.textContent;
+  }
+
+  // --- Menu thu gon tren man hinh nho ------------------------------------
+  var shell = document.getElementById('qtShell');
+  var burger = document.getElementById('qtBurger');
+  var backdrop = document.getElementById('qtBackdrop');
+  function dong() { shell.className = shell.className.replace(/\s*is-open/, ''); }
+  if (burger) burger.onclick = function () {
+    if (/is-open/.test(shell.className)) dong(); else shell.className += ' is-open';
+  };
+  if (backdrop) backdrop.onclick = dong;
+
+  // --- Hien ten file da chon o o tai anh ---------------------------------
+  // Tach thanh ham co ten vi con phai goi lai sau moi lan noi dung duoc trao
+  // theo thoi gian thuc - luc do cac o input la phan tu MOI, khong con listener.
+  function ganOFile() {
+    var oFile = document.querySelectorAll('.qt-file input[type=file]');
+    for (var k = 0; k < oFile.length; k++) {
+      oFile[k].onchange = function () {
+        var nhan = this.parentNode.querySelector('span');
+        if (nhan && this.files && this.files[0]) nhan.textContent = this.files[0].name;
+      };
+    }
+  }
+  ganOFile();
+
+  /* ======================================================================
+     THỜI GIAN THỰC CHO KHU QUẢN TRỊ
+
+     Khu /admin trước đây không có một dòng thời gian thực nào. Nay phiên quản
+     trị được vào phòng riêng `quan_tri` (xem services/realtime.js), nên chỉ
+     còn việc nói cho từng trang biết nó quan tâm dữ liệu nào.
+
+     Bảng dưới đây song song với bảng bên views/staff/partials/footer.ejs — hai
+     khu khác giao diện nhưng nghe cùng một bộ sự kiện miền, vì cùng nhìn vào
+     một cơ sở dữ liệu. Quản trị viên đổi giá món thì bếp thấy ngay, và ngược
+     lại bếp sửa thực đơn thì trang /admin/productlist cũng đổi theo.
+
+     `trao` đổi thẳng nội dung; `nhac` chỉ hiện dải bấm-để-xem-bản-mới, dành
+     cho trang tự vẽ biểu đồ bằng script riêng — tráo innerHTML sẽ giết script
+     đó và để lại biểu đồ trống.
+     ====================================================================== */
+  if (window.RT) {
+    var duongDan = window.location.pathname.replace(/\/+$/, '') || '/';
+
+    var BAN_DO = [
+      { mau: /^\/admin\/catlist/,         che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/admin\/productlist/,     che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/admin\/bloglist/,        che_do: 'trao', sk: ['blog:doi'] },
+      { mau: /^\/admin\/stafflist/,       che_do: 'trao', sk: ['nhan-su:doi'] },
+      { mau: /^\/admin\/hopdong(moi|list)/, che_do: 'trao', sk: ['hop-dong:doi', 'dat-ban:doi'] },
+      { mau: /^\/admin\/leavelist/,       che_do: 'trao', sk: ['nghi-phep:doi'] },
+      { mau: /^\/admin\/schedule/,        che_do: 'trao', sk: ['lich-lam:doi'] },
+      { mau: /^\/admin\/salary-approval/, che_do: 'trao', sk: ['luong:doi'] },
+      { mau: /^\/admin\/thanh-toan/,      che_do: 'nhac', sk: ['tt:da-thanh-toan', 'chot-ca:doi'] },
+      { mau: /^\/admin\/stats/,           che_do: 'nhac', sk: ['don-hang:doi', 'thuc-don:doi'] },
+      { mau: /^\/admin$/,                 che_do: 'trao',
+        sk: ['don-hang:doi', 'dat-ban:doi', 'khach-hang:doi', 'nhan-su:doi'] },
+    ];
+
+    /**
+     * Chạy lại sau mỗi lần tráo nội dung.
+     *
+     * Bảng ở khu này do DataTables dựng lên trong <script> nằm ngay trong trang.
+     * Tráo innerHTML không chạy lại script đó, nên nếu không gọi lại ở đây thì
+     * bảng mới hiện ra dưới dạng thô: mất ô tìm kiếm, mất phân trang, mất sắp
+     * xếp — trông như hỏng.
+     */
+    function dungLai() {
+      // Bọc try/catch: DataTables bản cũ đôi khi kêu ca khi gặp bảng trùng id.
+      // Nếu nó có hỏng thì cũng chỉ là mất phân trang cho tới lần tải sau —
+      // không đáng để ném lỗi làm chết luôn phần đồng bộ.
+      try {
+        if (window.jQuery && jQuery.fn.dataTable) jQuery('.datatable').dataTable();
+      } catch (e) {
+        console.warn('[RT] không dựng lại được DataTables:', e.message);
+      }
+      ganOFile();
+    }
+
+    for (var i = 0; i < BAN_DO.length; i++) {
+      if (!BAN_DO[i].mau.test(duongDan)) continue;
+      if (BAN_DO[i].che_do === 'trao') RT.dongBoTrang('#rt-noi-dung', BAN_DO[i].sk, { sau: dungLai });
+      else RT.nhacTaiLai(BAN_DO[i].sk);
+      break;
+    }
+  }
+})();
+</script>
 </body>
 </html>

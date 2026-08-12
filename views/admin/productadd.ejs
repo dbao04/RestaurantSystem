@@ -1,57 +1,69 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Thêm món ăn</h2>
-        <div class="block">   
-            <form action="/admin/productadd" method="post" enctype="multipart/form-data">
-                <table class="form">
-                    <tr>
-                        <td><label>Tên món</label></td>
-                        <td><input type="text" name="name_mon" placeholder="Enter Name..." class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Loại món</label></td>
-                        <td>
-                            <select id="select" name="loaimon" required>
-                                <option value="">-----Chọn loại món-----</option>
-                                <% if (categories) { %>
-                                    <% categories.forEach(cat => { %>
-                                        <option value="<%= cat.id_loai %>"><%= cat.name_loai %></option>
-                                    <% }) %>
-                                <% } %>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><label>Giá</label></td>
-                        <td><input type="number" name="gia" placeholder="Enter Price..." class="medium" min="1" required /></td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top; padding-top: 9px;"><label>Ghi chú</label></td>
-                        <td><textarea name="ghichu" class="tinymce" style="width: 100%; height: 100px;"></textarea></td>
-                    </tr>
-                    <tr>
-                        <td><label>Tải hình</label></td>
-                        <td><input type="file" name="image" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Trạng thái</label></td>
-                        <td>
-                            <select id="select" name="tinhtrang">
-                                <option value="1">Phục vụ</option>
-                                <option value="0">Ngưng phục vụ</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Save" /></td>
-                    </tr>
-                </table>
-            </form>
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Thêm món ăn</h2>
+            <p>Bổ sung một món mới vào thực đơn của nhà hàng.</p>
         </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/productlist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
+        </div>
+    </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/productadd" method="post" enctype="multipart/form-data">
+            <div class="qt-field">
+                <label for="name_mon">Tên món <span class="qt-req">*</span></label>
+                <input type="text" id="name_mon" name="name_mon" placeholder="Ví dụ: Gỏi cuốn tôm thịt" required />
+            </div>
+
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="loaimon">Loại món <span class="qt-req">*</span></label>
+                    <select id="loaimon" name="loaimon" required>
+                        <option value="">— Chọn loại món —</option>
+                        <% if (categories) { %>
+                            <% categories.forEach(cat => { %>
+                                <option value="<%= cat.id_loai %>"><%= cat.name_loai %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div class="qt-field">
+                    <label for="gia">Giá (VNĐ) <span class="qt-req">*</span></label>
+                    <input type="number" id="gia" name="gia" placeholder="Ví dụ: 85000" min="1" required />
+                </div>
+            </div>
+
+            <div class="qt-field">
+                <label for="ghichu">Ghi chú</label>
+                <textarea id="ghichu" name="ghichu" placeholder="Mô tả nguyên liệu, cách phục vụ…"></textarea>
+            </div>
+
+            <div class="qt-field">
+                <label>Hình ảnh món ăn <span class="qt-req">*</span></label>
+                <label class="qt-file">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                    <span>Chọn ảnh từ máy tính</span>
+                    <input type="file" name="image" accept="image/*" required />
+                </label>
+            </div>
+
+            <div class="qt-field">
+                <label for="tinhtrang">Trạng thái</label>
+                <select id="tinhtrang" name="tinhtrang">
+                    <option value="1">Đang phục vụ</option>
+                    <option value="0">Ngưng phục vụ</option>
+                </select>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Lưu món ăn</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/productlist">Hủy</a>
+            </div>
+        </form>
     </div>
 </div>
 

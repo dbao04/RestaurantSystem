@@ -1,0 +1,294 @@
+<%
+  /*
+    Widget tro ly ao - nhung vao footer nen xuat hien tren MOI trang khach.
+
+    Tu chua CSS/JS, khong phu thuoc jQuery hay Bootstrap, tien to `cb-` cho moi
+    lop de khong dam voi giao dien san co. Bieu do chi ve khi trang do da nap
+    Chart.js (trang quan tri), con trang khach thi bo qua - khong tai them thu
+    vien chi de ve mot bieu do hiem khi dung toi.
+  */
+  const cbQuyen = (typeof session !== 'undefined' && session.adminlogin) ? 'quan_ly'
+                : (typeof session !== 'undefined' && session.stafflogin
+                   && /quan ly|quanly|ke toan|ketoan|manager/i.test(session.staffRole || '')) ? 'quan_ly'
+                : 'khach';
+%>
+
+<style>
+  .cb-nut {
+    position: fixed; right: 22px; bottom: 22px; z-index: 9998;
+    width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #c8a45c, #a8842f); color: #fff; font-size: 22px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .28); transition: transform .18s ease;
+  }
+  .cb-nut:hover { transform: scale(1.07); }
+  .cb-nut__cham {
+    position: absolute; top: 2px; right: 2px; width: 12px; height: 12px;
+    background: #2ecc71; border: 2px solid #fff; border-radius: 50%;
+  }
+
+  .cb-khung {
+    position: fixed; right: 22px; bottom: 92px; z-index: 9999;
+    width: 380px; max-width: calc(100vw - 30px);
+    height: 540px; max-height: calc(100vh - 130px);
+    background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .28);
+    display: none; flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px;
+  }
+  .cb-khung.cb-mo { display: flex; }
+
+  .cb-dau {
+    background: linear-gradient(135deg, #1f2933, #2f3b46); color: #fff;
+    padding: 13px 16px; display: flex; align-items: center; gap: 10px;
+  }
+  .cb-dau b { font-size: 15px; }
+  .cb-dau small { opacity: .72; font-size: 11.5px; display: block; }
+  .cb-dau__dong {
+    margin-left: auto; background: none; border: none; color: #fff;
+    font-size: 20px; cursor: pointer; opacity: .8; line-height: 1;
+  }
+
+  .cb-than { flex: 1; overflow-y: auto; padding: 14px; background: #f6f7f9; }
+
+  .cb-tn { margin-bottom: 12px; display: flex; }
+  .cb-tn__noi {
+    max-width: 86%; padding: 10px 13px; border-radius: 14px;
+    line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+  }
+  .cb-tn--bot .cb-tn__noi { background: #fff; border: 1px solid #e6e8ec; border-bottom-left-radius: 4px; }
+  .cb-tn--toi { justify-content: flex-end; }
+  .cb-tn--toi .cb-tn__noi { background: #c8a45c; color: #fff; border-bottom-right-radius: 4px; }
+  .cb-tn__noi strong { font-weight: 650; }
+  .cb-tn__noi em { color: #6b7280; font-style: normal; font-size: 12.5px; }
+
+  .cb-bang { width: 100%; border-collapse: collapse; margin-top: 9px; font-size: 12.5px; }
+  .cb-bang th, .cb-bang td { padding: 5px 7px; border-bottom: 1px solid #eceef1; text-align: left; }
+  .cb-bang th { background: #f2f4f7; font-weight: 600; }
+  .cb-bang td.cb-so { text-align: right; font-variant-numeric: tabular-nums; }
+  .cb-bang-cuon { max-height: 230px; overflow: auto; }
+
+  .cb-goiy { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .cb-goiy button {
+    background: #fff; border: 1px solid #d8dce2; border-radius: 999px;
+    padding: 5px 11px; font-size: 12.5px; cursor: pointer; color: #374151;
+  }
+  .cb-goiy button:hover { background: #f0ece0; border-color: #c8a45c; }
+
+  .cb-cham { display: flex; gap: 6px; margin-top: 7px; }
+  .cb-cham button {
+    background: none; border: none; cursor: pointer; font-size: 13px;
+    opacity: .45; padding: 2px 4px;
+  }
+  .cb-cham button:hover, .cb-cham button.cb-da-cham { opacity: 1; }
+
+  .cb-chan { padding: 10px; border-top: 1px solid #e6e8ec; display: flex; gap: 8px; background: #fff; }
+  .cb-chan input {
+    flex: 1; border: 1px solid #d8dce2; border-radius: 999px;
+    padding: 9px 15px; outline: none; font-size: 14px;
+  }
+  .cb-chan input:focus { border-color: #c8a45c; }
+  .cb-chan button {
+    background: #c8a45c; border: none; color: #fff; width: 38px; height: 38px;
+    border-radius: 50%; cursor: pointer; font-size: 15px;
+  }
+  .cb-chan button:disabled { opacity: .5; cursor: default; }
+
+  .cb-dangnghi span {
+    display: inline-block; width: 6px; height: 6px; margin-right: 3px;
+    background: #9aa3ae; border-radius: 50%; animation: cb-nhay 1.1s infinite;
+  }
+  .cb-dangnghi span:nth-child(2) { animation-delay: .15s; }
+  .cb-dangnghi span:nth-child(3) { animation-delay: .3s; }
+  @keyframes cb-nhay { 0%, 60%, 100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+  .cb-nhan-ml {
+    font-size: 11px; color: #9aa3ae; margin-top: 5px; display: block;
+  }
+</style>
+
+<button class="cb-nut" id="cb-nut" aria-label="Mở trợ lý ảo" title="Trợ lý ảo">
+  <i class="fas fa-comment-dots"></i><span class="cb-nut__cham"></span>
+</button>
+
+<div class="cb-khung" id="cb-khung" role="dialog" aria-label="Trợ lý ảo nhà hàng">
+  <div class="cb-dau">
+    <i class="fas fa-robot"></i>
+    <div>
+      <b>Trợ lý ảo</b>
+      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? 'Chế độ quản lý' : 'Nhà hàng Bảo Đoàn' %></small>
+    </div>
+    <button class="cb-dau__dong" id="cb-dong" aria-label="Đóng">&times;</button>
+  </div>
+  <div class="cb-than" id="cb-than"></div>
+  <form class="cb-chan" id="cb-form" autocomplete="off">
+    <input id="cb-o-nhap" placeholder="Nhập câu hỏi của bạn…" maxlength="500" aria-label="Câu hỏi">
+    <button type="submit" id="cb-gui" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
+  </form>
+</div>
+
+<script>
+(function () {
+  var nut = document.getElementById('cb-nut');
+  var khung = document.getElementById('cb-khung');
+  var than = document.getElementById('cb-than');
+  var form = document.getElementById('cb-form');
+  var oNhap = document.getElementById('cb-o-nhap');
+  var nutGui = document.getElementById('cb-gui');
+  var quyen = '<%= cbQuyen %>';
+  var daChao = false;
+
+  /* Markdown toi gian: **dam**, _nghieng_. Tu escape HTML truoc de noi dung
+     tra ve tu server khong the chen the script vao trang. */
+  function thoat(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function dinhDang(s) {
+    return thoat(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/_([^_]+)_/g, '<em>$1</em>');
+  }
+  function laSo(v) { return v !== null && v !== '' && !isNaN(Number(v)); }
+  function soVN(v) { return Number(v).toLocaleString('vi-VN'); }
+
+  function themTin(vaiTro, noiDung, kem) {
+    var d = document.createElement('div');
+    d.className = 'cb-tn cb-tn--' + (vaiTro === 'toi' ? 'toi' : 'bot');
+    var noi = document.createElement('div');
+    noi.className = 'cb-tn__noi';
+    noi.innerHTML = dinhDang(noiDung);
+
+    if (kem && kem.bang && kem.bang.length && kem.cot && kem.cot.length) {
+      var boc = document.createElement('div');
+      boc.className = 'cb-bang-cuon';
+      var t = '<table class="cb-bang"><thead><tr>';
+      kem.cot.forEach(function (c) { t += '<th>' + thoat(c.nhan) + '</th>'; });
+      t += '</tr></thead><tbody>';
+      kem.bang.slice(0, 25).forEach(function (r) {
+        t += '<tr>';
+        kem.cot.forEach(function (c) {
+          var v = r[c.khoa];
+          t += laSo(v) ? '<td class="cb-so">' + soVN(v) + '</td>'
+                       : '<td>' + thoat(v == null ? '—' : v) + '</td>';
+        });
+        t += '</tr>';
+      });
+      t += '</tbody></table>';
+      boc.innerHTML = t;
+      noi.appendChild(boc);
+      if (kem.bang.length > 25) {
+        var ghi = document.createElement('em');
+        ghi.textContent = 'Hiển thị 25/' + kem.bang.length + ' dòng.';
+        noi.appendChild(ghi);
+      }
+    }
+
+    if (kem && kem.nguon === 'du_phong') {
+      var nhan = document.createElement('span');
+      nhan.className = 'cb-nhan-ml';
+      nhan.textContent = 'Chế độ dự phòng — dịch vụ AI chưa bật';
+      noi.appendChild(nhan);
+    }
+
+    /* Cham cau tra loi: du lieu nay dung de do do hai long trong bao cao. */
+    if (kem && kem.id_nhat_ky) {
+      var cham = document.createElement('div');
+      cham.className = 'cb-cham';
+      [['👍', true], ['👎', false]].forEach(function (c) {
+        var b = document.createElement('button');
+        b.textContent = c[0];
+        b.title = c[1] ? 'Hữu ích' : 'Chưa đúng ý';
+        b.onclick = function () {
+          fetch('/chatbot/api/danh-gia', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: kem.id_nhat_ky, huu_ich: c[1] })
+          }).catch(function () {});
+          cham.querySelectorAll('button').forEach(function (x) { x.classList.remove('cb-da-cham'); });
+          b.classList.add('cb-da-cham');
+        };
+        cham.appendChild(b);
+      });
+      noi.appendChild(cham);
+    }
+
+    if (kem && kem.goi_y && kem.goi_y.length) {
+      var g = document.createElement('div');
+      g.className = 'cb-goiy';
+      kem.goi_y.forEach(function (cau) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = cau;
+        b.onclick = function () { gui(cau); };
+        g.appendChild(b);
+      });
+      noi.appendChild(g);
+    }
+
+    d.appendChild(noi);
+    than.appendChild(d);
+    than.scrollTop = than.scrollHeight;
+    return d;
+  }
+
+  function themDangNghi() {
+    var d = document.createElement('div');
+    d.className = 'cb-tn cb-tn--bot';
+    d.innerHTML = '<div class="cb-tn__noi cb-dangnghi"><span></span><span></span><span></span></div>';
+    than.appendChild(d);
+    than.scrollTop = than.scrollHeight;
+    return d;
+  }
+
+  function gui(cauHoi) {
+    cauHoi = String(cauHoi || '').trim();
+    if (!cauHoi) return;
+    themTin('toi', cauHoi);
+    oNhap.value = '';
+    nutGui.disabled = true;
+    var nghi = themDangNghi();
+
+    fetch('/chatbot/api/hoi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cau_hoi: cauHoi })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (kq) {
+        nghi.remove();
+        themTin('bot', kq.van_ban || 'Mình chưa trả lời được câu này.', kq);
+        if (kq.chuyen_nhan_vien) {
+          themTin('bot', 'Bạn nhấn vào **mục Chat** trên thanh menu để nhắn trực tiếp với nhân viên nhé.');
+        }
+      })
+      .catch(function () {
+        nghi.remove();
+        themTin('bot', 'Mình không kết nối được máy chủ. Bạn thử lại sau ít phút nhé.');
+      })
+      .finally(function () { nutGui.disabled = false; oNhap.focus(); });
+  }
+
+  function chaoLanDau() {
+    if (daChao) return;
+    daChao = true;
+    fetch('/chatbot/api/cau-hoi-mau')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        themTin('bot',
+          quyen === 'quan_ly'
+            ? 'Chào bạn! Mình là trợ lý ảo. Bạn đang đăng nhập quyền **quản lý** nên hỏi được cả số liệu kinh doanh.'
+            : 'Chào bạn! Mình là trợ lý ảo của nhà hàng. Mình giúp gì được cho bạn?',
+          { goi_y: d.cau_hoi });
+      })
+      .catch(function () {
+        themTin('bot', 'Chào bạn! Mình là trợ lý ảo của nhà hàng. Mình giúp gì được cho bạn?');
+      });
+  }
+
+  nut.onclick = function () {
+    khung.classList.toggle('cb-mo');
+    if (khung.classList.contains('cb-mo')) { chaoLanDau(); oNhap.focus(); }
+  };
+  document.getElementById('cb-dong').onclick = function () { khung.classList.remove('cb-mo'); };
+  form.onsubmit = function (e) { e.preventDefault(); gui(oNhap.value); };
+})();
+</script>

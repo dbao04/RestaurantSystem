@@ -1,31 +1,74 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Về chúng tôi', activeNav: 'about' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Về chúng tôi</h1>
+<!-- ================= HERO NHỎ ================= -->
+<section class="nh-subhero">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_1.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Hành trình của chúng tôi</span>
+    <h1>Về chúng tôi</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Về chúng tôi</div>
+  </div>
+</section>
+
+<!-- ================= CÂU CHUYỆN ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container nh-about">
+    <div class="nh-about__imgs nh-reveal">
+      <img src="/about.jpg" alt="Không gian" onerror="this.src='/bg_2.jpg'">
+      <img src="/about-1.jpg" alt="Ẩm thực" onerror="this.src='/bg_4.jpg'">
+      <div class="nh-about__badge" style="font-family:var(--nh-serif)">
+        <span style="font-size:1rem;line-height:1.25;font-family:var(--nh-serif)">Tinh hoa<br>Pháp&nbsp;×&nbsp;Việt</span>
+      </div>
+    </div>
+    <div class="nh-about__text nh-reveal" data-delay="1">
+      <span class="nh-eyebrow">Về chúng tôi</span>
+      <h2 class="nh-section-title">Nơi hương vị<br>gặp gỡ nghệ thuật</h2>
+      <div class="nh-divider" style="margin-left:0"></div>
+      <p>Với tâm huyết mang đến hương vị chuẩn mực, Nhà Hàng Bảo Đoàn không chỉ là nơi thưởng thức món ăn, mà còn là không gian kết nối những giá trị văn hóa ẩm thực tinh tế giữa Pháp và Việt.</p>
+      <p>Từ nguyên liệu tuyển chọn kỹ lưỡng đến bàn tay tài hoa của người đầu bếp, mỗi món ăn đều là kết tinh của đam mê và sự tận tâm.</p>
+      <div class="nh-sign">— Bếp trưởng Nhà Hàng Bảo Đoàn</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GIÁ TRỊ CỐT LÕI ================= -->
+<section class="nh-section nh-section--dark">
+  <div class="nh-container">
+    <div class="nh-head nh-center nh-reveal">
+      <span class="nh-eyebrow">Điều làm nên khác biệt</span>
+      <h2 class="nh-section-title">Giá trị cốt lõi</h2>
+      <div class="nh-divider"></div>
+    </div>
+    <div class="nh-features">
+      <div class="nh-feature nh-reveal" data-delay="1">
+        <div class="nh-feature__icon"><i class="fas fa-seedling"></i></div>
+        <h3>Tươi &amp; sạch</h3>
+        <p>Nguyên liệu chọn lọc mỗi ngày, đặt sức khỏe thực khách lên hàng đầu.</p>
+      </div>
+      <div class="nh-feature nh-reveal" data-delay="2">
+        <div class="nh-feature__icon"><i class="fas fa-fire-alt"></i></div>
+        <h3>Đam mê ẩm thực</h3>
+        <p>Mỗi món ăn là một tác phẩm, chế biến bằng tất cả sự tận tâm.</p>
+      </div>
+      <div class="nh-feature nh-reveal" data-delay="3">
+        <div class="nh-feature__icon"><i class="fas fa-heart"></i></div>
+        <h3>Phục vụ từ tâm</h3>
+        <p>Chúng tôi trân trọng từng khoảnh khắc bạn dành cho nhà hàng.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="ftco-section ftco-wrap-about">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-7 d-flex">
-        <div class="img img-1 mr-md-2" style="background-image: url(/about.jpg);"></div>
-        <div class="img img-2 ml-md-2" style="background-image: url(/about-1.jpg);"></div>
-      </div>
-      <div class="col-md-5 wrap-about pt-5 pt-md-5 pb-md-3 ftco-animate">
-        <div class="heading-section mb-4 my-5 my-md-0">
-          <span class="subheading">Về chúng tôi</span>
-          <h2 class="mb-4">NHA HANG BD</h2>
-        </div>
-        <p>Với tâm huyết mang đến hương vị chuẩn mực, NHA HANG BD không chỉ là nơi thưởng thức món ăn, mà còn là không gian kết nối những giá trị văn hóa ẩm thực tinh tế giữa Pháp và Việt.</p>
-      </div>
-    </div>
+<!-- ================= CTA ================= -->
+<section class="nh-cta">
+  <div class="nh-cta__bg" style="background-image:url('/bg_5.jpg')"></div>
+  <div class="nh-cta__veil"></div>
+  <div class="nh-container nh-cta__inner nh-reveal">
+    <span class="nh-eyebrow">Mời bạn ghé thăm</span>
+    <h2>Hãy để chúng tôi<br>chiêu đãi bạn</h2>
+    <p>Đặt bàn ngay hôm nay và tận hưởng trải nghiệm ẩm thực đáng nhớ cùng Nhà Hàng Bảo Đoàn.</p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
   </div>
 </section>
 

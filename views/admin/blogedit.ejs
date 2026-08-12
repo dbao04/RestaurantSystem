@@ -1,35 +1,57 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Sửa bài viết</h2>
-        <div class="block">
-            <form action="/admin/blogedit/<%= post.id_bv %>" method="POST" enctype="multipart/form-data">
-                <table class="form">
-                    <tr>
-                        <td><label>Tiêu đề</label></td>
-                        <td><input type="text" name="tieu_de" value="<%= post.tieu_de %>" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Hình ảnh hiện tại</label></td>
-                        <td>
-                            <% if (post.hinh_anh) { %>
-                                <img src="/food/<%= post.hinh_anh %>" width="200" /><br />
-                            <% } %>
-                            <input type="file" name="hinh_anh" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top; padding-top: 9px;"><label>Nội dung</label></td>
-                        <td><textarea name="noi_dung" style="width: 500px; height: 300px;" required><%= post.noi_dung %></textarea></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Cập nhật" /></td>
-                    </tr>
-                </table>
-            </form>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Sửa bài viết</h2>
+            <p>Cập nhật nội dung bài “<%= post.tieu_de %>”.</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/bloglist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
         </div>
     </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/blogedit/<%= post.id_bv %>" method="POST" enctype="multipart/form-data">
+            <div class="qt-field">
+                <label for="tieu_de">Tiêu đề <span class="qt-req">*</span></label>
+                <input type="text" id="tieu_de" name="tieu_de" value="<%= post.tieu_de %>" required />
+            </div>
+
+            <div class="qt-field">
+                <label>Hình ảnh hiện tại</label>
+                <div class="qt-preview">
+                    <% if (post.hinh_anh) { %>
+                        <img src="/food/<%= post.hinh_anh %>" alt="<%= post.tieu_de %>" onerror="this.src='/logo.png'">
+                        <span class="qt-field__hint" style="margin:0"><%= post.hinh_anh %></span>
+                    <% } else { %>
+                        <span class="qt-thumb--none"><i class="fas fa-image"></i></span>
+                        <span class="qt-field__hint" style="margin:0">Bài viết này chưa có ảnh.</span>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="qt-field">
+                <label>Đổi hình ảnh</label>
+                <label class="qt-file">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                    <span>Chọn ảnh mới từ máy tính</span>
+                    <input type="file" name="hinh_anh" accept="image/*" />
+                </label>
+                <div class="qt-field__hint">Để trống nếu không muốn đổi ảnh.</div>
+            </div>
+
+            <div class="qt-field">
+                <label for="noi_dung">Nội dung <span class="qt-req">*</span></label>
+                <textarea id="noi_dung" name="noi_dung" style="min-height:300px" required><%= post.noi_dung %></textarea>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Cập nhật</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/bloglist">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
 <%- include('partials/footer') %>

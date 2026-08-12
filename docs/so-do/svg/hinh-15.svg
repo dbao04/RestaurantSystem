@@ -1,0 +1,92 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1260 800" role="img" aria-label="Sơ đồ lớp tầng dịch vụ nghiệp vụ: quan hệ giữa tầng định tuyến, tầng dịch vụ và pool cơ sở dữ liệu"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-lopA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-lopA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="lop "><rect class="vien" x="30" y="40" width="170" height="113" rx="3"/><rect class="ngan-ten" x="30" y="40" width="170" height="37" rx="3"/><text class="tx-khuon" x="115" y="54">&#171;router&#187;</text><text class="tx-lop-ten" x="115" y="69">server.js</text><line x1="30" y1="77" x2="200" y2="77"/><text class="tx-lop" x="41" y="89">− io: Server</text><line x1="30" y1="99" x2="200" y2="99"/><text class="tx-lop pt" x="41" y="111">+ GET /qr/table/:tableId</text><text class="tx-lop pt" x="41" y="127">+ POST /qr/add-dish</text><text class="tx-lop pt" x="41" y="143">+ GET /qr/table/:tableId/don</text></g><g class="lop "><rect class="vien" x="330" y="40" width="173" height="91" rx="3"/><rect class="ngan-ten" x="330" y="40" width="173" height="37" rx="3"/><text class="tx-khuon" x="416.5" y="54">&#171;router&#187;</text><text class="tx-lop-ten" x="416.5" y="69">routes/kds.js</text><line x1="330" y1="77" x2="503" y2="77"/><text class="tx-lop pt" x="341" y="89">+ GET /kds/api/don</text><text class="tx-lop pt" x="341" y="105">+ POST /kds/api/:buoc/:id</text><text class="tx-lop pt" x="341" y="121">+ GET /so-do-ban/api/du-lieu</text></g><g class="lop "><rect class="vien" x="650" y="40" width="231" height="91" rx="3"/><rect class="ngan-ten" x="650" y="40" width="231" height="37" rx="3"/><text class="tx-khuon" x="765.5" y="54">&#171;router&#187;</text><text class="tx-lop-ten" x="765.5" y="69">routes/thanhToan.js</text><line x1="650" y1="77" x2="881" y2="77"/><text class="tx-lop pt" x="661" y="89">+ POST /qr/thanh-toan/:sesis/tao-phien</text><text class="tx-lop pt" x="661" y="105">+ POST /api/webhook/ngan-hang</text><text class="tx-lop pt" x="661" y="121">+ GET /staff/thanh-toan/:sesis</text></g><g class="lop "><rect class="vien" x="1030" y="40" width="147" height="75" rx="3"/><rect class="ngan-ten" x="1030" y="40" width="147" height="37" rx="3"/><text class="tx-khuon" x="1103.5" y="54">&#171;router&#187;</text><text class="tx-lop-ten" x="1103.5" y="69">routes/analytics.js</text><line x1="1030" y1="77" x2="1177" y2="77"/><text class="tx-lop pt" x="1041" y="89">+ GET /analytics</text><text class="tx-lop pt" x="1041" y="105">+ GET /analytics/api/*</text></g><g class="lop "><rect class="vien" x="30" y="250" width="234" height="161" rx="3"/><rect class="ngan-ten" x="30" y="250" width="234" height="37" rx="3"/><text class="tx-khuon" x="147" y="264">&#171;module&#187;</text><text class="tx-lop-ten" x="147" y="279">orderService</text><line x1="30" y1="287" x2="264" y2="287"/><text class="tx-lop" x="41" y="299">− MAT_KHAU_VO_HIEU: string</text><line x1="30" y1="309" x2="264" y2="309"/><text class="tx-lop pt" x="41" y="321">+ layBanQR(tableId)</text><text class="tx-lop pt" x="41" y="337">+ phienDangMoCuaBan(tableId)</text><text class="tx-lop pt" x="41" y="353">+ createQROrder(tableId)</text><text class="tx-lop pt" x="41" y="369">+ addMultipleDishesToOrder(sesis, items)</text><text class="tx-lop pt" x="41" y="385">+ donCuaBanQR(tableId)</text><text class="tx-lop pt" x="41" y="401">+ createOrderFromCart(...)</text></g><g class="lop "><rect class="vien" x="330" y="250" width="184" height="161" rx="3"/><rect class="ngan-ten" x="330" y="250" width="184" height="37" rx="3"/><text class="tx-khuon" x="422" y="264">&#171;module&#187;</text><text class="tx-lop-ten" x="422" y="279">kdsService</text><line x1="330" y1="287" x2="514" y2="287"/><text class="tx-lop" x="341" y="299">+ TEN_TRANG_THAI_BEP: {0..3}</text><text class="tx-lop" x="341" y="315">+ TEN_TRANG_THAI_BAN: {0..3}</text><line x1="330" y1="325" x2="514" y2="325"/><text class="tx-lop pt" x="341" y="337">+ layDonBep()</text><text class="tx-lop pt" x="341" y="353">+ batDauCheBien(id)</text><text class="tx-lop pt" x="341" y="369">+ hoanThanhCheBien(id)</text><text class="tx-lop pt" x="341" y="385">+ danhDauDaPhucVu(id)</text><text class="tx-lop pt" x="341" y="401">+ laySoDoBan()</text></g><g class="lop "><rect class="vien" x="650" y="250" width="240" height="145" rx="3"/><rect class="ngan-ten" x="650" y="250" width="240" height="37" rx="3"/><text class="tx-khuon" x="770" y="264">&#171;module&#187;</text><text class="tx-lop-ten" x="770" y="279">thanhToanService</text><line x1="650" y1="287" x2="890" y2="287"/><text class="tx-lop" x="661" y="299">− cauHinh: object</text><line x1="650" y1="309" x2="890" y2="309"/><text class="tx-lop pt" x="661" y="321">+ taoPhien({sesis, soTien, maPhuongThuc})</text><text class="tx-lop pt" x="661" y="337">+ ghiNhanGiaoDichNganHang(gd)</text><text class="tx-lop pt" x="661" y="353">+ layHoaDon(sesis, opts)</text><text class="tx-lop pt" x="661" y="369">+ xacNhan(id) / huyPhien(id)</text><text class="tx-lop pt" x="661" y="385">− sinhMaDoiSoat()</text></g><g class="lop "><rect class="vien" x="1030" y="250" width="147" height="107" rx="3"/><rect class="ngan-ten" x="1030" y="250" width="147" height="37" rx="3"/><text class="tx-khuon" x="1103.5" y="264">&#171;module&#187;</text><text class="tx-lop-ten" x="1103.5" y="279">analyticsService</text><line x1="1030" y1="287" x2="1177" y2="287"/><text class="tx-lop pt" x="1041" y="299">+ khoangNgay(tu, den)</text><text class="tx-lop pt" x="1041" y="315">+ tongQuan(tu, den)</text><text class="tx-lop pt" x="1041" y="331">+ doanhThuTheoNgay(...)</text><text class="tx-lop pt" x="1041" y="347">+ topMonBanChay(...)</text></g><g class="lop "><rect class="vien" x="30" y="520" width="161" height="107" rx="3"/><rect class="ngan-ten" x="30" y="520" width="161" height="37" rx="3"/><text class="tx-khuon" x="110.5" y="534">&#171;module&#187;</text><text class="tx-lop-ten" x="110.5" y="549">menuService</text><line x1="30" y1="557" x2="191" y2="557"/><text class="tx-lop pt" x="41" y="569">+ getAllCategories()</text><text class="tx-lop pt" x="41" y="585">+ getDishesByCategory(id)</text><text class="tx-lop pt" x="41" y="601">+ getRecipeByDish(idMon)</text><text class="tx-lop pt" x="41" y="617">+ addStockIn(phieu)</text></g><g class="lop "><rect class="vien" x="650" y="560" width="136" height="97" rx="3"/><rect class="ngan-ten" x="650" y="560" width="136" height="37" rx="3"/><text class="tx-khuon" x="718" y="574">&#171;module&#187;</text><text class="tx-lop-ten" x="718" y="589">vietQR</text><line x1="650" y1="597" x2="786" y2="597"/><text class="tx-lop" x="661" y="609">+ nganHang: map 40+ mã</text><line x1="650" y1="619" x2="786" y2="619"/><text class="tx-lop pt" x="661" y="631">+ tlv(id, giaTri)</text><text class="tx-lop pt" x="661" y="647">+ noiDung(sesis)</text></g><g class="lop "><rect class="vien" x="330" y="560" width="132" height="97" rx="3"/><rect class="ngan-ten" x="330" y="560" width="132" height="37" rx="3"/><text class="tx-khuon" x="396" y="574">&#171;module&#187;</text><text class="tx-lop-ten" x="396" y="589">realtime</text><line x1="330" y1="597" x2="462" y2="597"/><text class="tx-lop" x="341" y="609">− io: Server</text><line x1="330" y1="619" x2="462" y2="619"/><text class="tx-lop pt" x="341" y="631">+ phat(sesis, sk, dl)</text><text class="tx-lop pt" x="341" y="647">+ phong(nv)</text></g><g class="lop "><rect class="vien" x="1030" y="560" width="132" height="97" rx="3"/><rect class="ngan-ten" x="1030" y="560" width="132" height="37" rx="3"/><text class="tx-khuon" x="1096" y="574">&#171;singleton&#187;</text><text class="tx-lop-ten" x="1096" y="589">config/db</text><line x1="1030" y1="597" x2="1162" y2="597"/><text class="tx-lop" x="1041" y="609">− pool: mysql2.Pool</text><line x1="1030" y1="619" x2="1162" y2="619"/><text class="tx-lop pt" x="1041" y="631">+ query(sql, tham_so)</text><text class="tx-lop pt" x="1041" y="647">+ getConnection()</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="115,153 147,250" fill="none" marker-end="url(#mui-lopA)"/><text class="tx-boi" x="173" y="201.5">«use»</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="416.5,131 422,250" fill="none" marker-end="url(#mui-lopA)"/><text class="tx-boi" x="461.25" y="190.5">«use»</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="765.5,131 770,250" fill="none" marker-end="url(#mui-lopA)"/><text class="tx-boi" x="809.75" y="190.5">«use»</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="1103.5,115 1103.5,250" fill="none" marker-end="url(#mui-lopA)"/><text class="tx-boi" x="1145.5" y="182.5">«use»</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="1103.5,357 1103.5,560" fill="none" marker-end="url(#mui-lopA)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="890,370 1000,370 1000,560" fill="none" marker-end="url(#mui-lopA)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="191,540 1012,540 1012,560" fill="none" marker-end="url(#mui-lopA)"/></g><g class="qh-lop-g"><polyline class="lk-dut" points="30,380 12,380 12,700 1060,700 1060,657" fill="none" marker-end="url(#mui-lopA)"/></g><text class="tx-boi" x="600" y="692">mọi truy vấn SQL đều đi qua một pool duy nhất</text><g class="qh-lop-g"><polyline class="qh-lop" points="770,395 718,560" fill="none"/><polygon class="thoi dac" points="770,395 761.8728323699422,400.8265895953757 765.1907514450867,410.26011560693644 773.3179190751446,404.43352601156073"/><text class="tx-boi" x="832" y="421">sinh mã QR</text></g><g class="qh-lop-g"><polyline class="qh-lop" points="422,411 396,560" fill="none"/><polygon class="thoi " points="422,411 414.7141192554079,417.84952128075986 419.2496130764516,426.76183275418106 426.5354938210437,419.91231147342114"/><text class="tx-boi" x="484" y="445">phát sự kiện</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="147,411 110.5,520" fill="none" marker-end="url(#mui-lopA)"/><text class="tx-boi" x="187" y="437">«use»</text></g><g class="ghi-chu">
+    <text class="tx-ghi" x="30" y="745">Toàn bộ câu lệnh SQL nằm ở tầng dịch vụ. Tầng định tuyến chỉ nhận tham số, kiểm tra quyền rồi gọi xuống — nhờ ranh giới này,</text><text class="tx-ghi" x="30" y="758">đổi một câu truy vấn hay đổi cả lược đồ bảng chỉ phải sửa trong services/ mà không lần theo hàng nghìn dòng ở tầng trên.</text>
+  </g></svg>

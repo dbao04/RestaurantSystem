@@ -1,0 +1,125 @@
+<!--
+  Widget goi y mon di kem (Tang 4 - AI).
+
+  Lay goi y tu luat ket hop Apriori dua tren cac mon dang co trong gio hang.
+  Neu gio trong hoac chua co luat nao khop, backend tu dong tra ve mon ban chay
+  nen widget luon co noi dung de hien thi.
+-->
+<section class="ftco-section pt-0" id="khu-goi-y" style="display:none">
+  <div class="container">
+    <div class="goi-y-box">
+      <div class="goi-y-dau">
+        <div>
+          <h3 class="goi-y-tieu-de">Có thể bạn sẽ thích</h3>
+          <p class="goi-y-mo-ta" id="goiYMoTa">Gợi ý dựa trên các món bạn đã chọn</p>
+        </div>
+        <span class="goi-y-nhan" id="goiYNhan"></span>
+      </div>
+      <div class="goi-y-luoi" id="goiYLuoi"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .goi-y-box {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 26px 28px; box-shadow: 0 2px 14px rgba(0,0,0,.05);
+  }
+  .goi-y-dau {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+  }
+  .goi-y-tieu-de { margin: 0; font-size: 22px; color: #1a1a1a; }
+  .goi-y-mo-ta { margin: 5px 0 0; font-size: 14px; color: #888; }
+  .goi-y-nhan {
+    font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 20px;
+    background: #eef2ff; color: #4338ca; white-space: nowrap;
+  }
+  .goi-y-luoi {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px;
+  }
+  .goi-y-the {
+    border: 1px solid #eee; border-radius: 10px; overflow: hidden;
+    transition: box-shadow .2s, transform .2s; background: #fff;
+  }
+  .goi-y-the:hover { box-shadow: 0 6px 20px rgba(0,0,0,.10); transform: translateY(-3px); }
+  .goi-y-anh {
+    height: 140px; background-size: cover; background-position: center;
+    background-color: #f3f4f6;
+  }
+  .goi-y-than { padding: 13px 15px 16px; }
+  .goi-y-ten {
+    font-weight: 600; font-size: 15px; margin: 0 0 6px; color: #1a1a1a;
+    min-height: 40px; line-height: 1.35;
+  }
+  .goi-y-gia { color: #c0392b; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+  .goi-y-vi-sao {
+    font-size: 11.5px; color: #6b7280; background: #f9fafb; border-radius: 6px;
+    padding: 6px 9px; margin-bottom: 11px; line-height: 1.45;
+  }
+  .goi-y-vi-sao b { color: #4338ca; }
+  .goi-y-nut {
+    display: block; width: 100%; text-align: center; padding: 9px;
+    background: #c0392b; color: #fff; border: 0; border-radius: 6px;
+    font-size: 13.5px; cursor: pointer; text-decoration: none;
+  }
+  .goi-y-nut:hover { background: #a93226; color: #fff; text-decoration: none; }
+</style>
+
+<script>
+(function () {
+  const tienVN = (v) => Number(v || 0).toLocaleString('vi-VN') + 'đ';
+
+  async function taiGoiY() {
+    let kq;
+    try {
+      const r = await fetch('/goi-y/api/theo-gio-hang?so_luong=4');
+      if (!r.ok) return;
+      kq = await r.json();
+    } catch (e) {
+      // Goi y la tinh nang phu tro - loi o day khong duoc anh huong trang chinh.
+      console.warn('Khong tai duoc goi y:', e);
+      return;
+    }
+
+    const ds = (kq && kq.goi_y) || [];
+    if (!ds.length) return;
+
+    const tuLuat = kq.nguon === 'luat_ket_hop';
+    document.getElementById('goiYNhan').textContent =
+      tuLuat ? 'AI • Luật kết hợp Apriori' : 'Món bán chạy';
+    document.getElementById('goiYMoTa').textContent = tuLuat
+      ? 'Gợi ý dựa trên thói quen gọi món của khách hàng khác'
+      : 'Những món được gọi nhiều nhất gần đây';
+
+    document.getElementById('goiYLuoi').innerHTML = ds.map((m) => {
+      const anh = m.images ? `/food/${m.images}` : '/bg_3.jpg';
+      const viSao = m.lift
+        ? `<b>${(m.tin_cay * 100).toFixed(0)}%</b> khách gọi món này kèm theo &mdash; phổ biến gấp <b>${Number(m.lift).toFixed(1)} lần</b> bình thường`
+        : 'Nằm trong nhóm món được gọi nhiều nhất';
+      return `
+        <div class="goi-y-the">
+          <div class="goi-y-anh" style="background-image:url('${anh}')"></div>
+          <div class="goi-y-than">
+            <p class="goi-y-ten">${m.name_mon}</p>
+            <div class="goi-y-gia">${tienVN(m.gia_mon)}</div>
+            <div class="goi-y-vi-sao">${viSao}</div>
+            <form action="/add-to-cart" method="POST">
+              <input type="hidden" name="monid" value="${m.id_mon}">
+              <input type="hidden" name="soluong" value="1">
+              <button type="submit" class="goi-y-nut">Thêm vào giỏ</button>
+            </form>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('khu-goi-y').style.display = '';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', taiGoiY);
+  } else {
+    taiGoiY();
+  }
+})();
+</script>

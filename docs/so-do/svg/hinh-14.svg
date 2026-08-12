@@ -1,0 +1,118 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1010 390" role="img" aria-label="Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-cg3" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-cg3" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><text class="tx-goi" x="14" y="20">L&#7898;P V&#192; L&#431;&#7906;C &#272;&#7890; CSDL</text><g class="lop "><rect class="vien" x="14" y="32" width="132" height="81" rx="3"/><rect class="ngan-ten" x="14" y="32" width="132" height="37" rx="3"/><text class="tx-khuon" x="80" y="46">&#171;module&#187;</text><text class="tx-lop-ten" x="80" y="61">Tên lớp</text><line x1="14" y1="69" x2="146" y2="69"/><text class="tx-lop" x="25" y="81">− thuộc tính</text><line x1="14" y1="91" x2="146" y2="91"/><text class="tx-lop pt" x="25" y="103">+ phương thức()</text></g><g class="bang "><rect class="vien" x="210" y="32" width="124" height="62" rx="3"/><rect class="ngan-ten" x="210" y="32" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="272" y="48">ten_bang</text><line x1="210" y1="56" x2="334" y2="56"/><text class="tx-khoa" x="218" y="69">PK</text><text class="tx-cot" x="240" y="69">khoá chính</text><text class="tx-khoa" x="218" y="85">FK</text><text class="tx-cot" x="240" y="85">khoá ngoại</text></g><g class="qh-lop-g"><polyline class="lk-dut" points="400,60 480,60" fill="none" marker-end="url(#mui-cg3)"/></g><text class="tx-ghi" x="400" y="82">phụ thuộc «use»</text><g class="qh-lop-g"><polyline class="qh-lop" points="560,60 640,60" fill="none"/><polygon class="thoi dac" points="560,60 568,66 576,60 568,54"/></g><text class="tx-ghi" x="560" y="82">cấu thành</text><g class="qh-lop-g"><polyline class="qh-lop" points="700,60 780,60" fill="none"/><polygon class="thoi " points="700,60 708,66 716,60 708,54"/></g><text class="tx-ghi" x="700" y="82">gộp</text><g class="noi-bang">
+    <polyline class="qh-lop" points="850,60 960,60"/>
+    <line x1="861" y1="53" x2="861" y2="67"/><line x1="960" y1="60" x2="949" y2="60"/><line x1="960" y1="60" x2="949" y2="53"/><line x1="960" y1="60" x2="949" y2="67"/>
+  </g><text class="tx-ghi" x="840" y="82">một &#8212; nhiều (chân quạ)</text><text class="tx-goi" x="14" y="150">TU&#7846;N T&#7920;</text><g class="doi-tuong ">
+      <rect x="24" y="162" width="112" height="40" rx="4"/>
+      <text class="tx-dt" x="80" y="186.5">Đối tượng</text>
+    </g><line class="duong-doi" x1="80" y1="202" x2="80" y2="250"/><rect class="kich-hoat" x="74" y="210" width="12" height="34"/><g class="td">
+    <line class="tin" x1="90" y1="220" x2="300" y2="220" marker-end="url(#mui-cg3)"/>
+    <text class="tx-tin" x="195" y="214">thông điệp gọi</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="300" y1="248" x2="92" y2="248" marker-end="url(#mui-cg3)"/>
+    <text class="tx-tin" x="196" y="242">trả kết quả</text>
+  </g><g class="khoi">
+    <rect class="khung-tt" x="380" y="150" width="250" height="110"/>
+    <path class="the" d="M380,150 h38 l10,14 v6 h-48 z"/>
+    <text class="tx-khoi" style="text-anchor:start" x="387" y="164">alt</text>
+    <text class="tx-dk" style="text-anchor:start" x="440" y="165">[điều kiện]</text>
+    <line class="chia" x1="380" y1="212" x2="630" y2="212"/>
+      <text class="tx-dk" style="text-anchor:start" x="388" y="225">[ngược lại]</text>
+  </g><text class="tx-ghi" x="650" y="205">khung rẽ nhánh alt / opt / loop</text><rect class="kich-hoat" x="294" y="210" width="12" height="34"/><text class="tx-goi" x="14" y="300">HO&#7840;T &#272;&#7896;NG</text><g class="nut-dau"><circle cx="40" cy="330" r="10"/></g><text class="tx-ghi" x="20" y="366">bắt đầu</text><g class="hd ">
+      <rect x="127" y="311" width="126" height="38" rx="13"/>
+      <text class="tx-viec" x="190" y="334.5">Hành động</text>
+    </g><g class="qd">
+    <polygon points="360,304 392,330 360,356 328,330"/>
+    
+  </g><text class="tx-ghi" x="325" y="372">rẽ nhánh</text><rect class="thanh-db" x="460" y="327" width="120" height="6" rx="2"/><text class="tx-ghi" x="478" y="366">tách / nhập luồng</text><g class="hd tu-dong">
+      <rect x="649" y="311" width="142" height="38" rx="13"/>
+      <text class="tx-viec" x="720" y="334.5">Bước hệ thống tự chạy</text>
+    </g><g class="nut-cuoi"><circle class="ngoai" cx="890" cy="330" r="12"/><circle class="trong" cx="890" cy="330" r="7"/></g><text class="tx-ghi" x="866" y="366">kết thúc</text></svg>

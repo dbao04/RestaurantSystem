@@ -103,10 +103,17 @@
                       </button>
                     <% } %>
 
-                    <!-- Pay -->
-                    <form action="/staff/bookings/pay/<%= b.sesis %>" method="POST" class="d-inline">
-                      <button type="submit" class="btn btn-sm btn-success mb-1" title="Thanh Toán" onclick="return confirm('Xác nhận thanh toán cho đơn này?')"><i class="fas fa-check-double"></i></button>
-                    </form>
+                    <!--
+                      Thanh toán.
+                      Trước đây nút này POST thẳng /staff/bookings/pay và chỉ đổi
+                      tinhtrang = 3, không ghi số tiền, không ghi hình thức trả,
+                      không có biên lai. Nay chuyển sang màn hình thu ngân để có
+                      hóa đơn thật: chọn phương thức, áp mã giảm giá, chia bill,
+                      sinh mã VietQR và in biên lai.
+                    -->
+                    <a href="/staff/thanh-toan/<%= b.sesis %>" class="btn btn-sm btn-success mb-1" title="Thanh toán">
+                      <i class="fas fa-cash-register"></i>
+                    </a>
                   <% } %>
 
                   <% if(b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>

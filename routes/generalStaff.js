@@ -31,41 +31,14 @@ router.get('/', requireStaffLogin, asyncHandler(async (req, res) => {
 
 /**
  * ATTENDANCE MANAGEMENT
+ *
+ * POST /check-in va /check-out DA GO BO. Router nay hien chua duoc mount trong
+ * server.js, nhung de lai hai route cham cong bang mot cu POST thi ngay ai do
+ * mount no len la duong cham cong thu cong quay lai. Cham cong gio chi qua
+ * POST /api/khuon-mat/cham-cong (khuon mat + anh song + GPS).
+ *
+ * Phan XEM bao cao cong ben duoi van giu - chi doc, khong ghi.
  */
-router.post('/check-in', requireStaffLogin, auditLog('staff_check_in'), asyncHandler(async (req, res) => {
-  await generalStaffService.checkIn(req.session.staffId);
-  
-  // Log attendance action
-  await auditService.log({
-    action: 'staff_check_in',
-    actor_type: 'staff',
-    actor_id: req.session.staffId,
-    actor_name: req.session.staffName,
-    status: 'success',
-    ip_address: req.ip,
-    user_agent: req.get('user-agent')
-  });
-  
-  res.redirect('/staff?msg=Chấm+công+vào+thành+công&msgType=success');
-}));
-
-router.post('/check-out', requireStaffLogin, auditLog('staff_check_out'), asyncHandler(async (req, res) => {
-  await generalStaffService.checkOut(req.session.staffId);
-  
-  // Log attendance action
-  await auditService.log({
-    action: 'staff_check_out',
-    actor_type: 'staff',
-    actor_id: req.session.staffId,
-    actor_name: req.session.staffName,
-    status: 'success',
-    ip_address: req.ip,
-    user_agent: req.get('user-agent')
-  });
-  
-  res.redirect('/staff?msg=Chấm+công+ra+thành+công&msgType=success');
-}));
-
 router.get('/attendance', requireStaffLogin, asyncHandler(async (req, res) => {
   const [year, month] = (req.query.thang || new Date().toISOString().slice(0, 7)).split('-').map(Number);
   const report = await generalStaffService.getMonthlyAttendanceReport(req.session.staffId, month, year);

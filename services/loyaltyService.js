@@ -189,6 +189,122 @@ const loyaltyService = {
       platinum: { name: 'Bạch kim', pointsPerSpent: 3, discount: 10 }
     };
     return benefits[tier] || benefits.bronze;
+  },
+
+  /* ====================================================================== */
+  /* QUAN TRI THANH VIEN                                                    */
+  /* ====================================================================== */
+
+  /** Nguong chi tieu de len hang - phai khop updateTier() o tren. */
+  NGUONG_HANG: { bronze: 0, silver: 2000000, gold: 5000000, platinum: 10000000 },
+  TEN_HANG: { bronze: 'Đồng', silver: 'Bạc', gold: 'Vàng', platinum: 'Bạch kim' },
+
+  /**
+   * Danh sach thanh vien cho trang quan tri.
+   *
+   * LEFT JOIN chu khong INNER: khach chi co ban ghi trong `loyalty_points` sau
+   * lan thanh toan dau tien, nen JOIN thuong se lam bien mat phan lon khach
+   * moi tao. Khach chua co vi diem duoc coi la hang Dong / 0 diem.
+   *
+   * @param {object} loc
+   *   - tuKhoa   tim theo ten / dien thoai / email
+   *   - hang     loc theo hang thanh vien
+   *   - keCaVangLai  co tinh ca khach QR khong (mac dinh: khong)
+   */
+  danhSachThanhVien: async (loc = {}) => {
+    const dieuKien = [];
+    const thamSo = [];
+
+    // Khach vang lai quet QR duoc sinh tu dong voi sodienthoai 'QR_xxx' - do
+    // khong phai thanh vien that, de lan vao se lam nhieu moi con so.
+    if (!loc.keCaVangLai) dieuKien.push("(k.sodienthoai IS NULL OR k.sodienthoai NOT LIKE 'QR_%')");
+
+    if (loc.tuKhoa) {
+      dieuKien.push('(k.ten LIKE ? OR k.sodienthoai LIKE ? OR k.email LIKE ?)');
+      const t = '%' + loc.tuKhoa + '%';
+      thamSo.push(t, t, t);
+    }
+    if (loc.hang) {
+      dieuKien.push(loc.hang === 'bronze'
+        ? "COALESCE(lp.tier, 'bronze') = 'bronze'"
+        : 'lp.tier = ?');
+      if (loc.hang !== 'bronze') thamSo.push(loc.hang);
+    }
+
+    const [rows] = await db.query(
+      `SELECT k.id, k.ten, k.sodienthoai, k.email, k.solandat,
+              COALESCE(lp.points, 0)        AS points,
+              COALESCE(lp.tier, 'bronze')   AS tier,
+              COALESCE(lp.total_spent, 0)   AS total_spent,
+              COALESCE(lp.redeemed_points, 0) AS redeemed_points,
+              lp.updated_at                 AS lan_cuoi,
+              (SELECT COUNT(*) FROM discount_usages u WHERE u.id_kh = k.id) AS so_ma_da_dung
+       FROM khach_hang k
+       LEFT JOIN loyalty_points lp ON lp.id_kh = k.id
+       ${dieuKien.length ? 'WHERE ' + dieuKien.join(' AND ') : ''}
+       ORDER BY COALESCE(lp.total_spent, 0) DESC, k.id DESC`,
+      thamSo
+    );
+    return rows;
+  },
+
+  /** So luong + chi tieu theo tung hang, da bo khach vang lai. */
+  thongKeHang: async () => {
+    const [rows] = await db.query(
+      `SELECT COALESCE(lp.tier, 'bronze') AS tier,
+              COUNT(*)                          AS so_khach,
+              COALESCE(SUM(lp.total_spent), 0)  AS tong_chi,
+              COALESCE(SUM(lp.points), 0)       AS tong_diem
+       FROM khach_hang k
+       LEFT JOIN loyalty_points lp ON lp.id_kh = k.id
+       WHERE k.sodienthoai IS NULL OR k.sodienthoai NOT LIKE 'QR_%'
+       GROUP BY COALESCE(lp.tier, 'bronze')`
+    );
+
+    // Tra ve du 4 hang ke ca hang chua co ai, de o giao dien khong bi nhay cot.
+    const theoHang = {};
+    ['bronze', 'silver', 'gold', 'platinum'].forEach((h) => {
+      const r = rows.find((x) => x.tier === h);
+      theoHang[h] = {
+        so_khach: r ? Number(r.so_khach) : 0,
+        tong_chi: r ? Number(r.tong_chi) : 0,
+        tong_diem: r ? Number(r.tong_diem) : 0,
+      };
+    });
+
+    const [[vangLai]] = await db.query(
+      "SELECT COUNT(*) AS n FROM khach_hang WHERE sodienthoai LIKE 'QR_%'"
+    );
+    return { theoHang, vangLai: Number(vangLai.n || 0) };
+  },
+
+  /** Ho so mot thanh vien: diem, lich su diem, lich su dung ma. */
+  chiTietThanhVien: async (id) => {
+    const [[kh]] = await db.query(
+      `SELECT k.id, k.ten, k.sodienthoai, k.email, k.diachi, k.solandat,
+              COALESCE(lp.points, 0)          AS points,
+              COALESCE(lp.tier, 'bronze')     AS tier,
+              COALESCE(lp.total_spent, 0)     AS total_spent,
+              COALESCE(lp.redeemed_points, 0) AS redeemed_points
+       FROM khach_hang k
+       LEFT JOIN loyalty_points lp ON lp.id_kh = k.id
+       WHERE k.id = ? LIMIT 1`,
+      [id]
+    );
+    if (!kh) return null;
+
+    const [giaoDichDiem] = await db.query(
+      'SELECT * FROM loyalty_transactions WHERE id_kh = ? ORDER BY id DESC LIMIT 30',
+      [id]
+    );
+    const [maDaDung] = await db.query(
+      `SELECT u.*, d.ten AS ten_chuong_trinh
+       FROM discount_usages u
+       LEFT JOIN discount_codes d ON d.id = u.discount_id
+       WHERE u.id_kh = ? ORDER BY u.id DESC LIMIT 30`,
+      [id]
+    );
+    return { kh, giaoDichDiem, maDaDung };
   }
 };
 

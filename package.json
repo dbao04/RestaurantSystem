@@ -1,3 +1,4 @@
+
 {
   "name": "restaurant",
   "version": "1.0.0",
@@ -8,6 +9,13 @@
   },
   "scripts": {
     "start": "node server.js",
+    "ml": "python -m uvicorn ml_service.main:app --host 127.0.0.1 --port 8000",
+    "db:setup": "node scripts/setup-db.js",
+    "db:check": "node scripts/check-db.js",
+    "db:export": "node scripts/export-db.js",
+    "qr:online": "node scripts/moOnline.js",
+    "mail:test": "node scripts/kiemTraMail.js",
+    "xepca:test": "node scripts/kiemTraXepCa.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^2.2.2",
+    "chart.js": "^4.5.1",
     "dotenv": "^17.3.1",
     "ejs": "^5.0.1",
     "express": "^5.2.1",
@@ -24,7 +33,11 @@
     "mysql2": "^3.20.0",
     "nodemailer": "^8.0.4",
     "qrcode": "^1.5.4",
+    "selfsigned": "^5.5.0",
     "socket.io": "^4.8.3",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.5.0"
   }
 }

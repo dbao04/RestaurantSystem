@@ -1,0 +1,133 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  // getDay(): 0 = Chu nhat. Bang xep theo thu tu Viet Nam (thu 2 truoc, CN cuoi)
+  // nen phai giu rieng danh sach nay thay vi lap 0..6.
+  var THU = [
+    { so: 1, ten: 'Thứ 2' }, { so: 2, ten: 'Thứ 3' }, { so: 3, ten: 'Thứ 4' },
+    { so: 4, ten: 'Thứ 5' }, { so: 5, ten: 'Thứ 6' }, { so: 6, ten: 'Thứ 7' },
+    { so: 0, ten: 'Chủ nhật' }
+  ];
+
+  var mucHienCo = {};
+  (dinhMuc || []).forEach(function (d) {
+    mucHienCo[d.thu + '|' + d.ma_ca + '|' + d.chucvu] = Number(d.so_luong);
+  });
+  function soHienCo(thu, maCa, cv) { return mucHienCo[thu + '|' + maCa + '|' + cv] || 0; }
+
+  // Chi hien nhung chuc vu thuc su co nguoi. Bay cot chuc vu trong khong ma
+  // khong bao gio dien duoc chi lam bang kho doc.
+  var cvHienThi = (chucVuList || []).filter(function (cv) { return (soNguoi[cv] || 0) > 0; });
+
+  var tongTuan = 0;
+  (dinhMuc || []).forEach(function (d) { tongTuan += Number(d.so_luong); });
+%>
+
+<style>
+  .dm-bang { width: 100%; border-collapse: collapse; }
+  .dm-bang th, .dm-bang td { border: 1px solid #e3e3e3; padding: 5px 7px; font-size: 13px; }
+  .dm-bang thead th { background: #faf7f4; text-align: center; }
+  .dm-bang td.dm-thu { background: #faf7f4; font-weight: 600; white-space: nowrap; }
+  .dm-bang td.dm-ca  { background: #fdfbf9; white-space: nowrap; }
+  .dm-bang input { width: 52px; text-align: center; padding: 2px; }
+  .dm-tran { color: #b03a2e; }
+  .dm-ghichu { font-size: 13px; color: #6b6b6b; margin-bottom: 14px; line-height: 1.6; }
+</style>
+
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2>Định mức nhân sự theo ca</h2>
+      <p>Mỗi ca cần bao nhiêu người — hiện <%= tongTuan %> lượt người mỗi tuần</p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/xep-ca">
+        <i class="fas fa-table-cells"></i> Về lưới xếp ca
+      </a>
+    </div>
+  </div>
+
+  <div class="qt-card__body">
+
+    <% if (msg) { %>
+      <div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %>"><%= msg %></div>
+    <% } %>
+
+    <div class="dm-ghichu">
+      Bảng này khai theo <strong>thứ trong tuần</strong>, không theo ngày cụ thể — khai một lần
+      dùng cho mọi tuần. Cuối tuần đông khách hơn thì để số lớn hơn.
+      Điền <strong>0</strong> nghĩa là ca đó không cần chức vụ đó.
+      <br>
+      Số người hiện có:
+      <% cvHienThi.forEach(function (cv) { %>
+        <strong><%= cv %></strong> <%= soNguoi[cv] %> người ·
+      <% }) %>
+      mỗi người tối đa 6 ca/tuần, nên tổng định mức một chức vụ vượt quá
+      <em>số người × 6</em> thì chắc chắn sẽ báo thiếu.
+    </div>
+
+    <form method="POST" action="/admin/xep-ca/dinh-muc">
+      <div class="qt-tablewrap">
+        <table class="dm-bang">
+          <thead>
+            <tr>
+              <th>Thứ</th>
+              <th>Ca</th>
+              <% cvHienThi.forEach(function (cv) { %>
+                <th><%= cv %><br><span style="font-weight:400; font-size:11px;">có <%= soNguoi[cv] %></span></th>
+              <% }) %>
+            </tr>
+          </thead>
+          <tbody>
+            <% THU.forEach(function (t) { %>
+              <% caList.forEach(function (ca, i) { %>
+                <tr>
+                  <% if (i === 0) { %>
+                    <td class="dm-thu" rowspan="<%= caList.length %>"><%= t.ten %></td>
+                  <% } %>
+                  <td class="dm-ca"><%= ca.ten_ca %></td>
+                  <% cvHienThi.forEach(function (cv) { %>
+                    <td style="text-align:center;">
+                      <input type="number" min="0" max="20"
+                             name="so_luong[<%= t.so %>|<%= ca.ma_ca %>|<%= cv %>]"
+                             value="<%= soHienCo(t.so, ca.ma_ca, cv) %>">
+                    </td>
+                  <% }) %>
+                </tr>
+              <% }) %>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="dm-thu">Tổng mỗi tuần</td>
+              <% cvHienThi.forEach(function (cv) { %>
+                <%
+                  var tong = 0;
+                  (dinhMuc || []).forEach(function (d) { if (d.chucvu === cv) tong += Number(d.so_luong); });
+                  var tran = (soNguoi[cv] || 0) * 6;
+                %>
+                <td style="text-align:center;" class="<%= tong > tran ? 'dm-tran' : '' %>">
+                  <strong><%= tong %></strong>
+                  <span style="font-size:11px; display:block;">tối đa <%= tran %></span>
+                </td>
+              <% }) %>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="margin-top:14px;">
+        <button class="qt-btn qt-btn--primary" type="submit">
+          <i class="fas fa-floppy-disk"></i> Lưu định mức
+        </button>
+        <span class="qt-sub" style="margin-left:10px;">
+          Lưu xong hãy quay về lưới và bấm “Xếp tự động” để áp dụng.
+        </span>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

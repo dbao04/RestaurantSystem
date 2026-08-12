@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chấm công khuôn mặt</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Kich thuoc duoc dieu khien boi bien CSS thay vi viet cung, de khoi @media
+       o cuoi tep chi phai doi vai con so thay vi chep lai ca bo quy tac. */
+    :root {
+      --co-tieu-de: 24px;  --co-thu-thach: 20px;  --co-nut: 18px;
+      --co-kq-icon: 96px;  --co-kq-ten: 36px;     --co-kq-chi-tiet: 20px;
+      --rong-video: 520px; --ti-le-video: 4/3;
+    }
+    * { box-sizing: border-box; }
+    /* `min-height:100dvh` chu khong phai 100vh: tren dien thoai, 100vh tinh ca
+       phan bi thanh dia chi che mat, nen nut cham cong nam duoi mep man hinh va
+       khong bam duoc. `dvh` la chieu cao THUC dang nhin thay. */
+    body { margin:0; min-height:100vh; min-height:100dvh;
+           font-family:'Nunito','Segoe UI',system-ui,sans-serif;
+           background:linear-gradient(135deg,#2c1810,#4e342e); color:#fff;
+           /* Truoc day la `overflow:hidden` cho dep tren man hinh lon. Tren dien
+              thoai man hinh ngan thi nut bam bi cat mat va khong cach nao cuon
+              toi - nen chi khoa cuon NGANG. */
+           overflow-x:hidden;
+           -webkit-text-size-adjust:100%;
+           /* Tranh tai nan lich su cua Safari iOS: cham hai lan lien tiep vao
+              nut se phong to trang. */
+           touch-action:manipulation; }
+    /* Flex theo cot ngay ca o che do thuong, de che do ngang chi phai doi
+       `flex-direction` va vai gia tri `order` thay vi sap xep lai DOM. */
+    .khung { max-width:760px; margin:0 auto; text-align:center;
+             display:flex; flex-direction:column;
+             /* safe-area: chua tai tho iPhone va thanh vuot cu chi o duoi. */
+             padding:calc(20px + env(safe-area-inset-top)) 16px
+                     calc(24px + env(safe-area-inset-bottom)); }
+    .khung-dau { order:1; }
+    .video-boc { order:2; }
+    .khung-phai { order:3; }
+    .dong-ho { font-size:15px; opacity:.75; }
+    h1 { font-size:var(--co-tieu-de); margin:6px 0 14px; font-weight:800; }
+    h1 .cham { display:inline-block; width:11px; height:11px; border-radius:50%; background:#b7b9cc; margin-left:6px; }
+
+    .video-boc { position:relative; width:100%; max-width:var(--rong-video); margin:0 auto;
+                 aspect-ratio:var(--ti-le-video);
+                 border-radius:18px; overflow:hidden; background:#000; box-shadow:0 1rem 3rem rgba(0,0,0,.5);
+                 border:3px solid rgba(255,255,255,.15); }
+    video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+    .khung-mat { position:absolute; inset:12% 20%; border:3px dashed rgba(255,255,255,.35);
+                 border-radius:50%/60%; pointer-events:none; transition:border-color .3s; }
+    .khung-mat.tot { border-color:#1cc88a; }
+
+    /* Nut doi camera truoc/sau - chi hien khi may co tu hai camera. */
+    .nut-doi-cam { position:absolute; right:10px; bottom:10px; width:44px; height:44px;
+                   border-radius:50%; border:none; background:rgba(0,0,0,.55); color:#fff;
+                   font-size:17px; cursor:pointer; display:none; align-items:center;
+                   justify-content:center; backdrop-filter:blur(4px); }
+    .nut-doi-cam.hien { display:flex; }
+
+    .thu-thach { margin:16px auto 6px; font-size:var(--co-thu-thach); font-weight:700; min-height:28px; }
+    .thu-thach i { color:#c8a951; }
+    .thanh-tien-do { width:100%; max-width:var(--rong-video); height:8px; background:rgba(255,255,255,.15);
+                     border-radius:5px; margin:8px auto; overflow:hidden; }
+    .thanh-tien-do > i { display:block; height:100%; width:0; background:#1cc88a; transition:width .2s; }
+
+    .trang-thai { margin-top:10px; font-size:15px; min-height:22px; opacity:.85; }
+
+    .ket-qua { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+               flex-direction:column; z-index:50; text-align:center; overflow-y:auto;
+               padding:calc(24px + env(safe-area-inset-top)) 24px
+                       calc(24px + env(safe-area-inset-bottom)); }
+    .ket-qua.hien { display:flex; animation:hienra .3s; }
+    @keyframes hienra { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:none} }
+    .ket-qua.thanh-cong { background:linear-gradient(135deg,#0f5132,#198754); }
+    .ket-qua.that-bai   { background:linear-gradient(135deg,#58151c,#dc3545); }
+    .ket-qua .bieu-tuong { font-size:var(--co-kq-icon); margin-bottom:12px; line-height:1; }
+    .ket-qua .ten { font-size:var(--co-kq-ten); font-weight:800; }
+    .ket-qua .chi-tiet { font-size:var(--co-kq-chi-tiet); opacity:.9; margin-top:8px; }
+    .ket-qua .phu { font-size:15px; opacity:.7; margin-top:14px; }
+
+    .nut-chinh { margin-top:20px; padding:14px 40px; font-size:var(--co-nut); font-weight:700; border:none;
+                 border-radius:12px; background:#c8a951; color:#2c1810; cursor:pointer;
+                 /* 48px la nguong vung cham toi thieu theo huong dan tiep can
+                    cua ca Apple lan Google. */
+                 min-height:48px; }
+    .nut-chinh:disabled { opacity:.5; cursor:default; }
+    .canh-bao { background:#58151c; border-radius:10px; padding:12px 16px; margin:14px auto;
+                max-width:var(--rong-video); font-size:14px; }
+    .goc-tren { position:fixed; top:calc(10px + env(safe-area-inset-top)); right:14px;
+                font-size:13px; opacity:.6; z-index:10; }
+    .goc-tren a { color:#fff; }
+
+    /* --- Man hinh hep (dien thoai dung doc, may tinh bang dung doc) ---
+       Khuon mat nguoi cao hon rong, nen o che do doc khung 3/4 chua duoc mat to
+       hon han khung 4/3 voi cung be rong man hinh. Mat to hon = nhieu diem anh
+       hon cho buoc cat 112x112 = diem do net cao hon. */
+    @media (max-width: 600px) {
+      :root {
+        --co-tieu-de: 19px;  --co-thu-thach: 17px;  --co-nut: 17px;
+        --co-kq-icon: 64px;  --co-kq-ten: 27px;     --co-kq-chi-tiet: 17px;
+        --ti-le-video: 3/4;
+      }
+      .khung { padding-left:12px; padding-right:12px; }
+      h1 { margin:4px 0 10px; }
+      /* Bam het be ngang - de mat chiem nhieu diem anh nhat co the. */
+      .video-boc { max-width:none; border-radius:14px; }
+      .khung-mat { inset:14% 12%; }
+      .nut-chinh { width:100%; padding:15px 20px; margin-top:16px; }
+      .goc-tren { font-size:12px; }
+      /* Dong ho va ten may an bot cho do chiem cho tren man hinh nho. */
+      .dong-ho { font-size:13px; }
+    }
+
+    /* Dien thoai xoay ngang: chieu cao rat thap, xep video va phan dieu khien
+       thanh hai cot de khong phai cuon. Chi doi huong flex va do rong - thu tu
+       DOM giu nguyen nho `order` da dat o tren. */
+    @media (max-height: 520px) and (orientation: landscape) {
+      :root { --ti-le-video: 4/3; --co-kq-icon: 48px; --co-kq-ten: 24px;
+              --co-tieu-de: 17px; --co-thu-thach: 16px; }
+      .khung { flex-direction:row; flex-wrap:wrap; align-items:center;
+               column-gap:18px; max-width:none; padding-top:8px; }
+      .khung-dau { flex:0 0 100%; display:flex; align-items:baseline;
+                   justify-content:center; gap:10px; }
+      .khung-dau h1 { margin:0 0 6px; }
+      .video-boc { flex:0 0 42%; max-width:42%; }
+      .khung-phai { flex:1; min-width:0; }
+      .thu-thach { margin-top:0; }
+      .nut-chinh { width:100%; margin-top:12px; }
+      /* Canh bao dich vu chiem het chieu cao o che do ngang - thu gon lai. */
+      .canh-bao { font-size:12px; padding:8px 12px; margin:6px auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="goc-tren">
+    <span id="ten-may"><%= session.staffName || session.adminname || '' %></span> ·
+    <a href="/staff"><i class="fas fa-times"></i> Thoát kiosk</a>
+  </div>
+
+  <div class="khung">
+    <div class="khung-dau">
+      <div class="dong-ho" id="dong-ho">--:--:--</div>
+      <h1>Chấm công khuôn mặt <span class="cham" id="cham-rt"></span></h1>
+
+      <% if (!trangThai || !trangThai.san_sang) { %>
+        <div class="canh-bao">
+          <i class="fas fa-exclamation-triangle"></i>
+          <% if (!trangThai || trangThai.ket_noi === false) { %>
+            Dịch vụ nhận diện (Python) chưa bật. Hãy khởi động ML service ở cổng 8000.
+          <% } else if (!trangThai.co_mo_hinh) { %>
+            Chưa có mô hình. Chạy <code>python -m ml_service.tai_mo_hinh</code>.
+          <% } else { %>
+            Chưa có ai đăng ký khuôn mặt. Vào <a href="/to-chuc/khuon-mat" style="color:#c8a951">trang quản lý</a> để đăng ký.
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="video-boc">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="khung-mat" id="khung-mat"></div>
+      <button class="nut-doi-cam" id="nut-doi-cam" type="button"
+              title="Đổi camera trước/sau" aria-label="Đổi camera trước/sau">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+
+    <div class="khung-phai">
+      <div class="thu-thach" id="thu-thach">Nhấn nút để bắt đầu</div>
+      <div class="thanh-tien-do"><i id="tien-do"></i></div>
+      <div class="trang-thai" id="trang-thai">Đứng thẳng, nhìn vào camera</div>
+
+      <button class="nut-chinh" id="nut-cham">
+        <i class="fas fa-camera"></i> Bắt đầu chấm công
+      </button>
+    </div>
+  </div>
+
+  <!-- Màn hình kết quả -->
+  <div class="ket-qua" id="man-ket-qua">
+    <div class="bieu-tuong" id="kq-icon"></div>
+    <div class="ten" id="kq-ten"></div>
+    <div class="chi-tiet" id="kq-chi-tiet"></div>
+    <div class="phu" id="kq-phu"></div>
+  </div>
+
+  <canvas id="canvas" style="display:none"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/cham-cong-khuon-mat.js"></script>
+  <script>
+  (function () {
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var nut = document.getElementById('nut-cham');
+    var elThuThach = document.getElementById('thu-thach');
+    var elTrangThai = document.getElementById('trang-thai');
+    var elTienDo = document.getElementById('tien-do');
+    var khungMat = document.getElementById('khung-mat');
+    var manKq = document.getElementById('man-ket-qua');
+
+    var SAN_SANG = <%= trangThai && trangThai.san_sang ? 'true' : 'false' %>;
+
+    // Bốn thử thách chống giả mạo, chọn ngẫu nhiên mỗi lượt.
+    var THU_THACH = [
+      { ma:'gat_dau',   mo_ta:'GẬT ĐẦU nhẹ một cái' },
+      { ma:'quay_trai', mo_ta:'Quay mặt sang TRÁI' },
+      { ma:'quay_phai', mo_ta:'Quay mặt sang PHẢI' },
+      { ma:'lai_gan',   mo_ta:'Đưa mặt LẠI GẦN camera' },
+    ];
+
+    // ---- Đồng hồ ----
+    function capNhatGio() {
+      var d = new Date();
+      document.getElementById('dong-ho').textContent =
+        d.toLocaleTimeString('vi-VN') + ' · ' + d.toLocaleDateString('vi-VN', { weekday:'long', day:'2-digit', month:'2-digit' });
+    }
+    setInterval(capNhatGio, 1000); capNhatGio();
+
+    // ---- Camera ----
+    // Chi mo nut khi camera DA tra ve khung hinh that; bam som hon chi gui len
+    // server 12 anh den.
+    var camSanSang = false;
+    var nutDoiCam = document.getElementById('nut-doi-cam');
+    nut.disabled = true;
+    elTrangThai.textContent = 'Đang mở camera...';
+    CamCC.moCamera(video)
+      .then(function () {
+        camSanSang = true;
+        elTrangThai.textContent = 'Đứng thẳng, nhìn vào camera';
+        nut.disabled = !SAN_SANG;
+        // Chi hien nut doi camera khi may THUC SU co tu hai camera. Tren may
+        // tinh de ban mot webcam thi nut chi lam roi man hinh. Phai goi sau khi
+        // da xin quyen: truoc do `enumerateDevices` giau danh sach thiet bi.
+        CamCC.coNhieuCamera().then(function (co) {
+          if (co) nutDoiCam.classList.add('hien');
+        });
+      })
+      .catch(function (e) {
+        elTrangThai.innerHTML = '<span style="color:#ffb3ad">' + e.message + '</span>';
+        nut.disabled = true;
+      });
+
+    nutDoiCam.addEventListener('click', function () {
+      if (dangChay) return;          // dang chup do khung - doi camera giua chung
+      nutDoiCam.disabled = true;     // se lam hong ca luot
+      CamCC.doiCamera()
+        .catch(function (e) {
+          elTrangThai.innerHTML = '<span style="color:#ffb3ad">' + e.message + '</span>';
+        })
+        .then(function () { nutDoiCam.disabled = false; });
+    });
+
+    function chupKhung() {
+      return CamCC.chup(video, canvas, { rong: 640, cao: 480 });
+    }
+
+    // ---- Một lượt chấm công ----
+    var dangChay = false;
+    function chamCong() {
+      if (dangChay || !camSanSang) return;
+      dangChay = true;
+      nut.disabled = true;
+      manKq.className = 'ket-qua';
+
+      var tt = THU_THACH[Math.floor(Math.random() * THU_THACH.length)];
+      elThuThach.innerHTML = '<i class="fas fa-tasks"></i> ' + tt.mo_ta;
+      elThuThach.setAttribute('data-ma', tt.ma);
+
+      // Xin toa do TRUOC khi thu khung hinh - hop xin quyen vi tri che mat man
+      // hinh, neu xin sau thi ca 12 khung vua chup deu hong.
+      elTrangThai.textContent = 'Đang xác định vị trí...';
+      CamCC.layViTri().then(function (viTri) {
+        khungMat.classList.add('tot');
+
+        // Thu 12 khung trong ~2.4 giây trong lúc người dùng thực hiện thử thách.
+        var khung = [];
+        var tong = 12, i = 0;
+        elTrangThai.textContent = 'Giữ khuôn mặt trong khung và làm theo yêu cầu...';
+
+        var hen = setInterval(function () {
+          try {
+            khung.push(chupKhung());
+          } catch (e) {
+            clearInterval(hen);
+            return hienKetQua({ ok: false, thong_bao: e.message });
+          }
+          i++;
+          elTienDo.style.width = Math.round(i / tong * 100) + '%';
+          if (i >= tong) {
+            clearInterval(hen);
+            guiChamCong(khung, viTri);
+          }
+        }, 200);
+      });
+    }
+
+    function guiChamCong(khung, viTri) {
+      khungMat.classList.remove('tot');
+
+      var than = JSON.stringify({
+        khung: khung,
+        thu_thach: elThuThach.getAttribute('data-ma') || 'gat_dau',
+        vi_tri: viTri,
+      });
+      // 12 khung anh la khoang 1 MB. Tren may tinh noi day mang thi tuc thi,
+      // nhung qua Wi-Fi yeu co the mat chuc giay - noi ro dung luong de nguoi
+      // dung biet may dang lam viec chu khong phai treo.
+      var mb = (than.length / 1048576).toFixed(1);
+      elTrangThai.textContent = 'Đang gửi ' + mb + ' MB và nhận diện...';
+
+      // Khong co gioi han thoi gian thi mat song giua chung se treo mai mai:
+      // nguoi dung nhin man hinh "Dang nhan dien..." khong bao gio doi, va nut
+      // cham cong ket o trang thai disabled.
+      var boQua = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var henHetGio = setTimeout(function () { if (boQua) boQua.abort(); }, 45000);
+
+      fetch('/api/khuon-mat/cham-cong', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: than,
+        signal: boQua ? boQua.signal : undefined,
+      })
+        .then(function (r) {
+          // Khi nginx/proxy tra ve trang loi HTML thi `r.json()` nem "Unexpected
+          // token <" - cau do khong giup ai. Doc ma trang thai truoc.
+          return r.json().catch(function () {
+            throw new Error('Máy chủ trả về lỗi ' + r.status + '.');
+          });
+        })
+        .then(hienKetQua)
+        .catch(function (e) {
+          hienKetQua({
+            ok: false,
+            thong_bao: e.name === 'AbortError'
+              ? 'Quá 45 giây không nhận được trả lời. Kiểm tra sóng Wi-Fi rồi thử lại.'
+              : 'Lỗi kết nối: ' + e.message,
+          });
+        })
+        .then(function () { clearTimeout(henHetGio); });
+    }
+
+    function hienKetQua(kq) {
+      elTienDo.style.width = '0';
+      var icon = document.getElementById('kq-icon');
+      var ten = document.getElementById('kq-ten');
+      var ct = document.getElementById('kq-chi-tiet');
+      var phu = document.getElementById('kq-phu');
+
+      if (kq.ok) {
+        manKq.className = 'ket-qua thanh-cong hien';
+        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+        ten.textContent = kq.nhan_vien ? kq.nhan_vien.ten : 'Thành công';
+        ct.textContent = (kq.chieu === 'vao' ? '✓ Đã chấm công VÀO' : '✓ Đã chấm công RA') +
+          ' lúc ' + (kq.gio || '');
+        // Phần trăm lấy thẳng từ máy chủ (đã quy đổi sẵn) để mọi màn hình và
+        // nhật ký cùng nói một con số.
+        phu.textContent = (kq.nhan_vien && kq.nhan_vien.ten_cd ? kq.nhan_vien.ten_cd + ' · ' : '') +
+          (kq.phan_tram != null
+            ? 'độ khớp ' + kq.phan_tram + '%' +
+              (kq.nguong_phan_tram != null ? ' (cần ' + kq.nguong_phan_tram + '%)' : '')
+            : '') +
+          (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : '');
+        keu(880);
+      } else {
+        manKq.className = 'ket-qua that-bai hien';
+        icon.innerHTML = kq.ket_qua === 'sai_vi_tri'
+          ? '<i class="fas fa-map-marker-alt"></i>'
+          : '<i class="fas fa-times-circle"></i>';
+        ten.textContent = kq.ket_qua === 'sai_vi_tri' ? 'Sai vị trí'
+          : kq.ket_qua === 'chua_dat_thu_thach' ? 'Làm lại động tác'
+          : kq.ket_qua === 'khung_khong_dong_nhat' ? 'Ảnh chưa rõ' : 'Chưa chấm được';
+        ct.textContent = kq.thong_bao || 'Vui lòng thử lại';
+        phu.textContent = kq.ket_qua === 'gia_mao'
+          ? 'Hãy dùng khuôn mặt thật, không dùng ảnh/màn hình.'
+          : kq.ket_qua === 'sai_vi_tri'
+            ? 'Chỉ chấm công được khi đang ở nhà hàng.'
+            : kq.ket_qua === 'chua_dat_thu_thach'
+              ? 'Làm động tác dứt khoát hơn, giữ mặt trong khung.'
+              : kq.ket_qua === 'khung_khong_dong_nhat'
+                ? 'Ngồi gần camera hơn và tránh ngồi ngược sáng.'
+                : '';
+        keu(220);
+      }
+
+      // Tự ẩn kết quả sau vài giây, sẵn sàng cho người kế tiếp.
+      setTimeout(function () {
+        manKq.className = 'ket-qua';
+        elThuThach.textContent = 'Nhấn nút để bắt đầu';
+        elTrangThai.textContent = 'Đứng thẳng, nhìn vào camera';
+        nut.disabled = !SAN_SANG || !camSanSang;
+        dangChay = false;
+      }, kq.ok ? 4000 : 4500);
+    }
+
+    // Bíp bằng WebAudio (không cần file).
+    function keu(tanSo) {
+      try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = tanSo; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        o.start(); o.stop(ctx.currentTime + 0.3);
+      } catch (e) {}
+    }
+
+    nut.onclick = chamCong;
+    // Nut van khoa cho toi khi CamCC.moCamera() bao co hinh (o tren).
+
+    // Đèn kết nối realtime (chỉ để hiển thị máy còn sống).
+    try {
+      var socket = io();
+      socket.on('connect', function () { document.getElementById('cham-rt').style.background = '#1cc88a'; });
+      socket.on('disconnect', function () { document.getElementById('cham-rt').style.background = '#b7b9cc'; });
+    } catch (e) {}
+  })();
+  </script>
+</body>
+</html>

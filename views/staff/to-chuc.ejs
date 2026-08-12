@@ -1,0 +1,356 @@
+<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800">
+    <i class="fas fa-sitemap text-primary"></i> Sơ đồ tổ chức
+    <span id="dau-hieu-rt" title="Đang kết nối"
+          style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b7b9cc;vertical-align:middle;margin-left:6px"></span>
+  </h1>
+  <div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button type="button" class="btn btn-outline-secondary active" data-che-do="cay">
+        <i class="fas fa-project-diagram"></i> Cây tổ chức
+      </button>
+      <button type="button" class="btn btn-outline-secondary" data-che-do="bo-phan">
+        <i class="fas fa-th-large"></i> Theo bộ phận
+      </button>
+    </div>
+    <div class="custom-control custom-switch d-inline-block ml-3 align-middle">
+      <input type="checkbox" class="custom-control-input" id="chi-online">
+      <label class="custom-control-label small" for="chi-online">Chỉ người đang trực</label>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Thẻ số liệu ================= -->
+<div class="row" id="the-so-lieu">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-primary h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng nhân sự</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-tong"><%= tongQuan.nhan_su.tong %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-success h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Đang trực tuyến</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800">
+          <span id="sl-online"><%= tongQuan.nhan_su.dang_online %></span>
+          <span class="text-muted" style="font-size:14px">người</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-warning h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Nghỉ phép</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-nghi"><%= tongQuan.nhan_su.nghi_phep %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-danger h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Việc đang chờ</div>
+        <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-viec"><%= tongQuan.viec.cho %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Dải bộ phận ================= -->
+<div class="card shadow mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex flex-wrap" id="dai-bo-phan"></div>
+  </div>
+</div>
+
+<!-- ================= Vị trí của tôi ================= -->
+<% if (hoSo) { %>
+<div class="card shadow mb-4 border-left-info">
+  <div class="card-body py-3">
+    <div class="row align-items-center">
+      <div class="col-md-5">
+        <div class="text-xs text-uppercase text-muted mb-1">Vị trí của bạn trong tổ chức</div>
+        <div class="h5 mb-0 font-weight-bold"><%= hoSo.ten %></div>
+        <div class="text-gray-700">
+          <span class="badge badge-pill px-2 py-1"
+                style="background:<%= hoSo.mau_bp || '#6c757d' %>;color:#fff">
+            <i class="fas <%= hoSo.icon_bp || 'fa-users' %>"></i> <%= hoSo.ten_bp || 'Chưa xếp bộ phận' %>
+          </span>
+          <strong class="ml-1"><%= hoSo.ten_cd || 'Chưa được bổ nhiệm chức danh' %></strong>
+          <span class="text-muted small">· cấp <%= hoSo.cap_bac === 9 ? '—' : hoSo.cap_bac %></span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-xs text-uppercase text-muted mb-1">Báo cáo trực tiếp cho</div>
+        <% if (hoSo.ten_quan_ly) { %>
+          <div class="font-weight-bold"><%= hoSo.ten_quan_ly %></div>
+          <div class="small text-muted"><%= hoSo.chuc_danh_quan_ly || '' %></div>
+        <% } else { %>
+          <div class="text-muted">— Không có cấp trên trực tiếp —</div>
+        <% } %>
+      </div>
+      <div class="col-md-3">
+        <div class="text-xs text-uppercase text-muted mb-1">Quyền đang có</div>
+        <div class="h5 mb-0 font-weight-bold text-info"><%= hoSo.quyen.length %></div>
+        <% if (hoSo.uy_quyen && hoSo.uy_quyen.length) { %>
+          <div class="small text-warning mt-1">
+            <i class="fas fa-user-shield"></i>
+            Đang giữ ủy quyền từ <%= hoSo.uy_quyen[0].tu_nguoi %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- ================= Sơ đồ ================= -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">Cơ cấu tổ chức</h6>
+    <span class="small text-muted">
+      <span class="cham-online"></span> đang trực ·
+      <span class="cham-offline"></span> không trực tuyến
+    </span>
+  </div>
+  <div class="card-body">
+    <div id="so-do" class="so-do"></div>
+  </div>
+</div>
+
+<style>
+  .cham-online, .cham-offline {
+    display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:2px;
+  }
+  .cham-online { background:#1cc88a; box-shadow:0 0 0 3px rgba(28,200,138,.18); }
+  .cham-offline { background:#d1d3e2; }
+
+  .so-do ul { list-style:none; margin:0; padding-left:26px; position:relative; }
+  .so-do > ul { padding-left:0; }
+  .so-do li { position:relative; padding:6px 0 6px 0; }
+  /* Đường nối dạng cây: dọc chạy suốt, ngang rẽ vào từng nút */
+  .so-do ul ul::before {
+    content:''; position:absolute; left:0; top:0; bottom:16px; border-left:2px solid #e3e6f0;
+  }
+  .so-do ul ul > li::before {
+    content:''; position:absolute; left:-26px; top:28px; width:24px; border-top:2px solid #e3e6f0;
+  }
+
+  .nut-cd {
+    display:inline-flex; align-items:center; gap:10px; background:#fff;
+    border:1px solid #e3e6f0; border-left-width:4px; border-radius:9px;
+    padding:9px 14px; min-width:290px; transition:box-shadow .15s, transform .15s;
+    cursor:pointer;
+  }
+  .nut-cd:hover { box-shadow:0 .3rem 1rem rgba(58,59,69,.18); transform:translateY(-1px); }
+  .nut-cd .ten-cd { font-weight:700; font-size:14px; color:#3a3b45; }
+  .nut-cd .meta { font-size:11.5px; color:#858796; }
+  .nut-cd .quan-ly { color:#c8a951; margin-left:4px; }
+
+  .nguoi {
+    display:inline-flex; align-items:center; gap:5px; font-size:12px;
+    background:#f8f9fc; border-radius:14px; padding:2px 9px 2px 5px; margin:2px 3px 0 0;
+    border:1px solid #eaecf4;
+  }
+  .nguoi.mo { opacity:.45; }
+  .nguoi .avt {
+    width:19px; height:19px; border-radius:50%; color:#fff; font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .trong-bien { font-size:11px; color:#e74a3b; font-style:italic; }
+
+  .the-bp {
+    flex:1 1 170px; margin:5px; padding:12px 14px; border-radius:9px; color:#fff;
+    min-width:160px; cursor:pointer; transition:transform .15s;
+  }
+  .the-bp:hover { transform:translateY(-2px); }
+  .the-bp.mo { opacity:.35; }
+  .the-bp .ten { font-size:12.5px; font-weight:700; opacity:.92; }
+  .the-bp .so { font-size:22px; font-weight:800; line-height:1.2; }
+  .the-bp .phu { font-size:11px; opacity:.85; }
+</style>
+
+<script>
+(function () {
+  var cay = <%- JSON.stringify(cay) %>;
+  var boPhan = <%- JSON.stringify(boPhan) %>;
+  var locBoPhan = null;   // null = tất cả
+  var chiOnline = false;
+  var cheDo = 'cay';
+
+  var E = (window.RT && RT.escapeHtml) || function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+
+  // ------------------------------------------------------------ Dải bộ phận
+  function veDaiBoPhan(tq) {
+    var el = document.getElementById('dai-bo-phan');
+    el.innerHTML = (tq.theo_bo_phan || []).map(function (b) {
+      var mo = locBoPhan && locBoPhan !== b.ma_bp ? ' mo' : '';
+      var thieu = b.dinh_bien > b.tong ? (b.dinh_bien - b.tong) : 0;
+      return '<div class="the-bp' + mo + '" style="background:' + E(b.mau_sac) + '" data-bp="' + E(b.ma_bp) + '">' +
+               '<div class="ten"><i class="fas ' + E(b.icon) + '"></i> ' + E(b.ten_bp) + '</div>' +
+               '<div class="so">' + b.online + '<span style="font-size:13px;font-weight:600">/' + b.tong + '</span></div>' +
+               '<div class="phu">đang trực' + (thieu ? ' · thiếu ' + thieu + ' so với định biên' : '') + '</div>' +
+             '</div>';
+    }).join('');
+
+    el.querySelectorAll('.the-bp').forEach(function (t) {
+      t.onclick = function () {
+        var ma = t.getAttribute('data-bp');
+        locBoPhan = (locBoPhan === ma) ? null : ma;
+        veDaiBoPhan(tq);
+        veSoDo();
+      };
+    });
+  }
+
+  // ------------------------------------------------------------ Cây tổ chức
+  function chuCai(ten) { return (String(ten).trim()[0] || '?').toUpperCase(); }
+
+  function veNguoi(n, mauBp) {
+    if (chiOnline && !n.online) return '';
+    var nghi = n.trang_thai_lam_viec && n.trang_thai_lam_viec !== 'dang_lam';
+    return '<span class="nguoi' + (n.online ? '' : ' mo') + '" title="' +
+             E(n.ma_nv || '') + (n.trang_hien_tai ? ' · đang ở ' + E(n.trang_hien_tai) : '') + '">' +
+             '<span class="avt" style="background:' + E(mauBp || '#858796') + '">' + E(chuCai(n.ten)) + '</span>' +
+             E(n.ten) +
+             (n.online ? '<span class="cham-online" style="margin-left:3px"></span>' : '') +
+             (nghi ? ' <i class="fas fa-plane-departure text-warning" title="Nghỉ phép"></i>' : '') +
+           '</span>';
+  }
+
+  /** Nút này hoặc nhánh con của nó có thuộc bộ phận đang lọc không. */
+  function thuocLoc(nut) {
+    if (!locBoPhan) return true;
+    if (nut.ma_bp === locBoPhan) return true;
+    return (nut.con || []).some(thuocLoc);
+  }
+
+  function veNut(nut) {
+    if (!thuocLoc(nut)) return '';
+
+    var nguoi = (nut.nguoi || []);
+    var htmlNguoi = nguoi.map(function (n) { return veNguoi(n, nut.mau_sac); }).join('');
+    var trong = nut.dinh_bien > nguoi.length ? (nut.dinh_bien - nguoi.length) : 0;
+    var soOnline = nguoi.filter(function (n) { return n.online; }).length;
+
+    var html =
+      '<li>' +
+        '<div class="nut-cd" style="border-left-color:' + E(nut.mau_sac) + '" ' +
+             'data-cd="' + E(nut.ma_cd) + '" title="' + E(nut.trach_nhiem || '') + '">' +
+          '<div style="flex:1">' +
+            '<div class="ten-cd">' + E(nut.ten_cd) +
+              (nut.la_quan_ly ? '<i class="fas fa-star quan-ly" title="Vị trí quản lý"></i>' : '') +
+            '</div>' +
+            '<div class="meta">' +
+              '<i class="fas ' + E(nut.icon) + '"></i> ' + E(nut.ten_bp) +
+              ' · cấp ' + nut.cap_bac +
+              ' · ' + nguoi.length + '/' + (nut.dinh_bien || nguoi.length) + ' người' +
+              (soOnline ? ' · <span style="color:#1cc88a;font-weight:700">' + soOnline + ' đang trực</span>' : '') +
+            '</div>' +
+            '<div style="margin-top:4px">' + htmlNguoi +
+              (trong ? '<span class="trong-bien">còn trống ' + trong + '</span>' : '') +
+              (!nguoi.length && !trong ? '<span class="trong-bien">chưa có người</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+    var con = (nut.con || []).map(veNut).join('');
+    if (con) html += '<ul>' + con + '</ul>';
+    return html + '</li>';
+  }
+
+  function veSoDo() {
+    var el = document.getElementById('so-do');
+    if (cheDo === 'cay') {
+      el.innerHTML = '<ul>' + cay.map(veNut).join('') + '</ul>';
+    } else {
+      // Gom phẳng theo bộ phận: dễ nhìn khi chỉ cần biết ai thuộc bộ phận nào.
+      var theoBp = {};
+      (function duyet(ds) {
+        ds.forEach(function (n) {
+          (theoBp[n.ma_bp] = theoBp[n.ma_bp] || { ten: n.ten_bp, mau: n.mau_sac, icon: n.icon, nut: [] })
+            .nut.push(n);
+          duyet(n.con || []);
+        });
+      })(cay);
+
+      el.innerHTML = Object.keys(theoBp).map(function (ma) {
+        if (locBoPhan && locBoPhan !== ma) return '';
+        var g = theoBp[ma];
+        var nut = g.nut.slice().sort(function (a, b) { return a.cap_bac - b.cap_bac; });
+        return '<div class="mb-4">' +
+          '<h6 class="font-weight-bold mb-2" style="color:' + E(g.mau) + '">' +
+            '<i class="fas ' + E(g.icon) + '"></i> ' + E(g.ten) + '</h6>' +
+          '<ul style="padding-left:0">' + nut.map(function (n) {
+            var sao = Object.assign({}, n, { con: [] });
+            return veNut(sao);
+          }).join('') + '</ul></div>';
+      }).join('');
+    }
+
+    if (!el.querySelector('li')) {
+      el.innerHTML = '<div class="text-center text-muted py-5">' +
+        '<i class="fas fa-user-slash fa-2x mb-2"></i><br>Không có ai khớp bộ lọc hiện tại.</div>';
+    }
+  }
+
+  // ------------------------------------------------------------ Điều khiển
+  document.querySelectorAll('[data-che-do]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('[data-che-do]').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      cheDo = b.getAttribute('data-che-do');
+      veSoDo();
+    };
+  });
+
+  document.getElementById('chi-online').onchange = function () {
+    chiOnline = this.checked;
+    veSoDo();
+  };
+
+  // ------------------------------------------------------------ Thời gian thực
+  veSoDo();
+
+  if (window.RT) {
+    RT.ganDauHieu(document.getElementById('dau-hieu-rt'));
+
+    // Sơ đồ tải lại khi có người vào/ra ca, được bổ nhiệm, hoặc tổ chức đổi.
+    RT.dongBo('/api/to-chuc/so-do', function (d) {
+      cay = d.cay;
+      veSoDo();
+    }, ['hien-dien:thay-doi', 'to-chuc:cap-nhat', 'to-chuc:to-doi', 'to-chuc:quyen-doi']);
+
+    RT.dongBo('/api/to-chuc/tong-quan', function (tq) {
+      document.getElementById('sl-tong').textContent = tq.nhan_su.tong;
+      document.getElementById('sl-online').textContent = tq.nhan_su.dang_online;
+      document.getElementById('sl-nghi').textContent = tq.nhan_su.nghi_phep;
+      document.getElementById('sl-viec').textContent = tq.viec.cho;
+      veDaiBoPhan(tq);
+    }, ['hien-dien:thay-doi', 'to-chuc:cap-nhat', 'viec:moi', 'viec:cap-nhat']);
+
+    // Báo ngắn khi có người vào/rời ca — quản lý cần biết ngay.
+    RT.khi('hien-dien:thay-doi', function (d) {
+      if (!d.ten || !d.trang_thai) return;
+      RT.thongBao(
+        d.ten + (d.ten_cd ? ' (' + d.ten_cd + ')' : '') +
+        (d.trang_thai === 'online' ? ' vừa vào ca' : ' vừa rời hệ thống'),
+        d.trang_thai === 'online' ? 'thanh-cong' : 'tin'
+      );
+    });
+  } else {
+    veDaiBoPhan(<%- JSON.stringify(tongQuan) %>);
+  }
+})();
+</script>
+
+<%- include('partials/footer') %>

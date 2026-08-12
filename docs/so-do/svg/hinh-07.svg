@@ -1,0 +1,169 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ nhân sự: chấm công bằng khuôn mặt kèm kiểm tra chống giả mạo và ràng buộc vị trí GPS, quản lý ca làm việc và phân quyền theo chức danh"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-ucE" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-ucE" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien">
+    <rect class="khung-bien" x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ NHÂN SỰ, CHẤM CÔNG &amp; TỔ CHỨC</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="81">Đăng ký khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Chấm công bằng khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Xem bảng công của tôi</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Đăng ký / huỷ ca làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Xin nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Xem thông báo nội bộ</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Sửa &amp; bổ sung chấm công</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Bổ nhiệm nhân sự, quản lý chức danh</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="697">Phân quyền theo chức danh,</text><text class="tx-uc" x="412" y="713">uỷ quyền tạm thời</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="76" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="73">Kiểm tra chống giả mạo</text><text class="tx-uc" x="812" y="89">(liveness: gật đầu / quay trái phải)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="154" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="151">Kiểm tra vị trí GPS</text><text class="tx-uc" x="812" y="167">(bán kính quanh nhà hàng)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="237">Ghi nhật ký nhận diện</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="388" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="393">Duyệt / từ chối nghỉ phép</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="134" x2="711.5" y2="95.6" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="612.95" y="108.8">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="154" x2="666" y2="154" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="615" y="145">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="174" x2="711.5" y2="212.4" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="612.95" y="187.2">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="388" x2="666" y2="388" marker-end="url(#mui-ucE)"/>
+    <text class="tx-khuon" x="615" y="379">&#171;extend&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="201" r="11"/>
+    <line x1="84" y1="212" x2="84" y2="238"/>
+    <line x1="67" y1="221" x2="101" y2="221"/>
+    <line x1="84" y1="238" x2="71" y2="260"/>
+    <line x1="84" y1="238" x2="97" y2="260"/>
+    <text class="tx-tn" x="84" y="178">Nhân viên</text>
+  </g><line class="lk" x1="84" y1="221" x2="260" y2="76"/><line class="lk" x1="84" y1="221" x2="260" y2="154"/><line class="lk" x1="84" y1="221" x2="260" y2="232"/><line class="lk" x1="84" y1="221" x2="260" y2="310"/><line class="lk" x1="84" y1="221" x2="260" y2="388"/><line class="lk" x1="84" y1="221" x2="260" y2="466"/><g class="tn ">
+    <circle cx="1176" cy="381" r="11"/>
+    <line x1="1176" y1="392" x2="1176" y2="418"/>
+    <line x1="1159" y1="401" x2="1193" y2="401"/>
+    <line x1="1176" y1="418" x2="1163" y2="440"/>
+    <line x1="1176" y1="418" x2="1189" y2="440"/>
+    <text class="tx-tn" x="1176" y="344">Quản lý</text><text class="tx-tn" x="1176" y="358">nhà hàng</text>
+  </g><line class="lk" x1="1176" y1="401" x2="958" y2="388"/><g class="tn ">
+    <circle cx="1176" cy="571" r="11"/>
+    <line x1="1176" y1="582" x2="1176" y2="608"/>
+    <line x1="1159" y1="591" x2="1193" y2="591"/>
+    <line x1="1176" y1="608" x2="1163" y2="630"/>
+    <line x1="1176" y1="608" x2="1189" y2="630"/>
+    <text class="tx-tn" x="1176" y="534">Quản trị</text><text class="tx-tn" x="1176" y="548">hệ thống</text>
+  </g><line class="lk" x1="1176" y1="591" x2="564" y2="544"/><line class="lk" x1="1176" y1="591" x2="564" y2="622"/><line class="lk" x1="1176" y1="591" x2="564" y2="700"/><g class="ht-ngoai">
+    <rect x="1101" y="72" width="150" height="56" rx="3"/>
+    <text class="tx-khuon" x="1176" y="87">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="103">Dịch vụ ML</text><text class="tx-ht" x="1176" y="118">(nhận diện khuôn mặt)</text>
+  </g><line class="lk" x1="1101" y1="100" x2="958" y2="76"/></svg>

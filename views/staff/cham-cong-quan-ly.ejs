@@ -1,0 +1,377 @@
+<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800">
+    <i class="fas fa-user-clock text-primary"></i> Quản lý chấm công
+  </h1>
+  <form method="GET" class="form-inline">
+    <label class="small font-weight-bold mr-2 mb-0">Ngày</label>
+    <input type="date" name="ngay" value="<%= ngay %>" class="form-control form-control-sm mr-2">
+    <button class="btn btn-sm btn-primary mr-2"><i class="fas fa-search"></i> Xem</button>
+    <a href="/to-chuc/khuon-mat" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-users-cog"></i> Khuôn mặt
+    </a>
+  </form>
+</div>
+
+<% if (!trangThai || trangThai.ket_noi === false) { %>
+  <div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Dịch vụ nhận diện đang tắt — hiện không ai chấm công được.</strong>
+    Hãy bật ML service (Python, cổng 8000). Trong lúc chờ, bạn có thể ghi bổ sung
+    bên dưới; mọi bản ghi đều được đánh dấu là sửa tay.
+  </div>
+<% } %>
+
+<!-- Thẻ số liệu -->
+<div class="row">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-success shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Đã chấm công</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800">
+        <span id="sl-da-cham"><%= tongQuan.da_cham %></span>/<%= tongQuan.tong_nv %> người
+      </div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-warning shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Chưa chấm</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-chua-cham"><%= tongQuan.chua_cham %></div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-info shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Chưa chấm ra</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-chua-ra"><%= tongQuan.chua_ra %></div>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card border-left-danger shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Dòng có sửa tay</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-sua-tay"><%= tongQuan.sua_tay %></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-<%= coTheSua ? 8 : 12 %>">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          Bảng công ngày <%= new Date(ngay + 'T00:00:00').toLocaleDateString('vi-VN') %>
+        </h6>
+        <div class="d-flex">
+          <input type="text" class="form-control form-control-sm mr-2" id="tim"
+                 placeholder="Tìm tên..." style="width:170px">
+          <div class="custom-control custom-switch d-flex align-items-center">
+            <input type="checkbox" class="custom-control-input" id="chi-chua-cham">
+            <label class="custom-control-label small" for="chi-chua-cham">Chỉ người chưa chấm</label>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height:620px; overflow-y:auto">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="thead-light"><tr>
+              <th>Nhân viên</th><th>Chức danh</th>
+              <th class="text-center">Vào</th><th class="text-center">Ra</th>
+              <th class="text-center">Giờ</th><th>Cách ghi</th>
+              <% if (coTheSua) { %><th></th><% } %>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (coTheSua) { %>
+  <div class="col-lg-4">
+    <!-- Thêm bản ghi -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-plus-circle"></i> Ghi bổ sung</h6>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted">
+          Dùng khi nhân viên không chấm được bằng khuôn mặt (camera hỏng, chưa đăng ký mẫu,
+          ML service chết giữa ca).
+        </p>
+        <div class="form-group mb-2">
+          <label class="small font-weight-bold mb-1">Nhân viên</label>
+          <select class="form-control form-control-sm" id="t-nv">
+            <option value="">— chọn nhân viên —</option>
+            <% nhanVien.forEach(function (n) { %>
+              <option value="<%= n.id_nv %>"><%= n.ten %><%= n.ten_cd ? ' · ' + n.ten_cd : '' %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6 mb-2">
+            <label class="small font-weight-bold mb-1">Giờ vào</label>
+            <input type="time" class="form-control form-control-sm" id="t-vao">
+          </div>
+          <div class="form-group col-6 mb-2">
+            <label class="small font-weight-bold mb-1">Giờ ra</label>
+            <input type="time" class="form-control form-control-sm" id="t-ra">
+          </div>
+        </div>
+        <div class="form-group mb-2">
+          <label class="small font-weight-bold mb-1">Lý do <span class="text-danger">*</span></label>
+          <textarea class="form-control form-control-sm" id="t-ly-do" rows="2"
+                    placeholder="Ví dụ: camera kiosk hỏng sáng 07/08, đã xác nhận với quản lý ca"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" id="t-luu">
+          <i class="fas fa-save"></i> Ghi bổ sung
+        </button>
+        <div id="t-bao" class="small mt-2"></div>
+      </div>
+    </div>
+
+    <!-- Nhật ký sửa -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history"></i> Nhật ký sửa chữa</h6>
+      </div>
+      <div class="card-body p-0">
+        <div style="max-height:380px; overflow-y:auto" id="ds-nhat-ky"></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<!-- Hộp sửa -->
+<div class="modal fade" id="hop-sua" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="s-tieu-de">Sửa chấm công</h6>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning py-2 small">
+          <i class="fas fa-exclamation-triangle"></i>
+          Đây là dữ liệu tính lương. Thao tác này được ghi lại kèm tên bạn và lý do.
+        </div>
+        <input type="hidden" id="s-id-cc">
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="small font-weight-bold mb-1">Giờ vào</label>
+            <input type="time" class="form-control form-control-sm" id="s-vao">
+          </div>
+          <div class="form-group col-6">
+            <label class="small font-weight-bold mb-1">Giờ ra</label>
+            <input type="time" class="form-control form-control-sm" id="s-ra">
+          </div>
+        </div>
+        <div class="form-group mb-1">
+          <label class="small font-weight-bold mb-1">Lý do sửa <span class="text-danger">*</span></label>
+          <textarea class="form-control form-control-sm" id="s-ly-do" rows="2"
+                    placeholder="Ví dụ: quên chấm ra, camera mất điện 22h"></textarea>
+        </div>
+        <div id="s-bao" class="small"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button class="btn btn-sm btn-outline-danger mr-auto" id="s-xoa">
+          <i class="fas fa-trash"></i> Xoá bản ghi
+        </button>
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal">Đóng</button>
+        <button class="btn btn-sm btn-primary" id="s-luu"><i class="fas fa-save"></i> Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var E = RT.escapeHtml;
+  var NGAY = '<%= ngay %>';
+  var coTheSua = <%= coTheSua ? 'true' : 'false' %>;
+  var bang = <%- JSON.stringify(bang) %>;
+  var nhatKy = <%- JSON.stringify(nhatKy) %>;
+
+  var hhmm = function (t) {
+    if (!t) return null;
+    var d = new Date(t);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  };
+
+  // Nhãn "cách ghi": phân biệt dòng có bằng chứng khuôn mặt với dòng người sửa
+  // vào. Không gộp chung, vì đó là điểm khác nhau duy nhất đáng tin cậy.
+  var CACH = {
+    khuon_mat: ['badge-success', 'Khuôn mặt'],
+    sua_tay:   ['badge-warning', 'Sửa tay'],
+    thu_cong:  ['badge-secondary', 'Thủ công (cũ)'],
+  };
+  function nhanCach(pt, tinCay) {
+    if (!pt) return '<span class="text-muted">—</span>';
+    var c = CACH[pt] || ['badge-light', pt];
+    return '<span class="badge ' + c[0] + '">' + c[1] + '</span>' +
+      (tinCay != null ? ' <span class="small text-muted">' + (tinCay * 100).toFixed(0) + '%</span>' : '');
+  }
+
+  function ve() {
+    var tu = (document.getElementById('tim').value || '').toLowerCase().trim();
+    var chiChua = document.getElementById('chi-chua-cham').checked;
+    var ds = bang.filter(function (r) {
+      if (chiChua && r.id_cc) return false;
+      return !tu || String(r.ten).toLowerCase().indexOf(tu) >= 0 ||
+             String(r.ma_nv || '').toLowerCase().indexOf(tu) >= 0;
+    });
+
+    document.getElementById('tbody').innerHTML = ds.map(function (r) {
+      var chuaCham = !r.id_cc;
+      var suaTay = r.phuong_thuc_vao === 'sua_tay' || r.phuong_thuc_ra === 'sua_tay';
+      return '<tr class="' + (chuaCham ? 'table-warning' : suaTay ? 'table-light' : '') + '">' +
+        '<td><strong>' + E(r.ten) + '</strong>' +
+          '<div class="small text-muted">' + E(r.ma_nv || '') +
+          (r.khoang_cach_m != null
+            ? ' · <i class="fas fa-map-marker-alt"></i> ' + Math.round(r.khoang_cach_m) + ' m' : '') +
+          '</div></td>' +
+        '<td>' + (r.ten_bp
+          ? '<span class="badge" style="background:' + E(r.mau_sac) + ';color:#fff">' + E(r.ten_cd || '') + '</span>'
+          : '<span class="text-muted small">—</span>') + '</td>' +
+        '<td class="text-center">' + (hhmm(r.gio_vao) || '<span class="text-muted">—</span>') + '</td>' +
+        '<td class="text-center">' + (hhmm(r.gio_ra) || '<span class="text-muted">—</span>') + '</td>' +
+        '<td class="text-center">' + (r.tong_gio != null ? r.tong_gio + 'h' : '<span class="text-muted">—</span>') + '</td>' +
+        '<td class="small">' + nhanCach(r.phuong_thuc_vao, r.do_tin_cay_vao) +
+          (r.phuong_thuc_ra ? ' <span class="text-muted">/</span> ' + nhanCach(r.phuong_thuc_ra, r.do_tin_cay_ra) : '') +
+          '</td>' +
+        (coTheSua
+          ? '<td class="text-right">' + (chuaCham
+              ? '<button class="btn btn-xs btn-outline-primary py-0 px-2 nap-them" data-id="' + r.id_nv +
+                '" data-ten="' + E(r.ten) + '">Ghi bổ sung</button>'
+              : '<button class="btn btn-xs btn-outline-secondary py-0 px-2 sua" data-id="' + r.id_cc +
+                '" data-ten="' + E(r.ten) + '" data-vao="' + (hhmm(r.gio_vao) || '') +
+                '" data-ra="' + (hhmm(r.gio_ra) || '') + '">Sửa</button>') + '</td>'
+          : '') +
+      '</tr>';
+    }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Không có dòng nào khớp.</td></tr>';
+
+    if (!coTheSua) return;
+
+    document.querySelectorAll('.sua').forEach(function (b) {
+      b.onclick = function () {
+        document.getElementById('s-id-cc').value = b.getAttribute('data-id');
+        document.getElementById('s-tieu-de').textContent = 'Sửa chấm công — ' + b.getAttribute('data-ten');
+        document.getElementById('s-vao').value = b.getAttribute('data-vao');
+        document.getElementById('s-ra').value = b.getAttribute('data-ra');
+        document.getElementById('s-ly-do').value = '';
+        document.getElementById('s-bao').innerHTML = '';
+        $('#hop-sua').modal('show');
+      };
+    });
+    document.querySelectorAll('.nap-them').forEach(function (b) {
+      b.onclick = function () {
+        document.getElementById('t-nv').value = b.getAttribute('data-id');
+        document.getElementById('t-vao').focus();
+        document.getElementById('t-nv').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+    });
+  }
+
+  function veNhatKy() {
+    var el = document.getElementById('ds-nhat-ky');
+    if (!el) return;
+    var NHAN = { sua: ['text-warning', 'Sửa'], them: ['text-primary', 'Thêm'], xoa: ['text-danger', 'Xoá'] };
+    el.innerHTML = nhatKy.map(function (j) {
+      var hd = String(j.action || '').split('.')[1];
+      var n = NHAN[hd] || ['text-muted', hd];
+      var d = j.details || {};
+      var moc = function (o) {
+        if (!o) return '—';
+        return (o.gio_vao || '—') + ' → ' + (o.gio_ra || '—');
+      };
+      return '<div class="border-bottom px-3 py-2">' +
+        '<div class="small"><strong class="' + n[0] + '">' + n[1] + '</strong> · ' +
+          E(d.ten || '') + ' · ' + E(d.ngay || '') + '</div>' +
+        '<div class="small text-muted">' +
+          (hd === 'them' ? moc(d.sau) : moc(d.truoc) + (d.sau ? '  ⇒  ' + moc(d.sau) : '')) +
+        '</div>' +
+        '<div class="small">“' + E(d.ly_do || '') + '”</div>' +
+        '<div class="small text-muted">' + E(j.actor_name || '') + ' · ' +
+          new Date(j.created_at).toLocaleString('vi-VN') + '</div>' +
+      '</div>';
+    }).join('') || '<div class="text-center text-muted py-3 small">Chưa có lần sửa nào.</div>';
+  }
+
+  document.getElementById('tim').oninput = ve;
+  document.getElementById('chi-chua-cham').onchange = ve;
+
+  // Tự tải lại khi có người chấm công (sự kiện realtime từ faceService).
+  var taiLai = RT.dongBo('/api/cham-cong/ngay?ngay=' + encodeURIComponent(NGAY), function (d) {
+    bang = d.bang; ve();
+    if (d.tong_quan) {
+      document.getElementById('sl-da-cham').textContent = d.tong_quan.da_cham;
+      document.getElementById('sl-chua-cham').textContent = d.tong_quan.chua_cham;
+      document.getElementById('sl-chua-ra').textContent = d.tong_quan.chua_ra;
+      document.getElementById('sl-sua-tay').textContent = d.tong_quan.sua_tay;
+    }
+  }, ['cham-cong:moi']);
+
+  if (coTheSua) {
+    function bao(id, html, loai) {
+      document.getElementById(id).innerHTML =
+        '<div class="alert alert-' + loai + ' py-2 mb-0">' + html + '</div>';
+    }
+
+    // ---- Lưu sửa ----
+    document.getElementById('s-luu').onclick = function () {
+      var nut = this; nut.disabled = true;
+      RT.gui('/api/cham-cong/sua', {
+        id_cc: Number(document.getElementById('s-id-cc').value),
+        gio_vao: document.getElementById('s-vao').value,
+        gio_ra: document.getElementById('s-ra').value,
+        ly_do: document.getElementById('s-ly-do').value,
+      }).then(function () {
+        $('#hop-sua').modal('hide');
+        RT.thongBao('Đã lưu và ghi vào nhật ký kiểm toán.', 'thanh-cong');
+        setTimeout(function () { location.reload(); }, 600);
+      }).catch(function (e) {
+        bao('s-bao', '<i class="fas fa-times-circle"></i> ' + E(e.message), 'danger');
+      }).then(function () { nut.disabled = false; });
+    };
+
+    // ---- Xoá ----
+    document.getElementById('s-xoa').onclick = function () {
+      var ly = document.getElementById('s-ly-do').value;
+      if (String(ly).trim().length < 8) {
+        return bao('s-bao', 'Phải ghi lý do (ít nhất 8 ký tự) trước khi xoá.', 'danger');
+      }
+      if (!confirm('Xoá hẳn bản ghi chấm công này? Thao tác được ghi lại kèm tên bạn.')) return;
+      var nut = this; nut.disabled = true;
+      RT.gui('/api/cham-cong/xoa', {
+        id_cc: Number(document.getElementById('s-id-cc').value), ly_do: ly,
+      }).then(function () {
+        $('#hop-sua').modal('hide');
+        RT.thongBao('Đã xoá bản ghi.', 'thanh-cong');
+        setTimeout(function () { location.reload(); }, 600);
+      }).catch(function (e) {
+        bao('s-bao', '<i class="fas fa-times-circle"></i> ' + E(e.message), 'danger');
+      }).then(function () { nut.disabled = false; });
+    };
+
+    // ---- Ghi bổ sung ----
+    document.getElementById('t-luu').onclick = function () {
+      var nut = this; nut.disabled = true;
+      RT.gui('/api/cham-cong/them', {
+        id_nv: Number(document.getElementById('t-nv').value),
+        ngay: NGAY,
+        gio_vao: document.getElementById('t-vao').value,
+        gio_ra: document.getElementById('t-ra').value,
+        ly_do: document.getElementById('t-ly-do').value,
+      }).then(function () {
+        RT.thongBao('Đã ghi bổ sung.', 'thanh-cong');
+        setTimeout(function () { location.reload(); }, 600);
+      }).catch(function (e) {
+        bao('t-bao', '<i class="fas fa-times-circle"></i> ' + E(e.message), 'danger');
+      }).then(function () { nut.disabled = false; });
+    };
+  }
+
+  ve(); veNhatKy();
+})();
+</script>
+
+<%- include('partials/footer') %>

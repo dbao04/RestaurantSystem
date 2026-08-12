@@ -1,0 +1,247 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  // Ngay luon la chuoi 'YYYY-MM-DD'. Phai them 'T00:00:00' khi dung new Date():
+  // thieu no thi trinh duyet hieu la gio UTC, o mui gio +07 se lui mat mot ngay
+  // va ca bang lech het cot.
+  function ngayVN(s) {
+    var d = new Date(s + 'T00:00:00');
+    return d.getDate() + '/' + (d.getMonth() + 1);
+  }
+  function thuVN(s) {
+    var t = new Date(s + 'T00:00:00').getDay();
+    return ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][t];
+  }
+  function laCuoiTuan(s) {
+    var t = new Date(s + 'T00:00:00').getDay();
+    return t === 0 || t === 6;
+  }
+  function thuCua(s) { return new Date(s + 'T00:00:00').getDay(); }
+
+  // Gom lich thanh 'ngay|ca' -> [dong, ...] de o duoi khong phai loc lai lien tuc.
+  var oLich = {};
+  (lich || []).forEach(function (l) {
+    var k = l.ngay + '|' + l.ca;
+    (oLich[k] = oLich[k] || []).push(l);
+  });
+
+  function nguoiTrongO(ngay, maCa) { return oLich[ngay + '|' + maCa] || []; }
+
+  function dinhMucCua(ngay, maCa) {
+    var thu = thuCua(ngay);
+    return (dinhMuc || []).filter(function (d) {
+      return Number(d.thu) === thu && d.ma_ca === maCa && Number(d.so_luong) > 0;
+    });
+  }
+
+  var soNhap = (lich || []).filter(function (l) { return l.trangthai === TT.NHAP; }).length;
+  var soChot = (lich || []).filter(function (l) { return l.trangthai === TT.DA_DUYET; }).length;
+%>
+
+<style>
+  .xc-luoi { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .xc-luoi th, .xc-luoi td { border: 1px solid #e3e3e3; vertical-align: top; padding: 6px; }
+  .xc-luoi thead th { background: #faf7f4; font-size: 13px; text-align: center; padding: 8px 4px; }
+  .xc-luoi thead th.xc-ct { background: #f3ece5; }
+  .xc-luoi .xc-cotca { width: 92px; background: #faf7f4; font-size: 13px; }
+  .xc-o { min-height: 64px; }
+  .xc-nhom { margin-bottom: 6px; }
+  .xc-nhom__ten { font-size: 11px; color: #8a7f76; text-transform: uppercase; letter-spacing: .3px; }
+  .xc-nhom__ten.xc-thieu { color: #c0392b; font-weight: 700; }
+  .xc-chip { display: inline-flex; align-items: center; gap: 4px; margin: 2px 2px 0 0;
+             padding: 2px 6px; border-radius: 10px; font-size: 12px; line-height: 1.5;
+             border: 1px solid transparent; }
+  .xc-chip--nhap    { background: #fdf3e3; border-color: #e8c88a; }
+  .xc-chip--chot    { background: #e8f5e9; border-color: #a5d6a7; }
+  .xc-chip--dangky  { background: #e7f0fb; border-color: #9fc2e8; }
+  .xc-chip form { display: inline; }
+  .xc-chip button { border: 0; background: none; cursor: pointer; color: #b03a2e;
+                    padding: 0 0 0 2px; font-size: 12px; line-height: 1; }
+  .xc-them { margin-top: 4px; }
+  .xc-them select { font-size: 11px; padding: 1px; max-width: 100%; }
+  .xc-them button { font-size: 11px; padding: 1px 6px; }
+  .xc-canhbao { background: #fdecea; border: 1px solid #f5c6cb; border-radius: 6px;
+                padding: 10px 14px; margin-bottom: 14px; }
+  .xc-canhbao ul { margin: 6px 0 0 18px; }
+  .xc-chugiai { font-size: 12px; color: #6b6b6b; margin-top: 10px; }
+  .xc-chugiai span { margin-right: 14px; }
+</style>
+
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2>Xếp ca tự động</h2>
+      <p>
+        Tuần <%= ngayVN(tuNgay) %> – <%= ngayVN(denNgay) %>
+        · <%= soChot %> ca đã chốt · <%= soNhap %> ca đang là bản nháp
+      </p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/xep-ca/dinh-muc">
+        <i class="fas fa-sliders"></i> Định mức nhân sự
+      </a>
+      <a class="qt-btn qt-btn--ghost" href="/admin/schedule">
+        <i class="fas fa-list-check"></i> Duyệt đơn đăng ký
+      </a>
+    </div>
+  </div>
+
+  <div class="qt-card__body">
+
+    <% if (msg) { %>
+      <div class="alert alert-<%= msgType === 'danger' ? 'danger' : (msgType === 'warning' ? 'warning' : (msgType === 'info' ? 'info' : 'success')) %>">
+        <%= msg %>
+      </div>
+    <% } %>
+
+    <!-- Thanh dieu huong tuan + cac nut thao tac -->
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px;">
+      <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/xep-ca?tuan=<%= tuanTruoc %>">
+        <i class="fas fa-chevron-left"></i> Tuần trước
+      </a>
+      <form method="GET" action="/admin/xep-ca" style="display:inline-flex; gap:6px;">
+        <input type="date" name="tuan" value="<%= tuNgay %>" class="form-control form-control-sm" style="width:auto;">
+        <button class="qt-btn qt-btn--ghost qt-btn--sm" type="submit">Xem tuần</button>
+      </form>
+      <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/xep-ca?tuan=<%= tuanSau %>">
+        Tuần sau <i class="fas fa-chevron-right"></i>
+      </a>
+
+      <span style="flex:1"></span>
+
+      <form method="POST" action="/admin/xep-ca/tu-dong" style="display:inline;">
+        <input type="hidden" name="tuan" value="<%= tuNgay %>">
+        <button class="qt-btn qt-btn--primary qt-btn--sm" type="submit"
+                onclick="return confirm('Xếp lại cả tuần? Bản nháp hiện tại sẽ bị thay thế. Lịch đã chốt và đơn đăng ký của nhân viên không bị ảnh hưởng.')">
+          <i class="fas fa-wand-magic-sparkles"></i> Xếp tự động
+        </button>
+      </form>
+
+      <% if (coNhap) { %>
+        <form method="POST" action="/admin/xep-ca/chot" style="display:inline;">
+          <input type="hidden" name="tuan" value="<%= tuNgay %>">
+          <button class="qt-btn qt-btn--ok qt-btn--sm" type="submit"
+                  onclick="return confirm('Chốt bản nháp thành lịch chính thức? Nhân viên sẽ nhìn thấy ngay.')">
+            <i class="fas fa-check-double"></i> Chốt lịch
+          </button>
+        </form>
+        <form method="POST" action="/admin/xep-ca/xoa-nhap" style="display:inline;">
+          <input type="hidden" name="tuan" value="<%= tuNgay %>">
+          <button class="qt-btn qt-btn--danger qt-btn--sm" type="submit"
+                  onclick="return confirm('Xoá bản nháp của tuần này? Lịch đã chốt vẫn giữ nguyên.')">
+            <i class="fas fa-trash"></i> Xoá nháp
+          </button>
+        </form>
+      <% } %>
+    </div>
+
+    <!-- Canh bao thieu nguoi -->
+    <% if (thieu && thieu.length > 0) { %>
+      <div class="xc-canhbao">
+        <strong><i class="fas fa-triangle-exclamation"></i>
+          Còn <%= thieu.reduce(function (s, t) { return s + t.thieu; }, 0) %> lượt chưa có người</strong>
+        <div style="font-size:13px; margin-top:4px;">
+          Hệ thống không tự hạ định mức. Cần gọi người làm thêm, giảm định mức, hoặc tuyển thêm.
+        </div>
+        <ul>
+          <% thieu.slice(0, 12).forEach(function (t) { %>
+            <li><%= thuVN(t.ngay) %> <%= ngayVN(t.ngay) %> — <%= t.ten_ca || t.ca %>:
+                thiếu <strong><%= t.thieu %></strong> <%= t.chucvu %>
+                (cần <%= t.can %>, có <%= t.co %>)</li>
+          <% }) %>
+          <% if (thieu.length > 12) { %><li>… và <%= thieu.length - 12 %> ô nữa</li><% } %>
+        </ul>
+      </div>
+    <% } %>
+
+    <!-- Luoi tuan -->
+    <div class="qt-tablewrap">
+      <table class="xc-luoi">
+        <thead>
+          <tr>
+            <th class="xc-cotca">Ca</th>
+            <% cacNgay.forEach(function (ng) { %>
+              <th class="<%= laCuoiTuan(ng) ? 'xc-ct' : '' %>">
+                <%= thuVN(ng) %><br><span style="font-weight:400"><%= ngayVN(ng) %></span>
+              </th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% caList.forEach(function (ca) { %>
+            <tr>
+              <td class="xc-cotca">
+                <strong><%= ca.ten_ca %></strong><br>
+                <span class="qt-sub"><%= String(ca.gio_bat_dau).slice(0,5) %>–<%= String(ca.gio_ket_thuc).slice(0,5) %></span>
+              </td>
+
+              <% cacNgay.forEach(function (ng) { %>
+                <% var trongO = nguoiTrongO(ng, ca.ma_ca); var mucs = dinhMucCua(ng, ca.ma_ca); %>
+                <td class="<%= laCuoiTuan(ng) ? 'xc-ct' : '' %>">
+                  <div class="xc-o">
+
+                    <% mucs.forEach(function (m) { %>
+                      <% var ds = trongO.filter(function (l) { return l.chucvu === m.chucvu; }); %>
+                      <div class="xc-nhom">
+                        <div class="xc-nhom__ten <%= ds.length < Number(m.so_luong) ? 'xc-thieu' : '' %>">
+                          <%= m.chucvu %> <%= ds.length %>/<%= m.so_luong %>
+                        </div>
+                        <% ds.forEach(function (l) { %>
+                          <span class="xc-chip xc-chip--<%= l.trangthai === TT.NHAP ? (l.nguon === 'dang_ky' ? 'dangky' : 'nhap') : 'chot' %>"
+                                title="<%= l.nguon === 'tu_dong' ? 'Máy xếp' : (l.nguon === 'thu_cong' ? 'Quản lý thêm tay' : 'Nhân viên tự đăng ký') %>">
+                            <%= l.ten_nhanvien %>
+                            <% if (l.trangthai === TT.NHAP) { %>
+                              <form method="POST" action="/admin/xep-ca/bo/<%= l.id_lich %>">
+                                <input type="hidden" name="tuan" value="<%= tuNgay %>">
+                                <button type="submit" title="Bỏ khỏi ca">&times;</button>
+                              </form>
+                            <% } %>
+                          </span>
+                        <% }) %>
+                      </div>
+                    <% }) %>
+
+                    <%
+                      // Nguoi da co trong o nay thi khong hien lai trong o chon,
+                      // trong danh sach chi giu nguoi thuoc cac chuc vu ma o nay can.
+                      var daCo = trongO.map(function (l) { return l.id_nv; });
+                      var chucVuCan = mucs.map(function (m) { return m.chucvu; });
+                      var conLai = (nhanVien || []).filter(function (n) {
+                        return daCo.indexOf(n.id_nv) === -1 && chucVuCan.indexOf(n.chucvu) !== -1;
+                      });
+                    %>
+                    <% if (conLai.length > 0) { %>
+                      <form method="POST" action="/admin/xep-ca/them" class="xc-them">
+                        <input type="hidden" name="tuan" value="<%= tuNgay %>">
+                        <input type="hidden" name="ngay" value="<%= ng %>">
+                        <input type="hidden" name="ma_ca" value="<%= ca.ma_ca %>">
+                        <select name="id_nv" required>
+                          <option value="">+ thêm…</option>
+                          <% conLai.forEach(function (n) { %>
+                            <option value="<%= n.id_nv %>"><%= n.ten %></option>
+                          <% }) %>
+                        </select>
+                        <button class="qt-btn qt-btn--ghost qt-btn--sm" type="submit">Thêm</button>
+                      </form>
+                    <% } %>
+
+                  </div>
+                </td>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="xc-chugiai">
+      <span><span class="xc-chip xc-chip--chot">Đã chốt</span> nhân viên đã nhìn thấy</span>
+      <span><span class="xc-chip xc-chip--nhap">Bản nháp</span> máy xếp hoặc thêm tay, chưa chốt</span>
+      <span><span class="xc-chip xc-chip--dangky">Đăng ký</span> nhân viên tự đăng ký</span>
+    </div>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

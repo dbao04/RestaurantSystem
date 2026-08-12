@@ -1,47 +1,80 @@
-    <footer class="ftco-footer ftco-bg-dark ftco-section">
-      <div class="container">
-        <div class="row mb-5">
-          <div class="col-md-6 col-lg-3">
-            <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">NHA HANG BD</h2>
-              <p>Trải nghiệm ẩm thực tinh túy giữa lòng Sài Gòn. Nơi hội tụ các món ăn Pháp - Việt độc đáo.</p>
-              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-3">
-                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
-              </ul>
+    <footer class="nh-footer">
+      <div class="nh-container">
+        <div class="nh-footer__grid">
+          <div>
+            <div class="nh-footer__brand">Nhà Hàng Bảo Đoàn</div>
+            <p style="max-width:300px">Trải nghiệm ẩm thực tinh túy giữa lòng Sài Gòn — nơi hội tụ nét đẹp ẩm thực Pháp và Việt trong không gian ấm cúng, sang trọng.</p>
+            <div class="nh-social">
+              <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+              <a href="#" aria-label="TripAdvisor"><i class="fab fa-tripadvisor"></i></a>
+              <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
             </div>
           </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Thông tin liên hệ</h2>
-              <div class="block-23 mb-3">
-                <ul class="list-unstyled">
-                  <li><span class="icon icon-map-marker"></span><span class="text">12 Nguyen Trai, District 1, Ho Chi Minh City</span></li>
-                  <li><a href="#"><span class="icon icon-phone"></span><span class="text">0918.453632</span></a></li>
-                  <li><a href="#"><span class="icon icon-envelope"></span><span class="text">nhahangbd@gmail.com</span></a></li>
-                </ul>
-              </div>
-            </div>
+
+          <div>
+            <h4>Khám phá</h4>
+            <ul>
+              <li><a href="/">Trang chủ</a></li>
+              <li><a href="/about">Về chúng tôi</a></li>
+              <li><a href="/menu">Thực đơn</a></li>
+              <li><a href="/blog">Tin tức</a></li>
+              <li><a href="/datban">Đặt bàn</a></li>
+            </ul>
           </div>
-          <div class="col-md-6 col-lg-3">
-            <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Giờ mở cửa</h2>
-              <ul class="list-unstyled open-hours">
-                <li class="d-flex"><span>Thứ Hai - Chủ Nhật</span></li>
-                <li class="d-flex"><span>8:00 giờ - 21:00 giờ</span></li>
-              </ul>
-            </div>
+
+          <div>
+            <h4>Liên hệ</h4>
+            <ul>
+              <li><i class="fas fa-map-marker-alt"></i><span>12 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh</span></li>
+              <li><i class="fas fa-phone-alt"></i><a href="tel:0918453632">0918 453 632</a></li>
+              <li><i class="fas fa-envelope"></i><a href="mailto:nhahangbd@gmail.com">nhahangbd@gmail.com</a></li>
+            </ul>
           </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 text-center">
-            <p>Copyright &copy;<script>document.write(new Date().getFullYear());</script> Tất cả quyền được bảo lưu | NHA HANG BD</p>
+
+          <div>
+            <h4>Giờ mở cửa</h4>
+            <div class="nh-hours-row"><span>Thứ 2 – Thứ 6</span><span>08:00 – 21:00</span></div>
+            <div class="nh-hours-row"><span>Thứ 7 – CN</span><span>08:00 – 22:00</span></div>
+            <a href="/datban" class="nh-btn nh-btn--gold nh-btn--sm" style="margin-top:1.2rem">Đặt bàn ngay</a>
           </div>
         </div>
       </div>
+      <div class="nh-footer__bottom">
+        © <script>document.write(new Date().getFullYear());</script> <b>Nhà Hàng Bảo Đoàn</b> — Bản quyền đã được bảo lưu.
+      </div>
     </footer>
-  
+
+    <!-- Điều khiển giao diện mới: nav đổi nền khi cuộn, menu mobile, hiện dần -->
+    <script>
+      (function () {
+        var nav = document.getElementById('nh-nav');
+        var heroNav = nav && !nav.classList.contains('is-solid');
+        if (heroNav) {
+          var onScroll = function () { nav.classList.toggle('is-solid', window.scrollY > 60); };
+          window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+        }
+        var burger = document.getElementById('nh-burger');
+        var menu = document.getElementById('nh-menu');
+        if (burger && menu) {
+          burger.addEventListener('click', function () { menu.classList.toggle('is-open'); });
+          menu.querySelectorAll('a').forEach(function (a) {
+            a.addEventListener('click', function () { menu.classList.remove('is-open'); });
+          });
+        }
+        var els = document.querySelectorAll('.nh-reveal');
+        if ('IntersectionObserver' in window && els.length) {
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+          }, { threshold: 0.12 });
+          els.forEach(function (el) { io.observe(el); });
+        } else { els.forEach(function (el) { el.classList.add('is-in'); }); }
+      })();
+    </script>
+
+
+  <!-- Tro ly ao: nhung o day nen co mat tren moi trang khach -->
+  <%- include('chatbot') %>
 
   <script src="/jquery.min.js"></script>
   <script src="/jquery-migrate-3.0.1.min.js"></script>

@@ -1,49 +1,285 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Tin tức', activeNav: 'blog' }) %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Tin Tức</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Tin tức <i class="ion-ios-arrow-forward"></i></span></p>
+<%
+  // ---- Dữ liệu & tiện ích hiển thị ----
+  var dsBaiViet = (typeof posts !== 'undefined' && posts) ? posts : [];
+  var THANG = ['Th1','Th2','Th3','Th4','Th5','Th6','Th7','Th8','Th9','Th10','Th11','Th12'];
+  // Bộ ảnh nhà hàng dùng khi bài viết chưa có hình
+  var ANH_MAC_DINH = ['/blog-1.jpg', '/blog-2.jpg', '/blog-3.jpg', '/blog-4.jpg'];
+
+  function anhBaiViet(p, i) {
+    return p.hinh_anh ? ('/food/' + p.hinh_anh) : ANH_MAC_DINH[i % ANH_MAC_DINH.length];
+  }
+  function anhDuPhong(i) {
+    return ANH_MAC_DINH[i % ANH_MAC_DINH.length];
+  }
+  function tomTat(s, n) {
+    if (!s) return 'Bài viết đang được cập nhật nội dung.';
+    var t = String(s).replace(/\s+/g, ' ').trim();
+    return t.length > n ? t.substring(0, n).trim() + '…' : t;
+  }
+  function thoiGianDoc(s) {
+    var soTu = s ? String(s).trim().split(/\s+/).length : 0;
+    return Math.max(1, Math.ceil(soTu / 200));
+  }
+  function ngayVN(d) {
+    var x = new Date(d);
+    return String(x.getDate()).padStart(2, '0') + '/' + String(x.getMonth() + 1).padStart(2, '0') + '/' + x.getFullYear();
+  }
+
+  var noiBat  = dsBaiViet.length ? dsBaiViet[0] : null;   // bài lớn
+  var canhBen = dsBaiViet.slice(1, 4);                    // 3 bài bên phải
+  var conLai  = dsBaiViet.slice(4);                       // lưới bên dưới
+%>
+
+<!-- ================= HERO NHỎ ================= -->
+<section class="nh-subhero">
+  <div class="nh-subhero__bg" style="background-image:url('/blog-hero.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Câu chuyện từ gian bếp</span>
+    <h1>Tin tức &amp; Sự kiện</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Tin tức</div>
+  </div>
+</section>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+
+    <% if (dsBaiViet.length === 0) { %>
+      <!-- ================= CHƯA CÓ BÀI VIẾT ================= -->
+      <div class="nh-empty nh-reveal">
+        <i class="far fa-newspaper"></i>
+        <h3>Chưa có bài viết nào</h3>
+        <p class="nh-lead" style="max-width:460px;margin:.6rem auto 1.6rem">
+          Nhà hàng đang chuẩn bị những câu chuyện thú vị về ẩm thực, sự kiện và ưu đãi. Mời bạn quay lại sau nhé!
+        </p>
+        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-utensils"></i> Xem thực đơn</a>
       </div>
-    </div>
+
+    <% } else { %>
+
+      <!-- ================= TRANG BÌA TẠP CHÍ ================= -->
+      <div class="nh-head nh-center nh-reveal">
+        <span class="nh-eyebrow">Chuyên mục</span>
+        <h2 class="nh-section-title">Đọc gì hôm nay</h2>
+        <div class="nh-divider"></div>
+      </div>
+
+      <div class="nh-mag nh-reveal">
+        <!-- Bài chủ đề lớn -->
+        <article class="nh-mag__lead nh-post-item"
+                 data-title="<%= noiBat.tieu_de %>"
+                 data-content="<%= noiBat.noi_dung || '' %>"
+                 data-img="<%= anhBaiViet(noiBat, 0) %>"
+                 data-fallback="<%= anhDuPhong(0) %>"
+                 data-date="<%= ngayVN(noiBat.created_at) %>"
+                 data-read="<%= thoiGianDoc(noiBat.noi_dung) %>">
+          <img src="<%= anhBaiViet(noiBat, 0) %>" alt="<%= noiBat.tieu_de %>"
+               onerror="this.src='<%= anhDuPhong(0) %>'">
+          <div class="nh-mag__lead-veil"></div>
+          <div class="nh-mag__lead-body">
+            <span class="nh-tag">Mới nhất</span>
+            <h2><%= noiBat.tieu_de %></h2>
+            <p><%= tomTat(noiBat.noi_dung, 190) %></p>
+            <div class="nh-meta nh-meta--light">
+              <span><i class="far fa-calendar"></i><%= ngayVN(noiBat.created_at) %></span>
+              <span><i class="far fa-user"></i>Ban biên tập</span>
+              <span><i class="far fa-clock"></i><%= thoiGianDoc(noiBat.noi_dung) %> phút đọc</span>
+            </div>
+            <button type="button" class="nh-btn nh-btn--gold nh-btn--sm nh-open-post">
+              Đọc bài viết <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </article>
+
+        <!-- Cột bài đọc thêm -->
+        <aside class="nh-mag__side">
+          <h4 class="nh-mag__side-title">Đáng chú ý</h4>
+
+          <% if (canhBen.length === 0) { %>
+            <p class="nh-lead" style="font-size:.92rem">
+              Đây là bài viết duy nhất hiện có. Hãy quay lại để đón đọc những câu chuyện mới từ nhà hàng nhé!
+            </p>
+            <a href="/menu" class="nh-post__more" style="margin-top:.4rem">Khám phá thực đơn <i class="fas fa-arrow-right"></i></a>
+          <% } %>
+
+          <% canhBen.forEach(function (p, i) { %>
+            <article class="nh-mini nh-post-item nh-open-post"
+                     data-title="<%= p.tieu_de %>"
+                     data-content="<%= p.noi_dung || '' %>"
+                     data-img="<%= anhBaiViet(p, i + 1) %>"
+                     data-fallback="<%= anhDuPhong(i + 1) %>"
+                     data-date="<%= ngayVN(p.created_at) %>"
+                     data-read="<%= thoiGianDoc(p.noi_dung) %>">
+              <div class="nh-mini__media">
+                <img src="<%= anhBaiViet(p, i + 1) %>" alt="<%= p.tieu_de %>"
+                     onerror="this.src='<%= anhDuPhong(i + 1) %>'">
+              </div>
+              <div class="nh-mini__body">
+                <span class="nh-mini__num"><%= String(i + 2).padStart(2, '0') %></span>
+                <h3><%= p.tieu_de %></h3>
+                <div class="nh-meta">
+                  <span><i class="far fa-calendar"></i><%= ngayVN(p.created_at) %></span>
+                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> phút</span>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        </aside>
+      </div>
+
+      <!-- ================= KHO BÀI VIẾT ================= -->
+      <% if (conLai.length > 0) { %>
+        <div class="nh-head nh-center nh-reveal" style="margin-top:4.5rem">
+          <span class="nh-eyebrow">Kho bài viết</span>
+          <h2 class="nh-section-title">Tất cả tin tức</h2>
+          <div class="nh-divider"></div>
+        </div>
+
+        <div class="nh-blog-toolbar nh-reveal">
+          <span class="nh-blog-count" id="nh-blog-count"><%= conLai.length %> bài viết</span>
+          <div class="nh-search nh-search--sm">
+            <input type="text" id="nh-blog-search" placeholder="Tìm bài viết…" aria-label="Tìm bài viết">
+            <button type="button" aria-label="Tìm"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+
+        <div class="nh-posts" id="nh-posts">
+          <% conLai.forEach(function (p, i) {
+               var d = new Date(p.created_at); %>
+            <article class="nh-post nh-reveal nh-post-item" data-delay="<%= (i % 3) + 1 %>"
+                     data-title="<%= p.tieu_de %>"
+                     data-content="<%= p.noi_dung || '' %>"
+                     data-img="<%= anhBaiViet(p, i + 4) %>"
+                     data-fallback="<%= anhDuPhong(i + 4) %>"
+                     data-date="<%= ngayVN(p.created_at) %>"
+                     data-read="<%= thoiGianDoc(p.noi_dung) %>">
+              <div class="nh-post__media nh-open-post">
+                <img src="<%= anhBaiViet(p, i + 4) %>" alt="<%= p.tieu_de %>"
+                     onerror="this.src='<%= anhDuPhong(i + 4) %>'">
+                <span class="nh-post__date">
+                  <b><%= String(d.getDate()).padStart(2, '0') %></b>
+                  <span><%= THANG[d.getMonth()] %> <%= d.getFullYear() %></span>
+                </span>
+              </div>
+              <div class="nh-post__body">
+                <div class="nh-meta">
+                  <span><i class="far fa-user"></i>Ban biên tập</span>
+                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> phút đọc</span>
+                </div>
+                <h3 class="nh-open-post"><%= p.tieu_de %></h3>
+                <p><%= tomTat(p.noi_dung, 150) %></p>
+                <button type="button" class="nh-post__more nh-open-post">
+                  Đọc tiếp <i class="fas fa-arrow-right"></i>
+                </button>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+
+        <p class="nh-lead nh-center" id="nh-no-result" style="display:none;margin-top:2rem">
+          Không tìm thấy bài viết nào phù hợp.
+        </p>
+      <% } %>
+
+    <% } %>
   </div>
 </section>
 
-<section class="ftco-section bg-light">
-  <div class="container">
-    <div class="row">
-      <% if (posts && posts.length > 0) { %>
-        <% posts.forEach(p => { %>
-          <div class="col-md-4 ftco-animate">
-            <div class="blog-entry">
-              <a href="#" class="block-20" style="background-image: url('/food/<%= p.hinh_anh || 'image_1.jpg' %>');">
-              </a>
-              <div class="text pt-3 pb-4 px-4">
-                <div class="meta">
-                  <div><a href="#"><%= new Date(p.created_at).toLocaleDateString('vi-VN') %></a></div>
-                  <div><a href="#">Quản trị viên</a></div>
-                </div>
-                <h3 class="heading"><a href="#"><%= p.tieu_de %></a></h3>
-                <p class="clearfix">
-                  <span class="float-left read"><%= p.noi_dung ? p.noi_dung.substring(0, 150) + '...' : '' %></span>
-                </p>
-                <p class="clearfix">
-                  <a href="#" class="float-left btn btn-primary btn-sm mt-2">Đọc thêm</a>
-                </p>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <div class="col-md-12 text-center">
-          <p>Hiện tại chưa có bài viết nào.</p>
-        </div>
-      <% } %>
-    </div>
+<!-- ================= CTA ĐẶT BÀN ================= -->
+<section class="nh-cta">
+  <div class="nh-cta__bg" style="background-image:url('/blog-cta.jpg')"></div>
+  <div class="nh-cta__veil"></div>
+  <div class="nh-container nh-cta__inner nh-reveal">
+    <span class="nh-eyebrow">Đọc rồi, còn chờ gì nữa?</span>
+    <h2>Trải nghiệm câu chuyện<br>ngay trên bàn ăn của bạn</h2>
+    <p>Mỗi món ăn đều mang một câu chuyện riêng. Đặt bàn hôm nay để tự mình cảm nhận trọn vẹn hương vị Nhà Hàng Bảo Đoàn.</p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Đặt bàn ngay</a>
   </div>
 </section>
+
+<!-- ================= CỬA SỔ ĐỌC BÀI ================= -->
+<div class="nh-modal" id="nh-post-modal" role="dialog" aria-modal="true" aria-labelledby="nh-modal-title">
+  <div class="nh-modal__veil" data-close></div>
+  <div class="nh-modal__box">
+    <button type="button" class="nh-modal__close" data-close aria-label="Đóng"><i class="fas fa-times"></i></button>
+    <img class="nh-modal__img" id="nh-modal-img" src="/blog-1.jpg" alt="">
+    <div class="nh-modal__inner">
+      <div class="nh-meta">
+        <span><i class="far fa-calendar"></i><span id="nh-modal-date"></span></span>
+        <span><i class="far fa-user"></i>Ban biên tập</span>
+        <span><i class="far fa-clock"></i><span id="nh-modal-read"></span> phút đọc</span>
+      </div>
+      <h2 id="nh-modal-title"></h2>
+      <div class="nh-divider" style="margin-left:0"></div>
+      <div class="nh-modal__text" id="nh-modal-text"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var modal = document.getElementById('nh-post-modal');
+    if (!modal) return;
+
+    function moBaiViet(el) {
+      document.getElementById('nh-modal-title').textContent = el.dataset.title || '';
+      document.getElementById('nh-modal-date').textContent = el.dataset.date || '';
+      document.getElementById('nh-modal-read').textContent = el.dataset.read || '1';
+      document.getElementById('nh-modal-text').textContent =
+        (el.dataset.content || '').trim() || 'Nội dung đang được cập nhật.';
+      var duPhong = el.dataset.fallback || '/blog-1.jpg';
+      var img = document.getElementById('nh-modal-img');
+      img.onerror = function () { this.onerror = null; this.src = duPhong; };
+      img.src = el.dataset.img || duPhong;
+      img.alt = el.dataset.title || '';
+      modal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      modal.querySelector('.nh-modal__box').scrollTop = 0;
+    }
+    function dongBaiViet() {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.nh-open-post').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var item = btn.classList.contains('nh-post-item') ? btn : btn.closest('.nh-post-item');
+        if (item) moBaiViet(item);
+      });
+    });
+    modal.querySelectorAll('[data-close]').forEach(function (el) {
+      el.addEventListener('click', dongBaiViet);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') dongBaiViet();
+    });
+
+    // ---- Tìm kiếm bài viết ----
+    var oTim = document.getElementById('nh-blog-search');
+    var luoi = document.getElementById('nh-posts');
+    if (oTim && luoi) {
+      var the = Array.prototype.slice.call(luoi.querySelectorAll('.nh-post'));
+      var trong = document.getElementById('nh-no-result');
+      var demSo = document.getElementById('nh-blog-count');
+
+      oTim.addEventListener('input', function () {
+        var tu = oTim.value.trim().toLowerCase();
+        var hien = 0;
+        the.forEach(function (t) {
+          var khop = !tu ||
+            (t.dataset.title || '').toLowerCase().indexOf(tu) > -1 ||
+            (t.dataset.content || '').toLowerCase().indexOf(tu) > -1;
+          t.style.display = khop ? '' : 'none';
+          if (khop) hien++;
+        });
+        if (trong) trong.style.display = hien === 0 ? '' : 'none';
+        if (demSo) demSo.textContent = tu ? (hien + ' kết quả') : (the.length + ' bài viết');
+      });
+    }
+  })();
+</script>
 
 <%- include('partials/footer') %>

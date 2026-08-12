@@ -2,11 +2,53 @@
   var activePage = 'attendance';
   var staffName = session.staffName || 'Nhân viên';
   var unreadCount = unread || 0;
+
+  /*
+    MỘT TRANG DUY NHẤT CHO KHUÔN MẶT + CHẤM CÔNG
+
+    Trước đây việc này nằm ở hai trang riêng:
+      /staff/attendance   máy chấm công 1:1 + lịch sử
+      /staff/khuon-mat    đăng ký khuôn mặt + MỘT máy chấm công 1:1 nữa
+    Tức là cùng một tính năng "tự chấm công" được viết hai lần, hai giao diện
+    khác nhau, hai đoạn mã phải sửa song song mỗi lần đổi luồng. Nhân viên thì
+    không đoán được nên bấm vào đâu, mà câu trả lời đúng là "đâu cũng được".
+
+    Nay gộp về đây. /staff/khuon-mat chuyển hướng sang trang này để đường dẫn cũ
+    và dấu trang của mọi người vẫn chạy.
+
+    Ba điều kiện tách rời nhau, KHÔNG gộp làm một:
+      coKetNoi   - Python (cổng 8000) còn sống không
+      coMoHinh   - đã tải YuNet + SFace chưa
+      daDangKy   - CHÍNH NGƯỜI ĐANG XEM đã có mẫu khuôn mặt chưa
+    Tách ra để báo đúng việc cần làm, thay vì một câu "dịch vụ chưa sẵn sàng".
+    Riêng việc ĐĂNG KÝ chỉ cần hai điều kiện đầu — gộp thêm daDangKy vào thì
+    người đầu tiên không bao giờ đăng ký được.
+  */
+  var coKetNoi = trangThai && trangThai.ket_noi !== false;
+  var coMoHinh = trangThai && trangThai.co_mo_hinh !== false;
+  var coTheDangKy = coKetNoi && coMoHinh;
+  // soMauCua() trả -1 khi bảng khuon_mat_nv chưa tồn tại -> coi như không áp dụng.
+  var soMau = typeof soMauKhuonMat === 'number' ? soMauKhuonMat : -1;
+  var daDangKy = soMau === -1 || soMau > 0;
+  var chamDuoc = coKetNoi && coMoHinh && daDangKy;
+
+  function gio(t) {
+    return t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : null;
+  }
+  var gioVao = todayAttendance ? gio(todayAttendance.gio_vao) : null;
+  var gioRa = todayAttendance ? gio(todayAttendance.gio_ra) : null;
+  // Chiều sẽ chấm lần tới: chưa có giờ vào -> VÀO, có vào chưa ra -> RA.
+  var chieuKeTiep = !gioVao ? 'vào' : (!gioRa ? 'ra' : null);
 %>
 <%- include('partials/header') %>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-  <h1 class="h3 mb-0 text-gray-800">Chấm công</h1>
+  <h1 class="h3 mb-0 text-gray-800">
+    <i class="fas fa-clock text-primary"></i> Chấm công của tôi
+  </h1>
+  <a href="/cham-cong-khuon-mat" class="btn btn-sm btn-outline-primary" target="_blank">
+    <i class="fas fa-external-link-alt"></i> Mở kiosk chấm công
+  </a>
 </div>
 
 <% if (typeof msg !== 'undefined' && msg) { %>
@@ -15,49 +57,175 @@
   </div>
 <% } %>
 
+<%
+  /* Trục trặc dịch vụ báo MỘT LẦN ở đầu trang, thay vì lặp lại trong từng thẻ
+     như trước — cùng một sự cố mà hiện hai chỗ thì đọc rối và dễ tưởng là hai
+     vấn đề khác nhau. */
+%>
+<% if (!coKetNoi) { %>
+  <div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Dịch vụ nhận diện chưa bật.</strong>
+    Chưa chấm công và chưa đăng ký khuôn mặt được. Nhờ quản trị khởi động
+    ML service (Python, cổng 8000) rồi tải lại trang.
+  </div>
+<% } else if (!coMoHinh) { %>
+  <div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Máy chủ chưa tải mô hình nhận diện.</strong>
+    Nhờ quản trị chạy <code>python -m ml_service.tai_mo_hinh</code> rồi tải lại trang.
+  </div>
+<% } %>
+
 <div class="row">
-  <!-- Clock In/Out -->
-  <div class="col-md-4 mb-4">
-    <div class="card shadow text-center">
-      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Chấm công hôm nay</h6></div>
-      <div class="card-body">
-        <div class="mb-3" style="font-size:48px;">🕐</div>
-        <h4 id="clock" class="text-gray-800 mb-3"></h4>
-        <p class="text-muted"><%= new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) %></p>
-        <% if (todayAttendance) { %>
-          <div class="mb-3">
-            <p class="mb-1"><strong>Giờ vào:</strong>
-              <span class="badge badge-success"><%= todayAttendance.gio_vao ? new Date(todayAttendance.gio_vao).toLocaleTimeString('vi-VN') : 'Chưa chấm' %></span>
-            </p>
-            <p class="mb-1"><strong>Giờ ra:</strong>
-              <span class="badge badge-danger"><%= todayAttendance.gio_ra ? new Date(todayAttendance.gio_ra).toLocaleTimeString('vi-VN') : 'Chưa chấm' %></span>
-            </p>
+  <!-- ================================================= MÁY CHẤM CÔNG -->
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-camera"></i> Chấm công hôm nay
+        </h6>
+      </div>
+      <div class="card-body text-center">
+        <h4 id="dong-ho" class="text-gray-800 mb-1"></h4>
+        <p class="text-muted small mb-3">
+          <%= new Date().toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) %>
+        </p>
+
+        <div class="d-flex justify-content-center mb-3" style="gap:24px">
+          <div>
+            <div class="text-xs text-uppercase text-muted font-weight-bold">Giờ vào</div>
+            <span class="badge badge-<%= gioVao ? 'success' : 'light' %>" style="font-size:14px" id="hien-gio-vao">
+              <%= gioVao || 'chưa chấm' %>
+            </span>
           </div>
-          <% if (!todayAttendance.gio_vao) { %>
-            <form action="/staff/clock-in" method="POST">
-              <button type="submit" class="btn btn-success btn-block btn-lg">✅ Chấm công VÀO</button>
-            </form>
-          <% } else if (!todayAttendance.gio_ra) { %>
-            <p class="text-success small">Đã vào lúc <%= new Date(todayAttendance.gio_vao).toLocaleTimeString('vi-VN') %></p>
-            <form action="/staff/clock-out" method="POST">
-              <button type="submit" class="btn btn-danger btn-block btn-lg">🚪 Chấm công RA</button>
-            </form>
-          <% } else { %>
-            <div class="alert alert-success">✅ Đã hoàn thành chấm công hôm nay!</div>
-            <p><strong>Tổng giờ:</strong> <%= todayAttendance.tong_gio %> giờ</p>
+          <div>
+            <div class="text-xs text-uppercase text-muted font-weight-bold">Giờ ra</div>
+            <span class="badge badge-<%= gioRa ? 'danger' : 'light' %>" style="font-size:14px" id="hien-gio-ra">
+              <%= gioRa || 'chưa chấm' %>
+            </span>
+          </div>
+          <% if (todayAttendance && todayAttendance.tong_gio) { %>
+            <div>
+              <div class="text-xs text-uppercase text-muted font-weight-bold">Tổng giờ</div>
+              <span class="badge badge-info" style="font-size:14px"><%= todayAttendance.tong_gio %>h</span>
+            </div>
           <% } %>
-        <% } else { %>
-          <form action="/staff/clock-in" method="POST">
-            <button type="submit" class="btn btn-success btn-block btn-lg">✅ Chấm công VÀO</button>
-          </form>
+        </div>
+
+        <% if (coTheDangKy && !daDangKy) { %>
+          <%
+            /* Chưa có mẫu thì máy chấm công vô nghĩa — nhưng KHÔNG đẩy người
+               dùng sang trang khác nữa (đó chính là cái vòng lặp trang cũ tạo
+               ra). Phần đăng ký nằm ngay bên cạnh, chỉ việc chỉ tới đó. */
+          %>
+          <div class="alert alert-info text-left mb-0">
+            <i class="fas fa-user-plus"></i>
+            <strong>Bạn chưa đăng ký khuôn mặt</strong> nên chưa chấm công được.
+            Việc này chỉ mất khoảng một phút.
+            <button class="btn btn-sm btn-primary btn-block mt-2" id="nut-toi-dang-ky">
+              <i class="fas fa-camera"></i> Đăng ký ngay ở khung bên cạnh
+            </button>
+          </div>
+        <% } else if (!chieuKeTiep) { %>
+          <div class="alert alert-success text-left mb-2">
+            <i class="fas fa-check-circle"></i> Đã hoàn thành chấm công hôm nay.
+            <% if (todayAttendance && todayAttendance.tong_gio) { %>
+              Tổng <strong><%= todayAttendance.tong_gio %> giờ</strong>.
+            <% } %>
+          </div>
+          <p class="small text-muted mb-0">
+            Nếu bạn làm thêm ca nữa trong ngày, bấm nút bên dưới để chấm ca bổ sung.
+          </p>
+        <% } %>
+
+        <% if (chamDuoc) { %>
+          <div class="mt-3" style="position:relative; border-radius:12px; overflow:hidden;
+                                   background:#000; aspect-ratio:4/3; max-width:340px; margin:0 auto">
+            <video id="video" autoplay playsinline muted
+                   style="width:100%; height:100%; object-fit:cover; transform:scaleX(-1)"></video>
+            <div id="khung-mat" style="position:absolute; inset:10% 18%; border:3px dashed rgba(255,255,255,.35);
+                                       border-radius:50%/60%; pointer-events:none; transition:border-color .3s"></div>
+          </div>
+
+          <div id="thu-thach" class="mt-2" style="font-weight:700; min-height:26px"></div>
+          <div class="progress mb-2" style="height:6px">
+            <div class="progress-bar bg-success" id="tien-do" style="width:0"></div>
+          </div>
+
+          <button class="btn btn-success btn-block btn-lg" id="nut-cham" disabled>
+            <i class="fas fa-camera"></i>
+            Chấm công <%= chieuKeTiep ? chieuKeTiep.toUpperCase() : 'ca bổ sung' %>
+          </button>
+          <div id="kq" class="mt-3"></div>
         <% } %>
       </div>
     </div>
   </div>
 
-  <!-- Lịch sử chấm công -->
-  <div class="col-md-8 mb-4">
-    <div class="card shadow">
+  <div class="col-lg-7">
+    <!-- ============================================ KHUÔN MẶT CỦA TÔI -->
+    <% if (coTheDangKy) { %>
+      <div class="card shadow mb-4" id="the-khuon-mat">
+        <%
+          /* Đã có mẫu rồi thì thẻ này thu gọn: người đăng ký một lần rồi hầu như
+             không quay lại, để nó mở toang chỉ đẩy bảng lịch sử — thứ họ vào xem
+             hằng ngày — xuống dưới màn hình. Chưa có mẫu thì mở sẵn. */
+          var moSan = !daDangKy;
+        %>
+        <div class="card-header py-3 d-flex align-items-center justify-content-between"
+             style="cursor:pointer" data-toggle="collapse" data-target="#than-khuon-mat">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-user-circle"></i> Khuôn mặt của tôi
+            <% if (soMau > 0) { %>
+              <span class="badge badge-success ml-1"><%= soMau %> mẫu</span>
+            <% } else if (soMau === 0) { %>
+              <span class="badge badge-warning ml-1">chưa đăng ký</span>
+            <% } %>
+          </h6>
+          <i class="fas fa-chevron-down text-gray-400"></i>
+        </div>
+
+        <div class="collapse <%= moSan ? 'show' : '' %>" id="than-khuon-mat">
+          <div class="card-body">
+            <p class="text-muted small mb-2">
+              Chụp <strong>ít nhất 5 ảnh</strong> ở nhiều góc (chính diện, nghiêng trái, nghiêng phải).
+              Ảnh chỉ dùng để trích đặc trưng — hệ thống <strong>không lưu ảnh gốc trong CSDL</strong>.
+            </p>
+
+            <div class="row">
+              <div class="col-md-7">
+                <div style="position:relative; border-radius:12px; overflow:hidden; background:#000; aspect-ratio:4/3">
+                  <video id="video-dk" autoplay playsinline muted
+                         style="width:100%; height:100%; object-fit:cover; transform:scaleX(-1)"></video>
+                </div>
+                <div class="btn-toolbar mt-2 justify-content-center">
+                  <button class="btn btn-primary" id="nut-chup" disabled>
+                    <i class="fas fa-camera"></i> Chụp ảnh
+                  </button>
+                  <button class="btn btn-outline-secondary ml-2" id="nut-xoa-het">Xóa hết</button>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <div class="small text-muted mb-1">Ảnh đã chụp: <span id="so-anh">0</span></div>
+                <div id="ds-anh" class="d-flex flex-wrap" style="gap:6px; min-height:80px"></div>
+                <div class="custom-control custom-switch mt-2">
+                  <input type="checkbox" class="custom-control-input" id="thay-the">
+                  <label class="custom-control-label small" for="thay-the">Thay thế mẫu cũ (đăng ký lại)</label>
+                </div>
+                <button class="btn btn-success btn-block mt-2" id="nut-dang-ky" disabled>
+                  <i class="fas fa-save"></i> Lưu đăng ký
+                </button>
+              </div>
+            </div>
+            <div id="kq-dang-ky" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- ============================================ LỊCH SỬ CHẤM CÔNG -->
+    <div class="card shadow mb-4">
       <div class="card-header py-3 d-flex align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Lịch sử chấm công</h6>
         <form method="GET" class="d-flex">
@@ -92,13 +260,249 @@
   </div>
 </div>
 
+<canvas id="canvas" style="display:none"></canvas>
+<script src="/cham-cong-khuon-mat.js"></script>
 <script>
-  function updateClock() {
-    var now = new Date();
-    document.getElementById('clock').textContent = now.toLocaleTimeString('vi-VN');
+(function () {
+  function capNhatGio() {
+    document.getElementById('dong-ho').textContent = new Date().toLocaleTimeString('vi-VN');
   }
-  setInterval(updateClock, 1000);
-  updateClock();
+  setInterval(capNhatGio, 1000); capNhatGio();
+
+  var canvas = document.getElementById('canvas');
+  var video   = document.getElementById('video');       // máy chấm công (có thể không có)
+  var videoDk = document.getElementById('video-dk');    // đăng ký (có thể không có)
+  var nut     = document.getElementById('nut-cham');
+  var nutChup = document.getElementById('nut-chup');
+
+  /*
+    MỘT luồng camera cho CẢ HAI thẻ video.
+
+    Đây là lý do chính khiến việc gộp hai trang không phải chỉ là dán mã vào
+    nhau: gọi getUserMedia hai lần trên cùng một trang thì webcam bị luồng đầu
+    chiếm, luồng thứ hai nhận NotReadableError và khung hình thứ hai đen sì.
+    CamCC.moCamera() nhận một mảng thẻ video và gắn chung một luồng — đúng cách
+    trang "khuôn mặt của tôi" cũ đã làm cho hai khung của nó.
+  */
+  var camSanSang = false;
+
+  function bcCamera(msg) {
+    ['kq', 'kq-dang-ky'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML =
+        '<div class="alert alert-danger mb-0"><i class="fas fa-video-slash"></i> ' +
+        RT.escapeHtml(msg) + '</div>';
+    });
+  }
+
+  if (video || videoDk) {
+    var hopKq = document.getElementById('kq');
+    if (hopKq) hopKq.innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin"></i> Đang mở camera...</div>';
+
+    CamCC.moCamera([video, videoDk])
+      .then(function () {
+        camSanSang = true;
+        if (nut) nut.disabled = false;
+        if (nutChup) nutChup.disabled = false;
+        if (hopKq) hopKq.innerHTML = '';
+        veAnh();
+      })
+      .catch(function (e) { bcCamera(e.message); });
+  }
+
+  function chup(tuVideo) {
+    return CamCC.chup(tuVideo, canvas, { rong: 640, cao: 480 });
+  }
+
+  // Bốn thử thách chống giả mạo, chọn ngẫu nhiên mỗi lượt để không ai quay sẵn
+  // một đoạn video rồi phát lại trước camera.
+  var THU_THACH = [
+    { ma:'gat_dau',   mo_ta:'GẬT ĐẦU nhẹ một cái' },
+    { ma:'quay_trai', mo_ta:'Quay mặt sang TRÁI' },
+    { ma:'quay_phai', mo_ta:'Quay mặt sang PHẢI' },
+    { ma:'lai_gan',   mo_ta:'Đưa mặt LẠI GẦN camera' },
+  ];
+
+  // ------------------------------------------------------- ĐĂNG KÝ KHUÔN MẶT
+  var anhDaChup = [];
+
+  function veAnh() {
+    var elSo = document.getElementById('so-anh');
+    var elDs = document.getElementById('ds-anh');
+    var nutDk = document.getElementById('nut-dang-ky');
+    if (!elSo || !elDs || !nutDk) return;    // trang đang ẩn phần đăng ký
+
+    elSo.textContent = anhDaChup.length;
+    // Đăng ký chỉ phụ thuộc mô hình + camera, KHÔNG phụ thuộc việc đã có ai
+    // đăng ký hay chưa — nếu không thì người đầu tiên mãi mãi bị khoá nút.
+    nutDk.disabled = anhDaChup.length < 5 || !camSanSang;
+
+    elDs.innerHTML = anhDaChup.map(function (a, i) {
+      return '<div style="position:relative"><img src="' + a + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px">' +
+        '<span data-i="' + i + '" class="xoa-anh" style="position:absolute;top:-6px;right:-6px;background:#e74a3b;color:#fff;' +
+        'border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;cursor:pointer">&times;</span></div>';
+    }).join('');
+    elDs.querySelectorAll('.xoa-anh').forEach(function (b) {
+      b.onclick = function () { anhDaChup.splice(+b.getAttribute('data-i'), 1); veAnh(); };
+    });
+  }
+
+  if (nutChup) {
+    nutChup.onclick = function () {
+      if (anhDaChup.length >= 12) return RT.thongBao('Đủ ảnh rồi (tối đa 12).', 'canh-bao');
+      try {
+        anhDaChup.push(chup(videoDk));
+      } catch (e) {
+        return RT.thongBao(e.message, 'loi');
+      }
+      veAnh();
+    };
+    document.getElementById('nut-xoa-het').onclick = function () { anhDaChup = []; veAnh(); };
+
+    document.getElementById('nut-dang-ky').onclick = function () {
+      var nutDk = this; nutDk.disabled = true;
+      var box = document.getElementById('kq-dang-ky');
+      box.innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin"></i> Đang xử lý ảnh...</div>';
+
+      // KHÔNG gửi id_nv: máy chủ lấy danh tính từ phiên đăng nhập. Gửi lên thì
+      // chỉ tạo thêm một trường có thể bị sửa mà chẳng thêm được gì.
+      RT.gui('/api/khuon-mat/dang-ky', {
+        anh: anhDaChup,
+        thay_the: document.getElementById('thay-the').checked,
+      }).then(function (kq) {
+        box.innerHTML = '<div class="alert alert-success mb-0"><i class="fas fa-check-circle"></i> ' +
+          'Nhận ' + kq.so_anh_nhan + ' ảnh, loại ' + kq.so_anh_loai + '. Tổng mẫu: <strong>' + kq.tong_mau_hien_co + '</strong>. ' +
+          (kq.du_dieu_kien ? 'Đã đủ điều kiện chấm công!' : 'Cần thêm ' + (kq.so_mau_toi_thieu - kq.tong_mau_hien_co) + ' ảnh nữa.') +
+          (kq.chi_tiet_loai && kq.chi_tiet_loai.length ? '<div class="small mt-1 text-muted">Ảnh bị loại: ' +
+            kq.chi_tiet_loai.map(function (l) { return 'ảnh ' + l.anh_thu + ' (' + l.ly_do + ')'; }).join('; ') + '</div>' : '') +
+          '</div>';
+        anhDaChup = [];
+
+        // Vừa đủ điều kiện mà máy chấm công chưa hiện (trang được dựng lúc chưa
+        // có mẫu nào) -> tải lại để dùng được ngay, khỏi bắt người ta tự đoán.
+        if (kq.du_dieu_kien && !nut) {
+          box.innerHTML += '<div class="small mt-2 text-muted">' +
+            '<i class="fas fa-spinner fa-spin"></i> Đang mở máy chấm công...</div>';
+          setTimeout(function () { location.href = '/staff/attendance'; }, 1500);
+        }
+      }).catch(function (e) {
+        box.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-times-circle"></i> ' +
+          RT.escapeHtml(e.message) + '</div>';
+      }).then(veAnh);
+    };
+  }
+
+  // Nút "đăng ký ngay ở khung bên cạnh": mở thẻ đăng ký rồi cuộn tới, thay cho
+  // đường dẫn sang trang khác của bản cũ.
+  var nutToiDk = document.getElementById('nut-toi-dang-ky');
+  if (nutToiDk) {
+    nutToiDk.onclick = function () {
+      var the = document.getElementById('the-khuon-mat');
+      if (!the) return;
+      $('#than-khuon-mat').collapse('show');
+      the.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+  }
+
+  // --------------------------------------------------------- MÁY CHẤM CÔNG
+  if (!nut) return;   // chưa đăng ký khuôn mặt / dịch vụ chưa bật
+
+  var khungMat  = document.getElementById('khung-mat');
+  var elThuThach = document.getElementById('thu-thach');
+  var elTienDo  = document.getElementById('tien-do');
+  var box       = document.getElementById('kq');
+
+  function bao(html, loai, icon) {
+    box.innerHTML = '<div class="alert alert-' + loai + ' mb-0 text-left">' +
+      (icon ? '<i class="fas ' + icon + '"></i> ' : '') + html + '</div>';
+  }
+
+  var dangChay = false;
+  nut.onclick = function () {
+    if (dangChay || !camSanSang) return;
+    dangChay = true; nut.disabled = true;
+
+    var tt = THU_THACH[Math.floor(Math.random() * THU_THACH.length)];
+    elThuThach.innerHTML = '<i class="fas fa-tasks text-warning"></i> ' + tt.mo_ta;
+
+    // Xin toạ độ TRƯỚC khi thu ảnh: hộp xin quyền vị trí che mất camera, xin
+    // sau thì cả loạt khung vừa chụp đều hỏng.
+    bao('<i class="fas fa-spinner fa-spin"></i> Đang xác định vị trí...', 'light', '');
+    CamCC.layViTri().then(function (viTri) {
+      khungMat.style.borderColor = '#1cc88a';
+      bao('<i class="fas fa-spinner fa-spin"></i> Giữ mặt trong khung và làm theo yêu cầu...', 'light', '');
+
+      var khung = [], i = 0, tong = 12;
+      var hen = setInterval(function () {
+        try {
+          khung.push(chup(video));
+        } catch (e) {
+          clearInterval(hen);
+          return xong({ ok: false, thong_bao: e.message });
+        }
+        i++;
+        elTienDo.style.width = Math.round(i / tong * 100) + '%';
+        if (i >= tong) { clearInterval(hen); gui(khung, viTri, tt.ma); }
+      }, 200);
+    });
+  };
+
+  function gui(khung, viTri, maThuThach) {
+    bao('<i class="fas fa-spinner fa-spin"></i> Đang xác minh khuôn mặt...', 'light', '');
+    fetch('/api/khuon-mat/cham-cong', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ khung: khung, thu_thach: maThuThach, che_do: 'ca_nhan', vi_tri: viTri }),
+    }).then(function (r) { return r.json(); })
+      .then(xong)
+      .catch(function (e) { xong({ ok: false, thong_bao: 'Lỗi kết nối: ' + e.message }); });
+  }
+
+  function xong(kq) {
+    elThuThach.textContent = '';
+    elTienDo.style.width = '0';
+    khungMat.style.borderColor = 'rgba(255,255,255,.35)';
+    dangChay = false;
+    nut.disabled = !camSanSang;
+
+    if (kq.ok) {
+      // Phần trăm do máy chủ gửi xuống (đã quy đổi sẵn) — không tự nhân 100 ở
+      // đây nữa để màn hình và nhật ký luôn nói cùng một con số.
+      bao('<strong>' + (kq.chieu === 'vao' ? 'Đã chấm công VÀO' : 'Đã chấm công RA') + '</strong> lúc ' +
+          RT.escapeHtml(kq.gio || '') +
+          (kq.phan_tram != null
+            ? ' · khớp ' + kq.phan_tram + '%' +
+              (kq.nguong_phan_tram != null ? ' (cần ' + kq.nguong_phan_tram + '%)' : '')
+            : '') +
+          (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : '') +
+          '<div class="small mt-1">Đang cập nhật lại trang...</div>', 'success', 'fa-check-circle');
+      RT.thongBao('Chấm công thành công.', 'thanh-cong');
+      // Tải lại để bảng lịch sử và giờ vào/ra hiển thị đúng bản ghi vừa tạo.
+      setTimeout(function () { location.href = '/staff/attendance'; }, 1800);
+    } else {
+      var icon = kq.ket_qua === 'sai_vi_tri' ? 'fa-map-marker-alt'
+               : kq.ket_qua === 'gia_mao' ? 'fa-user-secret'
+               : kq.ket_qua === 'chua_dat_thu_thach' ? 'fa-redo'
+               : kq.ket_qua === 'khung_khong_dong_nhat' ? 'fa-lightbulb'
+               : 'fa-times-circle';
+      // "Chưa đủ động tác" và "ảnh chưa rõ" là chuyện thường gặp của người thật,
+      // không phải lỗi nghiêm trọng - báo màu vàng chứ không phải màu đỏ.
+      var loai = (kq.ket_qua === 'chua_dat_thu_thach' ||
+                  kq.ket_qua === 'khung_khong_dong_nhat') ? 'warning' : 'danger';
+      // Phần đăng ký nay nằm ngay trên cùng trang, nên chỉ tới đó chứ không
+      // gửi người dùng đi một trang khác nữa.
+      var them = kq.ket_qua === 'chua_dang_ky'
+        ? '<div class="mt-2"><button class="btn btn-sm btn-primary" id="nut-dk-tu-loi">Đăng ký khuôn mặt</button></div>'
+        : '';
+      bao(RT.escapeHtml(kq.thong_bao || 'Chấm công thất bại.') + them, loai, icon);
+
+      var nutLoi = document.getElementById('nut-dk-tu-loi');
+      if (nutLoi) nutLoi.onclick = function () {
+        $('#than-khuon-mat').collapse('show');
+        document.getElementById('the-khuon-mat').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+    }
+  }
+})();
 </script>
 
 <%- include('partials/footer') %>

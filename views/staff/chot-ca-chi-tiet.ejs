@@ -1,0 +1,254 @@
+<%
+  var activePage = 'chot-ca';
+  var staffName = session.staffName || 'Nhân viên';
+  var lech = Number(bienBan.chenh_lech) || 0;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <a href="/staff/chot-ca/lich-su" class="small text-muted"><i class="fas fa-arrow-left"></i> Về lịch sử chốt ca</a>
+    <h1 class="h3 mb-0 text-gray-800">Biên bản chốt ca #<%= bienBan.id %></h1>
+    <div class="small text-muted">
+      <%= bienBan.ten_nhan_vien || 'Nhân viên' %> ·
+      <%= bienBan.ten_ca || '' %> ngày <%= new Date(bienBan.shift_date).toLocaleDateString('vi-VN') %>
+    </div>
+  </div>
+  <div class="d-flex" style="gap:8px;">
+    <button class="btn btn-sm btn-outline-secondary shadow-sm" onclick="window.print()">
+      <i class="fas fa-print fa-sm"></i> In biên bản
+    </button>
+    <% if (duocDuyet && bienBan.status !== 'verified') { %>
+      <button class="btn btn-sm btn-success shadow-sm" id="nut-duyet">
+        <i class="fas fa-check fa-sm"></i> Duyệt biên bản
+      </button>
+    <% } %>
+  </div>
+</div>
+
+<!-- Dải trạng thái: thứ người đọc cần thấy trước mọi con số -->
+<div class="alert <%= lech === 0 ? 'alert-success' : (lech < 0 ? 'alert-danger' : 'alert-warning') %>">
+  <div class="d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+      <h5 class="mb-1">
+        <% if (lech === 0) { %>
+          <i class="fas fa-check-circle"></i> Két khớp đúng
+        <% } else if (lech < 0) { %>
+          <i class="fas fa-exclamation-triangle"></i> Két thiếu <%= formatMoney(Math.abs(lech)) %>đ
+        <% } else { %>
+          <i class="fas fa-exclamation-circle"></i> Két thừa <%= formatMoney(lech) %>đ
+        <% } %>
+      </h5>
+      <% if (bienBan.ly_do_chenh_lech) { %>
+        <div class="small"><b>Lý do:</b> <%= bienBan.ly_do_chenh_lech %></div>
+      <% } %>
+    </div>
+    <div class="text-right">
+      <% if (bienBan.status === 'verified') { %>
+        <span class="badge badge-success p-2">
+          Đã duyệt bởi <%= bienBan.ten_nguoi_duyet || '—' %>
+          <% if (bienBan.duyet_luc) { %> · <%= new Date(bienBan.duyet_luc).toLocaleString('vi-VN') %><% } %>
+        </span>
+      <% } else { %>
+        <span class="badge badge-secondary p-2">Chờ giám sát / kế toán duyệt</span>
+      <% } %>
+    </div>
+  </div>
+  <% if (bienBan.ghi_chu_duyet) { %>
+    <hr class="my-2"><div class="small"><b>Ghi chú của người duyệt:</b> <%= bienBan.ghi_chu_duyet %></div>
+  <% } %>
+</div>
+
+<div class="row">
+  <!-- ==================================================== Đối soát két -->
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Đối soát két tiền mặt</h6></div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><td class="text-muted">Quỹ lẻ đầu ca</td>
+                <td class="text-right"><%= formatMoney(bienBan.tien_dau_ca) %>đ</td></tr>
+            <tr><td class="text-muted">Tiền mặt đã thu</td>
+                <td class="text-right text-success">+ <%= formatMoney(bienBan.cash_in) %>đ</td></tr>
+            <% if (Number(bienBan.tien_hoan) > 0) { %>
+              <tr><td class="text-muted">Tiền mặt đã hoàn khách</td>
+                  <td class="text-right text-danger">− <%= formatMoney(bienBan.tien_hoan) %>đ</td></tr>
+            <% } %>
+            <tr class="border-top"><th>Két phải có</th>
+                <th class="text-right"><%= formatMoney(bienBan.tien_mat_he_thong) %>đ</th></tr>
+            <tr><th>Đếm được thực tế</th>
+                <th class="text-right"><%= formatMoney(bienBan.tien_mat_dem_duoc) %>đ</th></tr>
+            <tr class="border-top">
+              <th>Chênh lệch</th>
+              <th class="text-right h5 mb-0 <%= lech === 0 ? 'text-success' : (lech < 0 ? 'text-danger' : 'text-warning') %>">
+                <%= lech > 0 ? '+' : '' %><%= formatMoney(lech) %>đ
+              </th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (bienBan.bang_menh_gia_doc) { %>
+      <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Bảng đếm theo mệnh giá</h6></div>
+        <div class="card-body">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Mệnh giá</th><th class="text-center">Số tờ</th><th class="text-right">Thành tiền</th></tr></thead>
+            <tbody>
+              <% bienBan.menh_gia.forEach(function (m) {
+                   var soTo = Number(bienBan.bang_menh_gia_doc[m] || 0);
+                   if (!soTo) return; %>
+                <tr>
+                  <td><%= formatMoney(m) %>đ</td>
+                  <td class="text-center"><%= soTo %></td>
+                  <td class="text-right"><%= formatMoney(m * soTo) %>đ</td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ================================================= Doanh thu ca -->
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Doanh thu ca</h6></div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><td class="text-muted">Tiền mặt</td><td class="text-right"><%= formatMoney(bienBan.cash_in) %>đ</td></tr>
+            <tr><td class="text-muted">Chuyển khoản VietQR</td><td class="text-right"><%= formatMoney(bienBan.tien_chuyen_khoan) %>đ</td></tr>
+            <tr><td class="text-muted">Thẻ ngân hàng (POS)</td><td class="text-right"><%= formatMoney(bienBan.tien_the) %>đ</td></tr>
+            <% if (Number(bienBan.tien_hoan) > 0) { %>
+              <tr><td class="text-muted">Hoàn trả khách</td><td class="text-right text-danger">− <%= formatMoney(bienBan.tien_hoan) %>đ</td></tr>
+            <% } %>
+            <tr class="border-top"><th>Tổng doanh thu ca</th>
+                <th class="text-right h5 mb-0 text-primary"><%= formatMoney(bienBan.total_revenue) %>đ</th></tr>
+            <tr><td class="text-muted">Số hóa đơn</td><td class="text-right"><%= bienBan.total_orders %></td></tr>
+            <% if (Number(bienBan.tien_tip) > 0) { %>
+              <tr><td class="text-muted">Tiền tip</td><td class="text-right"><%= formatMoney(bienBan.tien_tip) %>đ</td></tr>
+            <% } %>
+            <% if (Number(bienBan.tien_dat_coc) > 0) { %>
+              <tr><td class="text-muted">Trong đó là đặt cọc</td><td class="text-right"><%= formatMoney(bienBan.tien_dat_coc) %>đ</td></tr>
+            <% } %>
+            <% if (Number(bienBan.tien_khach_tu_tra) > 0) { %>
+              <tr>
+                <td class="text-muted">Khách tự quét QR trả <span class="small">(không qua két)</span></td>
+                <td class="text-right"><%= formatMoney(bienBan.tien_khach_tu_tra) %>đ</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+        <div class="small text-muted mt-3">
+          Ca tính từ <b><%= new Date(bienBan.shift_start).toLocaleString('vi-VN') %></b>
+          đến <b><%= new Date(bienBan.shift_end).toLocaleString('vi-VN') %></b>.
+          <% if (Number(bienBan.so_phien_cho) > 0) { %>
+            Lúc chốt còn <b><%= bienBan.so_phien_cho %></b> phiên chuyển khoản đang chờ tiền về.
+          <% } %>
+        </div>
+        <% if (bienBan.notes) { %>
+          <hr><div class="small"><b>Ghi chú bàn giao:</b> <%= bienBan.notes %></div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Danh sách phiên: chỗ để soi khi két lệch -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Các phiên trong ca</h6>
+        <span class="badge badge-secondary"><%= phien.length %></span>
+      </div>
+      <div class="card-body p-0">
+        <% if (!phien.length) { %>
+          <div class="text-muted text-center py-4">Không có phiên thanh toán nào trong ca này.</div>
+        <% } else { %>
+          <div class="table-responsive" style="max-height:420px; overflow:auto">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="thead-light"><tr>
+                <th>Giờ</th><th>Đơn</th><th>Hình thức</th><th class="text-right">Số tiền</th><th></th>
+              </tr></thead>
+              <tbody>
+                <% phien.forEach(function (p) { %>
+                  <tr class="<%= p.status === 'refunded' ? 'table-danger' : '' %>">
+                    <td class="small"><%= p.thanh_cong_luc ? new Date(p.thanh_cong_luc).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—' %></td>
+                    <td class="small"><a href="/staff/thanh-toan/<%= p.sesis %>"><%= p.sesis %></a></td>
+                    <td class="small">
+                      <%= p.ten_phuong_thuc %>
+                      <% if (p.loai === 'dat_coc') { %><span class="badge badge-info">cọc</span><% } %>
+                      <% if (p.nguon === 'khach_qr') { %><span class="badge badge-light border">khách tự trả</span><% } %>
+                    </td>
+                    <td class="text-right <%= p.status === 'refunded' ? 'text-danger' : '' %>">
+                      <%= p.status === 'refunded' ? '− ' : '' %><%= formatMoney(p.amount) %>đ
+                    </td>
+                    <td class="text-right small">
+                      <a href="/staff/thanh-toan/bien-lai/<%= p.id %>" target="_blank">biên lai</a>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chữ ký: chỉ hiện khi in -->
+<div class="row d-none d-print-flex mt-5">
+  <div class="col-6 text-center">
+    <div class="font-weight-bold">Thu ngân lập biên bản</div>
+    <div class="small text-muted">(ký, ghi rõ họ tên)</div>
+    <div style="height:70px"></div>
+    <div><%= bienBan.ten_nhan_vien || '' %></div>
+  </div>
+  <div class="col-6 text-center">
+    <div class="font-weight-bold">Giám sát / kế toán duyệt</div>
+    <div class="small text-muted">(ký, ghi rõ họ tên)</div>
+    <div style="height:70px"></div>
+    <div><%= bienBan.ten_nguoi_duyet || '' %></div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .sidebar, .topbar, .navbar, footer, .scroll-to-top, button, .btn { display:none !important; }
+    #content-wrapper, #wrapper, .container-fluid { margin:0 !important; padding:0 !important; width:100% !important; }
+    .card { border:1px solid #ccc !important; box-shadow:none !important; break-inside:avoid; }
+    a { text-decoration:none !important; color:#000 !important; }
+  }
+</style>
+
+<% if (duocDuyet && bienBan.status !== 'verified') { %>
+<script>
+document.getElementById('nut-duyet').onclick = function () {
+  Swal.fire({
+    title: 'Duyệt biên bản chốt ca?',
+    input: 'text',
+    inputPlaceholder: 'Ghi chú khi duyệt (không bắt buộc)',
+    html: 'Xác nhận bạn đã kiểm tra két và đồng ý với các con số trong biên bản này.',
+    showCancelButton: true, confirmButtonText: 'Duyệt', cancelButtonText: 'Để sau',
+    confirmButtonColor: '#1cc88a',
+  }).then(function (kq) {
+    if (!kq.isConfirmed) return;
+    fetch('/staff/chot-ca/<%= bienBan.id %>/duyet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ghi_chu: kq.value || '' }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (k) {
+        if (!k.ok || !k.d.thanhCong) throw new Error(k.d.loi || 'Không duyệt được');
+        location.reload();
+      })
+      .catch(function (e) { Swal.fire('Chưa duyệt được', e.message, 'error'); });
+  });
+};
+</script>
+<% } %>
+
+<%- include('partials/footer') %>

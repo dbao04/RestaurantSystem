@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard phân tích - Nhà Hàng Bảo Đoàn</title>
+  <script src="/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --line: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --brand: #0f766e;
+      --brand-2: #14b8a6;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    header {
+      background: linear-gradient(135deg, #0f766e, #115e59);
+      color: #fff; padding: 18px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    header .sub { font-size: 13px; opacity: .85; margin-top: 2px; }
+    header nav a {
+      color: #fff; text-decoration: none; font-size: 13px;
+      padding: 7px 13px; border: 1px solid rgba(255,255,255,.35);
+      border-radius: 7px; margin-left: 8px; display: inline-block;
+    }
+    header nav a:hover { background: rgba(255,255,255,.16); }
+
+    .wrap { padding: 20px 28px 60px; max-width: 1520px; margin: 0 auto; }
+
+    .filter {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 14px 18px; margin-bottom: 18px;
+      display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .filter label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .filter input, .filter select {
+      padding: 8px 11px; border: 1px solid var(--line); border-radius: 7px;
+      font-size: 14px; font-family: inherit;
+    }
+    .btn {
+      background: var(--brand); color: #fff; border: 0; padding: 9px 18px;
+      border-radius: 7px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .btn:hover { background: #115e59; }
+    .btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+    .btn.ghost:hover { background: #f0fdfa; }
+    .btn.ghost.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn.ghost.active:hover { background: #115e59; }
+    .btn:focus { outline: none; }
+    .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+    .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .kpi .value { font-size: 25px; font-weight: 700; margin-top: 7px; }
+    .kpi .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .kpi.accent { border-left: 4px solid var(--brand); }
+    .kpi.warn   { border-left: 4px solid var(--warn); }
+    .kpi.good   { border-left: 4px solid var(--ok); }
+
+    .grid { display: grid; gap: 16px; margin-bottom: 16px; }
+    .g2 { grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); }
+    .g3 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+    .card h2 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+    .card .desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .chart-box { position: relative; height: 300px; }
+    .chart-box.tall { height: 400px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .3px; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:hover { background: #f8fafc; }
+
+    .tag { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .tag.sap_het  { background: #fee2e2; color: #991b1b; }
+    .tag.canh_bao { background: #ffedd5; color: #9a3412; }
+    .tag.theo_doi { background: #fef9c3; color: #854d0e; }
+    .tag.du       { background: #dcfce7; color: #166534; }
+
+    .insight {
+      background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 4px solid var(--brand-2);
+      border-radius: 8px; padding: 12px 15px; font-size: 13.5px; margin-top: 12px; line-height: 1.6;
+    }
+    .insight b { color: #065f46; }
+    .scroll { max-height: 380px; overflow-y: auto; }
+    .loading { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Dashboard phân tích &amp; hỗ trợ ra quyết định</h1>
+      <div class="sub">Tầng 2 &mdash; Phân tích dữ liệu vận hành | Xin chào <%= tenNguoiDung %></div>
+    </div>
+    <nav>
+      <a href="/admin">Trang quản trị</a>
+      <a href="/du-bao">Dự báo AI</a>
+      <a href="/so-do-ban">Sơ đồ bàn</a>
+      <a href="/staff">Trang nhân viên</a>
+      <a href="/">Trang chủ</a>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div class="filter">
+      <div>
+        <label for="tu">Từ ngày</label>
+        <input type="date" id="tu" value="<%= khoang.tu %>">
+      </div>
+      <div>
+        <label for="den">Đến ngày</label>
+        <input type="date" id="den" value="<%= khoang.den %>">
+      </div>
+      <button class="btn" onclick="taiLai()">Áp dụng</button>
+      <button class="btn ghost" data-ngay="7" onclick="datNhanh(7)">7 ngày</button>
+      <button class="btn ghost" data-ngay="30" onclick="datNhanh(30)">30 ngày</button>
+      <button class="btn ghost" data-ngay="90" onclick="datNhanh(90)">90 ngày</button>
+      <button class="btn ghost" data-ngay="365" onclick="datNhanh(365)">1 năm</button>
+    </div>
+
+    <div class="kpis" id="kpis">
+      <div class="loading">Đang tải số liệu...</div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Doanh thu theo ngày</h2>
+        <div class="desc">Xu hướng doanh thu và số đơn trong khoảng đã chọn</div>
+        <div class="chart-box"><canvas id="cDoanhThuNgay"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Doanh thu theo khung giờ</h2>
+        <div class="desc">Xác định giờ cao điểm để bố trí nhân sự và chuẩn bị nguyên liệu</div>
+        <div class="chart-box"><canvas id="cGio"></canvas></div>
+        <div class="insight" id="insightGio">Đang phân tích...</div>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h2>Doanh thu theo thứ trong tuần</h2>
+        <div class="desc">Cơ sở xếp lịch làm việc</div>
+        <div class="chart-box"><canvas id="cThu"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Cơ cấu theo danh mục món</h2>
+        <div class="desc">Nhóm món nào đóng góp doanh thu chính</div>
+        <div class="chart-box"><canvas id="cDanhMuc"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Cơ cấu theo hình thức phục vụ</h2>
+        <div class="desc">Tại chỗ / mang về / giao hàng</div>
+        <div class="chart-box"><canvas id="cLoaiDon"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Top 15 món bán chạy</h2>
+        <div class="desc">Xếp theo số lượng bán ra</div>
+        <div class="chart-box tall"><canvas id="cTopMon"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Phân tích Pareto (quy luật 20/80)</h2>
+        <div class="desc">Bao nhiêu phần trăm số món tạo ra 80% doanh thu?</div>
+        <div class="chart-box tall"><canvas id="cPareto"></canvas></div>
+        <div class="insight" id="insightPareto">Đang phân tích...</div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Hiệu suất nhân viên phục vụ</h2>
+        <div class="desc">Số đơn phục vụ và doanh thu mang lại</div>
+        <div class="scroll"><table id="tNhanVien"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>Hiệu suất bếp</h2>
+        <div class="desc">Thời gian chế biến trung bình từng món</div>
+        <div class="insight" id="insightBep" style="margin-top:0;margin-bottom:12px">Đang phân tích...</div>
+        <div class="scroll"><table id="tBep"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Tình trạng tồn kho</h2>
+        <div class="desc">Số ngày sử dụng còn lại = tồn hiện tại / tiêu hao trung bình 30 ngày</div>
+        <div class="scroll"><table id="tTonKho"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>Lô hàng sắp hết hạn (14 ngày tới)</h2>
+        <div class="desc">Cảnh báo sớm để giảm lãng phí nguyên liệu</div>
+        <div class="scroll"><table id="tHetHan"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Tien ich
+// ---------------------------------------------------------------------------
+const MAU = ['#0f766e','#14b8a6','#f59e0b','#ef4444','#6366f1','#ec4899',
+             '#84cc16','#06b6d4','#8b5cf6','#f97316','#10b981','#3b82f6'];
+
+const dinhDangTien = (v) => Number(v || 0).toLocaleString('vi-VN');
+const trieu = (v) => (Number(v || 0) / 1e6).toFixed(1);
+
+/** Rut gon so tien cho nhan truc: 1.2 tr / 3.4 tỷ */
+function gonTien(v) {
+  v = Number(v) || 0;
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + ' tỷ';
+  if (v >= 1e6) return (v / 1e6).toFixed(0) + ' tr';
+  if (v >= 1e3) return (v / 1e3).toFixed(0) + ' k';
+  return String(v);
+}
+
+const bieuDo = {};
+/** Ve lai bieu do: huy instance cu de tranh ro ri bo nho khi doi bo loc. */
+function ve(id, config) {
+  if (bieuDo[id]) bieuDo[id].destroy();
+  bieuDo[id] = new Chart(document.getElementById(id), config);
+}
+
+function thamSo() {
+  const tu = document.getElementById('tu').value;
+  const den = document.getElementById('den').value;
+  return `?tu=${tu}&den=${den}`;
+}
+
+async function layJSON(duongDan, themThamSo = '') {
+  const r = await fetch('/analytics/api/' + duongDan + thamSo() + themThamSo);
+  if (!r.ok) throw new Error('Lỗi tải ' + duongDan + ': ' + r.status);
+  return r.json();
+}
+
+// Danh dau nut khoang thoi gian dang duoc chon (nut xanh nhay theo lua chon)
+function dongBoNutNhanh() {
+  const tu = document.getElementById('tu').value;
+  const den = document.getElementById('den').value;
+  let soNgay = 0;
+  if (tu && den) {
+    const a = new Date(tu + 'T00:00:00'), b = new Date(den + 'T00:00:00');
+    soNgay = Math.round((b - a) / 86400000) + 1;
+  }
+  document.querySelectorAll('.filter .btn.ghost[data-ngay]').forEach(nut => {
+    nut.classList.toggle('active', Number(nut.dataset.ngay) === soNgay);
+  });
+}
+
+// Dinh dang YYYY-MM-DD theo gio dia phuong (toISOString bi lui 1 ngay o mui gio +7)
+function dinhDangNgay(d) {
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+
+function datNhanh(soNgay) {
+  const den = document.getElementById('den').value || dinhDangNgay(new Date());
+  document.getElementById('den').value = den;
+  const d = new Date(den + 'T00:00:00');
+  d.setDate(d.getDate() - (soNgay - 1));
+  document.getElementById('tu').value = dinhDangNgay(d);
+  dongBoNutNhanh();
+  taiLai();
+}
+
+document.getElementById('tu').addEventListener('change', dongBoNutNhanh);
+document.getElementById('den').addEventListener('change', dongBoNutNhanh);
+
+// ---------------------------------------------------------------------------
+// Cac khoi noi dung
+// ---------------------------------------------------------------------------
+async function veKpi() {
+  const d = await layJSON('tong-quan');
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi accent">
+      <div class="label">Doanh thu</div>
+      <div class="value">${trieu(d.doanh_thu)} tr</div>
+      <div class="note">${d.so_don.toLocaleString('vi-VN')} đơn hoàn tất</div>
+    </div>
+    <div class="kpi good">
+      <div class="label">Lợi nhuận gộp</div>
+      <div class="value">${trieu(d.loi_nhuan_gop)} tr</div>
+      <div class="note">Biên ${d.bien_loi_nhuan.toFixed(1)}%</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Chi phí nguyên liệu</div>
+      <div class="value">${trieu(d.chi_phi_nguyen_lieu)} tr</div>
+      <div class="note">${(100 - d.bien_loi_nhuan).toFixed(1)}% doanh thu</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Giá trị đơn TB</div>
+      <div class="value">${dinhDangTien(Math.round(d.gia_tri_don_tb))}đ</div>
+      <div class="note">${dinhDangTien(d.so_mon_ban)} món bán ra</div>
+    </div>
+    <div class="kpi warn">
+      <div class="label">Tỷ lệ hủy đơn</div>
+      <div class="value">${d.ty_le_huy.toFixed(2)}%</div>
+      <div class="note">${d.don_huy} đơn bị hủy</div>
+    </div>`;
+}
+
+async function veDoanhThuNgay() {
+  const d = await layJSON('doanh-thu-ngay');
+  ve('cDoanhThuNgay', {
+    type: 'line',
+    data: {
+      labels: d.map(r => r.ngay.slice(5)),
+      datasets: [
+        { label: 'Doanh thu', data: d.map(r => r.doanh_thu), borderColor: MAU[0],
+          backgroundColor: 'rgba(15,118,110,.12)', fill: true, tension: .3,
+          pointRadius: d.length > 90 ? 0 : 2, yAxisID: 'y' },
+        { label: 'Số đơn', data: d.map(r => r.so_don), borderColor: MAU[2],
+          borderDash: [5, 4], fill: false, tension: .3,
+          pointRadius: 0, yAxisID: 'y1' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        tooltip: { callbacks: { label: (c) => c.datasetIndex === 0
+          ? 'Doanh thu: ' + dinhDangTien(c.parsed.y) + 'đ'
+          : 'Số đơn: ' + c.parsed.y } },
+      },
+      scales: {
+        y:  { position: 'left',  ticks: { callback: gonTien }, title: { display: true, text: 'Doanh thu' } },
+        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Số đơn' } },
+      },
+    },
+  });
+}
+
+async function veGio() {
+  const d = await layJSON('doanh-thu-gio');
+  ve('cGio', {
+    type: 'bar',
+    data: {
+      labels: d.map(r => r.gio + 'h'),
+      datasets: [{ label: 'Doanh thu', data: d.map(r => r.doanh_thu),
+        backgroundColor: d.map(r => (r.gio >= 11 && r.gio <= 13) || (r.gio >= 18 && r.gio <= 20) ? MAU[0] : '#94a3b8') }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: (c) => dinhDangTien(c.parsed.y) + 'đ' } } },
+      scales: { y: { ticks: { callback: gonTien } } },
+    },
+  });
+
+  // Rut ra ket luan quan tri thay vi de nguoi dung tu doc bieu do.
+  const tong = d.reduce((s, r) => s + Number(r.doanh_thu), 0);
+  const sap = [...d].sort((a, b) => b.doanh_thu - a.doanh_thu);
+  const top3 = sap.slice(0, 3);
+  const pct = tong > 0 ? (top3.reduce((s, r) => s + Number(r.doanh_thu), 0) / tong * 100) : 0;
+  document.getElementById('insightGio').innerHTML =
+    `Ba khung giờ <b>${top3.map(r => r.gio + 'h').join(', ')}</b> chiếm <b>${pct.toFixed(1)}%</b> tổng doanh thu. ` +
+    `Đây là các khung giờ cần bố trí đủ nhân sự phục vụ và chuẩn bị sẵn nguyên liệu.`;
+}
+
+async function veThu() {
+  const d = await layJSON('doanh-thu-thu');
+  ve('cThu', {
+    type: 'bar',
+    data: {
+      labels: d.map(r => r.ten_thu),
+      datasets: [{ label: 'Doanh thu', data: d.map(r => r.doanh_thu),
+        backgroundColor: d.map(r => r.thu_so === 1 || r.thu_so === 7 ? MAU[1] : MAU[0]) }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: (c) => dinhDangTien(c.parsed.y) + 'đ' } } },
+      scales: { y: { ticks: { callback: gonTien } } },
+    },
+  });
+}
+
+async function veTron(id, duongDan, nhan, gia_tri) {
+  const d = await layJSON(duongDan);
+  ve(id, {
+    type: 'doughnut',
+    data: {
+      labels: d.map(nhan),
+      datasets: [{ data: d.map(gia_tri), backgroundColor: MAU, borderWidth: 2, borderColor: '#fff' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (c) => c.label + ': ' + dinhDangTien(c.parsed) + 'đ' } },
+      },
+    },
+  });
+}
+
+async function veTopMon() {
+  const d = (await layJSON('top-mon', '&limit=15')).slice(0, 15);
+  ve('cTopMon', {
+    type: 'bar',
+    data: {
+      labels: d.map(r => r.name_mon.trim()),
+      datasets: [
+        { label: 'Số lượng bán', data: d.map(r => r.so_luong), backgroundColor: MAU[0] },
+      ],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { afterLabel: (c) => {
+          const r = d[c.dataIndex];
+          return 'Doanh thu: ' + dinhDangTien(r.doanh_thu) + 'đ\nLợi nhuận: ' + dinhDangTien(Math.round(r.loi_nhuan)) + 'đ';
+        } } } },
+    },
+  });
+}
+
+async function vePareto() {
+  const d = await layJSON('pareto');
+  const top = d.duLieu.slice(0, 20);
+  ve('cPareto', {
+    data: {
+      labels: top.map(r => r.name_mon.trim()),
+      datasets: [
+        { type: 'bar', label: 'Doanh thu', data: top.map(r => r.doanh_thu),
+          backgroundColor: MAU[0], yAxisID: 'y', order: 2 },
+        { type: 'line', label: '% lũy kế', data: top.map(r => r.luy_ke_pct),
+          borderColor: MAU[3], backgroundColor: MAU[3], yAxisID: 'y1',
+          tension: .2, pointRadius: 3, order: 1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x:  { ticks: { maxRotation: 70, minRotation: 45, font: { size: 10 } } },
+        y:  { position: 'left', ticks: { callback: gonTien } },
+        y1: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => v + '%' } },
+      },
+    },
+  });
+
+  document.getElementById('insightPareto').innerHTML =
+    `<b>${d.so_mon_dat_80}/${d.tong_so_mon} món</b> (chiếm <b>${d.ty_le_mon_dat_80.toFixed(1)}%</b> thực đơn) ` +
+    `tạo ra 80% doanh thu. Nhóm món này cần được ưu tiên đảm bảo nguyên liệu, ` +
+    `còn nhóm đuôi dài nên cân nhắc rút gọn hoặc thay thế để giảm chi phí tồn kho.`;
+}
+
+async function veNhanVien() {
+  const d = await layJSON('hieu-suat-nhan-vien');
+  const max = Math.max(...d.map(r => Number(r.so_don)), 1);
+  document.getElementById('tNhanVien').innerHTML = `
+    <thead><tr><th>Nhân viên</th><th>Chức vụ</th><th class="num">Số đơn</th>
+    <th class="num">Doanh thu</th><th style="width:110px">Tỷ trọng</th></tr></thead>
+    <tbody>${d.map(r => `
+      <tr>
+        <td>${r.ten}</td>
+        <td style="color:var(--muted)">${r.chucvu || '—'}</td>
+        <td class="num">${Number(r.so_don).toLocaleString('vi-VN')}</td>
+        <td class="num">${trieu(r.doanh_thu)} tr</td>
+        <td><div style="background:#e2e8f0;border-radius:4px;height:8px">
+          <div style="background:var(--brand);height:8px;border-radius:4px;width:${(r.so_don / max * 100).toFixed(0)}%"></div>
+        </div></td>
+      </tr>`).join('') || '<tr><td colspan="5" class="loading">Chưa có dữ liệu</td></tr>'}
+    </tbody>`;
+}
+
+async function veBep() {
+  const d = await layJSON('hieu-suat-bep');
+  document.getElementById('insightBep').innerHTML =
+    `Thời gian chế biến trung bình toàn bếp: <b>${d.phut_tb_toan_bep} phút/món</b>. ` +
+    (d.cham_nhat.length
+      ? `Món chậm nhất là <b>${d.cham_nhat[0].name_mon.trim()}</b> (${d.cham_nhat[0].phut_tb} phút) — nên báo trước thời gian chờ cho khách.`
+      : '');
+
+  document.getElementById('tBep').innerHTML = `
+    <thead><tr><th>Món</th><th class="num">Số lần</th>
+    <th class="num">TB (phút)</th><th class="num">Lâu nhất</th></tr></thead>
+    <tbody>${d.chi_tiet.map(r => `
+      <tr>
+        <td>${r.name_mon.trim()}</td>
+        <td class="num">${Number(r.so_lan).toLocaleString('vi-VN')}</td>
+        <td class="num" style="font-weight:600;color:${r.phut_tb > 25 ? 'var(--danger)' : r.phut_tb > 15 ? 'var(--warn)' : 'var(--ok)'}">${r.phut_tb}</td>
+        <td class="num" style="color:var(--muted)">${r.phut_max}</td>
+      </tr>`).join('') || '<tr><td colspan="4" class="loading">Chưa có dữ liệu</td></tr>'}
+    </tbody>`;
+}
+
+async function veTonKho() {
+  const r = await fetch('/analytics/api/ton-kho');
+  const d = await r.json();
+  const nhan = { sap_het: 'Sắp hết', canh_bao: 'Cảnh báo', theo_doi: 'Theo dõi', du: 'Đủ' };
+  const uuTien = { sap_het: 0, canh_bao: 1, theo_doi: 2, du: 3 };
+  d.sort((a, b) => uuTien[a.muc] - uuTien[b.muc]);
+  document.getElementById('tTonKho').innerHTML = `
+    <thead><tr><th>Nguyên liệu</th><th class="num">Tồn</th>
+    <th class="num">Dùng/ngày</th><th class="num">Còn (ngày)</th><th>Trạng thái</th></tr></thead>
+    <tbody>${d.map(x => `
+      <tr>
+        <td>${x.ten_nl}</td>
+        <td class="num">${x.ton.toFixed(1)} ${x.ten_dvt || ''}</td>
+        <td class="num" style="color:var(--muted)">${x.tieu_hao_ngay.toFixed(2)}</td>
+        <td class="num" style="font-weight:600">${x.so_ngay_con === null ? '—' : x.so_ngay_con.toFixed(1)}</td>
+        <td><span class="tag ${x.muc}">${nhan[x.muc]}</span></td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+async function veHetHan() {
+  const r = await fetch('/analytics/api/lo-het-han?ngay=14');
+  const d = await r.json();
+  document.getElementById('tHetHan').innerHTML = `
+    <thead><tr><th>Nguyên liệu</th><th>Số lô</th><th class="num">SL</th>
+    <th>Hạn dùng</th><th class="num">Còn</th></tr></thead>
+    <tbody>${d.map(x => `
+      <tr>
+        <td>${x.ten_nl}</td>
+        <td style="color:var(--muted)">${x.so_lo || '—'}</td>
+        <td class="num">${Number(x.so_luong).toFixed(1)}</td>
+        <td>${String(x.han_su_dung).slice(0, 10)}</td>
+        <td class="num"><span class="tag ${x.con_lai < 0 ? 'sap_het' : x.con_lai < 5 ? 'canh_bao' : 'theo_doi'}">${x.con_lai < 0 ? 'Quá hạn' : x.con_lai + ' ngày'}</span></td>
+      </tr>`).join('') || '<tr><td colspan="5" class="loading">Không có lô nào sắp hết hạn</td></tr>'}
+    </tbody>`;
+}
+
+// ---------------------------------------------------------------------------
+async function taiLai() {
+  const viec = [
+    veKpi(), veDoanhThuNgay(), veGio(), veThu(),
+    veTron('cDanhMuc', 'danh-muc', r => r.name_loai, r => r.doanh_thu),
+    veTron('cLoaiDon', 'loai-don', r => r.ten_loai, r => r.doanh_thu),
+    veTopMon(), vePareto(), veNhanVien(), veBep(), veTonKho(), veHetHan(),
+  ];
+  const kq = await Promise.allSettled(viec);
+  kq.filter(x => x.status === 'rejected').forEach(x => console.error(x.reason));
+}
+
+dongBoNutNhanh();
+taiLai();
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1500 1814" role="img" aria-label="Sơ đồ use case tổng quát: 58 ca sử dụng, chín tác nhân với quan hệ kế thừa, mọi chức năng cần phiên đăng nhập đều include về ca sử dụng Đăng nhập ở giữa"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-uc0" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-uc0" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bien"><rect x="210" y="24" width="1120" height="1716" rx="4"/></g><text class="tx-bien" x="770" y="48">HỆ THỐNG QUẢN LÝ NHÀ HÀNG THÔNG MINH</text><g class="uc ">
+    <ellipse cx="370" cy="178" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="183">Xem thực đơn, tìm món</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="230" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="235">Xem tin tức, bài viết</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="282" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="287">Quét mã QR gọi món tại bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="334" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="339">Đăng ký tài khoản</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="236" r="11"/>
+    <line x1="140" y1="247" x2="140" y2="273"/>
+    <line x1="123" y1="256" x2="157" y2="256"/>
+    <line x1="140" y1="273" x2="127" y2="295"/>
+    <line x1="140" y1="273" x2="153" y2="295"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="253">Khách</text><text class="tx-tn" style="text-anchor:end" x="116" y="267">vãng lai</text>
+  </g><line class="lk" x1="140" y1="256" x2="220" y2="178"/><line class="lk" x1="140" y1="256" x2="220" y2="230"/><line class="lk" x1="140" y1="256" x2="220" y2="282"/><line class="lk" x1="140" y1="256" x2="220" y2="334"/><g class="uc ">
+    <ellipse cx="370" cy="386" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="391">Quản lý thông tin cá nhân</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="438" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="443">Quản lý giỏ hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="490" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="495">Đặt bàn trực tuyến</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="542" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="547">Đặt cọc bằng mã VietQR</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="594" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="599">Quản lý đơn đặt bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="646" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="643">Đánh giá, bình luận sau khi</text><text class="tx-uc" x="370" y="659">hoàn thành đơn hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="698" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="703">Chat với nhân viên tư vấn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="750" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="755">Đổi điểm tích luỹ, áp mã giảm giá</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="548" r="11"/>
+    <line x1="140" y1="559" x2="140" y2="585"/>
+    <line x1="123" y1="568" x2="157" y2="568"/>
+    <line x1="140" y1="585" x2="127" y2="607"/>
+    <line x1="140" y1="585" x2="153" y2="607"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="565">Khách hàng</text><text class="tx-tn" style="text-anchor:end" x="116" y="579">thành viên</text>
+  </g><line class="lk" x1="140" y1="568" x2="220" y2="386"/><line class="lk" x1="140" y1="568" x2="220" y2="438"/><line class="lk" x1="140" y1="568" x2="220" y2="490"/><line class="lk" x1="140" y1="568" x2="220" y2="542"/><line class="lk" x1="140" y1="568" x2="220" y2="594"/><line class="lk" x1="140" y1="568" x2="220" y2="646"/><line class="lk" x1="140" y1="568" x2="220" y2="698"/><line class="lk" x1="140" y1="568" x2="220" y2="750"/><g class="uc ">
+    <ellipse cx="370" cy="802" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="807">Quản lý bảng lương</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="854" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="859">Quản lý thu chi</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="906" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="911">Quản lý nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="958" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="963">Quản lý email gửi khách</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1010" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1015">Xem báo cáo kế toán</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="886" r="11"/>
+    <line x1="140" y1="897" x2="140" y2="923"/>
+    <line x1="123" y1="906" x2="157" y2="906"/>
+    <line x1="140" y1="923" x2="127" y2="945"/>
+    <line x1="140" y1="923" x2="153" y2="945"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="910">Kế toán</text>
+  </g><line class="lk" x1="140" y1="906" x2="220" y2="802"/><line class="lk" x1="140" y1="906" x2="220" y2="854"/><line class="lk" x1="140" y1="906" x2="220" y2="906"/><line class="lk" x1="140" y1="906" x2="220" y2="958"/><line class="lk" x1="140" y1="906" x2="220" y2="1010"/><g class="uc ">
+    <ellipse cx="370" cy="1062" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1067">Xem báo cáo doanh thu tổng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1114" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1119">Xem dashboard phân tích vận hành</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1166" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1171">Dự báo lượt khách</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1218" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1223">Dự báo nhu cầu nguyên liệu</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1270" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1275">Khai phá luật kết hợp (Apriori)</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1322" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1327">Xem đánh giá mô hình dự báo</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1374" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1379">Quản lý nhân sự, phân quyền</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="1198" r="11"/>
+    <line x1="140" y1="1209" x2="140" y2="1235"/>
+    <line x1="123" y1="1218" x2="157" y2="1218"/>
+    <line x1="140" y1="1235" x2="127" y2="1257"/>
+    <line x1="140" y1="1235" x2="153" y2="1257"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="1215">Quản lý</text><text class="tx-tn" style="text-anchor:end" x="116" y="1229">nhà hàng</text>
+  </g><line class="lk" x1="140" y1="1218" x2="220" y2="1062"/><line class="lk" x1="140" y1="1218" x2="220" y2="1114"/><line class="lk" x1="140" y1="1218" x2="220" y2="1166"/><line class="lk" x1="140" y1="1218" x2="220" y2="1218"/><line class="lk" x1="140" y1="1218" x2="220" y2="1270"/><line class="lk" x1="140" y1="1218" x2="220" y2="1322"/><line class="lk" x1="140" y1="1218" x2="220" y2="1374"/><g class="uc ">
+    <ellipse cx="370" cy="1426" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1431">Quản lý danh mục, món ăn</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1478" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1483">Quản lý bài viết</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1530" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1535">Quản lý nhân viên, hợp đồng</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1582" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1579">Quản lý mã giảm giá,</text><text class="tx-uc" x="370" y="1595">phương thức thanh toán</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1634" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1631">Cấu hình tài khoản nhận tiền,</text><text class="tx-uc" x="370" y="1647">khoá webhook</text>
+  </g><g class="uc ">
+    <ellipse cx="370" cy="1686" rx="150" ry="20"/>
+    <text class="tx-uc" x="370" y="1691">Quản lý cơ cấu tổ chức</text>
+  </g><g class="tn ">
+    <circle cx="140" cy="1536" r="11"/>
+    <line x1="140" y1="1547" x2="140" y2="1573"/>
+    <line x1="123" y1="1556" x2="157" y2="1556"/>
+    <line x1="140" y1="1573" x2="127" y2="1595"/>
+    <line x1="140" y1="1573" x2="153" y2="1595"/>
+    <text class="tx-tn" style="text-anchor:end" x="116" y="1553">Quản trị</text><text class="tx-tn" style="text-anchor:end" x="116" y="1567">hệ thống</text>
+  </g><line class="lk" x1="140" y1="1556" x2="220" y2="1426"/><line class="lk" x1="140" y1="1556" x2="220" y2="1478"/><line class="lk" x1="140" y1="1556" x2="220" y2="1530"/><line class="lk" x1="140" y1="1556" x2="220" y2="1582"/><line class="lk" x1="140" y1="1556" x2="220" y2="1634"/><line class="lk" x1="140" y1="1556" x2="220" y2="1686"/><g class="uc ">
+    <ellipse cx="1160" cy="178" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="183">Quản lý sơ đồ bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="230" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="235">Quản lý đơn đặt bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="282" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="287">Quản lý mã QR của bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="334" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="339">Mang món ra bàn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="386" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="391">Nhắn tin với khách hàng để tư vấn</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="438" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="443">In phiếu đặt bàn</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="288" r="11"/>
+    <line x1="1400" y1="299" x2="1400" y2="325"/>
+    <line x1="1383" y1="308" x2="1417" y2="308"/>
+    <line x1="1400" y1="325" x2="1387" y2="347"/>
+    <line x1="1400" y1="325" x2="1413" y2="347"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="305">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="319">phục vụ</text>
+  </g><line class="lk" x1="1400" y1="308" x2="1310" y2="178"/><line class="lk" x1="1400" y1="308" x2="1310" y2="230"/><line class="lk" x1="1400" y1="308" x2="1310" y2="282"/><line class="lk" x1="1400" y1="308" x2="1310" y2="334"/><line class="lk" x1="1400" y1="308" x2="1310" y2="386"/><line class="lk" x1="1400" y1="308" x2="1310" y2="438"/><g class="uc ">
+    <ellipse cx="1160" cy="490" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="495">Thanh toán cho khách hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="542" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="547">Sinh mã VietQR theo số tiền</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="594" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="599">Xuất hoá đơn, in biên lai</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="646" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="651">Hoàn tiền / huỷ phiên</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="698" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="703">Đối soát giao dịch ngân hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="750" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="755">Chốt ca thu ngân</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="600" r="11"/>
+    <line x1="1400" y1="611" x2="1400" y2="637"/>
+    <line x1="1383" y1="620" x2="1417" y2="620"/>
+    <line x1="1400" y1="637" x2="1387" y2="659"/>
+    <line x1="1400" y1="637" x2="1413" y2="659"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="624">Thu ngân</text>
+  </g><line class="lk" x1="1400" y1="620" x2="1310" y2="490"/><line class="lk" x1="1400" y1="620" x2="1310" y2="542"/><line class="lk" x1="1400" y1="620" x2="1310" y2="594"/><line class="lk" x1="1400" y1="620" x2="1310" y2="646"/><line class="lk" x1="1400" y1="620" x2="1310" y2="698"/><line class="lk" x1="1400" y1="620" x2="1310" y2="750"/><g class="uc ">
+    <ellipse cx="1160" cy="802" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="807">Quản lý màn hình bếp (KDS)</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="854" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="859">Quản lý loại món, món, combo</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="906" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="911">Quản lý công thức, đơn vị tính</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="958" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="963">Quản lý trang thiết bị bếp</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1010" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1015">Chốt ca bếp</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="886" r="11"/>
+    <line x1="1400" y1="897" x2="1400" y2="923"/>
+    <line x1="1383" y1="906" x2="1417" y2="906"/>
+    <line x1="1400" y1="923" x2="1387" y2="945"/>
+    <line x1="1400" y1="923" x2="1413" y2="945"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="903">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="917">bếp</text>
+  </g><line class="lk" x1="1400" y1="906" x2="1310" y2="802"/><line class="lk" x1="1400" y1="906" x2="1310" y2="854"/><line class="lk" x1="1400" y1="906" x2="1310" y2="906"/><line class="lk" x1="1400" y1="906" x2="1310" y2="958"/><line class="lk" x1="1400" y1="906" x2="1310" y2="1010"/><g class="uc ">
+    <ellipse cx="1160" cy="1062" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1067">Quản lý nguyên liệu, nhập kho</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1114" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1119">Cảnh báo lô sắp hết hạn</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="1068" r="11"/>
+    <line x1="1400" y1="1079" x2="1400" y2="1105"/>
+    <line x1="1383" y1="1088" x2="1417" y2="1088"/>
+    <line x1="1400" y1="1105" x2="1387" y2="1127"/>
+    <line x1="1400" y1="1105" x2="1413" y2="1127"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="1092">Thủ kho</text>
+  </g><line class="lk" x1="1400" y1="1088" x2="1310" y2="1062"/><line class="lk" x1="1400" y1="1088" x2="1310" y2="1114"/><g class="uc ">
+    <ellipse cx="1160" cy="1166" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1171">Xem lịch làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1218" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1223">Đăng ký lịch làm việc</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1270" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1275">Quản lý thông tin cá nhân</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1322" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1327">Xem thông báo</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1374" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1379">Chấm công bằng khuôn mặt</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1426" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1431">Xin nghỉ phép</text>
+  </g><g class="uc ">
+    <ellipse cx="1160" cy="1478" rx="150" ry="20"/>
+    <text class="tx-uc" x="1160" y="1483">Đổi mật khẩu</text>
+  </g><g class="tn ">
+    <circle cx="1400" cy="1302" r="11"/>
+    <line x1="1400" y1="1313" x2="1400" y2="1339"/>
+    <line x1="1383" y1="1322" x2="1417" y2="1322"/>
+    <line x1="1400" y1="1339" x2="1387" y2="1361"/>
+    <line x1="1400" y1="1339" x2="1413" y2="1361"/>
+    <text class="tx-tn" style="text-anchor:start" x="1424" y="1319">Nhân viên</text><text class="tx-tn" style="text-anchor:start" x="1424" y="1333">chung</text>
+  </g><line class="lk" x1="1400" y1="1322" x2="1310" y2="1166"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1218"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1270"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1322"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1374"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1426"/><line class="lk" x1="1400" y1="1322" x2="1310" y2="1478"/><g class="uc uc-dn">
+    <ellipse cx="765" cy="882" rx="116" ry="50"/>
+    <text class="tx-uc" x="765" y="862">Đăng nhập</text>
+    <line class="dn-ngan" x1="669" y1="874" x2="861" y2="874"/>
+    <text class="tx-khuon" x="765" y="890">extension points</text>
+    <text class="tx-uc" x="765" y="908">Đăng xuất</text>
+  </g><g class="uc ">
+    <ellipse cx="765" cy="104" rx="82" ry="28"/>
+    <text class="tx-uc" x="765" y="109">Đăng xuất</text>
+  </g><line class="lk-dut" x1="765" y1="132" x2="765" y2="832"
+        marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="809" y="196">&#171;extend&#187;</text><line class="lk-dut" x1="520" y1="386" x2="741" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="551" y="441">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="438" x2="738" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="554" y="491">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="490" x2="735" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="557" y="541">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="542" x2="731" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="561" y="591">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="594" x2="725" y2="835"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="565" y="639">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="646" x2="718" y2="836"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="571" y="686">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="698" x2="707" y2="839"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="576" y="732">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="750" x2="693" y2="843"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="582" y="775">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="802" x2="673" y2="852"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="587" y="816">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="854" x2="653" y2="869"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="590" y="854">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="906" x2="652" y2="893"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="590" y="891">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="958" x2="671" y2="911"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="587" y="929">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1010" x2="691" y2="921"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="582" y="970">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1062" x2="706" y2="925"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="576" y="1012">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1114" x2="717" y2="928"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="571" y="1058">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1166" x2="725" y2="929"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="566" y="1105">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1218" x2="730" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="561" y="1153">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1270" x2="735" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="557" y="1203">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1322" x2="738" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="554" y="1253">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1374" x2="741" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="551" y="1303">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1426" x2="743" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="549" y="1354">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1478" x2="745" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="547" y="1405">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1530" x2="746" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="545" y="1457">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1582" x2="748" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="543" y="1508">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1634" x2="749" y2="932"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="542" y="1559">&#171;include&#187;</text><line class="lk-dut" x1="520" y1="1686" x2="750" y2="932"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="540" y="1611">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="178" x2="782" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="987" y="236">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="230" x2="784" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="985" y="288">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="282" x2="785" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="984" y="339">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="334" x2="787" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="981" y="390">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="386" x2="789" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="979" y="441">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="438" x2="792" y2="833"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="976" y="491">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="490" x2="795" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="973" y="541">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="542" x2="799" y2="834"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="969" y="591">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="594" x2="805" y2="835"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="965" y="639">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="646" x2="812" y2="836"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="959" y="686">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="698" x2="823" y2="839"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="954" y="732">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="750" x2="837" y2="843"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="948" y="775">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="802" x2="857" y2="852"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="943" y="816">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="854" x2="877" y2="869"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="940" y="854">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="906" x2="878" y2="893"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="940" y="891">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="958" x2="859" y2="911"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="943" y="929">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1010" x2="839" y2="921"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="948" y="970">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1062" x2="824" y2="925"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="954" y="1012">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1114" x2="813" y2="928"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="959" y="1058">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1166" x2="805" y2="929"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="964" y="1105">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1218" x2="800" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="969" y="1153">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1270" x2="795" y2="930"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="973" y="1203">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1322" x2="792" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="976" y="1253">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1374" x2="789" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="979" y="1303">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1426" x2="787" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="981" y="1354">&#171;include&#187;</text><line class="lk-dut" x1="1010" y1="1478" x2="785" y2="931"
+            marker-end="url(#mui-uc0)"/><text class="tx-khuon" x="983" y="1405">&#171;include&#187;</text><line class="lk" x1="140" y1="537" x2="140" y2="295" marker-end="url(#mui-rong-uc0)"/><polyline class="lk" points="1380,308 1352,308"/><polyline class="lk" points="1380,620 1352,620"/><polyline class="lk" points="1380,906 1352,906"/><polyline class="lk" points="1380,1088 1352,1088"/><polyline class="lk" points="118,906 40,906 40,1768 1352,1768"/><polyline class="lk" points="118,1218 56,1218 56,1788 1352,1788"/><line class="lk" x1="1352" y1="1322" x2="1352" y2="1788"/><line class="lk" x1="1352" y1="1322" x2="1420" y2="1322" marker-end="url(#mui-rong-uc0)"/></svg>

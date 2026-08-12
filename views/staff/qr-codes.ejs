@@ -26,6 +26,29 @@
   </div>
 </div>
 
+<!-- Địa chỉ máy chủ dùng cho mã QR -->
+<div class="alert alert-warning shadow-sm mb-4">
+  <h6 class="font-weight-bold mb-2"><i class="fas fa-wifi"></i> Địa chỉ đang nhúng vào mã QR</h6>
+  <p class="mb-2"><code><%= qrGoc %></code></p>
+  <p class="mb-2 small">
+    Điện thoại của khách phải mở được địa chỉ này thì quét QR mới ra trang đặt món.
+    Hãy mở thử bằng điện thoại đang dùng chung Wi-Fi với quán trước khi in hàng loạt.
+  </p>
+  <% if (dsDiaChi && dsDiaChi.length > 1) { %>
+    <p class="mb-2 small">
+      Máy chủ này có nhiều địa chỉ mạng (thường do có card mạng ảo của WSL, VMware hoặc VirtualBox):
+      <% dsDiaChi.forEach((dc) => { %><code class="mr-1"><%= dc %></code><% }) %>.
+      Nếu địa chỉ phía trên không mở được trên điện thoại, thử lần lượt các địa chỉ này,
+      rồi ghi địa chỉ chạy được vào khóa <code>QR_BASE_URL</code> trong file <code>.env</code> và khởi động lại hệ thống.
+    </p>
+  <% } %>
+  <p class="mb-0 small text-danger">
+    <i class="fas fa-print"></i>
+    Mã QR đã in và dán trên bàn từ trước vẫn giữ địa chỉ cũ bên trong hình — đổi cấu hình không sửa được giấy đã in.
+    Phải in lại và dán đè lên.
+  </p>
+</div>
+
 <!-- Tạo QR mới -->
 <div class="card shadow mb-4">
   <div class="card-header py-3">
@@ -63,7 +86,12 @@
   <div class="card-body text-center">
     <div id="qrContainer" class="d-inline-block p-3 bg-white rounded shadow mb-3"></div>
     <div id="qrTableName" class="h5 font-weight-bold text-dark mb-1"></div>
-    <div id="qrUrl" class="small text-muted mb-3"></div>
+    <div id="qrUrl" class="small text-muted mb-1"></div>
+    <div class="small text-muted mb-3">
+      <i class="fas fa-wifi"></i>
+      Địa chỉ này là địa chỉ máy chủ trong mạng Wi-Fi của quán. Trước khi in và dán lên bàn,
+      hãy quét thử bằng điện thoại đang dùng cùng Wi-Fi để chắc chắn trang đặt món mở lên được.
+    </div>
     <div class="d-flex justify-content-center gap-2" style="gap:10px;">
       <button class="btn btn-primary" onclick="printQR()">
         <i class="fas fa-print"></i> In mã QR
@@ -204,6 +232,16 @@
     tbody.appendChild(row);
   }
 
+  // Bieu tuong dia + dao + nia, ve noi tuyen de trang in khong phu thuoc font
+  // emoji cua may in / he dieu hanh.
+  const LOGO_BD = `<svg class="logo-bd" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"
+      width="22" height="22" fill="none" stroke="#c8813a" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="16" cy="16" r="8.5"/><circle cx="16" cy="16" r="4.5" stroke-width="1.5" opacity=".55"/>
+      <path d="M4 3.5v6a2.5 2.5 0 0 0 2.5 2.5v0a2.5 2.5 0 0 0 2.5-2.5v-6"/><path d="M6.5 3.5v5"/>
+      <path d="M6.5 12v16.5"/><path d="M25.5 3.5c1.6 1.6 2.2 4 2 7.2-.1 1.6-.9 2.5-2 2.5"/>
+      <path d="M25.5 13.2v15.3"/></svg>`;
+
   function printQR() {
     const qrHtml = document.getElementById('qrContainer').innerHTML;
     const name = document.getElementById('qrTableName').textContent;
@@ -216,9 +254,11 @@
         h2 { margin-bottom: 8px; }
         p { font-size: 12px; color: #555; word-break: break-all; }
         img { max-width: 200px; }
+        /* Emoji in ra may in thuong bi mo hoac thanh o vuong -> dung SVG. */
+        .logo-bd { vertical-align: -4px; margin-right: 6px; }
       </style>
       </head><body>
-        <h2>🍽️ NHA HANG BD</h2>
+        <h2>${LOGO_BD}Nhà Hàng Bảo Đoàn</h2>
         <h3 style="color:#c8813a">${name}</h3>
         <div style="display:flex;justify-content:center;margin:10px 0;">${qrHtml}</div>
         <p>📱 Quét mã QR để đặt món tại bàn</p>

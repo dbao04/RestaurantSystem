@@ -1,62 +1,80 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Hợp đồng mới</h2>
-        <div class="block">  
-            <table class="data display datatable" id="example">
+<%
+  /* Route da loc san tinhtrang = 0 (chua xac nhan) o getPendingContracts(). */
+  var choXacNhan = contracts || [];
+%>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Hợp đồng mới</h2>
+            <p><%= choXacNhan.length %> đơn đặt tiệc đang chờ xác nhận</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/hopdonglist"><i class="fas fa-file-signature"></i> Danh sách hợp đồng</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (choXacNhan.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>STT</th>
+                        <th>#</th>
                         <th>Ngày đặt</th>
                         <th>Khách hàng</th>
-                        <th>Số người</th>
+                        <th>Số khách</th>
                         <th>Nội dung</th>
                         <th>Thời gian</th>
                         <th>Tổng tiền</th>
-                        <th>Tình trạng</th>
-                        <th>Action</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (contracts && contracts.length > 0) { %>
-                        <% contracts.forEach((order, index) => { %>
-                            <tr class="odd gradeX">
-                                <td><%= index + 1 %></td>
-                                <td><%= order.dates %></td>
-                                <td><%= order.ten %></td>
-                                <td><%= order.so_user %></td>
-                                <td><%= order.noidung %></td>
-                                <td><%= order.tg %></td>
-                                <td><%= formatMoney(order.tong_tien) %> VNĐ</td>
-                                <td>
-                                    <% if (order.tinhtrang == 0) { %>
-                                        <span style="color: red;">Đang chờ...</span>
-                                    <% } else { %>
-                                        <span style="color: green;">Đã xác nhận</span>
-                                    <% } %>
-                                </td>
-                                <td>
-                                    <% if (order.tinhtrang == 0) { %>
-                                        <a href="/admin/hopdongconfirm/<%= order.sesis %>">Confirm</a>
-                                    <% } else { %>
-                                        N/A
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } %>
+                    <% choXacNhan.forEach((order, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
+                        <td><%= order.dates %></td>
+                        <td class="qt-strong"><%= order.ten %></td>
+                        <td class="qt-num"><%= order.so_user %></td>
+                        <td><%= order.noidung %></td>
+                        <td><%= order.tg %></td>
+                        <td class="qt-money"><%= formatMoney(order.tong_tien) %></td>
+                        <td>
+                            <% if (order.tinhtrang == 0) { %>
+                                <span class="qt-pill qt-pill--warn">Đang chờ</span>
+                            <% } else { %>
+                                <span class="qt-pill qt-pill--ok">Đã xác nhận</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ok qt-btn--sm" href="/admin/hopdongconfirm/<%= order.sesis %>"
+                                   onclick="return confirm('Xác nhận đơn hàng này và chuyển xuống bếp?')">
+                                    <i class="fas fa-check"></i> Xác nhận
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-bell-concierge"></i>
+            <p>Không có hợp đồng mới nào chờ xác nhận.</p>
+            <a class="qt-btn qt-btn--primary" href="/admin/hopdonglist"><i class="fas fa-file-signature"></i> Xem tất cả hợp đồng</a>
+        </div>
+        <% } %>
     </div>
 </div>
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('.datatable').dataTable();
-    });
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
 </script>
 
 <%- include('partials/footer') %>

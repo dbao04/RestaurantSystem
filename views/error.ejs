@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+           font-family:'Nunito','Segoe UI',system-ui,sans-serif; background:#f8f9fc; color:#3a3b45; padding:24px; }
+    .hop { background:#fff; border-radius:14px; box-shadow:0 .5rem 2rem rgba(58,59,69,.15);
+           max-width:560px; width:100%; padding:40px 36px; text-align:center; }
+    .ma { font-size:64px; font-weight:800; line-height:1; color:#5a3e36; margin:0 0 8px; }
+    .icon { font-size:40px; color:#c8a951; margin-bottom:16px; }
+    h1 { font-size:20px; margin:0 0 12px; }
+    p.thong-diep { color:#6e707e; line-height:1.6; margin:0 0 8px; }
+    .chuc-danh { display:inline-block; margin-top:14px; padding:6px 14px; border-radius:20px;
+                 background:#f1f0ee; font-size:13px; color:#5a3e36; }
+    .nut { display:inline-block; margin:24px 6px 0; padding:10px 22px; border-radius:8px;
+           text-decoration:none; font-weight:600; font-size:14px; }
+    .nut-chinh { background:#5a3e36; color:#fff; }
+    .nut-phu { background:#eaeaea; color:#3a3b45; }
+    pre { text-align:left; background:#2c1810; color:#f8f9fc; padding:14px; border-radius:8px;
+          font-size:12px; overflow:auto; max-height:260px; margin-top:20px; }
+  </style>
+</head>
+<body>
+  <div class="hop">
+    <div class="icon">
+      <i class="fas <%= statusCode === 403 ? 'fa-lock' : (statusCode === 404 ? 'fa-map-signs' : 'fa-exclamation-triangle') %>"></i>
+    </div>
+    <p class="ma"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></p>
+    <h1><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></h1>
+    <p class="thong-diep"><%= typeof message !== 'undefined' ? message : 'Hệ thống gặp sự cố ngoài dự kiến.' %></p>
+
+    <% if (typeof hoSo !== 'undefined' && hoSo) { %>
+      <div class="chuc-danh">
+        <i class="fas fa-id-badge"></i>
+        <%= hoSo.ten %> — <%= hoSo.ten_cd || 'chưa có chức danh' %>
+        <% if (hoSo.ten_bp) { %> · <%= hoSo.ten_bp %><% } %>
+      </div>
+    <% } %>
+
+    <div>
+      <a class="nut nut-chinh" href="javascript:history.back()"><i class="fas fa-arrow-left"></i> Quay lại</a>
+      <a class="nut nut-phu" href="/staff">Về trang nhân viên</a>
+    </div>
+
+    <% if (typeof isDevelopment !== 'undefined' && isDevelopment && typeof stack !== 'undefined' && stack) { %>
+      <pre><%= stack %></pre>
+    <% } %>
+  </div>
+</body>
+</html>

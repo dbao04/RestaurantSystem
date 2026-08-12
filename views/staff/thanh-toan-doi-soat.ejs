@@ -1,0 +1,227 @@
+<%
+  var activePage = 'thanh-toan';
+  var staffName = session.staffName || 'Nhân viên';
+  var nhan = {
+    cho_doi_soat: ['warning', 'Chờ đối soát'],
+    da_khop: ['success', 'Đã khớp'],
+    khong_khop: ['danger', 'Không khớp'],
+    bo_qua: ['secondary', 'Bỏ qua'],
+  };
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <a href="/staff/thanh-toan" class="small text-muted"><i class="fas fa-arrow-left"></i> Về thu ngân</a>
+    <h1 class="h3 mb-0 text-gray-800">Đối soát ngân hàng</h1>
+    <div class="small text-muted">
+      Mọi biến động số dư ngân hàng gửi về đều được ghi lại ở đây, kể cả giao dịch không khớp được đơn nào.
+    </div>
+  </div>
+</div>
+
+<!-- Hướng dẫn đấu webhook -->
+<div class="card shadow mb-4">
+  <div class="card-header py-2 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">Kết nối tự động</h6>
+    <button class="btn btn-sm btn-link" data-toggle="collapse" data-target="#hd-webhook">Xem cách đấu nối</button>
+  </div>
+  <div class="collapse" id="hd-webhook">
+    <div class="card-body">
+      <p class="small mb-2">
+        Hệ thống nhận biến động số dư qua webhook theo chuẩn của các dịch vụ đọc sao kê
+        (SePay, Casso). Cấu hình bên phía dịch vụ như sau:
+      </p>
+      <table class="table table-sm table-bordered small mb-2">
+        <tr><th style="width:150px">URL nhận</th><td><code id="url-webhook"></code></td></tr>
+        <tr><th>Phương thức</th><td><code>POST</code> · <code>Content-Type: application/json</code></td></tr>
+        <tr><th>Header xác thực</th><td><code>Authorization: Apikey <%= cauHinh.webhook_api_key %></code></td></tr>
+      </table>
+      <p class="small text-muted mb-2">
+        Khi chưa đấu nối, thu ngân vẫn thu tiền bình thường bằng nút
+        <strong>"Đã nhận tiền"</strong> trên màn hình tính tiền — mọi thao tác thủ công đều được ghi nhật ký.
+      </p>
+      <div class="alert alert-light border small mb-0">
+        <strong>Thử tại chỗ:</strong> chạy lệnh sau để mô phỏng ngân hàng báo có
+        (thay <code>&lt;MÃ&gt;</code> bằng mã đối soát của một phiên đang chờ ở bảng bên dưới):
+        <pre class="mb-0 mt-2" style="white-space:pre-wrap" id="lenh-thu"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- ================================================= Phiên đang chờ -->
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-warning">
+          Phiên đang chờ tiền <span class="badge badge-warning"><%= phienCho.length %></span>
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <% if (phienCho.length === 0) { %>
+          <div class="text-center text-muted py-4 small">Không có phiên nào đang chờ.</div>
+        <% } else { %>
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr><th>Mã đối soát</th><th class="text-right">Số tiền</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% phienCho.forEach(function (p) { %>
+                <tr>
+                  <td>
+                    <code class="font-weight-bold"><%= p.ma_doi_soat %></code>
+                    <div class="small text-muted"><%= formatTime(p.created_at) %> · <%= p.ten_phuong_thuc %></div>
+                  </td>
+                  <td class="text-right align-middle font-weight-bold"><%= formatMoney(p.amount) %>đ</td>
+                  <td class="align-middle text-right">
+                    <a href="/staff/thanh-toan/<%= p.sesis %>" class="btn btn-sm btn-outline-primary" title="Mở hóa đơn">
+                      <i class="fas fa-external-link-alt"></i>
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ Biến động số dư -->
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Biến động số dư</h6>
+        <div class="btn-group btn-group-sm">
+          <a href="/staff/thanh-toan/doi-soat" class="btn btn-<%= !loc ? 'primary' : 'outline-secondary' %>">Tất cả</a>
+          <a href="?trang_thai=khong_khop" class="btn btn-<%= loc === 'khong_khop' ? 'danger' : 'outline-danger' %>">Không khớp</a>
+          <a href="?trang_thai=da_khop" class="btn btn-<%= loc === 'da_khop' ? 'success' : 'outline-success' %>">Đã khớp</a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (giaoDich.length === 0) { %>
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-university fa-2x mb-3 d-block" style="opacity:.3"></i>
+            Chưa nhận được biến động số dư nào.
+          </div>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Thời điểm</th><th>Nội dung</th>
+                  <th class="text-right">Số tiền</th><th>Trạng thái</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% giaoDich.forEach(function (g) { %>
+                  <tr>
+                    <td class="small text-nowrap">
+                      <%= formatTime(g.thoi_diem || g.created_at) %>
+                      <div class="text-muted"><%= g.cong_thanh_toan || '—' %></div>
+                    </td>
+                    <td class="small" style="max-width:260px">
+                      <div style="word-break:break-word"><%= g.noi_dung || '(trống)' %></div>
+                      <div class="text-muted">ref <%= g.ma_tham_chieu %></div>
+                    </td>
+                    <td class="text-right font-weight-bold text-nowrap <%= g.loai === 'in' ? 'text-success' : 'text-danger' %>">
+                      <%= g.loai === 'in' ? '+' : '−' %><%= formatMoney(g.so_tien) %>
+                    </td>
+                    <td>
+                      <span class="badge badge-<%= (nhan[g.trang_thai] || ['secondary','?'])[0] %>">
+                        <%= (nhan[g.trang_thai] || ['secondary','?'])[1] %>
+                      </span>
+                      <% if (g.ghi_chu) { %><div class="small text-muted"><%= g.ghi_chu %></div><% } %>
+                    </td>
+                    <td class="text-right text-nowrap">
+                      <% if (g.trang_thai === 'khong_khop' || g.trang_thai === 'cho_doi_soat') { %>
+                        <button class="btn btn-sm btn-outline-success nut-ghep" data-id="<%= g.id %>" data-tien="<%= g.so_tien %>">
+                          Ghép tay
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary nut-bo-qua" data-id="<%= g.id %>">Bỏ qua</button>
+                      <% } else if (g.sesis) { %>
+                        <a href="/staff/thanh-toan/<%= g.sesis %>" class="small">xem đơn</a>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var PHIEN_CHO = <%- JSON.stringify(phienCho.map(function (p) {
+    return { id: p.id, ma: p.ma_doi_soat, tien: Number(p.amount), sesis: p.sesis };
+  })) %>;
+
+  // Dựng URL webhook và lệnh thử theo đúng địa chỉ máy chủ đang chạy, để người
+  // đọc chép được ngay mà không phải tự sửa localhost thành IP thật.
+  var goc = location.origin;
+  document.getElementById('url-webhook').textContent = goc + '/api/webhook/ngan-hang';
+  document.getElementById('lenh-thu').textContent =
+    'curl -X POST ' + goc + '/api/webhook/ngan-hang \\\n' +
+    '  -H "Content-Type: application/json" \\\n' +
+    '  -H "Authorization: Apikey <%= cauHinh.webhook_api_key %>" \\\n' +
+    '  -d \'{"referenceCode":"TEST' + Date.now() + '","gateway":"Vietcombank",' +
+    '"transferType":"in","transferAmount":100000,"content":"CK tu khach <MÃ>"}\'';
+
+  document.querySelectorAll('.nut-ghep').forEach(function (b) {
+    b.onclick = function () {
+      var id = this.dataset.id;
+      var tien = Number(this.dataset.tien);
+      if (!PHIEN_CHO.length) {
+        return Swal.fire('Không có phiên nào đang chờ', 'Hãy tạo phiên thanh toán trước khi ghép.', 'info');
+      }
+      var luaChon = {};
+      PHIEN_CHO.forEach(function (p) {
+        luaChon[p.id] = p.ma + ' — ' + p.tien.toLocaleString('vi-VN') + 'đ'
+          + (p.tien === tien ? '  ✓ khớp số tiền' : '');
+      });
+      Swal.fire({
+        title: 'Ghép giao dịch này vào phiên nào?',
+        input: 'select', inputOptions: luaChon,
+        inputPlaceholder: 'Chọn phiên đang chờ',
+        showCancelButton: true, confirmButtonText: 'Ghép và xác nhận thu',
+        inputValidator: function (v) { return !v && 'Phải chọn một phiên'; },
+      }).then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/staff/thanh-toan/doi-soat/' + id + '/ghep', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_id: r.value }),
+        }).then(function (x) { return x.json(); })
+          .then(function (kq) {
+            if (kq.thanhCong) location.reload();
+            else Swal.fire('Lỗi', kq.message || 'Không ghép được', 'error');
+          });
+      });
+    };
+  });
+
+  document.querySelectorAll('.nut-bo-qua').forEach(function (b) {
+    b.onclick = function () {
+      var id = this.dataset.id;
+      fetch('/staff/thanh-toan/doi-soat/' + id + '/bo-qua', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+      }).then(function () { location.reload(); });
+    };
+  });
+
+  // Có biến động số dư mới thì nạp lại để thấy ngay.
+  if (window.RT && RT.socket) {
+    RT.socket.emit('tt:vao-phong-quay');
+    RT.khi('tt:bien-dong-so-du', function () {
+      setTimeout(function () { location.reload(); }, 1200);
+    });
+  }
+})();
+</script>
+
+<%- include('partials/footer') %>

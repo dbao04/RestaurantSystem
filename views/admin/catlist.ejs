@@ -1,44 +1,63 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách loại </h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Loại món</h2>
+            <p><%= categories ? categories.length : 0 %> loại món đang có</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/productlist"><i class="fas fa-bowl-food"></i> Danh sách món ăn</a>
+            <a class="qt-btn qt-btn--primary" href="/admin/catadd"><i class="fas fa-plus"></i> Thêm loại món</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (categories && categories.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>Serial No.</th>
-                        <th>Category Name</th>
-                        <th>Note</th>
-                        <th>Action</th>
+                        <th>#</th>
+                        <th>Tên loại món</th>
+                        <th>Ghi chú</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if (categories && categories.length > 0) { %>
-                        <% categories.forEach((cat, index) => { %>
-                            <tr class="odd gradeX">
-                                <td><%= index + 1 %></td>
-                                <td><%= cat.name_loai %></td>
-                                <td><%= cat.ghichu %></td>
-                                <td>
-                                    <a href="/admin/catedit/<%= cat.id_loai %>">Edit</a> 
-                                    || 
-                                    <a onclick="return confirm('Bạn muốn xóa?')" href="/admin/catdel/<%= cat.id_loai %>">Delete</a>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } %>
+                    <% categories.forEach((cat, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
+                        <td class="qt-strong"><%= (cat.name_loai || '').trim() %></td>
+                        <td><%= (cat.ghichu || '').trim() || '—' %></td>
+                        <td>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/catedit/<%= cat.id_loai %>">
+                                    <i class="fas fa-pen"></i> Sửa
+                                </a>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/catdel/<%= cat.id_loai %>"
+                                   onclick="return confirm('Xóa loại món &quot;<%= (cat.name_loai || '').trim() %>&quot;?')">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-layer-group"></i>
+            <p>Chưa có loại món nào.</p>
+            <a class="qt-btn qt-btn--primary" href="/admin/catadd"><i class="fas fa-plus"></i> Thêm loại đầu tiên</a>
+        </div>
+        <% } %>
     </div>
 </div>
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('.datatable').dataTable();
-    });
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
 </script>
 
 <%- include('partials/footer') %>

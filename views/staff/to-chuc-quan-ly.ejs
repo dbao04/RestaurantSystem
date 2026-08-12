@@ -1,0 +1,839 @@
+<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800">
+    <i class="fas fa-user-cog text-primary"></i> Quản lý cơ cấu tổ chức
+    <span id="dau-hieu-rt"
+          style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b7b9cc;vertical-align:middle;margin-left:6px"></span>
+  </h1>
+  <a href="/to-chuc" class="btn btn-sm btn-outline-primary"><i class="fas fa-sitemap"></i> Xem sơ đồ</a>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="tab-tc" role="tablist">
+  <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#t-bo-nhiem">
+    <i class="fas fa-user-tag"></i> Bổ nhiệm nhân sự</a></li>
+  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#t-chuc-danh">
+    <i class="fas fa-id-badge"></i> Chức danh &amp; phân quyền</a></li>
+  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#t-to">
+    <i class="fas fa-users"></i> Tổ làm việc</a></li>
+  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#t-uy-quyen">
+    <i class="fas fa-user-shield"></i> Ủy quyền</a></li>
+  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#t-nhat-ky">
+    <i class="fas fa-history"></i> Nhật ký</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ==================== BỔ NHIỆM ==================== -->
+  <div class="tab-pane fade show active" id="t-bo-nhiem">
+    <% var chuaGan = nhanSu.filter(function (n) { return !n.id_cd; }); %>
+    <% if (chuaGan.length) { %>
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong><%= chuaGan.length %> nhân viên chưa có chức danh.</strong>
+        Họ vẫn dùng vai trò cũ (<code><%= chuaGan.map(function(n){return n.chucvu || '(trống)'}).join(', ') %></code>)
+        nên chưa nhận được quyền theo cơ cấu mới. Hãy bổ nhiệm cho họ.
+      </div>
+    <% } %>
+
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách nhân sự</h6>
+        <input type="text" class="form-control form-control-sm" id="tim-nhan-su"
+               placeholder="Tìm theo tên, mã, chức danh..." style="width:280px">
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0" id="bang-nhan-su">
+            <thead class="thead-light">
+              <tr>
+                <th>Mã</th><th>Họ tên</th><th>Bộ phận</th><th>Chức danh</th>
+                <th class="text-center">Cấp</th><th>Báo cáo cho</th>
+                <th class="text-center">Trực</th><th class="text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-nhan-su"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CHỨC DANH ==================== -->
+  <div class="tab-pane fade" id="t-chuc-danh">
+    <div class="row">
+      <div class="col-lg-7">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Chức danh</h6>
+            <% if (coQuyen('to_chuc.chuc_danh')) { %>
+              <button class="btn btn-sm btn-primary" id="nut-them-cd">
+                <i class="fas fa-plus"></i> Thêm chức danh
+              </button>
+            <% } %>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead class="thead-light">
+                  <tr><th>Mã</th><th>Chức danh</th><th>Bộ phận</th><th class="text-center">Cấp</th>
+                      <th class="text-center">Người</th><th class="text-center">Quyền</th><th></th></tr>
+                </thead>
+                <tbody id="tbody-chuc-danh"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary" id="tieu-de-quyen">
+              Quyền của chức danh
+            </h6>
+          </div>
+          <div class="card-body" id="khung-quyen" style="max-height:620px;overflow-y:auto">
+            <p class="text-muted text-center py-5">
+              <i class="fas fa-hand-point-left fa-2x mb-2"></i><br>
+              Chọn một chức danh bên trái để xem và sửa quyền.
+            </p>
+          </div>
+          <% if (coQuyen('to_chuc.phan_quyen')) { %>
+          <div class="card-footer text-right d-none" id="chan-quyen">
+            <span class="small text-muted mr-2" id="dem-quyen"></span>
+            <button class="btn btn-sm btn-success" id="nut-luu-quyen">
+              <i class="fas fa-save"></i> Lưu phân quyền
+            </button>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TỔ ==================== -->
+  <div class="tab-pane fade" id="t-to">
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Tổ làm việc</h6>
+            <% if (coQuyen('to_chuc.to.quan_ly')) { %>
+              <button class="btn btn-sm btn-primary" id="nut-them-to"><i class="fas fa-plus"></i> Thêm tổ</button>
+            <% } %>
+          </div>
+          <div class="card-body p-0">
+            <div id="ds-to"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary" id="tieu-de-to">Thành viên tổ</h6>
+          </div>
+          <div class="card-body" id="khung-thanh-vien">
+            <p class="text-muted text-center py-5">
+              <i class="fas fa-hand-point-left fa-2x mb-2"></i><br>Chọn một tổ để xem thành viên.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ỦY QUYỀN ==================== -->
+  <div class="tab-pane fade" id="t-uy-quyen">
+    <div class="row">
+      <% if (coQuyen('to_chuc.uy_quyen')) { %>
+      <div class="col-lg-4">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Lập phiếu ủy quyền</h6></div>
+          <div class="card-body">
+            <p class="small text-muted">
+              Dùng khi một người vắng mặt: người nhận sẽ tạm có toàn bộ quyền của
+              chức danh người giao, tự hết hiệu lực khi hết hạn.
+            </p>
+            <div class="form-group">
+              <label class="small font-weight-bold">Người giao quyền</label>
+              <select class="form-control form-control-sm" id="uq-giao"></select>
+            </div>
+            <div class="form-group">
+              <label class="small font-weight-bold">Người nhận quyền</label>
+              <select class="form-control form-control-sm" id="uq-nhan"></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label class="small font-weight-bold">Từ</label>
+                <input type="datetime-local" class="form-control form-control-sm" id="uq-tu">
+              </div>
+              <div class="form-group col-6">
+                <label class="small font-weight-bold">Đến</label>
+                <input type="datetime-local" class="form-control form-control-sm" id="uq-den">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="small font-weight-bold">Lý do</label>
+              <input type="text" class="form-control form-control-sm" id="uq-ly-do"
+                     placeholder="VD: Tổ trưởng nghỉ phép 2 ngày">
+            </div>
+            <button class="btn btn-sm btn-primary btn-block" id="uq-tao">
+              <i class="fas fa-user-shield"></i> Lập phiếu
+            </button>
+          </div>
+        </div>
+      </div>
+      <% } %>
+      <div class="col">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Phiếu ủy quyền</h6></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead class="thead-light">
+                  <tr><th>Người giao</th><th>Người nhận</th><th>Hiệu lực</th><th>Lý do</th><th>Trạng thái</th><th></th></tr>
+                </thead>
+                <tbody id="tbody-uy-quyen"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NHẬT KÝ ==================== -->
+  <div class="tab-pane fade" id="t-nhat-ky">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Nhật ký thay đổi tổ chức</h6></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr><th>Thời điểm</th><th>Hành động</th><th>Đối tượng</th><th>Chi tiết</th><th>Người thực hiện</th></tr>
+            </thead>
+            <tbody id="tbody-nhat-ky"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Modal chức danh ==================== -->
+<div class="modal fade" id="modal-cd" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-cd-tieu-de">Thêm chức danh</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cd-id">
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label class="small font-weight-bold">Mã <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cd-ma" placeholder="VD: TOTRUONGBEP">
+          </div>
+          <div class="form-group col-md-8">
+            <label class="small font-weight-bold">Tên chức danh <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cd-ten" placeholder="VD: Tổ trưởng bếp">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label class="small font-weight-bold">Bộ phận <span class="text-danger">*</span></label>
+            <select class="form-control" id="cd-bp">
+              <% boPhan.forEach(function (b) { %>
+                <option value="<%= b.id_bp %>"><%= b.ten_bp %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label class="small font-weight-bold">Cấp bậc</label>
+            <select class="form-control" id="cd-cap">
+              <option value="1">1 — Quản lý nhà hàng</option>
+              <option value="2">2 — Trưởng bộ phận</option>
+              <option value="3">3 — Giám sát</option>
+              <option value="4">4 — Tổ trưởng</option>
+              <option value="5" selected>5 — Nhân viên chính thức</option>
+              <option value="6">6 — Phụ việc / thử việc</option>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label class="small font-weight-bold">Báo cáo cho</label>
+            <select class="form-control" id="cd-cha">
+              <option value="">— Không có cấp trên —</option>
+              <% chucDanh.forEach(function (c) { %>
+                <option value="<%= c.id_cd %>"><%= c.ten_cd %> (<%= c.ten_bp %>)</option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label class="small font-weight-bold">Định biên</label>
+            <input type="number" class="form-control" id="cd-dinh-bien" min="0" value="1">
+          </div>
+          <div class="form-group col-md-3 d-flex align-items-end pb-2">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" id="cd-quan-ly">
+              <label class="custom-control-label small" for="cd-quan-ly">Là vị trí quản lý</label>
+            </div>
+          </div>
+          <div class="form-group col-md-6">
+            <label class="small font-weight-bold">Vai trò cũ tương đương</label>
+            <input type="text" class="form-control" id="cd-vai-tro"
+                   placeholder="Bep,Nhan vien chung">
+            <small class="form-text text-muted">
+              Danh sách ngăn cách bởi dấu phẩy, lấy từ: Phuc vu, Bep, Ke toan, Quay, Thu ngan,
+              Nhan vien chung. Đây là cầu nối để các trang cũ nhận đúng quyền.
+            </small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="small font-weight-bold">Trách nhiệm chính</label>
+          <textarea class="form-control" id="cd-trach-nhiem" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button class="btn btn-primary" id="cd-luu">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Modal tổ ==================== -->
+<div class="modal fade" id="modal-to" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tổ làm việc</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="to-id">
+        <div class="form-row">
+          <div class="form-group col-5">
+            <label class="small font-weight-bold">Mã tổ <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="to-ma" placeholder="VD: PV-C">
+          </div>
+          <div class="form-group col-7">
+            <label class="small font-weight-bold">Tên tổ <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="to-ten">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="small font-weight-bold">Bộ phận</label>
+            <select class="form-control" id="to-bp">
+              <% boPhan.forEach(function (b) { %>
+                <option value="<%= b.id_bp %>"><%= b.ten_bp %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label class="small font-weight-bold">Tổ trưởng</label>
+            <select class="form-control" id="to-truong"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="small font-weight-bold">Khu vực</label>
+            <input type="text" class="form-control" id="to-khu-vuc">
+          </div>
+          <div class="form-group col-6">
+            <label class="small font-weight-bold">Ca làm</label>
+            <input type="text" class="form-control" id="to-ca" placeholder="VD: Ca sáng">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button class="btn btn-primary" id="to-luu">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .nhom-quyen { border:1px solid #eaecf4; border-radius:8px; margin-bottom:10px; }
+  .nhom-quyen > .dau {
+    padding:7px 12px; background:#f8f9fc; font-weight:700; font-size:12.5px;
+    display:flex; justify-content:space-between; align-items:center; cursor:pointer;
+  }
+  .nhom-quyen .than { padding:6px 12px 10px; }
+  .o-quyen { display:block; font-size:12.5px; padding:3px 0; }
+  .o-quyen.nhay-cam label { color:#c0392b; }
+  .dong-to { padding:10px 16px; border-bottom:1px solid #eaecf4; cursor:pointer; }
+  .dong-to:hover, .dong-to.chon { background:#f8f9fc; }
+  .cd-chon { background:#eaf2ff !important; }
+</style>
+
+<script>
+(function () {
+  var E = RT.escapeHtml;
+  var nhanSu = <%- JSON.stringify(nhanSu) %>;
+  var chucDanh = <%- JSON.stringify(chucDanh) %>;
+  var dsTo = <%- JSON.stringify(to) %>;
+  var uyQuyen = <%- JSON.stringify(uyQuyen) %>;
+  var nhatKy = <%- JSON.stringify(nhatKy) %>;
+  var duocPhanQuyen = <%= coQuyen('to_chuc.phan_quyen') ? 'true' : 'false' %>;
+  var duocBoNhiem  = <%= coQuyen('to_chuc.bo_nhiem') ? 'true' : 'false' %>;
+  var duocSuaCd    = <%= coQuyen('to_chuc.chuc_danh') ? 'true' : 'false' %>;
+  var duocQuanLyTo = <%= coQuyen('to_chuc.to.quan_ly') ? 'true' : 'false' %>;
+  var cdDangChon = null;
+  var toDangChon = null;
+
+  function ngay(s) {
+    if (!s) return '—';
+    var d = new Date(s);
+    return ('0'+d.getDate()).slice(-2) + '/' + ('0'+(d.getMonth()+1)).slice(-2) + '/' + d.getFullYear() +
+           ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+  }
+
+  // ==================================================== BỔ NHIỆM
+  function veNhanSu() {
+    var tu = (document.getElementById('tim-nhan-su').value || '').toLowerCase().trim();
+    var ds = nhanSu.filter(function (n) {
+      if (!tu) return true;
+      return [n.ten, n.ma_nv, n.ten_cd, n.ten_bp, n.username]
+        .some(function (x) { return String(x || '').toLowerCase().indexOf(tu) >= 0; });
+    });
+
+    document.getElementById('tbody-nhan-su').innerHTML = ds.map(function (n) {
+      var chonCd = duocBoNhiem
+        ? '<select class="form-control form-control-sm chon-cd" data-nv="' + n.id_nv + '" style="min-width:180px">' +
+            '<option value="">— chọn chức danh —</option>' +
+            chucDanh.map(function (c) {
+              return '<option value="' + c.id_cd + '"' + (c.id_cd === n.id_cd ? ' selected' : '') + '>' +
+                E(c.ten_cd) + '</option>';
+            }).join('') +
+          '</select>'
+        : E(n.ten_cd || '—');
+
+      return '<tr' + (n.id_cd ? '' : ' class="table-warning"') + '>' +
+        '<td class="small">' + E(n.ma_nv || '') + '</td>' +
+        '<td><strong>' + E(n.ten) + '</strong>' +
+          '<div class="small text-muted">' + E(n.username || '') + '</div></td>' +
+        '<td>' + (n.ten_bp
+          ? '<span class="badge" style="background:' + E(n.mau_sac) + ';color:#fff">' + E(n.ten_bp) + '</span>'
+          : '<span class="text-muted small">—</span>') + '</td>' +
+        '<td>' + chonCd + '</td>' +
+        '<td class="text-center">' + (n.cap_bac || '—') + '</td>' +
+        '<td class="small">' + E(n.ten_quan_ly || '—') + '</td>' +
+        '<td class="text-center">' +
+          (n.online ? '<span class="badge badge-success">trực</span>' : '<span class="badge badge-light">—</span>') +
+        '</td>' +
+        '<td class="text-right">' +
+          (duocBoNhiem ? '<button class="btn btn-xs btn-outline-primary py-0 px-2 luu-bn" data-nv="' + n.id_nv + '">Lưu</button>' : '') +
+        '</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="text-center text-muted py-3">Không tìm thấy.</td></tr>';
+
+    document.querySelectorAll('.luu-bn').forEach(function (b) {
+      b.onclick = function () {
+        var idNv = b.getAttribute('data-nv');
+        var sel = document.querySelector('.chon-cd[data-nv="' + idNv + '"]');
+        if (!sel || !sel.value) return RT.thongBao('Chưa chọn chức danh.', 'canh-bao');
+        b.disabled = true;
+        RT.gui('/api/to-chuc/bo-nhiem', { id_nv: Number(idNv), id_cd: Number(sel.value) })
+          .then(function (d) {
+            RT.thongBao('Đã bổ nhiệm: ' + d.chuc_danh + ' — ' + d.bo_phan, 'thanh-cong');
+          })
+          .catch(function (e) { RT.thongBao(e.message, 'loi'); })
+          .then(function () { b.disabled = false; });
+      };
+    });
+  }
+  document.getElementById('tim-nhan-su').oninput = veNhanSu;
+
+  // ==================================================== CHỨC DANH
+  function veChucDanh() {
+    document.getElementById('tbody-chuc-danh').innerHTML = chucDanh.map(function (c) {
+      return '<tr data-cd="' + c.id_cd + '" style="cursor:pointer">' +
+        '<td class="small text-muted">' + E(c.ma_cd) + '</td>' +
+        '<td><strong>' + E(c.ten_cd) + '</strong>' +
+          (c.la_quan_ly ? ' <i class="fas fa-star text-warning" title="Vị trí quản lý"></i>' : '') +
+          (c.ten_cd_cha ? '<div class="small text-muted">↑ ' + E(c.ten_cd_cha) + '</div>' : '') + '</td>' +
+        '<td><span class="badge" style="background:' + E(c.mau_sac) + ';color:#fff">' + E(c.ten_bp) + '</span></td>' +
+        '<td class="text-center">' + c.cap_bac + '</td>' +
+        '<td class="text-center">' + c.so_nguoi + '<span class="text-muted small">/' + c.dinh_bien + '</span></td>' +
+        '<td class="text-center"><span class="badge badge-info">' + c.so_quyen + '</span></td>' +
+        '<td class="text-right">' +
+          (duocSuaCd ? '<button class="btn btn-xs btn-link py-0 sua-cd" data-cd="' + c.id_cd + '">Sửa</button>' : '') +
+        '</td></tr>';
+    }).join('');
+
+    document.querySelectorAll('#tbody-chuc-danh tr').forEach(function (tr) {
+      tr.onclick = function (ev) {
+        if (ev.target.classList.contains('sua-cd')) return;
+        document.querySelectorAll('#tbody-chuc-danh tr').forEach(function (x) { x.classList.remove('cd-chon'); });
+        tr.classList.add('cd-chon');
+        moQuyen(Number(tr.getAttribute('data-cd')));
+      };
+    });
+
+    document.querySelectorAll('.sua-cd').forEach(function (b) {
+      b.onclick = function (ev) {
+        ev.stopPropagation();
+        var c = chucDanh.find(function (x) { return x.id_cd === Number(b.getAttribute('data-cd')); });
+        if (!c) return;
+        document.getElementById('modal-cd-tieu-de').textContent = 'Sửa chức danh';
+        document.getElementById('cd-id').value = c.id_cd;
+        document.getElementById('cd-ma').value = c.ma_cd;
+        document.getElementById('cd-ten').value = c.ten_cd;
+        document.getElementById('cd-bp').value = c.id_bp;
+        document.getElementById('cd-cap').value = c.cap_bac;
+        document.getElementById('cd-cha').value = c.id_cd_cha || '';
+        document.getElementById('cd-dinh-bien').value = c.dinh_bien;
+        document.getElementById('cd-quan-ly').checked = !!c.la_quan_ly;
+        document.getElementById('cd-vai-tro').value = c.vai_tro_tuong_duong || '';
+        document.getElementById('cd-trach-nhiem').value = c.trach_nhiem || '';
+        $('#modal-cd').modal('show');
+      };
+    });
+  }
+
+  function moQuyen(idCd) {
+    cdDangChon = idCd;
+    var c = chucDanh.find(function (x) { return x.id_cd === idCd; });
+    document.getElementById('tieu-de-quyen').textContent = 'Quyền: ' + (c ? c.ten_cd : '');
+    var khung = document.getElementById('khung-quyen');
+    khung.innerHTML = '<p class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i> Đang tải…</p>';
+
+    fetch('/api/to-chuc/chuc-danh/' + idCd + '/quyen', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        khung.innerHTML = (d.nhom || []).map(function (g) {
+          var soCo = g.quyen.filter(function (q) { return q.duoc_cap; }).length;
+          return '<div class="nhom-quyen">' +
+            '<div class="dau"><span>' + E(g.nhom) + '</span>' +
+              '<span><span class="badge badge-secondary">' + soCo + '/' + g.quyen.length + '</span> ' +
+              (duocPhanQuyen ? '<a href="#" class="chon-het small ml-2">chọn hết</a>' : '') + '</span></div>' +
+            '<div class="than">' + g.quyen.map(function (q) {
+              return '<label class="o-quyen' + (q.la_nhay_cam ? ' nhay-cam' : '') + '">' +
+                '<input type="checkbox" class="q" value="' + q.id_q + '"' +
+                  (q.duoc_cap ? ' checked' : '') + (duocPhanQuyen ? '' : ' disabled') + '> ' +
+                E(q.ten_q) +
+                (q.la_nhay_cam ? ' <i class="fas fa-exclamation-triangle" title="Quyền nhạy cảm"></i>' : '') +
+                '<span class="text-muted small ml-1">' + E(q.ma_q) + '</span></label>';
+            }).join('') + '</div></div>';
+        }).join('');
+
+        khung.querySelectorAll('.chon-het').forEach(function (a) {
+          a.onclick = function (ev) {
+            ev.preventDefault();
+            var than = a.closest('.nhom-quyen').querySelector('.than');
+            var oCon = than.querySelectorAll('.q');
+            var tatCa = Array.prototype.every.call(oCon, function (o) { return o.checked; });
+            oCon.forEach(function (o) { o.checked = !tatCa; });
+            demQuyen();
+          };
+        });
+        khung.querySelectorAll('.q').forEach(function (o) { o.onchange = demQuyen; });
+
+        var chan = document.getElementById('chan-quyen');
+        if (chan) chan.classList.remove('d-none');
+        demQuyen();
+      });
+  }
+
+  function demQuyen() {
+    var el = document.getElementById('dem-quyen');
+    if (!el) return;
+    el.textContent = document.querySelectorAll('#khung-quyen .q:checked').length + ' quyền được chọn';
+  }
+
+  var nutLuuQuyen = document.getElementById('nut-luu-quyen');
+  if (nutLuuQuyen) {
+    nutLuuQuyen.onclick = function () {
+      if (!cdDangChon) return;
+      var ids = Array.prototype.map.call(
+        document.querySelectorAll('#khung-quyen .q:checked'), function (o) { return Number(o.value); });
+      nutLuuQuyen.disabled = true;
+      RT.gui('/api/to-chuc/chuc-danh/' + cdDangChon + '/quyen', { quyen: ids })
+        .then(function (d) { RT.thongBao('Đã lưu ' + d.so_quyen + ' quyền. Người đang giữ chức danh này được báo tải lại.', 'thanh-cong'); })
+        .catch(function (e) { RT.thongBao(e.message, 'loi'); })
+        .then(function () { nutLuuQuyen.disabled = false; });
+    };
+  }
+
+  var nutThemCd = document.getElementById('nut-them-cd');
+  if (nutThemCd) {
+    nutThemCd.onclick = function () {
+      document.getElementById('modal-cd-tieu-de').textContent = 'Thêm chức danh';
+      ['cd-id','cd-ma','cd-ten','cd-vai-tro','cd-trach-nhiem'].forEach(function (i) {
+        document.getElementById(i).value = '';
+      });
+      document.getElementById('cd-cap').value = '5';
+      document.getElementById('cd-cha').value = '';
+      document.getElementById('cd-dinh-bien').value = '1';
+      document.getElementById('cd-quan-ly').checked = false;
+      $('#modal-cd').modal('show');
+    };
+  }
+
+  var cdLuu = document.getElementById('cd-luu');
+  if (cdLuu) {
+    cdLuu.onclick = function () {
+      var goi = {
+        id_cd: document.getElementById('cd-id').value || null,
+        ma_cd: document.getElementById('cd-ma').value.trim(),
+        ten_cd: document.getElementById('cd-ten').value.trim(),
+        id_bp: Number(document.getElementById('cd-bp').value),
+        cap_bac: Number(document.getElementById('cd-cap').value),
+        id_cd_cha: document.getElementById('cd-cha').value || null,
+        dinh_bien: Number(document.getElementById('cd-dinh-bien').value),
+        la_quan_ly: document.getElementById('cd-quan-ly').checked,
+        vai_tro_tuong_duong: document.getElementById('cd-vai-tro').value.trim(),
+        trach_nhiem: document.getElementById('cd-trach-nhiem').value.trim(),
+      };
+      if (!goi.ma_cd || !goi.ten_cd) return RT.thongBao('Thiếu mã hoặc tên chức danh.', 'canh-bao');
+      cdLuu.disabled = true;
+      RT.gui('/api/to-chuc/chuc-danh', goi)
+        .then(function () { $('#modal-cd').modal('hide'); RT.thongBao('Đã lưu chức danh.', 'thanh-cong'); taiChucDanh(); })
+        .catch(function (e) { RT.thongBao(e.message, 'loi'); })
+        .then(function () { cdLuu.disabled = false; });
+    };
+  }
+
+  // ==================================================== TỔ
+  function veTo() {
+    document.getElementById('ds-to').innerHTML = dsTo.map(function (t) {
+      return '<div class="dong-to" data-to="' + t.id_to + '">' +
+        '<div class="d-flex justify-content-between align-items-start">' +
+          '<div><strong>' + E(t.ten_to) + '</strong>' +
+            '<div class="small text-muted">' + E(t.ma_to) + ' · ' + E(t.khu_vuc || '—') + ' · ' + E(t.ca_lam || '—') + '</div>' +
+            '<div class="small mt-1">' +
+              (t.ten_to_truong
+                ? '<i class="fas fa-user-tie text-warning"></i> ' + E(t.ten_to_truong)
+                : '<span class="text-danger">chưa có tổ trưởng</span>') + '</div>' +
+          '</div>' +
+          '<div class="text-right">' +
+            '<span class="badge" style="background:' + E(t.mau_sac) + ';color:#fff">' + E(t.ten_bp) + '</span>' +
+            '<div class="small text-muted mt-1">' + t.so_thanh_vien + ' thành viên</div>' +
+            (duocQuanLyTo ? '<button class="btn btn-xs btn-link py-0 sua-to" data-to="' + t.id_to + '">Sửa</button>' : '') +
+          '</div></div></div>';
+    }).join('') || '<div class="text-center text-muted py-4">Chưa có tổ nào.</div>';
+
+    document.querySelectorAll('.dong-to').forEach(function (d) {
+      d.onclick = function (ev) {
+        if (ev.target.classList.contains('sua-to')) return;
+        document.querySelectorAll('.dong-to').forEach(function (x) { x.classList.remove('chon'); });
+        d.classList.add('chon');
+        moThanhVien(Number(d.getAttribute('data-to')));
+      };
+    });
+
+    document.querySelectorAll('.sua-to').forEach(function (b) {
+      b.onclick = function (ev) {
+        ev.stopPropagation();
+        var t = dsTo.find(function (x) { return x.id_to === Number(b.getAttribute('data-to')); });
+        if (!t) return;
+        document.getElementById('to-id').value = t.id_to;
+        document.getElementById('to-ma').value = t.ma_to;
+        document.getElementById('to-ten').value = t.ten_to;
+        document.getElementById('to-bp').value = t.id_bp;
+        document.getElementById('to-khu-vuc').value = t.khu_vuc || '';
+        document.getElementById('to-ca').value = t.ca_lam || '';
+        napChonNhanSu('to-truong', t.id_to_truong);
+        $('#modal-to').modal('show');
+      };
+    });
+  }
+
+  function moThanhVien(idTo) {
+    toDangChon = idTo;
+    var t = dsTo.find(function (x) { return x.id_to === idTo; });
+    document.getElementById('tieu-de-to').textContent = 'Thành viên: ' + (t ? t.ten_to : '');
+    var khung = document.getElementById('khung-thanh-vien');
+    khung.innerHTML = '<p class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i></p>';
+
+    fetch('/api/to-chuc/to/' + idTo + '/thanh-vien', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var VAI = { to_truong: 'Tổ trưởng', to_pho: 'Tổ phó', thanh_vien: 'Thành viên' };
+        var html = '<table class="table table-sm"><tbody>' + (d.thanh_vien || []).map(function (v) {
+          return '<tr><td>' +
+            (v.online ? '<span class="cham-online" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1cc88a;margin-right:5px"></span>' : '') +
+            '<strong>' + E(v.ten) + '</strong>' +
+            '<div class="small text-muted">' + E(v.ten_cd || '—') + '</div></td>' +
+            '<td class="text-right">' +
+              (duocQuanLyTo
+                ? '<select class="form-control form-control-sm doi-vai" data-nv="' + v.id_nv + '" style="width:130px;display:inline-block">' +
+                    Object.keys(VAI).map(function (k) {
+                      return '<option value="' + k + '"' + (v.vai_tro_trong_to === k ? ' selected' : '') + '>' + VAI[k] + '</option>';
+                    }).join('') +
+                    '<option value="bo">— Bỏ khỏi tổ —</option>' +
+                  '</select>'
+                : '<span class="badge badge-secondary">' + VAI[v.vai_tro_trong_to] + '</span>') +
+            '</td></tr>';
+        }).join('') + '</tbody></table>';
+
+        if (duocQuanLyTo) {
+          html += '<hr><div class="form-row align-items-end">' +
+            '<div class="col-8"><label class="small font-weight-bold">Thêm thành viên</label>' +
+              '<select class="form-control form-control-sm" id="tv-them"></select></div>' +
+            '<div class="col-4"><button class="btn btn-sm btn-primary btn-block" id="tv-nut">Thêm</button></div>' +
+          '</div>';
+        }
+        khung.innerHTML = html || '<p class="text-muted text-center py-4">Tổ chưa có thành viên.</p>';
+
+        if (duocQuanLyTo) {
+          napChonNhanSu('tv-them');
+          document.getElementById('tv-nut').onclick = function () {
+            var idNv = document.getElementById('tv-them').value;
+            if (!idNv) return;
+            RT.gui('/api/to-chuc/to/' + idTo + '/thanh-vien', { id_nv: Number(idNv), vai_tro: 'thanh_vien' })
+              .then(function () { RT.thongBao('Đã thêm vào tổ.', 'thanh-cong'); moThanhVien(idTo); })
+              .catch(function (e) { RT.thongBao(e.message, 'loi'); });
+          };
+          khung.querySelectorAll('.doi-vai').forEach(function (s) {
+            s.onchange = function () {
+              RT.gui('/api/to-chuc/to/' + idTo + '/thanh-vien',
+                { id_nv: Number(s.getAttribute('data-nv')), vai_tro: s.value })
+                .then(function () { RT.thongBao('Đã cập nhật.', 'thanh-cong'); moThanhVien(idTo); })
+                .catch(function (e) { RT.thongBao(e.message, 'loi'); });
+            };
+          });
+        }
+      });
+  }
+
+  function napChonNhanSu(id, chon) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<option value="">— chọn nhân viên —</option>' + nhanSu.map(function (n) {
+      return '<option value="' + n.id_nv + '"' + (chon && n.id_nv === chon ? ' selected' : '') + '>' +
+        E(n.ten) + (n.ten_cd ? ' — ' + E(n.ten_cd) : '') + '</option>';
+    }).join('');
+  }
+
+  var nutThemTo = document.getElementById('nut-them-to');
+  if (nutThemTo) {
+    nutThemTo.onclick = function () {
+      ['to-id','to-ma','to-ten','to-khu-vuc','to-ca'].forEach(function (i) {
+        document.getElementById(i).value = '';
+      });
+      napChonNhanSu('to-truong');
+      $('#modal-to').modal('show');
+    };
+  }
+
+  var toLuu = document.getElementById('to-luu');
+  if (toLuu) {
+    toLuu.onclick = function () {
+      var goi = {
+        id_to: document.getElementById('to-id').value || null,
+        ma_to: document.getElementById('to-ma').value.trim(),
+        ten_to: document.getElementById('to-ten').value.trim(),
+        id_bp: Number(document.getElementById('to-bp').value),
+        id_to_truong: document.getElementById('to-truong').value || null,
+        khu_vuc: document.getElementById('to-khu-vuc').value.trim(),
+        ca_lam: document.getElementById('to-ca').value.trim(),
+      };
+      if (!goi.ma_to || !goi.ten_to) return RT.thongBao('Thiếu mã hoặc tên tổ.', 'canh-bao');
+      toLuu.disabled = true;
+      RT.gui('/api/to-chuc/to', goi)
+        .then(function () { $('#modal-to').modal('hide'); RT.thongBao('Đã lưu tổ.', 'thanh-cong'); taiTo(); })
+        .catch(function (e) { RT.thongBao(e.message, 'loi'); })
+        .then(function () { toLuu.disabled = false; });
+    };
+  }
+
+  // ==================================================== ỦY QUYỀN
+  function veUyQuyen() {
+    document.getElementById('tbody-uy-quyen').innerHTML = uyQuyen.map(function (u) {
+      var nhan = u.dang_hieu_luc ? 'badge-success'
+        : (u.trang_thai === 'da_thu_hoi' ? 'badge-secondary' : 'badge-light');
+      var ten = u.dang_hieu_luc ? 'Đang hiệu lực'
+        : (u.trang_thai === 'da_thu_hoi' ? 'Đã thu hồi' : 'Hết hạn');
+      return '<tr>' +
+        '<td>' + E(u.ten_giao) + '<div class="small text-muted">' + E(u.cd_giao || '') + '</div></td>' +
+        '<td>' + E(u.ten_nhan) + '<div class="small text-muted">' + E(u.cd_nhan || '') + '</div></td>' +
+        '<td class="small">' + ngay(u.tu_luc) + '<br>→ ' + ngay(u.den_luc) + '</td>' +
+        '<td class="small">' + E(u.ly_do || '—') + '</td>' +
+        '<td><span class="badge ' + nhan + '">' + ten + '</span></td>' +
+        '<td class="text-right">' +
+          (u.dang_hieu_luc
+            ? '<button class="btn btn-xs btn-outline-danger py-0 px-2 thu-hoi" data-id="' + u.id + '">Thu hồi</button>'
+            : '') +
+        '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-muted py-3">Chưa có phiếu ủy quyền.</td></tr>';
+
+    document.querySelectorAll('.thu-hoi').forEach(function (b) {
+      b.onclick = function () {
+        b.disabled = true;
+        RT.gui('/api/to-chuc/uy-quyen/' + b.getAttribute('data-id') + '/thu-hoi', {})
+          .then(function () { RT.thongBao('Đã thu hồi ủy quyền.', 'thanh-cong'); location.reload(); })
+          .catch(function (e) { RT.thongBao(e.message, 'loi'); b.disabled = false; });
+      };
+    });
+  }
+
+  var uqTao = document.getElementById('uq-tao');
+  if (uqTao) {
+    napChonNhanSu('uq-giao');
+    napChonNhanSu('uq-nhan');
+    uqTao.onclick = function () {
+      var goi = {
+        id_nv_giao: Number(document.getElementById('uq-giao').value),
+        id_nv_nhan: Number(document.getElementById('uq-nhan').value),
+        tu_luc: document.getElementById('uq-tu').value,
+        den_luc: document.getElementById('uq-den').value,
+        ly_do: document.getElementById('uq-ly-do').value.trim(),
+      };
+      if (!goi.id_nv_giao || !goi.id_nv_nhan) return RT.thongBao('Chưa chọn đủ người giao và người nhận.', 'canh-bao');
+      if (!goi.tu_luc || !goi.den_luc) return RT.thongBao('Chưa chọn khoảng thời gian.', 'canh-bao');
+      uqTao.disabled = true;
+      RT.gui('/api/to-chuc/uy-quyen', goi)
+        .then(function () { RT.thongBao('Đã lập phiếu ủy quyền, có hiệu lực ngay.', 'thanh-cong'); location.reload(); })
+        .catch(function (e) { RT.thongBao(e.message, 'loi'); uqTao.disabled = false; });
+    };
+  }
+
+  // ==================================================== NHẬT KÝ
+  var TEN_HD = {
+    bo_nhiem: 'Bổ nhiệm', phan_quyen: 'Phân quyền', them_chuc_danh: 'Thêm chức danh',
+    sua_chuc_danh: 'Sửa chức danh', ngung_chuc_danh: 'Ngừng chức danh',
+    them_to: 'Thêm tổ', sua_to: 'Sửa tổ', to_thanh_vien: 'Đổi thành viên tổ',
+    uy_quyen: 'Ủy quyền', thu_hoi_uy_quyen: 'Thu hồi ủy quyền',
+  };
+  function veNhatKy() {
+    document.getElementById('tbody-nhat-ky').innerHTML = nhatKy.map(function (k) {
+      return '<tr>' +
+        '<td class="small text-muted text-nowrap">' + ngay(k.tao_luc) + '</td>' +
+        '<td><span class="badge badge-light">' + E(TEN_HD[k.hanh_dong] || k.hanh_dong) + '</span></td>' +
+        '<td>' + E(k.ten_muc_tieu || '—') + '</td>' +
+        '<td class="small">' + E(k.chi_tiet || '') +
+          (k.cd_cu && k.cd_moi ? '<div class="text-muted">' + E(k.cd_cu) + ' → ' + E(k.cd_moi) + '</div>' : '') + '</td>' +
+        '<td class="small">' + E(k.nguoi_thuc_hien || '—') + '</td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Chưa có thay đổi nào.</td></tr>';
+  }
+
+  // ==================================================== Nạp lại theo thời gian thực
+  var taiChucDanh = RT.dongBo('/api/to-chuc/chuc-danh', function (d) {
+    chucDanh = d.chuc_danh; veChucDanh();
+  }, ['to-chuc:cap-nhat', 'to-chuc:quyen-doi']);
+
+  var taiNhanSu = RT.dongBo('/api/to-chuc/nhan-su', function (d) {
+    nhanSu = d.nhan_su; veNhanSu();
+  }, ['to-chuc:cap-nhat', 'hien-dien:thay-doi']);
+
+  var taiTo = RT.dongBo('/api/to-chuc/to', function (d) {
+    dsTo = d.to; veTo();
+  }, ['to-chuc:to-doi', 'to-chuc:cap-nhat']);
+
+  RT.dongBo('/api/to-chuc/nhat-ky?gioi_han=60', function (d) {
+    nhatKy = d.nhat_ky; veNhatKy();
+  }, ['to-chuc:cap-nhat', 'to-chuc:to-doi', 'to-chuc:quyen-doi']);
+
+  RT.ganDauHieu(document.getElementById('dau-hieu-rt'));
+  veUyQuyen();
+})();
+</script>
+
+<%- include('partials/footer') %>

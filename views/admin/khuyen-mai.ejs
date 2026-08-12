@@ -1,0 +1,192 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  /* Tinh trang thai hien thi cua mot chuong trinh: uu tien "tam ngung" vi do
+     la thao tac tay cua quan tri vien, sau do moi den moc thoi gian. */
+  function trangThaiCua(km) {
+    var now = new Date();
+    if (!km.is_active) return { lop: 'muted', chu: 'Tạm ngưng' };
+    if (new Date(km.valid_until) < now) return { lop: 'danger', chu: 'Hết hạn' };
+    if (new Date(km.valid_from) > now) return { lop: 'info', chu: 'Sắp chạy' };
+    if (km.max_usage && Number(km.current_usage) >= Number(km.max_usage)) {
+      return { lop: 'warn', chu: 'Hết lượt' };
+    }
+    return { lop: 'ok', chu: 'Đang chạy' };
+  }
+%>
+
+<% if (thongBao) { %>
+  <div class="qt-alert qt-alert--success"><i class="fas fa-circle-check"></i> <%= thongBao %></div>
+<% } %>
+<% if (loi) { %>
+  <div class="qt-alert qt-alert--danger"><i class="fas fa-triangle-exclamation"></i> <%= loi %></div>
+<% } %>
+
+<!-- ====================================================== Tổng quan -->
+<div class="qt-stats">
+  <div class="qt-stat qt-stat--green">
+    <span class="qt-stat__icon"><i class="fas fa-bolt"></i></span>
+    <div class="qt-stat__label">Đang chạy</div>
+    <div class="qt-stat__value"><%= thongKe.dang_chay %></div>
+    <div class="qt-stat__note">trên tổng <%= thongKe.tong %> chương trình</div>
+  </div>
+  <div class="qt-stat qt-stat--blue">
+    <span class="qt-stat__icon"><i class="fas fa-hourglass-start"></i></span>
+    <div class="qt-stat__label">Sắp chạy</div>
+    <div class="qt-stat__value"><%= thongKe.sap_toi %></div>
+    <div class="qt-stat__note"><%= thongKe.het_han %> chương trình đã hết hạn</div>
+  </div>
+  <div class="qt-stat qt-stat--gold">
+    <span class="qt-stat__icon"><i class="fas fa-ticket"></i></span>
+    <div class="qt-stat__label">Lượt dùng 30 ngày</div>
+    <div class="qt-stat__value"><%= thongKe.luot_30_ngay %></div>
+    <div class="qt-stat__note">hóa đơn có áp mã</div>
+  </div>
+  <div class="qt-stat qt-stat--plum">
+    <span class="qt-stat__icon"><i class="fas fa-hand-holding-dollar"></i></span>
+    <div class="qt-stat__label">Đã giảm 30 ngày</div>
+    <div class="qt-stat__value"><%= formatMoney(thongKe.giam_30_ngay) %>đ</div>
+    <div class="qt-stat__note">tổng tiền khuyến mãi</div>
+  </div>
+</div>
+
+<!-- ====================================================== Danh sách -->
+<div class="qt-card" style="margin-top:1.5rem">
+  <div class="qt-card__head">
+    <div>
+      <h2>Chương trình khuyến mãi</h2>
+      <p><%= danhSach.length %> chương trình<%= loc.tuKhoa || loc.trangThai ? ' khớp bộ lọc' : '' %></p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--primary" href="/admin/khuyen-mai/them">
+        <i class="fas fa-plus"></i> Tạo chương trình
+      </a>
+    </div>
+  </div>
+
+  <div class="qt-card__body" style="padding-bottom:0">
+    <form class="qt-filter" method="GET" action="/admin/khuyen-mai">
+      <input class="qt-input" type="text" name="q" placeholder="Tìm theo mã, tên, mô tả…"
+             value="<%= loc.tuKhoa %>" style="max-width:320px">
+      <select class="qt-select" name="trang_thai" style="max-width:200px">
+        <option value="">Tất cả trạng thái</option>
+        <option value="dang_chay" <%= loc.trangThai === 'dang_chay' ? 'selected' : '' %>>Đang chạy</option>
+        <option value="sap_toi"   <%= loc.trangThai === 'sap_toi'   ? 'selected' : '' %>>Sắp chạy</option>
+        <option value="het_han"   <%= loc.trangThai === 'het_han'   ? 'selected' : '' %>>Hết hạn</option>
+        <option value="tam_ngung" <%= loc.trangThai === 'tam_ngung' ? 'selected' : '' %>>Tạm ngưng</option>
+      </select>
+      <div class="qt-filter__act">
+        <button class="qt-btn qt-btn--ghost" type="submit"><i class="fas fa-filter"></i> Lọc</button>
+        <% if (loc.tuKhoa || loc.trangThai) { %>
+          <a class="qt-btn qt-btn--ghost" href="/admin/khuyen-mai"><i class="fas fa-xmark"></i> Bỏ lọc</a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+
+  <div class="qt-card__body qt-card__body--flush">
+    <% if (danhSach.length > 0) { %>
+    <div class="qt-tablewrap">
+      <table class="qt-table">
+        <thead>
+          <tr>
+            <th>Mã / Tên</th>
+            <th>Mức giảm</th>
+            <th>Điều kiện</th>
+            <th>Thời gian</th>
+            <th>Lượt dùng</th>
+            <th>Đã giảm</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% danhSach.forEach(function (km) { var tt = trangThaiCua(km); var dk = moTaDieuKien(km); %>
+          <tr>
+            <td>
+              <div class="qt-strong km-ma"><%= km.code %></div>
+              <div class="km-phu"><%= km.ten || '—' %></div>
+            </td>
+            <td class="qt-money">
+              <% if (km.discount_type === 'percentage') { %>
+                <%= Number(km.discount_value) %>%
+                <% if (km.max_discount_amount) { %>
+                  <div class="km-phu">tối đa <%= formatMoney(km.max_discount_amount) %>đ</div>
+                <% } %>
+              <% } else { %>
+                <%= formatMoney(km.discount_value) %>đ
+              <% } %>
+            </td>
+            <td>
+              <% if (km.min_order_value) { %>
+                <div class="km-phu">Đơn từ <%= formatMoney(km.min_order_value) %>đ</div>
+              <% } %>
+              <% if (dk.length === 0 && !km.min_order_value) { %>
+                <span class="km-phu">Không giới hạn</span>
+              <% } %>
+              <% dk.forEach(function (d) { %>
+                <span class="qt-pill qt-pill--muted km-dk"><%= d %></span>
+              <% }); %>
+            </td>
+            <td class="km-phu">
+              <%= formatDate(km.valid_from) %><br>→ <%= formatDate(km.valid_until) %>
+            </td>
+            <td class="qt-num">
+              <%= km.current_usage || 0 %><%= km.max_usage ? ' / ' + km.max_usage : '' %>
+              <% if (km.gioi_han_moi_khach) { %>
+                <div class="km-phu"><%= km.gioi_han_moi_khach %>/khách</div>
+              <% } %>
+            </td>
+            <td class="qt-money">
+              <%= formatMoney(km.tong_giam || 0) %>đ
+              <% if (Number(km.tong_doanh_thu) > 0) { %>
+                <div class="km-phu">trên <%= formatMoney(km.tong_doanh_thu) %>đ doanh thu</div>
+              <% } %>
+            </td>
+            <td><span class="qt-pill qt-pill--<%= tt.lop %>"><%= tt.chu %></span></td>
+            <td>
+              <div class="qt-actions">
+                <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/khuyen-mai/<%= km.id %>">
+                  <i class="fas fa-pen"></i> Sửa
+                </a>
+                <form method="POST" action="/admin/khuyen-mai/<%= km.id %>/trang-thai">
+                  <button class="qt-btn qt-btn--sm <%= km.is_active ? 'qt-btn--ghost' : 'qt-btn--ok' %>" type="submit">
+                    <i class="fas <%= km.is_active ? 'fa-pause' : 'fa-play' %>"></i>
+                    <%= km.is_active ? 'Ngưng' : 'Bật' %>
+                  </button>
+                </form>
+                <% if (!Number(km.so_luot_that) && !Number(km.current_usage)) { %>
+                <form method="POST" action="/admin/khuyen-mai/<%= km.id %>/xoa"
+                      onsubmit="return confirm('Xóa chương trình <%= km.code %>?')">
+                  <button class="qt-btn qt-btn--danger qt-btn--sm" type="submit">
+                    <i class="fas fa-trash"></i> Xóa
+                  </button>
+                </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="qt-empty">
+      <i class="fas fa-ticket"></i>
+      <p>Chưa có chương trình khuyến mãi nào<%= loc.tuKhoa || loc.trangThai ? ' khớp bộ lọc' : '' %>.</p>
+      <a class="qt-btn qt-btn--primary" href="/admin/khuyen-mai/them">
+        <i class="fas fa-plus"></i> Tạo chương trình đầu tiên
+      </a>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<style>
+  .km-ma { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .5px; }
+  .km-phu { font-size: .74rem; color: var(--qt-muted); margin-top: .15rem; }
+  .km-dk { margin: .12rem .2rem .12rem 0; font-size: .7rem; }
+</style>
+
+<%- include('partials/footer') %>

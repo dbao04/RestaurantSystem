@@ -1,53 +1,70 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Thêm nhân viên mới</h2>
-        <div class="block">
-            <form action="/admin/staffadd" method="POST">
-                <table class="form">
-                    <tr>
-                        <td><label>Tên nhân viên</label></td>
-                        <td><input type="text" name="ten" placeholder="Nhập tên..." class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Chức vụ</label></td>
-                        <td>
-                            <select name="chucvu" required>
-                                <option value="Phuc vu">Phục vụ</option>
-                                <option value="Thu ngan">Thu ngân</option>
-                                <option value="Bep">Bếp</option>
-                                <option value="Quan ly">Quản lý</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><label>Số điện thoại</label></td>
-                        <td><input type="text" name="sodienthoai" class="medium" /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Email</label></td>
-                        <td><input type="email" name="email" class="medium" /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Địa chỉ</label></td>
-                        <td><textarea name="diachi" style="width: 300px; height: 100px;"></textarea></td>
-                    </tr>
-                    <tr>
-                        <td><label>Username</label></td>
-                        <td><input type="text" name="username" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Mật khẩu</label></td>
-                        <td><input type="password" name="passwords" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Lưu nhân viên" /></td>
-                    </tr>
-                </table>
-            </form>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Thêm nhân viên</h2>
+            <p>Tạo hồ sơ và tài khoản đăng nhập cho nhân viên mới.</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/stafflist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
         </div>
     </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/staffadd" method="POST">
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="ten">Tên nhân viên <span class="qt-req">*</span></label>
+                    <input type="text" id="ten" name="ten" placeholder="Nhập họ và tên" required />
+                </div>
+
+                <div class="qt-field">
+                    <label for="chucvu">Chức vụ <span class="qt-req">*</span></label>
+                    <select id="chucvu" name="chucvu" required>
+                        <option value="Phuc vu">Phục vụ</option>
+                        <option value="Thu ngan">Thu ngân</option>
+                        <option value="Bep">Bếp</option>
+                        <option value="Quan ly">Quản lý</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="sodienthoai">Số điện thoại</label>
+                    <input type="text" id="sodienthoai" name="sodienthoai" placeholder="Ví dụ: 0901234567" />
+                </div>
+
+                <div class="qt-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="nhanvien@nhahangbd.vn" />
+                </div>
+            </div>
+
+            <div class="qt-field">
+                <label for="diachi">Địa chỉ</label>
+                <textarea id="diachi" name="diachi" placeholder="Số nhà, đường, phường/xã, quận/huyện…"></textarea>
+            </div>
+
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="username">Tên đăng nhập <span class="qt-req">*</span></label>
+                    <input type="text" id="username" name="username" placeholder="Dùng để đăng nhập trang nhân viên" required />
+                </div>
+
+                <div class="qt-field">
+                    <label for="passwords">Mật khẩu <span class="qt-req">*</span></label>
+                    <input type="password" id="passwords" name="passwords" placeholder="Nhập mật khẩu" required />
+                </div>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Lưu nhân viên</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/stafflist">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
 <%- include('partials/footer') %>

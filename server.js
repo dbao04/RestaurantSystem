@@ -16,24 +16,11 @@ const io = socketIo(server);
 const PORT = process.env.PORT || 3000;
 
 // Socket.io Logic
-// [BẢO VỆ]: Khởi tạo Socket.io, lắng nghe kết nối và chia phòng (room) theo vai trò để nhận thông báo đúng đối tượng
-io.on('connection', (socket) => {
-  socket.on('join-room', (data) => {
-    // data can be: userId (customer), or object { role: 'Bep' }
-    if (typeof data === 'object' && data.role) {
-      if (data.role === 'Bep') {
-        socket.join('kitchen_room');
-        console.log(`Staff joined kitchen_room`);
-      } else if (data.role === 'Phuc vu' || data.role === 'Ke toan') {
-        socket.join('staff_room');
-        console.log(`Staff joined staff_room`);
-      }
-    } else if (data) {
-      socket.join(`room_${data}`);
-      console.log(`User joined room_${data}`);
-    }
-  });
-});
+// Viec chia phong da chuyen sang services/realtime.js: phong duoc dat theo dung
+// co cau to chuc (nv / chuc danh / bo phan / cap bac / to) va danh tinh lay tu
+// phien dang nhap thay vi tin vao du lieu client tu khai. Xem realtime.khoiTao()
+// duoc goi ben duoi, sau khi session middleware da gan vao io.engine.
+const realtime = require('./services/realtime');
 
 // Services
 const personnelService = require('./services/personnelService');
@@ -41,6 +28,7 @@ const menuService = require('./services/menuService');
 const orderService = require('./services/orderService');
 const engagementService = require('./services/engagementService');
 const mailer = require('./utils/mailer');
+const diaChiQR = require('./utils/diaChiQR');
 const md5 = require('md5');
 
 // Multer setup for file uploads
@@ -62,8 +50,10 @@ const upload = multer({ storage: storage });
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+// Gioi han body 20MB: cham cong khuon mat gui mot loat khung anh base64 tu
+// webcam (kiosk gui ~12 khung). Mac dinh 100kb se bao loi 413 voi cac request do.
+app.use(bodyParser.urlencoded({ extended: true, limit: '20mb' }));
+app.use(bodyParser.json({ limit: '20mb' }));
 
 // Public static files
 app.use(express.static(path.join(__dirname, 'css')));
@@ -78,12 +68,17 @@ app.use('/admin', express.static(path.join(__dirname, 'admin/css')));
 app.use('/admin-js', express.static(path.join(__dirname, 'admin/js')));
 app.use('/admin-img', express.static(path.join(__dirname, 'admin/img')));
 
-app.use(session({
+// Tach ra bien de dung chung cho ca Express lan Socket.IO. Nho vay socket doc
+// duoc phien dang nhap va biet chac nguoi ket noi la ai.
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false }
-}));
+});
+
+app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
 
 app.use(async (req, res, next) => {
   // Tạo plain object an toàn thay vì truyền Session object trực tiếp
@@ -106,6 +101,9 @@ app.use(async (req, res, next) => {
   res.locals.formatMoney = require('./utils/format').formatMoney;
   res.locals.formatDate = require('./utils/format').formatDate;
   res.locals.formatTime = require('./utils/format').formatTime;
+  res.locals.ngayVN = require('./utils/format').ngayVN;
+  res.locals.gioVN = require('./utils/format').gioVN;
+  res.locals.soLuongKho = require('./utils/format').soLuongKho;
 
   if (!req.path.startsWith('/admin') && req.sessionID) {
     try {
@@ -119,6 +117,11 @@ app.use(async (req, res, next) => {
   next();
 });
 
+
+// Nap ho so quyen theo co cau to chuc vao req.hoSo / res.locals.hoSo cho moi
+// request cua nhan vien. Phai dat SAU session va TRUOC moi route co phan quyen.
+const phanQuyenMw = require('./middleware/phanQuyen');
+app.use(phanQuyenMw.napHoSo());
 
 // Auth Middlewares
 const requireLogin = (req, res, next) => {
@@ -140,19 +143,97 @@ const requireStaff = (req, res, next) => {
   next();
 };
 
-const requireRole = (roles) => {
-  return (req, res, next) => {
-    if (!req.session.stafflogin) return res.redirect('/staff/login');
-    if (!roles.includes(req.session.staffRole)) {
-      return res.status(403).send('Bạn không có quyền truy cập chức năng này!');
-    }
-    next();
-  };
-};
+/**
+ * requireRole nay giu nguyen chu ky cu nhung thong minh hon.
+ *
+ * Truoc day chi so sanh chuoi: requireRole(['Bep']) doi session.staffRole dung
+ * bang 'Bep'. Nhu vay Bep truong hay To truong bep - la chuc danh moi - se bi
+ * chan khoi chinh khu bep cua ho.
+ *
+ * Ban moi kiem tra hai lop:
+ *   1. staffRole khop chinh xac       (hanh vi cu, nguoi chua bo nhiem van chay)
+ *   2. chuc_danh.vai_tro_tuong_duong  (Bep truong dong vai duoc 'Bep')
+ * Nho lop 2, ca 178 route cu giu nguyen ma van hieu co cau to chuc moi.
+ */
+const requireRole = phanQuyenMw.canVaiTroCu;
+
+/*
+  Bao "du lieu vua doi" cho moi thao tac ghi.
+
+  Dat TRUOC tat ca route de bat duoc ca route trong file nay lan route trong
+  thu muc routes/. No chi gan mot ham nghe vao `res.on('finish')` roi di tiep,
+  khong doi phan hoi va khong lam cham yeu cau nao.
+
+  Bang anh xa duong dan -> mien du lieu nam trong middleware/baoDoi.js.
+*/
+app.use(require('./middleware/baoDoi')());
+
+// --- Cac phan he moi: phan tich du lieu, du bao ML, goi y AI ---
+app.use('/analytics', require('./routes/analytics'));
+app.use('/', require('./routes/forecast'));
+// Tro ly ao: widget khach hang + trang quan tri /admin/chatbot.
+app.use('/', require('./routes/chatbot'));
+// KDS va so do ban can `io` de phat su kien thoi gian thuc.
+app.use('/', require('./routes/kds')(io));
+// Co cau to chuc: so do, bang dieu hanh, bo nhiem, phan quyen, uy quyen.
+app.use('/', require('./routes/toChuc'));
+// Cham cong bang khuon mat (kiosk 1:N, ca nhan 1:1, quan ly).
+app.use('/', require('./routes/khuonMat'));
+// Quan ly bang cham cong: xem theo ngay, sua sai sot (co kiem toan).
+app.use('/', require('./routes/chamCong'));
+// Thanh toan: POS thu ngan, khach tu tra tai ban qua VietQR, dat coc, doi soat.
+// Can `io` de man hinh thu ngan va dien thoai khach cung sang trang thai "da
+// thanh toan" ngay khi ngan hang bao co.
+app.use('/', require('./routes/thanhToan')(io));
+// Khuyen mai: quan tri vien tu tao/sua/bat tat chuong trinh giam gia.
+app.use('/', require('./routes/adminKhuyenMai'));
+// Thanh vien: xem hang, diem, lich su dung ma (chi doc).
+app.use('/', require('./routes/adminThanhVien'));
+// Xep ca tu dong: khai dinh muc nhan su moi ca roi de may phan nguoi vao ca.
+app.use('/', require('./routes/xepCa'));
+
+// Gan trung tam thoi gian thuc. Phai goi SAU io.engine.use(sessionMiddleware)
+// de socket doc duoc phien dang nhap.
+realtime.khoiTao(io);
 
 // --- Frontend Routes ---
-app.get('/', (req, res) => {
-  res.render('index', { title: 'Trang chủ' });
+app.get('/', async (req, res) => {
+  // Lay vai mon dang ban de lam khoi "mon noi bat" tren trang chu.
+  let mons = [];
+  // So lieu THAT tu CSDL cho phan thong ke (khong bia so).
+  let thongKe = { soMon: 0, soDanhMuc: 0, soNhanVien: 0, soDon: 0 };
+  try {
+    // Mon noi bat: chi lay MON AN (bo do uong), phai co anh, uu tien mon ban chay
+    // -> khoi "Mon an dac sac" luon dep va khong lan do uong.
+    const [dep] = await db.query(`
+      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon,
+             COALESCE(SUM(h.soluong), 0) AS da_ban
+      FROM monan m
+      LEFT JOIN hopdong h ON h.id_mon = m.id_mon AND h.tinhtrang = 3
+      WHERE m.tinhtrang = 1 AND m.images IS NOT NULL AND m.images <> ''
+        AND m.id_loai NOT IN (SELECT id_loai FROM loai_mon
+            WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
+               OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%')
+      GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
+      ORDER BY da_ban DESC, m.id_mon DESC
+      LIMIT 6`);
+    mons = dep;
+    // Du phong: neu vi ly do gi khong co mon co anh, lay tam mon an bat ky.
+    if (!mons.length) {
+      const tatCa = await menuService.getAllDishes();
+      mons = (tatCa || []).filter((m) => m.tinhtrang == 1).slice(0, 6);
+    }
+
+    const [[tk]] = await db.query(`
+      SELECT (SELECT COUNT(*) FROM monan WHERE tinhtrang = 1)            AS soMon,
+             (SELECT COUNT(*) FROM loai_mon)                            AS soDanhMuc,
+             (SELECT COUNT(*) FROM nhan_vien WHERE trangthai = 1)       AS soNhanVien,
+             (SELECT COUNT(DISTINCT sesis) FROM hopdong WHERE tinhtrang = 3) AS soDon`);
+    if (tk) thongKe = { soMon: +tk.soMon, soDanhMuc: +tk.soDanhMuc, soNhanVien: +tk.soNhanVien, soDon: +tk.soDon };
+  } catch (err) {
+    console.error('Không lấy được dữ liệu trang chủ:', err.message);
+  }
+  res.render('index', { title: 'Trang chủ', mons, thongKe });
 });
 
 app.get('/about', (req, res) => {
@@ -273,7 +354,10 @@ app.get('/datban', requireLogin, async (req, res) => {
     if (cartItems.length === 0) {
       return res.render('cart', { title: 'Giỏ hàng', cartItems: [], subtotal: 0, error: 'Giỏ hàng của bạn đang trống. Vui lòng thêm món ăn trước khi đặt bàn!' });
     }
-    res.render('booking', { title: 'Đặt bàn' });
+    // Trang dat ban hien tom tat don ben canh form, de khach doi chieu truoc khi
+    // xac nhan ma khong phai bam qua lai giua hai trang.
+    const subtotal = await orderService.getCartTotal(req.sessionID);
+    res.render('booking', { title: 'Đặt bàn', cartItems, subtotal });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -283,12 +367,26 @@ app.get('/datban', requireLogin, async (req, res) => {
 app.post('/datban', requireLogin, async (req, res) => {
   const { timebook, datebook, khach, noidung } = req.body;
   try {
-    // Ràng buộc: Ngày đặt không được ở quá khứ
-    const parts = datebook.split('/'); // m/d/yyyy
-    const bookingDate = new Date(parts[2], parts[0] - 1, parts[1]);
+    // Ràng buộc: Ngày đặt không được ở quá khứ.
+    //
+    // Chấp nhận CA HAI dạng: 'yyyy-mm-dd' của <input type="date"> (dạng form đặt
+    // bàn đang dùng) và 'm/d/yyyy' của bootstrap-datepicker cũ - vẫn còn đơn cũ
+    // và có thể còn trang khác gửi lên theo dạng đó.
+    const phanTichNgay = (s) => {
+      const t = String(s || '').trim();
+      let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
+      if (m) return new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+      return null;
+    };
+    const bookingDate = phanTichNgay(datebook);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Chỉ so sánh ngày
 
+    if (!bookingDate || Number.isNaN(bookingDate.getTime())) {
+      return res.send('<script>alert("Ngày đặt bàn không hợp lệ!"); history.back();</script>');
+    }
     if (bookingDate < today) {
       return res.send('<script>alert("Ngày đặt bàn không được ở quá khứ!"); history.back();</script>');
     }
@@ -327,8 +425,16 @@ app.get('/contract', requireLogin, async (req, res) => {
 
 app.get('/my-orders', requireLogin, async (req, res) => {
   try {
-    const orders = await orderService.getUserOrders(req.session.userId);
-    res.render('my-orders', { title: 'Đơn hàng của tôi', orders });
+    const kq = await orderService.getUserOrders(req.session.userId, { trang: req.query.trang });
+    // /cancel-order chuyen ve day kem ?msg=... - phai truyen vao view thi khach
+    // moi biet yeu cau huy da gui duoc hay chua.
+    res.render('my-orders', {
+      title: 'Đơn hàng của tôi',
+      orders: kq.danhSach,
+      phanTrang: kq,
+      msg: req.query.msg || null,
+      msgType: req.query.msgType || 'success',
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -357,8 +463,8 @@ app.post('/my-orders/cancel/:sesis', requireLogin, async (req, res) => {
 app.get('/rate', requireLogin, async (req, res) => {
   try {
     const ratings = await engagementService.getAllRatings(); // Show all ratings or user's? The view says "Đánh giá gần đây"
-    const userOrders = await orderService.getUserOrders(req.session.userId);
-    const canRate = userOrders.some(o => o.tinhtrang == 1); // Only can rate if has at least 1 confirmed order
+    // Chi duoc danh gia khi da co it nhat mot don duoc xac nhan.
+    const canRate = await orderService.coDonDaXacNhan(req.session.userId);
     res.render('rating', { 
       title: 'Đánh giá dịch vụ', 
       ratings, 
@@ -462,17 +568,21 @@ app.post('/forgot-password', async (req, res) => {
     const newPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = require('md5')(newPassword);
 
-    // Update in DB
-    await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [hashedPassword, rows[0].id]);
-
-    // Send email
+    // GUI THU TRUOC, DOI MAT KHAU SAU - thu tu nay quan trong.
+    // Ban truoc ghi mat khau moi vao CSDL roi moi gui thu. Thu gui hong (chua
+    // cau hinh EMAIL_USER, Gmail tu choi, mang chan cong 587...) thi mat khau
+    // cu DA bi ghi de mat roi ma khach khong he nhan duoc mat khau moi - mat
+    // trang tai khoan vi mot loi khong lien quan gi den ho. Doi lai thu tu thi
+    // truong hop xau nhat chi la khach thay bao loi va bam thu lai.
     await mailer.sendNewPassword(email, newPassword);
+    await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [hashedPassword, rows[0].id]);
 
     res.render('forgot-password', { title: 'Quên mật khẩu', message: 'Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và thư mục rác).' });
   } catch (err) {
+    // Chi tiet loi chi ghi ra console cho nguoi van hanh. Day la trang CONG KHAI
+    // nen khong ha ra "chua cau hinh EMAIL_USER trong .env" cho khach doc.
     console.error('Forgot password error:', err);
-    require('fs').writeFileSync('forgot_err.txt', err.stack || err.toString());
-    res.render('forgot-password', { title: 'Quên mật khẩu', error: 'Đã xảy ra lỗi hệ thống khi gửi email.' });
+    res.render('forgot-password', { title: 'Quên mật khẩu', error: 'Chưa gửi được email lúc này. Mật khẩu của bạn vẫn giữ nguyên, vui lòng thử lại sau.' });
   }
 });
 
@@ -712,7 +822,7 @@ app.get('/admin/productdel/:id', requireAdmin, async (req, res) => {
 // Order Management
 app.get('/admin/hopdongmoi', requireAdmin, async (req, res) => {
   try {
-    const contracts = await personnelService.getAllContracts();
+    const contracts = await personnelService.getPendingContracts();
     res.render('admin/hopdongmoi', { contracts });
   } catch (err) {
     console.error(err);
@@ -732,8 +842,26 @@ app.get('/admin/hopdongconfirm/:id', requireAdmin, async (req, res) => {
 
 app.get('/admin/hopdonglist', requireAdmin, async (req, res) => {
   try {
-    const contracts = await personnelService.getAllContracts();
-    res.render('admin/hopdonglist', { contracts });
+    const keyword = (req.query.q || '').trim();
+    // tinhtrang: 0 cho xac nhan, 1 da xac nhan, 2 da huy, 3 da thanh toan,
+    // 5 khach da den, 6 dang dung mon (dong bo voi views/staff/bookings.ejs).
+    const MA_TRANG_THAI = ['0', '1', '2', '3', '5', '6'];
+    const status = MA_TRANG_THAI.includes(req.query.status) ? req.query.status : '';
+    const { rows, total, page, limit } = await personnelService.getContractsPaged({
+      page: req.query.page,
+      limit: req.query.limit,
+      keyword,
+      status
+    });
+    res.render('admin/hopdonglist', {
+      contracts: rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      keyword,
+      status
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -1497,7 +1625,26 @@ app.post('/staff/login', async (req, res) => {
       req.session.stafflogin = true;
       req.session.staffId = staff.id_nv;
       req.session.staffName = staff.ten;
-      req.session.staffRole = staff.chucvu; // 'Phuc vu' or 'Ke toan'
+      req.session.staffRole = staff.chucvu; // vai tro cu - giu de cac route cu chay dung
+
+      // Nap chuc danh, bo phan, cap bac va danh sach quyen theo co cau to chuc.
+      // Loi o day khong duoc chan dang nhap: nguoi chua duoc bo nhiem chuc danh
+      // van phai vao duoc he thong bang vai tro cu cua ho.
+      try {
+        await require('./services/phanQuyenService').napVaoSession(req, staff.id_nv);
+      } catch (e) {
+        console.error('Không nạp được hồ sơ quyền khi đăng nhập:', e.message);
+      }
+
+      // Lan dau dang nhap ma chua co khuon mat -> dua thang toi trang tu dang ky.
+      // Chi kiem tra CSDL (nhanh); trang do tu kiem tra dich vu Python va luon co
+      // nut "bo qua" nen khong bao gio chan duoc viec vao he thong.
+      try {
+        const soMau = await require('./services/faceService').soMauCua(staff.id_nv);
+        if (soMau === 0) return res.redirect('/staff/khuon-mat/lan-dau');
+      } catch (e) {
+        console.error('Không kiểm tra được khuôn mặt khi đăng nhập:', e.message);
+      }
       return res.redirect('/staff');
     }
     res.render('staff/login', { error: 'Tên đăng nhập hoặc mật khẩu không đúng!', layout: false });
@@ -1606,14 +1753,19 @@ app.post('/staff/bookings/edit/:sesis', requireRole(['Phuc vu', 'Ke toan', 'Quay
   }
 });
 
-app.post('/staff/bookings/pay/:sesis', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
-  try {
-    await orderService.payBill(req.params.sesis);
-    res.redirect('/staff/bookings');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
+/**
+ * Duong dan thanh toan CU - nay chi con chuyen huong sang man hinh thu ngan.
+ *
+ * Ban cu goi orderService.payBill(), tuc la chi `UPDATE hopdong SET tinhtrang = 3`:
+ * don duoc danh dau "da thanh toan" ma KHONG co dong nao trong bang `payments`.
+ * Hau qua: khong biet thu bao nhieu, bang hinh thuc gi, ai thu, khong in duoc
+ * bien lai, va bao cao doanh thu khong khop voi tien thuc te trong ket.
+ *
+ * Khong xoa han duong dan de trang nao con giu bookmark hoac form cu khong bi
+ * loi 404 - nhung tu day moi viec thu tien deu phai di qua /staff/thanh-toan.
+ */
+app.post('/staff/bookings/pay/:sesis', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan']), (req, res) => {
+  res.redirect(303, '/staff/thanh-toan/' + encodeURIComponent(req.params.sesis));
 });
 
 app.post('/staff/bookings/confirm/:sesis', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
@@ -2161,29 +2313,24 @@ app.post('/staff/customers/delete/:id', requireStaff, async (req, res) => {
 });
 
 // --- STAFF SHIFT ---
-app.get('/staff/shift', requireRole(['Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
-  try {
-    const history = await orderService.getShiftHistory();
-    res.render('staff/shift', {
-      title: 'Chốt ca làm việc',
-      history,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'shift'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
+/**
+ * Chot ca CU - nay chi con chuyen huong sang /staff/chot-ca.
+ *
+ * Man hinh cu bat thu ngan TU GO tong doanh thu vao mot o input roi luu thang
+ * vao bang `chot_ca`. Con so do khong doi chieu voi bat cu dau: go bao nhieu
+ * cung duoc chap nhan, nen no khong chung minh duoc dieu gi ve ket tien.
+ *
+ * Man hinh moi tu tinh ket PHAI co bao nhieu tu bang `payments`, thu ngan dem
+ * ket that va nhap vao, chenh lech hien ra va phai giai trinh. Bang `chot_ca`
+ * van giu nguyen cho ben BEP dung o /staff/kitchen/shift - ben do khong dinh
+ * den tien nen khong co gi de doi soat.
+ */
+app.get('/staff/shift', requireRole(['Ke toan', 'Quay', 'Thu ngan']), (req, res) => {
+  res.redirect(301, '/staff/chot-ca');
 });
 
-app.post('/staff/shift/close', requireRole(['Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
-  try {
-    await orderService.closeShift(req.session.staffId, req.body);
-    res.redirect('/staff/shift');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
+app.post('/staff/shift/close', requireRole(['Ke toan', 'Quay', 'Thu ngan']), (req, res) => {
+  res.redirect(303, '/staff/chot-ca');
 });
 
 // --- STAFF EMAILS ---
@@ -2266,12 +2413,20 @@ app.get('/staff/attendance', requireStaff, async (req, res) => {
   try {
     const [year, month] = (req.query.thang || new Date().toISOString().slice(0, 7)).split('-').map(Number);
     const today = new Date().toISOString().slice(0, 10);
-    const [attendance, todayRows] = await Promise.all([
+    const faceSvc = require('./services/faceService');
+    const [attendance, todayRows, trangThai, soMauKhuonMat] = await Promise.all([
       personnelService.getAttendance(req.session.staffId, year, month),
-      require('./config/db').query('SELECT * FROM cham_cong WHERE id_nv = ? AND ngay = ?', [req.session.staffId, today])
+      require('./config/db').query(
+        'SELECT * FROM cham_cong WHERE id_nv = ? AND ngay = ? ORDER BY id_cc DESC LIMIT 1',
+        [req.session.staffId, today]),
+      // Trang cham cong nay tu no la mot may cham cong khuon mat, nen phai biet
+      // dich vu nhan dien co song khong va nguoi dang xem da dang ky mau chua.
+      faceSvc.trangThaiDichVu(),
+      faceSvc.soMauCua(req.session.staffId),
     ]);
     res.render('staff/attendance', {
       title: 'Chấm công', attendance,
+      trangThai, soMauKhuonMat,
       todayAttendance: todayRows[0][0] || null,
       currentMonth: req.query.thang || new Date().toISOString().slice(0, 7),
       msg: req.query.msg || null, msgType: req.query.msgType || null,
@@ -2283,23 +2438,14 @@ app.get('/staff/attendance', requireStaff, async (req, res) => {
   }
 });
 
-app.post('/staff/clock-in', requireStaff, async (req, res) => {
-  try {
-    await personnelService.clockIn(req.session.staffId);
-    res.redirect('/staff/attendance?msg=Chấm+công+vào+thành+công!&msgType=success');
-  } catch (err) {
-    res.redirect('/staff/attendance?msg=' + encodeURIComponent(err.message) + '&msgType=danger');
-  }
-});
-
-app.post('/staff/clock-out', requireStaff, async (req, res) => {
-  try {
-    await personnelService.clockOut(req.session.staffId);
-    res.redirect('/staff/attendance?msg=Chấm+công+ra+thành+công!&msgType=success');
-  } catch (err) {
-    res.redirect('/staff/attendance?msg=' + encodeURIComponent(err.message) + '&msgType=danger');
-  }
-});
+// Cham cong thu cong (POST /staff/clock-in va /staff/clock-out) DA GO BO.
+//
+// Hai route cu chi can mot phien dang nhap la ghi duoc gio vao/gio ra, nen ai
+// muon cham ho chi viec muon tai khoan - dung thu ma cham cong khuon mat sinh
+// ra de chan. Nay chi con mot duong duy nhat: POST /api/khuon-mat/cham-cong
+// (routes/khuonMat.js), bat buoc qua kiem tra anh song + doi chieu GPS.
+//
+// Trang /staff/attendance ben duoi van giu, nhung phan bam tay doi thanh camera.
 
 // Staff Notifications
 app.get('/staff/notifications', requireStaff, async (req, res) => {
@@ -2470,16 +2616,35 @@ app.post('/staff/chat/send', requireStaff, async (req, res) => {
 // --- QR Code Routes (Public - no login required) ---
 // ============================================================
 
+/*
+ * QUY TAC CHUNG CUA HAI ROUTE QR BEN DUOI
+ *
+ * Ma QR dan o ban la thu duy nhat khach co. Moi thong tin khac ve ban (ten
+ * ban, so ban, ma phien dang mo) deu do may chu tu tra ra tu `qr_tables`,
+ * TUYET DOI khong lay tu `req.query` hay `req.body`.
+ *
+ * Truoc day hai gia tri bi tin nham:
+ *   - `?name=` / `body.tableName` -> dung de do ra `Id_ban`. Khach sua thanh
+ *     dia chi thanh `?name=12` la mon ra ban 12 va ban 12 bi danh dau dang
+ *     phuc vu bang phien cua nguoi khac.
+ *   - `?sesis=` -> dung lam hoa don de goi them mon. Biet ma phien cua ban
+ *     khac thi goi mon vao hoa don ban do.
+ */
+
 // Trang menu đặt món qua QR
 app.get('/qr/table/:tableId', async (req, res) => {
   try {
     const tableId = req.params.tableId;
-    const [tableRows] = await require('./config/db').query('SELECT * FROM qr_tables WHERE table_id = ? LIMIT 1', [tableId]);
-    const tableName = req.query.name || (tableRows.length > 0 ? tableRows[0].table_name : 'Bàn ' + tableId);
-    let sesis = req.query.sesis || null;
-    if (!sesis && tableRows.length > 0 && tableRows[0].active_sesis) {
-      sesis = tableRows[0].active_sesis;
+    const ban = await orderService.layBanQR(tableId);
+    if (!ban) {
+      return res.status(404).send(
+        '<h3 style="font-family:sans-serif;padding:24px">Mã QR không hợp lệ.<br>' +
+        'Vui lòng báo nhân viên để được hỗ trợ.</h3>'
+      );
     }
+    const tableName = ban.table_name;
+    // Ma phien do may chu tra theo ban, khong nhan tu URL.
+    const sesis = await orderService.phienDangMoCuaBan(tableId);
 
     const categories = await menuService.getAllCategories();
     const [allDishes] = await db.query(
@@ -2502,27 +2667,106 @@ app.get('/qr/table/:tableId', async (req, res) => {
   }
 });
 
+/*
+ * Don hien tai cua mot ban QR (JSON).
+ *
+ * Trang dat mon goi dinh ky de ve buoc "Bep che bien": khach thay tung mon
+ * dang cho, dang nau, xong hay da mang ra. Khong yeu cau dang nhap - dung muc
+ * cong khai nhu chinh trang QR - va chi tra ve mon cua ban do, khong kem
+ * thong tin khach hang.
+ */
+const { TEN_TRANG_THAI_BEP } = require('./services/kdsService');
+
+app.get('/qr/table/:tableId/don', async (req, res) => {
+  try {
+    const ban = await orderService.layBanQR(req.params.tableId);
+    if (!ban) return res.status(404).json({ success: false, message: 'Mã bàn không hợp lệ' });
+    const don = await orderService.donCuaBanQR(req.params.tableId);
+    res.json({
+      success: true,
+      sesis: don.sesis,
+      tam_tinh: don.tam_tinh,
+      mon: don.mon.map((m) => ({
+        id: m.id,
+        ten: m.name_mon,
+        so_luong: Number(m.soluong) || 0,
+        gia: Number(m.gia) || 0,
+        thanh_tien: Number(m.thanhtien) || 0,
+        anh: m.images || '',
+        ghi_chu: m.ghi_chu_mon || '',
+        trang_thai: Number(m.trangthai_bep) || 0,
+        ten_trang_thai: TEN_TRANG_THAI_BEP[Number(m.trangthai_bep) || 0] || 'Chờ chế biến',
+      })),
+    });
+  } catch (err) {
+    console.error('QR order status error:', err);
+    res.status(500).json({ success: false, message: 'Không lấy được đơn của bàn' });
+  }
+});
+
+/*
+ * Gioi han tan suat dat mon theo tung ban.
+ *
+ * Ma QR dan cong khai o ban, ai di ngang cung quet duoc. Khong co gioi han thi
+ * mot nguoi co the bam lien tuc de bom don rac thang vao man hinh bep. Dem
+ * trong bo nho tien trinh la du: he thong chay mot tien trinh Node, va gioi
+ * han nay chi de chan spam chu khong phai co che bao mat.
+ */
+const QR_GIOI_HAN_LAN = 12;              // so lan gui toi da
+const QR_GIOI_HAN_CUA_SO_MS = 5 * 60000; // trong 5 phut
+const qrNhatKyGui = new Map();           // table_id -> [moc thoi gian]
+
+function qrVuotGioiHan(tableId) {
+  const bayGio = Date.now();
+  const moc = (qrNhatKyGui.get(tableId) || []).filter((t) => bayGio - t < QR_GIOI_HAN_CUA_SO_MS);
+  if (moc.length >= QR_GIOI_HAN_LAN) {
+    qrNhatKyGui.set(tableId, moc);
+    return true;
+  }
+  moc.push(bayGio);
+  qrNhatKyGui.set(tableId, moc);
+  return false;
+}
+
+// Don rac trong Map moi 10 phut de khong phinh bo nho theo thoi gian chay.
+setInterval(() => {
+  const bayGio = Date.now();
+  for (const [ban, moc] of qrNhatKyGui) {
+    const conHan = moc.filter((t) => bayGio - t < QR_GIOI_HAN_CUA_SO_MS);
+    if (conHan.length) qrNhatKyGui.set(ban, conHan);
+    else qrNhatKyGui.delete(ban);
+  }
+}, 10 * 60000).unref();
+
 // API đặt món qua QR (POST JSON)
 app.post('/qr/add-dish', async (req, res) => {
   try {
-    const { sesis, tableId, items } = req.body;
+    const { tableId, items } = req.body;
     if (!items || items.length === 0) {
       return res.json({ success: false, message: 'Giỏ hàng trống!' });
     }
 
-    let targetSesis = sesis;
+    // Ma ban phai co that. Truoc day khong kiem tra, nen ma bia dat cung tao
+    // duoc don va sinh them mot dong khach_hang rac.
+    const ban = await orderService.layBanQR(tableId);
+    if (!ban) {
+      return res.json({ success: false, message: 'Mã bàn không hợp lệ, vui lòng báo nhân viên!' });
+    }
 
-    // Nếu chưa có sesis hoặc sesis rỗng, tạo đơn mới
-    if (!targetSesis || targetSesis.trim() === '') {
-      const tableName = req.query.name || req.body.tableName || ('Bàn ' + tableId);
-      targetSesis = await orderService.createQROrder(tableId, tableName);
+    if (qrVuotGioiHan(ban.table_id)) {
+      return res.json({
+        success: false,
+        message: 'Bàn đã gửi quá nhiều lượt đặt món trong ít phút. Vui lòng gọi nhân viên hỗ trợ.',
+      });
+    }
+
+    // Ma phien do may chu tu tra theo ban - khong nhan `sesis` tu client nua.
+    let targetSesis = await orderService.phienDangMoCuaBan(tableId);
+    if (!targetSesis) {
+      targetSesis = await orderService.createQROrder(tableId);
     } else {
-      // Kiểm tra sesis có hợp lệ không
-      const [checkRows] = await db.query('SELECT sesis FROM hopdong WHERE sesis = ? LIMIT 1', [targetSesis]);
-      if (checkRows.length === 0) {
-        const tableName = req.body.tableName || ('Bàn ' + tableId);
-        targetSesis = await orderService.createQROrder(tableId, tableName);
-      }
+      // Phiên cũ có thể chưa gắn bàn -> gắn lại để bếp thấy món này của bàn nào.
+      await orderService.lienKetPhienVoiBan(targetSesis, tableId);
     }
 
     await orderService.addMultipleDishesToOrder(targetSesis, items);
@@ -2546,10 +2790,18 @@ app.post('/qr/add-dish', async (req, res) => {
 
 app.get('/staff/qr-codes', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
   try {
-    const qrCodes = await orderService.getAllQRCodes();
+    // Dung lai `url` theo dia chi hien tai truoc khi ve ma QR: cac ma tao truoc
+    // day da luu san chuoi `http://localhost:3000/...` va dien thoai khach
+    // khong the mo duoc. Xem utils/diaChiQR.js.
+    const qrCodes = (await orderService.getAllQRCodes()).map((qr) => ({
+      ...qr,
+      url: diaChiQR.chuanHoa(qr.url, req),
+    }));
     res.render('staff/qr-codes', {
       title: 'Quản lý QR Code',
       qrCodes,
+      qrGoc: diaChiQR.goc(req),
+      dsDiaChi: diaChiQR.danhSachDiaChi().map((ip) => `http://${ip}:${PORT}`),
       unread: await personnelService.countUnread(req.session.staffId),
       activePage: 'qr-codes'
     });
@@ -2563,8 +2815,7 @@ app.post('/staff/qr-codes/create', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'T
   try {
     const { table_name, note } = req.body;
     if (!table_name) return res.json({ success: false, message: 'Tên bàn không được trống!' });
-    const baseUrl = req.protocol + '://' + req.get('host');
-    const result = await orderService.createQRCode(table_name, note, baseUrl);
+    const result = await orderService.createQRCode(table_name, note, diaChiQR.goc(req));
     res.json({ success: true, ...result });
   } catch (err) {
     console.error(err);
@@ -2630,7 +2881,88 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Ke toan', '
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// --- Xu ly loi tap trung ---
+// Phai dat SAU toan bo route. Truoc day hai middleware nay da duoc viet trong
+// middleware/errorHandler.js nhung khong noi nao goi, nen loi trong route async
+// lam treo request thay vi tra ve trang loi.
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// --- Khoi dong: HTTP cho may tinh tai cho, HTTPS cho dien thoai ---
+//
+// Vi sao phai co HTTPS: trinh duyet chi cho dung camera va GPS trong "secure
+// context" - tuc HTTPS hoac localhost. May tinh dat tai nha hang mo bang
+// http://localhost thi khong sao, nhung nhan vien mo bang dien thoai qua
+// http://<ip-lan>:3000 thi `navigator.mediaDevices` khong ton tai va trang cham
+// cong khong the hoat dong. Xem config/chungChi.js.
+//
+// Van giu HTTP: cac trang khong dung camera (don hang, thuc don, bao cao) chay
+// binh thuong tren HTTP, va khong bat ai phai bam qua canh bao chung chi neu ho
+// khong can cham cong bang khuon mat.
+const chungChi = require('./config/chungChi');
+const PORT_HTTPS = Number(process.env.HTTPS_PORT) || 3443;
+const BAT_HTTPS = String(process.env.BAT_HTTPS || '1') !== '0';
+
+function inBangDiaChi(dsLan, coHttps) {
+  const d = (s) => console.log('  ' + s);
+  console.log('\n╔══════════════════════════════════════════════════════════╗');
+  console.log('║  Hệ thống nhà hàng đã khởi động                          ║');
+  console.log('╚══════════════════════════════════════════════════════════╝');
+  d(`Máy tại chỗ:      http://localhost:${PORT}`);
+  if (coHttps) d(`Máy tại chỗ (bảo mật): https://localhost:${PORT_HTTPS}`);
+  if (dsLan.length) {
+    console.log('');
+    d('Điện thoại trong cùng mạng Wi-Fi — CHẤM CÔNG KHUÔN MẶT');
+    d('phải dùng địa chỉ https:// dưới đây, http:// sẽ không mở được camera:');
+    dsLan.forEach((ip) => d(coHttps ? `   https://${ip}:${PORT_HTTPS}` : `   http://${ip}:${PORT} (KHÔNG dùng được camera)`));
+    console.log('');
+    d(`Mã QR dán ở bàn đang dùng địa chỉ: ${diaChiQR.goc(null)}`);
+    if (dsLan.length > 1) {
+      d('Máy này có nhiều địa chỉ (card mạng ảo của WSL / VMware / VirtualBox).');
+      d('Nếu điện thoại quét mã QR mà không mở được trang, hãy thử từng địa chỉ');
+      d('phía trên bằng trình duyệt điện thoại, rồi ghi địa chỉ chạy được vào');
+      d('khóa QR_BASE_URL trong file .env (ví dụ QR_BASE_URL=http://192.168.1.5:3000).');
+    }
+    if (coHttps) {
+      console.log('');
+      d('Lần đầu mỗi máy sẽ báo "Kết nối không an toàn" — đó là do chứng chỉ');
+      d('tự ký, không phải lỗi. Bấm "Nâng cao" → "Tiếp tục truy cập".');
+    }
+  } else {
+    d('(Không tìm thấy địa chỉ mạng LAN nào — máy chủ chưa nối Wi-Fi/LAN?)');
+  }
+  console.log('');
+}
+
+(async () => {
+  server.listen(PORT, () => {});
+
+  if (!BAT_HTTPS) {
+    console.log('[https] Đã tắt qua BAT_HTTPS=0 — chỉ chạy HTTP.');
+    return inBangDiaChi(chungChi.diaChiLan(), false);
+  }
+
+  let cc = null;
+  try {
+    cc = await chungChi.layChungChi();
+    if (cc && cc.moi) console.log('[https] Đã sinh chứng chỉ tự ký mới trong config/chung-chi/.');
+  } catch (e) {
+    console.warn('[https] Không sinh được chứng chỉ:', e.message);
+  }
+
+  if (!cc) return inBangDiaChi(chungChi.diaChiLan(), false);
+
+  const https = require('https');
+  const serverHttps = https.createServer({ key: cc.key, cert: cc.cert }, app);
+  // Socket.io phai phuc vu ca hai cong, neu khong thi trang mo qua HTTPS mat
+  // het cap nhat thoi gian thuc (cham cong moi, thong bao) ma khong bao loi gi.
+  io.attach(serverHttps);
+
+  serverHttps.on('error', (e) => {
+    console.warn(`[https] Không mở được cổng ${PORT_HTTPS}: ${e.message}`);
+    console.warn('[https] Hệ thống vẫn chạy trên HTTP, nhưng điện thoại sẽ không dùng được camera.');
+  });
+  serverHttps.listen(PORT_HTTPS, () => inBangDiaChi(cc.dia_chi, true));
+})();
 

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dự báo AI &amp; Machine Learning - Nhà Hàng Bảo Đoàn</title>
+  <script src="/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg:#f1f5f9; --card:#fff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
+      --brand:#4338ca; --brand2:#6366f1; --warn:#d97706; --danger:#dc2626; --ok:#16a34a;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text);
+           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
+    header { background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff;
+             padding:18px 28px; display:flex; align-items:center;
+             justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    header h1 { margin:0; font-size:20px; }
+    header .sub { font-size:13px; opacity:.85; margin-top:2px; }
+    header nav a { color:#fff; text-decoration:none; font-size:13px; padding:7px 13px;
+                   border:1px solid rgba(255,255,255,.35); border-radius:7px;
+                   margin-left:8px; display:inline-block; }
+    header nav a:hover { background:rgba(255,255,255,.16); }
+
+    .wrap { padding:20px 28px 60px; max-width:1520px; margin:0 auto; }
+
+    .banner { padding:12px 16px; border-radius:9px; margin-bottom:18px; font-size:14px;
+              display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .banner.ok  { background:#dcfce7; border:1px solid #86efac; color:#166534; }
+    .banner.tat { background:#fef3c7; border:1px solid #fcd34d; color:#92400e; }
+    .banner code { background:rgba(0,0,0,.07); padding:2px 7px; border-radius:4px;
+                   font-size:12.5px; }
+
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+            padding:16px 18px; margin-bottom:16px; }
+    .card h2 { margin:0 0 4px; font-size:16px; }
+    .card .desc { font-size:12.5px; color:var(--muted); margin-bottom:14px; }
+    .grid { display:grid; gap:16px; margin-bottom:16px; }
+    .g2 { grid-template-columns:repeat(auto-fit,minmax(440px,1fr)); }
+    .chart-box { position:relative; height:330px; }
+
+    .btn { background:var(--brand); color:#fff; border:0; padding:9px 17px;
+           border-radius:7px; cursor:pointer; font-size:14px; font-family:inherit; }
+    .btn:hover { background:#3730a3; }
+    .btn:disabled { background:#a5b4fc; cursor:not-allowed; }
+    .btn.ghost { background:#fff; color:var(--brand); border:1px solid var(--brand); }
+    .thanh-nut { display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+                 margin-bottom:16px; }
+    .trang-thai { font-size:13px; color:var(--muted); }
+
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--line); }
+    th { color:var(--muted); font-weight:600; font-size:11.5px;
+         text-transform:uppercase; letter-spacing:.3px; }
+    td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    tbody tr:hover { background:#f8fafc; }
+    tr.tot td { background:#f0fdf4; font-weight:600; }
+
+    .tag { padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+    .tag.gap { background:#fee2e2; color:#991b1b; }
+    .tag.som { background:#ffedd5; color:#9a3412; }
+    .tag.on  { background:#dcfce7; color:#166534; }
+
+    .insight { background:#eef2ff; border:1px solid #c7d2fe; border-left:4px solid var(--brand2);
+               border-radius:8px; padding:12px 15px; font-size:13.5px; line-height:1.65;
+               margin-top:12px; }
+    .insight b { color:#3730a3; }
+    .scroll { max-height:430px; overflow-y:auto; }
+    .loading { color:var(--muted); font-size:13px; padding:18px; text-align:center; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+    .kpi { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--brand);
+           border-radius:10px; padding:14px 16px; }
+    .kpi .label { font-size:11.5px; color:var(--muted); text-transform:uppercase; }
+    .kpi .value { font-size:24px; font-weight:700; margin-top:6px; }
+    .kpi .note { font-size:12px; color:var(--muted); margin-top:3px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Dự báo nhu cầu &amp; Gợi ý món bằng AI</h1>
+      <div class="sub">Tầng 3 &mdash; Machine Learning | Tầng 4 &mdash; Khai phá luật kết hợp | Xin chào <%= tenNguoiDung %></div>
+    </div>
+    <nav>
+      <a href="/analytics">Dashboard phân tích</a>
+      <a href="/so-do-ban">Sơ đồ bàn</a>
+      <a href="/staff">Trang nhân viên</a>
+      <a href="/admin">Trang quản trị</a>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <% if (trangThaiML.san_sang) { %>
+      <div class="banner ok">
+        <b>✓ ML service đang chạy</b>
+        <span>Đã kết nối CSDL, <%= Number(trangThaiML.so_dong_don_hang).toLocaleString('vi-VN') %> dòng đơn hàng sẵn sàng để huấn luyện.</span>
+      </div>
+    <% } else { %>
+      <div class="banner tat">
+        <b>⚠ ML service chưa bật</b>
+        <span>Trang vẫn hiển thị kết quả dự báo đã lưu trong CSDL, nhưng không chạy lại được mô hình.
+        Bật bằng lệnh: <code>python -m uvicorn ml_service.main:app --port 8000</code></span>
+      </div>
+    <% } %>
+
+    <div class="thanh-nut">
+      <button class="btn" id="btnKhach" onclick="chay('khach')">Chạy lại dự báo lượt khách</button>
+      <button class="btn" id="btnNL" onclick="chay('nguyen-lieu')">Chạy lại dự báo nguyên liệu</button>
+      <button class="btn ghost" id="btnAp" onclick="chay('apriori')">Khai phá lại luật kết hợp</button>
+      <span class="trang-thai" id="trangThai"></span>
+    </div>
+
+    <div class="kpis" id="kpis" style="margin-bottom:16px"></div>
+
+    <div class="card">
+      <h2>Dự báo lượt khách theo ngày</h2>
+      <div class="desc">Đường liền là số liệu thực tế đã ghi nhận, đường đứt nét là dự báo kèm khoảng tin cậy 95%</div>
+      <div class="chart-box"><canvas id="cKhach"></canvas></div>
+      <div class="insight" id="insightKhach">Đang tải...</div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>So sánh hiệu năng các mô hình</h2>
+        <div class="desc">
+          Chia dữ liệu theo mốc thời gian (không xáo trộn ngẫu nhiên).
+          <b>SeasonalNaive</b> là mô hình nền: lấy giá trị cùng thứ của tuần trước.
+          Mô hình học máy phải thắng được mô hình nền này thì mới có giá trị thực tế.
+        </div>
+        <div class="scroll"><table id="tDanhGia"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+        <div class="insight" id="insightMoHinh">Đang phân tích...</div>
+      </div>
+
+      <div class="card">
+        <h2>Dự báo nhu cầu nguyên liệu</h2>
+        <div class="desc">Lượng cần dùng cho những ngày tới và lượng phải nhập thêm so với tồn hiện tại</div>
+        <div class="scroll"><table id="tNguyenLieu"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Luật kết hợp khai phá bằng thuật toán Apriori</h2>
+      <div class="desc">
+        <b>Độ hỗ trợ</b> = tỷ lệ hóa đơn chứa tổ hợp món &middot;
+        <b>Độ tin cậy</b> = xác suất gọi món B khi đã gọi A &middot;
+        <b>Lift</b> &gt; 1 nghĩa là gọi A thực sự làm tăng khả năng gọi B (lift càng cao, gợi ý càng có giá trị)
+      </div>
+      <div class="scroll"><table id="tLuat"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+      <div class="insight" id="insightLuat">Đang phân tích...</div>
+    </div>
+  </div>
+
+<script>
+const bieuDo = {};
+function ve(id, cfg) {
+  if (bieuDo[id]) bieuDo[id].destroy();
+  bieuDo[id] = new Chart(document.getElementById(id), cfg);
+}
+const so = (v, n = 0) => Number(v || 0).toLocaleString('vi-VN', { maximumFractionDigits: n });
+
+/**
+ * Số lượng nguyên liệu, làm tròn theo bản chất đơn vị tính.
+ *
+ * Trước đây bảng dự báo in mọi thứ với 1 chữ số thập phân nên hiện "157,0 lon"
+ * và "1.163,0 cái". Đơn vị đếm được thì phải là số nguyên; kg/lít mới có lẻ.
+ * Cùng quy tắc với utils/format.js -> soLeCuaDonVi (giữ hai nơi đồng bộ).
+ */
+const KHONG_LE = ['lon','chai','cai','cái','bo','bó','hop','hộp','goi','gói','gram','g','ml'];
+const soKho = (v, dv) => Number(v || 0).toLocaleString('vi-VN', {
+  maximumFractionDigits: KHONG_LE.indexOf(String(dv || '').trim().toLowerCase()) >= 0 ? 0 : 2,
+  useGrouping: false,
+});
+
+async function layJSON(duong) {
+  const r = await fetch(duong);
+  if (!r.ok) throw new Error(duong + ' -> ' + r.status);
+  return r.json();
+}
+
+// --- Dự báo lượt khách ---
+async function veKhach() {
+  const [duBao, lichSu] = await Promise.all([
+    layJSON('/du-bao/api/khach-da-luu?so_ngay=14'),
+    layJSON('/du-bao/api/lich-su-khach?so_ngay=45'),
+  ]);
+
+  if (!duBao.length) {
+    document.getElementById('insightKhach').innerHTML =
+      'Chưa có dữ liệu dự báo. Bấm <b>Chạy lại dự báo lượt khách</b> để huấn luyện mô hình.';
+    return;
+  }
+
+  const nhanLS = lichSu.map(r => r.ngay.slice(5));
+  const nhanDB = duBao.map(r => String(r.ngay_du_bao).slice(5, 10));
+  const nhan = [...nhanLS, ...nhanDB];
+  const demLS = lichSu.length;
+
+  // Noi lien 2 duong: diem cuoi cua lich su cung la diem dau cua du bao.
+  const thuc = [...lichSu.map(r => Number(r.so_khach)), ...new Array(duBao.length).fill(null)];
+  const db = new Array(demLS - 1).fill(null);
+  db.push(lichSu.length ? Number(lichSu[demLS - 1].so_khach) : null);
+  duBao.forEach(r => db.push(Number(r.so_khach_du_bao)));
+
+  const duoi = new Array(demLS).fill(null);
+  const tren = new Array(demLS).fill(null);
+  duBao.forEach(r => { duoi.push(Number(r.can_duoi)); tren.push(Number(r.can_tren)); });
+
+  ve('cKhach', {
+    type: 'line',
+    data: {
+      labels: nhan,
+      datasets: [
+        { label: 'Thực tế (lượt khách)', data: thuc, borderColor: '#0f766e',
+          backgroundColor: 'rgba(15,118,110,.10)', fill: true, tension: .3, pointRadius: 2 },
+        { label: 'Dự báo', data: db, borderColor: '#4338ca', borderDash: [6, 4],
+          tension: .3, pointRadius: 3, fill: false },
+        { label: 'Cận trên 95%', data: tren, borderColor: 'rgba(99,102,241,.35)',
+          pointRadius: 0, fill: '+1', backgroundColor: 'rgba(99,102,241,.13)' },
+        { label: 'Cận dưới 95%', data: duoi, borderColor: 'rgba(99,102,241,.35)',
+          pointRadius: 0, fill: false },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, spanGaps: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 11 } } } },
+      scales: { y: { title: { display: true, text: 'Lượt khách / số đơn' } } },
+    },
+  });
+
+  const tong = duBao.reduce((s, r) => s + Number(r.so_khach_du_bao), 0);
+  const cao = duBao.reduce((a, b) => Number(a.so_khach_du_bao) > Number(b.so_khach_du_bao) ? a : b);
+  const thu = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][new Date(cao.ngay_du_bao).getDay()];
+  document.getElementById('insightKhach').innerHTML =
+    `Dự báo <b>${so(tong)}</b> lượt khách trong ${duBao.length} ngày tới (mô hình <b>${cao.mo_hinh}</b>). ` +
+    `Ngày đông nhất là <b>${String(cao.ngay_du_bao).slice(0,10)} (${thu})</b> với khoảng <b>${so(cao.so_khach_du_bao)}</b> lượt — ` +
+    `cần bố trí thêm nhân sự và chuẩn bị nguyên liệu trước cho ngày này.`;
+}
+
+// --- Bảng đánh giá mô hình ---
+async function veDanhGia() {
+  const d = await layJSON('/du-bao/api/danh-gia');
+  if (!d.length) {
+    document.getElementById('tDanhGia').innerHTML = '<tbody><tr><td class="loading">Chưa có kết quả đánh giá</td></tr></tbody>';
+    return;
+  }
+  const tenBT = { du_bao_so_khach: 'Dự báo lượt khách', du_bao_so_don: 'Dự báo số đơn',
+                  du_bao_nguyen_lieu: 'Dự báo nguyên liệu' };
+  // Mo hinh tot nhat cua moi bai toan = MAE nho nhat.
+  const tot = {};
+  d.forEach(r => { if (!tot[r.bai_toan] || r.mae < tot[r.bai_toan]) tot[r.bai_toan] = r.mae; });
+
+  document.getElementById('tDanhGia').innerHTML = `
+    <thead><tr><th>Bài toán</th><th>Mô hình</th><th class="num">MAE</th>
+    <th class="num">RMSE</th><th class="num">MAPE</th><th class="num">R²</th></tr></thead>
+    <tbody>${d.map(r => `
+      <tr class="${r.mae === tot[r.bai_toan] ? 'tot' : ''}">
+        <td style="color:var(--muted)">${tenBT[r.bai_toan] || r.bai_toan}</td>
+        <td>${r.mo_hinh}${r.mo_hinh === 'SeasonalNaive' ? ' <span class="tag som">nền</span>' : ''}</td>
+        <td class="num">${r.mae === null ? '—' : Number(r.mae).toFixed(2)}</td>
+        <td class="num">${r.rmse === null ? '—' : Number(r.rmse).toFixed(2)}</td>
+        <td class="num">${r.mape === null ? '—' : Number(r.mape).toFixed(1) + '%'}</td>
+        <td class="num">${r.r2 === null ? '—' : Number(r.r2).toFixed(3)}</td>
+      </tr>`).join('')}
+    </tbody>`;
+
+  // So sanh mo hinh tot nhat voi baseline cho bai toan luot khach.
+  const bt = d.filter(r => r.bai_toan === 'du_bao_so_khach');
+  const nen = bt.find(r => r.mo_hinh === 'SeasonalNaive');
+  const hay = bt.filter(r => r.mo_hinh !== 'SeasonalNaive').sort((a, b) => a.mae - b.mae)[0];
+  if (nen && hay) {
+    const caiThien = ((nen.mae - hay.mae) / nen.mae * 100);
+    document.getElementById('insightMoHinh').innerHTML =
+      `Mô hình <b>${hay.mo_hinh}</b> đạt MAE <b>${Number(hay.mae).toFixed(2)}</b>, ` +
+      `giảm <b>${caiThien.toFixed(1)}%</b> sai số so với mô hình nền SeasonalNaive (MAE ${Number(nen.mae).toFixed(2)}). ` +
+      `R² = <b>${Number(hay.r2).toFixed(3)}</b> nghĩa là mô hình giải thích được ${(hay.r2*100).toFixed(1)}% biến thiên của lượng khách. ` +
+      `Đây là bằng chứng định lượng cho thấy phần học máy mang lại giá trị thật, không chỉ là thêm công nghệ.`;
+  }
+}
+
+// --- Dự báo nguyên liệu ---
+async function veNguyenLieu() {
+  const d = await layJSON('/du-bao/api/nguyen-lieu-da-luu');
+  if (!d.length) {
+    document.getElementById('tNguyenLieu').innerHTML =
+      '<tbody><tr><td class="loading">Chưa có dữ liệu. Bấm "Chạy lại dự báo nguyên liệu".</td></tr></tbody>';
+    return;
+  }
+  document.getElementById('tNguyenLieu').innerHTML = `
+    <thead><tr><th>Nguyên liệu</th><th>Mô hình</th><th class="num">Tồn</th>
+    <th class="num">Cần</th><th class="num">Nhập thêm</th></tr></thead>
+    <tbody>${d.map(r => {
+      const nhap = Number(r.can_nhap_them);
+      const dv = r.ten_dvt || '';
+      return `<tr>
+        <td>${r.ten_nl}</td>
+        <td style="color:var(--muted);font-size:12px">${r.mo_hinh}</td>
+        <td class="num">${soKho(r.ton_hien_tai, dv)}</td>
+        <td class="num">${soKho(r.tong_can, dv)}</td>
+        <td class="num">${nhap > 0
+          ? `<span class="tag ${nhap > Number(r.ton_hien_tai) ? 'gap' : 'som'}">${soKho(nhap, dv)} ${dv}</span>`
+          : '<span class="tag on">đủ</span>'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>`;
+}
+
+// --- Luật kết hợp ---
+async function veLuat() {
+  const d = await layJSON('/goi-y/api/luat?gioi_han=25');
+  const tk = d.thong_ke || {};
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="label">Số luật kết hợp</div>
+      <div class="value">${so(tk.so_luat)}</div>
+      <div class="note">khai phá từ ${so(tk.so_giao_dich)} hóa đơn</div></div>
+    <div class="kpi"><div class="label">Độ tin cậy TB</div>
+      <div class="value">${tk.tin_cay_tb ? (tk.tin_cay_tb * 100).toFixed(1) + '%' : '—'}</div>
+      <div class="note">trên toàn bộ luật</div></div>
+    <div class="kpi"><div class="label">Lift cao nhất</div>
+      <div class="value">${tk.lift_max || '—'}</div>
+      <div class="note">luật có giá trị gợi ý nhất</div></div>`;
+
+  if (!d.luat.length) {
+    document.getElementById('tLuat').innerHTML = '<tbody><tr><td class="loading">Chưa khai phá luật nào</td></tr></tbody>';
+    return;
+  }
+  document.getElementById('tLuat').innerHTML = `
+    <thead><tr><th>Nếu khách gọi</th><th>Gợi ý thêm</th>
+    <th class="num">Hỗ trợ</th><th class="num">Tin cậy</th><th class="num">Lift</th></tr></thead>
+    <tbody>${d.luat.map(r => `
+      <tr>
+        <td>${r.neu_goi.join(' <span style="color:var(--muted)">+</span> ')}</td>
+        <td><b>${r.goi_y_them}</b></td>
+        <td class="num">${(r.ho_tro * 100).toFixed(2)}%</td>
+        <td class="num">${(r.tin_cay * 100).toFixed(1)}%</td>
+        <td class="num"><span class="tag ${r.lift >= 3 ? 'gap' : r.lift >= 1.5 ? 'som' : 'on'}">${r.lift.toFixed(2)}</span></td>
+      </tr>`).join('')}
+    </tbody>`;
+
+  const top = d.luat[0];
+  document.getElementById('insightLuat').innerHTML =
+    `Luật mạnh nhất: khi khách gọi <b>${top.neu_goi.join(' + ')}</b> thì <b>${(top.tin_cay*100).toFixed(1)}%</b> ` +
+    `trường hợp sẽ gọi thêm <b>${top.goi_y_them}</b>, cao gấp <b>${top.lift.toFixed(2)} lần</b> so với xác suất ngẫu nhiên. ` +
+    `Đây là cơ sở để nhân viên chào bán thêm và để hệ thống tự gợi ý trên trang thực đơn.`;
+}
+
+// --- Kích hoạt huấn luyện lại ---
+async function chay(loai) {
+  const nut = { khach: 'btnKhach', 'nguyen-lieu': 'btnNL', apriori: 'btnAp' }[loai];
+  const duong = {
+    khach: '/du-bao/api/chay-du-bao-khach',
+    'nguyen-lieu': '/du-bao/api/chay-du-bao-nguyen-lieu',
+    apriori: '/du-bao/api/chay-apriori',
+  }[loai];
+
+  const b = document.getElementById(nut);
+  const tt = document.getElementById('trangThai');
+  ['btnKhach','btnNL','btnAp'].forEach(x => document.getElementById(x).disabled = true);
+  const nhan = b.textContent;
+  b.textContent = 'Đang chạy...';
+  tt.textContent = 'Đang huấn luyện mô hình, quá trình này có thể mất vài chục giây...';
+
+  try {
+    const r = await fetch(duong, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const kq = await r.json();
+    if (!r.ok) throw new Error(kq.loi || 'Lỗi không xác định');
+    tt.textContent = '✓ Hoàn tất lúc ' + new Date().toLocaleTimeString('vi-VN');
+    await taiLai();
+  } catch (e) {
+    tt.textContent = '✗ Thất bại: ' + e.message;
+  } finally {
+    b.textContent = nhan;
+    ['btnKhach','btnNL','btnAp'].forEach(x => document.getElementById(x).disabled = false);
+  }
+}
+
+async function taiLai() {
+  const kq = await Promise.allSettled([veKhach(), veDanhGia(), veNguyenLieu(), veLuat()]);
+  kq.filter(x => x.status === 'rejected').forEach(x => console.error(x.reason));
+}
+taiLai();
+</script>
+</body>
+</html>

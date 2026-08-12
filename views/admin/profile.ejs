@@ -1,31 +1,41 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Thông tin cá nhân</h2>
-        <div class="block">
-            <% if (msg) { %>
-                <div style="padding: 10px; margin-bottom: 20px; border-radius: 4px; background-color: <%= msgType === 'success' ? '#d4edda' : '#f8d7da' %>; color: <%= msgType === 'success' ? '#155724' : '#721c24' %>; border: 1px solid <%= msgType === 'success' ? '#c3e6cb' : '#f5c6cb' %>;">
-                    <%= msg %>
-                </div>
-            <% } %>
-            <form action="/admin/profile" method="POST">
-                <table class="form">
-                    <tr>
-                        <td><label>Tên hiển thị</label></td>
-                        <td><input type="text" name="Name_admin" value="<%= admin.Name_admin %>" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Tên đăng nhập</label></td>
-                        <td><input type="text" name="adminuser" value="<%= admin.adminuser %>" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Cập nhật thông tin" /></td>
-                    </tr>
-                </table>
-            </form>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Thông tin cá nhân</h2>
+            <p>Cập nhật tên hiển thị và tên đăng nhập của tài khoản quản trị.</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/changepassword"><i class="fas fa-key"></i> Đổi mật khẩu</a>
         </div>
     </div>
+    <div class="qt-card__body">
+        <% if (msg) { %>
+        <div class="qt-alert qt-alert--<%= msgType === 'success' ? 'success' : 'danger' %>">
+            <i class="fas <%= msgType === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation' %>"></i>
+            <span><%= msg %></span>
+        </div>
+        <% } %>
+
+        <form class="qt-form" action="/admin/profile" method="POST">
+            <div class="qt-field">
+                <label for="Name_admin">Tên hiển thị <span class="qt-req">*</span></label>
+                <input type="text" id="Name_admin" name="Name_admin" value="<%= admin.Name_admin %>" required />
+                <div class="qt-field__hint">Tên này hiển thị ở góc trên bên phải trang quản trị.</div>
+            </div>
+
+            <div class="qt-field">
+                <label for="adminuser">Tên đăng nhập <span class="qt-req">*</span></label>
+                <input type="text" id="adminuser" name="adminuser" value="<%= admin.adminuser %>" required />
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Cập nhật</button>
+            </div>
+        </form>
+    </div>
 </div>
+
 <%- include('partials/footer') %>

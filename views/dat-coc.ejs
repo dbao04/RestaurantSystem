@@ -1,0 +1,215 @@
+<%- include('partials/header', { title: 'Đặt cọc giữ bàn' }) %>
+
+<section class="nh-subhero" style="min-height:34vh">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Giữ bàn chắc chắn</span>
+    <h1>Đặt cọc giữ bàn</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/my-orders">Đơn của tôi</a> &nbsp;/&nbsp; Đặt cọc</div>
+  </div>
+</section>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container-narrow">
+
+    <% if (hoaDon.tien.da_dat_coc > 0) { %>
+      <!-- Đã cọc rồi thì không cho cọc tiếp: khách chỉ cần giữ bàn một lần. -->
+      <div class="nh-done nh-reveal">
+        <div class="nh-done__seal"><i class="fas fa-check"></i></div>
+        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)">Bàn của bạn đã được giữ</h2>
+        <p class="nh-lead" style="margin-top:.8rem">
+          Chúng tôi đã nhận <strong><%= formatMoney(hoaDon.tien.da_dat_coc) %>đ</strong> tiền cọc.
+          Số tiền này sẽ được trừ vào hóa đơn khi bạn đến dùng bữa.
+        </p>
+        <div class="nh-done__actions">
+          <a class="nh-btn nh-btn--gold" href="/my-orders">Xem đơn của tôi</a>
+        </div>
+      </div>
+
+    <% } else { %>
+      <div class="nh-receipt nh-reveal" id="khoi-thong-tin">
+        <div class="nh-receipt__head">
+          <span class="nh-eyebrow">Nhà Hàng Bảo Đoàn</span>
+          <h2>ĐẶT CỌC GIỮ BÀN</h2>
+          <div style="font-size:.78rem; letter-spacing:1.4px; opacity:.75; margin-top:.5rem">
+            MÃ ĐƠN &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(hoaDon.sesis).slice(0, 10).toUpperCase() %></strong>
+          </div>
+        </div>
+
+        <div class="nh-receipt__facts">
+          <div class="nh-receipt__fact">Người đặt <b><%= hoaDon.thongTin.ten_khach %></b></div>
+          <div class="nh-receipt__fact">Ngày đến <b><%= ngayVN(hoaDon.thongTin.dates) %></b></div>
+          <div class="nh-receipt__fact">Giờ đến <b><%= gioVN(hoaDon.thongTin.tg) %></b></div>
+          <div class="nh-receipt__fact">Số khách <b><%= hoaDon.thongTin.so_user %> người</b></div>
+        </div>
+
+        <div class="nh-receipt__body">
+          <div class="nh-summary">
+            <div class="nh-summary__row">
+              <span>Giá trị đơn tạm tính</span>
+              <span><%= formatMoney(hoaDon.tien.tong_cong) %>đ</span>
+            </div>
+            <div class="nh-summary__row">
+              <span>Tỷ lệ cọc</span>
+              <span><%= phanTram %>%</span>
+            </div>
+            <div class="nh-summary__total">
+              <span>Cần đặt cọc</span>
+              <span><%= formatMoney(tienCoc) %>đ</span>
+            </div>
+          </div>
+
+          <p class="nh-hint" style="margin-top:1.4rem">
+            Tiền cọc được <strong>trừ thẳng vào hóa đơn</strong> khi bạn đến dùng bữa.
+            Nếu bạn báo hủy trước giờ đến ít nhất 4 tiếng, nhà hàng hoàn lại toàn bộ.
+          </p>
+
+          <div style="margin-top:1.6rem; text-align:center">
+            <button class="nh-btn nh-btn--gold" id="nut-coc">
+              <i class="fas fa-qrcode"></i> Tạo mã chuyển khoản
+            </button>
+            <div style="margin-top:1rem">
+              <a class="nh-btn nh-btn--ghost nh-btn--sm" href="/my-orders">Để sau</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ Khung QR -->
+      <div class="nh-receipt nh-reveal" id="khoi-qr" style="display:none">
+        <div class="nh-receipt__head">
+          <span class="nh-eyebrow">Quét bằng app ngân hàng bất kỳ</span>
+          <h2>CHUYỂN KHOẢN <span id="dem-nguoc" style="font-size:.6em; opacity:.8"></span></h2>
+        </div>
+        <div class="nh-receipt__body" style="text-align:center">
+          <div style="background:#fff; padding:14px; border-radius:14px; display:inline-block; line-height:0">
+            <img id="anh-qr" alt="Mã VietQR" style="width:min(260px,68vw); height:min(260px,68vw); display:block">
+          </div>
+
+          <div style="margin-top:1.2rem; font-size:1.7rem; font-weight:800" id="qr-tien"></div>
+          <div class="nh-hint" style="margin-top:.3rem">
+            <span id="qr-ngan-hang"></span> · <span id="qr-stk"></span><br>
+            <span id="qr-ten-tk"></span>
+          </div>
+
+          <div style="margin-top:1.2rem; padding:.9rem; border:1px dashed rgba(0,0,0,.2); border-radius:10px">
+            <div class="nh-hint" style="text-transform:uppercase; letter-spacing:1px; font-size:.72rem">Nội dung chuyển khoản</div>
+            <div style="font-family:ui-monospace,Consolas,monospace; font-size:1.2rem; font-weight:800; letter-spacing:2px; margin-top:.3rem" id="qr-noi-dung"></div>
+          </div>
+
+          <p class="nh-hint" style="margin-top:1.2rem">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            Đang chờ ngân hàng xác nhận. Trang sẽ tự chuyển khi tiền vào — bạn không cần làm gì thêm.
+          </p>
+        </div>
+      </div>
+
+      <!-- ============================================ Xong -->
+      <div class="nh-done nh-reveal" id="khoi-xong" style="display:none">
+        <div class="nh-done__seal"><i class="fas fa-check"></i></div>
+        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)">Đã giữ bàn cho bạn</h2>
+        <p class="nh-lead" style="margin-top:.8rem">
+          Cảm ơn bạn. Tiền cọc sẽ được trừ vào hóa đơn khi bạn đến dùng bữa.
+        </p>
+        <div class="nh-done__actions">
+          <a class="nh-btn nh-btn--gold" href="/my-orders">Xem đơn của tôi</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<% if (hoaDon.tien.da_dat_coc <= 0) { %>
+<%
+/* Khong nap /socket.io/socket.io.js o day: partials/footer.ejs da nap roi.
+   Nap hai lan se tao hai ket noi WebSocket cho cung mot khach.
+   Ham theoDoi() chi chay sau khi khach bam nut, luc do footer da chay xong. */
+%>
+<script>
+(function () {
+  var SESIS = <%- JSON.stringify(hoaDon.sesis) %>;
+  var TIEN_COC = <%= tienCoc %>;
+  var phienId = null, demHen = null, pollHen = null, daXong = false;
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
+
+  $('nut-coc').onclick = function () {
+    var nut = this;
+    nut.disabled = true;
+    nut.innerHTML = 'Đang tạo mã...';
+
+    fetch('/thanh-toan/dat-coc/' + encodeURIComponent(SESIS) + '/tao-phien', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ so_tien: TIEN_COC }),
+    })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || j.loi || 'Lỗi'); return j; }); })
+      .then(function (kq) {
+        phienId = kq.payment.id;
+        $('anh-qr').src = kq.qr.anh;
+        $('qr-tien').textContent = tien(kq.qr.soTien) + 'đ';
+        $('qr-ngan-hang').textContent = kq.qr.nganHang;
+        $('qr-stk').textContent = kq.qr.soTaiKhoan;
+        $('qr-ten-tk').textContent = kq.qr.tenTaiKhoan || '';
+        $('qr-noi-dung').textContent = kq.qr.noiDung;
+        $('khoi-thong-tin').style.display = 'none';
+        $('khoi-qr').style.display = '';
+        $('khoi-qr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        demNguoc(kq.hanGiay || 900);
+        hoiTrangThai();
+        theoDoi();
+      })
+      .catch(function (e) {
+        alert(e.message);
+        nut.disabled = false;
+        nut.innerHTML = '<i class="fas fa-qrcode"></i> Tạo mã chuyển khoản';
+      });
+  };
+
+  function demNguoc(giay) {
+    clearInterval(demHen);
+    var conLai = giay;
+    demHen = setInterval(function () {
+      conLai--;
+      var p = Math.floor(conLai / 60), g = conLai % 60;
+      $('dem-nguoc').textContent = '(' + p + ':' + String(g).padStart(2, '0') + ')';
+      if (conLai <= 0) {
+        clearInterval(demHen); clearInterval(pollHen);
+        $('dem-nguoc').textContent = '(hết hạn)';
+      }
+    }, 1000);
+  }
+
+  function hoiTrangThai() {
+    clearInterval(pollHen);
+    pollHen = setInterval(function () {
+      if (!phienId) return;
+      fetch('/qr/phien/' + phienId + '/trang-thai')
+        .then(function (r) { return r.json(); })
+        .then(function (p) { if (p.status === 'success') xong(); })
+        .catch(function () {});
+    }, 4000);
+  }
+
+  function theoDoi() {
+    if (!window.io) return;
+    try {
+      var socket = io();
+      socket.on('connect', function () { socket.emit('tt:theo-doi-don', SESIS); });
+      socket.on('tt:da-thanh-toan', function (d) { if (d.sesis === SESIS) xong(); });
+    } catch (e) {}
+  }
+
+  function xong() {
+    if (daXong) return;
+    daXong = true;
+    clearInterval(demHen); clearInterval(pollHen);
+    $('khoi-qr').style.display = 'none';
+    $('khoi-xong').style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+})();
+</script>
+<% } %>
+
+<%- include('partials/footer') %>

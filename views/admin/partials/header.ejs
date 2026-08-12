@@ -1,63 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>Admin - NHA HANG BD</title>
-    <!-- We serve admin static files from /admin-assets -->
-    <link rel="stylesheet" type="text/css" href="/admin/reset.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/admin/text.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/admin/grid.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/admin/layout.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/admin/nav.css" media="screen" />
-    <link href="/admin/table/demo_page.css" rel="stylesheet" type="text/css" />
-    
-    <script src="/admin-js/jquery-1.6.4.min.js" type="text/javascript"></script>
-    <script type="text/javascript" src="/admin-js/jquery-ui/jquery.ui.core.min.js"></script>
-    <script src="/admin-js/jquery-ui/jquery.ui.widget.min.js" type="text/javascript"></script>
-    <script src="/admin-js/jquery-ui/jquery.ui.accordion.min.js" type="text/javascript"></script>
-    <script src="/admin-js/jquery-ui/jquery.effects.core.min.js" type="text/javascript"></script>
-    <script src="/admin-js/jquery-ui/jquery.effects.slide.min.js" type="text/javascript"></script>
-    <script src="/admin-js/jquery-ui/jquery.ui.mouse.min.js" type="text/javascript"></script>
-    <script src="/admin-js/jquery-ui/jquery.ui.sortable.min.js" type="text/javascript"></script>
-    <script src="/admin-js/table/jquery.dataTables.min.js" type="text/javascript"></script>
-    <script src="/admin-js/setup.js" type="text/javascript"></script>
-	 <script type="text/javascript">
-        $(document).ready(function () {
-            setupLeftMenu();
-		    setSidebarHeight();
-        });
-    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quản trị · Nhà Hàng Bảo Đoàn</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/admin/quantri.css" />
+
+    <script src="/admin-js/jquery-1.6.4.min.js"></script>
+    <script src="/admin-js/table/jquery.dataTables.min.js"></script>
 </head>
-<body>
-    <div class="container_12">
-        <div class="grid_12 header-repeat">
-            <div id="branding">
-                <div class="floatleft logo">
-                    <img src="/admin-img/new_logo.png" alt="Logo" style="height: 50px; width: auto;" />
-				</div>
-				<div class="floatleft middle">
-					<h1>NHA HANG BD</h1>
-				</div>
-                <div class="floatright">
-                    <div class="floatleft">
-                        <img src="/admin-img/img-profile.jpg" alt="Profile Pic" /></div>
-                    <div class="floatleft marginleft10">
-                        <ul class="inline-ul floatleft">
-                            <li>Hello <%= session.adminname %></li>
-                            <li><a href="/admin/logout">Đăng xuất</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="clear"></div>
+<body class="qt-body">
+
+<!--
+  Socket.io + thư viện RT.
+
+  Trước đây cả khu quản trị không nạp hai tệp này, nên /admin là vùng duy nhất
+  của hệ thống hoàn toàn không có thời gian thực: bếp sửa thực đơn, kế toán
+  duyệt lương, nhân viên xin nghỉ — quản trị viên đang mở đúng trang đó vẫn
+  nhìn số liệu cũ cho tới khi tự bấm F5.
+
+  Nạp ngay sau <body> chứ không trong <head>: thư viện có dùng document.body,
+  và các trang bên dưới gọi RT ngay đầu khối script của chúng.
+-->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/realtime-to-chuc.js"></script>
+
+<div class="qt-shell" id="qtShell">
+
+    <!-- ================================================ THANH BEN TRAI -->
+    <aside class="qt-side">
+        <div class="qt-side__brand">
+            <span class="qt-side__mark"><i class="fas fa-utensils"></i></span>
+            <span>
+                <span class="qt-side__name">Nhà Hàng Bảo Đoàn</span>
+                <span class="qt-side__role">Trang quản trị</span>
+            </span>
+        </div>
+
+        <nav class="qt-side__scroll" id="qtNav">
+            <div class="qt-side__group">
+                <div class="qt-side__label">Tổng quan</div>
+                <a class="qt-nav__item" href="/admin" data-match="/admin"><i class="fas fa-gauge-high"></i><span>Bảng điều khiển</span></a>
+                <a class="qt-nav__item" href="/admin/stats" data-match="/admin/stats"><i class="fas fa-chart-pie"></i><span>Báo cáo thống kê</span></a>
+                <a class="qt-nav__item" href="/analytics" data-match="/analytics"><i class="fas fa-chart-line"></i><span>Dashboard phân tích</span></a>
+                <a class="qt-nav__item" href="/du-bao" data-match="/du-bao"><i class="fas fa-wand-magic-sparkles"></i><span>Dự báo AI</span></a>
             </div>
-        </div>
-        <div class="clear"></div>
-        <div class="grid_12">
-            <ul class="nav main">
-                <li class="ic-dashboard"><a href="/admin"><span>Thống kê</span></a> </li>
-                <li class="ic-form-style"><a href="/admin/profile"><span>Thông tin cá nhân</span></a></li>
-				<li class="ic-typography"><a href="/admin/changepassword"><span>Đổi mật khẩu</span></a></li>
-                <li class="ic-charts"><a href="/" target="_blank"><span>Đến Trang Chủ</span></a></li>
-            </ul>
-        </div>
-        <div class="clear"></div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Thực đơn</div>
+                <a class="qt-nav__item" href="/admin/productlist" data-match="/admin/productlist,/admin/productedit,/admin/productdel"><i class="fas fa-bowl-food"></i><span>Danh sách món ăn</span></a>
+                <a class="qt-nav__item" href="/admin/productadd" data-match="/admin/productadd"><i class="fas fa-plus"></i><span>Thêm món ăn</span></a>
+                <a class="qt-nav__item" href="/admin/catlist" data-match="/admin/catlist,/admin/catedit,/admin/catdel"><i class="fas fa-layer-group"></i><span>Loại món</span></a>
+                <a class="qt-nav__item" href="/admin/catadd" data-match="/admin/catadd"><i class="fas fa-plus"></i><span>Thêm loại món</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Kinh doanh</div>
+                <a class="qt-nav__item" href="/admin/hopdongmoi" data-match="/admin/hopdongmoi"><i class="fas fa-bell-concierge"></i><span>Hợp đồng mới</span></a>
+                <a class="qt-nav__item" href="/admin/hopdonglist" data-match="/admin/hopdonglist,/admin/hopdongconfirm,/admin/hopdongdel"><i class="fas fa-file-signature"></i><span>Danh sách hợp đồng</span></a>
+                <a class="qt-nav__item" href="/admin/khuyen-mai" data-match="/admin/khuyen-mai"><i class="fas fa-ticket"></i><span>Khuyến mãi</span></a>
+                <a class="qt-nav__item" href="/admin/thanh-vien" data-match="/admin/thanh-vien"><i class="fas fa-medal"></i><span>Thành viên &amp; Hạng</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Nhân sự</div>
+                <a class="qt-nav__item" href="/admin/stafflist" data-match="/admin/stafflist,/admin/staffedit,/admin/staffdel"><i class="fas fa-user-group"></i><span>Danh sách nhân viên</span></a>
+                <a class="qt-nav__item" href="/admin/staffadd" data-match="/admin/staffadd"><i class="fas fa-user-plus"></i><span>Thêm nhân viên</span></a>
+                <a class="qt-nav__item" href="/admin/xep-ca" data-match="/admin/xep-ca"><i class="fas fa-wand-magic-sparkles"></i><span>Xếp ca tự động</span></a>
+                <a class="qt-nav__item" href="/admin/schedule" data-match="/admin/schedule"><i class="fas fa-calendar-days"></i><span>Duyệt lịch làm việc</span></a>
+                <a class="qt-nav__item" href="/admin/salary-approval" data-match="/admin/salary-approval,/admin/salary"><i class="fas fa-money-check-dollar"></i><span>Phê duyệt lương</span></a>
+                <a class="qt-nav__item" href="/admin/leavelist" data-match="/admin/leavelist,/admin/leaveapprove,/admin/leavereject"><i class="fas fa-plane-departure"></i><span>Đơn xin nghỉ phép</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Nội dung</div>
+                <a class="qt-nav__item" href="/admin/bloglist" data-match="/admin/bloglist,/admin/blogedit,/admin/blogdel"><i class="fas fa-newspaper"></i><span>Danh sách bài viết</span></a>
+                <a class="qt-nav__item" href="/admin/blogadd" data-match="/admin/blogadd"><i class="fas fa-pen-nib"></i><span>Thêm bài viết</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Vận hành</div>
+                <a class="qt-nav__item" href="/admin/thanh-toan" data-match="/admin/thanh-toan"><i class="fas fa-credit-card"></i><span>Cấu hình thanh toán</span></a>
+                <a class="qt-nav__item" href="/staff/thanh-toan/lich-su" data-match="/staff/thanh-toan/lich-su"><i class="fas fa-receipt"></i><span>Lịch sử thanh toán</span></a>
+                <a class="qt-nav__item" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn</span></a>
+                <a class="qt-nav__item" href="/kds" data-match="/kds"><i class="fas fa-fire-burner"></i><span>Màn hình bếp</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Tài khoản</div>
+                <a class="qt-nav__item" href="/admin/profile" data-match="/admin/profile"><i class="fas fa-id-card"></i><span>Thông tin cá nhân</span></a>
+                <a class="qt-nav__item" href="/admin/changepassword" data-match="/admin/changepassword"><i class="fas fa-key"></i><span>Đổi mật khẩu</span></a>
+                <a class="qt-nav__item" href="/" target="_blank"><i class="fas fa-store"></i><span>Xem website</span><i class="fas fa-arrow-up-right-from-square qt-nav__ext"></i></a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="qt-backdrop" id="qtBackdrop"></div>
+
+    <!-- ====================================================== NOI DUNG -->
+    <div class="qt-main">
+        <header class="qt-top">
+            <button class="qt-top__burger" id="qtBurger" type="button" aria-label="Mở menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div>
+                <div class="qt-top__crumb">Quản trị</div>
+                <h1 class="qt-top__title" id="qtTitle">Bảng điều khiển</h1>
+            </div>
+            <div class="qt-top__right">
+                <div class="qt-chip">
+                    <span class="qt-chip__ava"><%= (session.adminname || 'A').trim().charAt(0).toUpperCase() %></span>
+                    <span class="qt-chip__meta">
+                        <span class="qt-chip__name"><%= session.adminname || 'Quản trị viên' %></span><br>
+                        <span class="qt-chip__sub">@<%= session.adminuser || 'admin' %></span>
+                    </span>
+                </div>
+                <a class="qt-icon-btn" href="/admin/logout" title="Đăng xuất"><i class="fas fa-right-from-bracket"></i></a>
+            </div>
+        </header>
+
+        <!-- id="rt-noi-dung": vùng được RT.dongBoTrang() tráo khi dữ liệu đổi. -->
+        <main class="qt-content" id="rt-noi-dung">

@@ -1,39 +1,78 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Danh sách nhân viên</h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Danh sách nhân viên</h2>
+            <p><%= staff ? staff.length : 0 %> nhân viên trong hệ thống</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/schedule"><i class="fas fa-calendar-days"></i> Lịch làm việc</a>
+            <a class="qt-btn qt-btn--primary" href="/admin/staffadd"><i class="fas fa-user-plus"></i> Thêm nhân viên</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (staff && staff.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Tên nhân viên</th>
+                        <th>#</th>
+                        <th>Nhân viên</th>
                         <th>Chức vụ</th>
-                        <th>Username</th>
-                        <th>SĐT</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Số điện thoại</th>
                         <th>Trạng thái</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% staff.forEach(s => { %>
-                    <tr class="odd gradeX">
-                        <td><%= s.id_nv %></td>
-                        <td><%= s.ten %></td>
-                        <td><%= s.chucvu %></td>
-                        <td><%= s.username %></td>
-                        <td><%= s.sodienthoai %></td>
-                        <td><%= s.trangthai == 1 ? 'Đang làm' : 'Đã nghỉ' %></td>
+                    <% staff.forEach((s, index) => { %>
+                    <tr>
+                        <td class="qt-num"><%= index + 1 %></td>
                         <td>
-                            <a href="/admin/staffedit/<%= s.id_nv %>">Sửa</a> || 
-                            <a onclick="return confirm('Bạn có chắc muốn chuyển nhân viên này sang trạng thái Đã nghỉ?')" href="/admin/staffdel/<%= s.id_nv %>">Xóa</a>
+                            <span class="qt-strong"><%= s.ten %></span>
+                            <span class="qt-sub">Mã NV: <%= s.id_nv %></span>
+                        </td>
+                        <td><span class="qt-pill qt-pill--muted"><%= s.chucvu %></span></td>
+                        <td><%= s.username %></td>
+                        <td><%= s.sodienthoai || '—' %></td>
+                        <td>
+                            <% if (s.trangthai == 1) { %>
+                                <span class="qt-pill qt-pill--ok">Đang làm</span>
+                            <% } else { %>
+                                <span class="qt-pill qt-pill--muted">Đã nghỉ</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="qt-actions">
+                                <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/staffedit/<%= s.id_nv %>">
+                                    <i class="fas fa-pen"></i> Sửa
+                                </a>
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/staffdel/<%= s.id_nv %>"
+                                   onclick="return confirm('Chuyển nhân viên &quot;<%= s.ten %>&quot; sang trạng thái Đã nghỉ?')">
+                                    <i class="fas fa-user-slash"></i> Cho nghỉ
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-user-group"></i>
+            <p>Chưa có nhân viên nào.</p>
+            <a class="qt-btn qt-btn--primary" href="/admin/staffadd"><i class="fas fa-user-plus"></i> Thêm nhân viên đầu tiên</a>
+        </div>
+        <% } %>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
+</script>
+
 <%- include('partials/footer') %>

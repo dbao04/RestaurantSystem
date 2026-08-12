@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trợ lý ảo (Chatbot) - Nhà Hàng Bảo Đoàn</title>
+  <script src="/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg:#f1f5f9; --card:#fff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
+      --brand:#4338ca; --brand2:#6366f1; --warn:#d97706; --danger:#dc2626; --ok:#16a34a;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text);
+           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
+    header { background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff;
+             padding:18px 28px; display:flex; align-items:center;
+             justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    header h1 { margin:0; font-size:20px; }
+    header .sub { font-size:13px; opacity:.85; margin-top:2px; }
+    header nav a { color:#fff; text-decoration:none; font-size:13px; padding:7px 13px;
+                   border:1px solid rgba(255,255,255,.35); border-radius:7px;
+                   margin-left:8px; display:inline-block; }
+    header nav a:hover { background:rgba(255,255,255,.16); }
+
+    .wrap { padding:20px 28px 60px; max-width:1520px; margin:0 auto; }
+
+    .banner { padding:12px 16px; border-radius:9px; margin-bottom:18px; font-size:14px;
+              display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .banner.ok  { background:#dcfce7; border:1px solid #86efac; color:#166534; }
+    .banner.tat { background:#fef3c7; border:1px solid #fcd34d; color:#92400e; }
+    .banner code { background:rgba(0,0,0,.07); padding:2px 7px; border-radius:4px; font-size:12.5px; }
+
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+            padding:16px 18px; margin-bottom:16px; }
+    .card h2 { margin:0 0 4px; font-size:16px; }
+    .card .desc { font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
+    .grid { display:grid; gap:16px; margin-bottom:16px; }
+    .g2 { grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); }
+    .g4 { grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+    .chart-box { position:relative; height:300px; }
+
+    .the { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:15px 17px; }
+    .the .nhan { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .the .so { font-size:26px; font-weight:650; margin-top:5px; }
+    .the .phu { font-size:12px; color:var(--muted); margin-top:3px; }
+
+    table { width:100%; border-collapse:collapse; font-size:13.5px; }
+    th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; }
+    th { background:#f8fafc; font-weight:600; font-size:12.5px; color:var(--muted);
+         text-transform:uppercase; letter-spacing:.03em; }
+    td.so { text-align:right; font-variant-numeric:tabular-nums; }
+    tr.chon { background:#eef2ff; font-weight:600; }
+    .cuon { max-height:340px; overflow:auto; }
+
+    .btn { background:var(--brand); color:#fff; border:0; padding:9px 17px;
+           border-radius:7px; cursor:pointer; font-size:14px; font-family:inherit; }
+    .btn:hover { background:#3730a3; }
+    .btn:disabled { opacity:.55; cursor:default; }
+    .btn.phu { background:#fff; color:var(--text); border:1px solid var(--line); }
+
+    .thu { display:flex; gap:8px; margin-bottom:12px; }
+    .thu input { flex:1; padding:9px 13px; border:1px solid var(--line); border-radius:7px;
+                 font-size:14px; font-family:inherit; }
+    .ket-qua-thu { background:#f8fafc; border:1px solid var(--line); border-radius:8px;
+                   padding:13px 15px; font-size:13.5px; white-space:pre-wrap; line-height:1.6;
+                   min-height:56px; }
+    .nhan-yd { display:inline-block; background:#eef2ff; color:#4338ca; border-radius:5px;
+               padding:2px 8px; font-size:12px; font-family:ui-monospace,monospace; }
+    .canh-bao { color:var(--danger); }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Trợ lý ảo — Chatbot hỏi đáp tiếng Việt</h1>
+    <div class="sub">Phân loại ý định tự huấn luyện · Chạy offline, không gọi API bên ngoài</div>
+  </div>
+  <nav>
+    <a href="/admin">Trang quản trị</a>
+    <a href="/analytics">Phân tích</a>
+    <a href="/du-bao">Dự báo AI/ML</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <% if (trangThai && trangThai.san_sang) { %>
+    <div class="banner ok">
+      <b>✔ Chatbot đang hoạt động.</b>
+      <span>
+        Mô hình: <b><%= (trangThai.mo_hinh && trangThai.mo_hinh.ten_mo_hinh) || 'chưa rõ' %></b>
+        · Ngưỡng tin cậy: <code><%= trangThai.nguong_tin_cay %></code>
+        · <%= trangThai.bo_du_lieu ? trangThai.bo_du_lieu.so_y_dinh : 0 %> ý định
+      </span>
+    </div>
+  <% } else { %>
+    <div class="banner tat">
+      <b>⚠ ML service chưa bật</b>
+      <span>
+        Chatbot đang chạy ở <b>chế độ dự phòng</b> (chỉ trả lời được vài câu hỏi cơ bản bằng từ khóa).
+        Bật bằng: <code>python -m uvicorn ml_service.main:app --port 8000</code>
+      </span>
+    </div>
+  <% } %>
+
+  <!-- ===================== SỐ LIỆU VẬN HÀNH ===================== -->
+  <div class="grid g4">
+    <div class="the">
+      <div class="nhan">Lượt hỏi (<%= thongKe.so_ngay %> ngày)</div>
+      <div class="so"><%= Number(thongKe.so_luot).toLocaleString('vi-VN') %></div>
+      <div class="phu">Ghi từ nhật ký hội thoại thật</div>
+    </div>
+    <div class="the">
+      <div class="nhan">Tỷ lệ hiểu được</div>
+      <div class="so"><%= thongKe.ty_le_hieu.toFixed(1) %>%</div>
+      <div class="phu"><%= thongKe.so_khong_hieu %> câu bị từ chối</div>
+    </div>
+    <div class="the">
+      <div class="nhan">Độ tin cậy trung bình</div>
+      <div class="so"><%= (thongKe.tin_cay_tb * 100).toFixed(1) %>%</div>
+      <div class="phu">Ngưỡng chấp nhận: <%= trangThai.nguong_tin_cay || '0.45' %></div>
+    </div>
+    <div class="the">
+      <div class="nhan">Thời gian trả lời TB</div>
+      <div class="so"><%= Math.round(thongKe.ms_tb) %> ms</div>
+      <div class="phu">Toàn bộ pipeline 5 tầng</div>
+    </div>
+  </div>
+
+  <!-- ===================== THỬ NHANH ===================== -->
+  <div class="card">
+    <h2>Thử nhanh</h2>
+    <p class="desc">
+      Gõ một câu bất kỳ để xem bot nhận ra ý định nào và độ tin cậy bao nhiêu.
+      Câu hỏi ở đây chạy với <b>quyền quản lý</b> nên xem được cả số liệu kinh doanh.
+    </p>
+    <div class="thu">
+      <input id="o-thu" placeholder="Ví dụ: doanh thu tuần trước bao nhiêu" maxlength="500">
+      <button class="btn" id="nut-thu">Hỏi</button>
+    </div>
+    <div class="ket-qua-thu" id="kq-thu">Kết quả sẽ hiện ở đây…</div>
+  </div>
+
+  <!-- ===================== SO SÁNH MÔ HÌNH ===================== -->
+  <div class="card">
+    <h2>Kết quả thực nghiệm — so sánh mô hình phân loại ý định</h2>
+    <p class="desc">
+      Tập kiểm thử được chia <b>theo nhóm mẫu câu</b> (GroupShuffleSplit): toàn bộ câu sinh từ
+      một mẫu chỉ nằm ở một bên, tránh rò rỉ dữ liệu làm độ chính xác cao giả tạo.
+      Cột <b>“tay”</b> đo trên tập câu hỏi do người viết tự do, không theo mẫu nào —
+      đây mới là con số phản ánh năng lực thật và cũng là tiêu chí chọn mô hình.
+    </p>
+
+    <% if (danhGia && danhGia.length) { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Mô hình</th>
+            <th style="text-align:right">Độ chính xác (sinh)</th>
+            <th style="text-align:right">F1-macro (sinh)</th>
+            <th style="text-align:right">Độ chính xác (tay)</th>
+            <th style="text-align:right">F1-macro (tay)</th>
+            <th style="text-align:right">Huấn luyện (s)</th>
+            <th style="text-align:right">ms/câu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% danhGia.forEach(function (r) { %>
+            <tr class="<%= r.la_mo_hinh_chon ? 'chon' : '' %>">
+              <td><%= r.mo_hinh %><%= r.la_mo_hinh_chon ? ' ★' : '' %></td>
+              <td class="so"><%= Number(r.do_chinh_xac).toFixed(2) %>%</td>
+              <td class="so"><%= Number(r.f1_macro).toFixed(2) %>%</td>
+              <td class="so"><%= Number(r.do_chinh_xac_tay).toFixed(2) %>%</td>
+              <td class="so"><%= Number(r.f1_macro_tay).toFixed(2) %>%</td>
+              <td class="so"><%= Number(r.giay_huan_luyen).toFixed(2) %></td>
+              <td class="so"><%= Number(r.ms_moi_cau).toFixed(2) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <p class="desc" style="margin-top:12px">★ = mô hình đang được dùng để trả lời.</p>
+    <% } else { %>
+      <p class="desc canh-bao">
+        Chưa có kết quả huấn luyện nào. Chạy <code>train_chatbot.bat</code>
+        hoặc bấm nút bên dưới.
+      </p>
+    <% } %>
+
+    <div style="margin-top:14px; display:flex; gap:9px; flex-wrap:wrap; align-items:center">
+      <button class="btn" id="nut-train">Huấn luyện lại mô hình</button>
+      <span class="desc" style="margin:0">Mất khoảng 10–60 giây tùy cấu hình máy.</span>
+    </div>
+    <div id="kq-train" class="desc" style="margin-top:10px"></div>
+  </div>
+
+  <!-- ===================== PHÂN BỐ Ý ĐỊNH + CÂU CHƯA HIỂU ===================== -->
+  <div class="grid g2">
+    <div class="card">
+      <h2>Ý định được hỏi nhiều nhất</h2>
+      <p class="desc">Thống kê trên nhật ký <%= thongKe.so_ngay %> ngày gần nhất.</p>
+      <div class="chart-box"><canvas id="bd-y-dinh"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>Câu bot chưa hiểu — việc cần làm</h2>
+      <p class="desc">
+        Đây là danh sách quý nhất để cải thiện bot: mỗi câu ở đây là một cách hỏi
+        chưa có trong bộ mẫu. Thêm chúng vào <code>ml_service/chatbot/y_dinh.py</code>
+        rồi huấn luyện lại, độ phủ sẽ tăng ngay.
+      </p>
+      <div class="cuon">
+        <% if (thongKe.khong_hieu && thongKe.khong_hieu.length) { %>
+          <table>
+            <thead><tr><th>Câu hỏi</th><th style="text-align:right">Số lần</th></tr></thead>
+            <tbody>
+              <% thongKe.khong_hieu.forEach(function (r) { %>
+                <tr><td><%= r.cau_hoi %></td><td class="so"><%= r.so_lan %></td></tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <p class="desc">Chưa có câu nào bị từ chối. Rất tốt!</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ---- Biểu đồ phân bố ý định ---- */
+  (function () {
+    var duLieu = <%- JSON.stringify(thongKe.theo_y_dinh || []) %>;
+    var el = document.getElementById('bd-y-dinh');
+    if (!el || !duLieu.length || typeof Chart === 'undefined') return;
+    new Chart(el, {
+      type: 'bar',
+      data: {
+        labels: duLieu.map(function (r) { return r.y_dinh; }),
+        datasets: [{ label: 'Số lượt', data: duLieu.map(function (r) { return Number(r.so_luot); }),
+                     backgroundColor: '#6366f1' }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  })();
+
+  /* ---- Thử nhanh ---- */
+  (function () {
+    var o = document.getElementById('o-thu');
+    var nut = document.getElementById('nut-thu');
+    var kq = document.getElementById('kq-thu');
+
+    function thoat(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function hoi() {
+      var cau = o.value.trim();
+      if (!cau) return;
+      nut.disabled = true;
+      kq.textContent = 'Đang xử lý…';
+      fetch('/chatbot/api/hoi', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cau_hoi: cau })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var html = '';
+          if (d.y_dinh) {
+            html += '<span class="nhan-yd">' + thoat(d.y_dinh) + '</span> ';
+            if (d.tin_cay != null) html += 'tin cậy <b>' + (d.tin_cay * 100).toFixed(1) + '%</b> ';
+            if (d.thoi_gian_ms != null) html += '· ' + d.thoi_gian_ms + ' ms';
+            if (d.nguon === 'du_phong') html += ' · <b>chế độ dự phòng</b>';
+            html += '<br><br>';
+          }
+          html += thoat(d.van_ban || '')
+            .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+            .replace(/_([^_]+)_/g, '<i>$1</i>');
+          if (d.tham_so && Object.keys(d.tham_so).length) {
+            html += '<br><br><small>Tham số nhận ra: <code>'
+                  + thoat(JSON.stringify(d.tham_so)) + '</code></small>';
+          }
+          if (d.bang && d.bang.length) {
+            html += '<br><small>Kèm bảng ' + d.bang.length + ' dòng.</small>';
+          }
+          kq.innerHTML = html;
+        })
+        .catch(function () { kq.textContent = 'Không gọi được máy chủ.'; })
+        .finally(function () { nut.disabled = false; });
+    }
+
+    nut.onclick = hoi;
+    o.addEventListener('keydown', function (e) { if (e.key === 'Enter') hoi(); });
+  })();
+
+  /* ---- Huấn luyện lại ---- */
+  (function () {
+    var nut = document.getElementById('nut-train');
+    var kq = document.getElementById('kq-train');
+    nut.onclick = function () {
+      if (!confirm('Huấn luyện lại bộ phân loại ý định? Quá trình mất 10–60 giây.')) return;
+      nut.disabled = true;
+      kq.textContent = 'Đang huấn luyện… (không tắt trang)';
+      fetch('/admin/chatbot/huan-luyen', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) { kq.innerHTML = '<span class="canh-bao">Lỗi: ' + (d.loi || '') + '</span>'; return; }
+          kq.innerHTML = 'Xong. Mô hình được chọn: <b>' + d.ten_mo_hinh_chon + '</b>. Đang tải lại trang…';
+          setTimeout(function () { location.reload(); }, 1400);
+        })
+        .catch(function (e) { kq.innerHTML = '<span class="canh-bao">Lỗi: ' + e.message + '</span>'; })
+        .finally(function () { nut.disabled = false; });
+    };
+  })();
+</script>
+</body>
+</html>

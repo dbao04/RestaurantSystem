@@ -1,0 +1,645 @@
+<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+
+<style>
+/* --- Bang doc duoc tren dien thoai ---
+   Hai bang o trang nay co 5 cot. Tren man hinh 375px, `table-responsive` chi
+   cho cuon ngang - phai keo qua keo lai moi doc duoc mot dong, va cot "Ket qua"
+   (thu ma quan ly can nhat) nam tan ben phai. Nen o man hinh hep ta bo bo khung
+   bang di: moi DONG thanh mot the, moi O thanh mot dong "nhan: gia tri". Nhan
+   lay tu thuoc tinh `data-nhan` cua o, do JS ve bang gan vao. */
+@media (max-width: 767.98px) {
+  .bang-gon thead { display:none; }
+  .bang-gon, .bang-gon tbody, .bang-gon tr, .bang-gon td { display:block; width:100%; }
+  .bang-gon tbody tr {
+    border:1px solid #e3e6f0; border-radius:.35rem;
+    margin:0 0 .5rem; padding:.5rem .75rem; background:#fff;
+  }
+  .bang-gon tbody tr.table-warning { background:#fff3cd; }
+  .bang-gon tbody td {
+    border:0; padding:.2rem 0; text-align:left !important;
+    display:flex; justify-content:space-between; align-items:baseline; gap:.75rem;
+  }
+  .bang-gon tbody td::before {
+    content:attr(data-nhan); flex:0 0 auto;
+    font-size:.7rem; font-weight:700; text-transform:uppercase;
+    color:#858796; letter-spacing:.03em;
+  }
+  /* O rong (vi du cot nut Xoa cua nguoi chua dang ky) khong duoc chiem cho. */
+  .bang-gon tbody td:empty { display:none; }
+  /* Dong "khong co du lieu" trai het be ngang, khong can nhan. */
+  .bang-gon tbody td[colspan]::before { content:none; }
+  .bang-gon tbody td[colspan] { justify-content:center; }
+
+  /* Vung cuon rieng long trong trang da cuon lam nguoi dung mac ket giua hai
+     thanh cuon. Tren dien thoai cho ca trang cuon la du. */
+  .vung-cuon-bang { max-height:none !important; overflow-y:visible !important; }
+}
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-users-cog text-primary"></i> Chấm công khuôn mặt</h1>
+  <div>
+    <a href="/cham-cong-khuon-mat" target="_blank" class="btn btn-sm btn-outline-primary">
+      <i class="fas fa-desktop"></i> Mở kiosk
+    </a>
+    <% if (coTheSua) { %>
+      <button class="btn btn-sm btn-outline-info" id="nut-danh-gia">
+        <i class="fas fa-vial"></i> Đánh giá độ chính xác
+      </button>
+    <% } %>
+  </div>
+</div>
+
+<% if (!trangThai || trangThai.ket_noi === false) { %>
+  <div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    Dịch vụ nhận diện (Python) chưa bật. Danh sách vẫn xem được nhưng chưa đăng ký / chấm công được.
+  </div>
+<% } %>
+
+<!-- Thẻ số liệu -->
+<div class="row">
+  <div class="col-6 col-xl-3 mb-3">
+    <div class="card border-left-primary shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Đã đăng ký</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800">
+        <span id="sl-dk"><%= tongQuan.da_dang_ky %></span>/<%= tongQuan.tong_nv %> người
+      </div>
+    </div></div>
+  </div>
+  <div class="col-6 col-xl-3 mb-3">
+    <div class="card border-left-info shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tổng mẫu khuôn mặt</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-mau"><%= tongQuan.tong_mau %></div>
+    </div></div>
+  </div>
+  <div class="col-6 col-xl-3 mb-3">
+    <div class="card border-left-success shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Chấm công hôm nay</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-tc"><%= tongQuan.hom_nay.thanh_cong %></div>
+    </div></div>
+  </div>
+  <div class="col-6 col-xl-3 mb-3">
+    <div class="card border-left-danger shadow h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Nghi giả mạo hôm nay</div>
+      <div class="h5 mb-0 font-weight-bold text-gray-800" id="sl-gm"><%= tongQuan.hom_nay.gia_mao %></div>
+    </div></div>
+  </div>
+</div>
+
+<div id="kq-danh-gia"></div>
+
+<!--
+  Vi tri nha hang.
+
+  Toa do xuat xuong la trung tam Quan 1 TP.HCM voi ban kinh 30 m. Neu nha hang
+  khong o dung cho do ma khong ai sua, MOI lan cham cong deu bi tu choi vi "cach
+  nha hang vai km" - nen phai canh bao that ro ngay tren man hinh nay.
+-->
+<!--
+  Nguong nhan dien.
+
+  Truoc day ba con so quyet dinh ai vao duoc ca (nguong khop, chan cham ho, do
+  kho dong tac) nam trong ma nguon Python duoi dang hang so. Khi may tu choi mai
+  mot nguoi that, khong ai sua duoc neu khong doc ma - trong khi day dung la thu
+  phai chinh theo tung phong may va tung dieu kien anh sang.
+-->
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-sliders-h"></i> Ngưỡng nhận diện
+    </h6>
+    <span class="badge badge-info" id="nhan-nguong">
+      Đang cho vào từ <%= nhanDien.nguong_phan_tram %>% trở lên
+    </span>
+  </div>
+  <div class="card-body">
+    <% if (!coTheSuaViTri) { %>
+      <div class="alert alert-secondary py-2 small mb-3">
+        <i class="fas fa-lock"></i>
+        Bạn xem được ngưỡng đang áp dụng, nhưng <strong>chỉ Quản lý nhà hàng mới được đổi</strong>
+        — hạ ngưỡng là nới điều kiện vào ca cho toàn bộ nhân viên.
+      </div>
+    <% } %>
+
+    <div class="form-row align-items-end">
+      <div class="form-group col-md-4">
+        <label class="small font-weight-bold mb-1">
+          Độ khớp tối thiểu: <strong id="nd-nguong-hien"><%= nhanDien.nguong_phan_tram %>%</strong>
+        </label>
+        <input type="range" class="custom-range" id="nd-nguong" min="20" max="95" step="1"
+               value="<%= nhanDien.nguong_phan_tram %>" <%= coTheSuaViTri ? '' : 'disabled' %>>
+        <div class="small text-muted">
+          Khuôn mặt khớp từ mức này trở lên là được chấm công.
+          Càng thấp càng dễ vào nhưng càng dễ nhận nhầm người.
+        </div>
+      </div>
+
+      <div class="form-group col-md-3">
+        <label class="small font-weight-bold mb-1">Độ khó động tác</label>
+        <select class="form-control form-control-sm" id="nd-dong-tac" <%= coTheSuaViTri ? '' : 'disabled' %>>
+          <option value="de"  <%= nhanDien.muc_dong_tac === 'de'  ? 'selected' : '' %>>Dễ — webcam đặt xa, người ít cử động</option>
+          <option value="vua" <%= nhanDien.muc_dong_tac === 'vua' ? 'selected' : '' %>>Vừa (khuyên dùng)</option>
+          <option value="kho" <%= nhanDien.muc_dong_tac === 'kho' ? 'selected' : '' %>>Khó — chống giả mạo chặt nhất</option>
+        </select>
+        <div class="small text-muted mt-1">
+          Biên độ gật/quay đầu cần đạt để máy tin đây là người thật.
+        </div>
+      </div>
+
+      <div class="form-group col-md-5">
+        <div class="custom-control custom-switch mb-2">
+          <input type="checkbox" class="custom-control-input" id="nd-song"
+                 <%= nhanDien.bat_kiem_tra_song ? 'checked' : '' %> <%= coTheSuaViTri ? '' : 'disabled' %>>
+          <label class="custom-control-label small" for="nd-song">
+            Bắt làm động tác chống giả mạo (ảnh in, màn hình điện thoại)
+          </label>
+        </div>
+        <div class="custom-control custom-switch mb-2">
+          <input type="checkbox" class="custom-control-input" id="nd-cham-ho"
+                 <%= nhanDien.chan_cham_ho ? 'checked' : '' %> <%= coTheSuaViTri ? '' : 'disabled' %>>
+          <label class="custom-control-label small" for="nd-cham-ho">
+            Chặn nghi chấm hộ ở máy chấm công cá nhân
+          </label>
+        </div>
+        <% if (coTheSuaViTri) { %>
+          <button class="btn btn-sm btn-primary" id="nd-luu">
+            <i class="fas fa-save"></i> Lưu ngưỡng
+          </button>
+        <% } %>
+      </div>
+    </div>
+    <div id="nd-thong-bao" class="small"></div>
+
+    <div class="alert alert-warning py-2 small mb-0 mt-2">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Chỉ bật "chặn nghi chấm hộ" khi mỗi nhân viên có đúng một hồ sơ khuôn mặt.</strong>
+      Nếu hai hồ sơ trong hệ thống là cùng một người (hoặc hai anh em rất giống nhau),
+      máy sẽ liên tục thấy "người khác giống hơn" và từ chối cả người thật —
+      dù màn hình vẫn báo khớp rất cao.
+    </div>
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-map-marker-alt"></i> Vị trí nhà hàng (chấm công GPS)
+    </h6>
+    <span class="badge <%= viTri.bat_gps ? 'badge-success' : 'badge-secondary' %>" id="nhan-gps">
+      <%= viTri.bat_gps ? 'Đang bắt buộc đúng vị trí' : 'Không kiểm tra vị trí' %>
+    </span>
+  </div>
+  <div class="card-body">
+    <% if (!coTheSuaViTri) { %>
+      <!--
+        Ô nhập bị disable mà không nói lý do thì người dùng tưởng trang hỏng và
+        đi hỏi vòng quanh. Nói thẳng ai mới sửa được.
+      -->
+      <div class="alert alert-secondary py-2 small mb-3">
+        <i class="fas fa-lock"></i>
+        Bạn xem được vị trí và bán kính đang áp dụng, nhưng
+        <strong>chỉ Quản lý nhà hàng mới được đổi</strong> — vì đổi toạ độ là đổi
+        nơi toàn bộ nhân viên được phép chấm công.
+      </div>
+    <% } %>
+    <% if (viTri.bat_gps && viTri.mac_dinh) { %>
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Toạ độ vẫn là giá trị mặc định</strong> (trung tâm Quận 1, TP.HCM).
+        Nếu nhà hàng không nằm đúng chỗ đó thì mọi lượt chấm công đều bị từ chối.
+        Hãy đứng tại nhà hàng, bấm <em>Lấy vị trí hiện tại</em> rồi Lưu.
+      </div>
+    <% } else if (viTri.bat_gps && !viTri.co_toa_do) { %>
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        Chưa khai báo toạ độ nhà hàng nên ràng buộc GPS đang bị bỏ qua.
+      </div>
+    <% } %>
+
+    <!--
+      Ban do chon vi tri.
+
+      Go tay hai so thap phan sau dau phay la viec khong ai lam dung duoc, va sai
+      mot chu so thu tu la lech khoang 10 m - du de chan het ca nha hang. Keo mot
+      cai ghim thi nhin thay ngay minh dang chon dung toa nha nao.
+
+      Leaflet + OpenStreetMap tai tu CDN, giong cach trang nay dang tai Bootstrap
+      va Font Awesome. Neu mat mang thi ban do khong hien, nhung hai o toa do ben
+      duoi van go tay duoc nen man hinh khong hong.
+    -->
+    <div class="form-group">
+      <div id="ban-do" style="height:340px; border-radius:10px; overflow:hidden;
+                              border:1px solid #e3e6f0; background:#eef0f5"></div>
+      <div class="d-flex flex-wrap align-items-center mt-2" style="gap:8px">
+        <div class="input-group input-group-sm" style="max-width:340px">
+          <input type="text" class="form-control" id="vt-tim"
+                 placeholder="Tìm theo địa chỉ, ví dụ: 12 Quang Trung, Gò Vấp" <%= coTheSuaViTri ? '' : 'disabled' %>>
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" id="vt-nut-tim" type="button" <%= coTheSuaViTri ? '' : 'disabled' %>>
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <span class="small text-muted" id="vt-goi-y">
+          <% if (coTheSuaViTri) { %>
+            <i class="fas fa-hand-pointer"></i> Bấm hoặc kéo ghim trên bản đồ để chọn đúng vị trí nhà hàng.
+          <% } else { %>
+            <i class="fas fa-eye"></i> Đang xem vị trí và bán kính áp dụng cho toàn nhà hàng.
+          <% } %>
+        </span>
+      </div>
+    </div>
+
+    <div class="form-row align-items-end">
+      <div class="form-group col-md-3">
+        <label class="small font-weight-bold mb-1">Vĩ độ (latitude)</label>
+        <input type="number" step="0.000001" class="form-control form-control-sm" id="vt-vi-do"
+               value="<%= viTri.vi_do != null ? viTri.vi_do : '' %>" <%= coTheSuaViTri ? '' : 'disabled' %>>
+      </div>
+      <div class="form-group col-md-3">
+        <label class="small font-weight-bold mb-1">Kinh độ (longitude)</label>
+        <input type="number" step="0.000001" class="form-control form-control-sm" id="vt-kinh-do"
+               value="<%= viTri.kinh_do != null ? viTri.kinh_do : '' %>" <%= coTheSuaViTri ? '' : 'disabled' %>>
+      </div>
+      <div class="form-group col-md-2">
+        <label class="small font-weight-bold mb-1">Bán kính (m)</label>
+        <input type="number" min="5" max="5000" class="form-control form-control-sm" id="vt-ban-kinh"
+               value="<%= viTri.ban_kinh_m %>" <%= coTheSuaViTri ? '' : 'disabled' %>>
+      </div>
+      <div class="form-group col-md-4">
+        <div class="custom-control custom-switch mb-2">
+          <input type="checkbox" class="custom-control-input" id="vt-bat-gps"
+                 <%= viTri.bat_gps ? 'checked' : '' %> <%= coTheSuaViTri ? '' : 'disabled' %>>
+          <label class="custom-control-label small" for="vt-bat-gps">Bắt buộc đúng vị trí khi chấm công</label>
+        </div>
+        <% if (coTheSuaViTri) { %>
+          <button class="btn btn-sm btn-outline-secondary" id="vt-lay-hien-tai">
+            <i class="fas fa-crosshairs"></i> Lấy vị trí hiện tại
+          </button>
+          <button class="btn btn-sm btn-primary" id="vt-luu">
+            <i class="fas fa-save"></i> Lưu
+          </button>
+        <% } %>
+      </div>
+    </div>
+    <div id="vt-thong-bao" class="small"></div>
+    <div class="small text-muted mt-1">
+      Sai số GPS của điện thoại trong nhà thường 20–50 m; hệ thống tự cộng thêm sai số
+      mà trình duyệt báo về (tối đa 100 m) vào bán kính, nên đặt bán kính khoảng
+      50–100 m là hợp lý cho một mặt bằng nhà hàng.
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Danh sách đăng ký -->
+  <div class="col-lg-6">
+    <div class="card shadow mb-4">
+      <!-- flex-wrap + gap: tren dien thoai o tim kiem xuong dong rieng thay vi
+           bi bop con vai chuc pixel canh tieu de. -->
+      <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center"
+           style="gap:.5rem">
+        <h6 class="m-0 font-weight-bold text-primary">Tình trạng đăng ký</h6>
+        <input type="text" class="form-control form-control-sm flex-grow-1" id="tim"
+               placeholder="Tìm tên..." style="max-width:200px;min-width:140px">
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive vung-cuon-bang" style="max-height:560px;overflow-y:auto">
+          <table class="table table-sm table-hover mb-0 bang-gon">
+            <thead class="thead-light"><tr>
+              <th>Nhân viên</th><th>Chức danh</th><th class="text-center">Mẫu</th>
+              <th>Đăng ký cuối</th><% if (coTheSua) { %><th></th><% } %>
+            </tr></thead>
+            <tbody id="tbody-dk"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nhật ký nhận diện -->
+  <div class="col-lg-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Nhật ký nhận diện gần đây</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive vung-cuon-bang" style="max-height:560px;overflow-y:auto">
+          <table class="table table-sm mb-0 bang-gon">
+            <thead class="thead-light"><tr>
+              <th>Thời điểm</th><th>Chế độ</th><th>Người</th><th class="text-center">Khớp</th><th>Kết quả</th>
+            </tr></thead>
+            <tbody id="tbody-log"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/cham-cong-khuon-mat.js"></script>
+<script>
+(function () {
+  var E = RT.escapeHtml;
+  var dsDangKy = <%- JSON.stringify(dsDangKy) %>;
+  var nhatKy = <%- JSON.stringify(nhatKy) %>;
+  var coTheSua = <%= coTheSua ? 'true' : 'false' %>;
+  // Chon toa do nha hang la viec rieng cua cap 1 - xem routes/khuonMat.js.
+  var coTheSuaViTri = <%= coTheSuaViTri ? 'true' : 'false' %>;
+
+  function ngay(s){ if(!s) return '—'; var d=new Date(s);
+    return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+
+           ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+
+  var KQ = {
+    thanh_cong:['badge-success','Thành công'], khong_khop:['badge-secondary','Không khớp'],
+    gia_mao:['badge-danger','Giả mạo'], nghi_cham_ho:['badge-warning','Nghi chấm hộ'],
+    sai_vi_tri:['badge-warning','Sai vị trí'],
+    // Hai trạng thái dưới đây là người thật gặp điều kiện chụp xấu (thiếu sáng,
+    // ngồi xa, động tác nhẹ quá) — không phải gian lận, nên không tô đỏ và
+    // không tính vào ô "Nghi giả mạo hôm nay".
+    chua_dat_thu_thach:['badge-secondary','Chưa đủ động tác'],
+    khung_khong_dong_nhat:['badge-secondary','Ảnh chưa rõ'],
+  };
+  var CHE_DO = { nhan_dien:'Kiosk 1:N', xac_minh:'Cá nhân 1:1' };
+
+  function veDangKy() {
+    var tu = (document.getElementById('tim').value||'').toLowerCase().trim();
+    var ds = dsDangKy.filter(function(n){ return !tu || String(n.ten).toLowerCase().indexOf(tu)>=0; });
+    document.getElementById('tbody-dk').innerHTML = ds.map(function (n) {
+      var co = n.so_mau > 0;
+      // `data-nhan` chi duoc dung o che do the tren dien thoai (xem CSS
+      // `.bang-gon td::before` dau tep); tren man hinh rong no bi bo qua.
+      return '<tr class="' + (co?'':'table-warning') + '">' +
+        '<td data-nhan="Nhân viên"><strong>'+E(n.ten)+'</strong><div class="small text-muted">'+E(n.ma_nv||'')+'</div></td>' +
+        '<td data-nhan="Chức danh">'+(n.ten_bp?'<span class="badge" style="background:'+E(n.mau_sac)+';color:#fff">'+E(n.ten_cd||'')+'</span>':'<span class="text-muted small">—</span>')+'</td>' +
+        '<td class="text-center" data-nhan="Mẫu">'+(co?'<span class="badge badge-info">'+n.so_mau+'</span>':'<span class="badge badge-light">chưa có</span>')+'</td>' +
+        '<td class="small text-muted" data-nhan="Đăng ký cuối">'+ngay(n.lan_dang_ky_cuoi)+'</td>' +
+        (coTheSua ? '<td class="text-right">'+(co?'<button class="btn btn-xs btn-outline-danger py-0 px-2 xoa" data-id="'+n.id_nv+'" data-ten="'+E(n.ten)+'">Xóa</button>':'')+'</td>' : '') +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Không có nhân viên.</td></tr>';
+
+    document.querySelectorAll('.xoa').forEach(function(b){
+      b.onclick = function(){
+        if(!confirm('Xóa toàn bộ mẫu khuôn mặt của '+b.getAttribute('data-ten')+'?')) return;
+        b.disabled=true;
+        RT.gui('/api/khuon-mat/xoa', { id_nv: Number(b.getAttribute('data-id')) })
+          .then(function(){ RT.thongBao('Đã xóa mẫu.', 'thanh-cong'); taiDanhSach(); })
+          .catch(function(e){ RT.thongBao(e.message,'loi'); b.disabled=false; });
+      };
+    });
+  }
+
+  function veLog() {
+    document.getElementById('tbody-log').innerHTML = nhatKy.map(function (j) {
+      var kq = KQ[j.ket_qua] || ['badge-light', j.ket_qua];
+      var ten = j.ten_nhan_dien || j.ten_ky_vong || '—';
+      return '<tr>' +
+        '<td class="small text-muted text-nowrap" data-nhan="Thời điểm">'+ngay(j.thoi_diem)+'</td>' +
+        '<td class="small" data-nhan="Chế độ">'+(CHE_DO[j.che_do]||j.che_do)+'</td>' +
+        '<td class="small" data-nhan="Người">'+E(ten)+'</td>' +
+        '<td class="text-center small" data-nhan="Khớp">'+(j.do_tuong_dong!=null?(j.do_tuong_dong*100).toFixed(0)+'%':'—')+'</td>' +
+        '<td data-nhan="Kết quả"><span class="badge '+kq[0]+'">'+kq[1]+'</span>' +
+          (j.khoang_cach_m!=null?'<div class="small text-muted"><i class="fas fa-map-marker-alt"></i> '+
+            Math.round(j.khoang_cach_m)+' m</div>':'') + '</td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Chưa có lượt nào.</td></tr>';
+  }
+
+  document.getElementById('tim').oninput = veDangKy;
+
+  var taiDanhSach = RT.dongBo('/api/khuon-mat/danh-sach', function (d) {
+    dsDangKy = d.danh_sach; veDangKy();
+    if (d.tong_quan) {
+      document.getElementById('sl-dk').textContent = d.tong_quan.da_dang_ky;
+      document.getElementById('sl-mau').textContent = d.tong_quan.tong_mau;
+      document.getElementById('sl-tc').textContent = d.tong_quan.hom_nay.thanh_cong;
+      document.getElementById('sl-gm').textContent = d.tong_quan.hom_nay.gia_mao;
+    }
+  }, ['khuon-mat:dang-ky', 'cham-cong:moi']);
+
+  RT.dongBo('/api/khuon-mat/nhat-ky', function (d) { nhatKy = d.nhat_ky; veLog(); },
+    ['cham-cong:moi', 'khuon-mat:dang-ky']);
+
+  // Đánh giá độ chính xác (SFace vs LBPH).
+  var nutDG = document.getElementById('nut-danh-gia');
+  if (nutDG) {
+    nutDG.onclick = function () {
+      nutDG.disabled = true;
+      var box = document.getElementById('kq-danh-gia');
+      box.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Đang đánh giá trên dữ liệu hiện có (leave-one-out)...</div>';
+      RT.gui('/api/khuon-mat/danh-gia', {}).then(function (d) {
+        var n1 = d.nhan_dien_1_n || {};
+        var s = n1.SFace_cosine || {}, l = n1.LBPH_moc_so_sanh || null;
+        var canhBao = (d.canh_bao || []).map(function (c) {
+          return '<div class="small text-warning"><i class="fas fa-exclamation-triangle"></i> ' + E(c) + '</div>';
+        }).join('');
+        box.innerHTML = '<div class="card shadow mb-4 border-left-info"><div class="card-body">' +
+          '<h6 class="font-weight-bold">Kết quả đánh giá (nhận diện 1:N, leave-one-out)</h6>' +
+          '<div class="small text-muted mb-2">' + (d.so_nhan_vien||0) + ' nhân viên · ' + (d.so_anh_mau||0) + ' ảnh mẫu</div>' +
+          '<table class="table table-sm mb-1"><thead><tr><th>Mô hình</th><th>Độ chính xác</th><th>Đúng / Số mẫu</th></tr></thead><tbody>' +
+          '<tr><td><strong>SFace (đang dùng)</strong></td><td>'+((s.do_chinh_xac!=null?(s.do_chinh_xac*100).toFixed(1):'—'))+'%</td><td>'+(s.so_dung!=null?s.so_dung+' / '+s.so_mau:'—')+'</td></tr>' +
+          (l && l.do_chinh_xac!=null ? '<tr><td>LBPH (mốc so sánh)</td><td>'+(l.do_chinh_xac*100).toFixed(1)+'%</td><td>'+(l.so_dung+' / '+l.so_mau)+'</td></tr>' : '') +
+          '</tbody></table>' + canhBao +
+          '<div class="small text-muted mt-1">Đã lưu vào bảng danh_gia_mo_hinh.</div>' +
+          '</div></div>';
+      }).catch(function (e) {
+        box.innerHTML = '<div class="alert alert-danger">'+e.message+'</div>';
+      }).then(function(){ nutDG.disabled = false; });
+    };
+  }
+
+  // ---- Vị trí nhà hàng ----
+  var nutLay = document.getElementById('vt-lay-hien-tai');
+  var nutLuu = document.getElementById('vt-luu');
+  var bcVt = document.getElementById('vt-thong-bao');
+  var oViDo = document.getElementById('vt-vi-do');
+  var oKinhDo = document.getElementById('vt-kinh-do');
+  var oBanKinh = document.getElementById('vt-ban-kinh');
+
+  function bao(html, loai) {
+    bcVt.innerHTML = '<div class="alert alert-' + loai + ' py-2 mt-2 mb-0">' + html + '</div>';
+  }
+
+  // ---- Bản đồ ----
+  //
+  // Bản đồ và hai ô toạ độ là hai cách nhìn cùng một dữ liệu, đồng bộ hai chiều:
+  // kéo ghim thì số đổi, gõ số thì ghim nhảy. Nguồn sự thật khi bấm Lưu vẫn là
+  // hai ô số, nên mất mạng (bản đồ không tải được) thì màn hình vẫn dùng được.
+  var banDo = null, ghim = null, vong = null;
+
+  function toaDoHienTai() {
+    var a = parseFloat(oViDo.value), b = parseFloat(oKinhDo.value);
+    // Chưa khai báo thì mở ở trung tâm TP.HCM cho có chỗ bắt đầu.
+    if (!isFinite(a) || !isFinite(b)) return { lat: 10.762622, lng: 106.660172, trong: true };
+    return { lat: a, lng: b, trong: false };
+  }
+
+  function datToaDo(lat, lng, keoBanDo) {
+    oViDo.value = Number(lat).toFixed(6);
+    oKinhDo.value = Number(lng).toFixed(6);
+    if (ghim) ghim.setLatLng([lat, lng]);
+    if (vong) vong.setLatLng([lat, lng]);
+    if (keoBanDo && banDo) banDo.panTo([lat, lng]);
+  }
+
+  function capNhatVong() {
+    if (vong) vong.setRadius(Math.max(5, Number(oBanKinh.value) || 30));
+  }
+
+  function dungBanDo() {
+    var el = document.getElementById('ban-do');
+    if (!el || typeof L === 'undefined') {
+      if (el) el.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 ' +
+        'text-muted small text-center px-3">Không tải được bản đồ (cần mạng Internet).<br>' +
+        'Bạn vẫn nhập toạ độ bằng tay hoặc bấm “Lấy vị trí hiện tại” được.</div>';
+      return;
+    }
+    var t = toaDoHienTai();
+    banDo = L.map(el).setView([t.lat, t.lng], t.trong ? 13 : 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap',
+    }).addTo(banDo);
+
+    vong = L.circle([t.lat, t.lng], {
+      radius: Math.max(5, Number(oBanKinh.value) || 30),
+      color: '#c8a951', fillColor: '#c8a951', fillOpacity: 0.15, weight: 2,
+    }).addTo(banDo);
+
+    ghim = L.marker([t.lat, t.lng], { draggable: coTheSuaViTri }).addTo(banDo);
+    ghim.bindTooltip('Nhà hàng', { permanent: false });
+
+    if (coTheSuaViTri) {
+      ghim.on('drag', function (e) { datToaDo(e.latlng.lat, e.latlng.lng, false); });
+      banDo.on('click', function (e) { datToaDo(e.latlng.lat, e.latlng.lng, false); });
+    }
+
+    // Bản đồ nằm trong thẻ có thể bị ẩn lúc khởi tạo -> ép tính lại kích thước.
+    setTimeout(function () { banDo.invalidateSize(); }, 200);
+  }
+  dungBanDo();
+
+  if (coTheSuaViTri) {
+    [oViDo, oKinhDo].forEach(function (o) {
+      o.oninput = function () {
+        var a = parseFloat(oViDo.value), b = parseFloat(oKinhDo.value);
+        if (isFinite(a) && isFinite(b) && ghim) {
+          ghim.setLatLng([a, b]); vong.setLatLng([a, b]);
+        }
+      };
+    });
+    oBanKinh.oninput = capNhatVong;
+
+    // Tìm theo địa chỉ (Nominatim của OpenStreetMap). Chỉ là tiện ích phụ:
+    // hỏng thì vẫn kéo ghim tay được, nên lỗi chỉ báo nhẹ.
+    function tim() {
+      var q = document.getElementById('vt-tim').value.trim();
+      if (!q) return;
+      var goiY = document.getElementById('vt-goi-y');
+      goiY.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm...';
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=' +
+            encodeURIComponent(q), { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (ds) {
+          if (!ds || !ds.length) {
+            goiY.innerHTML = '<span class="text-danger">Không tìm thấy địa chỉ này. Hãy kéo ghim trên bản đồ.</span>';
+            return;
+          }
+          var v = ds[0];
+          datToaDo(parseFloat(v.lat), parseFloat(v.lon), true);
+          if (banDo) banDo.setView([parseFloat(v.lat), parseFloat(v.lon)], 17);
+          goiY.innerHTML = '<i class="fas fa-map-pin"></i> ' + E(String(v.display_name).slice(0, 90)) +
+            ' — kéo ghim để chỉnh cho khớp cửa nhà hàng.';
+        })
+        .catch(function () {
+          goiY.innerHTML = '<span class="text-danger">Không gọi được dịch vụ tìm địa chỉ. Hãy kéo ghim trên bản đồ.</span>';
+        });
+    }
+    document.getElementById('vt-nut-tim').onclick = tim;
+    document.getElementById('vt-tim').onkeydown = function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); tim(); }
+    };
+  }
+
+  if (nutLay) {
+    nutLay.onclick = function () {
+      nutLay.disabled = true;
+      bao('<i class="fas fa-spinner fa-spin"></i> Đang lấy vị trí từ thiết bị...', 'info');
+      CamCC.layViTri({ hetHanMs: 15000 }).then(function (v) {
+        nutLay.disabled = false;
+        if (!v.co) return bao('<i class="fas fa-times-circle"></i> ' + E(v.ly_do), 'danger');
+        datToaDo(v.vi_do, v.kinh_do, true);
+        if (banDo) banDo.setView([v.vi_do, v.kinh_do], 18);
+        bao('<i class="fas fa-check-circle"></i> Đã lấy toạ độ (sai số khoảng ' +
+            (v.do_chinh_xac_m != null ? v.do_chinh_xac_m + ' m' : 'không rõ') +
+            '). Kiểm tra ghim trên bản đồ rồi bấm <strong>Lưu</strong>.', 'success');
+      });
+    };
+  }
+
+  if (nutLuu) {
+    nutLuu.onclick = function () {
+      nutLuu.disabled = true;
+      RT.gui('/api/khuon-mat/vi-tri', {
+        vi_do: Number(document.getElementById('vt-vi-do').value),
+        kinh_do: Number(document.getElementById('vt-kinh-do').value),
+        ban_kinh_m: Number(document.getElementById('vt-ban-kinh').value),
+        bat_gps: document.getElementById('vt-bat-gps').checked,
+      }).then(function (d) {
+        var nhan = document.getElementById('nhan-gps');
+        nhan.className = 'badge ' + (d.cau_hinh.bat_gps ? 'badge-success' : 'badge-secondary');
+        nhan.textContent = d.cau_hinh.bat_gps ? 'Đang bắt buộc đúng vị trí' : 'Không kiểm tra vị trí';
+        bao('<i class="fas fa-check-circle"></i> Đã lưu. Bán kính cho phép ' +
+            d.cau_hinh.ban_kinh_m + ' m.', 'success');
+        capNhatVong();
+        // Cảnh báo "toạ độ mặc định" ở trên không còn đúng sau khi lưu chỗ khác.
+        var canhBao = document.querySelector('.card-body .alert-danger');
+        if (canhBao && !d.cau_hinh.mac_dinh) canhBao.remove();
+        RT.thongBao('Đã lưu vị trí nhà hàng.', 'thanh-cong');
+      }).catch(function (e) {
+        bao('<i class="fas fa-times-circle"></i> ' + E(e.message), 'danger');
+      }).then(function () { nutLuu.disabled = false; });
+    };
+  }
+
+  // ------------------------------------------------------- NGƯỠNG NHẬN DIỆN
+  var ndNguong = document.getElementById('nd-nguong');
+  var ndHien   = document.getElementById('nd-nguong-hien');
+  var ndLuu    = document.getElementById('nd-luu');
+
+  // Kéo thanh trượt thì con số đổi ngay, chưa lưu gì cả — người dùng thấy được
+  // mình đang chọn mức nào trước khi quyết định.
+  if (ndNguong && ndHien) {
+    ndNguong.oninput = function () { ndHien.textContent = ndNguong.value + '%'; };
+  }
+
+  if (ndLuu) {
+    ndLuu.onclick = function () {
+      ndLuu.disabled = true;
+      var hop = document.getElementById('nd-thong-bao');
+      RT.gui('/api/khuon-mat/cau-hinh', {
+        nguong_phan_tram: Number(ndNguong.value),
+        muc_dong_tac: document.getElementById('nd-dong-tac').value,
+        bat_kiem_tra_song: document.getElementById('nd-song').checked,
+        chan_cham_ho: document.getElementById('nd-cham-ho').checked,
+      }).then(function (d) {
+        document.getElementById('nhan-nguong').textContent =
+          'Đang cho vào từ ' + d.cau_hinh.nguong_phan_tram + '% trở lên';
+        hop.innerHTML = '<div class="alert alert-success py-2 mb-0 mt-2">' +
+          '<i class="fas fa-check-circle"></i> Đã lưu. Áp dụng ngay cho lượt chấm công kế tiếp.</div>';
+        RT.thongBao('Đã lưu ngưỡng nhận diện.', 'thanh-cong');
+      }).catch(function (e) {
+        hop.innerHTML = '<div class="alert alert-danger py-2 mb-0 mt-2">' +
+          '<i class="fas fa-times-circle"></i> ' + E(e.message) + '</div>';
+      }).then(function () { ndLuu.disabled = false; });
+    };
+  }
+
+  veDangKy(); veLog();
+})();
+</script>
+
+<%- include('partials/footer') %>

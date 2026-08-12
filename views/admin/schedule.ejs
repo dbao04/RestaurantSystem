@@ -1,68 +1,97 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Quản lý Lịch nhân viên</h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+<%
+  var choDuyet = (schedules || []).filter(function (s) { return s.trangthai == 0; }).length;
+%>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Duyệt lịch làm việc</h2>
+            <p><%= schedules ? schedules.length : 0 %> ca đăng ký · <%= choDuyet %> ca chờ duyệt</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/stafflist"><i class="fas fa-user-group"></i> Danh sách nhân viên</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (schedules && schedules.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
                         <th>Ngày</th>
                         <th>Nhân viên</th>
-                        <th>Ca / Giờ</th>
+                        <th>Ca làm việc</th>
                         <th>Trạng thái</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if(schedules && schedules.length > 0) { %>
-                        <% schedules.forEach(s => { %>
-                        <tr class="odd gradeX">
-                            <td>
-                                <strong><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></strong><br/>
-                                <small><%= new Date(s.ngay).toLocaleDateString('vi-VN', { weekday: 'long' }) %></small>
-                            </td>
-                            <td>
-                                <strong><%= s.ten_nhanvien %></strong><br/>
-                                <small><%= s.chucvu %></small>
-                            </td>
-                            <td>
-                                <span style="text-transform: uppercase; color: #444;"><%= s.ca %></span><br/>
-                                <small>
-                                    <%= s.gio_bat_dau ? s.gio_bat_dau.slice(0,5) : '--:--' %> - <%= s.gio_ket_thuc ? s.gio_ket_thuc.slice(0,5) : '--:--' %>
-                                </small>
-                            </td>
-                            <td class="center">
-                                <% if(s.trangthai == 0) { %>
-                                    <span style="color: #b8860b; font-weight: bold;">Chờ duyệt</span>
-                                <% } else if(s.trangthai == 1) { %>
-                                    <span style="color: green; font-weight: bold;">Đã duyệt</span>
-                                <% } else { %>
-                                    <span style="color: red; font-weight: bold;">Từ chối</span>
-                                <% } %>
-                            </td>
-                            <td>
-                                <% if(s.trangthai == 0) { %>
-                                    <form action="/admin/schedule/update/<%= s.id_lich %>" method="POST" style="display:inline;">
-                                        <input type="hidden" name="status" value="1">
-                                        <button type="submit" style="color: green; border: none; background: none; cursor: pointer; text-decoration: underline;">Duyệt</button>
-                                    </form> | 
-                                    <form action="/admin/schedule/update/<%= s.id_lich %>" method="POST" style="display:inline;">
-                                        <input type="hidden" name="status" value="2">
-                                        <button type="submit" style="color: red; border: none; background: none; cursor: pointer; text-decoration: underline;">Hủy</button>
-                                    </form>
-                                <% } else { %>
-                                    <span style="color: #888;">Đã xử lý</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                        <% }) %>
-                    <% } %>
+                    <% schedules.forEach(s => { %>
+                    <tr>
+                        <td>
+                            <span class="qt-strong"><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></span>
+                            <span class="qt-sub"><%= new Date(s.ngay).toLocaleDateString('vi-VN', { weekday: 'long' }) %></span>
+                        </td>
+                        <td>
+                            <span class="qt-strong"><%= s.ten_nhanvien %></span>
+                            <span class="qt-sub"><%= s.chucvu %></span>
+                        </td>
+                        <td>
+                            <span class="qt-strong"><%= (s.ca || '').toUpperCase() %></span>
+                            <span class="qt-sub">
+                                <%= s.gio_bat_dau ? s.gio_bat_dau.slice(0, 5) : '--:--' %> – <%= s.gio_ket_thuc ? s.gio_ket_thuc.slice(0, 5) : '--:--' %>
+                            </span>
+                        </td>
+                        <td>
+                            <% if (s.trangthai == 0) { %>
+                                <span class="qt-pill qt-pill--warn">Chờ duyệt</span>
+                            <% } else if (s.trangthai == 1) { %>
+                                <span class="qt-pill qt-pill--ok">Đã duyệt</span>
+                            <% } else { %>
+                                <span class="qt-pill qt-pill--danger">Từ chối</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (s.trangthai == 0) { %>
+                            <div class="qt-actions">
+                                <form action="/admin/schedule/update/<%= s.id_lich %>" method="POST">
+                                    <input type="hidden" name="status" value="1">
+                                    <button class="qt-btn qt-btn--ok qt-btn--sm" type="submit"
+                                            onclick="return confirm('Duyệt ca làm việc này?')">
+                                        <i class="fas fa-check"></i> Duyệt
+                                    </button>
+                                </form>
+                                <form action="/admin/schedule/update/<%= s.id_lich %>" method="POST">
+                                    <input type="hidden" name="status" value="2">
+                                    <button class="qt-btn qt-btn--danger qt-btn--sm" type="submit"
+                                            onclick="return confirm('Từ chối ca làm việc này?')">
+                                        <i class="fas fa-xmark"></i> Từ chối
+                                    </button>
+                                </form>
+                            </div>
+                            <% } else { %>
+                                <span class="qt-sub">Đã xử lý</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-calendar-days"></i>
+            <p>Chưa có lịch làm việc nào được đăng ký.</p>
+        </div>
+        <% } %>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
+</script>
 
 <%- include('partials/footer') %>

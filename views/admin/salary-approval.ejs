@@ -1,47 +1,70 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
 
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Phê duyệt lương nhân viên</h2>
-        <div class="block">
-            <table class="data display datatable" id="example">
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Phê duyệt lương</h2>
+            <p><%= pendingSalaries ? pendingSalaries.length : 0 %> bảng lương đang chờ duyệt</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/stafflist"><i class="fas fa-user-group"></i> Danh sách nhân viên</a>
+        </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+        <% if (pendingSalaries && pendingSalaries.length > 0) { %>
+        <div class="qt-tablewrap">
+            <table class="qt-table datatable">
                 <thead>
                     <tr>
-                        <th>Tháng/Năm</th>
+                        <th>Kỳ lương</th>
                         <th>Nhân viên</th>
                         <th>Chức vụ</th>
-                        <th>Tổng cộng</th>
+                        <th>Tổng lương</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% if(pendingSalaries && pendingSalaries.length > 0) { %>
-                        <% pendingSalaries.forEach(s => { %>
-                        <tr class="odd gradeX">
-                            <td><%= s.thang %>/<%= s.nam %></td>
-                            <td><strong><%= s.ten %></strong></td>
-                            <td><%= s.chucvu %></td>
-                            <td class="font-weight-bold" style="color: blue;"><%= formatMoney(s.tong_luong) %></td>
-                            <td>
-                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST" style="display:inline;">
+                    <% pendingSalaries.forEach(s => { %>
+                    <tr>
+                        <td class="qt-strong">Tháng <%= s.thang %>/<%= s.nam %></td>
+                        <td class="qt-strong"><%= s.ten %></td>
+                        <td><span class="qt-pill qt-pill--muted"><%= s.chucvu %></span></td>
+                        <td class="qt-money"><%= formatMoney(s.tong_luong) %></td>
+                        <td>
+                            <div class="qt-actions">
+                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST">
                                     <input type="hidden" name="status" value="2">
-                                    <button type="submit" style="color: green; border: none; background: none; cursor: pointer; text-decoration: underline;" onclick="return confirm('Xác nhận duyệt?')">Duyệt</button>
-                                </form> | 
-                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST" style="display:inline;">
-                                    <input type="hidden" name="status" value="0">
-                                    <button type="submit" style="color: red; border: none; background: none; cursor: pointer; text-decoration: underline;" onclick="return confirm('Xác nhận hủy?')">Hủy</button>
+                                    <button class="qt-btn qt-btn--ok qt-btn--sm" type="submit"
+                                            onclick="return confirm('Duyệt bảng lương tháng <%= s.thang %>/<%= s.nam %> của <%= s.ten %>?')">
+                                        <i class="fas fa-check"></i> Duyệt
+                                    </button>
                                 </form>
-                            </td>
-                        </tr>
-                        <% }) %>
-                    <% } else { %>
-                        <tr><td colspan="5" class="text-center">Số liệu lương đã được xử lý hết.</td></tr>
-                    <% } %>
+                                <form action="/admin/salary/update/<%= s.id_luong %>" method="POST">
+                                    <input type="hidden" name="status" value="0">
+                                    <button class="qt-btn qt-btn--danger qt-btn--sm" type="submit"
+                                            onclick="return confirm('Hủy bảng lương này?')">
+                                        <i class="fas fa-xmark"></i> Hủy
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
         </div>
+        <% } else { %>
+        <div class="qt-empty">
+            <i class="fas fa-money-check-dollar"></i>
+            <p>Không còn bảng lương nào chờ duyệt.</p>
+        </div>
+        <% } %>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () { $('.datatable').dataTable(); });
+</script>
 
 <%- include('partials/footer') %>

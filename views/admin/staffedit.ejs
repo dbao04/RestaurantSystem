@@ -1,62 +1,79 @@
 <%- include('partials/header') %>
 <%- include('partials/sidebar') %>
-<div class="grid_10">
-    <div class="box round first grid">
-        <h2>Sửa thông tin nhân viên</h2>
-        <div class="block">
-            <form action="/admin/staffedit/<%= staff.id_nv %>" method="POST">
-                <table class="form">
-                    <tr>
-                        <td><label>Tên nhân viên</label></td>
-                        <td><input type="text" name="ten" value="<%= staff.ten %>" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Chức vụ</label></td>
-                        <td>
-                            <select name="chucvu" required>
-                                <option value="Phuc vu" <%= staff.chucvu === 'Phuc vu' ? 'selected' : '' %>>Phục vụ</option>
-                                <option value="Thu ngan" <%= staff.chucvu === 'Thu ngan' ? 'selected' : '' %>>Thu ngân</option>
-                                <option value="Bep" <%= staff.chucvu === 'Bep' ? 'selected' : '' %>>Bếp</option>
-                                <option value="Quan ly" <%= staff.chucvu === 'Quan ly' ? 'selected' : '' %>>Quản lý</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><label>Số điện thoại</label></td>
-                        <td><input type="text" name="sodienthoai" value="<%= staff.sodienthoai %>" class="medium" /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Email</label></td>
-                        <td><input type="email" name="email" value="<%= staff.email %>" class="medium" /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Địa chỉ</label></td>
-                        <td><textarea name="diachi" style="width: 300px; height: 100px;"><%= staff.diachi %></textarea></td>
-                    </tr>
-                    <tr>
-                        <td><label>Username</label></td>
-                        <td><input type="text" name="username" value="<%= staff.username %>" class="medium" required /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Mật khẩu (Bỏ trống nếu không đổi)</label></td>
-                        <td><input type="password" name="passwords" class="medium" /></td>
-                    </tr>
-                    <tr>
-                        <td><label>Trạng thái</label></td>
-                        <td>
-                            <select name="trangthai">
-                                <option value="1" <%= staff.trangthai == 1 ? 'selected' : '' %>>Đang làm</option>
-                                <option value="0" <%= staff.trangthai == 0 ? 'selected' : '' %>>Đã nghỉ</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="submit" name="submit" Value="Cập nhật" /></td>
-                    </tr>
-                </table>
-            </form>
+
+<div class="qt-card">
+    <div class="qt-card__head">
+        <div>
+            <h2>Sửa nhân viên</h2>
+            <p>Cập nhật hồ sơ của <%= staff.ten %>.</p>
+        </div>
+        <div class="qt-card__act">
+            <a class="qt-btn qt-btn--ghost" href="/admin/stafflist"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
         </div>
     </div>
+    <div class="qt-card__body">
+        <form class="qt-form" action="/admin/staffedit/<%= staff.id_nv %>" method="POST">
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="ten">Tên nhân viên <span class="qt-req">*</span></label>
+                    <input type="text" id="ten" name="ten" value="<%= staff.ten %>" required />
+                </div>
+
+                <div class="qt-field">
+                    <label for="chucvu">Chức vụ <span class="qt-req">*</span></label>
+                    <select id="chucvu" name="chucvu" required>
+                        <option value="Phuc vu" <%= staff.chucvu === 'Phuc vu' ? 'selected' : '' %>>Phục vụ</option>
+                        <option value="Thu ngan" <%= staff.chucvu === 'Thu ngan' ? 'selected' : '' %>>Thu ngân</option>
+                        <option value="Bep" <%= staff.chucvu === 'Bep' ? 'selected' : '' %>>Bếp</option>
+                        <option value="Quan ly" <%= staff.chucvu === 'Quan ly' ? 'selected' : '' %>>Quản lý</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="sodienthoai">Số điện thoại</label>
+                    <input type="text" id="sodienthoai" name="sodienthoai" value="<%= staff.sodienthoai %>" />
+                </div>
+
+                <div class="qt-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="<%= staff.email %>" />
+                </div>
+            </div>
+
+            <div class="qt-field">
+                <label for="diachi">Địa chỉ</label>
+                <textarea id="diachi" name="diachi"><%= staff.diachi %></textarea>
+            </div>
+
+            <div class="qt-form__row qt-form__row--2">
+                <div class="qt-field">
+                    <label for="username">Tên đăng nhập <span class="qt-req">*</span></label>
+                    <input type="text" id="username" name="username" value="<%= staff.username %>" required />
+                </div>
+
+                <div class="qt-field">
+                    <label for="passwords">Mật khẩu mới</label>
+                    <input type="password" id="passwords" name="passwords" placeholder="Nhập mật khẩu mới" />
+                    <div class="qt-field__hint">Để trống nếu không muốn đổi mật khẩu.</div>
+                </div>
+            </div>
+
+            <div class="qt-field">
+                <label for="trangthai">Trạng thái</label>
+                <select id="trangthai" name="trangthai">
+                    <option value="1" <%= staff.trangthai == 1 ? 'selected' : '' %>>Đang làm</option>
+                    <option value="0" <%= staff.trangthai == 0 ? 'selected' : '' %>>Đã nghỉ</option>
+                </select>
+            </div>
+
+            <div class="qt-form__actions">
+                <button class="qt-btn qt-btn--primary" type="submit" name="submit"><i class="fas fa-floppy-disk"></i> Cập nhật</button>
+                <a class="qt-btn qt-btn--ghost" href="/admin/stafflist">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
 <%- include('partials/footer') %>

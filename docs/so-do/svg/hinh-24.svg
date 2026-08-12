@@ -1,0 +1,131 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1240 930" role="img" aria-label="Sơ đồ hoạt động quy trình đặt bàn trực tuyến kèm nhánh đặt cọc giữ bàn bằng VietQR"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-hdA" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-hdA" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="lan-doc">
+    <rect class="lan" x="0" y="28" width="420" height="902"/>
+    <rect class="lan-nhan" x="0" y="0" width="420" height="28"/>
+    <text class="tx-lan" x="210" y="18">Khách hàng</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="420" y="28" width="430" height="902"/>
+    <rect class="lan-nhan" x="420" y="0" width="430" height="28"/>
+    <text class="tx-lan" x="635" y="18">Hệ thống (web)</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="850" y="28" width="390" height="902"/>
+    <rect class="lan-nhan" x="850" y="0" width="390" height="28"/>
+    <text class="tx-lan" x="1045" y="18">Nhà hàng</text>
+  </g><g class="nut-dau"><circle cx="210" cy="90" r="10"/></g><g class="hd ">
+      <rect x="131.5" y="138" width="157" height="44" rx="13"/>
+      <text class="tx-viec" x="210" y="157.5">Chọn món trong thực đơn,</text><text class="tx-viec" x="210" y="171.5">thêm vào giỏ hàng</text>
+    </g><g class="hd ">
+      <rect x="139" y="228" width="142" height="44" rx="13"/>
+      <text class="tx-viec" x="210" y="247.5">Nhập ngày đến, giờ đến</text><text class="tx-viec" x="210" y="261.5">và số khách</text>
+    </g><g class="hd ">
+      <rect x="277" y="331" width="126" height="38" rx="13"/>
+      <text class="tx-viec" x="340" y="354.5">Sửa lại ngày giờ</text>
+    </g><g class="hd tu-dong">
+      <rect x="544" y="328" width="182" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="347.5">Ghi đơn: sinh mã phiên sesis,</text><text class="tx-viec" x="635" y="361.5">ghi từng dòng món vào hopdong</text>
+    </g><g class="hd tu-dong">
+      <rect x="544.5" y="508" width="181" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="527.5">Hiện trang hợp đồng kèm</text><text class="tx-viec" x="635" y="541.5">số tiền cọc theo tỉ lệ cấu hình</text>
+    </g><g class="hd tu-dong">
+      <rect x="537.5" y="738" width="195" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="757.5">Sinh mã VietQR đúng số tiền cọc,</text><text class="tx-viec" x="635" y="771.5">chờ webhook ngân hàng đối soát</text>
+    </g><g class="hd ">
+      <rect x="979" y="508" width="132" height="44" rx="13"/>
+      <text class="tx-viec" x="1045" y="527.5">Gọi lại xác nhận</text><text class="tx-viec" x="1045" y="541.5">và giữ bàn cho khách</text>
+    </g><g class="qd">
+    <polygon points="635,224 667,250 635,276 603,250"/>
+    <text class="tx-sk" x="635" y="214">Ngày giờ hợp lệ?</text>
+  </g><g class="qd">
+    <polygon points="210,624 242,650 210,676 178,650"/>
+    <text class="tx-sk" x="210" y="614">Đặt cọc ngay?</text>
+  </g><rect class="thanh-db" x="485" y="437" width="300" height="6" rx="2"/><g class="nut-cuoi"><circle class="ngoai" cx="210" cy="850" r="12"/><circle class="trong" cx="210" cy="850" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="1045" cy="630" r="12"/><circle class="trong" cx="1045" cy="630" r="7"/></g><polyline class="luong " points="210,100 210,138" marker-end="url(#mui-hdA)"/><polyline class="luong " points="210,182 210,228" marker-end="url(#mui-hdA)"/><polyline class="luong " points="281,250 605,250" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,274 635,328" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="669" y="310">hợp lệ</text><polyline class="luong " points="635,226 635,196 340,196 340,331" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="470" y="190">ngày ở quá khứ</text><polyline class="luong " points="277,350 40,350 40,250 139,250" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,372 635,437" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,443 635,508" marker-end="url(#mui-hdA)"/><polyline class="luong " points="785,443 1045,443 1045,508" marker-end="url(#mui-hdA)"/><polyline class="luong " points="1045,552 1045,618" marker-end="url(#mui-hdA)"/><polyline class="luong " points="544.5,530 210,530 210,624" marker-end="url(#mui-hdA)"/><polyline class="luong " points="240,650 635,650 635,738" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="280" y="644">có</text><polyline class="luong " points="210,676 210,838" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="302" y="730">để trả sau tại quầy</text><polyline class="luong " points="537.5,760 280,760 280,850 222,850" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="326" y="820">đã cọc</text><g class="ghi-chu">
+    <text class="tx-ghi" x="20" y="898">Nhánh “ngày ở quá khứ” là ràng buộc được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính min của ô ngày</text><text class="tx-ghi" x="20" y="911">trên form chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn có thể bỏ qua nó.</text>
+  </g></svg>

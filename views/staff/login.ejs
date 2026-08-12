@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng nhập - Nhân viên NHA HANG BD</title>
+  <title>Đăng nhập - Nhân viên Nhà Hàng Bảo Đoàn</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
@@ -20,8 +20,8 @@
 <body>
   <div class="login-card">
     <div class="login-header">
-      <div style="font-size:40px; margin-bottom:8px;">🍽️</div>
-      <h2>NHA HANG BD</h2>
+      <div style="margin-bottom:8px;"><%- include('../partials/logo-bd', { cao: 44, mau: '#c8a951' }) %></div>
+      <h2>Nhà Hàng Bảo Đoàn</h2>
       <p style="opacity:.7; margin:4px 0 0; font-size:14px;">Cổng nhân viên</p>
     </div>
     <div class="login-body">
@@ -39,9 +39,6 @@
         </div>
         <button type="submit" class="btn btn-login mt-2">Đăng nhập</button>
       </form>
-      <div class="text-center mt-3">
-        <small class="text-muted">Tài khoản mẫu: <strong>nv001 / 123456</strong></small>
-      </div>
     </div>
   </div>
 </body>

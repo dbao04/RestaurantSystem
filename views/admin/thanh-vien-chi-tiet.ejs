@@ -1,0 +1,143 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  var HANG = ['bronze', 'silver', 'gold', 'platinum'];
+  var MAU  = { bronze: 'muted', silver: 'info', gold: 'warn', platinum: 'ok' };
+  var i    = HANG.indexOf(kh.tier);
+  var ke   = i >= 0 && i < 3 ? HANG[i + 1] : null;
+  var thieu = ke ? Math.max(0, NGUONG_HANG[ke] - Number(kh.total_spent)) : 0;
+  // Phần trăm đã đi được trong chặng hiện tại, để vẽ thanh tiến độ.
+  var moc = ke ? NGUONG_HANG[ke] - NGUONG_HANG[kh.tier] : 0;
+  var daDi = moc > 0 ? Math.min(100, Math.round((Number(kh.total_spent) - NGUONG_HANG[kh.tier]) / moc * 100)) : 100;
+
+  var TEN_LOAI = { earn: 'Tích điểm', redeem: 'Dùng điểm', expire: 'Hết hạn', bonus: 'Thưởng' };
+%>
+
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2><%= kh.ten || '(chưa có tên)' %></h2>
+      <p><%= kh.sodienthoai || '—' %><%= kh.email ? ' · ' + kh.email : '' %></p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/thanh-vien"><i class="fas fa-arrow-left"></i> Danh sách</a>
+    </div>
+  </div>
+  <div class="qt-card__body">
+    <div class="qt-stats">
+      <div class="qt-stat qt-stat--gold">
+        <span class="qt-stat__icon"><i class="fas fa-medal"></i></span>
+        <div class="qt-stat__label">Hạng hiện tại</div>
+        <div class="qt-stat__value"><%= TEN_HANG[kh.tier] %></div>
+        <div class="qt-stat__note">
+          <% if (ke) { %>còn <%= formatMoney(thieu) %>đ lên <%= TEN_HANG[ke] %><% } else { %>hạng cao nhất<% } %>
+        </div>
+      </div>
+      <div class="qt-stat qt-stat--green">
+        <span class="qt-stat__icon"><i class="fas fa-star"></i></span>
+        <div class="qt-stat__label">Điểm còn lại</div>
+        <div class="qt-stat__value"><%= Number(kh.points).toLocaleString('vi-VN') %></div>
+        <div class="qt-stat__note">đã đổi <%= Number(kh.redeemed_points).toLocaleString('vi-VN') %> điểm</div>
+      </div>
+      <div class="qt-stat qt-stat--blue">
+        <span class="qt-stat__icon"><i class="fas fa-wallet"></i></span>
+        <div class="qt-stat__label">Tổng chi tiêu</div>
+        <div class="qt-stat__value"><%= formatMoney(kh.total_spent) %>đ</div>
+        <div class="qt-stat__note"><%= kh.solandat || 0 %> lần đặt</div>
+      </div>
+      <div class="qt-stat qt-stat--plum">
+        <span class="qt-stat__icon"><i class="fas fa-ticket"></i></span>
+        <div class="qt-stat__label">Mã đã dùng</div>
+        <div class="qt-stat__value"><%= maDaDung.length %></div>
+        <div class="qt-stat__note">
+          giảm <%= formatMoney(maDaDung.reduce(function (t, u) { return t + Number(u.so_tien_giam || 0); }, 0)) %>đ
+        </div>
+      </div>
+    </div>
+
+    <% if (ke) { %>
+      <div class="tv-tiendo">
+        <div class="tv-tiendo__thanh"><span style="width:<%= daDi %>%"></span></div>
+        <div class="tv-phu">
+          <%= formatMoney(kh.total_spent) %>đ / <%= formatMoney(NGUONG_HANG[ke]) %>đ để lên hạng <%= TEN_HANG[ke] %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="qt-grid qt-grid--2" style="margin-top:1.5rem">
+  <!-- ================================================ Lịch sử điểm -->
+  <div class="qt-card">
+    <div class="qt-card__head">
+      <div><h2>Lịch sử điểm</h2><p><%= giaoDichDiem.length %> giao dịch gần nhất</p></div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+      <% if (giaoDichDiem.length) { %>
+      <div class="qt-tablewrap">
+        <table class="qt-table">
+          <thead><tr><th>Thời gian</th><th>Loại</th><th>Điểm</th><th>Nội dung</th></tr></thead>
+          <tbody>
+            <% giaoDichDiem.forEach(function (g) { %>
+            <tr>
+              <td class="tv-phu"><%= formatDate(g.created_at) %></td>
+              <td><span class="qt-pill qt-pill--<%= g.type === 'redeem' ? 'warn' : 'ok' %>"><%= TEN_LOAI[g.type] || g.type %></span></td>
+              <td class="qt-num"><%= g.type === 'redeem' || g.type === 'expire' ? '−' : '+' %><%= Math.abs(Number(g.points)) %></td>
+              <td class="tv-phu"><%= g.description || '—' %></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+        <div class="qt-empty"><i class="fas fa-star"></i><p>Chưa có giao dịch điểm nào.</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ================================================ Mã đã dùng -->
+  <div class="qt-card">
+    <div class="qt-card__head">
+      <div><h2>Mã khuyến mãi đã dùng</h2><p><%= maDaDung.length %> lượt gần nhất</p></div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+      <% if (maDaDung.length) { %>
+      <div class="qt-tablewrap">
+        <table class="qt-table">
+          <thead><tr><th>Thời gian</th><th>Mã</th><th>Giá trị đơn</th><th>Đã giảm</th></tr></thead>
+          <tbody>
+            <% maDaDung.forEach(function (u) { %>
+            <tr>
+              <td class="tv-phu"><%= formatDate(u.created_at) %></td>
+              <td>
+                <div class="qt-strong"><%= u.code %></div>
+                <div class="tv-phu"><%= u.ten_chuong_trinh || '(đã xóa)' %></div>
+              </td>
+              <td class="qt-money"><%= formatMoney(u.gia_tri_don) %>đ</td>
+              <td class="qt-money">− <%= formatMoney(u.so_tien_giam) %>đ</td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+        <div class="qt-empty"><i class="fas fa-ticket"></i><p>Khách này chưa dùng mã nào.</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tv-phu { font-size: .74rem; color: var(--qt-muted); }
+  .tv-tiendo { margin-top: 1.2rem; }
+  .tv-tiendo__thanh {
+    height: 10px; border-radius: 99px; background: #f0eae0; overflow: hidden; margin-bottom: .4rem;
+  }
+  .tv-tiendo__thanh span {
+    display: block; height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--qt-gold), #a8822f);
+  }
+</style>
+
+<%- include('partials/footer') %>

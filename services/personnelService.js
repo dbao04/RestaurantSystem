@@ -232,6 +232,105 @@ const personnelService = {
     return rows;
   },
 
+  /**
+   * Danh sach hop dong co phan trang phia may chu.
+   * Bang `hopdong` co hang chuc nghin dong (moi mon an mot dong), doi hoi
+   * LIMIT/OFFSET tren truy van da GROUP BY - khong duoc tai het roi cat o view.
+   * @param {object} opts
+   * @param {number} opts.page    trang hien tai, bat dau tu 1
+   * @param {number} opts.limit   so hop dong moi trang
+   * @param {string} opts.keyword loc theo ten khach hoac noi dung (tuy chon)
+   * @param {string} opts.status  '0' | '1' de loc trang thai (tuy chon)
+   * @returns {Promise<{rows: object[], total: number}>}
+   */
+  getContractsPaged: async ({ page = 1, limit = 25, keyword = '', status = '' } = {}) => {
+    const soTrang = Math.max(1, parseInt(page, 10) || 1);
+    const moiTrang = Math.min(200, Math.max(1, parseInt(limit, 10) || 25));
+    const offset = (soTrang - 1) * moiTrang;
+
+    const dieuKien = [];
+    const thamSo = [];
+    if (keyword) {
+      dieuKien.push('(k.ten LIKE ? OR h.noidung LIKE ?)');
+      thamSo.push('%' + keyword + '%', '%' + keyword + '%');
+    }
+    if (status !== '' && status !== null && status !== undefined && !isNaN(Number(status))) {
+      dieuKien.push('h.tinhtrang = ?');
+      thamSo.push(Number(status));
+    }
+    const menhDeWhere = dieuKien.length ? 'WHERE ' + dieuKien.join(' AND ') : '';
+    // Chi noi bang khach_hang khi that su can loc theo ten khach - phep JOIN
+    // tren 80k dong la phan dat nhat cua truy van.
+    const menhDeJoin = keyword ? 'LEFT JOIN khach_hang k ON h.id_user = k.id' : '';
+
+    const [dem] = await db.query(`
+      SELECT COUNT(DISTINCT h.sesis) AS total
+      FROM hopdong h
+      ${menhDeJoin}
+      ${menhDeWhere}
+    `, thamSo);
+
+    // Buoc 1: chi lay ma hop dong (`sesis`) cua dung trang dang xem. Gom theo
+    // mot cot duy nhat va khong JOIN nen MySQL dung duoc idx_hopdong_sesis;
+    // gom theo cac cot TEXT (`dates`, `tg`) se buoc no tao bang tam rat cham.
+    // Cot `dates` co dang 'YYYY-MM-DD' nen sap xep chuoi van dung thu tu ngay.
+    const [ma] = await db.query(`
+      SELECT h.sesis
+      FROM hopdong h
+      ${menhDeJoin}
+      ${menhDeWhere}
+      GROUP BY h.sesis
+      ORDER BY MAX(h.dates) DESC, MAX(h.tg) DESC
+      LIMIT ? OFFSET ?
+    `, [...thamSo, moiTrang, offset]);
+
+    if (ma.length === 0) {
+      return { rows: [], total: dem[0].total, page: soTrang, limit: moiTrang };
+    }
+
+    // Buoc 2: tong hop chi tiet cho dung so hop dong cua trang nay.
+    const danhSachMa = ma.map(r => r.sesis);
+    const [rows] = await db.query(`
+      SELECT h.sesis,
+             MAX(h.dates) AS dates,
+             COALESCE(MAX(k.ten), 'Khách vãng lai') AS ten,
+             MAX(k.sodienthoai) AS sodienthoai,
+             MAX(h.so_user) AS so_user,
+             MAX(h.noidung) AS noidung,
+             MAX(h.tg) AS tg,
+             MAX(h.tinhtrang) AS tinhtrang,
+             SUM(h.thanhtien) AS tong_tien
+      FROM hopdong h
+      LEFT JOIN khach_hang k ON h.id_user = k.id
+      WHERE h.sesis IN (?)
+      GROUP BY h.sesis
+      ORDER BY dates DESC, tg DESC
+    `, [danhSachMa]);
+
+    return { rows, total: dem[0].total, page: soTrang, limit: moiTrang };
+  },
+
+  /** Chi lay hop dong chua xac nhan - dung cho trang "Hop dong moi". */
+  getPendingContracts: async () => {
+    const [rows] = await db.query(`
+      SELECT h.sesis,
+             MAX(h.dates) AS dates,
+             COALESCE(MAX(k.ten), 'Khách vãng lai') AS ten,
+             MAX(k.sodienthoai) AS sodienthoai,
+             MAX(h.so_user) AS so_user,
+             MAX(h.noidung) AS noidung,
+             MAX(h.tg) AS tg,
+             MAX(h.tinhtrang) AS tinhtrang,
+             SUM(h.thanhtien) AS tong_tien
+      FROM hopdong h
+      LEFT JOIN khach_hang k ON h.id_user = k.id
+      WHERE h.tinhtrang = 0
+      GROUP BY h.sesis
+      ORDER BY dates DESC, tg DESC
+    `);
+    return rows;
+  },
+
   updateContractStatus: async (sesis, status) => {
     await db.query('UPDATE hopdong SET tinhtrang = ? WHERE sesis = ?', [status, sesis]);
   },
@@ -241,11 +340,22 @@ const personnelService = {
   },
 
   // ============ SCHEDULE MANAGEMENT ============
+  //
+  // TRANG THAI 3 = BAN NHAP cua man hinh xep ca tu dong (/admin/xep-ca), la ket
+  // qua may vua xep ma quan ly con dang sua. Moi truy van o day deu loai no ra:
+  //   - Nhan vien khong duoc thay ca chua chot roi sap xep cuoc song ca nhan
+  //     theo, den luc quan ly doi lai thi thanh that hua.
+  //   - Trang /admin/schedule la noi duyet DON DANG KY cua nhan vien; do ban
+  //     nhap vao do thi mot tuan may xep se do hang chuc dong khong phai don,
+  //     lam chim mat vai don that dang cho duyet.
+  // Bam "Chot" tren man hinh xep ca thi 3 doi thanh 1 va cac dong do hien ra o
+  // day binh thuong.
   getAllSchedules: async () => {
     const [rows] = await db.query(`
-      SELECT l.*, n.ten AS ten_nhanvien, n.chucvu 
+      SELECT l.*, n.ten AS ten_nhanvien, n.chucvu
       FROM lich_lam_viec l
       JOIN nhan_vien n ON l.id_nv = n.id_nv
+      WHERE l.trangthai <> 3
       ORDER BY l.ngay DESC
     `);
     return rows;
@@ -254,20 +364,24 @@ const personnelService = {
   getSchedule: async (staffId, year, month) => {
     let query, params = [];
     
+    // `l.trangthai <> 3`: bo ban nhap cua man hinh xep ca - xem ghi chu o
+    // `getAllSchedules` ngay phia tren.
     if (staffId) {
       query = `
-        SELECT l.*, n.ten AS ten_nhanvien, n.chucvu 
+        SELECT l.*, n.ten AS ten_nhanvien, n.chucvu
         FROM lich_lam_viec l
         JOIN nhan_vien n ON l.id_nv = n.id_nv
-        WHERE l.id_nv = ? AND YEAR(l.ngay) = ? AND MONTH(l.ngay) = ? 
+        WHERE l.id_nv = ? AND YEAR(l.ngay) = ? AND MONTH(l.ngay) = ?
+          AND l.trangthai <> 3
         ORDER BY l.ngay ASC`;
       params = [staffId, year, month];
     } else {
       query = `
-        SELECT l.*, n.ten AS ten_nhanvien, n.chucvu 
+        SELECT l.*, n.ten AS ten_nhanvien, n.chucvu
         FROM lich_lam_viec l
         JOIN nhan_vien n ON l.id_nv = n.id_nv
-        WHERE YEAR(l.ngay) = ? AND MONTH(l.ngay) = ? 
+        WHERE YEAR(l.ngay) = ? AND MONTH(l.ngay) = ?
+          AND l.trangthai <> 3
         ORDER BY l.ngay ASC`;
       params = [year, month];
     }
@@ -288,12 +402,27 @@ const personnelService = {
     );
   },
 
+  /**
+   * Nhan vien huy dang ky ca cua chinh minh.
+   *
+   * Chi huy duoc dong do CHINH HO dang ky (`nguon = 'dang_ky'`) va con dang
+   * cho duyet. Truoc day cau lenh chi loc theo `id_nv`, nghia la nhan vien vao
+   * /staff/schedule bam Huy la xoa duoc ca QUAN LY DA PHAN cho minh - lich cua
+   * ca nha hang thung mot lo ma khong ai hay, vi khong co gi ghi lai viec xoa.
+   * Muon nghi ca da duoc phan thi phai qua duong don nghi phep.
+   */
   cancelSchedule: async (scheduleId, staffId) => {
     const [rows] = await db.query(
       'SELECT * FROM lich_lam_viec WHERE id_lich = ? AND id_nv = ?',
       [scheduleId, staffId]
     );
     if (!rows[0]) throw new Error('Không tìm thấy lịch làm việc');
+    if (rows[0].nguon && rows[0].nguon !== 'dang_ky') {
+      throw new Error('Ca này do quản lý phân, không tự huỷ được. Hãy nộp đơn nghỉ phép.');
+    }
+    if (Number(rows[0].trangthai) === 1) {
+      throw new Error('Ca này đã được duyệt, không tự huỷ được. Hãy nộp đơn nghỉ phép.');
+    }
     await db.query('DELETE FROM lich_lam_viec WHERE id_lich = ?', [scheduleId]);
   },
 
@@ -484,26 +613,14 @@ const personnelService = {
     return rows;
   },
 
-  // [BẢO VỆ]: Logic chấm công (Check-in) và chặn chấm công nhiều lần
-  clockIn: async (staffId) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const [existing] = await db.query('SELECT * FROM cham_cong WHERE id_nv = ? AND ngay = ?', [staffId, today]);
-    if (existing.length > 0) throw new Error('Bạn đã chấm công vào hôm nay rồi!');
-    await db.query('INSERT INTO cham_cong (id_nv, ngay, gio_vao) VALUES (?, ?, NOW())', [staffId, today]);
-  },
-
-  clockOut: async (staffId) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const [rows] = await db.query('SELECT * FROM cham_cong WHERE id_nv = ? AND ngay = ?', [staffId, today]);
-    if (!rows[0]) throw new Error('Bạn chưa chấm công vào hôm nay!');
-    if (rows[0].gio_ra) throw new Error('Bạn đã chấm công ra hôm nay rồi!');
-    await db.query(
-      `UPDATE cham_cong SET gio_ra = NOW(),
-       tong_gio = ROUND(TIMESTAMPDIFF(MINUTE, gio_vao, NOW())/60, 2)
-       WHERE id_nv = ? AND ngay = ?`,
-      [staffId, today]
-    );
-  },
+  // clockIn / clockOut DA GO BO cung voi hai route /staff/clock-in va
+  // /staff/clock-out. Chung ghi thang vao bang cham_cong chi dua tren phien dang
+  // nhap, khong co bat ky bang chung nao la nguoi do co mat that - dung duong
+  // nay thi cham cong khuon mat khong con y nghia.
+  //
+  // Ghi cham cong gio nam gon trong services/faceService.js: ghiChamCong() chi
+  // duoc goi sau khi da qua kiem tra anh song, so khop khuon mat va doi chieu
+  // GPS. Moi lan deu de lai dau vet trong nhat_ky_nhan_dien + cham_cong_gps.
 
   // ============ LEAVE REQUEST MANAGEMENT ============
   getAllLeaveRequests: async () => {
