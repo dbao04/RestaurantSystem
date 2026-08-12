@@ -12,7 +12,6 @@ từng phần:
 | `HUONG_DAN_CO_CAU_TO_CHUC.md` | Chức danh, phân quyền, thời gian thực |
 | `HUONG_DAN_CHAM_CONG_KHUON_MAT.md` | Chấm công bằng khuôn mặt |
 | `HUONG_DAN_CHATBOT.md` | Chatbot hỏi đáp tiếng Việt (phân loại ý định tự huấn luyện) |
-| `HUONG_DAN_QUET_QR_TU_XA.md` | Cho khách quét mã QR bằng 4G hoặc từ mạng khác |
 | `HUONG_DAN_XEP_CA.md` | Xếp ca tự động: định mức nhân sự, thuật toán, vận hành |
 | `DANH_SACH_TAI_KHOAN.md` | Danh sách tài khoản đăng nhập |
 
