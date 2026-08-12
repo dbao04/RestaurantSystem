@@ -298,8 +298,7 @@ lần lượt trong `config/migrations/`:
 | Script | Việc làm |
 |---|---|
 | `001_chuan_hoa_schema.js` | Thêm `ngay_dat`/`gio_dat` chuẩn kiểu DATE/TIME, không xóa cột cũ |
-| `002_master_data.js` | Đơn vị tính, danh mục nguyên liệu, công thức, nhà cung cấp, c
-ombo |
+| `002_master_data.js` | Đơn vị tính, danh mục nguyên liệu, công thức, nhà cung cấp, combo |
 | `003_sinh_du_lieu_lich_su.js` | Sinh ~12 tháng dữ liệu mô phỏng theo quy luật ngành F&B |
 | `004_hieu_suat.js` | Gắn đơn cho nhân viên, mốc thời gian chế biến |
 | `005_ton_lo_hang.js` | Mô phỏng tồn kho theo lô FIFO |
