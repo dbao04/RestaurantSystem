@@ -29,6 +29,16 @@
         <div class="alert alert-danger"><%= error %></div>
       <% } %>
       <form action="/staff/login" method="POST">
+        <%
+          /* Nơi cần quay lại sau khi đăng nhập — do máy chủ truyền xuống, đã
+             lọc chỉ còn đường dẫn nội bộ (xem duongDanTiep trong server.js).
+             Nhân viên quét mã QR chấm công bằng điện thoại rơi vào đây trước;
+             không giữ lại thì đăng nhập xong họ bị đá về trang tổng quan và
+             phải tự mò lại menu trên màn hình nhỏ. */
+        %>
+        <% if (typeof tiep !== 'undefined' && tiep) { %>
+          <input type="hidden" name="tiep" value="<%= tiep %>">
+        <% } %>
         <div class="form-group">
           <label style="font-weight:600;">Tên đăng nhập</label>
           <input type="text" class="form-control" name="username" placeholder="Nhập tên đăng nhập" required autocomplete="username">

@@ -96,6 +96,10 @@ Terminal sẽ in ra bảng địa chỉ. Nếu thấy bảng đó thì dự án 
    ╚══════════════════════════════════════════════════════════╝
      Máy tại chỗ:      http://localhost:3000
      Máy tại chỗ (bảo mật): https://localhost:3443
+
+     Điện thoại trong cùng mạng Wi-Fi — CHẤM CÔNG KHUÔN MẶT
+     phải dùng địa chỉ https:// dưới đây, http:// sẽ không mở được camera:
+        https://192.168.1.50:3443/cham-cong/
    ```
 
 ### Bước 6 *(tuỳ chọn)*: Bật phân hệ AI / Machine Learning
@@ -159,6 +163,28 @@ npm run ml
 | Màn hình bếp (KDS) | http://localhost:3000/kds |
 | Sơ đồ bàn | http://localhost:3000/so-do-ban |
 | Tài liệu API của ML | http://127.0.0.1:8000/docs |
+| Chấm công bằng điện thoại | https://\<ip-máy-chủ\>:3443/cham-cong/ |
+
+---
+
+## 📱 DÙNG TRÊN ĐIỆN THOẠI
+
+Nhân viên chấm công bằng điện thoại của mình tại **`/cham-cong/`**. Bắt buộc phải
+mở bằng `https://` — trình duyệt chỉ cho dùng camera và định vị trong ngữ cảnh
+bảo mật, mở bằng `http://` thì `navigator.mediaDevices` không tồn tại và không có
+cách nào lách. Các trang khác (đơn hàng, thực đơn, báo cáo) vẫn chạy trên `http://`.
+
+Hai đường vào:
+
+* **Trong mạng Wi-Fi:** `https://<ip-máy-chủ>:3443/cham-cong/` — lần đầu mỗi máy
+  phải bấm qua cảnh báo chứng chỉ tự ký một lần.
+* **Mạng nào cũng được:** chạy `npm run qr:online`, dùng địa chỉ
+  `https://….trycloudflare.com/cham-cong/` — chứng chỉ thật, không có cảnh báo.
+
+Trang `/staff/attendance` trên máy tính có sẵn **mã QR** dẫn tới địa chỉ này để
+nhân viên quét, khỏi gõ tay.
+
+👉 Chi tiết, ràng buộc GPS và bảng lỗi thường gặp: **`HUONG_DAN_CHAM_CONG_DIEN_THOAI.md`**
 
 ---
 

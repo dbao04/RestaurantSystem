@@ -120,6 +120,35 @@ async function nhatKySua(gioiHan = 60) {
   }
 }
 
+/**
+ * Ban ghi cham cong HOM NAY cua chinh nguoi dang dang nhap.
+ *
+ * Lay ban ghi MOI NHAT chu khong phai ban ghi dau tien: mot nguoi co the lam
+ * hai ca trong ngay, luc do `ghiChamCong` tao them mot dong "ca bo sung" moi.
+ * Man hinh dien thoai phai bam theo dong dang mo, neu khong no se bao "da hoan
+ * thanh" trong khi nguoi ta dang trong ca thu hai.
+ */
+async function banGhiHomNay(idNv) {
+  const [rows] = await db.query(
+    `SELECT id_cc, ngay, gio_vao, gio_ra, tong_gio, phuong_thuc_vao, phuong_thuc_ra
+     FROM cham_cong WHERE id_nv = ? AND ngay = CURDATE()
+     ORDER BY id_cc DESC LIMIT 1`,
+    [Number(idNv)]
+  );
+  return rows[0] || null;
+}
+
+/** Vai ngay cham cong gan nhat cua mot nguoi - de xem nhanh tren dien thoai. */
+async function lichSuGanDay(idNv, soNgay = 7) {
+  const [rows] = await db.query(
+    `SELECT id_cc, ngay, gio_vao, gio_ra, tong_gio
+     FROM cham_cong WHERE id_nv = ?
+     ORDER BY ngay DESC, id_cc DESC LIMIT ?`,
+    [Number(idNv), Number(soNgay)]
+  );
+  return rows;
+}
+
 /** Thong tin nguoi thuc hien, lay tu phien dang nhap chu khong tu body. */
 function nguoiThucHien(req) {
   if (req.hoSo) {
@@ -273,5 +302,6 @@ async function xoa(req, idCc, lyDo) {
 
 module.exports = {
   bangNgay, tongQuanNgay, dsNhanVien, nhatKySua,
+  banGhiHomNay, lichSuGanDay,
   sua, them, xoa,
 };

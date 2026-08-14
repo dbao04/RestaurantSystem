@@ -152,6 +152,13 @@ function inBang(url) {
   inRa(`Thực đơn: ${url}/qr-menu`);
   inRa(`Quản trị: ${url}/admin`);
   console.log('');
+  // Cham cong bang dien thoai in rieng mot dong: day la duong DUY NHAT khong
+  // can bam qua canh bao chung chi. Dia chi https tu ky trong mang LAN van chay
+  // duoc nhung moi may phai chap nhan canh bao mot lan, con ten mien Cloudflare
+  // co chung chi that nen dien thoai vao thang.
+  inRa(`Chấm công (điện thoại): ${url}/cham-cong/`);
+  inRa('Nhân viên vào địa chỉ này, đăng nhập rồi chấm công như ở máy.');
+  console.log('');
   inRa('Mã QR trong trang quản trị đã tự đổi sang địa chỉ này — vào');
   inRa('trang mã QR để in lại, đừng dùng tờ giấy in từ trước.');
   console.log('');

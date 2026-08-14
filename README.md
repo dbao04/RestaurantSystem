@@ -11,6 +11,7 @@ từng phần:
 | `HUONG_DAN_CAI_DAT.md` | Cài đặt lần đầu |
 | `HUONG_DAN_CO_CAU_TO_CHUC.md` | Chức danh, phân quyền, thời gian thực |
 | `HUONG_DAN_CHAM_CONG_KHUON_MAT.md` | Chấm công bằng khuôn mặt |
+| `HUONG_DAN_CHAM_CONG_DIEN_THOAI.md` | Chấm công trên điện thoại: HTTPS, PWA, ràng buộc GPS |
 | `HUONG_DAN_CHATBOT.md` | Chatbot hỏi đáp tiếng Việt (phân loại ý định tự huấn luyện) |
 | `HUONG_DAN_XEP_CA.md` | Xếp ca tự động: định mức nhân sự, thuật toán, vận hành |
 | `DANH_SACH_TAI_KHOAN.md` | Danh sách tài khoản đăng nhập |
@@ -346,19 +347,9 @@ khuôn mặt.
 
 Nêu rõ để không bị hỏi bất ngờ:
 
-- **Chấm công bằng khuôn mặt.** `ml_service/khuon_mat.py` (~1000 dòng) đã hoàn
-  chỉnh về mặt thuật toán: phát hiện bằng YuNet, trích vector 128 chiều bằng
-  SFace, so khớp cosine, có kiểm tra chống giả mạo ảnh in/màn hình. Migration 007
-  đã tạo bảng. **Nhưng** `main.py` chưa khai báo endpoint cho module này và phía
-  Node chưa có giao diện gọi tới — nên tính năng chưa dùng được từ trình duyệt.
-  Ngoài ra `ml_service/requirements.txt` chưa liệt kê `opencv-python`, cần cài
-  thêm trước khi chạy. Hai tệp mô hình ONNX tải bằng
-  `python -m ml_service.tai_mo_hinh`.
 - **Ba router chưa được mount** trong `server.js`: `routes/loyalty.js`,
   `routes/adminLoyalty.js`, `routes/generalStaff.js`. Code đã viết xong, chỉ thiếu
-  dòng `app.use(...)`. Hiện chỉ `analytics`, `forecast`, `kds` được nạp
-  (`server.js:154-157`).
-- **Chấm công GPS**: bảng và tham số đã có trong `cau_hinh`, chưa có luồng xử lý.
+  dòng `app.use(...)`.
 - **Chưa làm**: theo dõi shipper trên bản đồ, OCR hóa đơn, phân tích cảm xúc đánh
   giá.
 
@@ -382,6 +373,8 @@ routes/                   Các phân hệ mới tách riêng khỏi server.js
   kds.js                  Màn hình bếp + sơ đồ bàn (nhận `io` để bắn realtime)
   toChuc.js               Sơ đồ tổ chức, bảng điều hành, phân quyền, ủy quyền
   khuonMat.js             Chấm công bằng khuôn mặt (kiosk / cá nhân / quản lý)
+  chamCong.js             Bảng công theo ngày, sửa sai sót (có kiểm toán)
+  chamCongDiDong.js       Chấm công trên điện thoại: /cham-cong/ + manifest PWA
   chatbot.js              Trợ lý ảo: API công khai + trang quản trị
 services/                 Toàn bộ nghiệp vụ và SQL
   mlService.js            Cầu nối sang Python, luôn có dữ liệu dự phòng
@@ -404,6 +397,7 @@ train_ml.bat              Huấn luyện lại và in bảng chỉ số
 
 Các tài liệu chuyên đề: `HUONG_DAN_CO_CAU_TO_CHUC.md` (phân quyền, realtime),
 `HUONG_DAN_CHAM_CONG_KHUON_MAT.md` (nhận diện khuôn mặt),
+`HUONG_DAN_CHAM_CONG_DIEN_THOAI.md` (chấm công trên điện thoại),
 `DANH_SACH_TAI_KHOAN.md` (tài khoản đăng nhập).
 
 ---
