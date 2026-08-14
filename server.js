@@ -181,6 +181,9 @@ app.use('/', require('./routes/toChuc'));
 app.use('/', require('./routes/khuonMat'));
 // Quan ly bang cham cong: xem theo ngay, sua sai sot (co kiem toan).
 app.use('/', require('./routes/chamCong'));
+// Cham cong bang dien thoai: /cham-cong/ - giao dien mot cot, cai duoc ra man
+// hinh chinh. Dung chung API voi kiosk nen moi rang buoc chong gian lan giu nguyen.
+app.use('/', require('./routes/chamCongDiDong'));
 // Thanh toan: POS thu ngan, khach tu tra tai ban qua VietQR, dat coc, doi soat.
 // Can `io` de man hinh thu ngan va dien thoai khach cung sang trang thai "da
 // thanh toan" ngay khi ngan hang bao co.
@@ -1612,13 +1615,29 @@ app.use('/staff', async (req, res, next) => {
   next();
 });
 
+/**
+ * Duong dan quay lai sau khi dang nhap (`?tiep=`).
+ *
+ * Chi nhan duong dan NOI BO. Khong loc thi `?tiep=https://trang-gia.com` bien
+ * trang dang nhap that cua nha hang thanh mot buoc nhay sang trang cua ke khac -
+ * lo hong chuyen huong mo, va nan nhan la nguoi vua go dung mat khau xong.
+ * Chan ca `//` va `/\` vi trinh duyet hieu chung la dia chi tuyet doi.
+ */
+function duongDanTiep(gt) {
+  const s = String(gt || '');
+  if (!s.startsWith('/') || s.startsWith('//') || s.startsWith('/\\')) return null;
+  return s;
+}
+
 app.get('/staff/login', (req, res) => {
-  if (req.session.stafflogin) return res.redirect('/staff');
-  res.render('staff/login', { layout: false });
+  const tiep = duongDanTiep(req.query.tiep);
+  if (req.session.stafflogin) return res.redirect(tiep || '/staff');
+  res.render('staff/login', { layout: false, tiep });
 });
 
 app.post('/staff/login', async (req, res) => {
   const { username, password } = req.body;
+  const tiep = duongDanTiep(req.body.tiep);
   try {
     const staff = await personnelService.staffLogin(username, password);
     if (staff) {
@@ -1636,6 +1655,12 @@ app.post('/staff/login', async (req, res) => {
         console.error('Không nạp được hồ sơ quyền khi đăng nhập:', e.message);
       }
 
+      // Nguoi vua quet ma QR / bam duong dan cham cong tren dien thoai: dua ho
+      // ve DUNG cho ho dinh toi. Uu tien hon ca buoc moi dang ky khuon mat ben
+      // duoi, vi trang /cham-cong/ tu no da co phan dang ky ngay trong trang -
+      // chen them mot trang nua vao giua chi khien ho lac duong.
+      if (tiep) return res.redirect(tiep);
+
       // Lan dau dang nhap ma chua co khuon mat -> dua thang toi trang tu dang ky.
       // Chi kiem tra CSDL (nhanh); trang do tu kiem tra dich vu Python va luon co
       // nut "bo qua" nen khong bao gio chan duoc viec vao he thong.
@@ -1647,10 +1672,12 @@ app.post('/staff/login', async (req, res) => {
       }
       return res.redirect('/staff');
     }
-    res.render('staff/login', { error: 'Tên đăng nhập hoặc mật khẩu không đúng!', layout: false });
+    res.render('staff/login', {
+      error: 'Tên đăng nhập hoặc mật khẩu không đúng!', layout: false, tiep,
+    });
   } catch (err) {
     console.error(err);
-    res.render('staff/login', { error: 'Lỗi hệ thống!', layout: false });
+    res.render('staff/login', { error: 'Lỗi hệ thống!', layout: false, tiep });
   }
 });
 
@@ -2424,9 +2451,33 @@ app.get('/staff/attendance', requireStaff, async (req, res) => {
       faceSvc.trangThaiDichVu(),
       faceSvc.soMauCua(req.session.staffId),
     ]);
+
+    // Ma QR mo trang cham cong tren dien thoai.
+    //
+    // Vi sao ve ma QR chu khong chi in dia chi ra man hinh: dia chi that dai
+    // (https://192.168.1.50:3443/cham-cong/ hoac mot ten mien trycloudflare
+    // ngau nhien), go tay tren dien thoai sai mot ky tu la khong vao duoc va
+    // khong ai doan ra minh go sai o dau. Quet ma thi khong the go sai.
+    //
+    // `diaChiDienThoai` co the tra null khi may chu tat HTTPS va khong mo
+    // tunnel - luc do khong ve ma nao ca, giao dien noi thang la chua dung
+    // duoc, thay vi ve mot ma QR dan vao ngo cut.
+    let diDong = null;
+    try {
+      const dc = diaChiQR.diaChiDienThoai(req);
+      if (dc) {
+        diDong = { ...dc, url: dc.url + '/cham-cong/' };
+        diDong.anh = await require('qrcode').toDataURL(diDong.url, {
+          errorCorrectionLevel: 'M', margin: 1, width: 220,
+        });
+      }
+    } catch (e) {
+      console.warn('[cham-cong] không vẽ được mã QR điện thoại:', e.message);
+    }
+
     res.render('staff/attendance', {
       title: 'Chấm công', attendance,
-      trangThai, soMauKhuonMat,
+      trangThai, soMauKhuonMat, diDong,
       todayAttendance: todayRows[0][0] || null,
       currentMonth: req.query.thang || new Date().toISOString().slice(0, 7),
       msg: req.query.msg || null, msgType: req.query.msgType || null,
@@ -2915,7 +2966,9 @@ function inBangDiaChi(dsLan, coHttps) {
     console.log('');
     d('Điện thoại trong cùng mạng Wi-Fi — CHẤM CÔNG KHUÔN MẶT');
     d('phải dùng địa chỉ https:// dưới đây, http:// sẽ không mở được camera:');
-    dsLan.forEach((ip) => d(coHttps ? `   https://${ip}:${PORT_HTTPS}` : `   http://${ip}:${PORT} (KHÔNG dùng được camera)`));
+    dsLan.forEach((ip) => d(coHttps
+      ? `   https://${ip}:${PORT_HTTPS}/cham-cong/`
+      : `   http://${ip}:${PORT}/cham-cong/ (KHÔNG dùng được camera)`));
     console.log('');
     d(`Mã QR dán ở bàn đang dùng địa chỉ: ${diaChiQR.goc(null)}`);
     if (dsLan.length > 1) {

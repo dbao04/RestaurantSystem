@@ -205,4 +205,42 @@ function danhSachDiaChi() {
   return chungChi.diaChiLan();
 }
 
-module.exports = { goc, chuanHoa, ipMayChu, danhSachDiaChi, gocTunnel, TEP_TUNNEL };
+/**
+ * Dia chi mo tren DIEN THOAI de cham cong duoc.
+ *
+ * Khac `goc()` o mot diem duy nhat nhung quyet dinh: dia chi nay BAT BUOC phai
+ * la secure context. Trang thuc don qua ma QR khong dung camera nen `goc()` tra
+ * ve http cho gon; trang cham cong thi nguoc lai - mo bang http la
+ * `navigator.mediaDevices` khong ton tai, khong co cach nao lach.
+ *
+ * Thu tu uu tien va vi sao:
+ *   1. QR_BASE_URL neu la https - nguoi quan tri da khai bao ten mien that.
+ *   2. Tunnel Cloudflare (`npm run qr:online`) - chung chi that, dien thoai vao
+ *      thang khong canh bao gi. Day la duong tot nhat cho nhan vien.
+ *   3. https://<ip-lan>:3443 - chung chi tu ky, moi may phai bam qua canh bao
+ *      mot lan. Van chay duoc, nhung phai noi truoc cho nguoi dung biet, nen
+ *      tra kem co `tu_ky`.
+ *
+ * Tra ve null khi khong co duong nao (BAT_HTTPS=0 va khong co tunnel) - luc do
+ * giao dien phai noi that la chua cham cong bang dien thoai duoc, thay vi dua
+ * ra mot dia chi bam vao khong len.
+ */
+function diaChiDienThoai(req) {
+  const khaiBao = String(process.env.QR_BASE_URL || '').trim().replace(/\/+$/, '');
+  if (/^https:\/\//i.test(khaiBao)) return { url: khaiBao, tu_ky: false, nguon: 'cau_hinh' };
+
+  const qua = gocTunnel();
+  if (/^https:\/\//i.test(qua)) return { url: qua, tu_ky: false, nguon: 'tunnel' };
+
+  if (String(process.env.BAT_HTTPS || '1') === '0') return null;
+
+  const cong = Number(process.env.HTTPS_PORT) || 3443;
+  const tenMay = tachTenMay(req && req.get && req.get('host'));
+  const may = tenMay && !LOOPBACK.has(tenMay) ? tenMay : ipMayChu();
+  if (!may || LOOPBACK.has(may)) return null;
+  return { url: `https://${may}:${cong}`, tu_ky: true, nguon: 'lan' };
+}
+
+module.exports = {
+  goc, chuanHoa, ipMayChu, danhSachDiaChi, gocTunnel, diaChiDienThoai, TEP_TUNNEL,
+};

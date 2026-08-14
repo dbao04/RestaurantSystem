@@ -46,9 +46,20 @@
   <h1 class="h3 mb-0 text-gray-800">
     <i class="fas fa-clock text-primary"></i> Chấm công của tôi
   </h1>
-  <a href="/cham-cong-khuon-mat" class="btn btn-sm btn-outline-primary" target="_blank">
-    <i class="fas fa-external-link-alt"></i> Mở kiosk chấm công
-  </a>
+  <div>
+    <%
+      /* Chỉ hiện trên màn hình hẹp — tức là đúng lúc người dùng đang cầm điện
+         thoại. Trang này vẽ được trên điện thoại nhưng khung camera bị bó trong
+         lưới 12 cột nên khuôn mặt chiếm quá ít điểm ảnh; bản ở /cham-cong/ dùng
+         khung dọc hết bề ngang. Trên máy tính thì ngược lại, nút này chỉ gây rối. */
+    %>
+    <a href="/cham-cong/" class="btn btn-sm btn-primary d-lg-none">
+      <i class="fas fa-mobile-alt"></i> Bản cho điện thoại
+    </a>
+    <a href="/cham-cong-khuon-mat" class="btn btn-sm btn-outline-primary" target="_blank">
+      <i class="fas fa-external-link-alt"></i> Mở kiosk chấm công
+    </a>
+  </div>
 </div>
 
 <% if (typeof msg !== 'undefined' && msg) { %>
@@ -219,6 +230,58 @@
               </div>
             </div>
             <div id="kq-dang-ky" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- ========================================= CHẤM CÔNG BẰNG ĐIỆN THOẠI -->
+    <%
+      /* Mã QR để mở trang chấm công trên điện thoại.
+
+         Đặt ở đây — trong chính trang chấm công trên máy tính — vì đây là nơi
+         nhân viên đang đứng khi họ nghĩ tới việc chấm công. Bắt họ đi tìm địa
+         chỉ trong tài liệu cài đặt là cách chắc chắn để không ai dùng.
+
+         `diDong` do máy chủ dựng (xem /staff/attendance trong server.js) và có
+         thể là null khi máy chủ tắt HTTPS lẫn tunnel. Không có địa chỉ https
+         thì điện thoại không mở được camera, nên thà nói thẳng còn hơn vẽ một
+         mã QR quét vào chỗ không có gì. */
+    %>
+    <% if (typeof diDong !== 'undefined' && diDong) { %>
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-mobile-alt"></i> Chấm công bằng điện thoại
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-auto text-center">
+              <img src="<%= diDong.anh %>" alt="Mã QR chấm công" style="width:150px; height:150px">
+            </div>
+            <div class="col">
+              <p class="mb-2">Dùng camera điện thoại quét mã bên cạnh, hoặc mở địa chỉ:</p>
+              <div class="small text-monospace bg-light rounded p-2 mb-2" style="word-break:break-all">
+                <%= diDong.url %>
+              </div>
+              <% if (diDong.nguon === 'tunnel') { %>
+                <p class="small text-success mb-1">
+                  <i class="fas fa-globe"></i> Đang mở qua Internet — điện thoại ở mạng nào cũng vào được.
+                  Địa chỉ này đổi mỗi lần chạy lại <code>npm run qr:online</code>.
+                </p>
+              <% } else if (diDong.tu_ky) { %>
+                <p class="small text-muted mb-1">
+                  <i class="fas fa-wifi"></i> Điện thoại phải cùng mạng Wi-Fi với máy chủ.
+                  Lần đầu sẽ hiện cảnh báo chứng chỉ — bấm
+                  <strong>Nâng cao → Tiếp tục truy cập</strong> một lần là xong.
+                </p>
+              <% } %>
+              <p class="small text-muted mb-0">
+                Đăng nhập bằng chính tài khoản này. Vẫn phải quét khuôn mặt và đứng
+                trong phạm vi nhà hàng như khi chấm ở máy.
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,0 +1,768 @@
+<%
+  /*
+    TRANG CHẤM CÔNG DÀNH RIÊNG CHO ĐIỆN THOẠI
+
+    Ba trạng thái loại trừ nhau, chọn ngay ở đây thay vì để JavaScript đoán:
+
+      !anToan        trang đang mở bằng http:// → camera và GPS KHÔNG tồn tại.
+                     Không vẽ máy chấm công làm gì, chỉ đưa đường dẫn https.
+      soMau === 0    chưa có mẫu khuôn mặt → hiện phần đăng ký, không hiện nút
+                     chấm công (bấm cũng chỉ nhận "chưa đăng ký").
+      còn lại        máy chấm công bình thường.
+
+    soMau === -1 nghĩa là bảng khuon_mat_nv chưa tồn tại (migration 007 chưa
+    chạy) — coi như "không áp dụng" chứ không phải "chưa đăng ký", nếu không thì
+    cả nhà hàng bị đẩy vào màn hình đăng ký.
+  */
+  var coKetNoi = trangThai && trangThai.ket_noi !== false;
+  var coMoHinh = trangThai && trangThai.co_mo_hinh !== false;
+  var daDangKy = soMau === -1 || soMau > 0;
+  var chamDuoc = anToan && coKetNoi && coMoHinh && daDangKy;
+  var dangKyDuoc = anToan && coKetNoi && coMoHinh;
+
+  function gio(t) {
+    return t ? new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : null;
+  }
+  var gioVao = homNay ? gio(homNay.gio_vao) : null;
+  var gioRa = homNay ? gio(homNay.gio_ra) : null;
+  var chieuKeTiep = !gioVao ? 'VÀO' : (!gioRa ? 'RA' : 'VÀO');
+  var caBoSung = !!(gioVao && gioRa);
+%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <!--
+    viewport-fit=cover: iPhone có tai thỏ và vạch vuốt cử chỉ. Không khai báo thì
+    trình duyệt chừa hai dải trắng, khung camera hẹp lại vô cớ. Khai báo rồi thì
+    phải tự tránh bằng env(safe-area-inset-*) ở CSS bên dưới.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Chấm công</title>
+  <meta name="theme-color" content="#2c1810">
+  <link rel="manifest" href="/cham-cong/manifest.webmanifest">
+  <link rel="icon" href="/cham-cong/bieu-tuong.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/cham-cong/bieu-tuong.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chấm công">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    :root { --vang:#c8a951; --xanh:#1cc88a; --do:#e74a3b; }
+    * { box-sizing:border-box; }
+    /* 100dvh chứ không phải 100vh: trên điện thoại 100vh tính cả phần bị thanh
+       địa chỉ che, nút chấm công sẽ nằm dưới mép màn hình và không bấm được. */
+    body { margin:0; min-height:100vh; min-height:100dvh;
+           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+           background:linear-gradient(160deg,#2c1810,#4e342e 60%,#3a241a);
+           color:#fff; -webkit-text-size-adjust:100%;
+           /* Chặn phóng to khi chạm hai lần liên tiếp vào nút (tật của Safari iOS) */
+           touch-action:manipulation; overflow-x:hidden; }
+    a { color:var(--vang); }
+
+    .boc { max-width:520px; margin:0 auto;
+           padding:calc(12px + env(safe-area-inset-top)) 14px
+                   calc(20px + env(safe-area-inset-bottom)); }
+
+    /* ------------------------------------------------------------ đầu trang */
+    .dau { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .anh-dai-dien { width:42px; height:42px; border-radius:50%; background:var(--vang);
+                    color:#2c1810; font-weight:800; font-size:19px; flex:none;
+                    display:flex; align-items:center; justify-content:center; }
+    .dau .ten { font-weight:800; font-size:16px; line-height:1.2; }
+    .dau .chuc { font-size:12px; opacity:.65; }
+    /* Đồng hồ nằm ở đầu trang chứ không phải trong thẻ "Hôm nay": để trong thẻ
+       thì con số 34px đẩy nút chấm công xuống dưới mép màn hình, người dùng phải
+       cuộn mới bấm được việc duy nhất họ vào đây để làm. */
+    .dau .luc { margin-left:auto; text-align:right; line-height:1.25; }
+    .dau .luc .gio { font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; }
+    .dau .luc .ngay { font-size:11px; opacity:.6; }
+    .dau .thoat { color:#fff; opacity:.55; font-size:18px; text-decoration:none; padding:6px 2px 6px 10px; }
+
+    /* --------------------------------------------------------- thẻ hôm nay */
+    .the { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+           border-radius:16px; padding:14px; margin-bottom:14px; }
+    .the-tieu-de { font-size:12px; text-transform:uppercase; letter-spacing:.5px;
+                   opacity:.6; margin-bottom:10px; }
+    /* Tình trạng hôm nay gói trong MỘT dòng, không phải một thẻ ba ô.
+       Thẻ ba ô đọc đẹp hơn nhưng cao 100px, đủ để đẩy nút chấm công xuống dưới
+       mép màn hình điện thoại — đổi cả nút bấm lấy chỗ hiển thị ba con số mà
+       bảng "7 lần gần nhất" ngay bên dưới đã nói lại rồi. */
+    .moc { display:flex; gap:6px; margin-bottom:12px; }
+    .moc > span { flex:1; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.09);
+                  border-radius:11px; padding:7px 4px; text-align:center; font-size:12px;
+                  opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .moc b { display:block; font-size:15px; margin-top:1px; font-variant-numeric:tabular-nums; }
+    .moc .vao b { color:var(--xanh); }
+    .moc .ra b  { color:#ffb4ac; }
+    .moc .chua b { opacity:.4; font-weight:600; }
+
+    /* --------------------------------------------------------------- camera */
+    /* Khung DỌC 3/4 chứ không phải 4/3: khuôn mặt người cao hơn rộng, nên với
+       cùng bề ngang màn hình, khung dọc chứa được khuôn mặt to hơn hẳn — nhiều
+       điểm ảnh hơn cho bước cắt 112x112 bên Python, ảnh nét hơn, kiểm tra ảnh
+       sống ít báo trượt oan hơn.
+
+       max-height giữ nút chấm công nằm trong màn hình đầu tiên. Cao hơn nữa thì
+       khuôn mặt không to thêm được bao nhiêu (bề ngang mới là cạnh giới hạn),
+       mà nút thì tụt xuống dưới mép. width:auto để hộp co theo chiều cao mà
+       KHÔNG méo tỉ lệ — bóp ngang là hỏng đúng cái ta đang tối ưu. */
+    .video-boc { position:relative; width:100%; aspect-ratio:3/4; background:#000;
+                 border-radius:16px; overflow:hidden; border:2px solid rgba(255,255,255,.12); }
+    /* Khung đăng ký vuông vì ảnh mẫu được cắt vuông giữa khung (CamCC.chup với
+       vuong:true). Để 3/4 thì phần trên và dưới hiện trong khung xem trước sẽ bị
+       cắt bỏ lúc chụp — người dùng canh theo cái họ thấy rồi ngạc nhiên vì ảnh
+       lưu ra khác. Vuông cũng ngắn hơn 130px, đủ để hai nút nằm trong màn hình. */
+    .video-boc.vuong { aspect-ratio:1/1; }
+    video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+    .khung-mat { position:absolute; inset:12% 14%; border:3px dashed rgba(255,255,255,.3);
+                 border-radius:50%/60%; pointer-events:none; transition:border-color .3s; }
+    .khung-mat.tot { border-color:var(--xanh); }
+    .nut-doi-cam { position:absolute; right:10px; bottom:10px; width:46px; height:46px;
+                   border-radius:50%; border:none; background:rgba(0,0,0,.55); color:#fff;
+                   font-size:17px; display:none; align-items:center; justify-content:center; }
+    .nut-doi-cam.hien { display:flex; }
+    .lop-gps { position:absolute; left:10px; bottom:10px; right:64px; font-size:12px;
+               background:rgba(0,0,0,.55); border-radius:10px; padding:7px 10px;
+               line-height:1.35; }
+    .lop-gps.tot { color:#9ff0cd; } .lop-gps.xau { color:#ffb4ac; }
+
+    .thu-thach { text-align:center; font-weight:800; font-size:17px; min-height:24px;
+                 margin:12px 0 6px; }
+    .thu-thach i { color:var(--vang); }
+    .thanh { height:7px; background:rgba(255,255,255,.14); border-radius:5px; overflow:hidden; }
+    .thanh > i { display:block; height:100%; width:0; background:var(--xanh); transition:width .2s; }
+    .tinh-trang { text-align:center; font-size:13px; opacity:.75; min-height:20px; margin-top:8px; }
+
+    /* ----------------------------------------------------------------- nút */
+    .nut { display:block; width:100%; border:none; border-radius:14px; font-weight:800;
+           font-size:18px; padding:16px; margin-top:12px; background:var(--vang);
+           color:#2c1810; min-height:54px; }
+    .nut:disabled { opacity:.45; }
+    .nut.phu { background:rgba(255,255,255,.12); color:#fff; font-size:15px; padding:13px;
+               min-height:46px; }
+    .nut-lien-ket { text-decoration:none; text-align:center; }
+
+    /* ------------------------------------------------------------ cảnh báo */
+    .canh-bao { border-radius:14px; padding:14px; font-size:14px; line-height:1.5;
+                margin-bottom:14px; background:rgba(231,74,59,.2);
+                border:1px solid rgba(231,74,59,.45); }
+    .canh-bao.vang { background:rgba(200,169,81,.16); border-color:rgba(200,169,81,.45); }
+    .canh-bao b { display:block; margin-bottom:4px; }
+    .dia-chi { display:block; word-break:break-all; background:rgba(0,0,0,.3);
+               border-radius:10px; padding:10px; margin:10px 0; font-size:14px;
+               font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--vang); }
+
+    /* ------------------------------------------------------------- lịch sử */
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { font-size:11px; text-transform:uppercase; opacity:.55; font-weight:600;
+         text-align:left; padding-bottom:6px; }
+    td { padding:7px 0; border-top:1px solid rgba(255,255,255,.08); }
+    td.gio { font-variant-numeric:tabular-nums; }
+    .trong { text-align:center; opacity:.5; font-size:14px; padding:10px 0; }
+
+    /* --------------------------------------------------------- ảnh đăng ký */
+    .ds-anh { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; min-height:54px; }
+    .ds-anh img { width:54px; height:54px; object-fit:cover; border-radius:8px;
+                  border:2px solid rgba(255,255,255,.2); }
+
+    /* ------------------------------------------------------- màn hình kết quả */
+    .ket-qua { position:fixed; inset:0; z-index:60; display:none; flex-direction:column;
+               align-items:center; justify-content:center; text-align:center;
+               padding:calc(24px + env(safe-area-inset-top)) 26px
+                       calc(24px + env(safe-area-inset-bottom)); overflow-y:auto; }
+    .ket-qua.hien { display:flex; animation:hienra .25s; }
+    @keyframes hienra { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:none} }
+    .ket-qua.thanh-cong { background:linear-gradient(160deg,#0f5132,#198754); }
+    .ket-qua.that-bai   { background:linear-gradient(160deg,#58151c,#c0392b); }
+    .ket-qua .bieu-tuong { font-size:66px; line-height:1; margin-bottom:14px; }
+    .ket-qua .tieu-de { font-size:26px; font-weight:800; }
+    .ket-qua .chi-tiet { font-size:16px; opacity:.92; margin-top:8px; line-height:1.5; }
+    .ket-qua .phu { font-size:13px; opacity:.7; margin-top:14px; line-height:1.5; }
+    .ket-qua .nut { max-width:300px; }
+
+    .chan { text-align:center; font-size:12px; opacity:.45; margin-top:18px; line-height:1.6; }
+  </style>
+</head>
+<body>
+<div class="boc">
+
+  <div class="dau">
+    <div class="anh-dai-dien"><%= (hoTen || 'N').charAt(0).toUpperCase() %></div>
+    <div style="min-width:0">
+      <div class="ten"><%= hoTen %></div>
+      <div class="chuc"><%= tenChucDanh || 'Nhân viên' %></div>
+    </div>
+    <div class="luc">
+      <%
+        /* Vẽ sẵn giờ máy chủ thay vì để "--:--": ở trạng thái mở bằng http, khối
+           JavaScript phía dưới không chạy, chỗ này sẽ đứng nguyên dấu gạch. */
+      %>
+      <div class="gio" id="dong-ho"><%= new Date().toLocaleTimeString('vi-VN',
+            { hour:'2-digit', minute:'2-digit' }) %></div>
+      <div class="ngay"><%= new Date().toLocaleDateString('vi-VN',
+            { weekday:'short', day:'2-digit', month:'2-digit' }) %></div>
+    </div>
+    <a class="thoat" href="/staff" title="Về trang nhân viên"><i class="fas fa-th-large"></i></a>
+  </div>
+
+<% if (!anToan) { %>
+  <%
+    /* MỞ BẰNG http:// — KHÔNG VẼ MÁY CHẤM CÔNG
+
+       Đây là lỗi hay gặp nhất khi nhân viên tự gõ địa chỉ. Trình duyệt chỉ cho
+       dùng camera và GPS trong "secure context" (https hoặc localhost); mở bằng
+       http thì `navigator.mediaDevices` KHÔNG TỒN TẠI — không phải bị từ chối
+       quyền, mà là không có sẵn, và không lách được bằng JavaScript.
+
+       Nên thay vì để người dùng bấm nút rồi nhận một câu lỗi khó hiểu, trang
+       dừng lại ở đây và đưa đúng cái họ cần: một đường dẫn https bấm được. */
+  %>
+  <div class="canh-bao">
+    <b><i class="fas fa-lock-open"></i> Chưa mở được camera ở địa chỉ này</b>
+    Trang đang mở bằng <code>http://</code>. Trình duyệt chỉ cho phép dùng camera
+    và định vị khi trang chạy bằng <code>https://</code> — đây là quy định của
+    trình duyệt, không phải lỗi hệ thống.
+  </div>
+
+  <% if (diaChiAnToan) { %>
+    <div class="the">
+      <div class="the-tieu-de">Địa chỉ chấm công</div>
+      <span class="dia-chi"><%= diaChiAnToan.url %>/cham-cong/</span>
+      <a class="nut nut-lien-ket" href="<%= diaChiAnToan.url %>/cham-cong/">
+        <i class="fas fa-arrow-right"></i> Mở địa chỉ an toàn
+      </a>
+      <% if (diaChiAnToan.tu_ky) { %>
+        <p style="font-size:13px; opacity:.75; line-height:1.55; margin:12px 0 0">
+          Lần đầu vào, máy sẽ báo <b>"Kết nối của bạn không phải là kết nối riêng tư"</b>.
+          Đó là do chứng chỉ tự ký trong mạng nội bộ, không phải trang giả mạo:
+          <br>• Chrome/Edge: <b>Nâng cao</b> → <b>Tiếp tục truy cập</b>
+          <br>• Safari: <b>Chi tiết</b> → <b>Truy cập trang web này</b>
+          <br>Bấm qua một lần, các lần sau máy nhớ luôn.
+        </p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="the">
+      <div class="the-tieu-de">Chưa có địa chỉ https</div>
+      <p style="font-size:14px; line-height:1.55; margin:0">
+        Máy chủ đang tắt HTTPS (<code>BAT_HTTPS=0</code>) và cũng không mở tunnel.
+        Nhờ quản trị bật một trong hai, hoặc chấm công ở máy đặt tại nhà hàng.
+      </p>
+    </div>
+  <% } %>
+
+<% } else { %>
+
+  <!-- ================================================= TÌNH TRẠNG HÔM NAY -->
+  <div class="moc">
+    <span class="<%= gioVao ? 'vao' : 'chua' %>">Giờ vào<b><%= gioVao || '––:––' %></b></span>
+    <span class="<%= gioRa ? 'ra' : 'chua' %>">Giờ ra<b><%= gioRa || '––:––' %></b></span>
+    <span class="<%= homNay && homNay.tong_gio ? '' : 'chua' %>">Tổng giờ<b><%=
+      homNay && homNay.tong_gio ? homNay.tong_gio + 'h' : '–' %></b></span>
+  </div>
+
+  <% if (!coKetNoi) { %>
+    <div class="canh-bao vang">
+      <b><i class="fas fa-plug"></i> Dịch vụ nhận diện chưa bật</b>
+      Chưa chấm công được. Nhờ quản trị khởi động ML service (Python, cổng 8000)
+      rồi tải lại trang.
+    </div>
+  <% } else if (!coMoHinh) { %>
+    <div class="canh-bao vang">
+      <b><i class="fas fa-microchip"></i> Máy chủ chưa tải mô hình nhận diện</b>
+      Nhờ quản trị chạy <code>python -m ml_service.tai_mo_hinh</code> rồi tải lại trang.
+    </div>
+  <% } %>
+
+  <% if (dangKyDuoc && !daDangKy) { %>
+    <!-- ============================================ ĐĂNG KÝ KHUÔN MẶT LẦN ĐẦU -->
+    <%
+      /* Chưa có mẫu thì máy chấm công vô nghĩa — nhận diện lấy gì mà so. Việc
+         đăng ký làm ngay tại đây thay vì đẩy sang trang khác: nhân viên mở điện
+         thoại lên là để chấm công, gửi họ đi một trang nữa rồi bắt quay lại là
+         cách chắc chắn nhất để họ bỏ giữa chừng. */
+    %>
+    <div class="canh-bao vang">
+      <b><i class="fas fa-user-plus"></i> Bạn chưa đăng ký khuôn mặt</b>
+      Cần chụp 5 ảnh để hệ thống nhận ra bạn. Chỉ làm một lần, mất khoảng một phút.
+    </div>
+
+    <div class="the">
+      <div class="the-tieu-de">Đăng ký khuôn mặt</div>
+      <div class="video-boc vuong">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="khung-mat"></div>
+        <button class="nut-doi-cam" id="nut-doi-cam" type="button" aria-label="Đổi camera">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+      <div class="tinh-trang" id="tinh-trang">Đang mở camera...</div>
+      <div class="ds-anh" id="ds-anh"></div>
+      <button class="nut" id="nut-chup" disabled>
+        <i class="fas fa-camera"></i> Chụp <span id="so-anh">0</span>/5
+      </button>
+      <button class="nut phu" id="nut-luu" disabled>
+        <i class="fas fa-save"></i> Lưu đăng ký
+      </button>
+      <p style="font-size:12px; opacity:.6; line-height:1.55; margin:12px 0 0">
+        Chụp ở nhiều góc: chính diện, nghiêng trái, nghiêng phải, ngẩng nhẹ.
+        Ảnh chỉ dùng để trích đặc trưng — hệ thống không lưu ảnh gốc trong cơ sở dữ liệu.
+      </p>
+    </div>
+
+  <% } else if (chamDuoc) { %>
+    <!-- ========================================================= MÁY CHẤM CÔNG -->
+    <div class="the">
+      <div class="the-tieu-de">
+        <% if (caBoSung) { %>Ca bổ sung trong ngày<% } else { %>Chấm công <%= chieuKeTiep %><% } %>
+      </div>
+      <div class="video-boc">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="khung-mat" id="khung-mat"></div>
+        <div class="lop-gps" id="lop-gps" style="display:none"></div>
+        <button class="nut-doi-cam" id="nut-doi-cam" type="button" aria-label="Đổi camera">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+
+      <div class="thu-thach" id="thu-thach">Giữ mặt trong khung rồi bấm nút</div>
+      <div class="thanh"><i id="tien-do"></i></div>
+      <div class="tinh-trang" id="tinh-trang">Đang mở camera...</div>
+
+      <button class="nut" id="nut-cham" disabled>
+        <i class="fas fa-fingerprint"></i>
+        <span id="chu-nut">Chấm công <%= chieuKeTiep %></span>
+      </button>
+    </div>
+  <% } %>
+
+  <!-- ================================================================ LỊCH SỬ -->
+  <div class="the">
+    <div class="the-tieu-de">7 lần gần nhất</div>
+    <% if (ganDay && ganDay.length) { %>
+      <table>
+        <thead><tr><th>Ngày</th><th>Vào</th><th>Ra</th><th style="text-align:right">Giờ</th></tr></thead>
+        <tbody>
+          <% ganDay.forEach(function (a) { %>
+            <tr>
+              <td><%= new Date(a.ngay).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit' }) %></td>
+              <td class="gio"><%= gio(a.gio_vao) || '–' %></td>
+              <td class="gio"><%= gio(a.gio_ra) || '–' %></td>
+              <td class="gio" style="text-align:right"><%= a.tong_gio ? a.tong_gio + 'h' : '–' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <div class="trong">Chưa có dữ liệu chấm công.</div>
+    <% } %>
+  </div>
+
+  <button class="nut phu" id="nut-cai" style="display:none">
+    <i class="fas fa-mobile-alt"></i> Cài lên màn hình chính
+  </button>
+
+  <div class="chan">
+    Chấm công có đối chiếu vị trí và kiểm tra ảnh sống.<br>
+    Nhà Hàng Bảo Đoàn
+  </div>
+<% } %>
+
+</div>
+
+<!-- Màn hình kết quả -->
+<div class="ket-qua" id="man-ket-qua">
+  <div class="bieu-tuong" id="kq-icon"></div>
+  <div class="tieu-de" id="kq-tieu-de"></div>
+  <div class="chi-tiet" id="kq-chi-tiet"></div>
+  <div class="phu" id="kq-phu"></div>
+  <button class="nut phu" id="kq-dong" style="display:none">Đóng</button>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<% if (anToan) { %>
+<script src="/cham-cong-khuon-mat.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var CHAM_DUOC  = <%= chamDuoc ? 'true' : 'false' %>;
+  var DANG_KY    = <%= (dangKyDuoc && !daDangKy) ? 'true' : 'false' %>;
+  var VI_TRI_NH  = <%- JSON.stringify({
+        bat: !!(viTri && viTri.bat_gps && viTri.co_toa_do),
+        vi_do: viTri ? viTri.vi_do : null,
+        kinh_do: viTri ? viTri.kinh_do : null,
+        ban_kinh_m: viTri ? viTri.ban_kinh_m : 30,
+      }) %>;
+
+  var video   = document.getElementById('video');
+  var canvas  = document.getElementById('canvas');
+  var elTinh  = document.getElementById('tinh-trang');
+  var manKq   = document.getElementById('man-ket-qua');
+
+  // ------------------------------------------------------------------ đồng hồ
+  var elDongHo = document.getElementById('dong-ho');
+  if (elDongHo) {
+    (function tick() {
+      elDongHo.textContent = new Date().toLocaleTimeString('vi-VN');
+      setTimeout(tick, 1000);
+    })();
+  }
+
+  function noi(chu, mau) {
+    if (!elTinh) return;
+    elTinh.innerHTML = mau ? '<span style="color:' + mau + '">' + chu + '</span>' : chu;
+  }
+
+  // ------------------------------------------------------------------- camera
+  var camSanSang = false;
+  var nutDoiCam = document.getElementById('nut-doi-cam');
+
+  if (video) {
+    CamCC.moCamera(video)
+      .then(function () {
+        camSanSang = true;
+        noi(DANG_KY ? 'Chụp ảnh đầu tiên: nhìn thẳng vào camera'
+                    : 'Sẵn sàng — giữ khuôn mặt trong khung');
+        capNhatNut();
+        // Chỉ hiện nút đổi camera khi máy thật sự có từ hai camera. Phải gọi sau
+        // khi đã xin quyền: trước đó enumerateDevices giấu danh sách thiết bị.
+        CamCC.coNhieuCamera().then(function (co) {
+          if (co && nutDoiCam) nutDoiCam.classList.add('hien');
+        });
+      })
+      .catch(function (e) { noi(e.message, '#ffb4ac'); });
+  }
+
+  if (nutDoiCam) {
+    nutDoiCam.onclick = function () {
+      if (dangChay) return;                 // đổi camera giữa chừng làm hỏng cả lượt
+      nutDoiCam.disabled = true;
+      CamCC.doiCamera()
+        .catch(function (e) { noi(e.message, '#ffb4ac'); })
+        .then(function () { nutDoiCam.disabled = false; });
+    };
+  }
+
+  function chup(tuy) {
+    return CamCC.chup(video, canvas, tuy || { rong: 640, cao: 480 });
+  }
+
+  // ---------------------------------------------------------- màn hình kết quả
+  var nutDong = document.getElementById('kq-dong');
+  if (nutDong) nutDong.onclick = function () { manKq.className = 'ket-qua'; };
+
+  function hienKq(loai, icon, tieuDe, chiTiet, phu, tuAn) {
+    manKq.className = 'ket-qua ' + loai + ' hien';
+    document.getElementById('kq-icon').innerHTML = '<i class="fas ' + icon + '"></i>';
+    document.getElementById('kq-tieu-de').textContent = tieuDe;
+    document.getElementById('kq-chi-tiet').textContent = chiTiet || '';
+    document.getElementById('kq-phu').textContent = phu || '';
+    if (nutDong) nutDong.style.display = tuAn ? 'none' : 'block';
+    if (tuAn) setTimeout(function () { manKq.className = 'ket-qua'; }, tuAn);
+  }
+
+  // Bíp bằng WebAudio (không cần tệp âm thanh). Trên điện thoại đang ở chế độ
+  // im lặng thì không kêu — nên đây chỉ là phần thêm, không phải cách báo chính.
+  function keu(tanSo) {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = tanSo; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      o.start(); o.stop(ctx.currentTime + 0.3);
+    } catch (e) {}
+  }
+  function rung(kieu) {
+    try { if (navigator.vibrate) navigator.vibrate(kieu); } catch (e) {}
+  }
+
+  // ========================================================================
+  // ĐĂNG KÝ KHUÔN MẶT
+  // ========================================================================
+  var SO_ANH_CAN = 5;
+  var anhDaChup = [];
+  var nutChup = document.getElementById('nut-chup');
+  var nutLuu  = document.getElementById('nut-luu');
+
+  function veAnh() {
+    var ds = document.getElementById('ds-anh');
+    if (!ds) return;
+    ds.innerHTML = anhDaChup.map(function (a) { return '<img src="' + a + '" alt="">'; }).join('');
+    document.getElementById('so-anh').textContent = anhDaChup.length;
+    capNhatNut();
+  }
+
+  function capNhatNut() {
+    if (nutChup) nutChup.disabled = !camSanSang || anhDaChup.length >= 12;
+    if (nutLuu) nutLuu.disabled = !camSanSang || anhDaChup.length < SO_ANH_CAN;
+    var nc = document.getElementById('nut-cham');
+    if (nc) nc.disabled = !camSanSang || dangChay;
+  }
+
+  if (nutChup) {
+    var GOI_Y = [
+      'Nhìn thẳng vào camera',
+      'Nghiêng mặt sang TRÁI một chút',
+      'Nghiêng mặt sang PHẢI một chút',
+      'Ngẩng nhẹ lên',
+      'Cúi nhẹ xuống',
+    ];
+    nutChup.onclick = function () {
+      try {
+        // vuong:true — trang đăng ký cần ảnh mẫu vuông, cắt giữa khung, không méo.
+        anhDaChup.push(chup({ rong: 480, cao: 480, vuong: true }));
+      } catch (e) {
+        return noi(e.message, '#ffb4ac');
+      }
+      veAnh();
+      rung(30);
+      noi(anhDaChup.length >= SO_ANH_CAN
+        ? 'Đủ ảnh rồi — bấm "Lưu đăng ký"'
+        : GOI_Y[anhDaChup.length % GOI_Y.length]);
+    };
+
+    nutLuu.onclick = function () {
+      nutLuu.disabled = true; nutChup.disabled = true;
+      noi('Đang xử lý ảnh...');
+      // KHÔNG gửi id_nv: máy chủ lấy danh tính từ phiên đăng nhập.
+      fetch('/api/khuon-mat/dang-ky', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anh: anhDaChup }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (kq) {
+          if (!kq.ok) throw new Error(kq.thong_bao || 'Đăng ký thất bại.');
+          if (kq.du_dieu_kien) {
+            hienKq('thanh-cong', 'fa-check-circle', 'Đã đăng ký khuôn mặt',
+              'Nhận ' + kq.so_anh_nhan + ' ảnh. Đang mở máy chấm công...', '', 2200);
+            setTimeout(function () { location.reload(); }, 2200);
+          } else {
+            anhDaChup = []; veAnh();
+            noi('Mới lưu được ' + kq.tong_mau_hien_co + '/' + kq.so_mau_toi_thieu +
+                ' mẫu — hãy chụp thêm, đứng nơi đủ sáng.', '#f6c85f');
+          }
+        })
+        .catch(function (e) {
+          noi(e.message, '#ffb4ac');
+          capNhatNut();
+        });
+    };
+  }
+
+  // ========================================================================
+  // CHẤM CÔNG
+  // ========================================================================
+  var nut = document.getElementById('nut-cham');
+  var dangChay = false;
+
+  // Bốn thử thách chống giả mạo, chọn ngẫu nhiên mỗi lượt để không ai quay sẵn
+  // một đoạn video rồi phát lại trước camera.
+  var THU_THACH = [
+    { ma:'gat_dau',   mo_ta:'GẬT ĐẦU nhẹ một cái' },
+    { ma:'quay_trai', mo_ta:'Quay mặt sang TRÁI' },
+    { ma:'quay_phai', mo_ta:'Quay mặt sang PHẢI' },
+    { ma:'lai_gan',   mo_ta:'Đưa mặt LẠI GẦN camera' },
+  ];
+
+  /* --------------------------------------------------------------------
+     Xem trước khoảng cách tới nhà hàng.
+
+     Chỉ chạy khi quyền vị trí ĐÃ được cấp từ trước (Permissions API trả
+     'granted'). Cố tình không xin quyền lúc mở trang: hộp xin quyền bật lên
+     ngay khi vừa vào là cách nhanh nhất để người dùng bấm "Chặn", và một khi
+     đã chặn thì lần chấm công thật sẽ hỏng mà họ không biết vì sao.
+
+     Con số ở đây chỉ để xem trước. Máy chủ vẫn tự đối chiếu lại khi chấm — đó
+     mới là chỗ quyết định, vì toạ độ do trình duyệt gửi lên thì sửa được.
+     -------------------------------------------------------------------- */
+  var lopGps = document.getElementById('lop-gps');
+
+  function khoangCachM(v1, k1, v2, k2) {
+    var R = 6371000, rad = function (d) { return d * Math.PI / 180; };
+    var dP = rad(v2 - v1), dL = rad(k2 - k1);
+    var a = Math.sin(dP / 2) * Math.sin(dP / 2) +
+            Math.cos(rad(v1)) * Math.cos(rad(v2)) * Math.sin(dL / 2) * Math.sin(dL / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+  }
+
+  function veGps(viTri) {
+    if (!lopGps || !VI_TRI_NH.bat) return;
+    if (!viTri || !viTri.co) {
+      lopGps.style.display = 'block';
+      lopGps.className = 'lop-gps xau';
+      lopGps.innerHTML = '<i class="fas fa-map-marker-alt"></i> Chưa lấy được vị trí';
+      return;
+    }
+    var kc = Math.round(khoangCachM(VI_TRI_NH.vi_do, VI_TRI_NH.kinh_do, viTri.vi_do, viTri.kinh_do));
+    var buTru = Math.min(100, viTri.do_chinh_xac_m || 0);
+    var trong = kc <= VI_TRI_NH.ban_kinh_m + buTru;
+    lopGps.style.display = 'block';
+    lopGps.className = 'lop-gps ' + (trong ? 'tot' : 'xau');
+    lopGps.innerHTML = '<i class="fas fa-map-marker-alt"></i> ' +
+      (trong ? 'Đang ở nhà hàng · cách ' + kc + ' m'
+             : 'Cách nhà hàng ' + kc + ' m — quá xa, cần trong ' + VI_TRI_NH.ban_kinh_m + ' m');
+  }
+
+  if (nut && VI_TRI_NH.bat && navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' })
+      .then(function (tt) { if (tt.state === 'granted') CamCC.layViTri().then(veGps); })
+      .catch(function () {});
+  }
+
+  if (nut) {
+    nut.onclick = function () {
+      if (dangChay || !camSanSang) return;
+      dangChay = true;
+      capNhatNut();
+
+      var tt = THU_THACH[Math.floor(Math.random() * THU_THACH.length)];
+      var elThuThach = document.getElementById('thu-thach');
+      var elTienDo = document.getElementById('tien-do');
+      var khungMat = document.getElementById('khung-mat');
+
+      elThuThach.innerHTML = '<i class="fas fa-tasks"></i> ' + tt.mo_ta;
+      noi('Đang xác định vị trí...');
+
+      // Xin toạ độ TRƯỚC khi thu ảnh: hộp xin quyền vị trí che mất camera, xin
+      // sau thì cả loạt khung vừa chụp đều hỏng.
+      CamCC.layViTri().then(function (viTri) {
+        veGps(viTri);
+        khungMat.classList.add('tot');
+        noi('Giữ mặt trong khung và làm theo yêu cầu...');
+        rung(40);
+
+        // 12 khung trong ~2,4 giây — đủ để Python thấy được động tác.
+        var khung = [], i = 0, tong = 12;
+        var hen = setInterval(function () {
+          try {
+            khung.push(chup());
+          } catch (e) {
+            clearInterval(hen);
+            return xong({ ok: false, thong_bao: e.message });
+          }
+          i++;
+          elTienDo.style.width = Math.round(i / tong * 100) + '%';
+          if (i >= tong) { clearInterval(hen); gui(khung, viTri, tt.ma); }
+        }, 200);
+      });
+    };
+  }
+
+  function gui(khung, viTri, maThuThach) {
+    var than = JSON.stringify({
+      khung: khung, thu_thach: maThuThach, che_do: 'ca_nhan', vi_tri: viTri,
+    });
+    // 12 khung ảnh khoảng 1 MB. Qua 4G yếu có thể mất chục giây — nói rõ dung
+    // lượng để người dùng biết máy đang làm việc chứ không phải treo.
+    noi('Đang gửi ' + (than.length / 1048576).toFixed(1) + ' MB và nhận diện...');
+
+    // Không có giới hạn thời gian thì mất sóng giữa chừng sẽ treo mãi mãi: người
+    // dùng nhìn màn hình "đang nhận diện" không bao giờ đổi, nút thì kẹt khoá.
+    var boQua = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var henHetGio = setTimeout(function () { if (boQua) boQua.abort(); }, 45000);
+
+    fetch('/api/khuon-mat/cham-cong', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: than,
+      signal: boQua ? boQua.signal : undefined,
+    })
+      .then(function (r) {
+        // Khi proxy trả về trang lỗi HTML thì r.json() ném "Unexpected token <"
+        // — câu đó không giúp ai. Đọc mã trạng thái trước.
+        return r.json().catch(function () {
+          throw new Error('Máy chủ trả về lỗi ' + r.status + '.');
+        });
+      })
+      .then(xong)
+      .catch(function (e) {
+        xong({
+          ok: false,
+          thong_bao: e.name === 'AbortError'
+            ? 'Quá 45 giây không nhận được trả lời. Kiểm tra sóng Wi-Fi/4G rồi thử lại.'
+            : 'Lỗi kết nối: ' + e.message,
+        });
+      })
+      .then(function () { clearTimeout(henHetGio); });
+  }
+
+  function xong(kq) {
+    var elThuThach = document.getElementById('thu-thach');
+    var elTienDo = document.getElementById('tien-do');
+    var khungMat = document.getElementById('khung-mat');
+
+    elTienDo.style.width = '0';
+    khungMat.classList.remove('tot');
+    elThuThach.textContent = 'Giữ mặt trong khung rồi bấm nút';
+    dangChay = false;
+    noi('');
+    capNhatNut();
+
+    if (kq.ok) {
+      keu(880); rung([40, 60, 40]);
+      hienKq('thanh-cong', 'fa-check-circle',
+        kq.chieu === 'vao' ? 'Đã chấm công VÀO' : 'Đã chấm công RA',
+        'lúc ' + (kq.gio || '') + (kq.tong_gio ? ' · tổng ' + kq.tong_gio + ' giờ' : ''),
+        (kq.phan_tram != null ? 'độ khớp ' + kq.phan_tram + '%' : '') +
+        (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : ''),
+        0);
+      // Tải lại để mốc giờ và lịch sử hiện đúng bản ghi vừa tạo. Không tự vẽ lại
+      // bằng JavaScript: giờ trên màn hình phải là giờ máy chủ đã ghi, không phải
+      // giờ máy điện thoại đoán ra.
+      setTimeout(function () { location.reload(); }, 2600);
+      return;
+    }
+
+    keu(220); rung(200);
+    var icon = kq.ket_qua === 'sai_vi_tri' ? 'fa-map-marker-alt'
+             : kq.ket_qua === 'gia_mao' ? 'fa-user-secret'
+             : kq.ket_qua === 'chua_dat_thu_thach' ? 'fa-redo'
+             : kq.ket_qua === 'khung_khong_dong_nhat' ? 'fa-lightbulb'
+             : 'fa-times-circle';
+    var tieuDe = kq.ket_qua === 'sai_vi_tri' ? 'Sai vị trí'
+               : kq.ket_qua === 'chua_dat_thu_thach' ? 'Làm lại động tác'
+               : kq.ket_qua === 'khung_khong_dong_nhat' ? 'Ảnh chưa rõ'
+               : kq.ket_qua === 'gia_mao' ? 'Nghi ngờ giả mạo'
+               : 'Chưa chấm được';
+    var phu = kq.ket_qua === 'sai_vi_tri' ? 'Chỉ chấm công được khi đang ở nhà hàng.'
+            : kq.ket_qua === 'gia_mao' ? 'Hãy dùng khuôn mặt thật, không giơ ảnh hay màn hình.'
+            : kq.ket_qua === 'chua_dat_thu_thach' ? 'Làm động tác dứt khoát hơn, giữ mặt trong khung.'
+            : kq.ket_qua === 'khung_khong_dong_nhat' ? 'Đứng nơi đủ sáng, đừng để đèn phía sau lưng.'
+            : '';
+    hienKq('that-bai', icon, tieuDe, kq.thong_bao || 'Vui lòng thử lại.', phu, 0);
+  }
+
+  // ========================================================================
+  // CÀI RA MÀN HÌNH CHÍNH
+  // ========================================================================
+  // Chrome chỉ cho gọi prompt() từ trong một cử chỉ của người dùng, nên phải giữ
+  // lại sự kiện rồi bật nút, chứ không thể mời cài ngay lúc trang vừa mở.
+  var moiCai = null;
+  var nutCai = document.getElementById('nut-cai');
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    moiCai = e;
+    if (nutCai) nutCai.style.display = 'block';
+  });
+  if (nutCai) {
+    nutCai.onclick = function () {
+      if (!moiCai) return;
+      moiCai.prompt();
+      moiCai.userChoice.then(function () { moiCai = null; nutCai.style.display = 'none'; });
+    };
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/cham-cong/sw.js', { scope: '/cham-cong/' })
+      .catch(function () { /* không cài được thì trang vẫn chạy bình thường */ });
+  }
+})();
+</script>
+<% } %>
+</body>
+</html>
