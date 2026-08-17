@@ -74,6 +74,17 @@
   }
   .cb-goiy button:hover { background: #f0ece0; border-color: #c8a45c; }
 
+  /* Nút dẫn sang người thật (đăng nhập / đăng ký / mở khung chat). Dùng màu
+     thương hiệu để tách khỏi các nút gợi ý câu hỏi màu trắng bên trên — đây là
+     lối ra khi bot bí, không phải một câu hỏi nữa để bấm thử. */
+  .cb-nguoi-that { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .cb-nguoi-that a {
+    background: #c8a45c; color: #2c1810; border-radius: 999px; text-decoration: none;
+    padding: 7px 14px; font-size: 13px; font-weight: 700;
+  }
+  .cb-nguoi-that a.phu { background: #fff; color: #374151; border: 1px solid #d8dce2; font-weight: 600; }
+  .cb-nguoi-that a:hover { opacity: .88; }
+
   .cb-cham { display: flex; gap: 6px; margin-top: 7px; }
   .cb-cham button {
     background: none; border: none; cursor: pointer; font-size: 13px;
@@ -230,6 +241,37 @@
     return d;
   }
 
+  /**
+   * Gắn nút dẫn sang nhân viên thật vào cuối một bong bóng trả lời.
+   *
+   * canDangNhap do máy chủ quyết định (theo phiên), không đoán ở đây: khách đã
+   * đăng nhập mà lại mời "đăng ký" thì vừa thừa vừa khó hiểu, còn khách chưa
+   * đăng nhập mà đưa thẳng /chat thì bấm vào chỉ bị đá về trang đăng nhập.
+   */
+  function themNutNguoiThat(bongBong, canDangNhap) {
+    var noi = bongBong && bongBong.querySelector('.cb-tn__noi');
+    if (!noi) return;
+    var hop = document.createElement('div');
+    hop.className = 'cb-nguoi-that';
+
+    function nut(chu, duong, phu) {
+      var a = document.createElement('a');
+      a.href = duong;
+      a.textContent = chu;
+      if (phu) a.className = 'phu';
+      hop.appendChild(a);
+    }
+
+    if (canDangNhap) {
+      nut('Đăng nhập', '/login');
+      nut('Đăng ký', '/register', true);
+    } else {
+      nut('Nhắn với nhân viên', '/chat');
+    }
+    noi.appendChild(hop);
+    than.scrollTop = than.scrollHeight;
+  }
+
   function themDangNghi() {
     var d = document.createElement('div');
     d.className = 'cb-tn cb-tn--bot';
@@ -255,10 +297,11 @@
       .then(function (r) { return r.json(); })
       .then(function (kq) {
         nghi.remove();
-        themTin('bot', kq.van_ban || 'Mình chưa trả lời được câu này.', kq);
-        if (kq.chuyen_nhan_vien) {
-          themTin('bot', 'Bạn nhấn vào **mục Chat** trên thanh menu để nhắn trực tiếp với nhân viên nhé.');
-        }
+        var bongBong = themTin('bot', kq.van_ban || 'Mình chưa trả lời được câu này.', kq);
+        /* Trước đây chỗ này thêm một bong bóng thứ hai chỉ để nói "bạn vào mục
+           Chat" — vừa lặp lại đúng câu máy chủ vừa nói, vừa bắt người dùng tự đi
+           tìm menu. Nay gắn thẳng nút bấm vào ngay câu trả lời. */
+        if (kq.chuyen_nhan_vien) themNutNguoiThat(bongBong, kq.can_dang_nhap);
       })
       .catch(function () {
         nghi.remove();

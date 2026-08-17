@@ -80,7 +80,7 @@ Sau đó:
 | Tệp | Vai trò |
 |---|---|
 | `ml_service/chatbot/tien_xu_ly.py` | Chuẩn hóa, bỏ dấu, đo tương đồng 3-gram |
-| `ml_service/chatbot/y_dinh.py` | **Bộ từ điển 44 ý định + trình sinh dữ liệu** |
+| `ml_service/chatbot/y_dinh.py` | **Bộ từ điển 37 ý định + trình sinh dữ liệu** |
 | `ml_service/chatbot/phan_loai.py` | Huấn luyện, đánh giá, suy luận, quét ngưỡng |
 | `ml_service/chatbot/thuc_the.py` | Thời gian tiếng Việt, từ điển món/nguyên liệu |
 | `ml_service/chatbot/truy_van.py` | Mẫu SQL an toàn + phân quyền |
@@ -97,7 +97,7 @@ Sau đó:
 ## 3. Bộ dữ liệu — tự xây
 
 Không có bộ dữ liệu hỏi đáp tiếng Việt công khai nào chứa các ý định đặc thù của
-một nhà hàng (hỏi tồn kho, hỏi lô sắp hết hạn, hỏi hiệu suất bếp). Vì vậy bộ dữ
+một nhà hàng (hỏi hiệu suất bếp, hỏi bàn trống, hỏi đơn đang chờ). Vì vậy bộ dữ
 liệu được xây từ đầu.
 
 ### Cách sinh
@@ -114,12 +114,17 @@ Mỗi ý định được mô tả bằng một số **mẫu câu** dùng hai k�
 
 | Chỉ số | Giá trị |
 |---|---|
-| Số ý định | **44** (5 chung · 21 khách hàng · 18 quản lý) |
-| Số mẫu câu viết tay | **352** |
-| Số câu sinh ra | **~5.000** |
+| Số ý định | **37** (6 chung · 21 khách hàng · 10 quản lý) |
+| Số mẫu câu viết tay | **~300** |
+| Số câu sinh ra | **~4.400** |
 | Độ dài trung bình | ~5,4 từ |
-| Tập kiểm thử viết tay | **66 câu** |
+| Tập kiểm thử viết tay | **65 câu** |
 | Tập ngoài phạm vi | **20 câu** |
+
+> **Phạm vi đã thu hẹp có chủ đích.** Bản đầu có 44 ý định, trong đó 8 ý định
+> chạm vào **tiền và kho**: doanh thu, so sánh doanh thu, lợi nhuận, giá trị đơn
+> trung bình, tồn kho, nguyên liệu sắp hết, lô sắp hết hạn, hiệu suất nhân viên.
+> Toàn bộ 8 ý định này **đã được gỡ bỏ** — xem mục 7, Lớp 5.
 
 Bộ sinh dùng seed cố định (`SEED = 20260804`, trùng quy ước với bộ sinh dữ liệu
 lịch sử ở migration 003) nên **chạy lại cho ra đúng bộ dữ liệu cũ** — số liệu
@@ -192,13 +197,13 @@ thành từ lạ. Đổi lại hệ thống không phải thêm một phụ thu�
 Chạy `train_chatbot.bat` để sinh bảng này (số liệu thay đổi theo máy):
 
 ```
-  Mô hình                          DoCX(sinh)  F1(sinh)  DoCX(tay)  F1(tay)  Train(s)  ms/câu
-  ----------------------------------------------------------------------------------------
-  Nền - đoán nhãn phổ biến nhất        ...        ...       ...       ...      ...      ...
-  Naive Bayes (chỉ TF-IDF từ)          ...        ...       ...       ...      ...      ...
-  kNN cosine (k=5)                     ...        ...       ...       ...      ...      ...
-  Hồi quy Logistic                     ...        ...       ...       ...      ...      ...
-* SVM tuyến tính                       ...        ...       ...       ...      ...      ...
+  Mô hình                        DoCX(sinh) F1(sinh) DoCX(tay) F1(tay) F1(từ chối) Train(s) ms/câu
+  -----------------------------------------------------------------------------------------------
+  Nền - đoán nhãn phổ biến nhất      ...      ...      ...      ...        ...       ...     ...
+  kNN cosine (k=5)                   ...      ...      ...      ...        ...       ...     ...
+  Naive Bayes (chỉ TF-IDF từ)        ...      ...      ...      ...        ...       ...     ...
+  SVM tuyến tính                     ...      ...      ...      ...        ...       ...     ...
+* Hồi quy Logistic                   ...      ...      ...      ...        ...       ...     ...
 ```
 
 Bảng còn được ghi vào bảng `chatbot_danh_gia` và hiển thị lại ở
@@ -213,6 +218,36 @@ Bảng còn được ghi vào bảng `chatbot_danh_gia` và hiển thị lại �
   liệu sinh theo mẫu và ngôn ngữ tự nhiên thật. Nêu thẳng con số này thay vì
   giấu đi.
 - Cột **ms/câu** trả lời câu hỏi "chạy nổi trên máy thường không".
+- Cột **F1(từ chối)** là chỉ số **quyết định mô hình nào được chọn** — xem ngay
+  dưới đây.
+
+### Chọn mô hình theo F1 *có từ chối*
+
+Bản đầu chọn mô hình theo F1-macro trên tập viết tay. Chỉ số đó chỉ đo khả năng
+**nhận dạng** câu nằm trong phạm vi, mà bỏ qua khả năng **từ chối** câu nằm ngoài
+— trong khi ở vận hành thật, thứ chặn câu ngoài phạm vi không phải bộ phân loại
+mà là ngưỡng tin cậy.
+
+Thiếu sót này đã trả giá thật: Naive Bayes thắng với F1(tay) 97% rồi khi chạy
+thật nó gán nhãn `hoi_noi_bo` với độ tin cậy 0,50 cho câu *"tôi để quên áo khoác
+ở quán hôm qua"*.
+
+Nay `phan_loai.py` tính thêm **F1-macro trên tập gộp**: tập câu viết tay (trong
+phạm vi) cộng tập ngoài phạm vi gán nhãn `khong_hieu`, và áp đúng phép từ chối
+theo ngưỡng như lúc chạy thật. Một chỉ số duy nhất, không trọng số tùy tiện, đo
+đúng cái người dùng cảm nhận. Mô hình được chọn theo chỉ số này.
+
+### Hiệu chỉnh xác suất cho SVM
+
+`LinearSVC` không có `predict_proba`, nên điểm tin cậy trước đây được tính bằng
+softmax trên `decision_function`. Với 37 nhãn, cách này cho đỉnh chỉ 0,1–0,3
+trong khi Hồi quy Logistic cho 0,9+. Hai mô hình **dùng chung một ngưỡng từ chối
+0,45**, nên hôm nào SVM thắng là bot trả về "chưa hiểu" cho **mọi** câu hỏi —
+kể cả "quán mấy giờ mở cửa". Đây không phải giả thuyết: nó đã xảy ra thật.
+
+Nay SVM được bọc trong `CalibratedClassifierCV(method="sigmoid")` — hiệu chỉnh
+Platt — để điểm của nó nằm cùng thang xác suất với Logistic. Giá phải trả là
+huấn luyện lâu hơn khoảng 3 lần (0,8s → 2,5s), không đáng kể.
 
 ### Ngưỡng tin cậy
 
@@ -231,7 +266,7 @@ con số chọn bừa. Ngưỡng mặc định 0,45; quản lý chỉnh qua khó
 
 ---
 
-## 7. An ninh — bốn lớp độc lập
+## 7. An ninh — năm lớp độc lập
 
 ### Lớp 1 — Không sinh SQL tự do
 
@@ -252,8 +287,8 @@ Tham số `quyen` gửi sang Python được suy ra từ `req.session` phía ser
 **không bao giờ lấy từ body request**. Khách sửa JSON cũng không thể tự nâng
 mình lên quản lý.
 
-18 ý định nhóm `quan_ly` bị chặn **trước khi chạm vào CSDL**. Mô hình chỉ làm
-nhiệm vụ nhận dạng, không được phép là chốt bảo vệ an ninh.
+10 ý định nhóm `quan_ly` còn lại bị chặn **trước khi chạm vào CSDL**. Mô hình chỉ
+làm nhiệm vụ nhận dạng, không được phép là chốt bảo vệ an ninh.
 
 ### Lớp 3 — Dữ liệu cá nhân lấy từ phiên
 
@@ -263,6 +298,71 @@ lấy từ nội dung câu hỏi. Người dùng không thể gõ "đơn của k
 ### Lớp 4 — Giới hạn tần suất và độ dài
 
 20 câu / 60 giây cho mỗi phiên; câu hỏi tối đa 500 ký tự.
+
+---
+
+### Lớp 5 — Bot không biết đường nào dẫn tới tiền và kho
+
+Phân quyền ở lớp 2 vẫn đúng, nhưng mọi lớp phòng thủ đều có thể sai, và cái giá
+của một lần sai ở đây là con số doanh thu hoặc giá vốn của nhà hàng lọt ra ngoài.
+Cách chắc chắn nhất để một dữ liệu không bị lộ qua chatbot là **chatbot không hề
+biết đường nào dẫn tới dữ liệu đó**.
+
+Vì vậy 8 ý định về tiền và kho đã bị gỡ khỏi cả bốn tầng: bộ dữ liệu huấn luyện,
+tầng truy vấn, mẫu câu trả lời và ô gợi ý câu hỏi. Kèm theo đó:
+
+* `_tong_quan()` trong `truy_van.py` **không còn trả về bất kỳ trường tiền nào**
+  (trước đây trả cả `doanh_thu`, `chi_phi_nguyen_lieu`, `loi_nhuan_gop`,
+  `gia_tri_don_tb` cho mọi ý định dùng chung nó — nghĩa là chỉ cần hỏi "hôm nay
+  bao nhiêu đơn" là cả cụm số liệu tài chính đi kèm xuống trình duyệt, dù câu trả
+  lời không đọc ra).
+* "Top món bán chạy" và "món bán chậm" chỉ còn cột **số phần bán**, bỏ cột doanh
+  thu và lợi nhuận cùng phép JOIN sang giá vốn nguyên liệu.
+* "Giờ cao điểm" đo bằng **số đơn** thay vì doanh thu.
+* Tầng trích thực thể không còn nạp bảng `nguyen_lieu`.
+
+**Nhãn từ chối có chủ đích.** Một bộ phân loại 37 nhãn luôn phải chọn một trong
+37 nhãn đó. Sau khi gỡ 8 ý định, câu "doanh thu tuần trước bao nhiêu" không còn
+nhãn nào đúng để về, nên mô hình đẩy nó sang `hoi_top_mon` với độ tin cậy 0,484 —
+trên ngưỡng — và bot trả về bảng món bán chạy. Vì vậy có thêm một ý định
+`hoi_noi_bo` **không truy vấn gì cả**, chỉ để bot nhận ra câu hỏi thuộc số liệu
+nội bộ và từ chối cho đúng, kèm chỉ dẫn xem ở trang `/analytics`.
+
+Người quản lý xem các số này ở trang **Phân tích** và **Dự báo** — nơi đã có
+phân quyền theo chức danh.
+
+## 7b. Khi bot không hiểu — dẫn về người thật
+
+Đây là câu bot nói **nhiều nhất** trong thực tế. Một bộ phân loại 37 nhãn sẽ gặp
+vô số câu nằm ngoài 37 nhãn đó: *"món này ăn cay không"*, *"cho bé 3 tuổi ăn được
+món nào"*, *"tôi để quên áo khoác ở quán hôm qua"* — toàn những việc chỉ **người
+thật** trả lời được.
+
+Bản đầu chỉ nói "mình chưa hiểu ý bạn" rồi liệt kê lại năng lực của bot. Với
+người đang cần một câu trả lời cụ thể thì đó là ngõ cụt: họ hỏi lại lần hai, vẫn
+không hiểu, rồi thôi.
+
+Nay mọi ngõ cụt đều dẫn về nhân viên, và lời mời khác nhau tùy người đang hỏi:
+
+| Người hỏi | Câu trả lời | Nút hiện ra |
+|---|---|---|
+| Chưa đăng nhập | "Bạn **đăng ký** hoặc **đăng nhập** rồi vào **mục Chat**…" | **Đăng nhập** · Đăng ký |
+| Đã đăng nhập | "Bạn vào **mục Chat** để nhắn trực tiếp với nhân viên…" | **Nhắn với nhân viên** |
+
+Máy chủ quyết định biến thể nào qua cờ `can_dang_nhap` (suy từ phiên, không đoán
+ở trình duyệt): khách đã đăng nhập mà lại mời "đăng ký" thì vừa thừa vừa khó
+hiểu, còn khách chưa đăng nhập mà đưa thẳng `/chat` thì bấm vào chỉ bị đá về
+trang đăng nhập.
+
+Cùng một lời mời được dùng ở **ba** đường: bot không hiểu (`tra_loi._khong_hieu`),
+Python tắt (`chatbotService.traLoiDuPhong`), và chatbot bị tắt qua cấu hình
+(`routes/chatbot.js`). Với người dùng thì cả ba đều là "bot không trả lời được",
+nên phải nói cùng một câu.
+
+Dòng "hay ý bạn là…" chỉ gợi ý những ý định người đó **được phép dùng** — không
+lọc thì khách vãng lai có thể nhận lại *"Hay ý bạn là: Số lượt khách?"*, vừa
+quảng cáo một năng lực họ không dùng được, vừa hé lộ rằng bot tra được số liệu
+nội bộ.
 
 ---
 
@@ -352,7 +452,7 @@ Khách còn chấm 👍/👎 mỗi câu trả lời (`chatbot_hoi_thoai.huu_ich`
 
 ## 12. Hạn chế — nêu trung thực trong báo cáo
 
-1. **Chỉ hiểu trong phạm vi 44 ý định.** Bot không tán gẫu tự do, không trả lời
+1. **Chỉ hiểu trong phạm vi 37 ý định.** Bot không tán gẫu tự do, không trả lời
    câu hỏi ngoài lĩnh vực nhà hàng. Đây là đánh đổi có chủ đích: đổi độ linh
    hoạt lấy tính đúng đắn tuyệt đối của số liệu và an toàn SQL.
 

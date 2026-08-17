@@ -116,6 +116,7 @@ def _tao_bo_dac_trung(dung_ky_tu: bool = True):
 def danh_sach_mo_hinh() -> dict:
     """Cac mo hinh dem so sanh. Tang dan do phuc tap - dung de ke chuyen trong
     bao cao: tu mo hinh nen ngo nghech den mo hinh cuoi cung."""
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.dummy import DummyClassifier
     from sklearn.linear_model import LogisticRegression
     from sklearn.naive_bayes import MultinomialNB
@@ -149,9 +150,29 @@ def danh_sach_mo_hinh() -> dict:
                 C=10.0, max_iter=2000, class_weight="balanced",
             )),
         ]),
+        # LinearSVC duoc BOC trong CalibratedClassifierCV chu khong dung tran.
+        #
+        # VI SAO - mot loi da xay ra that. LinearSVC khong co `predict_proba`,
+        # nen `xac_suat()` phai ap softmax len `decision_function`. Voi 37 nhan,
+        # softmax tren khoang cach le tuyen tinh cho ra dinh chi 0.1-0.3, trong
+        # khi Hoi quy Logistic cho 0.9+. Hai mo hinh dung CHUNG mot nguong tu
+        # choi (0.45): nguong do vua phai voi Logistic thi LOAI SACH moi cau khi
+        # SVM thang - bot tra ve "khong hieu" cho ca "quan may gio mo cua".
+        #
+        # Va SVM co thang that: hai mo hinh chi hon kem nhau vai phan tram F1,
+        # nen chi can doi bo du lieu mot chut la doi ngoi. Tuc la day khong phai
+        # gia thuyet - no da lam chet bot mot lan ngay sau khi bo y dinh duoc
+        # thu gon.
+        #
+        # Hieu chinh Platt (method="sigmoid") dua diem SVM ve cung thang xac
+        # suat voi Logistic, nen nguong 0.45 co y nghia nhu nhau voi ca hai. Gia
+        # phai tra la huan luyen lau hon ~3 lan (cv=3) - tu 0.8s len 2.5s, khong
+        # dang ke - va toc do suy luan gan nhu khong doi.
         "SVM tuyen tinh": Pipeline([
             ("dac_trung", _tao_bo_dac_trung()),
-            ("mo_hinh", LinearSVC(C=1.0, class_weight="balanced")),
+            ("mo_hinh", CalibratedClassifierCV(
+                LinearSVC(C=1.0, class_weight="balanced"), cv=3, method="sigmoid",
+            )),
         ]),
     }
 
@@ -166,6 +187,10 @@ class KetQuaDanhGia:
     f1_macro: float
     do_chinh_xac_tay: float      # tren tap cau nguoi viet tay
     f1_macro_tay: float
+    # F1-macro do tren tap GOP: cau viet tay (trong pham vi) + cau ngoai pham vi
+    # gan nhan 'khong_hieu', va du doan duoi nguong tin cay cung thanh
+    # 'khong_hieu'. Day la chi so DUY NHAT phan anh dung hanh vi khi chay that.
+    f1_macro_tu_choi: float
     giay_huan_luyen: float
     mili_giay_moi_cau: float
     nham_lan: list = field(default_factory=list)  # cac cap bi nham nhieu nhat
@@ -237,6 +262,7 @@ def huan_luyen_va_danh_gia(ti_le_kiem_thu: float = 0.25, seed: int = yd.SEED) ->
 
     X_tay = [c for c, _ in yd.BO_KIEM_THU_TAY]
     y_tay = np.array([n for _, n in yd.BO_KIEM_THU_TAY])
+    X_ngoai = list(yd.BO_NGOAI_PHAM_VI)
 
     ket_qua: list[KetQuaDanhGia] = []
     da_huan_luyen: dict[str, object] = {}
@@ -251,21 +277,52 @@ def huan_luyen_va_danh_gia(ti_le_kiem_thu: float = 0.25, seed: int = yd.SEED) ->
         doan_tay = mo_hinh.predict(X_tay)
         ms_moi_cau = (time.perf_counter() - t0) * 1000 / max(len(X_tay), 1)
 
+        # --- Do kha nang TU CHOI, khong chi kha nang nhan dang ---
+        #
+        # Mot bo phan loai 37 nhan luon tra ve mot trong 37 nhan, ke ca voi cau
+        # "toi de quen ao khoac o quan hom qua". Trong van hanh that, thu chan
+        # nhung cau do lai KHONG phai bo phan loai ma la NGUONG TIN CAY. Vay ma
+        # bang so sanh cu chi do do chinh xac tren cau trong pham vi - hai mo
+        # hinh cung 92% F1 nhung mot cai tu choi dung 80% cau ngoai pham vi con
+        # cai kia 20% thi van xep ngang nhau.
+        #
+        # Da tra gia that cho thieu sot nay: Naive Bayes thang bang F1 tap viet
+        # tay (97%) roi khi chay that no gan nhan "hoi_noi_bo" voi do tin cay
+        # 0.50 cho cau hoi ve cai ao khoac bo quen.
+        #
+        # Nay do them F1 tren tap GOP - cau trong pham vi + cau ngoai pham vi
+        # gan nhan 'khong_hieu' - va ap dung dung phep tu choi theo nguong nhu
+        # luc chay that. Mot con so, khong trong so tuy tien, va no do dung cai
+        # nguoi dung cam nhan.
+        tin_tay = xac_suat(mo_hinh, X_tay).max(axis=1)
+        tin_ngoai = xac_suat(mo_hinh, X_ngoai).max(axis=1)
+        doan_ngoai = mo_hinh.predict(X_ngoai)
+        y_gop = list(y_tay) + ["khong_hieu"] * len(X_ngoai)
+        doan_gop = (
+            [d if t >= NGUONG_TIN_CAY else "khong_hieu" for d, t in zip(doan_tay, tin_tay)] +
+            [d if t >= NGUONG_TIN_CAY else "khong_hieu" for d, t in zip(doan_ngoai, tin_ngoai)]
+        )
+
         ket_qua.append(KetQuaDanhGia(
             ten=ten,
             do_chinh_xac=accuracy_score(y_test, doan_test),
             f1_macro=f1_score(y_test, doan_test, average="macro", zero_division=0),
             do_chinh_xac_tay=accuracy_score(y_tay, doan_tay),
             f1_macro_tay=f1_score(y_tay, doan_tay, average="macro", zero_division=0),
+            f1_macro_tu_choi=f1_score(y_gop, doan_gop, average="macro", zero_division=0),
             giay_huan_luyen=giay,
             mili_giay_moi_cau=ms_moi_cau,
             nham_lan=_cap_nham_lan(list(y_tay), list(doan_tay)),
         ))
         da_huan_luyen[ten] = mo_hinh
 
-    # Chon theo F1 tren TAP VIET TAY, khong theo tap sinh. Tap viet tay gan
-    # thuc te hon nen la tieu chi chon dung dan hon.
-    ket_qua.sort(key=lambda k: (k.f1_macro_tay, k.f1_macro), reverse=True)
+    # Chon theo F1 CO TU CHOI - chi so mo phong dung hanh vi luc chay that
+    # (nhan dang + tu choi theo nguong). F1 tren tap viet tay va tap sinh chi
+    # con la tieu chi phu de pha the hoa. Xem chu thich o cho tinh
+    # `f1_macro_tu_choi` phia tren de biet vi sao khong chon theo F1 tap viet
+    # tay nua.
+    ket_qua.sort(key=lambda k: (k.f1_macro_tu_choi, k.f1_macro_tay, k.f1_macro),
+                 reverse=True)
     ten_tot = ket_qua[0].ten
 
     # Huan luyen lai mo hinh thang tren TOAN BO du lieu truoc khi luu: khi da

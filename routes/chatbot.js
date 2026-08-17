@@ -75,10 +75,16 @@ function requireQuanLy(req, res, next) {
 // ==========================================================================
 router.post('/chatbot/api/hoi', gioiHanTanSuat, bat(async (req, res) => {
   if (!(await chatbot.dangBat())) {
+    const { id_kh, id_nv } = chatbot.suyRaQuyen(req.session);
+    const canDangNhap = !(id_kh || id_nv);
     return res.json({
-      van_ban: 'Trợ lý ảo hiện đang tạm tắt. Bạn nhắn nhân viên để được hỗ trợ nhé.',
+      van_ban: canDangNhap
+        ? 'Trợ lý ảo hiện đang tạm tắt. Bạn **đăng ký** hoặc **đăng nhập** rồi vào ' +
+          '**mục Chat** để nhắn trực tiếp với nhân viên nhé.'
+        : 'Trợ lý ảo hiện đang tạm tắt. Bạn vào **mục Chat** để nhắn nhân viên nhé.',
       y_dinh: 'tat',
       chuyen_nhan_vien: true,
+      can_dang_nhap: canDangNhap,
     });
   }
 
@@ -114,11 +120,13 @@ router.get('/chatbot/api/cau-hoi-mau', bat(async (req, res) => {
       'Quán mở cửa mấy giờ?',
       'Đặt bàn cho 4 người',
     ],
+    // Khong goi y cau nao ve doanh thu / ton kho: nhung y dinh do da duoc go
+    // khoi bot, goi y ra chi de nguoi dung bam vao roi nhan "chua hieu".
     quan_ly: [
-      'Doanh thu hôm nay bao nhiêu?',
+      'Hôm nay có bao nhiêu đơn?',
       'Top 10 món bán chạy tháng này',
-      'Nguyên liệu nào sắp hết?',
-      'So sánh doanh thu tuần này với tuần trước',
+      'Khung giờ nào đông khách nhất?',
+      'Còn mấy bàn trống?',
     ],
   };
   res.json({ quyen, cau_hoi: mau[quyen] });

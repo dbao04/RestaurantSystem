@@ -77,21 +77,22 @@ def _cau_hinh(khoa: str, mac_dinh: str = "") -> str:
 # NHOM QUAN LY
 # ==========================================================================
 def _tong_quan(tu: str, den: str) -> dict:
-    """Cac chi so tong hop cho mot khoang - dung chung cho nhieu y dinh."""
+    """Cac chi so tong hop cho mot khoang - dung chung cho nhieu y dinh.
+
+    KHONG TRA VE BAT KY CON SO TIEN NAO. Ban truoc ham nay con tra them
+    doanh_thu, chi_phi_nguyen_lieu, loi_nhuan_gop, bien_loi_nhuan va
+    gia_tri_don_tb - va no duoc dung chung cho ca nhung y dinh vo hai nhu "hom
+    nay bao nhieu don". Nghia la chi can mot cau hoi ve so don la ca cum so
+    lieu tai chinh di theo xuong client, du cau tra loi khong doc ra.
+
+    Khi cac y dinh ve tien bi go bo, phai go luon o day chu khong chi o tang
+    tra loi: du lieu khong duoc gui di thi khong the lo, con du lieu da gui roi
+    ma chi "khong hien" thi van nam trong phan hoi JSON.
+    """
     rows = _doc(
-        f"""SELECT COUNT(DISTINCT h.sesis)        AS so_don,
-                   COALESCE(SUM(h.thanhtien), 0)  AS doanh_thu,
-                   COALESCE(SUM(h.soluong), 0)    AS so_mon
+        f"""SELECT COUNT(DISTINCT h.sesis)     AS so_don,
+                   COALESCE(SUM(h.soluong), 0) AS so_mon
             FROM hopdong h
-            WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den""",
-        {"tu": tu, "den": den},
-    )
-    chi_phi = _doc(
-        f"""SELECT COALESCE(SUM(h.soluong * ct.chi_phi), 0) AS chi_phi_nl
-            FROM hopdong h
-            JOIN (SELECT c.id_mon, SUM(c.so_luong_tieu_hao * n.gia_von) AS chi_phi
-                  FROM cong_thuc c JOIN nguyen_lieu n ON n.id_nl = c.id_nl
-                  GROUP BY c.id_mon) ct ON ct.id_mon = h.id_mon
             WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den""",
         {"tu": tu, "den": den},
     )
@@ -103,25 +104,18 @@ def _tong_quan(tu: str, den: str) -> dict:
                  GROUP BY sesis) t""",
         {"tu": tu, "den": den},
     )
-    dt = _so(rows[0]["doanh_thu"])
-    cp = _so(chi_phi[0]["chi_phi_nl"])
-    so_don = int(_so(rows[0]["so_don"]))
     return {
-        "so_don": so_don,
-        "doanh_thu": dt,
+        "so_don": int(_so(rows[0]["so_don"])),
         "so_mon": int(_so(rows[0]["so_mon"])),
         "so_khach": int(_so(khach[0]["so_khach"])) if khach else 0,
-        "chi_phi_nguyen_lieu": cp,
-        "loi_nhuan_gop": dt - cp,
-        "bien_loi_nhuan": (dt - cp) / dt * 100 if dt > 0 else 0.0,
-        "gia_tri_don_tb": dt / so_don if so_don else 0.0,
     }
 
 
-def _duong_doanh_thu(tu: str, den: str) -> dict:
+def _duong_so_don(tu: str, den: str) -> dict:
+    """Bieu do so DON theo ngay - truoc day la bieu do doanh thu theo ngay."""
     rows = _doc(
         f"""SELECT DATE_FORMAT(h.ngay_dat, '%Y-%m-%d') AS ngay,
-                   SUM(h.thanhtien) AS doanh_thu
+                   COUNT(DISTINCT h.sesis) AS so_don
             FROM hopdong h
             WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den
             GROUP BY h.ngay_dat ORDER BY h.ngay_dat""",
@@ -129,64 +123,18 @@ def _duong_doanh_thu(tu: str, den: str) -> dict:
     )
     return {
         "loai": "duong",
-        "ten": "Doanh thu theo ngày",
+        "ten": "Số đơn theo ngày",
         "nhan": [r["ngay"] for r in rows],
-        "gia_tri": [_so(r["doanh_thu"]) for r in rows],
+        "gia_tri": [_so(r["so_don"]) for r in rows],
     }
 
 
-def _q_doanh_thu(tham_so: dict, boi_canh: dict) -> dict:
-    k = _khoang(tham_so)
-    tq = _tong_quan(k["tu"], k["den"])
-    return {"khoang": k, "chi_so": tq, "bieu_do": _duong_doanh_thu(k["tu"], k["den"])}
-
-
-def _q_so_sanh_doanh_thu(tham_so: dict, boi_canh: dict) -> dict:
-    """So sanh ky hien tai voi ky lien truoc CUNG DO DAI.
-
-    Ky truoc duoc suy ra tu do dai ky nay, khong phai "thang truoc" co dinh -
-    nho vay "so sanh 7 ngay qua" cung dung nhu "so sanh thang nay".
-    """
-    k = _khoang(tham_so)
-    tu = date.fromisoformat(k["tu"])
-    den = date.fromisoformat(k["den"])
-    so_ngay = (den - tu).days + 1
-    truoc_den = tu - timedelta(days=1)
-    truoc_tu = truoc_den - timedelta(days=so_ngay - 1)
-
-    nay = _tong_quan(k["tu"], k["den"])
-    truoc = _tong_quan(truoc_tu.isoformat(), truoc_den.isoformat())
-
-    def _thay_doi(a: float, b: float) -> float:
-        return ((a - b) / b * 100) if b else 0.0
-
-    return {
-        "khoang": k,
-        "khoang_truoc": {
-            "tu": truoc_tu.isoformat(), "den": truoc_den.isoformat(),
-            "nhan": f"{so_ngay} ngày liền trước",
-        },
-        "ky_nay": nay,
-        "ky_truoc": truoc,
-        "thay_doi": {
-            "doanh_thu": _thay_doi(nay["doanh_thu"], truoc["doanh_thu"]),
-            "so_don": _thay_doi(nay["so_don"], truoc["so_don"]),
-            "so_khach": _thay_doi(nay["so_khach"], truoc["so_khach"]),
-            "loi_nhuan_gop": _thay_doi(nay["loi_nhuan_gop"], truoc["loi_nhuan_gop"]),
-        },
-        "bieu_do": {
-            "loai": "cot",
-            "ten": "So sánh hai kỳ",
-            "nhan": ["Kỳ trước", "Kỳ này"],
-            "gia_tri": [truoc["doanh_thu"], nay["doanh_thu"]],
-        },
-    }
 
 
 def _q_so_don(tham_so, boi_canh):
     k = _khoang(tham_so)
     return {"khoang": k, "chi_so": _tong_quan(k["tu"], k["den"]),
-            "bieu_do": _duong_doanh_thu(k["tu"], k["den"])}
+            "bieu_do": _duong_so_don(k["tu"], k["den"])}
 
 
 def _q_luot_khach(tham_so, boi_canh):
@@ -212,28 +160,17 @@ def _q_luot_khach(tham_so, boi_canh):
     }
 
 
-def _q_loi_nhuan(tham_so, boi_canh):
-    k = _khoang(tham_so)
-    return {"khoang": k, "chi_so": _tong_quan(k["tu"], k["den"])}
-
-
-def _q_gia_tri_don_tb(tham_so, boi_canh):
-    k = _khoang(tham_so)
-    return {"khoang": k, "chi_so": _tong_quan(k["tu"], k["den"])}
 
 
 def _q_top_mon(tham_so, boi_canh):
     k = _khoang(tham_so)
     n = int(tham_so.get("top_n") or 10)
     rows = _doc(
-        f"""SELECT h.name_mon,
-                   SUM(h.soluong)   AS so_luong,
-                   SUM(h.thanhtien) AS doanh_thu,
-                   SUM(h.thanhtien) - COALESCE(SUM(h.soluong * ct.chi_phi), 0) AS loi_nhuan
+        # Xep hang theo SO PHAN BAN, khong theo doanh thu hay loi nhuan. Ban cu
+        # con hai cot tien va mot phep JOIN sang gia von nguyen lieu - tuc la
+        # cau hoi "mon nao ban chay" tra ve luon bang lai lo tung mon.
+        f"""SELECT h.name_mon, SUM(h.soluong) AS so_luong
             FROM hopdong h
-            LEFT JOIN (SELECT c.id_mon, SUM(c.so_luong_tieu_hao * n.gia_von) AS chi_phi
-                       FROM cong_thuc c JOIN nguyen_lieu n ON n.id_nl = c.id_nl
-                       GROUP BY c.id_mon) ct ON ct.id_mon = h.id_mon
             WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den
             GROUP BY h.id_mon, h.name_mon
             ORDER BY so_luong DESC LIMIT :n""",
@@ -241,8 +178,7 @@ def _q_top_mon(tham_so, boi_canh):
     )
     return {
         "khoang": k, "bang": rows,
-        "cot": [("name_mon", "Món"), ("so_luong", "SL bán"),
-                ("doanh_thu", "Doanh thu"), ("loi_nhuan", "Lợi nhuận")],
+        "cot": [("name_mon", "Món"), ("so_luong", "SL bán")],
         "bieu_do": {
             "loai": "cot", "ten": f"Top {len(rows)} món bán chạy",
             "nhan": [r["name_mon"] for r in rows],
@@ -255,112 +191,22 @@ def _q_mon_ban_cham(tham_so, boi_canh):
     k = _khoang(tham_so)
     n = int(tham_so.get("top_n") or 10)
     rows = _doc(
-        f"""SELECT m.name_mon,
-                   COALESCE(SUM(h.soluong), 0)   AS so_luong,
-                   COALESCE(SUM(h.thanhtien), 0) AS doanh_thu
+        f"""SELECT m.name_mon, COALESCE(SUM(h.soluong), 0) AS so_luong
             FROM monan m
             LEFT JOIN hopdong h
                    ON h.id_mon = m.id_mon AND {DON_HOAN_TAT}
                   AND h.ngay_dat BETWEEN :tu AND :den
             WHERE m.tinhtrang = 1
             GROUP BY m.id_mon, m.name_mon
-            ORDER BY so_luong ASC, doanh_thu ASC LIMIT :n""",
+            ORDER BY so_luong ASC, m.name_mon LIMIT :n""",
         {"tu": k["tu"], "den": k["den"], "n": n},
     )
     return {"khoang": k, "bang": rows,
-            "cot": [("name_mon", "Món"), ("so_luong", "SL bán"), ("doanh_thu", "Doanh thu")]}
+            "cot": [("name_mon", "Món"), ("so_luong", "SL bán")]}
 
 
-def _q_ton_kho(tham_so, boi_canh):
-    nl = tham_so.get("nguyen_lieu")
-    if nl:
-        rows = _doc(
-            """SELECT nl.ten_nl, nl.so_luong AS ton, nl.dinh_muc_min, dv.ten_dvt
-               FROM nguyen_lieu nl
-               LEFT JOIN don_vi_tinh dv ON dv.id_dvt = nl.id_dvt
-               WHERE nl.id_nl = :id""",
-            {"id": int(nl["id_nl"])},
-        )
-    else:
-        rows = _doc(
-            """SELECT nl.ten_nl, nl.so_luong AS ton, nl.dinh_muc_min, dv.ten_dvt
-               FROM nguyen_lieu nl
-               LEFT JOIN don_vi_tinh dv ON dv.id_dvt = nl.id_dvt
-               -- Xep nguyen lieu "cang gan cham dinh muc cang len dau".
-               -- NULLIF tranh chia cho 0 khi chua khai bao dinh muc.
-               ORDER BY nl.so_luong / NULLIF(nl.dinh_muc_min, 0) ASC, nl.ten_nl
-               LIMIT 15"""
-        )
-    return {"bang": rows, "loc_theo": nl["ten_nl"] if nl else None,
-            "cot": [("ten_nl", "Nguyên liệu"), ("ton", "Tồn"),
-                    ("ten_dvt", "ĐVT"), ("dinh_muc_min", "Định mức tối thiểu")]}
 
 
-def _q_nguyen_lieu_sap_het(tham_so, boi_canh):
-    """Nguyen lieu duoi dinh muc HOAC du dung chua toi 3 ngay.
-
-    "So ngay con lai" = ton / tieu hao trung binh 30 ngay - cung cong thuc voi
-    dashboard, de hai noi khong noi hai con so khac nhau.
-    """
-    rows = _doc(
-        """SELECT nl.ten_nl, nl.so_luong AS ton, nl.dinh_muc_min, dv.ten_dvt,
-                  COALESCE(tb.tieu_hao_ngay, 0) AS tieu_hao_ngay,
-                  CASE WHEN COALESCE(tb.tieu_hao_ngay, 0) > 0
-                       THEN ROUND(nl.so_luong / tb.tieu_hao_ngay, 1) END AS so_ngay_con
-           FROM nguyen_lieu nl
-           LEFT JOIN don_vi_tinh dv ON dv.id_dvt = nl.id_dvt
-           LEFT JOIN (SELECT id_nl, SUM(so_luong) / 30 AS tieu_hao_ngay
-                      FROM xuat_kho
-                      WHERE ngay_xuat >= (SELECT DATE_SUB(MAX(ngay_xuat), INTERVAL 30 DAY)
-                                          FROM xuat_kho)
-                      GROUP BY id_nl) tb ON tb.id_nl = nl.id_nl
-           WHERE nl.so_luong <= nl.dinh_muc_min
-              OR (COALESCE(tb.tieu_hao_ngay, 0) > 0 AND nl.so_luong / tb.tieu_hao_ngay < 3)
-           ORDER BY so_ngay_con IS NULL, so_ngay_con ASC LIMIT 20"""
-    )
-    return {"bang": rows,
-            "cot": [("ten_nl", "Nguyên liệu"), ("ton", "Tồn"), ("ten_dvt", "ĐVT"),
-                    ("so_ngay_con", "Còn đủ (ngày)")]}
-
-
-def _q_lo_sap_het_han(tham_so, boi_canh):
-    rows = _doc(
-        """SELECT nl.ten_nl, ct.so_lo, ct.han_su_dung, ct.so_luong_con_lai AS so_luong,
-                  DATEDIFF(ct.han_su_dung, CURDATE()) AS con_lai
-           FROM chi_tiet_phieu_nhap ct
-           JOIN nguyen_lieu nl ON nl.id_nl = ct.id_nl
-           WHERE ct.han_su_dung IS NOT NULL AND ct.so_luong_con_lai > 0
-             AND ct.han_su_dung <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
-           ORDER BY ct.han_su_dung LIMIT 20"""
-    )
-    return {"bang": rows,
-            "cot": [("ten_nl", "Nguyên liệu"), ("so_lo", "Lô"),
-                    ("han_su_dung", "Hạn dùng"), ("so_luong", "Còn lại"),
-                    ("con_lai", "Còn (ngày)")]}
-
-
-def _q_hieu_suat_nhan_vien(tham_so, boi_canh):
-    k = _khoang(tham_so)
-    rows = _doc(
-        f"""SELECT nv.ten, nv.chucvu,
-                   COUNT(DISTINCT h.sesis)  AS so_don,
-                   COUNT(DISTINCT h.id_ban) AS so_ban,
-                   SUM(h.thanhtien)         AS doanh_thu
-            FROM hopdong h
-            JOIN nhan_vien nv ON nv.id_nv = h.id_nv_phuc_vu
-            WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den
-            GROUP BY nv.id_nv, nv.ten, nv.chucvu
-            ORDER BY so_don DESC LIMIT 15""",
-        {"tu": k["tu"], "den": k["den"]},
-    )
-    return {"khoang": k, "bang": rows,
-            "cot": [("ten", "Nhân viên"), ("chucvu", "Chức vụ"),
-                    ("so_don", "Số đơn"), ("doanh_thu", "Doanh thu")],
-            "bieu_do": {
-                "loai": "cot", "ten": "Số đơn theo nhân viên",
-                "nhan": [r["ten"] for r in rows],
-                "gia_tri": [_so(r["so_don"]) for r in rows],
-            }}
 
 
 def _q_hieu_suat_bep(tham_so, boi_canh):
@@ -389,8 +235,10 @@ def _q_hieu_suat_bep(tham_so, boi_canh):
 def _q_gio_cao_diem(tham_so, boi_canh):
     k = _khoang(tham_so)
     gio = _doc(
-        f"""SELECT HOUR(h.gio_dat) AS gio, COUNT(DISTINCT h.sesis) AS so_don,
-                   SUM(h.thanhtien) AS doanh_thu
+        # Do "cao diem" bang SO DON chu khong bang doanh thu: cau hoi nay de xep
+        # ca lam, ma xep ca thi can biet luc nao dong khach - khong can biet luc
+        # nao thu duoc nhieu tien.
+        f"""SELECT HOUR(h.gio_dat) AS gio, COUNT(DISTINCT h.sesis) AS so_don
             FROM hopdong h
             WHERE {DON_HOAN_TAT} AND h.gio_dat IS NOT NULL
               AND h.ngay_dat BETWEEN :tu AND :den
@@ -398,8 +246,7 @@ def _q_gio_cao_diem(tham_so, boi_canh):
         {"tu": k["tu"], "den": k["den"]},
     )
     thu = _doc(
-        f"""SELECT DAYOFWEEK(h.ngay_dat) AS thu_so, COUNT(DISTINCT h.sesis) AS so_don,
-                   SUM(h.thanhtien) AS doanh_thu
+        f"""SELECT DAYOFWEEK(h.ngay_dat) AS thu_so, COUNT(DISTINCT h.sesis) AS so_don
             FROM hopdong h
             WHERE {DON_HOAN_TAT} AND h.ngay_dat BETWEEN :tu AND :den
             GROUP BY DAYOFWEEK(h.ngay_dat) ORDER BY thu_so""",
@@ -410,9 +257,9 @@ def _q_gio_cao_diem(tham_so, boi_canh):
         r["ten_thu"] = ten_thu[int(_so(r["thu_so"], 1))]
     return {"khoang": k, "theo_gio": gio, "theo_thu": thu,
             "bieu_do": {
-                "loai": "cot", "ten": "Doanh thu theo khung giờ",
+                "loai": "cot", "ten": "Số đơn theo khung giờ",
                 "nhan": [f"{int(_so(r['gio']))}h" for r in gio],
-                "gia_tri": [_so(r["doanh_thu"]) for r in gio],
+                "gia_tri": [_so(r["so_don"]) for r in gio],
             }}
 
 
@@ -714,6 +561,19 @@ def _q_mon_chay(tham_so, boi_canh):
 # cau hinh, KHONG phai sua code - dung tinh than cua bang `cau_hinh` san co.
 # ==========================================================================
 NOI_DUNG_TINH: dict[str, tuple[str, str]] = {
+    # Tu choi co chu dich - xem chu thich o y dinh "hoi_noi_bo" trong y_dinh.py.
+    #
+    # KHONG dat chuyen_nhan_vien cho y dinh nay: nguoi hoi doanh thu ma bi day
+    # sang khung chat voi nhan vien phuc vu thi ho se hoi lai dung cau do voi
+    # mot con nguoi khong co quyen tra loi. Chi ro noi DUNG de xem la /analytics.
+    "hoi_noi_bo": (
+        "chatbot.noi_bo",
+        "Mình không tra được số liệu nội bộ của nhà hàng (doanh thu, lợi nhuận, "
+        "tồn kho, nguyên liệu, lương nhân viên).\n\n"
+        "Nếu bạn là quản lý, các số này nằm ở trang **Phân tích** và **Dự báo** "
+        "sau khi đăng nhập bằng tài khoản có quyền.\n\n"
+        "Còn ở đây mình giúp được: thực đơn, giá món, đặt bàn, khuyến mãi, giao hàng…",
+    ),
     "hoi_gio_mo_cua": (
         "chatbot.gio_mo_cua",
         "Nhà hàng mở cửa **10:00 – 22:00** tất cả các ngày trong tuần "
@@ -799,18 +659,10 @@ def _tra_loi_tinh(y_dinh_ma: str) -> dict:
 # ==========================================================================
 THU_VIEN = {
     # quan ly
-    "hoi_doanh_thu": _q_doanh_thu,
-    "hoi_so_sanh_doanh_thu": _q_so_sanh_doanh_thu,
     "hoi_so_don": _q_so_don,
     "hoi_luot_khach": _q_luot_khach,
-    "hoi_loi_nhuan": _q_loi_nhuan,
-    "hoi_gia_tri_don_tb": _q_gia_tri_don_tb,
     "hoi_top_mon": _q_top_mon,
     "hoi_mon_ban_cham": _q_mon_ban_cham,
-    "hoi_ton_kho": _q_ton_kho,
-    "hoi_nguyen_lieu_sap_het": _q_nguyen_lieu_sap_het,
-    "hoi_lo_sap_het_han": _q_lo_sap_het_han,
-    "hoi_hieu_suat_nhan_vien": _q_hieu_suat_nhan_vien,
     "hoi_hieu_suat_bep": _q_hieu_suat_bep,
     "hoi_gio_cao_diem": _q_gio_cao_diem,
     "hoi_ty_le_huy": _q_ty_le_huy,

@@ -256,13 +256,21 @@ async function traLoiDuPhong(cauHoi, boiCanh) {
     } catch { /* roi xuong cau tra loi chung */ }
   }
 
+  // Duong cung: dan ve nguoi that, dung loi moi giong het ban ben Python
+  // (`tra_loi._khong_hieu`). Hai duong nay chay o hai tinh huong khac nhau -
+  // Python tat va Python bat nhung khong hieu cau hoi - nhung voi nguoi dung
+  // thi ca hai deu la "bot khong tra loi duoc", nen phai noi cung mot cau.
+  const canDangNhap = !(boiCanh && (boiCanh.id_kh || boiCanh.id_nv));
   return {
-    van_ban:
-      'Xin lỗi, trợ lý ảo đang tạm thời không sẵn sàng. Bạn nhắn tin cho nhân viên ' +
-      'trong mục Chat để được hỗ trợ ngay nhé.',
+    van_ban: canDangNhap
+      ? 'Xin lỗi, trợ lý ảo đang tạm thời không sẵn sàng. Bạn **đăng ký** hoặc ' +
+        '**đăng nhập** vào website rồi vào **mục Chat** để nhắn trực tiếp với nhân viên nhé.'
+      : 'Xin lỗi, trợ lý ảo đang tạm thời không sẵn sàng. Bạn vào **mục Chat** ' +
+        'để nhắn trực tiếp với nhân viên nhé.',
     y_dinh: 'khong_hieu',
     tin_cay: null,
     chuyen_nhan_vien: true,
+    can_dang_nhap: canDangNhap,
   };
 }
 

@@ -6,7 +6,6 @@ THAM SO can thiet:
 
     thoi_gian   khoang ngay -> WHERE ngay_dat BETWEEN ? AND ?
     mon         id mon an
-    nguyen_lieu id nguyen lieu
     loai_mon    id danh muc
     so          so nguoi / so luong
     gia         nguong gia (VND)
@@ -14,8 +13,7 @@ THAM SO can thiet:
 
 VI SAO KHONG DUNG MO HINH HOC MAY CHO TANG NAY
 ----------------------------------------------
-Ten mon an, ten nguyen lieu la du lieu SONG: quan them mon moi luc nao cung
-duoc. Neu dung mo hinh NER hoc may thi moi lan them mon phai gan nhan lai va
+Ten mon an la du lieu SONG: quan them mon moi luc nao cung duoc. Neu dung mo hinh NER hoc may thi moi lan them mon phai gan nhan lai va
 huan luyen lai - khong the chap nhan trong van hanh that.
 
 Vi vay tang nay dung TU DIEN THUC THE (gazetteer) SINH DONG TU CSDL, ghep bang
@@ -62,7 +60,7 @@ def _doc_bang(cau_lenh: str) -> list[dict]:
 
 
 def nap_tu_dien(bat_buoc: bool = False) -> dict:
-    """Nap tu dien mon an / nguyen lieu / danh muc / ban tu CSDL."""
+    """Nap tu dien mon an / danh muc tu CSDL."""
     global _TU_DIEN, _TU_DIEN_LUC
     if _TU_DIEN is not None and not bat_buoc and (time.time() - _TU_DIEN_LUC) < _HAN_CACHE_GIAY:
         return _TU_DIEN
@@ -71,7 +69,6 @@ def nap_tu_dien(bat_buoc: bool = False) -> dict:
         "mon": _doc_bang(
             "SELECT id_mon, name_mon, gia_mon, id_loai FROM monan WHERE tinhtrang = 1"
         ),
-        "nguyen_lieu": _doc_bang("SELECT id_nl, ten_nl FROM nguyen_lieu"),
         "loai_mon": _doc_bang("SELECT id_loai, name_loai FROM loai_mon"),
     }
     _TU_DIEN_LUC = time.time()
@@ -283,10 +280,6 @@ def tach_mon(cau: str) -> dict | None:
     return _tim_theo_tu_dien(cau, nap_tu_dien()["mon"], "name_mon")
 
 
-def tach_nguyen_lieu(cau: str) -> dict | None:
-    return _tim_theo_tu_dien(cau, nap_tu_dien()["nguyen_lieu"], "ten_nl")
-
-
 def tach_loai_mon(cau: str) -> dict | None:
     return _tim_theo_tu_dien(cau, nap_tu_dien()["loai_mon"], "name_loai", nguong=0.72)
 
@@ -367,11 +360,6 @@ def trich_xuat(cau: str, y_dinh_ma: str = "") -> dict:
         mon = tach_mon(cau)
         if mon:
             tham_so["mon"] = mon
-
-    if y_dinh_ma in {"hoi_ton_kho", "hoi_nguyen_lieu_sap_het", "hoi_lo_sap_het_han"} or not y_dinh_ma:
-        nl = tach_nguyen_lieu(cau)
-        if nl:
-            tham_so["nguyen_lieu"] = nl
 
     if y_dinh_ma in {"hoi_mon_theo_loai", "hoi_thuc_don", "hoi_do_uong"} or not y_dinh_ma:
         loai = tach_loai_mon(cau)

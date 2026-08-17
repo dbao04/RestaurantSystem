@@ -82,7 +82,8 @@ def main() -> int:
     print()
 
     tieu_de = (f"  {'Mo hinh':<32}{'DoCX(sinh)':>11}{'F1(sinh)':>10}"
-               f"{'DoCX(tay)':>11}{'F1(tay)':>9}{'Train(s)':>10}{'ms/cau':>9}")
+               f"{'DoCX(tay)':>11}{'F1(tay)':>9}{'F1(tu choi)':>13}"
+               f"{'Train(s)':>10}{'ms/cau':>9}")
     print(tieu_de)
     _ke()
     for k in kq["ket_qua"]:
@@ -92,11 +93,14 @@ def main() -> int:
               f"{k.f1_macro * 100:>9.2f}%"
               f"{k.do_chinh_xac_tay * 100:>10.2f}%"
               f"{k.f1_macro_tay * 100:>8.2f}%"
+              f"{k.f1_macro_tu_choi * 100:>12.2f}%"
               f"{k.giay_huan_luyen:>10.2f}"
               f"{k.mili_giay_moi_cau:>9.2f}")
     _ke()
-    print(f"  (*) Mo hinh duoc chon: {kq['ten_tot']}"
-          f"  - chon theo F1-macro tren TAP VIET TAY, vi tap nay gan thuc te nhat.")
+    print(f"  (*) Mo hinh duoc chon: {kq['ten_tot']}  - chon theo F1(tu choi):")
+    print("      do tren tap viet tay GOP voi tap ngoai pham vi, va co ap nguong")
+    print("      tu choi y het luc chay that. Mot mo hinh nhan dang gioi nhung")
+    print("      khong biet noi 'toi khong biet' thi khong dung duoc.")
 
     tot = kq["ket_qua"][0]
     if tot.nham_lan:

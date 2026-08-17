@@ -2,7 +2,25 @@
 
 Day la "bo du lieu tu xay" cua khoa luan. He thong khong dung bat ky bo du lieu
 hoi dap tieng Viet co san nao, vi khong bo nao chua cac y dinh dac thu cua mot
-nha hang (hoi ton kho, hoi lo sap het han, hoi hieu suat bep...).
+nha hang (hoi hieu suat bep, hoi ban trong, hoi don dang cho...).
+
+PHAM VI DA THU HEP - VI SAO
+---------------------------
+Ban dau bo tu dien co them 8 y dinh cham vao TIEN va KHO: doanh thu, so sanh
+doanh thu, loi nhuan, gia tri don trung binh, ton kho, nguyen lieu sap het, lo
+sap het han, hieu suat nhan vien. Chung da duoc go bo hoan toan.
+
+Ly do khong phai ky thuat ma la QUAN TRI RUI RO: mot tro ly ao dat tren trang
+cong khai la be mat tan cong rong nhat cua he thong. Phan quyen o
+`truy_van.py` van dung, nhung moi lop phong thu deu co the sai - va cai gia cua
+mot lan sai o day la con so doanh thu hoac gia von cua nha hang bi lo ra ngoai.
+Cach chac chan nhat de mot du lieu khong bi lo qua chatbot la chatbot khong he
+biet duong nao dan toi du lieu do. Nguoi quan ly xem cac so nay o /analytics -
+noi da co phan quyen theo chuc danh.
+
+Nhung y dinh VAN HANH khong nhay cam thi giu lai (so don, luot khach, mon ban
+chay/ban cham, hieu suat bep, gio cao diem, ty le huy, ban trong, don dang cho,
+du bao). Chung cung da duoc go het cot tien: xem `_tong_quan` trong truy_van.py.
 
 CACH SINH DU LIEU
 -----------------
@@ -146,6 +164,53 @@ Y_DINH: dict[str, dict] = {
             "{có|} {người thật|nhân viên} {nào|} {trực|online} {không|}",
             "{cần|muốn} {hỗ trợ|tư vấn} {trực tiếp|từ nhân viên}",
             "{nói chuyện|chat} {với người|với nhân viên} {đi|được không}",
+        ],
+    },
+
+    # ----------------------------------------------------------------------
+    # NHAN TU CHOI CO CHU DICH
+    #
+    # Y dinh nay khong tra ve du lieu nao ca - no ton tai de bot BIET rang cau
+    # dang hoi la so lieu noi bo, va tu choi cho dung.
+    #
+    # Vi sao phai co mot nhan rieng thay vi de "khong hieu" lo: mot bo phan loai
+    # chi biet N nhan thi luon phai chon mot trong N nhan do. Sau khi go 8 y dinh
+    # ve tien va kho, cau "doanh thu tuan truoc bao nhieu" khong con nhan nao
+    # dung de ve, nen mo hinh day no sang "hoi_top_mon" voi do tin cay 0.484 -
+    # tren nguong 0.45 - va bot tra ve bang mon ban chay. Nguoi hoi khong hieu
+    # vi sao, con nguoi bao tri thi doc log thay mot y dinh hoan toan khac.
+    #
+    # Them mot nhan "tu choi" giai quyet dung goc: mo hinh co cho de xep cac cau
+    # nay, do tin cay cao, va cau tra loi noi dung mot su that - bot khong tra so
+    # lieu noi bo, muon xem thi vao trang phan tich (noi da co phan quyen).
+    # ----------------------------------------------------------------------
+    "hoi_noi_bo": {
+        "nhom": "chung",
+        "mo_ta": "Hỏi số liệu nội bộ (doanh thu, lợi nhuận, tồn kho, lương)",
+        "mau": [
+            "{doanh thu|doanh số} {hôm nay|<tg>} {bao nhiêu|là bao nhiêu|thế nào}",
+            "{tổng|} {doanh thu|doanh số} <tg>",
+            "{quán|nhà hàng} {thu|kiếm|bán} {được|} {bao nhiêu|nhiêu tiền} <tg>",
+            "{lợi nhuận|lãi|lời} <tg> {bao nhiêu|thế nào}",
+            "{lợi nhuận|lãi} {của quán|của nhà hàng|} <tg> {thế nào|ra sao}",
+            "{quán|nhà hàng} {lãi|lời} {được|} {bao nhiêu|nhiêu} <tg>",
+            "{tình hình|kết quả} {kinh doanh|tài chính} <tg> {thế nào|ra sao}",
+            "{lãi|lời} {hay|hay là} {lỗ} <tg>",
+            "{chi phí|giá vốn} {nguyên liệu|hàng hóa} <tg> {bao nhiêu|hết bao nhiêu}",
+            "{biên|tỷ suất} {lợi nhuận|lãi} {bao nhiêu|thế nào}",
+            "{trung bình|tb} {mỗi|một} {đơn|hóa đơn|khách} {bao nhiêu tiền|chi bao nhiêu}",
+            "{tồn kho|kho} {còn|hiện} {bao nhiêu|những gì|thế nào}",
+            "{kiểm tra|xem|báo cáo} {tồn kho|hàng tồn|kho}",
+            "{còn|có} {bao nhiêu|mấy} {kg|lít|} <nl> {trong kho|còn lại}",
+            "{nguyên liệu|hàng} {nào|gì} {sắp hết|hết rồi|cần nhập}",
+            "{cần|phải} {nhập|mua} {thêm|} {nguyên liệu|hàng} {gì|nào}",
+            "{lô|hàng} {nào|} {sắp|gần} {hết hạn|hết date}",
+            "{hạn sử dụng|date} {của|} {lô hàng|nguyên liệu} {thế nào|còn bao lâu}",
+            "{lương|thu nhập} {của|} {nhân viên|nhân sự} {bao nhiêu|thế nào}",
+            "{nhân viên|ai} {nào|} {bán|phục vụ} {giỏi nhất|nhiều nhất|tốt nhất}",
+            "{hiệu suất|năng suất} {nhân viên|của nhân viên} {thế nào|ra sao}",
+            "{chi phí|chi tiêu} {vận hành|hàng tháng} {bao nhiêu|thế nào}",
+            "{báo cáo|thống kê} {tài chính|kinh doanh|doanh thu} <tg>",
         ],
     },
 
@@ -450,34 +515,6 @@ Y_DINH: dict[str, dict] = {
     },
 
     # ===================== NHOM QUAN LY =====================
-    "hoi_doanh_thu": {
-        "nhom": "quan_ly",
-        "mo_ta": "Tổng doanh thu trong một khoảng thời gian",
-        "mau": [
-            "{doanh thu|dt} <tg> {là bao nhiêu|bao nhiêu|thế nào|}",
-            "{cho|} {xem|báo cáo|thống kê} {doanh thu|dt} <tg>",
-            "<tg> {thu được|bán được|kiếm được} {bao nhiêu|nhiêu tiền}",
-            "{tổng|} {doanh thu|tiền bán hàng} <tg> {đi|với|nhé}",
-            "{báo|cho biết} {doanh số|doanh thu} <tg>",
-            "{doanh thu|dt} {thế nào|ra sao} <tg>",
-            "{xem|kiểm tra} {tiền|doanh thu} {bán hàng|thu về} <tg>",
-            "<tg> {doanh thu|dt} {được|đạt} {nhiêu|bao nhiêu}",
-        ],
-    },
-    "hoi_so_sanh_doanh_thu": {
-        "nhom": "quan_ly",
-        "mo_ta": "So sánh doanh thu giữa hai kỳ",
-        "mau": [
-            "{so sánh|đối chiếu} {doanh thu|dt} {tuần này|tháng này} {với|và} {tuần trước|tháng trước}",
-            "{doanh thu|dt} {tuần này|tháng này} {so với|hơn kém} {tuần trước|tháng trước} {thế nào|bao nhiêu}",
-            "{tăng|giảm} {bao nhiêu|mấy phần trăm} {so với|so} {kỳ trước|tháng trước|tuần trước}",
-            "{doanh thu|dt} {có|} {tăng|khá hơn} {không|hơn tháng trước không}",
-            "{tháng này|tuần này} {hơn|kém} {tháng trước|tuần trước} {bao nhiêu|nhiêu}",
-            "{xu hướng|đà} {doanh thu|kinh doanh} {thế nào|đang lên hay xuống}",
-            "{tăng trưởng|growth} {doanh thu|dt} {bao nhiêu|mấy phần trăm}",
-            "{so sánh|đối chiếu} {2 kỳ|hai tháng gần nhất} {giúp|đi}",
-        ],
-    },
     "hoi_so_don": {
         "nhom": "quan_ly",
         "mo_ta": "Số lượng đơn hàng",
@@ -504,20 +541,6 @@ Y_DINH: dict[str, dict] = {
             "{thống kê|đếm} {khách|lượt khách} <tg>",
             "{khách|người} {đến|tới} {bao nhiêu|nhiêu} <tg>",
             "{tổng|} {lượt khách|số khách} <tg>",
-        ],
-    },
-    "hoi_loi_nhuan": {
-        "nhom": "quan_ly",
-        "mo_ta": "Lợi nhuận gộp, biên lợi nhuận, chi phí nguyên liệu",
-        "mau": [
-            "{lợi nhuận|ln|lãi} <tg> {bao nhiêu|là bao nhiêu|thế nào}",
-            "{lãi|lời} {được|} {bao nhiêu|nhiêu} <tg>",
-            "{biên|tỷ lệ} {lợi nhuận|lãi} <tg> {bao nhiêu|mấy phần trăm}",
-            "{chi phí|giá vốn} {nguyên liệu|nguyên vật liệu} <tg> {bao nhiêu|hết bao nhiêu}",
-            "{lợi nhuận gộp|lãi gộp} <tg> {thế nào|bao nhiêu}",
-            "{tính|cho biết} {lãi lỗ|lợi nhuận} <tg>",
-            "{kinh doanh|làm ăn} <tg> {lãi hay lỗ|có lời không}",
-            "{doanh thu trừ|trừ} {chi phí|giá vốn} {còn|ra} {bao nhiêu|nhiêu} <tg>",
         ],
     },
     "hoi_top_mon": {
@@ -548,62 +571,6 @@ Y_DINH: dict[str, dict] = {
             "{cuối bảng|xếp cuối} {là|có} {món nào|những món nào}",
         ],
     },
-    "hoi_ton_kho": {
-        "nhom": "quan_ly",
-        "mo_ta": "Tình trạng tồn kho nguyên liệu",
-        "mau": [
-            "{tồn kho|tk} {hiện tại|bây giờ} {thế nào|ra sao|còn bao nhiêu}",
-            "{còn|tồn} {bao nhiêu|mấy} <nl>",
-            "{kiểm tra|xem} {tồn kho|kho|nguyên liệu}",
-            "{báo cáo|thống kê} {tồn kho|kho hàng}",
-            "{trong kho|kho} {còn|có} {những gì|gì}",
-            "{số lượng|lượng} {tồn|còn lại} {của|} <nl> {bao nhiêu|thế nào}",
-            "{tình trạng|tình hình} {kho|nguyên liệu} {thế nào|ra sao}",
-            "{xem|kiểm} {kho|hàng tồn} {đi|giúp|nhé}",
-        ],
-    },
-    "hoi_nguyen_lieu_sap_het": {
-        "nhom": "quan_ly",
-        "mo_ta": "Nguyên liệu sắp hết, cần nhập thêm",
-        "mau": [
-            "{nguyên liệu|nl|hàng} {nào|gì} {sắp hết|gần hết|dưới định mức}",
-            "{cần|phải} {nhập|mua} {thêm|} {gì|nguyên liệu nào}",
-            "{cảnh báo|báo động} {tồn kho|hết hàng} {có gì|gồm gì}",
-            "{món|nguyên liệu} {nào|gì} {phải|cần} {đặt hàng|nhập} {gấp|ngay}",
-            "{sắp hết|hết} {những|} {nguyên liệu|thứ} {nào|gì}",
-            "{danh sách|liệt kê} {cần nhập|phải mua} {hôm nay|tuần này|}",
-            "{nguyên liệu|hàng} {còn|dùng được} {mấy ngày|bao lâu} {nữa|}",
-            "{có|} {gì|nguyên liệu nào} {dưới|thấp hơn} {định mức|mức tối thiểu} {không|}",
-        ],
-    },
-    "hoi_lo_sap_het_han": {
-        "nhom": "quan_ly",
-        "mo_ta": "Lô hàng sắp hết hạn sử dụng",
-        "mau": [
-            "{lô|hàng|nguyên liệu} {nào|gì} {sắp hết hạn|gần hết hạn|hết date}",
-            "{có|} {hàng|lô} {nào|} {hết hạn|quá hạn} {chưa|không}",
-            "{kiểm tra|xem} {hạn sử dụng|date|hsd} {kho|nguyên liệu}",
-            "{cảnh báo|báo} {hết hạn|hạn sử dụng} {có gì|gồm gì}",
-            "{hàng|lô} {hết hạn|hết date} {trong|sau} {7 ngày|tuần này|vài ngày} {tới|nữa}",
-            "{cần|phải} {dùng gấp|xử lý} {nguyên liệu|lô} {nào|gì}",
-            "{danh sách|liệt kê} {lô hàng|hàng} {sắp hết hạn|cận date}",
-            "{nguyên liệu|đồ} {nào|gì} {sắp hỏng|sắp bỏ|phải bỏ}",
-        ],
-    },
-    "hoi_hieu_suat_nhan_vien": {
-        "nhom": "quan_ly",
-        "mo_ta": "Hiệu suất nhân viên phục vụ",
-        "mau": [
-            "{nhân viên|nv} {nào|ai} {phục vụ|làm} {nhiều|tốt} {nhất|} <tg>",
-            "{hiệu suất|năng suất} {nhân viên|nv} <tg> {thế nào|ra sao}",
-            "{xếp hạng|rank} {nhân viên|nv} {theo|theo doanh thu} {số đơn|doanh thu} <tg>",
-            "{ai|nhân viên nào} {bán được|mang về} {nhiều tiền nhất|doanh thu cao nhất}",
-            "{báo cáo|thống kê} {nhân viên|nhân sự} <tg>",
-            "{nhân viên|nv} {nào|ai} {làm ít|kém|yếu} {nhất|} <tg>",
-            "{mỗi|từng} {nhân viên|nv} {phục vụ|làm} {bao nhiêu|mấy} {đơn|bàn} <tg>",
-            "{đánh giá|xem} {năng suất|hiệu quả} {đội ngũ|nhân viên} <tg>",
-        ],
-    },
     "hoi_hieu_suat_bep": {
         "nhom": "quan_ly",
         "mo_ta": "Thời gian chế biến của bếp",
@@ -620,13 +587,11 @@ Y_DINH: dict[str, dict] = {
     },
     "hoi_du_bao": {
         "nhom": "quan_ly",
-        "mo_ta": "Kết quả dự báo lượt khách / nguyên liệu (nối vào module ML sẵn có)",
+        "mo_ta": "Kết quả dự báo lượt khách (nối vào module ML sẵn có)",
         "mau": [
             "{dự báo|dự đoán} {lượt khách|khách} {ngày mai|tuần tới|mấy ngày tới} {thế nào|bao nhiêu}",
             "{mai|ngày mai|tuần sau} {dự kiến|dự báo} {bao nhiêu|mấy} {khách|lượt khách}",
             "{xem|cho biết} {kết quả|số liệu} {dự báo|dự đoán}",
-            "{dự báo|dự đoán} {nguyên liệu|nhu cầu nguyên liệu} {tuần tới|sắp tới}",
-            "{cần|phải} {chuẩn bị|nhập} {bao nhiêu|nhiêu} {nguyên liệu|hàng} {tuần tới|tới}",
             "{mô hình|ml|ai} {dự báo|đoán} {thế nào|ra sao}",
             "{độ chính xác|sai số} {của|} {mô hình|dự báo} {bao nhiêu|thế nào}",
             "{sắp tới|những ngày tới} {đông khách|vắng} {không|thế nào}",
@@ -686,20 +651,6 @@ Y_DINH: dict[str, dict] = {
             "{kiểm tra|xem} {đơn|món} {đang chờ|chưa xong}",
             "{còn|có} {đơn|order} {nào|} {chưa|chậm} {xử lý|ra món} {không|}",
             "{tình trạng|trạng thái} {bếp|kds} {hiện tại|bây giờ}",
-        ],
-    },
-    "hoi_gia_tri_don_tb": {
-        "nhom": "quan_ly",
-        "mo_ta": "Giá trị trung bình mỗi đơn / mỗi khách",
-        "mau": [
-            "{giá trị|tiền} {trung bình|tb} {mỗi|một} {đơn|hóa đơn} {bao nhiêu|là bao nhiêu} <tg>",
-            "{mỗi|một} {khách|người} {chi|tiêu|xài} {bao nhiêu|trung bình bao nhiêu} <tg>",
-            "{trung bình|tb} {một|mỗi} {bill|hóa đơn} {bao nhiêu|nhiêu tiền}",
-            "{aov|giá trị đơn trung bình} <tg> {bao nhiêu|thế nào}",
-            "{khách|} {tiêu|chi} {trung bình|tb} {bao nhiêu|nhiêu} <tg>",
-            "{đơn|hóa đơn} {trung bình|tb} {tăng hay giảm|thế nào} <tg>",
-            "{tính|cho biết} {giá trị đơn|bill} {trung bình|tb} <tg>",
-            "{trung bình|tb} {mỗi bàn|mỗi lượt} {chi|thu} {bao nhiêu|nhiêu}",
         ],
     },
 }
@@ -850,21 +801,10 @@ BO_KIEM_THU_TAY: list[tuple[str, str]] = [
     ("ok cảm ơn bạn nhiều nhé", "cam_on"),
     ("thôi mình đi đây bye", "tam_biet"),
     # --- nhom quan ly ---
-    ("doanh thu tuần vừa rồi được nhiêu", "hoi_doanh_thu"),
-    ("cho xem tiền bán hàng tháng này", "hoi_doanh_thu"),
-    ("thang nay so voi thang truoc the nao", "hoi_so_sanh_doanh_thu"),
-    ("doanh thu có tăng so với kỳ trước không", "hoi_so_sanh_doanh_thu"),
     ("hôm qua bán được mấy đơn", "hoi_so_don"),
     ("tuần này đón bao nhiêu lượt khách", "hoi_luot_khach"),
-    ("tháng này lãi được nhiêu", "hoi_loi_nhuan"),
-    ("chi phí nguyên liệu tháng trước hết bao nhiêu", "hoi_loi_nhuan"),
     ("liệt kê 10 món bán chạy nhất tháng này", "hoi_top_mon"),
     ("món nào đang ế nhất vậy", "hoi_mon_ban_cham"),
-    ("kiểm tra giúp tôi tồn kho hiện tại", "hoi_ton_kho"),
-    ("còn bao nhiêu thịt bò trong kho", "hoi_ton_kho"),
-    ("nguyên liệu nào sắp hết cần nhập gấp", "hoi_nguyen_lieu_sap_het"),
-    ("có lô hàng nào sắp hết hạn không", "hoi_lo_sap_het_han"),
-    ("nhân viên nào phục vụ nhiều đơn nhất tuần này", "hoi_hieu_suat_nhan_vien"),
     ("bếp làm một món mất trung bình bao lâu", "hoi_hieu_suat_bep"),
     ("món nào lâu ra nhất", "hoi_hieu_suat_bep"),
     ("dự báo ngày mai bao nhiêu khách", "hoi_du_bao"),
@@ -874,7 +814,22 @@ BO_KIEM_THU_TAY: list[tuple[str, str]] = [
     ("tỷ lệ hủy đơn tháng này bao nhiêu", "hoi_ty_le_huy"),
     ("giờ còn mấy bàn trống", "hoi_ban_trong"),
     ("bếp đang tồn mấy món chưa làm", "hoi_don_dang_cho"),
-    ("trung bình mỗi hóa đơn bao nhiêu tiền", "hoi_gia_tri_don_tb"),
+
+    # Cau hoi so lieu noi bo - bot phai nhan ra va TU CHOI, khong duoc day sang
+    # mot y dinh gan gan roi tra ve bang so lieu khac. Day dung la nhung cau da
+    # tung co nhan rieng truoc khi 8 y dinh ve tien va kho bi go bo, nen chung
+    # cung do luon xem viec go bo co de lai lo hong nao khong.
+    ("doanh thu hôm nay được bao nhiêu", "hoi_noi_bo"),
+    ("tháng này quán lãi hay lỗ", "hoi_noi_bo"),
+    ("lợi nhuận tháng này thế nào", "hoi_noi_bo"),
+    ("tình hình kinh doanh tuần này ra sao", "hoi_noi_bo"),
+    ("chi phí nguyên liệu tháng trước hết bao nhiêu", "hoi_noi_bo"),
+    ("kiểm tra giúp tôi tồn kho hiện tại", "hoi_noi_bo"),
+    ("còn bao nhiêu thịt bò trong kho", "hoi_noi_bo"),
+    ("nguyên liệu nào sắp hết cần nhập gấp", "hoi_noi_bo"),
+    ("có lô hàng nào sắp hết hạn không", "hoi_noi_bo"),
+    ("nhân viên nào phục vụ nhiều đơn nhất tuần này", "hoi_noi_bo"),
+    ("trung bình mỗi hóa đơn bao nhiêu tiền", "hoi_noi_bo"),
 ]
 
 
