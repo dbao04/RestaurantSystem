@@ -4,7 +4,7 @@
  *   npm run db:check
  *
  * Ma thoat:
- *   0 = da du 62 bang, dung duoc ngay
+ *   0 = da du 66 bang, dung duoc ngay
  *   1 = database chua ton tai hoac chua du bang -> can chay "npm run db:setup"
  *   2 = khong ket noi duoc MySQL (chua bat MySQL, hoac sai mat khau trong .env)
  *
@@ -14,7 +14,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const TEN_DB = process.env.DB_NAME || 'gs_restaurant';
-const SO_BANG_CAN = 62;
+const SO_BANG_CAN = 66;
 const IM_LANG = process.argv.includes('--im-lang');
 
 const in_ = (...d) => { if (!IM_LANG) console.log(...d); };

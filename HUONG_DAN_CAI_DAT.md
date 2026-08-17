@@ -67,7 +67,7 @@ Bảo đảm MySQL đang chạy (bật XAMPP Control Panel → Start MySQL), r�
 npm run db:setup
 ```
 
-Lệnh này tự tạo database `gs_restaurant`, nạp toàn bộ **62 bảng** kèm dữ liệu từ
+Lệnh này tự tạo database `gs_restaurant`, nạp toàn bộ **66 bảng** kèm dữ liệu từ
 file nguồn duy nhất `database/gs_restaurant.sql`, rồi kiểm tra lại kết quả.
 Bạn **không cần** tạo database trước, cũng không cần mở phpMyAdmin.
 
