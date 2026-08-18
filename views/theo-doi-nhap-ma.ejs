@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Theo dõi đơn giao hàng</title>
+  <meta name="theme-color" content="#2c1810">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { margin:0; min-height:100vh; min-height:100dvh; display:flex; align-items:center;
+           justify-content:center; padding:24px;
+           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+           background:linear-gradient(160deg,#2c1810,#4e342e); color:#fff; }
+    .hop { max-width:400px; width:100%; text-align:center; }
+    i.to { font-size:48px; color:#c8a951; opacity:.85; margin-bottom:16px; }
+    h1 { font-size:22px; margin:0 0 8px; }
+    p { font-size:14.5px; line-height:1.6; opacity:.82; margin:0 0 20px; }
+    input { width:100%; padding:15px; font-size:19px; text-align:center; letter-spacing:2px;
+            border-radius:12px; border:2px solid rgba(255,255,255,.2); background:rgba(0,0,0,.25);
+            color:#fff; font-weight:800; text-transform:uppercase; }
+    input::placeholder { letter-spacing:normal; font-weight:400; opacity:.4; }
+    button { width:100%; margin-top:12px; padding:15px; font-size:16px; font-weight:800;
+             border:0; border-radius:12px; background:#c8a951; color:#2c1810; cursor:pointer; }
+    .loi { background:rgba(231,74,59,.2); border:1px solid rgba(231,74,59,.45); color:#ffd5d0;
+           border-radius:10px; padding:12px; font-size:13.5px; margin-bottom:16px; line-height:1.55; }
+    a { color:#c8a951; font-size:13.5px; display:inline-block; margin-top:18px; }
+  </style>
+</head>
+<body>
+  <div class="hop">
+    <i class="fas fa-motorcycle to"></i>
+    <h1>Đơn của bạn đang ở đâu?</h1>
+    <p>Nhập mã theo dõi in trên hóa đơn hoặc trong tin nhắn xác nhận.</p>
+
+    <% if (loi) { %><div class="loi"><%= loi %></div><% } %>
+
+    <form action="/theo-doi" method="GET">
+      <input name="ma" required autofocus autocomplete="off" placeholder="GH0818-007"
+             pattern="[A-Za-z0-9\-]{4,20}" maxlength="20">
+      <button type="submit"><i class="fas fa-magnifying-glass"></i> Xem đơn của tôi</button>
+    </form>
+
+    <a href="/">← Về trang chủ nhà hàng</a>
+  </div>
+</body>
+</html>

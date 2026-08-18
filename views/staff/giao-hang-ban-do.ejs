@@ -1,0 +1,323 @@
+<%
+  var activePage = 'giao-hang';
+%>
+<%- include('partials/header') %>
+
+<%
+  /*
+    BAN DO THOI GIAN THUC
+
+    Ba nguon du lieu nuoi man hinh nay, co y khong gop lam mot:
+
+      1. `banDau`  - HTML dung san. Ban do co cham ngay khi trang vua mo, khong
+                     phai doi mot vong goi API. Man hinh dieu phoi thuong duoc
+                     mo suot ca, nhung luc no vua duoc mo lai la luc gap nhat.
+      2. socket    - 'shipper:vi-tri' day toa do xuong ngay khi shipper gui.
+                     Day la duong chinh, do tre khoang mot phan nghin giay.
+      3. goi lai API moi 20 giay - luoi an toan. Goi tin socket co the roi khi
+                     mang chap chon; khong co buoc nay thi ban do dung im ma
+                     khong ai biet, va dieu phoi tuong ca doi dang dung mot cho.
+
+    THU VIEN BAN DO
+    Leaflet + nen OpenStreetMap: khong can khoa API, khong gioi han luot xem, va
+    khong gui du lieu don hang cua nha hang cho ben thu ba nao ca - chi tai ve
+    anh nen theo o vuong toa do.
+  */
+%>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<style>
+  .bd-khung { display:grid; grid-template-columns: 1fr 330px; gap:14px; align-items:start; }
+  @media (max-width: 1100px) { .bd-khung { grid-template-columns: 1fr; } }
+
+  #ban-do { height: calc(100vh - 230px); min-height: 460px; border-radius:10px; z-index:1; }
+
+  .bd-ben { max-height: calc(100vh - 230px); overflow-y:auto; }
+  .bd-muc { border:1px solid #eee; border-left:4px solid #ccc; border-radius:8px;
+            padding:9px 11px; margin-bottom:8px; cursor:pointer; background:#fff; font-size:13px; }
+  .bd-muc:hover { background:#fdfaf4; }
+  .bd-muc__ten { font-weight:600; }
+  .bd-muc__meta { font-size:11.5px; color:#888; }
+  .bd-mat { opacity:.55; }
+
+  /* Cham shipper - ve bang divIcon nen phai tu tao hinh o day. */
+  .bd-xe { display:flex; align-items:center; justify-content:center;
+           width:30px; height:30px; border-radius:50%; color:#fff; font-size:14px;
+           box-shadow:0 2px 8px rgba(0,0,0,.35); border:2px solid #fff; }
+  .bd-xe--mat { filter:grayscale(1); opacity:.6; }
+  .bd-nhan { background:rgba(44,24,16,.92); color:#fff; padding:2px 7px; border-radius:5px;
+             font-size:11px; font-weight:600; white-space:nowrap; }
+
+  .bd-thanh { display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+              font-size:12.5px; color:#666; margin-bottom:10px; }
+  .bd-cham { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-2">
+  <div>
+    <h1 class="h3 mb-0 text-gray-800">Bản đồ theo dõi shipper</h1>
+    <small class="text-muted" id="bd-cap-nhat">Đang kết nối…</small>
+  </div>
+  <a href="/staff/giao-hang" class="btn btn-sm btn-outline-secondary shadow-sm">
+    <i class="fas fa-list fa-sm"></i> Về bảng điều phối
+  </a>
+</div>
+
+<% if (!banDau.nha_hang) { %>
+  <div class="alert alert-warning py-2">
+    <strong>Chưa khai tọa độ nhà hàng</strong> nên bản đồ không biết đặt tâm ở đâu.
+    Khai ở <a href="/to-chuc/cham-cong">Quản lý chấm công → Cấu hình vị trí</a>.
+  </div>
+<% } %>
+
+<div class="bd-thanh">
+  <span><span class="bd-cham" style="background:#198754"></span> đang phát tín hiệu</span>
+  <span><span class="bd-cham" style="background:#adb5bd"></span> mất tín hiệu trên 3 phút</span>
+  <span><i class="fas fa-utensils"></i> nhà hàng</span>
+  <span><i class="fas fa-location-dot"></i> điểm giao</span>
+  <span class="ml-auto">Shipper gửi vị trí mỗi <%= banDau.nhip_gps_giay %> giây</span>
+</div>
+
+<div class="bd-khung">
+  <div id="ban-do"></div>
+
+  <div class="bd-ben">
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-motorcycle"></i> Shipper trong ca <span class="badge badge-light" id="bd-so-sp">0</span>
+        </h6>
+      </div>
+      <div class="card-body py-2" id="bd-ds-sp"></div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-warning">
+          <i class="fas fa-box"></i> Đơn đang chạy <span class="badge badge-light" id="bd-so-don">0</span>
+        </h6>
+      </div>
+      <div class="card-body py-2" id="bd-ds-don"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BAN_DAU = <%- JSON.stringify(banDau) %>;
+  var TAM_MAC_DINH = [10.7756, 106.7019];   // TP.HCM, dùng khi chưa khai tọa độ nhà hàng
+
+  var ban_do = L.map('ban-do', { zoomControl: true })
+    .setView(BAN_DAU.nha_hang ? [BAN_DAU.nha_hang.vi_do, BAN_DAU.nha_hang.kinh_do] : TAM_MAC_DINH, 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(ban_do);
+
+  // --- Nhà hàng ------------------------------------------------------------
+  if (BAN_DAU.nha_hang) {
+    L.marker([BAN_DAU.nha_hang.vi_do, BAN_DAU.nha_hang.kinh_do], {
+      icon: L.divIcon({
+        className: '',
+        html: '<div class="bd-xe" style="background:#2c1810"><i class="fas fa-utensils"></i></div>',
+        iconSize: [30, 30], iconAnchor: [15, 15],
+      }),
+      zIndexOffset: 500,
+    }).addTo(ban_do).bindPopup('<b>Nhà hàng Bảo Đoàn</b>');
+  }
+
+  /*
+    Giữ marker theo id thay vì xóa sạch và vẽ lại mỗi vòng cập nhật.
+
+    Xóa-vẽ-lại là cách viết ngắn hơn nhiều, nhưng nó làm popup đang mở bị đóng
+    sập ngay giữa lúc điều phối đang đọc địa chỉ trong đó — cứ 15 giây một lần.
+    Cập nhật tại chỗ (`setLatLng`) còn cho Leaflet vẽ chuyển động mượt giữa hai
+    điểm, nên xe trông như đang chạy chứ không phải nhảy cóc.
+  */
+  var chamSp = {};    // id_shipper -> marker
+  var chamDon = {};   // id_giao    -> marker
+
+  function icon(mau, hinh, mat) {
+    return L.divIcon({
+      className: '',
+      html: '<div class="bd-xe' + (mat ? ' bd-xe--mat' : '') + '" style="background:' + mau + '">' +
+            '<i class="fas ' + hinh + '"></i></div>',
+      iconSize: [30, 30], iconAnchor: [15, 15],
+    });
+  }
+
+  function thoat(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function tien(n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); }
+
+  // --- Vẽ shipper ----------------------------------------------------------
+  function veShipper(ds) {
+    var conSong = {};
+    var html = '';
+
+    ds.forEach(function (s) {
+      conSong[s.id_shipper] = true;
+      var mau = s.mat_tin_hieu ? '#adb5bd' : (s.mau_sac || '#198754');
+
+      if (s.co_vi_tri) {
+        var toa = [s.vi_do, s.kinh_do];
+        if (chamSp[s.id_shipper]) {
+          chamSp[s.id_shipper].setLatLng(toa).setIcon(icon(mau, 'fa-motorcycle', s.mat_tin_hieu));
+        } else {
+          chamSp[s.id_shipper] = L.marker(toa, { icon: icon(mau, 'fa-motorcycle', s.mat_tin_hieu), zIndexOffset: 400 })
+            .addTo(ban_do);
+        }
+        chamSp[s.id_shipper].bindPopup(
+          '<b>' + thoat(s.ten) + '</b><br>' +
+          thoat(s.ten_dv) + '<br>' +
+          'Đang cầm ' + s.don_dang_cam + ' đơn' +
+          (s.bien_so ? '<br>' + thoat(s.bien_so) : '') +
+          (s.sdt ? '<br><a href="tel:' + thoat(s.sdt) + '">' + thoat(s.sdt) + '</a>' : '') +
+          (s.mat_tin_hieu ? '<br><span style="color:#dc3545">Mất tín hiệu ' + (s.phut_truoc === null ? '—' : s.phut_truoc + ' phút') + '</span>' : '')
+        );
+      }
+
+      html +=
+        '<div class="bd-muc' + (s.mat_tin_hieu ? ' bd-mat' : '') + '" style="border-left-color:' + mau + '"' +
+        (s.co_vi_tri ? ' data-sp="' + s.id_shipper + '"' : '') + '>' +
+          '<div class="bd-muc__ten">' + thoat(s.ten) + '</div>' +
+          '<div class="bd-muc__meta">' + thoat(s.ten_dv) + ' · ' + s.don_dang_cam + ' đơn' +
+            (s.pin !== null && s.pin !== undefined ? ' · pin ' + s.pin + '%' : '') + '</div>' +
+          '<div class="bd-muc__meta">' +
+            (!s.co_vi_tri ? '<span style="color:#adb5bd">chưa bật định vị</span>'
+              : s.mat_tin_hieu ? '<span style="color:#dc3545">mất tín hiệu ' + (s.phut_truoc === null ? '—' : s.phut_truoc + ' phút') + '</span>'
+              : '<span style="color:#198754">đang phát tín hiệu</span>') +
+          '</div>' +
+        '</div>';
+    });
+
+    // Ai rời ca thì gỡ chấm — để lại thì bản đồ đầy xe đứng yên của hôm qua.
+    Object.keys(chamSp).forEach(function (id) {
+      if (!conSong[id]) { ban_do.removeLayer(chamSp[id]); delete chamSp[id]; }
+    });
+
+    document.getElementById('bd-so-sp').textContent = ds.length;
+    document.getElementById('bd-ds-sp').innerHTML =
+      html || '<p class="text-muted small mb-0">Chưa ai bật ca.</p>';
+  }
+
+  // --- Vẽ điểm giao --------------------------------------------------------
+  function veDon(ds) {
+    var conSong = {};
+    var html = '';
+
+    ds.forEach(function (g) {
+      conSong[g.id_giao] = true;
+
+      if (g.vi_do !== null && g.kinh_do !== null) {
+        var toa = [g.vi_do, g.kinh_do];
+        if (chamDon[g.id_giao]) chamDon[g.id_giao].setLatLng(toa).setIcon(icon(g.mau, 'fa-location-dot'));
+        else chamDon[g.id_giao] = L.marker(toa, { icon: icon(g.mau, 'fa-location-dot') }).addTo(ban_do);
+
+        chamDon[g.id_giao].bindPopup(
+          '<b>' + thoat(g.ma_giao) + '</b> — ' + thoat(g.nhan) + '<br>' +
+          thoat(g.ten_nguoi_nhan) + '<br>' +
+          thoat(g.dia_chi_giao) + '<br>' +
+          'Thu ' + tien((g.tien_hang || 0) + (g.phi_giao || 0)) + 'đ' +
+          (g.ten_shipper ? '<br>Shipper: ' + thoat(g.ten_shipper) : '<br><i>chưa phân shipper</i>') +
+          '<br><a href="/staff/giao-hang/' + g.id_giao + '">Xem chi tiết</a>'
+        );
+      }
+
+      html +=
+        '<div class="bd-muc" style="border-left-color:' + g.mau + '"' +
+        (g.vi_do !== null ? ' data-don="' + g.id_giao + '"' : '') + '>' +
+          '<div class="bd-muc__ten">' + thoat(g.ma_giao) +
+            ' <span style="color:' + g.mau + '">· ' + thoat(g.nhan) + '</span></div>' +
+          '<div class="bd-muc__meta">' + thoat(g.ten_nguoi_nhan) + ' · ' + thoat(g.dia_chi_giao) + '</div>' +
+          '<div class="bd-muc__meta">' +
+            (g.ten_shipper ? thoat(g.ten_shipper) : '<span style="color:#dc3545">chưa phân</span>') +
+            (g.khoang_cach_km !== null ? ' · ' + g.khoang_cach_km + ' km' : '') +
+            (g.bep_da_xong ? ' · <span style="color:#198754">bếp xong</span>' : ' · <span style="color:#fd7e14">bếp đang nấu</span>') +
+          '</div>' +
+        '</div>';
+    });
+
+    Object.keys(chamDon).forEach(function (id) {
+      if (!conSong[id]) { ban_do.removeLayer(chamDon[id]); delete chamDon[id]; }
+    });
+
+    document.getElementById('bd-so-don').textContent = ds.length;
+    document.getElementById('bd-ds-don').innerHTML =
+      html || '<p class="text-muted small mb-0">Không có đơn nào đang chạy.</p>';
+  }
+
+  // Bấm vào một dòng bên phải thì bản đồ bay tới đúng chấm đó và mở popup.
+  // Danh sách được vẽ lại liên tục nên không gắn listener vào từng dòng —
+  // gắn một lần ở thùng chứa và đọc ngược lên phần tử có data-*.
+  function noiDanhSach(idThung, kho) {
+    document.getElementById(idThung).addEventListener('click', function (e) {
+      var muc = e.target.closest('.bd-muc');
+      if (!muc) return;
+      var id = muc.getAttribute('data-sp') || muc.getAttribute('data-don');
+      if (!id || !kho[id]) return;
+      ban_do.setView(kho[id].getLatLng(), Math.max(ban_do.getZoom(), 16));
+      kho[id].openPopup();
+    });
+  }
+  noiDanhSach('bd-ds-sp', chamSp);
+  noiDanhSach('bd-ds-don', chamDon);
+
+  // --- Nạp dữ liệu ---------------------------------------------------------
+  function apDung(d) {
+    veShipper(d.shippers || []);
+    veDon(d.don || []);
+    document.getElementById('bd-cap-nhat').textContent =
+      'Cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN');
+  }
+
+  apDung(BAN_DAU);
+
+  function taiLai() {
+    fetch('/api/giao-hang/ban-do', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+      .then(apDung)
+      .catch(function (e) { console.warn('[bản đồ] không tải được:', e.message); });
+  }
+
+  // Lưới an toàn cho trường hợp gói tin socket rơi. 20 giây đủ thưa để không
+  // nặng máy chủ, đủ dày để không ai kịp ra quyết định dựa trên bản đồ chết.
+  setInterval(taiLai, 20000);
+
+  if (window.RT) {
+    /*
+      Gói tin vị trí mang thẳng tọa độ (khác mọi miền dữ liệu khác — xem ghi chú
+      hàm viTriShipper trong services/realtime.js), nên ở đây chỉ cần dời chấm,
+      không phải gọi lại API. Nhờ vậy xe chạy mượt trên bản đồ với chi phí gần
+      như bằng không.
+    */
+    RT.khi('shipper:vi-tri', function (d) {
+      var m = chamSp[d.id_shipper];
+      if (m) {
+        m.setLatLng([d.vi_do, d.kinh_do]);
+      } else {
+        // Shipper vừa bật ca giữa hai vòng tải — kéo lại danh sách đầy đủ để có
+        // tên, đơn vị và màu, thay vì vẽ một chấm trống không bấm được.
+        taiLai();
+      }
+      document.getElementById('bd-cap-nhat').textContent =
+        'Cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN');
+    });
+
+    // Đơn đổi trạng thái thì màu chấm và cột phải đều phải đổi theo.
+    RT.khi('giao-hang:doi-trang-thai', taiLai);
+    RT.khi('giao-hang:doi', taiLai);
+  }
+})();
+</script>
+
+<%- include('partials/footer') %>

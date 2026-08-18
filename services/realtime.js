@@ -53,6 +53,15 @@ const P = {
   cap: (n) => `cap:${n}`,
   to: (id) => `to:${id}`,
   /**
+   * Phong theo doi MOT don giao hang.
+   *
+   * Khac moi phong con lai o cho nguoi trong phong nay co the la KHACH, khong
+   * dang nhap nhan vien. Ho vao bang ma tra cuu in tren don (`ma_giao`), va chi
+   * nhan duoc toa do cua shipper dang cam DUNG don do - khong thay shipper khac,
+   * khong thay don khac. Xem `socket.on('giao-hang:theo-doi')` ben duoi.
+   */
+  giao: (id) => `giao:${id}`,
+  /**
    * Phong GIAO cua bo phan va cap bac.
    *
    * Can rieng vi phong Socket.IO chi hop duoc, khong giao duoc: neu gui vao
@@ -91,6 +100,7 @@ const MIEN = {
   DAT_BAN: 'dat-ban:doi',
   KHACH_HANG: 'khach-hang:doi',
   DON_HANG: 'don-hang:doi',
+  GIAO_HANG: 'giao-hang:doi',   // don vi van chuyen, shipper, don giao
   CHOT_CA: 'chot-ca:doi',
   CA_BEP: 'ca-bep:doi',
   NGHI_PHEP: 'nghi-phep:doi',
@@ -256,6 +266,74 @@ function baoCapNhat(viec) {
   io.to([...phong]).emit('viec:cap-nhat', { ...viec, _luc: new Date().toISOString() });
 }
 
+/**
+ * Phat vi tri moi cua mot shipper.
+ *
+ * TAI SAO KHONG DUNG `doi()` NHU CAC MIEN KHAC
+ * --------------------------------------------
+ * `doi()` co y KHONG mang du lieu nghiep vu: nguoi nhan tu goi lai URL dang xem
+ * va route do kiem tra quyen. Cach do dung cho mot bang kho hay mot danh sach
+ * luong - moi vai phut doi mot lan.
+ *
+ * Vi tri shipper doi moi 15 giay va chi la ba con so. Bat ban do goi lai ca
+ * trang moi lan nhu vay la hang tram request mot phut cho mot cham di chuyen
+ * duoc 20 met. Nen goi tin nay MANG toa do di theo, va bu lai bang cach thu hep
+ * nguoi nhan that chat:
+ *
+ *   bp:GH + quan_ly + quan_tri   nguoi dieu phoi va cap quan ly - xem duoc het
+ *   nv:<id_nv cua shipper>       chinh shipper do, de dien thoai ho tu ve lai
+ *   giao:<id_giao>               khach dang mo trang theo doi DUNG don do
+ *
+ * Khach trong phong `giao:` chi nhan toa do, khong nhan ten shipper hay so don
+ * khac - xem `goiChoKhach` ben duoi.
+ */
+function viTriShipper(dl) {
+  if (!io) return;
+  const luc = new Date().toISOString();
+
+  // Ban day du cho nguoi trong nha.
+  const phongNoiBo = [P.bp('GH'), P.QUAN_LY, P.QUAN_TRI];
+  if (dl.id_nv) phongNoiBo.push(P.nv(dl.id_nv));
+  io.to(phongNoiBo).emit('shipper:vi-tri', { ...dl, _luc: luc });
+
+  // Ban rut gon cho khach: chi du de ve mot cham dang chay tren ban do.
+  if (dl.id_giao) {
+    io.to(P.giao(dl.id_giao)).emit('giao-hang:vi-tri', {
+      id_giao: dl.id_giao,
+      vi_do: dl.vi_do,
+      kinh_do: dl.kinh_do,
+      huong: dl.huong ?? null,
+      _luc: luc,
+    });
+  }
+}
+
+/**
+ * Bao don giao hang vua doi trang thai.
+ *
+ * Gui cho ca ba phia cung mot luc: dieu phoi (de cap nhat bang), shipper duoc
+ * phan (de dien thoai ho keu len khi co don moi), va khach dang theo doi.
+ */
+function donGiaoDoi(don) {
+  if (!io) return;
+  const luc = new Date().toISOString();
+  const goi = {
+    id_giao: don.id_giao, ma_giao: don.ma_giao, sesis: don.sesis,
+    trang_thai: don.trang_thai, nhan: don.nhan || null,
+    ten_shipper: don.ten_shipper || null, _luc: luc,
+  };
+
+  const phong = [P.bp('GH'), P.QUAN_LY, P.QUAN_TRI];
+  if (don.id_nv_shipper) phong.push(P.nv(don.id_nv_shipper));
+  io.to(phong).emit('giao-hang:doi-trang-thai', goi);
+
+  if (don.id_giao) {
+    io.to(P.giao(don.id_giao)).emit('giao-hang:doi-trang-thai', {
+      id_giao: don.id_giao, trang_thai: don.trang_thai, nhan: don.nhan || null, _luc: luc,
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Khoi tao
 // ---------------------------------------------------------------------------
@@ -279,6 +357,50 @@ function khoiTao(_io) {
     if (phien && phien.userlogin && phien.userId) {
       socket.join(`room_${phien.userId}`);
     }
+
+    /*
+     * Theo doi mot don giao hang.
+     *
+     * Dang ky TRUOC moi nhanh phan loai ben duoi vi nguoi dung o day co the la
+     * bat ky ai: khach da dang nhap, khach vang lai mo duong dan tra cuu, hay
+     * chinh nhan vien mo trang khach de doi chieu.
+     *
+     * DANH TINH O DAY LA MA DON, KHONG PHAI PHIEN DANG NHAP
+     * -----------------------------------------------------
+     * Khac moi phong con lai. Khong the doi hoi dang nhap: don giao hang dat qua
+     * dien thoai hay quet ma QR tai ban thi nguoi nhan khong co tai khoan nao ca.
+     * `ma_giao` dong vai tro ma bi mat - no chi in tren don cua chinh khach do.
+     *
+     * Ba lop chan de ma bi mat do khong bi do:
+     *   1. Chi nhan don CHUA XONG. Don da giao hom truoc thi ma het tac dung,
+     *      nguoi nhat duoc to hoa don cu khong theo doi duoc ai.
+     *   2. Moi socket vao toi da 5 phong theo doi. Khong the ngoi thu ma hang
+     *      loat tren mot ket noi.
+     *   3. Goi tin gui vao phong nay chi co toa do (xem `viTriShipper`), khong
+     *      co ten shipper, so dien thoai hay dia chi khach.
+     */
+    const dangTheoDoi = new Set();
+    socket.on('giao-hang:theo-doi', async (ma, traLoi) => {
+      const bao = (kq) => { if (typeof traLoi === 'function') traLoi(kq); };
+      const maGiao = String(ma || '').trim().toUpperCase().slice(0, 20);
+      if (!/^[A-Z0-9-]{4,20}$/.test(maGiao)) return bao({ ok: false, loi: 'Mã đơn không hợp lệ.' });
+      if (dangTheoDoi.size >= 5) return bao({ ok: false, loi: 'Đang theo dõi quá nhiều đơn.' });
+
+      try {
+        const [[don]] = await db.query(
+          `SELECT id_giao, trang_thai FROM don_giao_hang
+           WHERE ma_giao = ? AND trang_thai NOT IN ('da_giao','huy')`,
+          [maGiao]
+        );
+        if (!don) return bao({ ok: false, loi: 'Đơn không tồn tại hoặc đã kết thúc.' });
+        socket.join(P.giao(don.id_giao));
+        dangTheoDoi.add(don.id_giao);
+        bao({ ok: true, id_giao: don.id_giao, trang_thai: don.trang_thai });
+      } catch (e) {
+        console.error('[realtime] theo doi don giao:', e.message);
+        bao({ ok: false, loi: 'Không kết nối được, thử lại sau.' });
+      }
+    });
 
     // --- Quan tri (/admin) ---
     //
@@ -391,6 +513,8 @@ module.exports = {
   bao,
   baoCapNhat,
   doi,
+  viTriShipper,
+  donGiaoDoi,
   dangOnline,
   P,
   MIEN,

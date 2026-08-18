@@ -222,6 +222,12 @@
 
       // --- Nghiệp vụ tuyến trước ---
       { mau: /^\/staff\/bookings/,   che_do: 'nhac', sk: ['dat-ban:doi', 'don-hang:doi'] },
+      /* Chặn `(?!\/ban-do)` là cố ý. Bản đồ giao hàng tự lo lấy dữ liệu qua
+         socket và API riêng (xem views/staff/giao-hang-ban-do.ejs); tráo
+         innerHTML sẽ giết thể hiện Leaflet và để lại một ô xám, còn hiện dải
+         "bấm để xem bản mới" thì thừa vì bản đồ đã luôn là bản mới. */
+      { mau: /^\/staff\/giao-hang(?!\/ban-do)/, che_do: 'trao',
+        sk: ['giao-hang:doi', 'giao-hang:doi-trang-thai'] },
       { mau: /^\/staff\/customers/,  che_do: 'trao', sk: ['khach-hang:doi'] },
       { mau: /^\/staff\/qr-codes/,   che_do: 'nhac', sk: ['qr-ban:doi'] },
       { mau: /^\/staff\/emails/,     che_do: 'trao', sk: ['email:doi'] },

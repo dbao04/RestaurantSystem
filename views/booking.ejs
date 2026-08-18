@@ -1,12 +1,69 @@
 <%- include('partials/header', { title: 'Đặt bàn' }) %>
 
+<%
+  /*
+    MOT FORM, HAI HINH THUC
+
+    Truoc day trang nay chi lam duoc mot viec: dat ban an tai cho. Cot
+    `hopdong.loai_don` da co gia tri 'giao_hang' tu lau va tro ly ao van hua
+    "nha hang co giao hang trong ban kinh 5km", nhung khong co cho nao tren
+    website de khach chon.
+
+    Tach thanh hai trang rieng se phai nhan doi ca gio hang, tom tat don, kiem
+    tra ngay gio va man hinh xac nhan. Nen o day dung mot form, doi phan giua
+    theo lua chon:
+
+        Tai cho    → so khach + dip dat ban        (nhu cu, khong doi gi)
+        Giao hang  → dia chi + ghim ban do + phi   (phan moi)
+
+    HAI O BAT BUOC CUA NHANH CU
+    ---------------------------
+    `khach` va `noidung` la NOT NULL trong CSDL va dang `required` tren form.
+    Khi khach chon giao hang, hai nhom nut do bi VO HIEU HOA (`disabled`) chu
+    khong phai chi bi an: o bi vo hieu hoa khong tham gia kiem tra `required`
+    va khong duoc gui len. An bang CSS thoi thi trinh duyet se tu choi gui form
+    kem mot thong bao tro toi mot o vo hinh - loi kho hieu nhat co the gap.
+    Hai o an di ben duoi cung ten se duoc bat len de thay the.
+  */
+  var coGiaoHang = typeof giaoHang !== 'undefined' && giaoHang && giaoHang.bat;
+  var diaChiCu = (typeof khach !== 'undefined' && khach && khach.diachi) ? khach.diachi : '';
+%>
+
+<% if (coGiaoHang) { %>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<% } %>
+
+<style>
+  .hinh-thuc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:520px) { .hinh-thuc { grid-template-columns:1fr; } }
+  .ht-o { position:relative; }
+  .ht-o input { position:absolute; opacity:0; pointer-events:none; }
+  .ht-o span { display:block; border:2px solid #e3d9cc; border-radius:12px; padding:16px 14px;
+               cursor:pointer; transition:.18s; background:#fff; }
+  .ht-o input:checked + span { border-color:var(--nh-gold); background:#fffdf7;
+                               box-shadow:0 4px 16px rgba(200,169,81,.18); }
+  .ht-o b { display:block; font-size:16px; margin-bottom:3px; }
+  .ht-o small { color:#8a8a8a; line-height:1.5; display:block; }
+  .ht-o i { color:var(--nh-gold); margin-right:6px; }
+
+  #gh-ban-do { height:280px; border-radius:12px; margin-top:10px; z-index:1; }
+  .gh-phi { background:#fffdf7; border:1px solid #eee3d0; border-radius:12px;
+            padding:13px 15px; margin-top:12px; font-size:14px; line-height:1.65; }
+  .gh-phi b { color:var(--nh-gold); font-size:17px; }
+  .gh-phi--loi { background:#fdf0ee; border-color:#f0c8c0; color:#b03a2e; }
+  .gh-nut { display:inline-flex; align-items:center; gap:7px; background:#2c1810; color:#fff;
+            border:0; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:600;
+            cursor:pointer; margin-top:10px; }
+  .gh-nut:disabled { opacity:.55; }
+</style>
+
 <section class="nh-subhero" style="min-height:38vh">
   <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
     <span class="nh-eyebrow">Giữ chỗ cho bạn</span>
-    <h1>Đặt bàn</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/cart">Giỏ hàng</a> &nbsp;/&nbsp; Đặt bàn</div>
+    <h1 id="tieu-de">Đặt bàn</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/cart">Giỏ hàng</a> &nbsp;/&nbsp; <span id="crumb">Đặt bàn</span></div>
   </div>
 </section>
 
@@ -26,6 +83,92 @@
 
       <div class="nh-checkout">
         <div>
+          <% if (coGiaoHang) { %>
+            <!-- Hình thức -->
+            <div class="nh-panel nh-reveal">
+              <h3 class="nh-panel__title"><i class="fas fa-hand-pointer"></i> Bạn muốn dùng bữa thế nào?</h3>
+              <div class="hinh-thuc">
+                <label class="ht-o">
+                  <input type="radio" name="hinh_thuc" value="tai_cho" checked>
+                  <span>
+                    <b><i class="fas fa-utensils"></i>Ăn tại nhà hàng</b>
+                    <small>Giữ bàn theo giờ bạn chọn. Nhà hàng gọi lại xác nhận.</small>
+                  </span>
+                </label>
+                <label class="ht-o">
+                  <input type="radio" name="hinh_thuc" value="giao_hang">
+                  <span>
+                    <b><i class="fas fa-motorcycle"></i>Giao tận nơi</b>
+                    <small>
+                      Trong bán kính <%= giaoHang.ban_kinh_km %> km.
+                      <% if (giaoHang.mien_phi_tu > 0) { %>
+                        Miễn phí giao cho đơn từ <%= formatMoney(giaoHang.mien_phi_tu) %>₫.
+                      <% } %>
+                    </small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Địa chỉ giao (chỉ hiện khi chọn giao hàng) -->
+            <div class="nh-panel nh-reveal" id="khoi-giao" style="display:none">
+              <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> Giao tới đâu?</h3>
+
+              <div class="nh-field">
+                <label>Địa chỉ nhận hàng <span class="req">*</span></label>
+                <input class="nh-input" name="dia_chi_giao" id="o-dia-chi" maxlength="300"
+                       value="<%= diaChiCu %>" placeholder="Số nhà, tên đường, phường, quận">
+                <span class="nh-hint">Ghi càng chi tiết càng đỡ mất thời gian gọi lại hỏi đường.</span>
+              </div>
+
+              <div class="nh-fields">
+                <div class="nh-field">
+                  <label>Người nhận</label>
+                  <input class="nh-input" name="ten_nguoi_nhan" maxlength="120"
+                         value="<%= session.username %>">
+                </div>
+                <div class="nh-field">
+                  <label>Số điện thoại người nhận</label>
+                  <input class="nh-input" name="sdt_nguoi_nhan" maxlength="20"
+                         value="<%= session.usersdt %>">
+                </div>
+              </div>
+
+              <div class="nh-field">
+                <label>Ghi chú cho shipper</label>
+                <input class="nh-input" name="ghi_chu_giao" maxlength="300"
+                       placeholder="Gọi trước khi tới, nhà cổng xanh, gửi bảo vệ…">
+              </div>
+
+              <label style="display:block; margin-top:6px; font-weight:600">
+                Ghim đúng vị trí trên bản đồ <span class="req">*</span>
+              </label>
+              <span class="nh-hint">
+                Bấm vào bản đồ để đặt ghim, hoặc dùng nút bên dưới. Ghim quyết định phí giao và
+                giúp shipper tới đúng nơi — địa chỉ viết tay dễ trùng tên đường.
+              </span>
+              <button type="button" class="gh-nut" id="nut-vi-tri">
+                <i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi
+              </button>
+              <div id="gh-ban-do"></div>
+
+              <input type="hidden" name="vi_do" id="o-vi-do">
+              <input type="hidden" name="kinh_do" id="o-kinh-do">
+
+              <div class="gh-phi" id="gh-phi">
+                Chưa đặt ghim — hãy bấm vào bản đồ để hệ thống tính phí giao.
+              </div>
+            </div>
+
+            <%
+              /* Hai ô thay thế cho `khach` và `noidung` khi chọn giao hàng.
+                 Bắt đầu ở trạng thái disabled để nhánh đặt bàn cũ không bị gửi
+                 lên hai giá trị cùng tên. */
+            %>
+            <input type="hidden" name="khach" value="1" disabled id="gh-khach">
+            <input type="hidden" name="noidung" value="Giao hàng tận nơi" disabled id="gh-noidung">
+          <% } %>
+
           <!-- Người đặt -->
           <div class="nh-panel nh-reveal">
             <h3 class="nh-panel__title"><i class="fas fa-user"></i> Người đặt</h3>
@@ -50,13 +193,13 @@
             <h3 class="nh-panel__title"><i class="fas fa-calendar-alt"></i> Thời gian</h3>
             <div class="nh-fields">
               <div class="nh-field">
-                <label>Ngày đến <span class="req">*</span></label>
+                <label id="nhan-ngay">Ngày đến <span class="req">*</span></label>
                 <input class="nh-input" type="date" name="datebook" id="o-ngay" required
                        min="<%= new Date().toISOString().slice(0,10) %>">
                 <span class="nh-hint" id="hint-ngay">Chỉ nhận đặt từ hôm nay trở đi.</span>
               </div>
               <div class="nh-field">
-                <label>Giờ đến <span class="req">*</span></label>
+                <label id="nhan-gio">Giờ đến <span class="req">*</span></label>
                 <input class="nh-input" type="time" name="timebook" id="o-gio" required value="18:00">
                 <span class="nh-hint">Nhà hàng phục vụ 10:00 – 22:00.</span>
               </div>
@@ -64,7 +207,7 @@
           </div>
 
           <!-- Số khách -->
-          <div class="nh-panel nh-reveal">
+          <div class="nh-panel nh-reveal" id="khoi-khach">
             <h3 class="nh-panel__title"><i class="fas fa-users"></i> Số khách <span class="req" style="color:#c0392b">*</span></h3>
             <div class="nh-chips">
               <% ['2','4','6','8','10-15','15-20'].forEach(function (n, i) { %>
@@ -77,7 +220,7 @@
           </div>
 
           <!-- Dịp -->
-          <div class="nh-panel nh-reveal">
+          <div class="nh-panel nh-reveal" id="khoi-dip">
             <h3 class="nh-panel__title"><i class="fas fa-champagne-glasses"></i> Dịp đặt bàn <span class="req" style="color:#c0392b">*</span></h3>
             <div class="nh-chips">
               <%
@@ -111,20 +254,26 @@
                   <span><%= formatMoney(item.soluong * item.gia_mon) %> ₫</span>
                 </div>
               <% }) %>
+              <% if (coGiaoHang) { %>
+                <div class="nh-summary__row" id="dong-phi" style="display:none">
+                  <span>Phí giao hàng</span>
+                  <span id="dong-phi-so">—</span>
+                </div>
+              <% } %>
               <div class="nh-summary__total">
                 <span>Tổng cộng</span>
-                <b><%= formatMoney(subtotal) %> ₫</b>
+                <b><span id="tong-tien"><%= formatMoney(subtotal) %></span> ₫</b>
               </div>
               <a href="/cart" class="nh-hint" style="display:inline-block; margin-top:.6rem; color:var(--nh-gold); font-weight:600">
                 <i class="fas fa-pen"></i> Sửa món
               </a>
             <% } %>
 
-            <button type="submit" class="nh-btn nh-btn--gold">
-              Xác nhận đặt bàn <i class="fas fa-arrow-right"></i>
+            <button type="submit" class="nh-btn nh-btn--gold" id="nut-gui">
+              <span id="chu-nut">Xác nhận đặt bàn</span> <i class="fas fa-arrow-right"></i>
             </button>
 
-            <p class="nh-note">
+            <p class="nh-note" id="ghi-chu-cuoi">
               Bấm xác nhận là gửi yêu cầu giữ bàn. Nhà hàng gọi lại theo số điện thoại của bạn để chốt —
               <strong>chưa thanh toán</strong> ở bước này.
             </p>
@@ -135,6 +284,7 @@
   </div>
 </section>
 
+<% if (coGiaoHang) { %><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><% } %>
 <script>
 (function () {
   var form = document.getElementById('form-datban');
@@ -169,10 +319,192 @@
 
   form.onsubmit = function (e) {
     if (!kiemTra()) { e.preventDefault(); oGio.focus(); return false; }
+    if (typeof kiemTraGiaoHang === 'function' && !kiemTraGiaoHang()) { e.preventDefault(); return false; }
     var nut = form.querySelector('button[type=submit]');
     nut.disabled = true;
     nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
   };
+
+<% if (coGiaoHang) { %>
+  // ======================================================================
+  // NHÁNH GIAO HÀNG
+  // ======================================================================
+  var NHA_HANG = <%- JSON.stringify(giaoHang.nha_hang) %>;
+  var TIEN_HANG = <%= Number(subtotal) || 0 %>;
+
+  var khoiGiao = document.getElementById('khoi-giao');
+  var khoiKhach = document.getElementById('khoi-khach');
+  var khoiDip = document.getElementById('khoi-dip');
+  var oViDo = document.getElementById('o-vi-do');
+  var oKinhDo = document.getElementById('o-kinh-do');
+  var oDiaChi = document.getElementById('o-dia-chi');
+  var hopPhi = document.getElementById('gh-phi');
+  var dongPhi = document.getElementById('dong-phi');
+  var dongPhiSo = document.getElementById('dong-phi-so');
+  var tongTien = document.getElementById('tong-tien');
+  var ghKhach = document.getElementById('gh-khach');
+  var ghNoiDung = document.getElementById('gh-noidung');
+
+  var laGiao = false;
+  var baoGia = null;
+  var ban_do = null, ghim = null;
+
+  function tien(n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); }
+
+  /* Bật/tắt hai nhóm bắt buộc của nhánh đặt bàn.
+     Phải dùng `disabled` chứ không chỉ ẩn — xem ghi chú đầu tệp. */
+  function doiHinhThuc(giao) {
+    laGiao = giao;
+    khoiGiao.style.display = giao ? '' : 'none';
+    khoiKhach.style.display = giao ? 'none' : '';
+    khoiDip.style.display = giao ? 'none' : '';
+
+    form.querySelectorAll('#khoi-khach input, #khoi-dip input').forEach(function (o) {
+      o.disabled = giao;
+    });
+    ghKhach.disabled = !giao;
+    ghNoiDung.disabled = !giao;
+
+    document.getElementById('tieu-de').textContent = giao ? 'Giao hàng tận nơi' : 'Đặt bàn';
+    document.getElementById('crumb').textContent = giao ? 'Giao hàng' : 'Đặt bàn';
+    document.getElementById('nhan-ngay').innerHTML = (giao ? 'Ngày nhận hàng' : 'Ngày đến') + ' <span class="req">*</span>';
+    document.getElementById('nhan-gio').innerHTML = (giao ? 'Giờ muốn nhận' : 'Giờ đến') + ' <span class="req">*</span>';
+    document.getElementById('chu-nut').textContent = giao ? 'Đặt giao hàng' : 'Xác nhận đặt bàn';
+    document.getElementById('ghi-chu-cuoi').innerHTML = giao
+      ? 'Bấm đặt là đơn xuống bếp ngay. Bạn <strong>trả tiền mặt cho shipper</strong> khi nhận hàng, ' +
+        'và theo dõi được shipper đang ở đâu trên bản đồ.'
+      : 'Bấm xác nhận là gửi yêu cầu giữ bàn. Nhà hàng gọi lại theo số điện thoại của bạn để chốt — ' +
+        '<strong>chưa thanh toán</strong> ở bước này.';
+
+    dongPhi.style.display = (giao && baoGia && baoGia.giao_duoc) ? '' : 'none';
+    veTong();
+    if (giao) setTimeout(dungBanDo, 60);   // đợi khối hiện ra rồi Leaflet mới đo được kích thước
+  }
+
+  function veTong() {
+    var them = (laGiao && baoGia && baoGia.giao_duoc) ? Number(baoGia.phi) : 0;
+    tongTien.textContent = tien(TIEN_HANG + them);
+  }
+
+  /* Leaflet đo kích thước khung lúc khởi tạo. Dựng bản đồ trong một khối
+     display:none thì nó nghĩ khung rộng 0px và chỉ vẽ một mảng xám. Nên hoãn
+     tới lần đầu khối được hiện ra, và gọi invalidateSize() cho các lần sau. */
+  function dungBanDo() {
+    var tam = NHA_HANG ? [NHA_HANG.vi_do, NHA_HANG.kinh_do] : [10.7756, 106.7019];
+    if (ban_do) { ban_do.invalidateSize(); return; }
+
+    ban_do = L.map('gh-ban-do').setView(tam, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(ban_do);
+
+    if (NHA_HANG) {
+      L.marker(tam, {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="display:flex;align-items:center;justify-content:center;width:28px;' +
+                'height:28px;border-radius:50%;background:#2c1810;color:#fff;border:2px solid #fff;' +
+                'box-shadow:0 2px 8px rgba(0,0,0,.35)"><i class="fas fa-utensils"></i></div>',
+          iconSize: [28, 28], iconAnchor: [14, 14],
+        }),
+      }).addTo(ban_do).bindPopup('Nhà hàng');
+    }
+
+    ban_do.on('click', function (e) { datGhim(e.latlng.lat, e.latlng.lng); });
+  }
+
+  function datGhim(viDo, kinhDo) {
+    oViDo.value = viDo;
+    oKinhDo.value = kinhDo;
+
+    if (ghim) ghim.setLatLng([viDo, kinhDo]);
+    else {
+      ghim = L.marker([viDo, kinhDo], { draggable: true }).addTo(ban_do);
+      // Kéo được ghim: bấm một phát hiếm khi trúng đúng số nhà, và phóng to rồi
+      // bấm lại là hai thao tác thay vì một.
+      ghim.on('dragend', function () {
+        var v = ghim.getLatLng();
+        oViDo.value = v.lat; oKinhDo.value = v.lng;
+        hoiPhi();
+      });
+    }
+    hoiPhi();
+  }
+
+  var henHoi = null;
+  function hoiPhi() {
+    clearTimeout(henHoi);
+    hopPhi.className = 'gh-phi';
+    hopPhi.textContent = 'Đang tính phí giao…';
+    // Gom các lần kéo ghim liên tiếp thành một lần hỏi.
+    henHoi = setTimeout(function () {
+      fetch('/api/giao-hang/bao-gia?vi_do=' + oViDo.value + '&kinh_do=' + oKinhDo.value +
+            '&tien_hang=' + TIEN_HANG)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          baoGia = d;
+          if (!d.giao_duoc) {
+            hopPhi.className = 'gh-phi gh-phi--loi';
+            hopPhi.textContent = d.ly_do || 'Không giao được tới vị trí này.';
+            dongPhi.style.display = 'none';
+            veTong();
+            return;
+          }
+          hopPhi.className = 'gh-phi';
+          hopPhi.innerHTML =
+            'Cách nhà hàng <b>' + d.khoang_cach_km + ' km</b> · phí giao <b>' +
+            (d.phi > 0 ? tien(d.phi) + ' ₫' : 'miễn phí') + '</b>' +
+            (d.mien_phi ? ' <span style="color:#198754">(đơn của bạn được miễn phí giao)</span>' : '') +
+            (d.don_vi ? '<br><span style="color:#8a8a8a">' + d.don_vi.ten_dv +
+              ' · cam kết giao trong ' + d.don_vi.thoi_gian_cam_ket_phut + ' phút</span>' : '');
+          dongPhiSo.textContent = (d.phi > 0 ? tien(d.phi) : 0) + ' ₫';
+          dongPhi.style.display = '';
+          veTong();
+        })
+        .catch(function () {
+          hopPhi.className = 'gh-phi gh-phi--loi';
+          hopPhi.textContent = 'Không hỏi được phí giao — kiểm tra kết nối rồi thử lại.';
+        });
+    }, 350);
+  }
+
+  document.getElementById('nut-vi-tri').onclick = function () {
+    var nut = this;
+    if (!navigator.geolocation) { alert('Trình duyệt của bạn không hỗ trợ định vị.'); return; }
+    nut.disabled = true;
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy vị trí…';
+    navigator.geolocation.getCurrentPosition(function (v) {
+      dungBanDo();
+      ban_do.setView([v.coords.latitude, v.coords.longitude], 17);
+      datGhim(v.coords.latitude, v.coords.longitude);
+      nut.disabled = false;
+      nut.innerHTML = '<i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi';
+    }, function () {
+      // Không nói "lỗi": người dùng vừa chủ động từ chối, hoặc đang ở trong nhà
+      // không bắt được vệ tinh. Cả hai đều có cách đi tiếp là bấm vào bản đồ.
+      alert('Chưa lấy được vị trí. Bạn bấm thẳng vào bản đồ để đặt ghim nhé.');
+      nut.disabled = false;
+      nut.innerHTML = '<i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi';
+    }, { enableHighAccuracy: true, timeout: 12000 });
+  };
+
+  /* Chặn ở trình duyệt những gì máy chủ cũng sẽ chặn.
+     Không phải để tin vào trình duyệt — máy chủ vẫn kiểm tra lại tất cả — mà để
+     khách biết ngay tại chỗ, thay vì mất hết những gì vừa điền rồi mới biết. */
+  window.kiemTraGiaoHang = function () {
+    if (!laGiao) return true;
+    if (!oDiaChi.value.trim()) { alert('Hãy nhập địa chỉ nhận hàng.'); oDiaChi.focus(); return false; }
+    if (!oViDo.value) { alert('Hãy bấm vào bản đồ để ghim vị trí nhận hàng.'); return false; }
+    if (baoGia && !baoGia.giao_duoc) { alert(baoGia.ly_do || 'Không giao được tới vị trí này.'); return false; }
+    return true;
+  };
+
+  form.querySelectorAll('input[name=hinh_thuc]').forEach(function (o) {
+    o.onchange = function () { doiHinhThuc(this.value === 'giao_hang'); };
+  });
+  doiHinhThuc(false);
+<% } %>
 })();
 </script>
 

@@ -1,0 +1,329 @@
+<%
+  var activePage = 'giao-hang';
+%>
+<%- include('partials/header') %>
+<%
+  /*
+    Quan tri vien co dong vao duoc khong.
+
+    `canQuyen()` trong middleware/phanQuyen.js cho phien `adminlogin` di qua vo
+    dieu kien - ho dung tren he thong chuc danh. Nhung `res.locals.coQuyen` lai
+    tra ve false cho ho, vi quan tri khong co ban ghi trong `nhan_vien` nen
+    khong co ho so quyen nao de tra loi.
+
+    Neu chi hoi `coQuyen()` thi quan tri vao duoc trang nay ma khong thay mot
+    nut phan cong nao - trang tro thanh chi doc mot cach kho hieu. Menu va
+    middleware phai tra loi giong het nhau, neu khong nguoi dung thay mot he
+    thong luc cho vao luc khong.
+  */
+  var phanCongDuoc = !!session.adminlogin ||
+    (typeof coQuyen === 'function' && coQuyen('giao_hang.phan_cong'));
+%>
+
+<%
+  var spRanh = (dsSp || []).filter(function (s) { return s.trang_thai !== 'nghi'; });
+  var tre = !don.da_xong && don.du_kien_luc && new Date(don.du_kien_luc) < new Date();
+
+  /* Nhan cho tung nut doi trang thai. Dieu phoi khong nen phai doan
+     'dang_lay' nghia la gi - viet ra thanh cau lenh ho se lam. */
+  var NUT = {
+    dang_lay:  { nhan: 'Shipper đã tới lấy hàng', lop: 'btn-outline-primary', icon: 'fa-box-open' },
+    dang_giao: { nhan: 'Đã rời nhà hàng',         lop: 'btn-outline-warning', icon: 'fa-motorcycle' },
+    da_giao:   { nhan: 'Xác nhận đã giao xong',   lop: 'btn-success',         icon: 'fa-circle-check' },
+    that_bai:  { nhan: 'Báo giao thất bại',       lop: 'btn-outline-danger',  icon: 'fa-triangle-exclamation' },
+    huy:       { nhan: 'Hủy đơn giao',            lop: 'btn-outline-danger',  icon: 'fa-ban' },
+    cho_phan:  { nhan: 'Trả về hàng chờ',         lop: 'btn-outline-secondary', icon: 'fa-rotate-left' },
+    da_phan:   { nhan: 'Giao lại cho shipper',    lop: 'btn-outline-primary', icon: 'fa-user-check' },
+  };
+%>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<style>
+  #ct-ban-do { height: 320px; border-radius:8px; z-index:1; }
+  .ct-moc { position:relative; padding-left:26px; padding-bottom:14px; }
+  .ct-moc:not(:last-child)::before { content:''; position:absolute; left:8px; top:18px; bottom:0;
+                                     width:2px; background:#e6e6e6; }
+  .ct-moc__cham { position:absolute; left:0; top:2px; width:18px; height:18px; border-radius:50%;
+                  color:#fff; display:flex; align-items:center; justify-content:center; font-size:9px; }
+  .ct-moc__nhan { font-weight:600; font-size:13.5px; }
+  .ct-moc__meta { font-size:11.5px; color:#888; }
+  .ct-hang { display:flex; justify-content:space-between; padding:4px 0; font-size:13.5px;
+             border-bottom:1px dashed #eee; }
+  .ct-xe { display:flex; align-items:center; justify-content:center; width:28px; height:28px;
+           border-radius:50%; color:#fff; font-size:13px; border:2px solid #fff;
+           box-shadow:0 2px 6px rgba(0,0,0,.3); }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-0 text-gray-800">
+      Đơn giao <%= don.ma_giao %>
+      <span class="badge" style="background:<%= don.tt.mau %>; color:#fff; font-size:13px; vertical-align:middle">
+        <i class="fas <%= don.tt.icon %>"></i> <%= don.tt.nhan %>
+      </span>
+    </h1>
+    <small class="text-muted">
+      Tạo lúc <%= new Date(don.tao_luc).toLocaleString('vi-VN') %>
+      <% if (don.du_kien_luc) { %>
+        · hẹn giao trước <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
+        <% if (tre) { %><span class="text-danger font-weight-bold">— đã trễ</span><% } %>
+      <% } %>
+    </small>
+  </div>
+  <div>
+    <a href="/theo-doi/<%= don.ma_giao %>" target="_blank" class="btn btn-sm btn-outline-info shadow-sm">
+      <i class="fas fa-eye fa-sm"></i> Xem như khách
+    </a>
+    <a href="/staff/giao-hang" class="btn btn-sm btn-outline-secondary shadow-sm">
+      <i class="fas fa-arrow-left fa-sm"></i> Về bảng điều phối
+    </a>
+  </div>
+</div>
+
+<% if (msg) { %>
+  <div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %> py-2"><%= msg %></div>
+<% } %>
+
+<div class="row">
+  <!-- ============================================ CỘT TRÁI -->
+  <div class="col-lg-7">
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-location-dot"></i> Điểm giao</h6>
+      </div>
+      <div class="card-body">
+        <p class="mb-2">
+          <strong><%= don.ten_nguoi_nhan %></strong> ·
+          <a href="tel:<%= don.sdt_nguoi_nhan %>"><%= don.sdt_nguoi_nhan %></a><br>
+          <%= don.dia_chi_giao %>
+        </p>
+        <p class="text-muted small mb-2">
+          <% if (don.khoang_cach_km !== null) { %>
+            Cách nhà hàng <strong><%= don.khoang_cach_km %> km</strong> (đường chim bay) ·
+          <% } %>
+          Đơn vị: <strong><%= don.ten_dv || 'chưa chọn' %></strong>
+          <% if (don.ten_shipper) { %> · Shipper: <strong><%= don.ten_shipper %></strong>
+            <% if (don.sdt_shipper) { %> (<a href="tel:<%= don.sdt_shipper %>"><%= don.sdt_shipper %></a>)<% } %>
+          <% } %>
+        </p>
+        <% if (don.ghi_chu) { %>
+          <div class="alert alert-light border py-2 mb-2 small"><i class="fas fa-note-sticky"></i> <%= don.ghi_chu %></div>
+        <% } %>
+        <% if (don.ly_do) { %>
+          <div class="alert alert-danger py-2 mb-2 small"><i class="fas fa-circle-info"></i> <%= don.ly_do %></div>
+        <% } %>
+
+        <% if (don.vi_do !== null || nhaHang) { %>
+          <div id="ct-ban-do"></div>
+          <p class="text-muted mb-0 mt-2" style="font-size:11.5px">
+            <% if (vet && vet.length) { %>
+              Đường kẻ là lộ trình thật shipper đã đi (<%= vet.length %> điểm định vị).
+            <% } else { %>
+              Chưa có điểm định vị nào cho đơn này.
+            <% } %>
+          </p>
+        <% } else { %>
+          <div class="alert alert-warning py-2 mb-0 small">
+            Đơn không có tọa độ nên không vẽ được bản đồ. Bổ sung tọa độ để theo dõi được.
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-utensils"></i> Món trong đơn</h6>
+      </div>
+      <div class="card-body">
+        <% (mon || []).forEach(function (m) { %>
+          <div class="ct-hang">
+            <span>
+              <%= (m.name_mon || '').trim() %> <span class="text-muted">×<%= m.soluong %></span>
+              <% if (m.ghi_chu_mon) { %><br><small class="text-muted"><i class="fas fa-comment"></i> <%= m.ghi_chu_mon %></small><% } %>
+            </span>
+            <span><%= formatMoney(m.thanhtien) %>đ</span>
+          </div>
+        <% }) %>
+        <div class="ct-hang" style="border:0">
+          <span class="text-muted">Phí giao hàng</span>
+          <span><%= formatMoney(don.phi_giao) %>đ</span>
+        </div>
+        <div class="ct-hang font-weight-bold" style="border:0; font-size:15px">
+          <span>Tổng thu của khách</span>
+          <span class="text-danger"><%= formatMoney(don.tong_thu) %>đ</span>
+        </div>
+        <% if (Number(don.tien_thu_ho) > 0) { %>
+          <p class="text-muted small mb-0 mt-1">
+            Thu hộ (COD): <strong><%= formatMoney(don.tien_thu_ho) %>đ</strong>
+            <%= Number(don.da_thu_ho) === 1 ? '— đã thu' : '— chưa thu' %>
+          </p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ CỘT PHẢI -->
+  <div class="col-lg-5">
+    <% if (phanCongDuoc && !don.da_xong) { %>
+      <div class="card shadow mb-3">
+        <div class="card-header py-2">
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-check"></i> Phân công</h6>
+        </div>
+        <div class="card-body">
+          <form action="/staff/giao-hang/<%= don.id_giao %>/phan" method="POST" class="mb-2">
+            <div class="form-group mb-2">
+              <label class="small font-weight-bold mb-1">Shipper</label>
+              <select name="id_shipper" class="form-control form-control-sm" required>
+                <option value="">— chọn shipper —</option>
+                <% spRanh.forEach(function (s) { %>
+                  <option value="<%= s.id_shipper %>"
+                          <%= Number(s.id_shipper) === Number(don.id_shipper) ? 'selected' : '' %>
+                          <%= (s.con_nhan_don || Number(s.id_shipper) === Number(don.id_shipper)) ? '' : 'disabled' %>>
+                    <%= s.ten %> — <%= s.ten_dv %> (<%= s.don_dang_cam %>/<%= s.so_don_toi_da %>)
+                  </option>
+                <% }) %>
+              </select>
+              <% if (!spRanh.length) { %>
+                <small class="text-danger">Chưa có shipper nào bật ca.</small>
+              <% } %>
+            </div>
+            <button class="btn btn-sm btn-primary btn-block" type="submit">
+              <i class="fas fa-motorcycle"></i> <%= don.id_shipper ? 'Đổi shipper' : 'Phân đơn' %>
+            </button>
+          </form>
+
+          <% if (don.id_shipper && ['da_phan','dang_lay'].indexOf(don.trang_thai) >= 0) { %>
+            <form action="/staff/giao-hang/<%= don.id_giao %>/go" method="POST"
+                  onsubmit="return confirm('Gỡ đơn khỏi <%= don.ten_shipper %>?')">
+              <input type="hidden" name="ly_do" value="Điều phối gỡ đơn">
+              <button class="btn btn-sm btn-outline-warning btn-block" type="submit">
+                <i class="fas fa-user-minus"></i> Gỡ khỏi <%= don.ten_shipper %>
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="card shadow mb-3">
+        <div class="card-header py-2">
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-forward"></i> Chuyển trạng thái</h6>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small">
+            Bình thường shipper tự bấm trên điện thoại. Dùng các nút này khi máy họ hết pin,
+            mất sóng, hoặc khi phải xử lý thay.
+          </p>
+          <% if (!don.chuyen_duoc.length) { %>
+            <p class="text-muted mb-0">Đơn đã kết thúc, không chuyển tiếp được.</p>
+          <% } %>
+          <% don.chuyen_duoc.forEach(function (tt) { %>
+            <%
+              var n = NUT[tt] || { nhan: tt, lop: 'btn-outline-secondary', icon: 'fa-circle' };
+              var canLyDo = (tt === 'that_bai' || tt === 'huy');
+            %>
+            <form action="/staff/giao-hang/<%= don.id_giao %>/trang-thai" method="POST" class="mb-2"
+                  <% if (canLyDo) { %>onsubmit="return xinLyDo(this)"<% } %>>
+              <input type="hidden" name="trang_thai" value="<%= tt %>">
+              <input type="hidden" name="ly_do" value="">
+              <button class="btn btn-sm <%= n.lop %> btn-block" type="submit">
+                <i class="fas <%= n.icon %>"></i> <%= n.nhan %>
+              </button>
+            </form>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-clock-rotate-left"></i> Nhật ký</h6>
+      </div>
+      <div class="card-body">
+        <%
+          /* Nhat ky la bang chung khi khach khieu nai. Hien ca toa do luc bam
+             nut - do la thu duy nhat phan xu duoc "da giao roi" voi "chua nhan". */
+        %>
+        <% (lichSu || []).forEach(function (n) { %>
+          <div class="ct-moc">
+            <span class="ct-moc__cham" style="background:<%= n.tt.mau %>"><i class="fas <%= n.tt.icon %>"></i></span>
+            <div class="ct-moc__nhan"><%= n.tt.nhan %></div>
+            <div class="ct-moc__meta">
+              <%= new Date(n.luc).toLocaleString('vi-VN') %> · <%= n.ten_nguoi %>
+              <% if (n.ghi_chu) { %><br><%= n.ghi_chu %><% } %>
+              <% if (n.vi_do !== null && n.vi_do !== undefined) { %>
+                <br><i class="fas fa-location-crosshairs"></i>
+                <%= Number(n.vi_do).toFixed(5) %>, <%= Number(n.kinh_do).toFixed(5) %>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function xinLyDo(form) {
+  var ly = prompt('Lý do (khách không nghe máy, sai địa chỉ, khách hủy…):');
+  if (ly === null) return false;
+  if (!ly.trim()) { alert('Phải ghi lý do — đây là căn cứ khi khách khiếu nại.'); return false; }
+  form.ly_do.value = ly.trim();
+  return true;
+}
+
+(function () {
+  var el = document.getElementById('ct-ban-do');
+  if (!el || typeof L === 'undefined') return;
+
+  var NHA_HANG = <%- JSON.stringify(nhaHang) %>;
+  var DIEM = <%- JSON.stringify(don.vi_do !== null ? { vi_do: don.vi_do, kinh_do: don.kinh_do } : null) %>;
+  var VET = <%- JSON.stringify((vet || []).map(function (v) { return [v.vi_do, v.kinh_do]; })) %>;
+  var SHIPPER = <%- JSON.stringify(don.dang_chay && don.shipper_vi_do !== null
+                    ? { vi_do: don.shipper_vi_do, kinh_do: don.shipper_kinh_do } : null) %>;
+
+  var m = L.map('ct-ban-do');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(m);
+
+  function cham(mau, hinh) {
+    return L.divIcon({
+      className: '',
+      html: '<div class="ct-xe" style="background:' + mau + '"><i class="fas ' + hinh + '"></i></div>',
+      iconSize: [28, 28], iconAnchor: [14, 14],
+    });
+  }
+
+  var diem = [];
+  if (NHA_HANG) {
+    L.marker([NHA_HANG.vi_do, NHA_HANG.kinh_do], { icon: cham('#2c1810', 'fa-utensils') })
+      .addTo(m).bindPopup('Nhà hàng');
+    diem.push([NHA_HANG.vi_do, NHA_HANG.kinh_do]);
+  }
+  if (DIEM) {
+    L.marker([DIEM.vi_do, DIEM.kinh_do], { icon: cham('#dc3545', 'fa-location-dot') })
+      .addTo(m).bindPopup('Điểm giao');
+    diem.push([DIEM.vi_do, DIEM.kinh_do]);
+  }
+  if (VET.length > 1) {
+    L.polyline(VET, { color: '#fd7e14', weight: 4, opacity: .8 }).addTo(m);
+    diem = diem.concat(VET);
+  }
+  if (SHIPPER) {
+    L.marker([SHIPPER.vi_do, SHIPPER.kinh_do], { icon: cham('#198754', 'fa-motorcycle'), zIndexOffset: 400 })
+      .addTo(m).bindPopup('Shipper đang ở đây');
+    diem.push([SHIPPER.vi_do, SHIPPER.kinh_do]);
+  }
+
+  // Khung nhìn ôm hết mọi thứ đáng xem. Một điểm duy nhất thì fitBounds cho ra
+  // mức phóng tối đa, nhìn thấy mỗi mái nhà — nên trường hợp đó đặt tay.
+  if (diem.length > 1) m.fitBounds(L.latLngBounds(diem), { padding: [30, 30] });
+  else if (diem.length === 1) m.setView(diem[0], 16);
+  else m.setView([10.7756, 106.7019], 13);
+})();
+</script>
+
+<%- include('partials/footer') %>

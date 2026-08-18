@@ -44,6 +44,15 @@ const BANG = [
   { mau: /^\/admin\/salary\//,                                                  mien: M.LUONG },
   { mau: /^\/admin\/schedule\//,                                                mien: M.LICH_LAM },
   { mau: /^\/admin\/xep-ca\//,                                                  mien: M.LICH_LAM },
+  { mau: /^\/admin\/van-chuyen\//,                                              mien: M.GIAO_HANG },
+
+  // --- Giao hang ----------------------------------------------------------
+  // Ung dung shipper (/api/shipper/vi-tri) CO Y khong nam trong bang nay: no
+  // chay bon lan mot phut cho moi shipper, va da co su kien rieng mang thang
+  // toa do di theo (realtime.viTriShipper). Cho vao day thi ca he thong tu tai
+  // lai trang moi 15 giay vi mot cham xe dich 20 met.
+  { mau: /^\/staff\/giao-hang/,      mien: M.GIAO_HANG },
+  { mau: /^\/api\/shipper\/ca$/,     mien: M.GIAO_HANG },
 
   // --- Ke toan ------------------------------------------------------------
   { mau: /^\/staff\/accountant\/salary\//,        mien: M.LUONG },

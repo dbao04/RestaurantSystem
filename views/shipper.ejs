@@ -1,0 +1,514 @@
+<%
+  /*
+    ỨNG DỤNG SHIPPER — MỘT CỘT, BA NÚT, KHÔNG CÓ GÌ KHÁC
+
+    Người dùng màn hình này đang đứng giữa đường, một tay cầm mũ bảo hiểm, mắt
+    liếc trong hai giây. Nên mọi thứ ở đây bị ép về ba câu hỏi:
+
+        Giao cho ai, ở đâu?   → địa chỉ to nhất trang
+        Bấm gì tiếp theo?     → đúng MỘT nút chính, đổi chữ theo trạng thái
+        Máy có đang gửi vị trí không? → dải trạng thái dính đỉnh màn hình
+
+    Không có bảng, không có biểu đồ, không có menu. Điều phối cần bảng thì họ
+    ngồi trước máy tính ở /staff/giao-hang.
+
+    VÌ SAO DẢI ĐỊNH VỊ PHẢI LUÔN NHÌN THẤY
+    --------------------------------------
+    Trình duyệt điện thoại tạm dừng JavaScript nền khi tắt màn hình, và Android
+    giết hẳn tab khi thiếu bộ nhớ. Nghĩa là định vị CÓ THỂ chết mà không báo gì.
+    Nếu dải này không luôn hiện, shipper sẽ chạy nửa tiếng trong khi điều phối
+    nhìn một chấm đứng yên — và không ai biết cho tới khi khách gọi phàn nàn.
+    Dải chuyển sang đỏ ngay khi quá hai nhịp không gửi được.
+  */
+%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Giao hàng</title>
+  <meta name="theme-color" content="#2c1810">
+  <link rel="manifest" href="/shipper/manifest.webmanifest">
+  <link rel="icon" href="/shipper/bieu-tuong.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/shipper/bieu-tuong.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Giao hàng">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    :root { --vang:#c8a951; --xanh:#1cc88a; --do:#e74a3b; --cam:#fd7e14; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; min-height:100dvh;
+           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+           background:linear-gradient(160deg,#2c1810,#4e342e 60%,#3a241a);
+           color:#fff; -webkit-text-size-adjust:100%;
+           touch-action:manipulation; overflow-x:hidden; }
+    a { color:var(--vang); }
+
+    .boc { max-width:560px; margin:0 auto;
+           padding:calc(8px + env(safe-area-inset-top)) 13px
+                   calc(24px + env(safe-area-inset-bottom)); }
+
+    /* ------------------------------------------------- dải định vị (dính) */
+    .gps { position:sticky; top:0; z-index:20; margin:0 -13px 12px;
+           padding:calc(7px + env(safe-area-inset-top)) 15px 7px;
+           font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:8px;
+           background:#1b5e20; color:#fff; transition:background .25s; }
+    .gps--tat { background:#5d4037; }
+    .gps--loi { background:#b71c1c; }
+    .gps__phu { font-weight:400; opacity:.85; margin-left:auto; font-size:11.5px; }
+
+    /* ------------------------------------------------------------- đầu trang */
+    .dau { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .ava { width:40px; height:40px; border-radius:50%; background:var(--vang); color:#2c1810;
+           font-weight:800; font-size:18px; flex:none; display:flex; align-items:center;
+           justify-content:center; }
+    .dau h1 { font-size:16px; margin:0; font-weight:800; }
+    .dau p  { font-size:12px; margin:1px 0 0; opacity:.7; }
+
+    .ca { border:0; border-radius:999px; padding:7px 15px; font-size:12.5px; font-weight:800;
+          cursor:pointer; flex:none; }
+    .ca--bat { background:var(--xanh); color:#08351f; }
+    .ca--tat { background:rgba(255,255,255,.15); color:#fff; }
+
+    /* --------------------------------------------------------------- thẻ đơn */
+    .the { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+           border-left:4px solid var(--vang); border-radius:14px; padding:14px;
+           margin-bottom:13px; }
+    .the__dau { display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+                margin-bottom:9px; }
+    .ma { font-weight:800; font-size:15px; letter-spacing:.4px; }
+    .tt { font-size:11px; font-weight:800; padding:3px 10px; border-radius:999px; color:#fff;
+          white-space:nowrap; }
+
+    /* Địa chỉ là thông tin quan trọng nhất trang — cho nó cỡ chữ lớn nhất. */
+    .dc { font-size:16.5px; font-weight:700; line-height:1.45; margin:0 0 4px; }
+    .nguoi { font-size:13.5px; opacity:.82; margin:0 0 10px; }
+    .nguoi a { font-weight:700; }
+
+    .so { display:flex; gap:9px; flex-wrap:wrap; font-size:12px; opacity:.75; margin-bottom:11px; }
+    .so b { opacity:1; }
+
+    .thu { background:rgba(200,169,81,.16); border-radius:10px; padding:9px 12px;
+           margin-bottom:11px; font-size:13.5px; }
+    .thu b { font-size:18px; color:var(--vang); display:block; }
+
+    .nut { display:block; width:100%; border:0; border-radius:13px; padding:15px;
+           font-size:16px; font-weight:800; cursor:pointer; margin-bottom:8px;
+           text-align:center; text-decoration:none; }
+    .nut--chinh { background:var(--vang); color:#2c1810; }
+    .nut--xong  { background:var(--xanh); color:#08351f; }
+    .nut--phu   { background:rgba(255,255,255,.13); color:#fff; font-size:14px; padding:12px; }
+    .nut--hong  { background:rgba(231,74,59,.2); color:#ffb3ab; font-size:13.5px; padding:11px; }
+    .nut:disabled { opacity:.45; }
+    .hang2 { display:flex; gap:8px; }
+    .hang2 > * { flex:1; }
+
+    .trong { text-align:center; padding:46px 20px; opacity:.6; font-size:14.5px; line-height:1.6; }
+    .trong i { font-size:40px; display:block; margin-bottom:12px; opacity:.4; }
+
+    .tong { background:rgba(255,255,255,.07); border-radius:12px; padding:11px 14px;
+            font-size:13px; display:flex; justify-content:space-between; margin-bottom:14px; }
+
+    .canh { background:rgba(231,74,59,.18); border:1px solid rgba(231,74,59,.4); color:#ffd5d0;
+            border-radius:12px; padding:13px; font-size:13.5px; line-height:1.6; margin-bottom:14px; }
+    .canh a { color:#fff; font-weight:800; word-break:break-all; }
+
+    .mon { font-size:13px; opacity:.85; line-height:1.7; margin:0 0 11px; padding:9px 12px;
+           background:rgba(0,0,0,.18); border-radius:10px; }
+
+    .bao { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(18px + env(safe-area-inset-bottom));
+           background:#2c1810; border:1px solid var(--vang); color:#fff; padding:12px 18px;
+           border-radius:12px; font-size:13.5px; z-index:50; max-width:92vw; text-align:center;
+           box-shadow:0 8px 28px rgba(0,0,0,.5); }
+  </style>
+</head>
+<body>
+<div class="boc">
+
+  <!-- ================================================== DẢI ĐỊNH VỊ -->
+  <div class="gps gps--tat" id="gps">
+    <i class="fas fa-location-slash" id="gps-icon"></i>
+    <span id="gps-chu">Chưa bật định vị</span>
+    <span class="gps__phu" id="gps-phu"></span>
+  </div>
+
+  <!-- ================================================== ĐẦU TRANG -->
+  <div class="dau">
+    <div class="ava"><%= (hoTen || 'S').trim().charAt(0).toUpperCase() %></div>
+    <div style="flex:1; min-width:0">
+      <h1><%= hoTen %></h1>
+      <p><%= shipper.ten_dv %><%= shipper.bien_so ? ' · ' + shipper.bien_so : '' %></p>
+    </div>
+    <button class="ca <%= shipper.trang_thai === 'nghi' ? 'ca--tat' : 'ca--bat' %>" id="nut-ca"
+            data-ca="<%= shipper.trang_thai %>">
+      <%= shipper.trang_thai === 'nghi' ? 'Bật ca' : 'Trong ca' %>
+    </button>
+  </div>
+
+  <% if (!anToan) { %>
+    <div class="canh">
+      <strong>Trang đang mở bằng http:// nên điện thoại không cho lấy vị trí.</strong><br>
+      Định vị và mọi thứ dựa vào nó chỉ chạy khi địa chỉ bắt đầu bằng <b>https://</b>.
+      Hãy mở lại bằng địa chỉ này:<br>
+      <a href="<%= diaChiAnToan %>/shipper/"><%= diaChiAnToan %>/shipper/</a>
+    </div>
+  <% } %>
+
+  <div class="tong">
+    <span>Hôm nay đã giao</span>
+    <span><b id="hn-don">0</b> đơn · <b id="hn-phi">0</b>đ phí ship</span>
+  </div>
+
+  <!-- ================================================== DANH SÁCH ĐƠN -->
+  <div id="ds-don"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var NHIP_MS = <%= thamSo.nhip_gps_giay %> * 1000;
+  var AN_TOAN = <%= anToan ? 'true' : 'false' %>;
+  var CA = '<%= shipper.trang_thai %>';
+
+  var elDs = document.getElementById('ds-don');
+  var elGps = document.getElementById('gps');
+  var elGpsChu = document.getElementById('gps-chu');
+  var elGpsIcon = document.getElementById('gps-icon');
+  var elGpsPhu = document.getElementById('gps-phu');
+  var nutCa = document.getElementById('nut-ca');
+
+  var viTriCuoi = null;      // toạ độ mới nhất máy đọc được
+  var guiThanhCongLuc = 0;   // lần cuối máy chủ nhận được vị trí
+  var soLanHong = 0;
+
+  // ------------------------------------------------------------------ tiện ích
+  function thoat(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function tien(n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); }
+
+  var henBao = null;
+  function bao(chu) {
+    var cu = document.querySelector('.bao');
+    if (cu) cu.remove();
+    var el = document.createElement('div');
+    el.className = 'bao';
+    el.textContent = chu;
+    document.body.appendChild(el);
+    clearTimeout(henBao);
+    henBao = setTimeout(function () { el.remove(); }, 3600);
+  }
+
+  // ------------------------------------------------------------------ định vị
+  /*
+    watchPosition chứ không phải setInterval + getCurrentPosition.
+
+    getCurrentPosition mỗi 15 giây phải đánh thức chip GPS từ đầu mỗi lần —
+    tốn pin hơn hẳn, và điểm đầu tiên sau khi thức dậy thường có sai số lớn.
+    watchPosition giữ chip ở chế độ theo dõi liên tục, hệ điều hành tự gộp với
+    các ứng dụng khác đang định vị. Ta chỉ tự bóp tần số GỬI LÊN máy chủ, còn
+    tần số ĐỌC để hệ điều hành lo.
+  */
+  var theoDoiId = null;
+
+  function veDaiGps(loai, chu, phu) {
+    elGps.className = 'gps' + (loai === 'ok' ? '' : (loai === 'loi' ? ' gps--loi' : ' gps--tat'));
+    elGpsIcon.className = 'fas ' + (loai === 'ok' ? 'fa-location-dot'
+                                  : loai === 'loi' ? 'fa-triangle-exclamation' : 'fa-location-slash');
+    elGpsChu.textContent = chu;
+    elGpsPhu.textContent = phu || '';
+  }
+
+  function batDinhVi() {
+    if (!AN_TOAN) { veDaiGps('loi', 'Cần mở bằng https://', 'xem hướng dẫn ở trên'); return; }
+    if (!navigator.geolocation) { veDaiGps('loi', 'Máy không hỗ trợ định vị', ''); return; }
+    if (theoDoiId !== null) return;
+
+    veDaiGps('tat', 'Đang tìm vệ tinh…', '');
+    theoDoiId = navigator.geolocation.watchPosition(function (v) {
+      viTriCuoi = {
+        vi_do: v.coords.latitude,
+        kinh_do: v.coords.longitude,
+        do_chinh_xac_m: v.coords.accuracy,
+        // Trình duyệt trả m/s; máy chủ và màn hình điều phối đều nói km/h.
+        toc_do_kmh: v.coords.speed === null ? null : v.coords.speed * 3.6,
+        huong: v.coords.heading,
+      };
+    }, function (e) {
+      /*
+        PERMISSION_DENIED là trường hợp duy nhất đáng dừng hẳn: hỏi lại cũng
+        chỉ nhận cùng câu trả lời cho tới khi người dùng vào cài đặt sửa. Hai
+        lỗi kia (mất tín hiệu, quá hạn) là tạm thời — watchPosition tự thử lại,
+        không được tắt nó.
+      */
+      if (e.code === 1) {
+        veDaiGps('loi', 'Bạn đã từ chối quyền vị trí', 'sửa trong cài đặt trình duyệt');
+        navigator.geolocation.clearWatch(theoDoiId);
+        theoDoiId = null;
+      } else {
+        veDaiGps('loi', 'Chưa bắt được tín hiệu GPS', 'ra chỗ thoáng hơn');
+      }
+    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  }
+
+  function tatDinhVi() {
+    if (theoDoiId !== null) { navigator.geolocation.clearWatch(theoDoiId); theoDoiId = null; }
+    viTriCuoi = null;
+    veDaiGps('tat', 'Đã tắt định vị', 'ngoài ca');
+  }
+
+  /** Mức pin, nếu trình duyệt cho biết. Không có thì bỏ qua, không phải lỗi. */
+  var pin = null;
+  if (navigator.getBattery) {
+    navigator.getBattery().then(function (b) {
+      pin = Math.round(b.level * 100);
+      b.addEventListener('levelchange', function () { pin = Math.round(b.level * 100); });
+    }).catch(function () {});
+  }
+
+  function guiViTri() {
+    if (!viTriCuoi || CA === 'nghi') return;
+    var goi = JSON.parse(JSON.stringify(viTriCuoi));
+    if (pin !== null) goi.pin = pin;
+
+    fetch('/api/shipper/vi-tri', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(goi),
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+      .then(function (d) {
+        soLanHong = 0;
+        if (d.ghi) {
+          guiThanhCongLuc = Date.now();
+          veDaiGps('ok', 'Đang gửi vị trí', 'sai số ~' + Math.round(viTriCuoi.do_chinh_xac_m) + 'm');
+        } else {
+          // Máy chủ bỏ điểm vì sai số quá lớn — không phải hỏng, chỉ là tín hiệu xấu.
+          veDaiGps('tat', 'Tín hiệu yếu, chờ điểm tốt hơn', '');
+        }
+      })
+      .catch(function () {
+        soLanHong++;
+        // Một nhịp lỗi có thể chỉ là đi qua hầm. Hai nhịp liên tiếp thì phải
+        // báo — điều phối đang nhìn một chấm đứng yên mà tưởng là thật.
+        if (soLanHong >= 2) veDaiGps('loi', 'Không gửi được vị trí', 'kiểm tra sóng 4G');
+      });
+  }
+
+  setInterval(guiViTri, NHIP_MS);
+
+  /*
+    Gửi ngay khi màn hình sáng trở lại.
+
+    Điện thoại khoá màn hình thì trình duyệt bóp hoặc dừng hẳn setInterval, có
+    máy giãn tới vài phút một lần. Nếu chỉ dựa vào bộ đếm, mỗi lần shipper mở
+    lại máy sẽ có một khoảng trống dài trên bản đồ.
+  */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { guiViTri(); taiDon(); }
+  });
+
+  // ------------------------------------------------------------------ ca trực
+  nutCa.onclick = function () {
+    var moi = CA === 'nghi' ? 'san_sang' : 'nghi';
+    if (moi === 'nghi' && !confirm('Tan ca? Bạn sẽ không được phân đơn mới nữa.')) return;
+
+    nutCa.disabled = true;
+    fetch('/api/shipper/ca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trang_thai: moi }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (k) {
+        if (!k.ok) { bao(k.d.thong_bao || 'Không đổi được ca.'); return; }
+        CA = k.d.ca;
+        nutCa.textContent = CA === 'nghi' ? 'Bật ca' : 'Trong ca';
+        nutCa.className = 'ca ' + (CA === 'nghi' ? 'ca--tat' : 'ca--bat');
+        if (CA === 'nghi') tatDinhVi(); else { batDinhVi(); guiViTri(); }
+        bao(CA === 'nghi' ? 'Đã tan ca.' : 'Đã vào ca — điều phối thấy bạn rồi.');
+        taiDon();
+      })
+      .catch(function () { bao('Mất kết nối, thử lại.'); })
+      .then(function () { nutCa.disabled = false; });
+  };
+
+  // ------------------------------------------------------------------ đơn hàng
+  /*
+    Nhãn nút phải nói VIỆC SẮP LÀM, không nói tên trạng thái.
+
+    "Chuyển sang dang_giao" là ngôn ngữ của cơ sở dữ liệu. "Đã lấy hàng, đi
+    giao" là việc người đứng ở bếp sắp làm. Cùng một lệnh, nhưng chỉ một trong
+    hai đọc được khi đang vội.
+  */
+  var NHAN = {
+    dang_lay:  { chu: 'Tôi đã tới lấy hàng', lop: 'nut--chinh' },
+    dang_giao: { chu: 'Đã lấy hàng — đi giao', lop: 'nut--chinh' },
+    da_giao:   { chu: 'Giao xong', lop: 'nut--xong' },
+    that_bai:  { chu: 'Không giao được', lop: 'nut--hong' },
+  };
+
+  function veDon(ds) {
+    if (!ds.length) {
+      elDs.innerHTML =
+        '<div class="trong"><i class="fas fa-mug-hot"></i>' +
+        (CA === 'nghi'
+          ? 'Bạn đang ngoài ca.<br>Bấm <b>Bật ca</b> ở trên để nhận đơn.'
+          : 'Chưa có đơn nào.<br>Điều phối sẽ đẩy đơn xuống đây ngay khi có.') +
+        '</div>';
+      return;
+    }
+
+    elDs.innerHTML = ds.map(function (g) {
+      var duong = g.vi_do !== null && g.vi_do !== undefined
+        ? 'https://www.google.com/maps/dir/?api=1&destination=' + g.vi_do + ',' + g.kinh_do
+        : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(g.dia_chi_giao);
+
+      var nut = (g.chuyen_duoc || []).filter(function (t) { return NHAN[t]; }).map(function (t) {
+        return '<button class="nut ' + NHAN[t].lop + '" data-don="' + g.id_giao + '" data-tt="' + t + '">' +
+               thoat(NHAN[t].chu) + '</button>';
+      }).join('');
+
+      return '' +
+      '<div class="the" style="border-left-color:' + g.mau + '">' +
+        '<div class="the__dau">' +
+          '<span class="ma">' + thoat(g.ma_giao) + '</span>' +
+          '<span class="tt" style="background:' + g.mau + '">' + thoat(g.nhan) + '</span>' +
+        '</div>' +
+
+        '<p class="dc">' + thoat(g.dia_chi_giao) + '</p>' +
+        '<p class="nguoi">' + thoat(g.ten_nguoi_nhan) +
+          ' · <a href="tel:' + thoat(g.sdt_nguoi_nhan) + '">' + thoat(g.sdt_nguoi_nhan) + '</a></p>' +
+
+        '<div class="so">' +
+          (g.khoang_cach_km !== null ? '<span><b>' + g.khoang_cach_km + '</b> km</span>' : '') +
+          '<span><b>' + g.so_mon + '</b> món</span>' +
+          (g.bep_da_xong ? '<span style="color:#1cc88a">bếp đã xong</span>'
+                         : '<span style="color:#fd7e14">bếp đang nấu</span>') +
+        '</div>' +
+
+        (g.ghi_chu ? '<p class="mon"><i class="fas fa-note-sticky"></i> ' + thoat(g.ghi_chu) + '</p>' : '') +
+
+        '<div class="thu">Thu của khách <b>' + tien(g.tong_thu) + 'đ</b>' +
+          '<span style="opacity:.7">hàng ' + tien(g.tien_hang) + 'đ + ship ' + tien(g.phi_giao) + 'đ</span></div>' +
+
+        '<div class="hang2">' +
+          '<a class="nut nut--phu" href="' + duong + '" target="_blank" rel="noopener">' +
+            '<i class="fas fa-diamond-turn-right"></i> Chỉ đường</a>' +
+          '<a class="nut nut--phu" href="tel:' + thoat(g.sdt_nguoi_nhan) + '">' +
+            '<i class="fas fa-phone"></i> Gọi khách</a>' +
+        '</div>' +
+
+        '<button class="nut nut--phu" data-mon="' + g.id_giao + '">' +
+          '<i class="fas fa-list-check"></i> Xem ' + g.so_mon + ' món trong đơn</button>' +
+        '<div id="mon-' + g.id_giao + '"></div>' +
+
+        nut +
+      '</div>';
+    }).join('');
+  }
+
+  function taiDon() {
+    fetch('/api/shipper/don-cua-toi', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+      .then(function (d) {
+        CA = d.ca;
+        nutCa.textContent = CA === 'nghi' ? 'Bật ca' : 'Trong ca';
+        nutCa.className = 'ca ' + (CA === 'nghi' ? 'ca--tat' : 'ca--bat');
+        document.getElementById('hn-don').textContent = d.hom_nay.so_don;
+        document.getElementById('hn-phi').textContent = tien(d.hom_nay.tien_phi);
+        veDon(d.don || []);
+      })
+      .catch(function () { /* mất mạng — giữ nguyên màn hình cũ, đừng xoá đơn đi */ });
+  }
+
+  /*
+    Một listener ở thùng chứa thay vì gắn vào từng nút.
+
+    Danh sách đơn được vẽ lại sau mỗi thao tác và mỗi lần có sự kiện thời gian
+    thực, nên nút cũ biến mất liên tục. Gắn vào từng nút thì listener chết theo,
+    và có lúc bấm không ăn — thứ khó chịu nhất trên một màn hình đang vội.
+  */
+  elDs.addEventListener('click', function (e) {
+    var nut = e.target.closest('button[data-don]');
+    if (nut) return doiTrangThai(nut);
+    var xem = e.target.closest('button[data-mon]');
+    if (xem) return xemMon(xem.getAttribute('data-mon'));
+  });
+
+  function doiTrangThai(nut) {
+    var id = nut.getAttribute('data-don');
+    var tt = nut.getAttribute('data-tt');
+    var goi = { trang_thai: tt };
+
+    if (tt === 'that_bai') {
+      var ly = prompt('Vì sao không giao được?\n(khách không nghe máy, sai địa chỉ, khách từ chối nhận…)');
+      if (ly === null) return;
+      if (!ly.trim()) { bao('Phải ghi lý do.'); return; }
+      goi.ly_do = ly.trim();
+    }
+    if (tt === 'da_giao' && !confirm('Xác nhận đã giao xong và đã thu đủ tiền?')) return;
+
+    // Kèm toạ độ lúc bấm. Đây là bằng chứng duy nhất khi khách nói chưa nhận
+    // được hàng — xem ghi chú hàm doiTrangThai trong services/vanChuyenService.js.
+    if (viTriCuoi) { goi.vi_do = viTriCuoi.vi_do; goi.kinh_do = viTriCuoi.kinh_do; }
+
+    nut.disabled = true;
+    fetch('/api/shipper/don/' + id + '/trang-thai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(goi),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (k) {
+        if (!k.ok) { bao(k.d.thong_bao || 'Không đổi được trạng thái.'); nut.disabled = false; return; }
+        bao(k.d.nhan);
+        taiDon();
+        guiViTri();
+      })
+      .catch(function () { bao('Mất kết nối, thử lại.'); nut.disabled = false; });
+  }
+
+  function xemMon(id) {
+    var o = document.getElementById('mon-' + id);
+    if (o.innerHTML) { o.innerHTML = ''; return; }   // bấm lần nữa để đóng
+    fetch('/api/shipper/don/' + id + '/mon', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { bao(d.thong_bao || 'Không xem được.'); return; }
+        o.innerHTML = '<p class="mon">' + (d.mon || []).map(function (m) {
+          return thoat((m.name_mon || '').trim()) + ' ×' + m.soluong +
+                 (m.ghi_chu_mon ? ' <i style="opacity:.7">(' + thoat(m.ghi_chu_mon) + ')</i>' : '');
+        }).join('<br>') + '</p>';
+      })
+      .catch(function () { bao('Mất kết nối.'); });
+  }
+
+  // ------------------------------------------------------------------ khởi động
+  taiDon();
+  if (CA !== 'nghi') { batDinhVi(); setTimeout(guiViTri, 2500); }
+  else veDaiGps('tat', 'Chưa vào ca', 'bấm Bật ca để bắt đầu');
+
+  // Điều phối phân đơn mới thì đơn phải hiện ra ngay, không đợi shipper tự kéo.
+  if (typeof io !== 'undefined') {
+    var socket = io({ transports: ['websocket', 'polling'] });
+    socket.on('giao-hang:doi-trang-thai', function () { taiDon(); });
+    socket.on('giao-hang:doi', function () { taiDon(); });
+  }
+
+  // Lưới an toàn cho trường hợp socket rơi.
+  setInterval(taiDon, 45000);
+
+  // Cài được ra màn hình chính. Không có service worker thì Chrome không cho cài.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/shipper/sw.js').catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

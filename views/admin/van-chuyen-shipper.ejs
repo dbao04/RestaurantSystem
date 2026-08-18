@@ -1,0 +1,260 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  var dangSua = null;
+  (dsSp || []).forEach(function (s) { if (Number(s.id_shipper) === Number(suaId)) dangSua = s; });
+  var f = dangSua || {
+    id_dv: (dsDv[0] || {}).id_dv || '', id_nv: '', ten: '', sdt: '',
+    loai_xe: 'xe_may', bien_so: '', so_don_toi_da: 3, trang_thai: 'nghi', ghi_chu: '',
+  };
+
+  var XE = { xe_may: 'Xe máy', xe_dap: 'Xe đạp', xe_dien: 'Xe điện', o_to: 'Ô tô' };
+  var CA = {
+    san_sang:  { nhan: 'Sẵn sàng nhận đơn', lop: 'qt-pill--ok' },
+    dang_giao: { nhan: 'Đang giao',         lop: 'qt-pill--warn' },
+    nghi:      { nhan: 'Ngoài ca',          lop: 'qt-pill--muted' },
+  };
+%>
+
+<style>
+  .sp-gps { font-size:.76rem; }
+  .sp-gps--ok  { color:#198754; }
+  .sp-gps--cu  { color:#fd7e14; }
+  .sp-gps--mat { color:#adb5bd; }
+</style>
+
+<% if (msg) { %>
+  <div class="qt-alert qt-alert--<%= msgType === 'danger' ? 'danger' : 'success' %>"><%= msg %></div>
+<% } %>
+
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2>Shipper</h2>
+      <p>
+        Người giao hàng của từng đơn vị. Shipper đội nhà phải gắn với một nhân viên
+        — họ đăng nhập bằng chính tài khoản nhân viên để mở ứng dụng <code>/shipper</code>.
+      </p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/van-chuyen"><i class="fas fa-truck"></i> Đơn vị vận chuyển</a>
+      <a class="qt-btn qt-btn--primary" href="/staff/giao-hang/ban-do"><i class="fas fa-map-location-dot"></i> Bản đồ</a>
+    </div>
+  </div>
+
+  <div class="qt-card__body qt-card__body--flush">
+    <div class="qt-tablewrap">
+      <table class="qt-table">
+        <thead>
+          <tr>
+            <th>Shipper</th>
+            <th>Đơn vị</th>
+            <th>Phương tiện</th>
+            <th class="qt-center">Đang cầm</th>
+            <th class="qt-center">Ca</th>
+            <th>Tín hiệu GPS</th>
+            <th class="qt-center">Thành công</th>
+            <th class="qt-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!dsSp.length) { %>
+            <tr><td colspan="8" class="qt-empty">Chưa có shipper nào — thêm ở form bên dưới.</td></tr>
+          <% } %>
+          <% dsSp.forEach(function (s) { %>
+            <tr>
+              <td>
+                <span class="qt-strong"><%= s.ten %></span>
+                <span class="qt-sub">
+                  <% if (s.ma_nv) { %><%= s.ma_nv %> · <% } %>
+                  <%= s.sdt || 'chưa có số' %>
+                  <% if (!s.id_nv) { %> · <em>shipper đối tác</em><% } %>
+                </span>
+              </td>
+              <td>
+                <%= s.ten_dv %>
+                <span class="qt-sub"><%= s.loai_dv === 'noi_bo' ? 'Đội nhà' : 'Đối tác' %></span>
+              </td>
+              <td>
+                <%= XE[s.loai_xe] || s.loai_xe %>
+                <% if (s.bien_so) { %><span class="qt-sub"><%= s.bien_so %></span><% } %>
+              </td>
+              <td class="qt-center qt-num">
+                <%= s.don_dang_cam %>/<%= s.so_don_toi_da %>
+                <% if (s.con_nhan_don) { %><span class="qt-sub" style="color:#198754">còn nhận</span><% } %>
+              </td>
+              <td class="qt-center">
+                <span class="qt-pill <%= (CA[s.trang_thai] || {}).lop || 'qt-pill--muted' %>">
+                  <%= (CA[s.trang_thai] || {}).nhan || s.trang_thai %>
+                </span>
+              </td>
+              <td>
+                <%
+                  /* Ba mức: vừa nhận / cũ / chưa bao giờ. Phân biệt được ba mức
+                     này là điều kiện để điều phối tin vào chấm trên bản đồ. */
+                %>
+                <% if (s.vi_tri_luc === null || s.vi_tri_luc === undefined) { %>
+                  <span class="sp-gps sp-gps--mat"><i class="fas fa-location-slash"></i> Chưa từng gửi vị trí</span>
+                <% } else if (Number(s.phut_truoc) <= 3) { %>
+                  <span class="sp-gps sp-gps--ok"><i class="fas fa-location-dot"></i> Đang phát tín hiệu</span>
+                <% } else { %>
+                  <span class="sp-gps sp-gps--cu"><i class="fas fa-triangle-exclamation"></i>
+                    Mất tín hiệu <%= s.phut_truoc %> phút</span>
+                <% } %>
+                <% if (s.pin !== null && s.pin !== undefined) { %>
+                  <span class="qt-sub">Pin <%= s.pin %>%</span>
+                <% } %>
+              </td>
+              <td class="qt-center qt-num">
+                <%= s.tong_don_thanh_cong %>/<%= s.tong_don %>
+                <% if (Number(s.tong_don) > 0) { %>
+                  <span class="qt-sub"><%= Math.round(s.tong_don_thanh_cong / s.tong_don * 100) %>%</span>
+                <% } %>
+              </td>
+              <td class="qt-center">
+                <a class="qt-btn qt-btn--sm qt-btn--ghost" href="/admin/van-chuyen/shipper?sua=<%= s.id_shipper %>#form-sp">
+                  <i class="fas fa-pen"></i>
+                </a>
+                <% if (Number(s.don_dang_cam) === 0) { %>
+                  <form action="/admin/van-chuyen/shipper/xoa/<%= s.id_shipper %>" method="POST" style="display:inline"
+                        onsubmit="return confirm('Xóa hồ sơ shipper của <%= s.ten %>? Lịch sử các đơn đã giao vẫn được giữ.')">
+                    <button class="qt-btn qt-btn--sm qt-btn--danger" type="submit"><i class="fas fa-trash"></i></button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="qt-card" id="form-sp">
+  <div class="qt-card__head">
+    <div>
+      <h2><%= dangSua ? 'Sửa hồ sơ: ' + dangSua.ten : 'Thêm shipper' %></h2>
+      <p>Chọn một nhân viên để họ tự đăng nhập vào ứng dụng, hoặc bỏ trống nếu là shipper đối tác</p>
+    </div>
+    <% if (dangSua) { %>
+      <div class="qt-card__act">
+        <a class="qt-btn qt-btn--ghost" href="/admin/van-chuyen/shipper"><i class="fas fa-xmark"></i> Hủy sửa</a>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="qt-card__body">
+    <form class="qt-form qt-form--wide" method="POST"
+          action="<%= dangSua ? '/admin/van-chuyen/shipper/sua/' + dangSua.id_shipper : '/admin/van-chuyen/shipper/them' %>">
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Đơn vị vận chuyển <span class="qt-req">*</span></label>
+          <select class="qt-select" name="id_dv" required>
+            <% dsDv.forEach(function (d) { %>
+              <option value="<%= d.id_dv %>" <%= Number(f.id_dv) === Number(d.id_dv) ? 'selected' : '' %>>
+                <%= d.ten_dv %> (<%= d.loai === 'noi_bo' ? 'đội nhà' : 'đối tác' %>)
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Nhân viên</label>
+          <select class="qt-select" name="id_nv" id="o-nv">
+            <option value="">— Không phải nhân viên (shipper đối tác) —</option>
+            <% if (dangSua && dangSua.id_nv) { %>
+              <option value="<%= dangSua.id_nv %>" selected>
+                <%= dangSua.ten %> — đang gắn
+              </option>
+            <% } %>
+            <% dsNv.forEach(function (n) { %>
+              <option value="<%= n.id_nv %>" data-ten="<%= n.ten %>" data-sdt="<%= n.sodienthoai || '' %>">
+                <%= n.ten %><%= n.ten_cd ? ' — ' + n.ten_cd : '' %>
+              </option>
+            <% }) %>
+          </select>
+          <span class="qt-field__hint">
+            Chỉ nhân viên đã gắn ở đây mới mở được ứng dụng <code>/shipper</code> trên điện thoại.
+          </span>
+        </div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Tên hiển thị <span class="qt-req">*</span></label>
+          <input class="qt-input" name="ten" id="o-ten" required maxlength="120" value="<%= f.ten || '' %>">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Điện thoại</label>
+          <input class="qt-input" name="sdt" id="o-sdt" maxlength="20" value="<%= f.sdt || '' %>">
+          <span class="qt-field__hint">Điều phối gọi số này khi mất tín hiệu GPS.</span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Số đơn cầm cùng lúc</label>
+          <input class="qt-input" type="number" name="so_don_toi_da" min="1" max="20"
+                 value="<%= f.so_don_toi_da %>">
+          <span class="qt-field__hint">Hệ thống không phân quá số này cho một người.</span>
+        </div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Phương tiện</label>
+          <select class="qt-select" name="loai_xe">
+            <% Object.keys(XE).forEach(function (k) { %>
+              <option value="<%= k %>" <%= f.loai_xe === k ? 'selected' : '' %>><%= XE[k] %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Biển số</label>
+          <input class="qt-input" name="bien_so" maxlength="20" value="<%= f.bien_so || '' %>"
+                 style="text-transform:uppercase" placeholder="59X1-234.56">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Trạng thái ca</label>
+          <select class="qt-select" name="trang_thai">
+            <option value="nghi"      <%= f.trang_thai === 'nghi'      ? 'selected' : '' %>>Ngoài ca</option>
+            <option value="san_sang"  <%= f.trang_thai === 'san_sang'  ? 'selected' : '' %>>Sẵn sàng nhận đơn</option>
+            <option value="dang_giao" <%= f.trang_thai === 'dang_giao' ? 'selected' : '' %>>Đang giao</option>
+          </select>
+          <span class="qt-field__hint">Shipper tự bật/tắt ca trong ứng dụng — ở đây chỉ để sửa khi cần.</span>
+        </div>
+      </div>
+
+      <div class="qt-field">
+        <label class="qt-label">Ghi chú</label>
+        <input class="qt-input" name="ghi_chu" maxlength="255" value="<%= f.ghi_chu || '' %>">
+      </div>
+
+      <div class="qt-form__actions">
+        <button class="qt-btn qt-btn--primary" type="submit">
+          <i class="fas fa-floppy-disk"></i> <%= dangSua ? 'Lưu hồ sơ' : 'Thêm shipper' %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* Chọn nhân viên thì điền sẵn tên và số điện thoại.
+     Gõ lại tên một người đã có trong hệ thống là việc thừa, và gõ sai chính tả
+     thì hai màn hình gọi cùng một người bằng hai cái tên. */
+  var oNv = document.getElementById('o-nv');
+  var oTen = document.getElementById('o-ten');
+  var oSdt = document.getElementById('o-sdt');
+  if (!oNv || !oTen) return;
+
+  oNv.onchange = function () {
+    var op = this.options[this.selectedIndex];
+    var ten = op.getAttribute('data-ten');
+    if (!ten) return;                       // chọn lại "không phải nhân viên"
+    if (!oTen.value.trim()) oTen.value = ten;
+    var sdt = op.getAttribute('data-sdt');
+    if (sdt && oSdt && !oSdt.value.trim()) oSdt.value = sdt;
+  };
+})();
+</script>
+
+<%- include('partials/footer') %>

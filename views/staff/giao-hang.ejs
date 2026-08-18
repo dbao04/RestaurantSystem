@@ -1,0 +1,350 @@
+<%
+  var activePage = 'giao-hang';
+%>
+<%- include('partials/header') %>
+<%
+  /*
+    Quan tri vien co dong vao duoc khong.
+
+    `canQuyen()` trong middleware/phanQuyen.js cho phien `adminlogin` di qua vo
+    dieu kien - ho dung tren he thong chuc danh. Nhung `res.locals.coQuyen` lai
+    tra ve false cho ho, vi quan tri khong co ban ghi trong `nhan_vien` nen
+    khong co ho so quyen nao de tra loi.
+
+    Neu chi hoi `coQuyen()` thi quan tri vao duoc trang nay ma khong thay mot
+    nut phan cong nao - trang tro thanh chi doc mot cach kho hieu. Menu va
+    middleware phai tra loi giong het nhau, neu khong nguoi dung thay mot he
+    thong luc cho vao luc khong.
+  */
+  var phanCongDuoc = !!session.adminlogin ||
+    (typeof coQuyen === 'function' && coQuyen('giao_hang.phan_cong'));
+%>
+
+<%
+  /* Tach don theo trang thai ngay o day thay vi loc lai trong tung khoi HTML:
+     bang duoi chia lam ba cot cong viec, va moi don chi duoc nam o dung mot
+     cot. Loc ba lan tren cung mot mang la ba co hoi de mot don bi trung hoac
+     bien mat khoi ca ba cot ma khong ai phat hien. */
+  var choPhan = [], dangCam = [], daXong = [];
+  (don || []).forEach(function (g) {
+    if (g.trang_thai === 'cho_phan' || g.trang_thai === 'that_bai') choPhan.push(g);
+    else if (g.da_xong) daXong.push(g);
+    else dangCam.push(g);
+  });
+
+  var spRanh = (dsSp || []).filter(function (s) { return s.trang_thai !== 'nghi'; });
+%>
+
+<style>
+  .gh-cot { display:grid; grid-template-columns: 1fr 340px; gap:18px; align-items:start; }
+  @media (max-width: 1100px) { .gh-cot { grid-template-columns: 1fr; } }
+
+  .gh-don { border:1px solid #e6e6e6; border-left-width:4px; border-radius:8px;
+            padding:12px 14px; margin-bottom:10px; background:#fff; }
+  .gh-don__dau { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .gh-ma { font-weight:700; font-size:15px; color:#2c1810; }
+  .gh-tt { font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px;
+           color:#fff; white-space:nowrap; }
+  .gh-dc { font-size:13px; color:#444; margin:7px 0 2px; line-height:1.5; }
+  .gh-meta { font-size:12px; color:#888; display:flex; gap:12px; flex-wrap:wrap; }
+  .gh-act { margin-top:9px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .gh-tre { color:#dc3545; font-weight:700; }
+
+  .gh-sp { border:1px solid #eee; border-radius:8px; padding:9px 11px; margin-bottom:7px; font-size:13px; }
+  .gh-sp--ranh { border-color:#c3e6cb; background:#f6fff9; }
+  .gh-sp--day  { opacity:.6; }
+  .gh-sp__ten { font-weight:600; }
+  .gh-sp__meta { font-size:11.5px; color:#888; }
+  .gh-cham { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-0 text-gray-800">Điều phối giao hàng</h1>
+    <small class="text-muted">
+      Đơn chờ phân nằm ở cột trái. Phân xong, theo dõi tiếp trên bản đồ.
+    </small>
+  </div>
+  <div>
+    <a href="/staff/giao-hang/ban-do" class="btn btn-sm btn-primary shadow-sm">
+      <i class="fas fa-map-location-dot fa-sm"></i> Bản đồ thời gian thực
+    </a>
+    <a href="/staff/giao-hang?tat_ca=<%= xemHet ? '0' : '1' %>" class="btn btn-sm btn-outline-secondary shadow-sm">
+      <i class="fas fa-clock-rotate-left fa-sm"></i> <%= xemHet ? 'Chỉ đơn đang chạy' : 'Xem cả đơn đã xong' %>
+    </a>
+  </div>
+</div>
+
+<% if (msg) { %>
+  <div class="alert alert-<%= msgType === 'danger' ? 'danger' : (msgType === 'info' ? 'info' : 'success') %> py-2">
+    <%= msg %>
+  </div>
+<% } %>
+
+<!-- ==================================================== SO LIEU NHANH -->
+<div class="row mb-3">
+  <div class="col-md-3 col-6 mb-2">
+    <div class="card border-left-secondary shadow-sm h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-secondary text-uppercase">Chờ phân</div>
+      <div class="h4 mb-0 font-weight-bold text-gray-800"><%= thongKe.cho_phan %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3 col-6 mb-2">
+    <div class="card border-left-warning shadow-sm h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-warning text-uppercase">Đang giao</div>
+      <div class="h4 mb-0 font-weight-bold text-gray-800"><%= thongKe.dang_chay %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3 col-6 mb-2">
+    <div class="card border-left-success shadow-sm h-100 py-2"><div class="card-body py-2">
+      <div class="text-xs font-weight-bold text-success text-uppercase">Đã giao hôm nay</div>
+      <div class="h4 mb-0 font-weight-bold text-gray-800"><%= thongKe.da_giao %></div>
+      <% if (thongKe.phut_tb !== null) { %>
+        <div class="text-xs text-muted">Trung bình <%= thongKe.phut_tb %> phút/đơn</div>
+      <% } %>
+    </div></div>
+  </div>
+  <div class="col-md-3 col-6 mb-2">
+    <%
+      /* Tre han la con so duy nhat noi len chat luong dich vu, nen no duoc to
+         do khi > 0 thay vi nam lang le nhu ba o kia. */
+    %>
+    <div class="card border-left-<%= thongKe.tre_han > 0 ? 'danger' : 'info' %> shadow-sm h-100 py-2">
+      <div class="card-body py-2">
+        <div class="text-xs font-weight-bold text-<%= thongKe.tre_han > 0 ? 'danger' : 'info' %> text-uppercase">Trễ hẹn</div>
+        <div class="h4 mb-0 font-weight-bold text-gray-800"><%= thongKe.tre_han %></div>
+        <% if (thongKe.tre_han > 0) { %>
+          <div class="text-xs text-danger">Gọi khách báo trước khi họ gọi mình</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="gh-cot">
+  <!-- ================================================ CAC DON -->
+  <div>
+    <% function veDon(g, choPhep) { %>
+      <div class="gh-don" style="border-left-color:<%= g.tt.mau %>">
+        <div class="gh-don__dau">
+          <div>
+            <span class="gh-ma"><%= g.ma_giao %></span>
+            <span class="gh-tt" style="background:<%= g.tt.mau %>">
+              <i class="fas <%= g.tt.icon %>"></i> <%= g.tt.nhan %>
+            </span>
+            <% if (!g.da_xong && g.du_kien_luc && new Date(g.du_kien_luc) < new Date()) { %>
+              <span class="gh-tre"><i class="fas fa-clock"></i> trễ hẹn</span>
+            <% } %>
+          </div>
+          <div class="text-right" style="white-space:nowrap">
+            <div class="font-weight-bold"><%= formatMoney(g.tong_thu) %>đ</div>
+            <div class="gh-sp__meta">
+              hàng <%= formatMoney(g.tien_hang || 0) %>đ + ship <%= formatMoney(g.phi_giao) %>đ
+            </div>
+          </div>
+        </div>
+
+        <div class="gh-dc">
+          <i class="fas fa-location-dot text-muted"></i>
+          <strong><%= g.ten_nguoi_nhan %></strong> · <%= g.sdt_nguoi_nhan %><br>
+          <%= g.dia_chi_giao %>
+        </div>
+
+        <div class="gh-meta">
+          <% if (g.khoang_cach_km !== null) { %><span><i class="fas fa-route"></i> <%= g.khoang_cach_km %> km</span><% } %>
+          <span><i class="fas fa-utensils"></i> <%= g.so_mon %> món</span>
+          <% if (g.ten_dv) { %><span><i class="fas fa-truck"></i> <%= g.ten_dv %></span><% } %>
+          <% if (g.ten_shipper) { %><span><i class="fas fa-user"></i> <%= g.ten_shipper %></span><% } %>
+          <%
+            /* Bep xong chua la thong tin quan trong nhat khi phan don: xe cho
+               truoc cua bep 20 phut la mot chuyen bi lang phi. */
+          %>
+          <% if (!g.da_xong) { %>
+            <% if (g.bep_da_xong) { %>
+              <span class="text-success"><i class="fas fa-check"></i> bếp xong</span>
+            <% } else { %>
+              <span class="text-warning"><i class="fas fa-fire-burner"></i> bếp đang nấu</span>
+            <% } %>
+          <% } %>
+          <% if (g.ly_do) { %><span class="text-danger"><i class="fas fa-circle-info"></i> <%= g.ly_do %></span><% } %>
+        </div>
+
+        <div class="gh-act">
+          <a href="/staff/giao-hang/<%= g.id_giao %>" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-list"></i> Chi tiết
+          </a>
+
+          <% if (choPhep && phanCongDuoc) { %>
+            <% if (['cho_phan','that_bai','da_phan','dang_lay'].indexOf(g.trang_thai) >= 0) { %>
+              <form action="/staff/giao-hang/<%= g.id_giao %>/phan" method="POST" class="form-inline">
+                <select name="id_shipper" class="form-control form-control-sm mr-1" required>
+                  <option value="">— chọn shipper —</option>
+                  <% spRanh.forEach(function (s) { %>
+                    <option value="<%= s.id_shipper %>" <%= s.con_nhan_don ? '' : 'disabled' %>>
+                      <%= s.ten %> (<%= s.don_dang_cam %>/<%= s.so_don_toi_da %>)<%= s.con_nhan_don ? '' : ' — đầy' %>
+                    </option>
+                  <% }) %>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">
+                  <i class="fas fa-motorcycle"></i> <%= g.id_shipper ? 'Đổi' : 'Phân' %>
+                </button>
+              </form>
+            <% } %>
+
+            <% if (g.id_shipper && ['da_phan','dang_lay'].indexOf(g.trang_thai) >= 0) { %>
+              <form action="/staff/giao-hang/<%= g.id_giao %>/go" method="POST"
+                    onsubmit="return confirm('Gỡ đơn <%= g.ma_giao %> khỏi <%= g.ten_shipper %>?')">
+                <button class="btn btn-sm btn-outline-warning" type="submit"><i class="fas fa-user-minus"></i> Gỡ</button>
+              </form>
+            <% } %>
+
+            <% if (g.chuyen_duoc.indexOf('huy') >= 0) { %>
+              <form action="/staff/giao-hang/<%= g.id_giao %>/trang-thai" method="POST"
+                    onsubmit="return confirm('Hủy hẳn đơn giao <%= g.ma_giao %>? Không hoàn tác được.')">
+                <input type="hidden" name="trang_thai" value="huy">
+                <input type="hidden" name="ly_do" value="Điều phối hủy">
+                <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-ban"></i></button>
+              </form>
+            <% } %>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-hourglass-half"></i> Chờ phân shipper
+        </h6>
+        <span class="badge badge-secondary"><%= choPhan.length %></span>
+      </div>
+      <div class="card-body">
+        <% if (!choPhan.length) { %>
+          <p class="text-muted mb-0">Không có đơn nào đang chờ. Mọi đơn đều đã có người cầm.</p>
+        <% } %>
+        <% choPhan.forEach(function (g) { veDon(g, true); }) %>
+      </div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-warning">
+          <i class="fas fa-motorcycle"></i> Đang trên đường
+        </h6>
+        <span class="badge badge-warning"><%= dangCam.length %></span>
+      </div>
+      <div class="card-body">
+        <% if (!dangCam.length) { %>
+          <p class="text-muted mb-0">Chưa có chuyến nào đang chạy.</p>
+        <% } %>
+        <% dangCam.forEach(function (g) { veDon(g, true); }) %>
+      </div>
+    </div>
+
+    <% if (xemHet && daXong.length) { %>
+      <div class="card shadow mb-3">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-circle-check"></i> Đã kết thúc</h6>
+          <span class="badge badge-success"><%= daXong.length %></span>
+        </div>
+        <div class="card-body">
+          <% daXong.forEach(function (g) { veDon(g, false); }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ================================================ SHIPPER -->
+  <div>
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-group"></i> Shipper trong ca</h6>
+      </div>
+      <div class="card-body">
+        <% if (!spRanh.length) { %>
+          <p class="text-muted mb-2">
+            Chưa ai bật ca. Shipper tự bật ca trong ứng dụng <code>/shipper</code> trên điện thoại.
+          </p>
+        <% } %>
+        <% spRanh.forEach(function (s) { %>
+          <div class="gh-sp <%= s.con_nhan_don ? 'gh-sp--ranh' : 'gh-sp--day' %>">
+            <div class="gh-sp__ten">
+              <span class="gh-cham" style="background:<%= s.mau_sac %>"></span><%= s.ten %>
+            </div>
+            <div class="gh-sp__meta">
+              <%= s.ten_dv %> ·
+              <%= s.don_dang_cam %>/<%= s.so_don_toi_da %> đơn
+              <% if (s.bien_so) { %> · <%= s.bien_so %><% } %>
+            </div>
+            <div class="gh-sp__meta">
+              <%
+                /* Trang thai tin hieu quyet dinh dieu phoi co tin duoc cham tren
+                   ban do khong. Ba muc, khong phai hai. */
+              %>
+              <% if (s.vi_tri_luc === null || s.vi_tri_luc === undefined) { %>
+                <span class="text-muted"><i class="fas fa-location-slash"></i> chưa bật định vị</span>
+              <% } else if (Number(s.phut_truoc) <= 3) { %>
+                <span class="text-success"><i class="fas fa-location-dot"></i> đang phát tín hiệu</span>
+              <% } else { %>
+                <span class="text-danger"><i class="fas fa-triangle-exclamation"></i> mất tín hiệu <%= s.phut_truoc %>′</span>
+                <% if (s.sdt) { %> · <a href="tel:<%= s.sdt %>"><%= s.sdt %></a><% } %>
+              <% } %>
+              <% if (s.pin !== null && s.pin !== undefined && Number(s.pin) <= 20) { %>
+                · <span class="text-danger"><i class="fas fa-battery-quarter"></i> pin <%= s.pin %>%</span>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-plus"></i> Tạo đơn giao thủ công</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small">
+          Dùng khi khách gọi điện đặt, hoặc khách đang ngồi bàn đổi ý muốn mang về giao tận nhà.
+          Nhập mã đơn có sẵn (cột <em>Mã đơn</em> ở trang Quản lý Đặt bàn).
+        </p>
+        <form action="/staff/giao-hang/tao" method="POST">
+          <div class="form-group mb-2">
+            <label class="small font-weight-bold mb-1">Mã đơn hàng (sesis)</label>
+            <input class="form-control form-control-sm" name="sesis" required placeholder="k3n8fh2p9qa1x">
+          </div>
+          <div class="form-group mb-2">
+            <label class="small font-weight-bold mb-1">Người nhận</label>
+            <input class="form-control form-control-sm" name="ten_nguoi_nhan" placeholder="để trống = lấy tên khách">
+          </div>
+          <div class="form-group mb-2">
+            <label class="small font-weight-bold mb-1">Điện thoại</label>
+            <input class="form-control form-control-sm" name="sdt_nguoi_nhan">
+          </div>
+          <div class="form-group mb-2">
+            <label class="small font-weight-bold mb-1">Địa chỉ giao</label>
+            <textarea class="form-control form-control-sm" name="dia_chi_giao" rows="2" required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="col form-group mb-2">
+              <label class="small font-weight-bold mb-1">Vĩ độ</label>
+              <input class="form-control form-control-sm" name="vi_do" placeholder="10.7756">
+            </div>
+            <div class="col form-group mb-2">
+              <label class="small font-weight-bold mb-1">Kinh độ</label>
+              <input class="form-control form-control-sm" name="kinh_do" placeholder="106.7019">
+            </div>
+          </div>
+          <p class="text-muted" style="font-size:11.5px">
+            Không có tọa độ thì đơn vẫn tạo được nhưng phí giao bằng 0 và không hiện trên bản đồ.
+            Lấy tọa độ nhanh: mở Google Maps, bấm giữ vào điểm giao, chép cặp số hiện ra.
+          </p>
+          <button class="btn btn-sm btn-primary btn-block" type="submit">
+            <i class="fas fa-box"></i> Tạo đơn giao
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

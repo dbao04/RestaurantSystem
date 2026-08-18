@@ -194,6 +194,10 @@ app.use('/', require('./routes/adminKhuyenMai'));
 app.use('/', require('./routes/adminThanhVien'));
 // Xep ca tu dong: khai dinh muc nhan su moi ca roi de may phan nguoi vao ca.
 app.use('/', require('./routes/xepCa'));
+// Giao hang: don vi van chuyen + bang gia (/admin/van-chuyen), dieu phoi va ban
+// do theo doi (/staff/giao-hang), ung dung dien thoai cua shipper (/shipper),
+// va trang khach tu tra cuu don cua minh (/theo-doi).
+app.use('/', require('./routes/vanChuyen'));
 
 // Gan trung tam thoi gian thuc. Phai goi SAU io.engine.use(sessionMiddleware)
 // de socket doc duoc phien dang nhap.
@@ -360,7 +364,33 @@ app.get('/datban', requireLogin, async (req, res) => {
     // Trang dat ban hien tom tat don ben canh form, de khach doi chieu truoc khi
     // xac nhan ma khong phai bam qua lai giua hai trang.
     const subtotal = await orderService.getCartTotal(req.sessionID);
-    res.render('booking', { title: 'Đặt bàn', cartItems, subtotal });
+
+    // Hai thu cho phan "Giao hang tan noi" cua form. Doc o day chu khong de
+    // trinh duyet tu hoi: neu quan ly da tat nhan don giao hang thi o chon do
+    // khong duoc phep hien ra, ke ca trong mot phan giay.
+    const vanChuyen = require('./services/vanChuyenService');
+    const [thamSoGiao, nhaHangToaDo, khachHang] = await Promise.all([
+      vanChuyen.thamSo(),
+      vanChuyen.toaDoNhaHang(),
+      orderService.getUserById(req.session.userId).catch(() => null),
+    ]);
+
+    res.render('booking', {
+      title: 'Đặt bàn',
+      cartItems,
+      subtotal,
+      giaoHang: {
+        // Chi mo hinh thuc giao hang khi CA HAI dieu kien du: quan ly bat tinh
+        // nang, VA nha hang da khai toa do. Thieu toa do thi khong tinh duoc phi
+        // va khong chan duoc don ngoai vung - nhan don la hua mot dieu khong
+        // chac giu duoc.
+        bat: thamSoGiao.bat && !!nhaHangToaDo,
+        ban_kinh_km: thamSoGiao.ban_kinh_km,
+        mien_phi_tu: thamSoGiao.mien_phi_tu,
+        nha_hang: nhaHangToaDo,
+      },
+      khach: khachHang || null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -369,6 +399,27 @@ app.get('/datban', requireLogin, async (req, res) => {
 
 app.post('/datban', requireLogin, async (req, res) => {
   const { timebook, datebook, khach, noidung } = req.body;
+  // 'giao_hang' hay 'tai_cho'. Mac dinh 'tai_cho' de moi lien ket cu, moi trinh
+  // duyet khong chay JavaScript, va moi form da luu trong bo nho dem van dat
+  // ban duoc y nhu truoc.
+  const laGiaoHang = String(req.body.hinh_thuc || '') === 'giao_hang';
+
+  /*
+    Hai cot NOT NULL cua nhanh dat ban, dien o MAY CHU cho don giao hang.
+
+    Form dat ban co hai nhom bat buoc - so khach va dip dat ban - vo nghia voi
+    mot don giao tan nha. Trang web xu ly bang cach vo hieu hoa hai nhom do va
+    bat len hai o an cung ten. Nhung do la viec cua TRINH DUYET, va
+    `hopdong.noidung` / `hopdong.so_user` la NOT NULL o CSDL.
+
+    Tin vao trinh duyet o day nghia la: JavaScript hong, nguoi dung tat JS, hay
+    bat ky ai POST thang vao /datban - deu lam don vo voi loi 500 kho hieu
+    ("Column 'noidung' cannot be null") thay vi tao duoc don. May chu phai tu
+    dien duoc gia tri cua chinh no, khong doi client dua sang.
+  */
+  const soKhach = laGiaoHang ? (khach || '1') : khach;
+  const dipDat  = laGiaoHang ? (noidung || 'Giao hàng tận nơi') : noidung;
+
   try {
     // Ràng buộc: Ngày đặt không được ở quá khứ.
     //
@@ -398,8 +449,43 @@ app.post('/datban', requireLogin, async (req, res) => {
     if (cartItems.length === 0) {
       return res.redirect('/cart');
     }
+
+    /*
+      Kiem tra dia chi giao TRUOC khi tao don.
+
+      Tao don roi moi phat hien ngoai vung thi phai xoa mot don da ghi - va neu
+      buoc xoa hong thi khach co mot don treo khong ai giao. Hoi may chu ve gia
+      va vung phuc vu la mot truy van re, lam truoc thi hoac tao ca don lan don
+      giao, hoac khong tao gi ca.
+
+      Phi giao va toa do KHONG lay tu form khach gui len de lam gia cuoi: bao gia
+      duoi day va `taoDonGiao` cung goi lai `tinhPhi()` tu toa do. Xem ghi chu
+      dau tep services/vanChuyenService.js.
+    */
+    let baoGia = null;
+    if (laGiaoHang) {
+      const vanChuyen = require('./services/vanChuyenService');
+      const ts = await vanChuyen.thamSo();
+      if (!ts.bat) {
+        return res.send('<script>alert("Nhà hàng đang tạm ngưng nhận đơn giao hàng."); history.back();</script>');
+      }
+      if (!String(req.body.dia_chi_giao || '').trim()) {
+        return res.send('<script>alert("Hãy nhập địa chỉ giao hàng."); history.back();</script>');
+      }
+      // Khong boc qua Number(): o toa do de trong se thanh 0 va bao gia se noi
+      // dia chi cach nha hang 1.197 km. `tinhPhi` tu loc gia tri khong hop le.
+      baoGia = await vanChuyen.tinhPhi(
+        req.body.vi_do, req.body.kinh_do, await orderService.getCartTotal(req.sessionID)
+      );
+      if (!baoGia.giao_duoc) {
+        return res.send(
+          `<script>alert(${JSON.stringify(baoGia.ly_do || 'Không giao được tới địa chỉ này.')}); history.back();</script>`
+        );
+      }
+    }
+
     // createOrderFromCart giờ trả về uniqueSesis để redirect đúng đơn vừa đặt
-    const uniqueSesis = await orderService.createOrderFromCart(req.sessionID, req.session.userId, timebook, datebook, khach, noidung);
+    const uniqueSesis = await orderService.createOrderFromCart(req.sessionID, req.session.userId, timebook, datebook, soKhach, dipDat);
 
     // Notify Kitchen Real-time
     // [BẢO VỆ]: Server kích hoạt đẩy sự kiện 'new-order-to-kitchen' về phòng của Bếp khi có đơn đặt bàn mới
@@ -407,6 +493,38 @@ app.post('/datban', requireLogin, async (req, res) => {
       message: `Khách hàng [${req.session.username}] vừa đặt 1 đơn mới!`,
       sesis: uniqueSesis
     });
+
+    if (laGiaoHang) {
+      const vanChuyen = require('./services/vanChuyenService');
+      const ts = await vanChuyen.thamSo();
+
+      // Quan ly co the chon de dieu phoi goi xac nhan voi khach roi moi tao don
+      // giao bang tay. Khi do van danh dau don la don giao hang de no khong lan
+      // vao danh sach dat ban.
+      if (!ts.tu_dong_tao_don) {
+        await db.query("UPDATE hopdong SET loai_don = 'giao_hang' WHERE sesis = ?", [uniqueSesis]);
+        return res.redirect(`/contract?sesis=${uniqueSesis}`);
+      }
+
+      const donGiao = await vanChuyen.taoDonGiao(uniqueSesis, {
+        ten_nguoi_nhan: req.body.ten_nguoi_nhan || req.session.username,
+        sdt_nguoi_nhan: req.body.sdt_nguoi_nhan || req.session.usersdt,
+        dia_chi_giao: req.body.dia_chi_giao,
+        vi_do: req.body.vi_do,
+        kinh_do: req.body.kinh_do,
+        ghi_chu: req.body.ghi_chu_giao,
+        batBuocTrongVung: true,
+        ten_nguoi: req.session.username,
+      });
+
+      // Bao dieu phoi co don moi ngay lap tuc. Don giao hang cho lau hon mot
+      // don dat ban: mon nguoi di thi khong cuu duoc bang mot loi xin loi.
+      realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+
+      // Ve thang trang theo doi chu khong ve trang hop dong: dieu khach vua dat
+      // giao hang muon biet la "bao gio toi", va do la trang tra loi cau do.
+      return res.redirect(`/theo-doi/${donGiao.ma_giao}`);
+    }
 
     res.redirect(`/contract?sesis=${uniqueSesis}`);
   } catch (err) {
@@ -2989,6 +3107,37 @@ function inBangDiaChi(dsLan, coHttps) {
 }
 
 (async () => {
+  /*
+    Cong 3000 dang bi giu -> BAO RO, dung de nem loi tho.
+
+    Truoc day `server.listen` khong co ai nghe 'error'. Khi mot tien trinh Node
+    cu con giu cong 3000 (rat de xay ra: dong nham cua so, hoac start_all.bat
+    mo them mot cua so nua), Node nem EADDRINUSE khong ai bat -> tien trinh MOI
+    chet ngay, con tien trinh CU van chay va van phuc vu.
+
+    Hau qua rat kho doan ra: nguoi dung "da khoi dong lai" nhung trinh duyet
+    van nhan ma nguon cu, nen moi trang moi them vao deu tra ve 404. Ho se di
+    tim loi trong ma nguon, o dung cho khong co loi nao ca.
+  */
+  server.on('error', (e) => {
+    if (e.code !== 'EADDRINUSE') throw e;
+    console.error('');
+    console.error('╔══════════════════════════════════════════════════════════╗');
+    console.error(`║  KHÔNG MỞ ĐƯỢC CỔNG ${String(PORT).padEnd(5)}                                ║`);
+    console.error('╚══════════════════════════════════════════════════════════╝');
+    console.error('  Một tiến trình Node khác đang giữ cổng này — gần như chắc chắn');
+    console.error('  là bản máy chủ CŨ bạn quên tắt.');
+    console.error('');
+    console.error('  Máy chủ cũ đó vẫn đang chạy và vẫn phục vụ MÃ NGUỒN CŨ, nên');
+    console.error('  các trang mới thêm vào sẽ báo 404 dù bạn tưởng đã khởi động lại.');
+    console.error('');
+    console.error('  Cách dứt điểm trên Windows:');
+    console.error('      taskkill /F /IM node.exe');
+    console.error('      npm start');
+    console.error('');
+    process.exit(1);
+  });
+
   server.listen(PORT, () => {});
 
   if (!BAT_HTTPS) {

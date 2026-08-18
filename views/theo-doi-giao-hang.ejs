@@ -1,0 +1,281 @@
+<%
+  /*
+    TRANG THEO DÕI CHO KHÁCH
+
+    Trang duy nhất trong hệ thống mà người xem có thể không đăng nhập gì cả —
+    họ vào bằng mã in trên hóa đơn. Vì thế route đã lọc dữ liệu trước khi đưa
+    sang đây: không có số điện thoại shipper, không có ghi chú nội bộ, không có
+    id nhân viên nào. Xem ghi chú route GET /theo-doi/:ma trong routes/vanChuyen.js.
+
+    Bản đồ chỉ hiện khi đơn ĐANG chạy. Đơn đã giao xong mà vẫn vẽ vị trí shipper
+    là để lộ họ đang ở đâu sau khi công việc đã kết thúc — không liên quan gì tới
+    khách nữa.
+  */
+  var BUOC = ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao', 'da_giao'];
+  var TEN_BUOC = {
+    cho_phan: 'Nhà hàng nhận đơn', da_phan: 'Đã có shipper',
+    dang_lay: 'Đang lấy hàng', dang_giao: 'Đang trên đường', da_giao: 'Đã giao',
+  };
+  var viTriBuoc = BUOC.indexOf(don.trang_thai);
+  var hong = don.trang_thai === 'that_bai' || don.trang_thai === 'huy';
+%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Đơn <%= don.ma_giao %></title>
+  <meta name="theme-color" content="#2c1810">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <% if (don.dang_chay) { %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+  <% } %>
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; min-height:100dvh;
+           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+           background:linear-gradient(170deg,#2c1810,#4e342e 65%,#3a241a); color:#fff; }
+    .boc { max-width:520px; margin:0 auto;
+           padding:calc(18px + env(safe-area-inset-top)) 15px
+                   calc(28px + env(safe-area-inset-bottom)); }
+
+    .dau { text-align:center; margin-bottom:20px; }
+    .dau .ma { font-size:12.5px; letter-spacing:2px; opacity:.6; text-transform:uppercase; }
+    .dau h1 { font-size:23px; margin:6px 0 4px; }
+    .dau p { font-size:14px; opacity:.8; margin:0; }
+
+    .vong { width:76px; height:76px; border-radius:50%; display:flex; align-items:center;
+            justify-content:center; font-size:31px; margin:0 auto 14px; color:#fff; }
+
+    /* ------------------------------------------------------------ tiến trình */
+    .buoc { display:flex; margin:0 0 22px; }
+    .buoc__o { flex:1; text-align:center; position:relative; font-size:10.5px; line-height:1.35; }
+    .buoc__o::before { content:''; position:absolute; top:11px; left:-50%; width:100%; height:2px;
+                       background:rgba(255,255,255,.16); }
+    .buoc__o:first-child::before { display:none; }
+    .buoc__o.qua::before { background:#c8a951; }
+    .buoc__cham { width:24px; height:24px; border-radius:50%; margin:0 auto 5px; position:relative;
+                  background:rgba(255,255,255,.14); display:flex; align-items:center;
+                  justify-content:center; font-size:10px; }
+    .buoc__o.qua .buoc__cham { background:#c8a951; color:#2c1810; }
+    .buoc__o.qua { opacity:1; }
+    .buoc__o { opacity:.45; }
+    /* Bước hiện tại nhấp nháy nhẹ — thứ khách nhìn vào đầu tiên khi mở trang. */
+    .buoc__o.nay .buoc__cham { background:#1cc88a; color:#08351f; animation:tho 1.6s infinite; }
+    .buoc__o.nay { opacity:1; font-weight:800; }
+    @keyframes tho { 0%,100% { box-shadow:0 0 0 0 rgba(28,200,138,.55); }
+                     70% { box-shadow:0 0 0 9px rgba(28,200,138,0); } }
+
+    #ban-do { height:270px; border-radius:14px; margin-bottom:16px; z-index:1; }
+
+    .the { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.11);
+           border-radius:14px; padding:15px; margin-bottom:13px; }
+    .the h2 { font-size:13px; text-transform:uppercase; letter-spacing:1px; opacity:.6;
+              margin:0 0 10px; font-weight:800; }
+    .hang { display:flex; justify-content:space-between; gap:12px; font-size:14px;
+            padding:5px 0; border-bottom:1px dashed rgba(255,255,255,.1); }
+    .hang:last-child { border:0; }
+    .hang--tong { font-size:17px; font-weight:800; color:#c8a951; padding-top:10px; }
+
+    .moc { display:flex; gap:11px; padding:7px 0; font-size:13.5px; }
+    .moc__cham { width:9px; height:9px; border-radius:50%; margin-top:6px; flex:none; }
+    .moc__gio { opacity:.55; font-size:11.5px; }
+
+    .canh { background:rgba(231,74,59,.18); border:1px solid rgba(231,74,59,.4); color:#ffd5d0;
+            border-radius:12px; padding:14px; font-size:14px; line-height:1.6; margin-bottom:14px; }
+    .chan { text-align:center; font-size:12.5px; opacity:.55; margin-top:22px; line-height:1.7; }
+    .chan a { color:#c8a951; }
+    .cham-song { display:inline-block; width:7px; height:7px; border-radius:50%; background:#1cc88a;
+                 margin-right:5px; animation:tho 1.6s infinite; }
+  </style>
+</head>
+<body>
+<div class="boc">
+
+  <div class="dau">
+    <div class="vong" style="background:<%= don.mau %>"><i class="fas <%= don.icon %>"></i></div>
+    <div class="ma"><%= don.ma_giao %></div>
+    <h1 id="tt-nhan"><%= don.nhan %></h1>
+    <p id="tt-phu">
+      <% if (don.trang_thai === 'dang_giao') { %>
+        <span class="cham-song"></span>Shipper đang trên đường tới bạn
+      <% } else if (don.trang_thai === 'da_giao') { %>
+        Cảm ơn bạn đã đặt món của nhà hàng!
+      <% } else if (don.du_kien_luc && !don.da_xong) { %>
+        Dự kiến giao trước
+        <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
+      <% } %>
+    </p>
+  </div>
+
+  <% if (hong) { %>
+    <div class="canh">
+      <strong>Đơn này không giao được.</strong><br>
+      Nhà hàng sẽ liên hệ lại với bạn. Nếu cần gấp, hãy gọi trực tiếp cho nhà hàng.
+    </div>
+  <% } else { %>
+    <div class="buoc">
+      <% BUOC.forEach(function (b, i) { %>
+        <div class="buoc__o <%= i < viTriBuoc ? 'qua' : (i === viTriBuoc ? 'qua nay' : '') %>">
+          <div class="buoc__cham"><i class="fas <%= i < viTriBuoc ? 'fa-check' : 'fa-circle' %>"></i></div>
+          <%= TEN_BUOC[b] %>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (don.dang_chay && don.vi_do !== null) { %>
+    <div id="ban-do"></div>
+  <% } %>
+
+  <div class="the">
+    <h2>Giao tới</h2>
+    <p style="margin:0 0 4px; font-size:16px; font-weight:700"><%= don.dia_chi_giao %></p>
+    <p style="margin:0; font-size:13.5px; opacity:.75">
+      <%= don.ten_nguoi_nhan %>
+      <% if (don.khoang_cach_km !== null) { %> · cách nhà hàng <%= don.khoang_cach_km %> km<% } %>
+    </p>
+    <% if (don.ten_shipper && !don.da_xong) { %>
+      <p style="margin:10px 0 0; font-size:13.5px">
+        <i class="fas fa-motorcycle" style="color:#c8a951"></i>
+        <strong><%= don.ten_shipper %></strong> đang cầm đơn của bạn
+        <% if (don.ten_dv) { %><span style="opacity:.65"> · <%= don.ten_dv %></span><% } %>
+      </p>
+    <% } %>
+  </div>
+
+  <div class="the">
+    <h2>Đơn hàng</h2>
+    <% (mon || []).forEach(function (m) { %>
+      <div class="hang">
+        <span><%= (m.name_mon || '').trim() %> <span style="opacity:.6">×<%= m.soluong %></span></span>
+        <span><%= formatMoney(m.thanhtien) %>đ</span>
+      </div>
+    <% }) %>
+    <div class="hang">
+      <span style="opacity:.7">Phí giao hàng</span>
+      <span><%= don.phi_giao > 0 ? formatMoney(don.phi_giao) + 'đ' : 'Miễn phí' %></span>
+    </div>
+    <div class="hang hang--tong">
+      <span>Tổng cộng</span>
+      <span><%= formatMoney(don.tong_thu) %>đ</span>
+    </div>
+    <% if (don.tien_thu_ho > 0) { %>
+      <p style="margin:9px 0 0; font-size:12.5px; opacity:.7">
+        Bạn trả tiền mặt cho shipper khi nhận hàng.
+      </p>
+    <% } %>
+  </div>
+
+  <div class="the">
+    <h2>Diễn biến</h2>
+    <% (lichSu || []).forEach(function (n) { %>
+      <div class="moc">
+        <span class="moc__cham" style="background:<%= n.mau %>"></span>
+        <div>
+          <div><%= n.nhan %></div>
+          <div class="moc__gio"><%= new Date(n.luc).toLocaleString('vi-VN') %></div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="chan">
+    Trang này tự cập nhật, bạn không cần tải lại.<br>
+    <a href="/">Nhà Hàng Bảo Đoàn</a> · <a href="/theo-doi">Tra cứu đơn khác</a>
+  </div>
+</div>
+
+<% if (don.dang_chay) { %>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var MA = '<%= don.ma_giao %>';
+  var DIEM = <%- JSON.stringify(don.vi_do !== null ? [don.vi_do, don.kinh_do] : null) %>;
+  var NHA_HANG = <%- JSON.stringify(nhaHang ? [nhaHang.vi_do, nhaHang.kinh_do] : null) %>;
+  var SHIPPER = <%- JSON.stringify(don.shipper_vi_do !== null && don.shipper_vi_do !== undefined
+                    ? [don.shipper_vi_do, don.shipper_kinh_do] : null) %>;
+
+  var chamShipper = null;
+  var ban_do = null;
+
+  if (DIEM && document.getElementById('ban-do') && typeof L !== 'undefined') {
+    ban_do = L.map('ban-do', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(ban_do);
+
+    function cham(mau, hinh) {
+      return L.divIcon({
+        className: '',
+        html: '<div style="display:flex;align-items:center;justify-content:center;width:30px;' +
+              'height:30px;border-radius:50%;background:' + mau + ';color:#fff;font-size:14px;' +
+              'border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)">' +
+              '<i class="fas ' + hinh + '"></i></div>',
+        iconSize: [30, 30], iconAnchor: [15, 15],
+      });
+    }
+
+    var diem = [DIEM];
+    L.marker(DIEM, { icon: cham('#e74a3b', 'fa-house') }).addTo(ban_do);
+    if (NHA_HANG) { L.marker(NHA_HANG, { icon: cham('#2c1810', 'fa-utensils') }).addTo(ban_do); diem.push(NHA_HANG); }
+    if (SHIPPER) {
+      chamShipper = L.marker(SHIPPER, { icon: cham('#1cc88a', 'fa-motorcycle'), zIndexOffset: 400 }).addTo(ban_do);
+      diem.push(SHIPPER);
+    }
+    ban_do.fitBounds(L.latLngBounds(diem), { padding: [34, 34] });
+  }
+
+  if (typeof io === 'undefined') return;
+  var socket = io({ transports: ['websocket', 'polling'] });
+
+  /*
+    Xin vào phòng theo dõi bằng chính mã đơn.
+
+    Máy chủ kiểm tra mã và chỉ cho vào nếu đơn còn đang chạy; sau đó nó đẩy toạ
+    độ shipper xuống mỗi khi có nhịp mới. Phải xin lại sau mỗi lần kết nối lại
+    ('connect' bắn cả lần đầu lẫn các lần nối lại) — mất sóng thang máy xong mà
+    không xin lại thì chấm sẽ đứng im vĩnh viễn.
+  */
+  socket.on('connect', function () {
+    socket.emit('giao-hang:theo-doi', MA, function (kq) {
+      if (!kq || !kq.ok) console.warn('[theo dõi]', kq && kq.loi);
+    });
+  });
+
+  socket.on('giao-hang:vi-tri', function (d) {
+    if (!ban_do) return;
+    var toa = [d.vi_do, d.kinh_do];
+    if (chamShipper) {
+      chamShipper.setLatLng(toa);
+    } else {
+      chamShipper = L.marker(toa, {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="display:flex;align-items:center;justify-content:center;width:30px;' +
+                'height:30px;border-radius:50%;background:#1cc88a;color:#fff;font-size:14px;' +
+                'border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)">' +
+                '<i class="fas fa-motorcycle"></i></div>',
+          iconSize: [30, 30], iconAnchor: [15, 15],
+        }),
+        zIndexOffset: 400,
+      }).addTo(ban_do);
+    }
+  });
+
+  /*
+    Đổi trạng thái thì tải lại cả trang thay vì vá từng mảnh.
+
+    Trang này có tiến trình, nhật ký, bản đồ và cả phần chân — vá tay từng chỗ
+    là bốn cơ hội để chúng nói bốn điều khác nhau. Một lần tải lại vài chục
+    kilobyte, xảy ra đúng bốn lần trong cả vòng đời một đơn hàng.
+  */
+  socket.on('giao-hang:doi-trang-thai', function () {
+    setTimeout(function () { location.reload(); }, 900);
+  });
+})();
+</script>
+<% } %>
+</body>
+</html>

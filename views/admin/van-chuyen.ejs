@@ -1,0 +1,383 @@
+<%- include('partials/header') %>
+<%- include('partials/sidebar') %>
+
+<%
+  /* Don vi dang duoc sua - form ben duoi doi hai vai: them moi khi khong co
+     `suaId`, sua mot dong khi co. Mot form thay vi hai vi hai bang gia phai
+     giong het nhau ve cach nhap; hai form la hai cho phai sua khi doi truong. */
+  var dangSua = null;
+  (dsDv || []).forEach(function (d) { if (Number(d.id_dv) === Number(suaId)) dangSua = d; });
+  var f = dangSua || {
+    ma_dv: '', ten_dv: '', loai: 'noi_bo', sdt: '', email: '', dia_chi: '',
+    phi_co_ban: 15000, so_km_dau: 2, phi_moi_km: 5000, ban_kinh_km: 5,
+    thoi_gian_cam_ket_phut: 45, mau_sac: '#0d6efd', ghi_chu: '', thu_tu: 0, trang_thai: 1,
+  };
+%>
+
+<style>
+  .vc-gia { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; font-size:.82rem; }
+  .vc-gia b { font-size:.95rem; }
+  .vc-mau { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:6px; }
+  .vc-vd { background:#faf7f4; border:1px solid #eee3d6; border-radius:10px; padding:10px 12px;
+           font-size:.82rem; line-height:1.7; color:#6b6b6b; }
+  .vc-vd b { color:#2c1810; }
+</style>
+
+<!-- ================================================== SO LIEU HOM NAY -->
+<div class="qt-stats">
+  <div class="qt-stat qt-stat--blue">
+    <div class="qt-stat__icon"><i class="fas fa-box"></i></div>
+    <div><div class="qt-stat__value"><%= thongKe.tong %></div>
+    <div class="qt-stat__label">Đơn giao hôm nay</div></div>
+  </div>
+  <div class="qt-stat qt-stat--gold">
+    <div class="qt-stat__icon"><i class="fas fa-motorcycle"></i></div>
+    <div><div class="qt-stat__value"><%= thongKe.dang_chay %></div>
+    <div class="qt-stat__label">Đang trên đường</div></div>
+  </div>
+  <div class="qt-stat qt-stat--green">
+    <div class="qt-stat__icon"><i class="fas fa-circle-check"></i></div>
+    <div><div class="qt-stat__value"><%= thongKe.da_giao %></div>
+    <div class="qt-stat__label">Đã giao xong</div>
+    <% if (thongKe.phut_tb !== null) { %>
+      <div class="qt-stat__note">Trung bình <%= thongKe.phut_tb %> phút/đơn</div>
+    <% } %></div>
+  </div>
+  <div class="qt-stat qt-stat--plum">
+    <div class="qt-stat__icon"><i class="fas fa-coins"></i></div>
+    <div><div class="qt-stat__value"><%= formatMoney(thongKe.tien_phi) %>đ</div>
+    <div class="qt-stat__label">Phí giao thu được</div></div>
+  </div>
+</div>
+
+<% if (msg) { %>
+  <div class="qt-alert qt-alert--<%= msgType === 'danger' ? 'danger' : (msgType === 'info' ? 'info' : 'success') %>">
+    <%= msg %>
+  </div>
+<% } %>
+
+<% if (!nhaHang) { %>
+  <div class="qt-alert qt-alert--danger">
+    <strong>Chưa khai tọa độ nhà hàng.</strong> Không có tọa độ thì không tính được khoảng cách,
+    nên mọi đơn sẽ có phí giao bằng 0 và không chặn được đơn ngoài vùng.
+    Khai ở <a href="/to-chuc/cham-cong" class="qt-link">Quản lý chấm công → Cấu hình vị trí</a>
+    — hai phân hệ dùng chung một tọa độ.
+  </div>
+<% } %>
+
+<!-- ================================================== DANH SACH DON VI -->
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2>Đơn vị vận chuyển</h2>
+      <p>Đội giao hàng của nhà hàng và các đối tác thuê ngoài, mỗi đơn vị một bảng giá riêng</p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/admin/van-chuyen/shipper">
+        <i class="fas fa-user-group"></i> Quản lý shipper
+      </a>
+      <a class="qt-btn qt-btn--primary" href="/staff/giao-hang">
+        <i class="fas fa-route"></i> Bảng điều phối
+      </a>
+    </div>
+  </div>
+
+  <div class="qt-card__body qt-card__body--flush">
+    <div class="qt-tablewrap">
+      <table class="qt-table">
+        <thead>
+          <tr>
+            <th>Đơn vị</th>
+            <th>Loại</th>
+            <th class="qt-right">Bảng giá</th>
+            <th class="qt-center">Bán kính</th>
+            <th class="qt-center">Cam kết</th>
+            <th class="qt-center">Shipper</th>
+            <th class="qt-center">Đang chạy</th>
+            <th class="qt-center">Trạng thái</th>
+            <th class="qt-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!dsDv.length) { %>
+            <tr><td colspan="9" class="qt-empty">Chưa có đơn vị vận chuyển nào.</td></tr>
+          <% } %>
+          <% dsDv.forEach(function (d) { %>
+            <tr>
+              <td>
+                <span class="qt-strong"><span class="vc-mau" style="background:<%= d.mau_sac %>"></span><%= d.ten_dv %></span>
+                <span class="qt-sub"><%= d.ma_dv %><%= d.sdt ? ' · ' + d.sdt : '' %></span>
+              </td>
+              <td>
+                <% if (d.loai === 'noi_bo') { %>
+                  <span class="qt-pill qt-pill--ok">Đội nhà</span>
+                <% } else { %>
+                  <span class="qt-pill qt-pill--info">Đối tác</span>
+                <% } %>
+              </td>
+              <td class="qt-right qt-num">
+                <div class="vc-gia" style="justify-content:flex-end">
+                  <b><%= formatMoney(d.phi_co_ban) %>đ</b>
+                  <span>cho <%= Number(d.so_km_dau) %> km đầu</span>
+                </div>
+                <span class="qt-sub">+ <%= formatMoney(d.phi_moi_km) %>đ mỗi km sau</span>
+              </td>
+              <td class="qt-center qt-num"><%= Number(d.ban_kinh_km) %> km</td>
+              <td class="qt-center qt-num"><%= d.thoi_gian_cam_ket_phut %> phút</td>
+              <td class="qt-center qt-num"><%= d.so_shipper %></td>
+              <td class="qt-center qt-num">
+                <% if (Number(d.don_dang_chay) > 0) { %>
+                  <span class="qt-pill qt-pill--warn"><%= d.don_dang_chay %> đơn</span>
+                <% } else { %>—<% } %>
+              </td>
+              <td class="qt-center">
+                <% if (Number(d.trang_thai) === 1) { %>
+                  <span class="qt-pill qt-pill--ok">Hoạt động</span>
+                <% } else { %>
+                  <span class="qt-pill qt-pill--muted">Ngừng</span>
+                <% } %>
+              </td>
+              <td class="qt-center">
+                <a class="qt-btn qt-btn--sm qt-btn--ghost" href="/admin/van-chuyen?sua=<%= d.id_dv %>#form-dv">
+                  <i class="fas fa-pen"></i>
+                </a>
+                <%
+                  /* Chi hien nut xoa khi don vi CHUA tung dung. Hien roi bao loi
+                     khi bam la bat nguoi dung thu moi biet - trong khi may da
+                     biet truoc cau tra loi. */
+                %>
+                <% if (Number(d.don_dang_chay) === 0 && Number(d.so_shipper) === 0) { %>
+                  <form action="/admin/van-chuyen/xoa/<%= d.id_dv %>" method="POST" style="display:inline"
+                        onsubmit="return confirm('Xóa đơn vị <%= d.ten_dv %>?')">
+                    <button class="qt-btn qt-btn--sm qt-btn--danger" type="submit"><i class="fas fa-trash"></i></button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================== FORM THEM / SUA -->
+<div class="qt-card" id="form-dv">
+  <div class="qt-card__head">
+    <div>
+      <h2><%= dangSua ? 'Sửa đơn vị: ' + dangSua.ten_dv : 'Thêm đơn vị vận chuyển' %></h2>
+      <p>Bảng giá ở đây quyết định phí giao khách nhìn thấy khi đặt hàng</p>
+    </div>
+    <% if (dangSua) { %>
+      <div class="qt-card__act">
+        <a class="qt-btn qt-btn--ghost" href="/admin/van-chuyen"><i class="fas fa-xmark"></i> Hủy sửa</a>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="qt-card__body">
+    <form class="qt-form qt-form--wide" method="POST"
+          action="<%= dangSua ? '/admin/van-chuyen/sua/' + dangSua.id_dv : '/admin/van-chuyen/them' %>">
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Mã đơn vị <span class="qt-req">*</span></label>
+          <input class="qt-input" name="ma_dv" required maxlength="20" value="<%= f.ma_dv %>"
+                 placeholder="NOIBO" style="text-transform:uppercase">
+          <span class="qt-field__hint">Chữ hoa, số và dấu gạch dưới. Không đổi được sau khi có đơn.</span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Tên đơn vị <span class="qt-req">*</span></label>
+          <input class="qt-input" name="ten_dv" required maxlength="120" value="<%= f.ten_dv %>"
+                 placeholder="Đội giao hàng nhà hàng">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Loại</label>
+          <select class="qt-select" name="loai">
+            <option value="noi_bo"  <%= f.loai === 'noi_bo'  ? 'selected' : '' %>>Đội nhà — theo dõi được GPS</option>
+            <option value="doi_tac" <%= f.loai === 'doi_tac' ? 'selected' : '' %>>Đối tác thuê ngoài</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Phí cơ bản (đ) <span class="qt-req">*</span></label>
+          <input class="qt-input" type="number" name="phi_co_ban" min="0" step="1000" required
+                 value="<%= Number(f.phi_co_ban) %>" id="o-phi-co-ban">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Số km đầu đã gồm <span class="qt-req">*</span></label>
+          <input class="qt-input" type="number" name="so_km_dau" min="0" max="50" step="0.5" required
+                 value="<%= Number(f.so_km_dau) %>" id="o-km-dau">
+          <span class="qt-field__hint">Trong khoảng này khách chỉ trả phí cơ bản.</span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Phí mỗi km sau (đ) <span class="qt-req">*</span></label>
+          <input class="qt-input" type="number" name="phi_moi_km" min="0" step="500" required
+                 value="<%= Number(f.phi_moi_km) %>" id="o-phi-km">
+        </div>
+      </div>
+
+      <div class="qt-field">
+        <div class="vc-vd" id="vc-vd">Ví dụ giá sẽ hiện ở đây.</div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Bán kính phục vụ (km) <span class="qt-req">*</span></label>
+          <input class="qt-input" type="number" name="ban_kinh_km" min="0.1" max="100" step="0.5" required
+                 value="<%= Number(f.ban_kinh_km) %>">
+          <span class="qt-field__hint">Ngoài bán kính này đơn vị không nhận đơn.</span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Cam kết giao trong (phút) <span class="qt-req">*</span></label>
+          <input class="qt-input" type="number" name="thoi_gian_cam_ket_phut" min="1" max="600" required
+                 value="<%= f.thoi_gian_cam_ket_phut %>">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Màu trên bản đồ</label>
+          <input class="qt-input" type="color" name="mau_sac" value="<%= f.mau_sac %>" style="height:42px;padding:4px">
+        </div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Điện thoại</label>
+          <input class="qt-input" name="sdt" maxlength="20" value="<%= f.sdt || '' %>">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Email</label>
+          <input class="qt-input" type="email" name="email" maxlength="150" value="<%= f.email || '' %>">
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Thứ tự hiển thị</label>
+          <input class="qt-input" type="number" name="thu_tu" value="<%= f.thu_tu %>">
+          <span class="qt-field__hint">Số nhỏ đứng trước. Khi hai đơn vị cùng giá, đơn vị đứng trước được chọn.</span>
+        </div>
+      </div>
+
+      <div class="qt-field">
+        <label class="qt-label">Địa chỉ</label>
+        <input class="qt-input" name="dia_chi" maxlength="255" value="<%= f.dia_chi || '' %>">
+      </div>
+
+      <div class="qt-field">
+        <label class="qt-label">Ghi chú</label>
+        <textarea class="qt-textarea" name="ghi_chu" rows="2"><%= f.ghi_chu || '' %></textarea>
+      </div>
+
+      <div class="qt-field">
+        <label class="qt-label">
+          <input type="checkbox" name="trang_thai" value="1" <%= Number(f.trang_thai) === 1 ? 'checked' : '' %>>
+          Đang hoạt động — được chọn khi tính phí và phân đơn
+        </label>
+      </div>
+
+      <div class="qt-form__actions">
+        <button class="qt-btn qt-btn--primary" type="submit">
+          <i class="fas fa-floppy-disk"></i> <%= dangSua ? 'Lưu thay đổi' : 'Thêm đơn vị' %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================================================== THAM SO VAN HANH -->
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2>Tham số vận hành</h2>
+      <p>Áp cho toàn hệ thống, không phụ thuộc đơn vị nào</p>
+    </div>
+  </div>
+  <div class="qt-card__body">
+    <form class="qt-form qt-form--wide" method="POST" action="/admin/van-chuyen/tham-so">
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Bán kính giao tối đa (km)</label>
+          <input class="qt-input" type="number" name="ban_kinh_km" min="0.5" max="100" step="0.5"
+                 value="<%= thamSo.ban_kinh_km %>">
+          <span class="qt-field__hint">Dùng để báo cho khách khi không có đơn vị nào với tới.</span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Miễn phí giao cho đơn từ (đ)</label>
+          <input class="qt-input" type="number" name="mien_phi_tu" min="0" step="10000"
+                 value="<%= thamSo.mien_phi_tu %>">
+          <span class="qt-field__hint">Để 0 nếu không miễn phí cho đơn nào.</span>
+        </div>
+      </div>
+
+      <div class="qt-form__row">
+        <div class="qt-field">
+          <label class="qt-label">Nhịp gửi vị trí GPS (giây)</label>
+          <input class="qt-input" type="number" name="nhip_gps_giay" min="5" max="300"
+                 value="<%= thamSo.nhip_gps_giay %>">
+          <span class="qt-field__hint">
+            Nhỏ thì bản đồ mượt nhưng hao pin điện thoại shipper. 15 giây là mức cân bằng.
+          </span>
+        </div>
+        <div class="qt-field">
+          <label class="qt-label">Giữ vết đường đi (ngày)</label>
+          <input class="qt-input" type="number" name="giu_vet_ngay" min="1" max="365"
+                 value="<%= thamSo.giu_vet_ngay %>">
+          <span class="qt-field__hint">
+            Đủ dài để đối chiếu khi khách khiếu nại. Quá dài thì bảng vết phình rất nhanh.
+          </span>
+        </div>
+      </div>
+
+      <div class="qt-field">
+        <label class="qt-label">
+          <input type="checkbox" name="bat" value="1" <%= thamSo.bat ? 'checked' : '' %>>
+          Nhận đơn giao hàng trên website
+        </label>
+        <label class="qt-label">
+          <input type="checkbox" name="tu_dong_tao_don" value="1" <%= thamSo.tu_dong_tao_don ? 'checked' : '' %>>
+          Tự tạo đơn giao ngay khi khách chọn hình thức Giao hàng
+        </label>
+        <span class="qt-field__hint">
+          Tắt mục thứ hai nếu muốn điều phối gọi xác nhận với khách rồi mới tạo đơn giao bằng tay.
+        </span>
+      </div>
+
+      <div class="qt-form__actions">
+        <button class="qt-btn qt-btn--primary" type="submit"><i class="fas fa-floppy-disk"></i> Lưu tham số</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* Ví dụ giá sống theo ô nhập.
+     Bảng giá ba con số rời rạc rất khó hình dung thành tiền thật; một dòng
+     "3 km hết 20.000đ" nói được ngay điều mà ba ô nhập không nói được, và
+     người khai thấy luôn mình vừa gõ nhầm một số 0. */
+  var oCoBan = document.getElementById('o-phi-co-ban');
+  var oKmDau = document.getElementById('o-km-dau');
+  var oPhiKm = document.getElementById('o-phi-km');
+  var hop = document.getElementById('vc-vd');
+  if (!oCoBan || !hop) return;
+
+  function tien(n) { return Math.round(n).toLocaleString('vi-VN'); }
+
+  function ve() {
+    var coBan = Number(oCoBan.value) || 0;
+    var kmDau = Number(oKmDau.value) || 0;
+    var phiKm = Number(oPhiKm.value) || 0;
+    var dong = [1, 3, 5].map(function (km) {
+      // Làm tròn lên từng 0.5 km — phải giống hệt tinhPhi() trong
+      // services/vanChuyenService.js, nếu không màn hình khai giá và giá thật
+      // sẽ lệch nhau và không ai biết bên nào đúng.
+      var vuot = Math.max(0, km - kmDau);
+      var buoc = Math.ceil(vuot * 2) / 2;
+      return '<b>' + km + ' km</b> → ' + tien(coBan + buoc * phiKm) + 'đ';
+    });
+    hop.innerHTML = 'Khách ở cách nhà hàng: ' + dong.join(' &nbsp;·&nbsp; ');
+  }
+  [oCoBan, oKmDau, oPhiKm].forEach(function (o) { if (o) o.oninput = ve; });
+  ve();
+})();
+</script>
+
+<%- include('partials/footer') %>

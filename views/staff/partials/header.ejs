@@ -80,6 +80,19 @@
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>">
       <a class="nav-link" href="/so-do-ban"><i class="fas fa-fw fa-th"></i><span>Sơ đồ bàn</span></a>
     </li>
+    <%
+      /* Dieu phoi giao hang: chan bang dung QUYEN ma route dang doi
+         (`giao_hang.xem` trong routes/vanChuyen.js). Menu rong hon route thi
+         nguoi dung thay muc roi bam vao nhan 403; hep hon thi ho khong bao gio
+         tim thay chuc nang minh duoc phep dung. */
+    %>
+    <% if (typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) { %>
+      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>">
+        <a class="nav-link" href="/staff/giao-hang">
+          <i class="fas fa-fw fa-motorcycle"></i><span>Điều phối giao hàng</span>
+        </a>
+      </li>
+    <% } %>
     <hr class="sidebar-divider">
     <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Tổ chức</div>
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='to-chuc' ? 'active' : '' %>">

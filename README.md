@@ -14,6 +14,7 @@ từng phần:
 | `HUONG_DAN_CHAM_CONG_DIEN_THOAI.md` | Chấm công trên điện thoại: HTTPS, PWA, ràng buộc GPS |
 | `HUONG_DAN_CHATBOT.md` | Chatbot hỏi đáp tiếng Việt (phân loại ý định tự huấn luyện) |
 | `HUONG_DAN_XEP_CA.md` | Xếp ca tự động: định mức nhân sự, thuật toán, vận hành |
+| `HUONG_DAN_GIAO_HANG.md` | Giao hàng: đơn vị vận chuyển, cước phí, điều phối, theo dõi shipper bằng GPS |
 | `DANH_SACH_TAI_KHOAN.md` | Danh sách tài khoản đăng nhập |
 
 ---
@@ -309,6 +310,15 @@ lần lượt trong `config/migrations/`:
 | `009_tao_tai_khoan.js` | Bộ tài khoản chuẩn cho admin và từng chức danh |
 | `010_anh_do_uong.js` | Gán ảnh cho các món đồ uống |
 | `011_mo_rong_so_do_ban.js` | Nâng nhà hàng lên **40 bàn / 4 khu**, đổi tên bàn sang mã thống nhất, đồng bộ mã QR |
+| `012_thanh_toan.js` | Phân hệ thanh toán: VietQR, tiền mặt, thẻ |
+| `013_chot_ca_thu_ngan.js` | Chốt ca thu ngân, đối chiếu két tiền mặt cuối ca |
+| `013_don_vi_ton_kho.js` | Làm sạch số lượng tồn kho theo đúng bản chất đơn vị tính |
+| `014_khuyen_mai.js` | Khuyến mãi điều chỉnh được (điều kiện, hạn mức, thời gian) |
+| `015_nguong_khuon_mat.js` | Ngưỡng nhận diện khuôn mặt tính bằng phần trăm |
+| `016_chatbot.js` | Bảng hội thoại, đánh giá, và bộ câu trả lời của trợ lý ảo |
+| `017_qr_dat_mon.js` | Vá lỗ hổng luồng đặt món QR, thêm ghi chú theo món |
+| `018_xep_ca.js` | Bảng `ca_lam_viec`, `dinh_muc_ca`, nguồn dòng lịch, khóa chống trùng |
+| `019_van_chuyen.js` | Đơn vị vận chuyển, shipper, đơn giao, vết GPS; bộ phận GH + 6 quyền mới |
 
 Hai nguyên tắc xuyên suốt:
 
@@ -366,7 +376,7 @@ server.js                 Điểm vào web: session, phân quyền, route, Socke
 config/
   db.js                   Pool mysql2, ép UTF-8 cho mọi cột chuỗi
   migrate.js              Bộ chạy migration
-  migrations/             001 → 011, chạy lại được nhiều lần
+  migrations/             001 → 019, chạy lại được nhiều lần
 routes/                   Các phân hệ mới tách riêng khỏi server.js
   analytics.js            Dashboard: 13 endpoint JSON cho biểu đồ
   forecast.js             Trang /du-bao và các nút chạy lại dự báo
@@ -376,6 +386,7 @@ routes/                   Các phân hệ mới tách riêng khỏi server.js
   chamCong.js             Bảng công theo ngày, sửa sai sót (có kiểm toán)
   chamCongDiDong.js       Chấm công trên điện thoại: /cham-cong/ + manifest PWA
   chatbot.js              Trợ lý ảo: API công khai + trang quản trị
+  vanChuyen.js            Giao hàng: quản trị / điều phối / app shipper / theo dõi
 services/                 Toàn bộ nghiệp vụ và SQL
   mlService.js            Cầu nối sang Python, luôn có dữ liệu dự phòng
   chatbotService.js       Cầu nối chatbot, có bộ trả lời dự phòng khi Python tắt
@@ -383,6 +394,7 @@ services/                 Toàn bộ nghiệp vụ và SQL
   toChucService.js        Bổ nhiệm, chức danh, tổ, việc cần xử lý
   realtime.js             Trung tâm Socket.IO: phòng theo cơ cấu tổ chức
   faceService.js          Ghi chấm công + nhật ký nhận diện khuôn mặt
+  vanChuyenService.js     Cước phí, phân công shipper, trạng thái đơn, vết GPS
 middleware/
   auth.js                 Phân quyền theo khách / quản trị / nhân viên (bản cũ)
   phanQuyen.js            Phân quyền RBAC mới (canQuyen/canCapBac/canVaiTroCu)
@@ -393,11 +405,15 @@ ml_service/               Package Python (xem mục 5)
 css/ js/ scss/ fonts/ images/ food/    Tài nguyên tĩnh
 start_all.bat             Bật cả hệ thống
 train_ml.bat              Huấn luyện lại và in bảng chỉ số
+npm run giaohang:check    Chẩn đoán phân hệ giao hàng khi không vào được trang
+npm run giaohang:nhansu   Tạo 1 điều phối + 3 shipper kèm hồ sơ và tài khoản
+npm run giaohang:mophong  Chạy một ca giao hàng thật qua API — xem xe chạy trên bản đồ
 ```
 
 Các tài liệu chuyên đề: `HUONG_DAN_CO_CAU_TO_CHUC.md` (phân quyền, realtime),
 `HUONG_DAN_CHAM_CONG_KHUON_MAT.md` (nhận diện khuôn mặt),
 `HUONG_DAN_CHAM_CONG_DIEN_THOAI.md` (chấm công trên điện thoại),
+`HUONG_DAN_GIAO_HANG.md` (giao hàng và theo dõi shipper bằng GPS),
 `DANH_SACH_TAI_KHOAN.md` (tài khoản đăng nhập).
 
 ---

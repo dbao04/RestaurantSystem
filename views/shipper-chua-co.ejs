@@ -1,0 +1,49 @@
+<%
+  /*
+    Trang này thay cho một mã 403 trống.
+
+    Người đến đây gần như chắc chắn là nhân viên thật vừa được giao việc giao
+    hàng, còn quản lý thì quên bước lập hồ sơ shipper. Trả về "403 Forbidden"
+    khiến họ tưởng mình không được phép — và họ sẽ không báo ai cả. Câu duy nhất
+    cần nói ở đây là ai phải làm gì tiếp theo.
+  */
+%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Chưa có hồ sơ shipper</title>
+  <meta name="theme-color" content="#2c1810">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body { margin:0; min-height:100vh; min-height:100dvh; display:flex; align-items:center;
+           justify-content:center; padding:24px;
+           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+           background:linear-gradient(160deg,#2c1810,#4e342e); color:#fff; }
+    .hop { max-width:420px; text-align:center; }
+    i.to { font-size:52px; color:#c8a951; opacity:.8; margin-bottom:18px; }
+    h1 { font-size:20px; margin:0 0 12px; }
+    p  { font-size:15px; line-height:1.65; opacity:.85; margin:0 0 16px; }
+    ol { text-align:left; font-size:14px; line-height:1.8; opacity:.85; padding-left:22px; }
+    a.nut { display:inline-block; background:#c8a951; color:#2c1810; text-decoration:none;
+            font-weight:800; padding:13px 26px; border-radius:12px; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="hop">
+    <i class="fas fa-id-card-clip to"></i>
+    <h1>Chào <%= hoTen %> — bạn chưa có hồ sơ shipper</h1>
+    <p>
+      Bạn đăng nhập được, nhưng hệ thống chưa biết bạn chạy xe gì và thuộc đơn vị vận chuyển nào,
+      nên chưa phân đơn cho bạn được.
+    </p>
+    <ol>
+      <li>Báo quản lý mở <b>Quản trị → Đơn vị vận chuyển → Quản lý shipper</b>.</li>
+      <li>Bấm <b>Thêm shipper</b> và chọn đúng tên bạn ở ô <b>Nhân viên</b>.</li>
+      <li>Xong thì mở lại trang này — đơn sẽ hiện ngay.</li>
+    </ol>
+    <a class="nut" href="/staff"><i class="fas fa-arrow-left"></i> Về trang nhân viên</a>
+  </div>
+</body>
+</html>
