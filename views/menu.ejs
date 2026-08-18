@@ -1,13 +1,13 @@
-<%- include('partials/header', { title: 'Thực đơn', activeNav: 'menu' }) %>
+<%- include('partials/header', { title: t('dieu_huong.thuc_don'), activeNav: 'menu' }) %>
 
 <!-- ================= HERO NHỎ ================= -->
 <section class="nh-subhero">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Tinh hoa từ căn bếp</span>
-    <h1>Thực đơn</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Thực đơn</div>
+    <span class="nh-eyebrow"><%= t('thuc_don.eyebrow_bep') %></span>
+    <h1><%= t('thuc_don.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.thuc_don') %></div>
   </div>
 </section>
 
@@ -16,14 +16,14 @@
   <div class="nh-container">
 
     <form class="nh-search" action="/menu" method="post">
-      <input name="key" type="search" placeholder="Tìm kiếm món ăn..." value="<%= key %>">
+      <input name="key" type="search" placeholder="<%= t('thuc_don.tim_goi_y') %>" value="<%= key %>">
       <button type="submit"><i class="fas fa-search"></i></button>
     </form>
 
     <div class="nh-cats nh-reveal">
       <% categories.forEach(function(category){ %>
         <a class="nh-cat <%= currentCategory == category.id_loai ? 'is-active' : '' %>"
-           href="/menu?id_loai=<%= category.id_loai %>"><%= category.name_loai %></a>
+           href="/menu?id_loai=<%= category.id_loai %>"><%= tenNhom(category) %></a>
       <% }) %>
     </div>
 
@@ -33,13 +33,13 @@
           <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
             <div class="nh-dish__media">
               <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>" loading="lazy"
-                   onerror="this.src='/bg_<%= (i % 5) + 1 %>.jpg'">
+                   onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
               <span class="nh-dish__price"><%= formatMoney(dish.gia_mon) %></span>
             </div>
             <div class="nh-dish__body">
-              <h3><%= (dish.name_mon || '').trim() %></h3>
-              <p><%= dish.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất.' %></p>
-              <a href="/detail?monid=<%= dish.id_mon %>" class="nh-dish__cta">Đặt món ngay <i class="fas fa-arrow-right"></i></a>
+              <h3><%= tenMon(dish).chinh %></h3>
+              <p><% var tmd = tenMon(dish); %><%= tmd.phu || t('trang_chu.mon_mac_dinh_mo_ta') %></p>
+              <a href="/detail?monid=<%= dish.id_mon %>" class="nh-dish__cta"><%= t('chung.dat_mon_ngay') %> <i class="fas fa-arrow-right"></i></a>
             </div>
           </article>
         <% }) %>
@@ -47,7 +47,7 @@
     <% } else { %>
       <div class="nh-center" style="padding:3rem 0">
         <i class="fas fa-utensils" style="font-size:2.4rem;color:var(--nh-gold)"></i>
-        <p class="nh-lead" style="margin-top:1rem">Không tìm thấy món ăn nào phù hợp.</p>
+        <p class="nh-lead" style="margin-top:1rem"><%= t('thuc_don.khong_thay') %></p>
       </div>
     <% } %>
   </div>

@@ -1,37 +1,91 @@
 <%- include('partials/header', { heroNav: true, activeNav: 'home' }) %>
 
+<%
+  /*
+    MÓN THẬT THAY CHO ẢNH STOCK
+
+    Bảy ảnh nền cũ là ảnh của một nhà hàng Âu (đầu bếp mũ toque bày bít tết,
+    croissant với cà phê, oải hương Provence...). Nay nền là hoa văn Nhật vẽ
+    bằng SVG trong css/nhahang.css, còn "ảnh" là chính món trong thực đơn —
+    PNG nền trong suốt nên đặt lên nền tối là gọn.
+
+    `monTrangTri` do route `/` cắt ra từ cùng một truy vấn với khối "Món đặc
+    sắc", nên không món nào xuất hiện hai lần trên cùng một trang.
+
+    Mọi chỗ dùng đều phải chịu được mảng RỖNG: cơ sở dữ liệu lỗi hay thực đơn
+    chưa có ảnh thì trang vẫn phải dựng được, chỉ là không có món nổi lên.
+  */
+  var dsTrangTri = (typeof monTrangTri !== 'undefined' && monTrangTri) ? monTrangTri : [];
+  function monTT(i) { return dsTrangTri.length ? dsTrangTri[i % dsTrangTri.length] : null; }
+%>
+
 <!-- ================= HERO ================= -->
 <header class="nh-hero">
-  <div class="nh-hero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-hero__bg nh-wa-song"></div>
   <div class="nh-hero__veil"></div>
+  <% var mHero = monTT(0); %>
+  <% if (mHero) { %>
+    <%
+      /* Ba lớp chồng lên nhau, vẽ theo đúng thứ tự từ sau ra trước:
+           ensō   vòng tròn thiền, hở một khoảng — nét vẽ một hơi
+           quầng  ánh vàng toả, tách món khỏi nền tối
+           món    ảnh thật, nền trong suốt
+         Thiếu hai lớp sau thì món dán thẳng lên hoa văn, trông như bị cắt dán. */
+    %>
+    <svg class="nh-hero__enso" viewBox="0 0 200 200" aria-hidden="true">
+      <%
+        /* r=84 → chu vi ≈ 528. Nét 455 + hở 73 = đúng một vòng, nên khoảng hở
+           chỉ xuất hiện MỘT lần thay vì lặp lại quanh vòng tròn. Ensō luôn hở —
+           đó là ý của nó, không phải nét vẽ dở dang. */
+      %>
+      <circle cx="100" cy="100" r="84" fill="none"
+              stroke="url(#nh-enso-mau)" stroke-width="5.5" stroke-linecap="round"
+              stroke-dasharray="455 73" transform="rotate(34 100 100)"/>
+      <defs>
+        <linearGradient id="nh-enso-mau" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0"   stop-color="#c8a24b" stop-opacity=".85"/>
+          <stop offset="0.6" stop-color="#c8a24b" stop-opacity=".35"/>
+          <stop offset="1"   stop-color="#c8a24b" stop-opacity=".05"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="nh-hero__quang" aria-hidden="true"></div>
+    <img class="nh-hero__mon" src="/food/<%= mHero.images %>"
+         alt="<%= (mHero.name_mon || '').trim() %>" loading="eager">
+  <% } %>
   <div class="nh-container nh-hero__inner">
-    <span class="nh-eyebrow">Tinh hoa ẩm thực Pháp – Việt</span>
-    <h1>Hương vị <span>tinh tế</span><br>trong từng khoảnh khắc</h1>
-    <p>Không gian ấm cúng, sang trọng giữa lòng Sài Gòn. Nơi mỗi món ăn là một câu chuyện, mỗi bữa tiệc là một kỷ niệm đáng nhớ.</p>
+    <span class="nh-eyebrow"><%= t('trang_chu.eyebrow') %></span>
+    <h1><%= t('trang_chu.tieu_de_1') %> <span><%= t('trang_chu.tieu_de_nhan') %></span><br><%= t('trang_chu.tieu_de_2') %></h1>
+    <p><%= t('trang_chu.mo_ta') %></p>
     <div class="nh-hero__actions">
-      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
-      <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
+      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
+      <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
     </div>
   </div>
-  <div class="nh-hero__scroll">Cuộn xuống<span></span></div>
+  <div class="nh-hero__scroll"><%= t('trang_chu.cuon_xuong') %><span></span></div>
 </header>
 
 <!-- ================= GIỚI THIỆU ================= -->
 <section class="nh-section nh-section--cream">
   <div class="nh-container nh-about">
-    <div class="nh-about__imgs nh-reveal">
-      <img src="/about.jpg" alt="Không gian nhà hàng" onerror="this.src='/bg_1.jpg'">
-      <img src="/about-1.jpg" alt="Món ăn đặc sắc" onerror="this.src='/bg_2.jpg'">
-      <div class="nh-about__badge"><b><%= (typeof thongKe!=='undefined'&&thongKe)?thongKe.soMon:'' %></b><span>Món<br>đặc sắc</span></div>
+    <div class="nh-about__imgs nh-about__imgs--mon nh-reveal">
+      <% [1, 2].forEach(function (i) { var m = monTT(i); %>
+        <div class="nh-mon-khung <%= i % 2 ? 'nh-wa-shippo' : 'nh-wa-song' %>">
+          <% if (m) { %>
+            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+          <% } %>
+        </div>
+      <% }) %>
+      <div class="nh-about__badge"><b><%= (typeof thongKe!=='undefined'&&thongKe)?thongKe.soMon:'' %></b><span><%= t('trang_chu.mon_dac_sac') %></span></div>
     </div>
     <div class="nh-about__text nh-reveal" data-delay="1">
-      <span class="nh-eyebrow">Về chúng tôi</span>
-      <h2 class="nh-section-title">Câu chuyện của<br>Nhà Hàng Bảo Đoàn</h2>
+      <span class="nh-eyebrow"><%= t('trang_chu.ve_chung_toi') %></span>
+      <h2 class="nh-section-title"><%= t('trang_chu.cau_chuyen') %><br><%= t('chung.ten_nha_hang') %></h2>
       <div class="nh-divider" style="margin-left:0"></div>
-      <p>Những giá trị lịch sử, văn hóa và ẩm thực độc đáo của Pháp – Việt hòa quyện một cách hoàn hảo, đem đến trải nghiệm khó quên giữa lòng Sài Gòn.</p>
-      <p>Chúng tôi tôn vinh từng nguyên liệu tươi ngon nhất, chế biến bởi đội ngũ đầu bếp tận tâm, phục vụ trong không gian đậm chất nghệ thuật.</p>
-      <div class="nh-sign">— Bếp trưởng Nhà Hàng Bảo Đoàn</div>
-      <div style="margin-top:1.6rem"><a href="/about" class="nh-btn nh-btn--dark">Tìm hiểu thêm</a></div>
+      <p><%- t('trang_chu.gioi_thieu_1') %></p>
+      <p><%- t('trang_chu.gioi_thieu_2') %></p>
+      <div class="nh-sign"><%- t('trang_chu.ky_ten') %></div>
+      <div style="margin-top:1.6rem"><a href="/about" class="nh-btn nh-btn--dark"><%= t('chung.tim_hieu_them') %></a></div>
     </div>
   </div>
 </section>
@@ -40,10 +94,10 @@
 <section class="nh-section nh-section--cream2">
   <div class="nh-container">
     <div class="nh-head nh-center nh-reveal">
-      <span class="nh-eyebrow">Được yêu thích nhất</span>
-      <h2 class="nh-section-title">Món ăn đặc sắc</h2>
+      <span class="nh-eyebrow"><%= t('trang_chu.mon_dac_sac_eyebrow') %></span>
+      <h2 class="nh-section-title"><%= t('trang_chu.mon_dac_sac') %></h2>
       <div class="nh-divider"></div>
-      <p class="nh-lead">Những món ăn ghi dấu ấn trong lòng thực khách — được tuyển chọn kỹ lưỡng từ thực đơn của chúng tôi.</p>
+      <p class="nh-lead"><%= t('trang_chu.mon_dac_sac_mo_ta') %></p>
     </div>
 
     <% var ds = (typeof mons !== 'undefined' && mons) ? mons : []; %>
@@ -53,23 +107,24 @@
           <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
             <div class="nh-dish__media">
               <img src="/food/<%= m.images %>" alt="<%= m.name_mon %>" loading="lazy"
-                   onerror="this.src='/bg_<%= (i % 5) + 1 %>.jpg'">
+                   onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
               <span class="nh-dish__price"><%= formatMoney(m.gia_mon) %></span>
             </div>
             <div class="nh-dish__body">
-              <h3><%= (m.name_mon || '').trim() %></h3>
-              <p><%= m.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất.' %></p>
-              <a href="/detail?monid=<%= m.id_mon %>" class="nh-dish__cta">Đặt món ngay <i class="fas fa-arrow-right"></i></a>
+              <h3><%= tenMon(m).chinh %></h3>
+              <% var tm = tenMon(m); %>
+              <p><%= tm.phu || t('trang_chu.mon_mac_dinh_mo_ta') %></p>
+              <a href="/detail?monid=<%= m.id_mon %>" class="nh-dish__cta"><%= t('chung.dat_mon_ngay') %> <i class="fas fa-arrow-right"></i></a>
             </div>
           </article>
         <% }) %>
       </div>
     <% } else { %>
-      <p class="nh-center nh-lead">Thực đơn đang được cập nhật. Vui lòng quay lại sau.</p>
+      <p class="nh-center nh-lead"><%= t('chung.dang_cap_nhat') %></p>
     <% } %>
 
     <div class="nh-center nh-reveal" style="margin-top:3rem">
-      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Xem toàn bộ thực đơn</a>
+      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> <%= t('chung.xem_toan_bo_thuc_don') %></a>
     </div>
   </div>
 </section>
@@ -78,39 +133,39 @@
 <section class="nh-section nh-section--dark">
   <div class="nh-container">
     <div class="nh-head nh-center nh-reveal">
-      <span class="nh-eyebrow">Trải nghiệm khác biệt</span>
-      <h2 class="nh-section-title">Vì sao chọn chúng tôi</h2>
+      <span class="nh-eyebrow"><%= t('trang_chu.vi_sao_eyebrow') %></span>
+      <h2 class="nh-section-title"><%= t('trang_chu.vi_sao') %></h2>
       <div class="nh-divider"></div>
     </div>
     <div class="nh-features">
       <div class="nh-feature nh-reveal" data-delay="1">
-        <div class="nh-feature__icon"><i class="fas fa-leaf"></i></div>
-        <h3>Nguyên liệu tươi</h3>
-        <p>Tuyển chọn mỗi ngày từ những nhà cung cấp uy tín, đảm bảo độ tươi ngon.</p>
+        <div class="nh-feature__icon"><i class="fas fa-fish"></i></div>
+        <h3><%= t('trang_chu.the_1_tieu_de') %></h3>
+        <p><%= t('trang_chu.the_1_mo_ta') %></p>
       </div>
       <div class="nh-feature nh-reveal" data-delay="2">
         <div class="nh-feature__icon"><i class="fas fa-award"></i></div>
-        <h3>Đầu bếp tài hoa</h3>
-        <p>Đội ngũ đầu bếp giàu kinh nghiệm, tận tâm trong từng chi tiết món ăn.</p>
+        <h3><%= t('trang_chu.the_2_tieu_de') %></h3>
+        <p><%= t('trang_chu.the_2_mo_ta') %></p>
       </div>
       <div class="nh-feature nh-reveal" data-delay="3">
-        <div class="nh-feature__icon"><i class="fas fa-wine-glass-alt"></i></div>
-        <h3>Không gian sang trọng</h3>
-        <p>Kiến trúc tinh tế, ấm cúng — lý tưởng cho mọi dịp gặp gỡ quan trọng.</p>
+        <div class="nh-feature__icon"><i class="fas fa-torii-gate"></i></div>
+        <h3><%= t('trang_chu.the_3_tieu_de') %></h3>
+        <p><%= t('trang_chu.the_3_mo_ta') %></p>
       </div>
       <div class="nh-feature nh-reveal" data-delay="3">
         <div class="nh-feature__icon"><i class="fas fa-concierge-bell"></i></div>
-        <h3>Phục vụ tận tâm</h3>
-        <p>Đội ngũ chuyên nghiệp, chu đáo mang đến trải nghiệm trọn vẹn.</p>
+        <h3><%= t('trang_chu.the_4_tieu_de') %></h3>
+        <p><%= t('trang_chu.the_4_mo_ta') %></p>
       </div>
     </div>
 
     <% var tk = (typeof thongKe !== 'undefined' && thongKe) ? thongKe : {soMon:0,soDanhMuc:0,soNhanVien:0,soDon:0}; %>
     <div class="nh-stats nh-reveal" style="margin-top:4rem">
-      <div class="nh-stat"><b data-count="<%= tk.soMon %>"><%= tk.soMon %></b><span>Món trong thực đơn</span></div>
-      <div class="nh-stat"><b data-count="<%= tk.soDanhMuc %>"><%= tk.soDanhMuc %></b><span>Danh mục ẩm thực</span></div>
-      <div class="nh-stat"><b data-count="<%= tk.soNhanVien %>"><%= tk.soNhanVien %></b><span>Đầu bếp &amp; nhân viên</span></div>
-      <div class="nh-stat"><b data-count="<%= tk.soDon %>"><%= tk.soDon.toLocaleString('vi-VN') %></b><span>Đơn đã phục vụ</span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soMon %>"><%= tk.soMon %></b><span><%= t('trang_chu.tk_mon') %></span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soDanhMuc %>"><%= tk.soDanhMuc %></b><span><%= t('trang_chu.tk_danh_muc') %></span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soNhanVien %>"><%= tk.soNhanVien %></b><span><%- t('trang_chu.tk_nhan_vien') %></span></div>
+      <div class="nh-stat"><b data-count="<%= tk.soDon %>"><%= tk.soDon.toLocaleString('vi-VN') %></b><span><%= t('trang_chu.tk_don') %></span></div>
     </div>
   </div>
 </section>
@@ -119,17 +174,39 @@
 <section class="nh-section nh-section--cream">
   <div class="nh-container">
     <div class="nh-head nh-center nh-reveal">
-      <span class="nh-eyebrow">Khoảnh khắc</span>
-      <h2 class="nh-section-title">Không gian &amp; ẩm thực</h2>
+      <%
+        /* Tiêu đề phải nói đúng thứ bên dưới nó.
+
+           Bản cũ là "Không gian & ẩm thực" vì lưới này từng có ảnh phòng ăn,
+           bàn tiệc và đồ uống. Nay lưới chỉ còn các món trong thực đơn, nên
+           giữ chữ "không gian" là hứa một thứ trang không đưa ra. */
+      %>
+      <span class="nh-eyebrow"><%= t('trang_chu.thu_vien_eyebrow') %></span>
+      <h2 class="nh-section-title"><%= t('trang_chu.thu_vien') %></h2>
       <div class="nh-divider"></div>
+      <p class="nh-lead"><%= t('trang_chu.thu_vien_mo_ta') %></p>
     </div>
-    <div class="nh-gallery nh-reveal">
-      <a href="/bg_1.jpg" class="tall"><img src="/bg_1.jpg" alt="Không gian"></a>
-      <a href="/bg_2.jpg"><img src="/bg_2.jpg" alt="Món ăn"></a>
-      <a href="/bg_4.jpg"><img src="/bg_4.jpg" alt="Bàn tiệc"></a>
-      <a href="/about.jpg" class="tall"><img src="/about.jpg" alt="Nhà hàng"></a>
-      <a href="/bg_5.jpg"><img src="/bg_5.jpg" alt="Đồ uống"></a>
-      <a href="/about-1.jpg"><img src="/about-1.jpg" alt="Chi tiết"></a>
+    <%
+      /* Sáu ô, ô thứ nhất và thứ tư cao gấp đôi (lớp `tall`) — giữ đúng bố cục
+         so le của bản cũ để lưới không bị vỡ nhịp. Bấm vào ô thì mở trang món
+         chứ không phóng to ảnh: người xem đang muốn đặt món, không muốn ngắm ảnh. */
+      var oCao = [0, 3];
+    %>
+    <div class="nh-gallery nh-gallery--mon nh-reveal">
+      <% for (var i = 0; i < 6; i++) { var m = monTT(i); %>
+        <%
+          /* Xen kẽ ba hoa văn theo ô. Sáu ô cùng một nền thì lưới trông như
+             một mảng phẳng; đổi nền làm mắt nhận ra đây là sáu món riêng. */
+          var nen = ['nh-wa-song', 'nh-wa-koshi', 'nh-wa-shippo'][i % 3];
+        %>
+        <a class="<%= nen %> <%= oCao.indexOf(i) >= 0 ? 'tall' : '' %>"
+           href="<%= m ? '/detail?monid=' + m.id_mon : '/menu' %>"
+           data-ten="<%= m ? (m.name_mon || '').trim() : '' %>">
+          <% if (m) { %>
+            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+          <% } %>
+        </a>
+      <% } %>
     </div>
   </div>
 </section>
@@ -138,20 +215,20 @@
 <section class="nh-section nh-section--dark">
   <div class="nh-container-narrow nh-quote nh-reveal">
     <div class="nh-quote__mark">&ldquo;</div>
-    <p>Một trong những trải nghiệm ẩm thực đáng nhớ nhất của tôi tại Sài Gòn. Món ăn tinh tế, không gian sang trọng và phục vụ chu đáo đến từng chi tiết.</p>
-    <cite>— Minh Anh, thực khách thân thiết</cite>
+    <p><%= t('trang_chu.cam_nhan') %></p>
+    <cite><%= t('trang_chu.cam_nhan_ky') %></cite>
   </div>
 </section>
 
 <!-- ================= CTA ĐẶT BÀN ================= -->
 <section class="nh-cta">
-  <div class="nh-cta__bg" style="background-image:url('/bg_4.jpg')"></div>
+  <div class="nh-cta__bg nh-wa-koshi"></div>
   <div class="nh-cta__veil"></div>
   <div class="nh-container nh-cta__inner nh-reveal">
-    <span class="nh-eyebrow">Đặt chỗ hôm nay</span>
-    <h2>Sẵn sàng cho bữa tiệc<br>khó quên?</h2>
-    <p>Đặt bàn trước để chúng tôi chuẩn bị chu đáo nhất cho trải nghiệm của bạn.</p>
-    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
+    <span class="nh-eyebrow"><%= t('trang_chu.cta_eyebrow') %></span>
+    <h2><%- t('trang_chu.cta_tieu_de') %></h2>
+    <p><%= t('trang_chu.cta_mo_ta') %></p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
   </div>
 </section>
 

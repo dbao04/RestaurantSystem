@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="<%= typeof maHtml !== 'undefined' ? maHtml : 'vi' %>">
   <head>
-    <title><%= typeof title !== 'undefined' ? title + ' — Nhà Hàng Bảo Đoàn' : 'Nhà Hàng Bảo Đoàn' %></title>
+    <title><%= typeof title !== 'undefined' && title ? title + ' — ' + t('chung.ten_nha_hang') : t('chung.ten_nha_hang') %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Great+Vibes&family=Dancing+Script:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -33,35 +33,70 @@
       <div class="nh-container nh-nav__inner">
         <a class="nh-brand" href="/">
           <img src="/admin-img/new_logo.png" alt="Logo" onerror="this.style.display='none'">
-          <span class="nh-brand__name">Nhà Hàng Bảo Đoàn</span>
+          <span class="nh-brand__name"><%= t('chung.ten_nha_hang') %></span>
         </a>
 
         <ul class="nh-nav__links" id="nh-menu">
-          <li><a href="/" class="<%= (typeof activeNav !== 'undefined' && activeNav==='home') ? 'is-active' : '' %>">Trang Chủ</a></li>
-          <li><a href="/about" class="<%= (typeof activeNav !== 'undefined' && activeNav==='about') ? 'is-active' : '' %>">Về Chúng Tôi</a></li>
-          <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>">Thực Đơn</a></li>
-          <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>">Tin Tức</a></li>
+          <li><a href="/" class="<%= (typeof activeNav !== 'undefined' && activeNav==='home') ? 'is-active' : '' %>"><%= t('dieu_huong.trang_chu') %></a></li>
+          <li><a href="/about" class="<%= (typeof activeNav !== 'undefined' && activeNav==='about') ? 'is-active' : '' %>"><%= t('dieu_huong.gioi_thieu') %></a></li>
+          <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
+          <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
+          <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
           <% if (session.username) { %>
-            <li><a href="/my-orders">Đơn Của Tôi</a></li>
+            <li><a href="/my-orders"><%= t('dieu_huong.don_cua_toi') %></a></li>
           <% } %>
         </ul>
 
         <div class="nh-nav__actions">
-          <a href="/cart" class="nh-cart" title="Giỏ hàng">
+          <a href="/cart" class="nh-cart" title="<%= t('dieu_huong.gio_hang') %>">
             <i class="fas fa-shopping-bag"></i>
             <% if (session.sum) { %><span class="nh-cart__badge">•</span><% } %>
           </a>
           <% if (session.username) { %>
-            <a href="/profile" class="nh-user" title="Tài khoản">
+            <a href="/profile" class="nh-user" title="<%= t('dieu_huong.tai_khoan') %>">
               <span class="nh-user__avatar"><%= session.username.charAt(0).toUpperCase() %></span>
               <span class="nh-user__name d-none-mobile"><%= session.username %></span>
             </a>
           <% } %>
-          <a href="/datban" class="nh-btn nh-btn--gold nh-btn--sm d-none-mobile"><i class="fas fa-utensils"></i> Đặt Bàn</a>
+          <%
+            /*
+              Nut doi ngon ngu.
+
+              Giu nguyen duong dan hien tai va chi them `?lang=`, nen khach dang
+              doc trang nao thi o lai trang do. Middleware ghi lua chon xuong
+              cookie ngay khi thay `?lang=`, nen cac trang sau khong con can
+              tham so nay nua.
+
+              Ten moi ngon ngu viet BANG CHINH NO (English, 日本語) chu khong
+              phai bang tieng dang hien - nguoi dang nhin mot trang tieng Nhat
+              ma khong doc duoc tieng Nhat van phai tim ra loi thoat.
+            */
+            var duongDanGoc = (typeof duongDanHienTai !== 'undefined' && duongDanHienTai) ? duongDanHienTai : '/';
+          %>
+          <div class="nh-lang">
+            <button class="nh-lang__nut" type="button" id="nh-lang-nut"
+                    aria-haspopup="true" aria-expanded="false"
+                    title="<%= t('dieu_huong.ngon_ngu') %>">
+              <i class="fas fa-globe"></i>
+              <span><%= (dsNgonNgu.find(function (x) { return x.ma === nn; }) || dsNgonNgu[0]).ma_ngan %></span>
+            </button>
+            <ul class="nh-lang__menu" id="nh-lang-menu">
+              <% dsNgonNgu.forEach(function (ng) { %>
+                <li>
+                  <a href="<%= duongDanGoc %><%= duongDanGoc.indexOf('?') >= 0 ? '&' : '?' %>lang=<%= ng.ma %>"
+                     class="<%= ng.ma === nn ? 'is-active' : '' %>" lang="<%= ng.ma %>">
+                    <span class="nh-lang__co"><%= ng.co %></span><%= ng.ten_goc %>
+                    <% if (ng.ma === nn) { %><i class="fas fa-check"></i><% } %>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+          <a href="/datban" class="nh-btn nh-btn--gold nh-btn--sm d-none-mobile"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
           <% if (!session.username) { %>
-            <a href="/login" class="nh-user d-none-mobile" title="Đăng nhập"><i class="fas fa-user"></i></a>
+            <a href="/login" class="nh-user d-none-mobile" title="<%= t('dieu_huong.dang_nhap') %>"><i class="fas fa-user"></i></a>
           <% } else { %>
-            <a href="/logout" class="nh-user d-none-mobile" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></a>
+            <a href="/logout" class="nh-user d-none-mobile" title="<%= t('dieu_huong.dang_xuat') %>"><i class="fas fa-sign-out-alt"></i></a>
           <% } %>
         </div>
 

@@ -13,18 +13,18 @@
   */
   var BUOC = ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao', 'da_giao'];
   var TEN_BUOC = {
-    cho_phan: 'Nhà hàng nhận đơn', da_phan: 'Đã có shipper',
-    dang_lay: 'Đang lấy hàng', dang_giao: 'Đang trên đường', da_giao: 'Đã giao',
+    cho_phan: t('theo_doi.b_cho_phan'), da_phan: t('theo_doi.b_da_phan'),
+    dang_lay: t('theo_doi.b_dang_lay'), dang_giao: t('theo_doi.b_dang_giao'), da_giao: t('theo_doi.b_da_giao'),
   };
   var viTriBuoc = BUOC.indexOf(don.trang_thai);
   var hong = don.trang_thai === 'that_bai' || don.trang_thai === 'huy';
 %>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="<%= typeof maHtml !== 'undefined' ? maHtml : 'vi' %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Đơn <%= don.ma_giao %></title>
+  <title><%= t('theo_doi.don_ma', { ma: don.ma_giao }) %></title>
   <meta name="theme-color" content="#2c1810">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <% if (don.dang_chay) { %>
@@ -98,11 +98,11 @@
     <h1 id="tt-nhan"><%= don.nhan %></h1>
     <p id="tt-phu">
       <% if (don.trang_thai === 'dang_giao') { %>
-        <span class="cham-song"></span>Shipper đang trên đường tới bạn
+        <span class="cham-song"></span><%= t('theo_doi.dang_toi') %>
       <% } else if (don.trang_thai === 'da_giao') { %>
-        Cảm ơn bạn đã đặt món của nhà hàng!
+        <%= t('theo_doi.cam_on') %>
       <% } else if (don.du_kien_luc && !don.da_xong) { %>
-        Dự kiến giao trước
+        <%= t('theo_doi.du_kien') %>
         <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
       <% } %>
     </p>
@@ -110,8 +110,8 @@
 
   <% if (hong) { %>
     <div class="canh">
-      <strong>Đơn này không giao được.</strong><br>
-      Nhà hàng sẽ liên hệ lại với bạn. Nếu cần gấp, hãy gọi trực tiếp cho nhà hàng.
+      <strong><%= t('theo_doi.that_bai') %></strong><br>
+      <%= t('theo_doi.that_bai_mo_ta') %>
     </div>
   <% } else { %>
     <div class="buoc">
@@ -129,23 +129,23 @@
   <% } %>
 
   <div class="the">
-    <h2>Giao tới</h2>
+    <h2><%= t('theo_doi.giao_toi') %></h2>
     <p style="margin:0 0 4px; font-size:16px; font-weight:700"><%= don.dia_chi_giao %></p>
     <p style="margin:0; font-size:13.5px; opacity:.75">
       <%= don.ten_nguoi_nhan %>
-      <% if (don.khoang_cach_km !== null) { %> · cách nhà hàng <%= don.khoang_cach_km %> km<% } %>
+      <% if (don.khoang_cach_km !== null) { %> · <%= t('theo_doi.cach_nha_hang', { km: don.khoang_cach_km }) %><% } %>
     </p>
     <% if (don.ten_shipper && !don.da_xong) { %>
       <p style="margin:10px 0 0; font-size:13.5px">
         <i class="fas fa-motorcycle" style="color:#c8a951"></i>
-        <strong><%= don.ten_shipper %></strong> đang cầm đơn của bạn
+        <strong><%= don.ten_shipper %></strong> <%= t('theo_doi.dang_cam_don') %>
         <% if (don.ten_dv) { %><span style="opacity:.65"> · <%= don.ten_dv %></span><% } %>
       </p>
     <% } %>
   </div>
 
   <div class="the">
-    <h2>Đơn hàng</h2>
+    <h2><%= t('theo_doi.don_hang') %></h2>
     <% (mon || []).forEach(function (m) { %>
       <div class="hang">
         <span><%= (m.name_mon || '').trim() %> <span style="opacity:.6">×<%= m.soluong %></span></span>
@@ -153,22 +153,22 @@
       </div>
     <% }) %>
     <div class="hang">
-      <span style="opacity:.7">Phí giao hàng</span>
-      <span><%= don.phi_giao > 0 ? formatMoney(don.phi_giao) + 'đ' : 'Miễn phí' %></span>
+      <span style="opacity:.7"><%= t('dat_ban.phi_giao') %></span>
+      <span><%= don.phi_giao > 0 ? formatMoney(don.phi_giao) + 'đ' : t('chung.mien_phi') %></span>
     </div>
     <div class="hang hang--tong">
-      <span>Tổng cộng</span>
+      <span><%= t('chung.tong_cong') %></span>
       <span><%= formatMoney(don.tong_thu) %>đ</span>
     </div>
     <% if (don.tien_thu_ho > 0) { %>
       <p style="margin:9px 0 0; font-size:12.5px; opacity:.7">
-        Bạn trả tiền mặt cho shipper khi nhận hàng.
+        <%= t('theo_doi.tra_tien_mat') %>
       </p>
     <% } %>
   </div>
 
   <div class="the">
-    <h2>Diễn biến</h2>
+    <h2><%= t('theo_doi.dien_bien') %></h2>
     <% (lichSu || []).forEach(function (n) { %>
       <div class="moc">
         <span class="moc__cham" style="background:<%= n.mau %>"></span>
@@ -181,8 +181,8 @@
   </div>
 
   <div class="chan">
-    Trang này tự cập nhật, bạn không cần tải lại.<br>
-    <a href="/">Nhà Hàng Bảo Đoàn</a> · <a href="/theo-doi">Tra cứu đơn khác</a>
+    <%= t('theo_doi.tu_cap_nhat') %><br>
+    <a href="/"><%= t('chung.ten_nha_hang') %></a> · <a href="/theo-doi"><%= t('theo_doi.tra_cuu_khac') %></a>
   </div>
 </div>
 

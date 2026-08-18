@@ -1,12 +1,12 @@
-<%- include('partials/header', { title: 'Đặt cọc giữ bàn' }) %>
+<%- include('partials/header', { title: t('dat_coc.tieu_de') }) %>
 
 <section class="nh-subhero" style="min-height:34vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Giữ bàn chắc chắn</span>
-    <h1>Đặt cọc giữ bàn</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/my-orders">Đơn của tôi</a> &nbsp;/&nbsp; Đặt cọc</div>
+    <span class="nh-eyebrow"><%= t('coc.eyebrow') %></span>
+    <h1><%= t('dat_coc.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <a href="/my-orders"><%= t('coc.don_cua_toi') %></a> &nbsp;/&nbsp; <%= t('coc.breadcrumb') %></div>
   </div>
 </section>
 
@@ -17,60 +17,58 @@
       <!-- Đã cọc rồi thì không cho cọc tiếp: khách chỉ cần giữ bàn một lần. -->
       <div class="nh-done nh-reveal">
         <div class="nh-done__seal"><i class="fas fa-check"></i></div>
-        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)">Bàn của bạn đã được giữ</h2>
+        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)"><%= t('coc.da_giu_ban') %></h2>
         <p class="nh-lead" style="margin-top:.8rem">
-          Chúng tôi đã nhận <strong><%= formatMoney(hoaDon.tien.da_dat_coc) %>đ</strong> tiền cọc.
-          Số tiền này sẽ được trừ vào hóa đơn khi bạn đến dùng bữa.
+          <%- t('coc.da_nhan_coc', { tien: '<strong>' + formatMoney(hoaDon.tien.da_dat_coc) + 'đ</strong>' }) %>
         </p>
         <div class="nh-done__actions">
-          <a class="nh-btn nh-btn--gold" href="/my-orders">Xem đơn của tôi</a>
+          <a class="nh-btn nh-btn--gold" href="/my-orders"><%= t('coc.xem_don') %></a>
         </div>
       </div>
 
     <% } else { %>
       <div class="nh-receipt nh-reveal" id="khoi-thong-tin">
         <div class="nh-receipt__head">
-          <span class="nh-eyebrow">Nhà Hàng Bảo Đoàn</span>
-          <h2>ĐẶT CỌC GIỮ BÀN</h2>
+          <span class="nh-eyebrow"><%= t('chung.ten_nha_hang') %></span>
+          <h2><%= t('coc.tieu_de_phieu').toUpperCase() %></h2>
           <div style="font-size:.78rem; letter-spacing:1.4px; opacity:.75; margin-top:.5rem">
-            MÃ ĐƠN &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(hoaDon.sesis).slice(0, 10).toUpperCase() %></strong>
+            <%= t('don.ma_don').toUpperCase() %> &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(hoaDon.sesis).slice(0, 10).toUpperCase() %></strong>
           </div>
         </div>
 
         <div class="nh-receipt__facts">
-          <div class="nh-receipt__fact">Người đặt <b><%= hoaDon.thongTin.ten_khach %></b></div>
-          <div class="nh-receipt__fact">Ngày đến <b><%= ngayVN(hoaDon.thongTin.dates) %></b></div>
-          <div class="nh-receipt__fact">Giờ đến <b><%= gioVN(hoaDon.thongTin.tg) %></b></div>
-          <div class="nh-receipt__fact">Số khách <b><%= hoaDon.thongTin.so_user %> người</b></div>
+          <div class="nh-receipt__fact"><%= t('phieu.nguoi_dat') %> <b><%= hoaDon.thongTin.ten_khach %></b></div>
+          <div class="nh-receipt__fact"><%= t('phieu.ngay_den') %> <b><%= ngayVN(hoaDon.thongTin.dates) %></b></div>
+          <div class="nh-receipt__fact"><%= t('phieu.gio_den') %> <b><%= gioVN(hoaDon.thongTin.tg) %></b></div>
+          <div class="nh-receipt__fact"><%= t('don.so_khach') %> <b><%= nhanSoKhach(hoaDon.thongTin.so_user) %></b></div>
         </div>
 
         <div class="nh-receipt__body">
           <div class="nh-summary">
             <div class="nh-summary__row">
-              <span>Giá trị đơn tạm tính</span>
+              <span><%= t('coc.gia_tri_don') %></span>
               <span><%= formatMoney(hoaDon.tien.tong_cong) %>đ</span>
             </div>
             <div class="nh-summary__row">
-              <span>Tỷ lệ cọc</span>
+              <span><%= t('coc.ty_le_coc') %></span>
               <span><%= phanTram %>%</span>
             </div>
             <div class="nh-summary__total">
-              <span>Cần đặt cọc</span>
+              <span><%= t('coc.can_dat_coc') %></span>
               <span><%= formatMoney(tienCoc) %>đ</span>
             </div>
           </div>
 
           <p class="nh-hint" style="margin-top:1.4rem">
-            Tiền cọc được <strong>trừ thẳng vào hóa đơn</strong> khi bạn đến dùng bữa.
-            Nếu bạn báo hủy trước giờ đến ít nhất 4 tiếng, nhà hàng hoàn lại toàn bộ.
+            <%= t('coc.giai_thich') %>
           </p>
 
           <div style="margin-top:1.6rem; text-align:center">
             <button class="nh-btn nh-btn--gold" id="nut-coc">
-              <i class="fas fa-qrcode"></i> Tạo mã chuyển khoản
+              <i class="fas fa-qrcode"></i> <%= t('coc.tao_ma') %>
             </button>
             <div style="margin-top:1rem">
-              <a class="nh-btn nh-btn--ghost nh-btn--sm" href="/my-orders">Để sau</a>
+              <a class="nh-btn nh-btn--outline nh-btn--sm" href="/my-orders"><%= t('coc.de_sau') %></a>
             </div>
           </div>
         </div>
@@ -79,12 +77,12 @@
       <!-- ============================================ Khung QR -->
       <div class="nh-receipt nh-reveal" id="khoi-qr" style="display:none">
         <div class="nh-receipt__head">
-          <span class="nh-eyebrow">Quét bằng app ngân hàng bất kỳ</span>
-          <h2>CHUYỂN KHOẢN <span id="dem-nguoc" style="font-size:.6em; opacity:.8"></span></h2>
+          <span class="nh-eyebrow"><%= t('coc.quet_app') %></span>
+          <h2><%= t('coc.chuyen_khoan').toUpperCase() %> <span id="dem-nguoc" style="font-size:.6em; opacity:.8"></span></h2>
         </div>
         <div class="nh-receipt__body" style="text-align:center">
           <div style="background:#fff; padding:14px; border-radius:14px; display:inline-block; line-height:0">
-            <img id="anh-qr" alt="Mã VietQR" style="width:min(260px,68vw); height:min(260px,68vw); display:block">
+            <img id="anh-qr" alt="<%= t('coc.ma_vietqr') %>" style="width:min(260px,68vw); height:min(260px,68vw); display:block">
           </div>
 
           <div style="margin-top:1.2rem; font-size:1.7rem; font-weight:800" id="qr-tien"></div>
@@ -94,13 +92,13 @@
           </div>
 
           <div style="margin-top:1.2rem; padding:.9rem; border:1px dashed rgba(0,0,0,.2); border-radius:10px">
-            <div class="nh-hint" style="text-transform:uppercase; letter-spacing:1px; font-size:.72rem">Nội dung chuyển khoản</div>
+            <div class="nh-hint" style="text-transform:uppercase; letter-spacing:1px; font-size:.72rem"><%= t('ttqr.noi_dung_ck') %></div>
             <div style="font-family:ui-monospace,Consolas,monospace; font-size:1.2rem; font-weight:800; letter-spacing:2px; margin-top:.3rem" id="qr-noi-dung"></div>
           </div>
 
           <p class="nh-hint" style="margin-top:1.2rem">
             <i class="fas fa-circle-notch fa-spin"></i>
-            Đang chờ ngân hàng xác nhận. Trang sẽ tự chuyển khi tiền vào — bạn không cần làm gì thêm.
+            <%= t('coc.dang_cho_ngan_hang') %>
           </p>
         </div>
       </div>
@@ -108,12 +106,12 @@
       <!-- ============================================ Xong -->
       <div class="nh-done nh-reveal" id="khoi-xong" style="display:none">
         <div class="nh-done__seal"><i class="fas fa-check"></i></div>
-        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)">Đã giữ bàn cho bạn</h2>
+        <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3.2vw,2.1rem)"><%= t('coc.da_giu_ban_2') %></h2>
         <p class="nh-lead" style="margin-top:.8rem">
-          Cảm ơn bạn. Tiền cọc sẽ được trừ vào hóa đơn khi bạn đến dùng bữa.
+          <%= t('coc.cam_on') %>
         </p>
         <div class="nh-done__actions">
-          <a class="nh-btn nh-btn--gold" href="/my-orders">Xem đơn của tôi</a>
+          <a class="nh-btn nh-btn--gold" href="/my-orders"><%= t('coc.xem_don') %></a>
         </div>
       </div>
     <% } %>
@@ -137,7 +135,7 @@
   $('nut-coc').onclick = function () {
     var nut = this;
     nut.disabled = true;
-    nut.innerHTML = 'Đang tạo mã...';
+    nut.innerHTML = '<%= t('coc.dang_tao_ma') %>';
 
     fetch('/thanh-toan/dat-coc/' + encodeURIComponent(SESIS) + '/tao-phien', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -162,7 +160,7 @@
       .catch(function (e) {
         alert(e.message);
         nut.disabled = false;
-        nut.innerHTML = '<i class="fas fa-qrcode"></i> Tạo mã chuyển khoản';
+        nut.innerHTML = '<i class="fas fa-qrcode"></i> <%= t('coc.tao_ma') %>';
       });
   };
 
@@ -175,7 +173,7 @@
       $('dem-nguoc').textContent = '(' + p + ':' + String(g).padStart(2, '0') + ')';
       if (conLai <= 0) {
         clearInterval(demHen); clearInterval(pollHen);
-        $('dem-nguoc').textContent = '(hết hạn)';
+        $('dem-nguoc').textContent = '<%= t('coc.het_han') %>';
       }
     }, 1000);
   }

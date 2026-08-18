@@ -68,7 +68,11 @@ const LOOPBACK = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', '[::1]']);
 
 // Ten card mang cua cac phan mem may ao pho bien. Chi dung cho duong du phong
 // khi phep do UDP that bai - do UDP van la cach chinh vi no khong phu thuoc ten.
-const TEN_CARD_AO = /vethernet|wsl|virtualbox|vmware|vmnet|hyper-v|loopback|docker|tailscale|zerotier|tap-|npcap|bluetooth/i;
+//
+// Lay tu config/chungChi.js chu khong giu ban sao rieng: hai noi cung phai tra
+// loi cau "dia chi nao la that", lech nhau mot chu la ma QR tro mot dia chi con
+// chung chi bao phu mot dia chi khac.
+const TEN_CARD_AO = chungChi.TEN_CARD_AO;
 
 let ipDaDo = null;   // ket qua phep do UDP gan nhat
 
@@ -111,20 +115,21 @@ function doDiaChi() {
 doDiaChi();
 setInterval(doDiaChi, 5 * 60000).unref();
 
-/** Dia chi IPv4 that, da bo cac card ao doan duoc theo ten. */
+/**
+ * Dia chi IPv4 that, da bo cac card ao va DA XEP theo kha nang dung.
+ *
+ * Truoc day tra thang `diaChiThat()` - danh sach do chi loc theo TEN card mang
+ * va sap xep theo thu tu chuoi. Tren may nay no cho ra
+ * ['192.168.4.169', '192.168.56.1']: dia chi dau tien tinh co la dia chi Wi-Fi
+ * that, nhung chi vi '4' xep truoc '5' theo thu tu chuoi - khong phai vi no
+ * dung. Doi dia chi Wi-Fi thanh 192.168.9.x la ma QR se tro vao card ao cua
+ * VirtualBox, va dien thoai quet xong chi thay "khong ket noi duoc may chu".
+ *
+ * `diaChiDeXuat()` xep theo dau hieu that su phan biet duoc hai loai - xem ghi
+ * chu cua no trong config/chungChi.js.
+ */
 function diaChiKhongPhaiMayAo() {
-  const ds = [];
-  const cac = os.networkInterfaces();
-  for (const ten of Object.keys(cac)) {
-    if (TEN_CARD_AO.test(ten)) continue;
-    for (const dc of cac[ten] || []) {
-      if (dc.family !== 'IPv4' && dc.family !== 4) continue;
-      if (dc.internal) continue;
-      if (dc.address.startsWith('169.254.')) continue;
-      ds.push(dc.address);
-    }
-  }
-  return ds;
+  return chungChi.diaChiDeXuat();
 }
 
 /** Dia chi may chu nen dung cho ma QR (chi phan IP, khong co cong). */

@@ -7,10 +7,41 @@
 const express = require('express');
 const ml = require('../services/mlService');
 const analytics = require('../services/analyticsService');
+const ngonNgu = require('../services/ngonNgu');
 
 const router = express.Router();
 
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+/**
+ * Gan ten mon theo ngon ngu vao danh sach goi y.
+ *
+ * Khu goi y dung tren trinh duyet nen no dung thang truong `name_mon` tra ve o
+ * day - ma `name_mon` luon la tieng Viet. Ket qua: trang tieng Nhat co mot o
+ * toan ten mon tieng Viet.
+ *
+ * Chi THEM `ten_chinh` / `ten_phu`, khong sua `name_mon`: gio hang, hop dong va
+ * phieu bao bep deu doc truong do, va ten luu trong CSDL khong duoc doi theo
+ * ngon ngu khach dang xem.
+ *
+ * Phai tra bang `monan` them mot lan vi `tenMon()` dich dua tren cot
+ * `ghichu_mon` (chua ten tieng Anh), ma nguon goi y ben Python khong tra ve cot
+ * nay.
+ */
+async function ganTenTheoNgonNgu(db, ds, nn) {
+  const ids = ds.map((m) => Number(m.id_mon)).filter(Boolean);
+  if (!ids.length) return ds;
+  const [rows] = await db.query(
+    `SELECT id_mon, name_mon, ghichu_mon FROM monan WHERE id_mon IN (${ids.map(() => '?').join(',')})`,
+    ids
+  );
+  const theoId = new Map(rows.map((r) => [Number(r.id_mon), r]));
+  return ds.map((m) => {
+    const goc = theoId.get(Number(m.id_mon)) || { name_mon: m.name_mon };
+    const ten = ngonNgu.tenMon(goc, nn);
+    return { ...m, ten_chinh: ten.chinh, ten_phu: ten.phu };
+  });
+}
 
 function requireQuanLy(req, res, next) {
   if (req.session.adminlogin) return next();
@@ -122,7 +153,9 @@ router.get('/goi-y/api/theo-gio-hang', bat(async (req, res) => {
     `SELECT id_mon FROM monan
      WHERE id_loai IN (SELECT id_loai FROM loai_mon
                        WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
-                          OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%')`
+                          OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%'
+                          OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+                          OR name_loai LIKE '%beer%' OR name_loai LIKE '%wine%')`
   );
   const laDoUong = new Set(drinkRows.map((r) => Number(r.id_mon)));
 
@@ -139,7 +172,9 @@ router.get('/goi-y/api/theo-gio-hang', bat(async (req, res) => {
        WHERE h.tinhtrang = 3 AND h.id_mon > 0 AND m.tinhtrang = 1
          AND m.id_loai NOT IN (SELECT id_loai FROM loai_mon
              WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
-                OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%')
+                OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%'
+                OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+                OR name_loai LIKE '%beer%' OR name_loai LIKE '%wine%')
        GROUP BY h.id_mon, m.name_mon, m.gia_mon, m.images
        ORDER BY sl DESC LIMIT 20`
     );
@@ -151,9 +186,36 @@ router.get('/goi-y/api/theo-gio-hang', bat(async (req, res) => {
     }
   }
 
+  // Duong cung: thuc don vua thay moi thi chua co lich su ban hang nao noi
+  // duoc voi mon dang co, ca hai nguon tren deu rong. Gioi thieu mon an dang
+  // ban con hon de trong khoi goi y.
+  if (!ds.length) {
+    const daCo = new Set(ids);
+    const [monMoi] = await db.query(
+      `SELECT id_mon, name_mon, gia_mon, images FROM monan
+       WHERE tinhtrang = 1 AND images IS NOT NULL AND images <> ''
+         AND id_loai NOT IN (SELECT id_loai FROM loai_mon
+             WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
+                OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%'
+                OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+                OR name_loai LIKE '%beer%' OR name_loai LIKE '%wine%')
+       ORDER BY RAND() LIMIT ?`,
+      [soLuong + ids.length]
+    );
+    for (const m of monMoi) {
+      if (ds.length >= soLuong) break;
+      if (daCo.has(Number(m.id_mon))) continue;
+      ds.push({ id_mon: m.id_mon, name_mon: String(m.name_mon).trim(),
+                gia_mon: Number(m.gia_mon), images: m.images, ly_do: 'mon_moi' });
+    }
+    if (ds.length) {
+      return res.json({ nguon: 'mon_moi', goi_y: await ganTenTheoNgonNgu(db, ds, req.ngonNgu) });
+    }
+  }
+
   ds = ds.slice(0, soLuong);
   // Neu con it nhat mot goi y tu luat ket hop thi giu nhan "luat_ket_hop".
-  res.json({ nguon: kq.nguon || 'ban_chay', goi_y: ds });
+  res.json({ nguon: kq.nguon || 'ban_chay', goi_y: await ganTenTheoNgonNgu(db, ds, req.ngonNgu) });
 }));
 
 module.exports = router;

@@ -1,12 +1,12 @@
 <%- include('partials/header') %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
   <div class="overlay"></div>
   <div class="container">
     <div class="row no-gutters slider-text align-items-end justify-content-center">
       <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Chat với nhân viên</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
+        <h1 class="mb-2 bread"><%= t('chat.tieu_de') %></h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
       </div>
     </div>
   </div>
@@ -19,8 +19,8 @@
         <div class="card shadow-sm">
           <div class="card-header bg-dark text-white d-flex align-items-center">
             <i class="ion-ios-chatbubbles mr-2" style="font-size:20px;"></i>
-            <strong>Hỗ trợ trực tuyến</strong>
-            <span class="ml-auto badge badge-success">Đang hoạt động</span>
+            <strong><%= t('chat.ho_tro') %></strong>
+            <span class="ml-auto badge badge-success"><%= t('chat.dang_hoat_dong') %></span>
           </div>
           <!-- Khu vực hiển thị tin nhắn -->
           <div class="card-body" id="chat-box" style="height:420px; overflow-y:auto; background:#f8f9fa;">
@@ -36,7 +36,7 @@
                 <% } else { %>
                   <div class="d-flex justify-content-start mb-3">
                     <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
-                      <small class="text-muted d-block"><strong><%= m.ten_nv || 'Nhân viên' %></strong></small>
+                      <small class="text-muted d-block"><strong><%= m.ten_nv || t('chat.nhan_vien') %></strong></small>
                       <div><%= m.noi_dung %></div>
                       <small style="color:#999; font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
                     </div>
@@ -46,15 +46,15 @@
             <% } else { %>
               <div class="text-center text-muted mt-5">
                 <i class="ion-ios-chatbubbles" style="font-size:48px; color:#ddd;"></i>
-                <p class="mt-2">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+                <p class="mt-2"><%= t('chat.chua_co_tin') %></p>
               </div>
             <% } %>
           </div>
           <!-- Form gửi tin nhắn -->
           <div class="card-footer">
             <form action="/chat/send" method="POST" class="d-flex">
-              <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập tin nhắn..." required autocomplete="off">
-              <button type="submit" class="btn btn-primary px-4">Gửi</button>
+              <input type="text" name="noi_dung" class="form-control mr-2" placeholder="<%= t('chat.nhap_tin') %>" required autocomplete="off">
+              <button type="submit" class="btn btn-primary px-4"><%= t('chung.gui') %></button>
             </form>
           </div>
         </div>
@@ -65,6 +65,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+  var TEN_NV_MAC_DINH = <%- JSON.stringify(t('chat.nhan_vien')) %>;
   const socket = io();
   const userId = '<%= session.userId %>';
   const chatBox = document.getElementById('chat-box');
@@ -115,7 +116,7 @@
     ` : `
       <div class="d-flex justify-content-start mb-3">
         <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
-          <small class="text-muted d-block"><strong>${data.ten_nv || 'Nhân viên'}</strong></small>
+          <small class="text-muted d-block"><strong>${data.ten_nv || TEN_NV_MAC_DINH}</strong></small>
           <div>${data.noi_dung}</div>
           <small style="color:#999; font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
         </div>

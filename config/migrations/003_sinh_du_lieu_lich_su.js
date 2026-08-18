@@ -104,62 +104,77 @@ const PHAN_BO_GIO = [
 const KICH_BAN = [
   {
     ten: 'gia_dinh',
-    trong_so: 26,
+    trong_so: 24,
     so_khach: [4, 8],
     loai_don: 'tai_cho',
     nhom: [
-      { pool: 'mon_chinh', p: 1.0, sl: [2, 3] },
-      { pool: 'com_bun', p: 0.9, sl: [1, 2] },
-      { pool: 'khai_vi', p: 0.75, sl: [1, 2] },
-      { pool: 'trang_mieng', p: 0.7, sl: [1, 2] },
+      { pool: 'sashimi', p: 0.85, sl: [1, 2] },
+      { pool: 'sushi', p: 0.95, sl: [2, 4] },
+      { pool: 'nuong', p: 0.8, sl: [1, 2] },
+      { pool: 'com', p: 0.6, sl: [1, 2] },
+      { pool: 'khai_vi', p: 0.7, sl: [1, 2] },
       { pool: 'nuoc_ngot', p: 0.85, sl: [2, 4] },
     ],
   },
   {
     ten: 'nhau',
-    trong_so: 20,
+    trong_so: 18,
     so_khach: [3, 6],
     loai_don: 'tai_cho',
     nhom: [
-      { pool: 'mon_nhau', p: 1.0, sl: [2, 3] },
-      { pool: 'khai_vi', p: 0.85, sl: [1, 2] },
-      { pool: 'bia', p: 0.95, sl: [4, 10] },
-      { pool: 'mon_chinh', p: 0.35, sl: [1, 1] },
+      { pool: 'sashimi', p: 0.95, sl: [1, 3] },
+      { pool: 'nuong', p: 0.9, sl: [2, 3] },
+      { pool: 'khai_vi', p: 0.8, sl: [1, 2] },
+      { pool: 'bia', p: 0.95, sl: [3, 8] },
     ],
   },
   {
     ten: 'trua_van_phong',
-    trong_so: 24,
+    trong_so: 22,
     so_khach: [1, 3],
     loai_don: 'tai_cho',
     gio_uu_tien: [11, 12, 13],
     nhom: [
-      { pool: 'com_bun', p: 1.0, sl: [1, 2] },
+      { pool: 'com', p: 0.7, sl: [1, 2] },
+      { pool: 'mi', p: 0.55, sl: [1, 1] },
+      { pool: 'sup', p: 0.45, sl: [1, 1] },
       { pool: 'nuoc_re', p: 0.9, sl: [1, 2] },
-      { pool: 'trang_mieng', p: 0.25, sl: [1, 1] },
     ],
   },
   {
     ten: 'cap_doi',
-    trong_so: 14,
+    trong_so: 13,
     so_khach: [2, 2],
     loai_don: 'tai_cho',
     gio_uu_tien: [18, 19, 20],
     nhom: [
-      { pool: 'mon_chinh', p: 1.0, sl: [1, 2] },
-      { pool: 'khai_vi', p: 0.7, sl: [1, 1] },
+      { pool: 'sashimi', p: 0.8, sl: [1, 2] },
+      { pool: 'sushi', p: 0.9, sl: [1, 3] },
       { pool: 'trang_mieng', p: 0.75, sl: [1, 2] },
       { pool: 'nuoc_ngot', p: 0.8, sl: [2, 2] },
     ],
   },
   {
+    ten: 'lau_nhom',
+    trong_so: 8,
+    so_khach: [4, 8],
+    loai_don: 'tai_cho',
+    gio_uu_tien: [18, 19, 20],
+    nhom: [
+      { pool: 'lau', p: 1.0, sl: [1, 2] },
+      { pool: 'khai_vi', p: 0.7, sl: [1, 2] },
+      { pool: 'bia', p: 0.75, sl: [2, 6] },
+      { pool: 'com', p: 0.4, sl: [1, 1] },
+    ],
+  },
+  {
     ten: 'mang_ve',
-    trong_so: 10,
+    trong_so: 9,
     so_khach: [1, 2],
     loai_don: 'mang_ve',
     nhom: [
-      { pool: 'com_bun', p: 0.85, sl: [1, 2] },
-      { pool: 'mon_chinh', p: 0.5, sl: [1, 1] },
+      { pool: 'sushi', p: 0.85, sl: [1, 3] },
+      { pool: 'com', p: 0.6, sl: [1, 1] },
       { pool: 'nuoc_re', p: 0.5, sl: [1, 2] },
     ],
   },
@@ -169,36 +184,54 @@ const KICH_BAN = [
     so_khach: [1, 4],
     loai_don: 'giao_hang',
     nhom: [
-      { pool: 'com_bun', p: 0.8, sl: [1, 3] },
-      { pool: 'mon_chinh', p: 0.6, sl: [1, 2] },
+      { pool: 'sushi', p: 0.8, sl: [1, 3] },
+      { pool: 'com', p: 0.65, sl: [1, 2] },
+      { pool: 'mon_nong', p: 0.5, sl: [1, 1] },
       { pool: 'nuoc_ngot', p: 0.6, sl: [1, 3] },
-      { pool: 'khai_vi', p: 0.3, sl: [1, 1] },
-    ],
-  },
-  {
-    ten: 'an_chay',
-    trong_so: 4,
-    so_khach: [1, 3],
-    loai_don: 'tai_cho',
-    nhom: [
-      { pool: 'chay', p: 1.0, sl: [1, 2] },
-      { pool: 'com_bun', p: 0.7, sl: [1, 1] },
-      { pool: 'nuoc_re', p: 0.6, sl: [1, 2] },
     ],
   },
 ];
 
-/** Gan mon vao nhom theo TEN mon. */
-const NHOM_MON = {
-  mon_chinh: ['Bò lagu', 'Bò nướng Y', 'Bò nướng đá', 'Bò hầm', 'Gà hầm', 'Gà nướng', 'Sườn heo ngon', 'Heo quay', 'Heo nướng'],
-  mon_nhau: ['Heo lên mẹt', 'Khai vị ba món', 'Chả giò', 'Gà nướng'],
-  khai_vi: ['Chả giò', 'Khai vị ba món', 'Gà ngó sen', 'Gà gỏi', 'Gà gỏi ', 'Đậu hủ chiên giòn '],
-  com_bun: ['Cơm chiên Lộc Phát', 'Cơm xá xíu', 'Hủ tiếu áp chảo ', 'Miến xào cua'],
-  trang_mieng: ['Trái cây 1', 'Trái cây 2', 'Rau câu 1', 'Rau câu 2'],
-  nuoc_ngot: ['Coca-Cola', 'Pepsi', 'Nước cam ép', 'Nước suối'],
-  nuoc_re: ['Trà đá', 'Nước suối'],
-  bia: ['Bia Tiger'],
-  chay: ['Đậu hủ chiên giòn ', 'Đậu hủ tứ xuyên'],
+
+/**
+ * Gan mon vao nhom theo DANH MUC, khong theo ten mon.
+ *
+ * Ban dau nhom duoc liet ke bang ten mon ('Bo lagu', 'Chagio'...). Cach do
+ * chet ngay lan dau nha hang thay thuc don: toan bo ten cu bien mat, moi nhom
+ * rong sach, script sinh ra 0 don va Apriori khong con gi de hoc.
+ *
+ * Gan theo danh muc thi ben hon nhieu - nha hang them bot mon trong danh muc
+ * la chuyen thuong xuyen, con xoa han mot danh muc thi hiem. Khop theo phan
+ * chu HOA sau so thu tu: "05. SASHIMI" -> SASHIMI.
+ *
+ * Mot danh muc duoc phep nam trong nhieu nhom (do uong vua la `nuoc_ngot` vua
+ * co the la `nuoc_re`); loc them bang tu khoa o `LOC_TEN` ben duoi.
+ */
+const NHOM_DANH_MUC = {
+  sashimi:     ['SASHIMI', 'SASHIMI COMBO'],
+  sushi:       ['GUNKAN', 'NIGIRI', 'SUSHI COMBO', 'MAKI', 'TEMAKI', 'RICE ROLL'],
+  nuong:       ['GRILLED', 'TEPPAN YAKI'],
+  mon_nong:    ['HOT DISH', 'TEMPURA'],
+  khai_vi:     ['APPERTIZER', 'SALAD', 'JAPANESE OYSTER'],
+  sup:         ['SOUP'],
+  mi:          ['NOODLE'],
+  lau:         ['HOT POT'],
+  com:         ['RICE'],
+  trang_mieng: ['DESSERT'],
+  nuoc_ngot:   ['DRINK'],
+  nuoc_re:     ['DRINK'],
+  bia:         ['SAKE - BEER'],
+};
+
+/**
+ * Loc them trong nhom, theo tu khoa trong ten mon.
+ *
+ * `nuoc_re` la nuoc khach goi kem bua trua cho re - nuoc suoi, tra. Neu de ca
+ * danh muc DRINK thi khach an trua cung goi matcha latte 59k, sai ban chat va
+ * lam nhoe luat ket hop cua nhom trua van phong.
+ */
+const LOC_TEN = {
+  nuoc_re: (ten) => /NƯỚC SUỐI|TRÀ|COCA|SPRITE|STING/i.test(ten),
 };
 
 const LOAI_TIEC = ['Sinh nhật', 'Họp mặt gia đình', 'Liên hoan công ty', 'Hẹn hò', 'Ăn thường', 'Tiếp khách'];
@@ -256,21 +289,52 @@ async function main() {
 
   // --- Nap danh muc mon ---
   const [mons] = await db.query(
-    'SELECT id_mon, name_mon, gia_mon, images FROM monan WHERE tinhtrang = 1'
+    `SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, l.name_loai
+     FROM monan m JOIN loai_mon l ON l.id_loai = m.id_loai
+     WHERE m.tinhtrang = 1`
   );
-  const monTheoTen = {};
-  for (const m of mons) monTheoTen[m.name_mon] = m;
+  // Gan mon vao nhom theo danh muc. `tenNen` bo so thu tu o dau ten danh muc
+  // ("05. SASHIMI" -> "SASHIMI") de doi so thu tu khong lam vo anh xa.
+  const tenNen = (s) => String(s).replace(/^\s*\d+\.\s*/, '').trim().toUpperCase();
+  const monTheoDanhMuc = new Map();
+  for (const m of mons) {
+    const k = tenNen(m.name_loai);
+    if (!monTheoDanhMuc.has(k)) monTheoDanhMuc.set(k, []);
+    monTheoDanhMuc.get(k).push(m);
+  }
 
   const pool = {};
-  const monThieu = new Set();
-  for (const [nhom, tens] of Object.entries(NHOM_MON)) {
+  const nhomRong = [];
+  for (const [nhom, dsDanhMuc] of Object.entries(NHOM_DANH_MUC)) {
+    const loc = LOC_TEN[nhom];
     pool[nhom] = [];
-    for (const t of tens) {
-      if (monTheoTen[t]) pool[nhom].push(monTheoTen[t]);
-      else monThieu.add(t);
+    for (const dm of dsDanhMuc) {
+      for (const m of monTheoDanhMuc.get(dm) || []) {
+        if (loc && !loc(m.name_mon)) continue;
+        pool[nhom].push(m);
+      }
     }
+    if (!pool[nhom].length) nhomRong.push(nhom);
   }
-  if (monThieu.size) console.log(`  ! mon khong tim thay: ${[...monThieu].join(', ')}`);
+
+  console.log('  Nhom mon:');
+  for (const [nhom, ds] of Object.entries(pool)) {
+    console.log(`      ${nhom.padEnd(12)} ${String(ds.length).padStart(3)} mon`);
+  }
+
+  /*
+    Dung han neu co nhom rong.
+
+    Ban truoc gan nhom theo ten mon; khi thuc don doi, moi nhom rong sach nhung
+    script van chay het, in ra "sinh 0 don" roi bao hoan tat - loi im lang.
+    Tha hong to con hon sinh ra mot bo du lieu rong ma khong ai nhan ra.
+  */
+  if (nhomRong.length) {
+    throw new Error(
+      `Cac nhom mon khong co mon nao: ${nhomRong.join(', ')}. ` +
+      'Kiem tra NHOM_DANH_MUC co con khop ten danh muc trong bang loai_mon khong.'
+    );
+  }
 
   const [khachs] = await db.query('SELECT id FROM khach_hang');
   const idKhachs = khachs.map((k) => k.id);

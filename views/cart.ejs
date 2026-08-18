@@ -1,12 +1,12 @@
-<%- include('partials/header', { title: 'Giỏ hàng' }) %>
+<%- include('partials/header', { title: t('gio_hang.tieu_de') }) %>
 
 <section class="nh-subhero" style="min-height:38vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Thực đơn của bạn</span>
-    <h1>Giỏ hàng</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Giỏ hàng</div>
+    <span class="nh-eyebrow"><%= t('gio_hang.eyebrow') %></span>
+    <h1><%= t('gio_hang.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('gio_hang.tieu_de') %></div>
   </div>
 </section>
 
@@ -25,7 +25,7 @@
         <div style="display:flex; gap:.9rem; align-items:flex-start">
           <i class="fas fa-circle-info" style="color:var(--nh-gold); font-size:1.3rem; margin-top:.2rem"></i>
           <div>
-            <strong style="color:var(--nh-espresso)">Hãy chọn món trước khi đặt bàn</strong>
+            <strong style="color:var(--nh-espresso)"><%= t('gio_hang.chon_mon_truoc') %></strong>
             <p class="nh-note" style="margin-top:.3rem"><%= error %></p>
           </div>
         </div>
@@ -39,38 +39,38 @@
           <div class="nh-panel nh-reveal">
             <h3 class="nh-panel__title">
               <i class="fas fa-utensils"></i>
-              Món đã chọn
-              <span class="nh-locked" style="margin-left:auto"><%= cartItems.length %> món</span>
+              <%= t('gio_hang.mon_da_chon') %>
+              <span class="nh-locked" style="margin-left:auto"><%= cartItems.length %> <%= t('chung.mon') %></span>
             </h3>
 
             <% cartItems.forEach(function (item) { %>
               <div class="nh-line">
                 <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= item.name_mon %>"
-                     onerror="this.src='/bg_2.jpg'">
+                     onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
 
                 <div class="nh-line__info">
-                  <h4 class="nh-line__name"><%= (item.name_mon || '').trim() %></h4>
-                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ / phần</div>
+                  <h4 class="nh-line__name"><%= tenMon(item).chinh %></h4>
+                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ <%= t('gio_hang.moi_phan') %></div>
                 </div>
 
                 <!-- Đổi số lượng: gửi ngay khi bấm +/- nên không cần nút "Cập nhật" riêng. -->
                 <form action="/update-cart" method="post" class="nh-line__qty js-qty">
                   <input type="hidden" name="cartid" value="<%= item.cart_id %>">
                   <div class="nh-qty">
-                    <button type="button" data-buoc="-1" aria-label="Bớt một phần"
+                    <button type="button" data-buoc="-1" aria-label="<%= t('chi_tiet.bot_mot_phan') %>"
                       <%= item.soluong <= 1 ? 'disabled' : '' %>><i class="fas fa-minus"></i></button>
                     <input type="number" name="soluong" value="<%= item.soluong %>" min="1" max="50"
-                           aria-label="Số phần <%= item.name_mon %>">
-                    <button type="button" data-buoc="1" aria-label="Thêm một phần"><i class="fas fa-plus"></i></button>
+                           aria-label="<%= t('chung.so_luong') %> <%= item.name_mon %>">
+                    <button type="button" data-buoc="1" aria-label="<%= t('chi_tiet.them_mot_phan') %>"><i class="fas fa-plus"></i></button>
                   </div>
-                  <noscript><button type="submit" class="nh-btn nh-btn--sm nh-btn--dark">Cập nhật</button></noscript>
+                  <noscript><button type="submit" class="nh-btn nh-btn--sm nh-btn--dark"><%= t('gio_hang.cap_nhat') %></button></noscript>
                 </form>
 
                 <div class="nh-line__sum"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
 
                 <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>"
-                   title="Bỏ món này"
-                   onclick="return confirm('Bỏ &quot;<%= (item.name_mon||'').trim() %>&quot; khỏi giỏ hàng?')">
+                   title="<%= t('gio_hang.bo_mon_nay') %>"
+                   onclick="return confirm('<%= t('gio_hang.xac_nhan_bo', { ten: (item.name_mon||'').trim() }) %>')">
                   <i class="fas fa-times"></i>
                 </a>
               </div>
@@ -79,7 +79,7 @@
 
           <div style="margin-top:1.2rem">
             <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
-              <i class="fas fa-plus"></i> Chọn thêm món
+              <i class="fas fa-plus"></i> <%= t('gio_hang.chon_them_mon') %>
             </a>
           </div>
         </div>
@@ -87,23 +87,23 @@
         <!-- Tóm tắt -->
         <aside class="nh-summary nh-reveal">
           <div class="nh-panel">
-            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> Tạm tính</h3>
+            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('gio_hang.tam_tinh') %></h3>
 
             <div class="nh-summary__row">
-              <span>Số món</span><span><%= cartItems.length %></span>
+              <span><%= t('gio_hang.so_mon') %></span><span><%= cartItems.length %></span>
             </div>
             <div class="nh-summary__row">
-              <span>Tổng số phần</span>
+              <span><%= t('gio_hang.tong_so_phan') %></span>
               <span><%= cartItems.reduce(function (s, i) { return s + Number(i.soluong); }, 0) %></span>
             </div>
 
             <div class="nh-summary__total">
-              <span>Tổng cộng</span>
+              <span><%= t('chung.tong_cong') %></span>
               <b><%= formatMoney(subtotal) %> ₫</b>
             </div>
 
             <a href="/datban" class="nh-btn nh-btn--gold">
-              Tiến hành đặt bàn <i class="fas fa-arrow-right"></i>
+              <%= t('gio_hang.thanh_toan') %> <i class="fas fa-arrow-right"></i>
             </a>
 
             <p class="nh-note">
@@ -116,12 +116,12 @@
     <% } else { %>
       <div class="nh-empty nh-reveal">
         <i class="fas fa-shopping-bag"></i>
-        <h3>Giỏ hàng đang trống</h3>
+        <h3><%= t('gio_hang.dang_trong') %></h3>
         <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
           Hãy chọn vài món trong thực đơn. Bạn có thể đổi số lượng hoặc bỏ bớt bất cứ lúc nào
           trước khi đặt bàn.
         </p>
-        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
       </div>
     <% } %>
   </div>

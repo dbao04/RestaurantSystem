@@ -1,12 +1,12 @@
 <%- include('partials/header') %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
   <div class="overlay"></div>
   <div class="container">
     <div class="row no-gutters slider-text align-items-end justify-content-center">
       <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Đánh giá dịch vụ</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Đánh giá <i class="ion-ios-arrow-forward"></i></span></p>
+        <h1 class="mb-2 bread"><%= t('danh_gia.tieu_de') %></h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span><%= t('danh_gia.tieu_de_ngan') %> <i class="ion-ios-arrow-forward"></i></span></p>
       </div>
     </div>
   </div>
@@ -22,11 +22,11 @@
       <div class="col-md-6 mb-4">
         <% if (canRate) { %>
         <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="ion-ios-star mr-2"></i>Gửi đánh giá của bạn</div>
+          <div class="card-header bg-dark text-white"><i class="ion-ios-star mr-2"></i><%= t('danh_gia.gui_cua_ban') %></div>
           <div class="card-body">
             <form action="/rating" method="POST">
               <div class="form-group text-center">
-                <label class="d-block mb-2">Chất lượng dịch vụ</label>
+                <label class="d-block mb-2"><%= t('danh_gia.chat_luong') %></label>
                 <div id="star-rating" class="mb-2">
                   <% for(let i = 1; i <= 5; i++) { %>
                     <input type="radio" id="star<%= i %>" name="sao" value="<%= i %>" <%= i === 5 ? 'checked' : '' %> style="display:none;">
@@ -35,17 +35,17 @@
                 </div>
               </div>
               <div class="form-group">
-                <label>Nhận xét của bạn</label>
-                <textarea class="form-control" name="noi_dung" rows="4" placeholder="Chia sẻ trải nghiệm của bạn về nhà hàng..."></textarea>
+                <label><%= t('danh_gia.nhan_xet') %></label>
+                <textarea class="form-control" name="noi_dung" rows="4" placeholder="<%= t('danh_gia.goi_y') %>"></textarea>
               </div>
-              <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá</button>
+              <button type="submit" class="btn btn-primary btn-block"><%= t('danh_gia.gui') %></button>
             </form>
           </div>
         </div>
         <% } else { %>
           <div class="alert alert-info text-center mt-3" style="padding: 2em; border-radius: 8px;">
             <i class="ion-ios-information-circle-outline" style="font-size: 40px; color: #17a2b8; display: block; margin-bottom: 10px;"></i>
-            <h5>Rất tiếc!</h5>
+            <h5><%= t('danh_gia.rat_tiec') %></h5>
             <p class="mb-0">Bạn cần trải nghiệm cấu trúc dịch vụ của chúng tôi bằng cách hoàn thành ít nhất một đơn đặt bàn mới có thể gửi đánh giá dịch vụ.</p>
           </div>
         <% } %>
@@ -54,7 +54,7 @@
       <!-- Danh sách đánh giá -->
       <div class="col-md-6">
         <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="ion-ios-list mr-2"></i>Đánh giá gần đây</div>
+          <div class="card-header bg-dark text-white"><i class="ion-ios-list mr-2"></i><%= t('danh_gia.gan_day') %></div>
           <div class="card-body" style="max-height:400px; overflow-y:auto;">
             <% if (ratings && ratings.length > 0) { %>
               <% ratings.forEach(r => { %>
@@ -65,13 +65,13 @@
                         <% for(let i=1; i<=5; i++) { %><% if(i<=r.sao) { %>&#9733;<% } else { %>&#9734;<% } %><% } %>
                       </span>
                     </h6>
-                    <p class="mb-1 text-muted"><%= r.noi_dung || '<em>Không có nhận xét</em>' %></p>
+                    <p class="mb-1 text-muted"><%- r.noi_dung ? r.noi_dung : '<em>' + t('danh_gia.khong_nhan_xet') + '</em>' %></p>
                     <small class="text-muted"><%= new Date(r.thoigian).toLocaleDateString('vi-VN') %></small>
                   </div>
                 </div>
               <% }) %>
             <% } else { %>
-              <p class="text-center text-muted">Chưa có đánh giá nào.</p>
+              <p class="text-center text-muted"><%= t('danh_gia.chua_co') %></p>
             <% } %>
           </div>
         </div>

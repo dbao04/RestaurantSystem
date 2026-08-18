@@ -10,8 +10,8 @@
     <div class="goi-y-box">
       <div class="goi-y-dau">
         <div>
-          <h3 class="goi-y-tieu-de">Có thể bạn sẽ thích</h3>
-          <p class="goi-y-mo-ta" id="goiYMoTa">Gợi ý dựa trên các món bạn đã chọn</p>
+          <h3 class="goi-y-tieu-de"><%= t('goi_y.tieu_de') %></h3>
+          <p class="goi-y-mo-ta" id="goiYMoTa"><%= t('goi_y.theo_don') %></p>
         </div>
         <span class="goi-y-nhan" id="goiYNhan"></span>
       </div>
@@ -52,6 +52,7 @@
     font-weight: 600; font-size: 15px; margin: 0 0 6px; color: #1a1a1a;
     min-height: 40px; line-height: 1.35;
   }
+  .goi-y-ten-phu { font-size: 12px; color: #9ca3af; margin: -4px 0 7px; line-height: 1.35; }
   .goi-y-gia { color: #c0392b; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
   .goi-y-vi-sao {
     font-size: 11.5px; color: #6b7280; background: #f9fafb; border-radius: 6px;
@@ -67,8 +68,26 @@
 </style>
 
 <script>
+/* Chuoi cho phan JavaScript - xem ghi chu tuong tu trong views/booking.ejs. */
+var GY = {
+  theoDon:       <%- JSON.stringify(t('goi_y.theo_don')) %>,
+  theoThoiQuen:  <%- JSON.stringify(t('goi_y.theo_thoi_quen')) %>,
+  thongKe:       <%- JSON.stringify(t('goi_y.thong_ke')) %>,
+  lan:           <%- JSON.stringify(t('goi_y.lan')) %>,
+  nhanAi:        <%- JSON.stringify(t('goi_y.nhan_ai')) %>,
+  nhanMonMoi:    <%- JSON.stringify(t('goi_y.nhan_mon_moi')) %>,
+  nhanBanChay:   <%- JSON.stringify(t('goi_y.nhan_ban_chay')) %>,
+  moTaMonMoi:    <%- JSON.stringify(t('goi_y.mo_ta_mon_moi')) %>,
+  moTaBanChay:   <%- JSON.stringify(t('goi_y.mo_ta_ban_chay')) %>,
+  trongNhomBanChay: <%- JSON.stringify(t('goi_y.trong_nhom_ban_chay')) %>,
+  themGio:       <%- JSON.stringify(t('chi_tiet.them_gio')) %>,
+};
 (function () {
   const tienVN = (v) => Number(v || 0).toLocaleString('vi-VN') + 'đ';
+  // Ten mon va ban dich deu di thang vao innerHTML - phai chan the HTML.
+  const esc = (v) => String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   async function taiGoiY() {
     let kq;
@@ -86,28 +105,35 @@
     if (!ds.length) return;
 
     const tuLuat = kq.nguon === 'luat_ket_hop';
+    const monMoi = kq.nguon === 'mon_moi';
     document.getElementById('goiYNhan').textContent =
-      tuLuat ? 'AI • Luật kết hợp Apriori' : 'Món bán chạy';
+      tuLuat ? GY.nhanAi : monMoi ? GY.nhanMonMoi : GY.nhanBanChay;
     document.getElementById('goiYMoTa').textContent = tuLuat
-      ? 'Gợi ý dựa trên thói quen gọi món của khách hàng khác'
-      : 'Những món được gọi nhiều nhất gần đây';
+      ? GY.theoThoiQuen
+      : monMoi ? GY.moTaMonMoi : GY.moTaBanChay;
 
     document.getElementById('goiYLuoi').innerHTML = ds.map((m) => {
-      const anh = m.images ? `/food/${m.images}` : '/bg_3.jpg';
+      const anh = m.images ? `/food/${esc(m.images)}` : '/mon-thay-the.svg';
       const viSao = m.lift
-        ? `<b>${(m.tin_cay * 100).toFixed(0)}%</b> khách gọi món này kèm theo &mdash; phổ biến gấp <b>${Number(m.lift).toFixed(1)} lần</b> bình thường`
-        : 'Nằm trong nhóm món được gọi nhiều nhất';
+        ? `<b>${(m.tin_cay * 100).toFixed(0)}%</b> ${esc(GY.thongKe)} <b>${Number(m.lift).toFixed(1)}</b> ${esc(GY.lan)}`
+        : esc(GY.trongNhomBanChay);
+      // `ten_chinh` la ten theo ngon ngu dang xem; `name_mon` chi la duong lui
+      // cho ban may chu cu chua tra ve truong nay.
+      const ten = m.ten_chinh || m.name_mon;
+      const tenPhu = m.ten_phu && m.ten_phu !== ten
+        ? `<p class="goi-y-ten-phu">${esc(m.ten_phu)}</p>` : '';
       return `
         <div class="goi-y-the">
           <div class="goi-y-anh" style="background-image:url('${anh}')"></div>
           <div class="goi-y-than">
-            <p class="goi-y-ten">${m.name_mon}</p>
+            <p class="goi-y-ten">${esc(ten)}</p>
+            ${tenPhu}
             <div class="goi-y-gia">${tienVN(m.gia_mon)}</div>
             <div class="goi-y-vi-sao">${viSao}</div>
             <form action="/add-to-cart" method="POST">
-              <input type="hidden" name="monid" value="${m.id_mon}">
+              <input type="hidden" name="monid" value="${Number(m.id_mon)}">
               <input type="hidden" name="soluong" value="1">
-              <button type="submit" class="goi-y-nut">Thêm vào giỏ</button>
+              <button type="submit" class="goi-y-nut">${esc(GY.themGio)}</button>
             </form>
           </div>
         </div>`;

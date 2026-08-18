@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Thanh toán - Nhà Hàng Bảo Đoàn</title>
+  <title><%= t('ttqr.tieu_de') %> - <%= t('chung.ten_nha_hang') %></title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -138,8 +138,8 @@
 
 <div class="dau">
   <div class="boc" style="display:flex;align-items:center;justify-content:space-between;width:100%">
-    <div class="hieu"><i class="fas fa-utensils"></i> Nhà Hàng Bảo Đoàn</div>
-    <div class="the-ban"><%= hoaDon.thongTin.ten_ban || 'Hóa đơn' %></div>
+    <div class="hieu"><i class="fas fa-utensils"></i> <%= t('chung.ten_nha_hang') %></div>
+    <div class="the-ban"><%= hoaDon.thongTin.ten_ban || t('ttqr.hoa_don') %></div>
   </div>
 </div>
 
@@ -148,12 +148,12 @@
   <% if (hoaDon.tien.da_tra_du) { %>
     <div class="xong">
       <div class="dau-tich"><i class="fas fa-check"></i></div>
-      <h1>Hóa đơn đã thanh toán</h1>
-      <p>Cảm ơn quý khách đã dùng bữa tại Nhà Hàng Bảo Đoàn.<br>Hẹn gặp lại quý khách!</p>
+      <h1><%= t('ttqr.da_thanh_toan') %></h1>
+      <p><%- t('ttqr.cam_on', { ten: t('chung.ten_nha_hang') }) %></p>
     </div>
   <% } else { %>
     <div class="khoi">
-      <h2>Bàn của bạn đã gọi</h2>
+      <h2><%= t('ttqr.ban_da_goi') %></h2>
       <% hoaDon.mon.forEach(function (m) { %>
         <div class="mon">
           <div><%= m.name_mon %> <span class="sl">× <%= m.soluong %></span></div>
@@ -163,10 +163,10 @@
     </div>
 
     <div class="khoi">
-      <h2>Mã giảm giá</h2>
+      <h2><%= t('ttqr.ma_giam_gia') %></h2>
       <div class="o-ma">
-        <input type="text" id="ma-giam-gia" placeholder="Nhập mã nếu có" autocomplete="off" autocapitalize="characters">
-        <button id="nut-ap-ma">Áp dụng</button>
+        <input type="text" id="ma-giam-gia" placeholder="<%= t('ttqr.nhap_ma') %>" autocomplete="off" autocapitalize="characters">
+        <button id="nut-ap-ma"><%= t('ttqr.ap_dung') %></button>
       </div>
       <div class="bao" id="bao-ma"></div>
       <!-- Chương trình quản trị đang cho chạy và hợp lệ với chính đơn này. -->
@@ -174,29 +174,29 @@
     </div>
 
     <div class="khoi">
-      <h2>Tổng cộng</h2>
-      <div class="dong-tien mo"><span>Tạm tính</span><span class="tien" id="o-tam-tinh"><%= formatMoney(hoaDon.tien.tam_tinh) %>đ</span></div>
-      <div class="dong-tien giam an" id="hang-giam"><span>Giảm giá</span><span class="tien" id="o-giam">0đ</span></div>
+      <h2><%= t('ttqr.tong_cong') %></h2>
+      <div class="dong-tien mo"><span><%= t('ttqr.tam_tinh') %></span><span class="tien" id="o-tam-tinh"><%= formatMoney(hoaDon.tien.tam_tinh) %>đ</span></div>
+      <div class="dong-tien giam an" id="hang-giam"><span><%= t('ttqr.giam_gia') %></span><span class="tien" id="o-giam">0đ</span></div>
       <% if (hoaDon.tyLe.phi_phuc_vu > 0) { %>
-        <div class="dong-tien mo"><span>Phí phục vụ <%= hoaDon.tyLe.phi_phuc_vu %>%</span><span class="tien"><%= formatMoney(hoaDon.tien.phi_phuc_vu) %>đ</span></div>
+        <div class="dong-tien mo"><span><%= t('ttqr.phi_phuc_vu') %> <%= hoaDon.tyLe.phi_phuc_vu %>%</span><span class="tien"><%= formatMoney(hoaDon.tien.phi_phuc_vu) %>đ</span></div>
       <% } %>
       <% if (hoaDon.tyLe.thue_vat > 0) { %>
         <div class="dong-tien mo"><span>VAT <%= hoaDon.tyLe.thue_vat %>%</span><span class="tien"><%= formatMoney(hoaDon.tien.thue_vat) %>đ</span></div>
       <% } %>
       <% if (hoaDon.tien.da_thanh_toan > 0) { %>
-        <div class="dong-tien giam"><span>Đã thanh toán</span><span class="tien">− <%= formatMoney(hoaDon.tien.da_thanh_toan) %>đ</span></div>
+        <div class="dong-tien giam"><span><%= t('ttqr.da_thanh_toan_roi') %></span><span class="tien">− <%= formatMoney(hoaDon.tien.da_thanh_toan) %>đ</span></div>
       <% } %>
-      <div class="dong-tien tong"><span>Cần thanh toán</span><span class="tien" id="o-con-lai"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span></div>
+      <div class="dong-tien tong"><span><%= t('ttqr.can_thanh_toan') %></span><span class="tien" id="o-con-lai"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span></div>
     </div>
 
     <div class="khoi">
-      <h2>Bạn trả bao nhiêu?</h2>
+      <h2><%= t('ttqr.ban_tra_bao_nhieu') %></h2>
       <div class="o-ma">
         <input type="number" id="so-tien" value="<%= hoaDon.tien.con_phai_tra %>" step="1000" style="text-transform:none">
-        <button id="nut-tat-ca">Tất cả</button>
+        <button id="nut-tat-ca"><%= t('ttqr.tat_ca') %></button>
       </div>
       <div class="bao" style="color:var(--text-muted)">
-        Đi cùng bạn bè? Nhập đúng phần của bạn, người còn lại quét mã lần nữa để trả tiếp.
+        <%= t('ttqr.chia_bill') %>
       </div>
     </div>
   <% } %>
@@ -205,25 +205,25 @@
 <!-- =========================================== MÀN 2: quét mã chuyển khoản -->
 <div id="man-qr" class="boc an">
   <div class="khoi qr-boc">
-    <div class="qr-anh"><img id="anh-qr" alt="Mã VietQR"></div>
+    <div class="qr-anh"><img id="anh-qr" alt="<%= t('coc.ma_vietqr') %>"></div>
     <div class="qr-tien" id="qr-tien"></div>
     <div class="qr-nh"><span id="qr-ngan-hang"></span> · <span id="qr-stk"></span></div>
     <div class="qr-nh" id="qr-ten-tk" style="margin-top:2px"></div>
 
     <div class="qr-nd">
-      <div class="nhan">Nội dung chuyển khoản</div>
+      <div class="nhan"><%= t('ttqr.noi_dung_ck') %></div>
       <div class="ma" id="qr-noi-dung"></div>
     </div>
 
     <div class="cho" id="o-cho">
       <div class="vong"></div>
-      <span>Đang chờ xác nhận từ ngân hàng<span id="dem"></span></span>
+      <span><%= t('ttqr.dang_cho') %><span id="dem"></span></span>
     </div>
 
     <ul class="huong-dan">
-      <li>Mở app ngân hàng bất kỳ, chọn <b>Quét mã QR</b></li>
-      <li>Số tiền và nội dung đã điền sẵn — <b>không sửa nội dung</b></li>
-      <li>Chuyển xong, màn hình này tự chuyển sang trang cảm ơn</li>
+      <li><%= t('ttqr.hd1') %></li>
+      <li><%= t('ttqr.hd2') %></li>
+      <li><%= t('ttqr.hd3') %></li>
     </ul>
   </div>
 </div>
@@ -232,17 +232,17 @@
 <div id="man-xong" class="boc an">
   <div class="xong">
     <div class="dau-tich"><i class="fas fa-check"></i></div>
-    <h1>Thanh toán thành công</h1>
-    <p id="loi-cam-on">Cảm ơn quý khách đã dùng bữa tại Nhà Hàng Bảo Đoàn.<br>Hẹn gặp lại quý khách!</p>
+    <h1><%= t('ttqr.thanh_cong') %></h1>
+    <p id="loi-cam-on"><%- t('ttqr.cam_on', { ten: t('chung.ten_nha_hang') }) %></p>
   </div>
 </div>
 
 <!-- =========================================== Thanh đáy -->
 <div class="day" id="thanh-day" <%= hoaDon.tien.da_tra_du ? 'style="display:none"' : '' %>>
   <div class="boc">
-    <button class="nut phu an" id="nut-quay-lai">Quay lại</button>
+    <button class="nut phu an" id="nut-quay-lai"><%= t('ttqr.quay_lai') %></button>
     <button class="nut" id="nut-tra">
-      Chuyển khoản <span id="nut-so-tien"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span>
+      <%= t('ttqr.chuyen_khoan') %> <span id="nut-so-tien"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span>
     </button>
   </div>
 </div>
@@ -251,6 +251,16 @@
 <script>
 (function () {
   var SESIS = <%- JSON.stringify(hoaDon.sesis) %>;
+
+  /* Chuoi giao dien cho phan JavaScript. Ham t() chay ben may chu, JS tren
+     trinh duyet khong goi duoc, nen day san xuong day duoi dang JSON. */
+  var TT = <%- JSON.stringify({
+    da_giam: t('ttqr.da_giam'),
+    dang_tao_ma: t('ttqr.dang_tao_ma'),
+    chuyen_khoan: t('ttqr.chuyen_khoan'),
+    ma_het_han: t('ttqr.ma_het_han'),
+    da_ghi_nhan_phan: t('ttqr.da_ghi_nhan_phan')
+  }) %>;
   var phienId = null;
   var demHen = null, pollHen = null;
 
@@ -276,7 +286,7 @@
 
         var bao = $('bao-ma');
         if (t.loi_ma_giam_gia) { bao.className = 'bao loi'; bao.textContent = t.loi_ma_giam_gia; }
-        else if (t.ma_giam_gia) { bao.className = 'bao ok'; bao.textContent = 'Đã giảm ' + tien(t.giam_gia) + 'đ'; }
+        else if (t.ma_giam_gia) { bao.className = 'bao ok'; bao.textContent = TT.da_giam.split('{tien}').join(tien(t.giam_gia)) + 'đ'; }
         else { bao.textContent = ''; }
         veGoiYMa(hd.khuyenMai || []);
       });
@@ -325,7 +335,7 @@
 
     var nut = this;
     nut.disabled = true;
-    nut.textContent = 'Đang tạo mã...';
+    nut.textContent = TT.dang_tao_ma;
 
     fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS) + '/tao-phien', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -353,7 +363,7 @@
       .catch(function (e) {
         alert(e.message);
         nut.disabled = false;
-        nut.innerHTML = 'Chuyển khoản <span id="nut-so-tien">' + tien(soTien) + 'đ</span>';
+        nut.innerHTML = TT.chuyen_khoan + ' <span id="nut-so-tien">' + tien(soTien) + 'đ</span>';
       });
   };
 
@@ -366,7 +376,7 @@
       $('dem').textContent = ' (' + p + ':' + String(g).padStart(2, '0') + ')';
       if (conLai <= 0) {
         clearInterval(demHen); clearInterval(pollHen);
-        $('o-cho').innerHTML = '<span style="color:var(--danger)">Mã đã hết hạn. Vui lòng tải lại trang để tạo mã mới.</span>';
+        $('o-cho').innerHTML = '<span style="color:var(--danger)">' + TT.ma_het_han + '</span>';
       }
     }, 1000);
   }
@@ -402,8 +412,8 @@
     clearInterval(demHen); clearInterval(pollHen);
     if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
     if (p && p.da_tra_du === false && p.con_phai_tra > 0) {
-      $('loi-cam-on').innerHTML = 'Đã ghi nhận phần thanh toán của bạn.<br>'
-        + 'Hóa đơn còn <b>' + tien(p.con_phai_tra) + 'đ</b> cho những người còn lại.';
+      $('loi-cam-on').innerHTML = TT.da_ghi_nhan_phan
+        .split('{tien}').join('<b>' + tien(p.con_phai_tra) + 'đ</b>');
     }
     $('man-qr').classList.add('an');
     $('man-xong').classList.remove('an');

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></title>
+  <title><%= typeof title !== 'undefined' ? title : t('loi.da_xay_ra') %></title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
     body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
@@ -31,19 +31,19 @@
     </div>
     <p class="ma"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></p>
     <h1><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></h1>
-    <p class="thong-diep"><%= typeof message !== 'undefined' ? message : 'Hệ thống gặp sự cố ngoài dự kiến.' %></p>
+    <p class="thong-diep"><%= typeof message !== 'undefined' ? message : t('loi.mo_ta') %></p>
 
     <% if (typeof hoSo !== 'undefined' && hoSo) { %>
       <div class="chuc-danh">
         <i class="fas fa-id-badge"></i>
-        <%= hoSo.ten %> — <%= hoSo.ten_cd || 'chưa có chức danh' %>
+        <%= hoSo.ten %> — <%= hoSo.ten_cd || t('loi.chua_co_chuc_danh') %>
         <% if (hoSo.ten_bp) { %> · <%= hoSo.ten_bp %><% } %>
       </div>
     <% } %>
 
     <div>
-      <a class="nut nut-chinh" href="javascript:history.back()"><i class="fas fa-arrow-left"></i> Quay lại</a>
-      <a class="nut nut-phu" href="/staff">Về trang nhân viên</a>
+      <a class="nut nut-chinh" href="javascript:history.back()"><i class="fas fa-arrow-left"></i> <%= t('chung.quay_lai') %></a>
+      <a class="nut nut-phu" href="/staff"><%= t('loi.ve_trang_nhan_vien') %></a>
     </div>
 
     <% if (typeof isDevelopment !== 'undefined' && isDevelopment && typeof stack !== 'undefined' && stack) { %>

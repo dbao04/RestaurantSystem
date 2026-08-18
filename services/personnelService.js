@@ -663,25 +663,43 @@ const personnelService = {
     return rows[0] || null;
   },
 
+  /*
+    Ban dich de TRONG thi luu NULL chu khong luu chuoi rong.
+
+    Trang tin tuc xet `if (p.tieu_de_en)` de biet co ban dich hay khong. Chuoi
+    rong cung la gia tri "khong co", nhung luu NULL thi cau lenh dem ban dich
+    trong migration va bao cao ve sau khong phai xet hai truong hop.
+  */
   addPost: async (data) => {
     const { tieu_de, noi_dung, hinh_anh } = data;
+    const rong = (v) => (String(v || '').trim() ? String(v).trim() : null);
     await db.query(
-      'INSERT INTO bai_viet (tieu_de, noi_dung, hinh_anh, created_at) VALUES (?, ?, ?, NOW())',
-      [tieu_de, noi_dung, hinh_anh]
+      `INSERT INTO bai_viet
+         (tieu_de, noi_dung, hinh_anh, tieu_de_en, noi_dung_en, tieu_de_ja, noi_dung_ja, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [tieu_de, noi_dung, hinh_anh,
+       rong(data.tieu_de_en), rong(data.noi_dung_en),
+       rong(data.tieu_de_ja), rong(data.noi_dung_ja)]
     );
   },
 
   updatePost: async (id, data) => {
     const { tieu_de, noi_dung, hinh_anh } = data;
+    const rong = (v) => (String(v || '').trim() ? String(v).trim() : null);
+    const banDich = [
+      rong(data.tieu_de_en), rong(data.noi_dung_en),
+      rong(data.tieu_de_ja), rong(data.noi_dung_ja),
+    ];
+    const cotDich = 'tieu_de_en = ?, noi_dung_en = ?, tieu_de_ja = ?, noi_dung_ja = ?';
     if (hinh_anh) {
       await db.query(
-        'UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, hinh_anh = ? WHERE id_bv = ?',
-        [tieu_de, noi_dung, hinh_anh, id]
+        `UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, hinh_anh = ?, ${cotDich} WHERE id_bv = ?`,
+        [tieu_de, noi_dung, hinh_anh, ...banDich, id]
       );
     } else {
       await db.query(
-        'UPDATE bai_viet SET tieu_de = ?, noi_dung = ? WHERE id_bv = ?',
-        [tieu_de, noi_dung, id]
+        `UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, ${cotDich} WHERE id_bv = ?`,
+        [tieu_de, noi_dung, ...banDich, id]
       );
     }
   },

@@ -15,6 +15,7 @@ từng phần:
 | `HUONG_DAN_CHATBOT.md` | Chatbot hỏi đáp tiếng Việt (phân loại ý định tự huấn luyện) |
 | `HUONG_DAN_XEP_CA.md` | Xếp ca tự động: định mức nhân sự, thuật toán, vận hành |
 | `HUONG_DAN_GIAO_HANG.md` | Giao hàng: đơn vị vận chuyển, cước phí, điều phối, theo dõi shipper bằng GPS |
+| `HUONG_DAN_NGON_NGU.md` | Đa ngôn ngữ: Tiếng Việt / English / 日本語 cho khu khách |
 | `DANH_SACH_TAI_KHOAN.md` | Danh sách tài khoản đăng nhập |
 
 ---
@@ -319,6 +320,7 @@ lần lượt trong `config/migrations/`:
 | `017_qr_dat_mon.js` | Vá lỗ hổng luồng đặt món QR, thêm ghi chú theo món |
 | `018_xep_ca.js` | Bảng `ca_lam_viec`, `dinh_muc_ca`, nguồn dòng lịch, khóa chống trùng |
 | `019_van_chuyen.js` | Đơn vị vận chuyển, shipper, đơn giao, vết GPS; bộ phận GH + 6 quyền mới |
+| `024_chi_muc_trang_chu.js` | Hai chỉ mục cho truy vấn thống kê trang chủ — đưa trang chủ từ 10s xuống 0,5s |
 
 Hai nguyên tắc xuyên suốt:
 
@@ -395,9 +397,11 @@ services/                 Toàn bộ nghiệp vụ và SQL
   realtime.js             Trung tâm Socket.IO: phòng theo cơ cấu tổ chức
   faceService.js          Ghi chấm công + nhật ký nhận diện khuôn mặt
   vanChuyenService.js     Cước phí, phân công shipper, trạng thái đơn, vết GPS
+  ngonNgu.js              Tra chuỗi 3 ngôn ngữ, dịch tên món Anh → Nhật
 middleware/
   auth.js                 Phân quyền theo khách / quản trị / nhân viên (bản cũ)
   phanQuyen.js            Phân quyền RBAC mới (canQuyen/canCapBac/canVaiTroCu)
+  ngonNgu.js              Chọn ngôn ngữ khu khách (?lang → cookie → trình duyệt)
   errorHandler.js         asyncHandler + xử lý lỗi tập trung
 views/                    EJS — gốc là trang khách, admin/ và staff/ là hai khu riêng
 utils/                    format tiền/ngày, gửi mail, kiểm tra dữ liệu vào
@@ -408,6 +412,7 @@ train_ml.bat              Huấn luyện lại và in bảng chỉ số
 npm run giaohang:check    Chẩn đoán phân hệ giao hàng khi không vào được trang
 npm run giaohang:nhansu   Tạo 1 điều phối + 3 shipper kèm hồ sơ và tài khoản
 npm run giaohang:mophong  Chạy một ca giao hàng thật qua API — xem xe chạy trên bản đồ
+npm run ngonngu:check     Đối chiếu 3 từ điển, tìm khóa thiếu và chữ Latin lẫn trong tiếng Nhật
 ```
 
 Các tài liệu chuyên đề: `HUONG_DAN_CO_CAU_TO_CHUC.md` (phân quyền, realtime),

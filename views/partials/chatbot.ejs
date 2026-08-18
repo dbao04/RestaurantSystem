@@ -117,16 +117,16 @@
   }
 </style>
 
-<button class="cb-nut" id="cb-nut" aria-label="Mở trợ lý ảo" title="Trợ lý ảo">
+<button class="cb-nut" id="cb-nut" aria-label="<%= t('chatbot.mo') %>" title="<%= t('chatbot.tro_ly') %>">
   <i class="fas fa-comment-dots"></i><span class="cb-nut__cham"></span>
 </button>
 
-<div class="cb-khung" id="cb-khung" role="dialog" aria-label="Trợ lý ảo nhà hàng">
+<div class="cb-khung" id="cb-khung" role="dialog" aria-label="<%= t('chatbot.tro_ly') %>">
   <div class="cb-dau">
     <i class="fas fa-robot"></i>
     <div>
-      <b>Trợ lý ảo</b>
-      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? 'Chế độ quản lý' : 'Nhà hàng Bảo Đoàn' %></small>
+      <b><%= t('chatbot.tro_ly') %></b>
+      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? t('chatbot.che_do_quan_ly') : t('chung.ten_nha_hang') %></small>
     </div>
     <button class="cb-dau__dong" id="cb-dong" aria-label="Đóng">&times;</button>
   </div>

@@ -28,6 +28,14 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+/**
+ * Ten card mang cua cac phan mem may ao pho bien.
+ *
+ * Dat o day chu khong o utils/diaChiQR.js vi diaChiQR da `require` tep nay -
+ * de mau o tren thi thanh phu thuoc vong. diaChiQR nhap lai tu day.
+ */
+const TEN_CARD_AO = /vethernet|wsl|virtualbox|vmware|vmnet|hyper-v|loopback|docker|tailscale|zerotier|tap-|npcap|bluetooth/i;
+
 const THU_MUC = path.join(__dirname, 'chung-chi');
 const DUONG_DAN_KHOA = path.join(THU_MUC, 'khoa.pem');
 const DUONG_DAN_CHUNG_CHI = path.join(THU_MUC, 'chung-chi.pem');
@@ -55,6 +63,74 @@ function diaChiLan() {
   return ds.sort();
 }
 
+/**
+ * Chi cac dia chi tren card mang THAT - bo card ao (WSL, VMware, VirtualBox,
+ * Docker...).
+ *
+ * VI SAO CAN TACH RIENG. Dien thoai cua nhan vien chi bao gio goi vao dia chi
+ * Wi-Fi that. Nhung dia chi cua card ao thi doi luon: WSL nhan dia chi moi sau
+ * moi lan Windows hoac WSL khoi dong lai. Neu lay ca hai loai lam can cu de
+ * quyet dinh cap lai chung chi thi cu moi lan do la chung chi doi, va NGOAI LE
+ * MA MOI DIEN THOAI DA BAM CHAP NHAN TRUOC DO HET HIEU LUC. Nhan vien mo trang
+ * cham cong se thay "khong ket noi duoc may chu" (service worker nuot loi chung
+ * chi thanh loi mang) va khong ai doan ra vi sao.
+ *
+ * Card ao VAN duoc dua vao SAN khi da sinh chung chi - thua vai dia chi khong
+ * hai gi. Chung chi chi khong cap lai VI RIENG chung nua.
+ */
+function diaChiThat() {
+  const ds = [];
+  const cac = os.networkInterfaces();
+  for (const ten of Object.keys(cac)) {
+    if (TEN_CARD_AO.test(ten)) continue;
+    for (const dc of cac[ten] || []) {
+      if (dc.family !== 'IPv4' && dc.family !== 4) continue;
+      if (dc.internal) continue;
+      if (dc.address.startsWith('169.254.')) continue;
+      ds.push(dc.address);
+    }
+  }
+  return ds.sort();
+}
+
+/**
+ * Dia chi CO KHA NANG NHAT la dia chi dien thoai vao duoc, xep dau danh sach.
+ *
+ * VI SAO CAN THEM MOT BUOC NUA SAU `diaChiThat()`
+ * -----------------------------------------------
+ * `diaChiThat()` loc theo TEN card mang, nhung ten khong phai luc nao cung noi
+ * len ban chat. Tren may nay VirtualBox tao mot card ten "Ethernet 3" - khong
+ * chua tu khoa nao trong `TEN_CARD_AO` - nen no lot qua va dung canh dia chi
+ * Wi-Fi that. Nguoi dung nhin bang dia chi luc khoi dong thay hai dong nhu nhau
+ * va khong co cach nao biet cai nao dung.
+ *
+ * DAU HIEU DUNG DE XEP HANG
+ * -------------------------
+ * Card ao gan nhu luon TU LAM cong cho mang rieng cua no, nen dia chi ket thuc
+ * bang `.1` (192.168.56.1, 192.168.198.1, 172.26.224.1...). May tinh noi vao
+ * router that thi duoc router cap mot dia chi bat ky trong dai, rat hiem khi
+ * la `.1` - do la dia chi cua chinh router.
+ *
+ * Day la PHONG DOAN, khong phai chan ly: mot may dat IP tinh la `.1` se bi xep
+ * sau. Nen ham nay chi SAP XEP chu khong loai bo dia chi nao - bang dia chi van
+ * in het, chi khac la cai kha nang dung nhat duoc dua len truoc va danh dau.
+ */
+function diaChiDeXuat() {
+  const that = diaChiThat();
+  const ao = diaChiLan().filter((x) => !that.includes(x));
+
+  const diem = (ip) => {
+    let d = 0;
+    if (!ip.endsWith('.1')) d += 10;        // khong phai cong cua mang rieng
+    if (ip.startsWith('192.168.')) d += 2;  // dai gia dinh pho bien nhat
+    return d;
+  };
+  const sap = (ds) => [...ds].sort((a, b) => diem(b) - diem(a) || a.localeCompare(b));
+
+  // Card that len truoc card ao, trong moi nhom lai xep theo diem.
+  return [...sap(that), ...sap(ao)];
+}
+
 /** Danh sach dia chi ma chung chi can bao phu. */
 function _tenMien() {
   return ['localhost', ...diaChiLan(), '127.0.0.1', '::1'];
@@ -74,9 +150,17 @@ function _conDung(dsHienTai) {
   try {
     const cu = JSON.parse(fs.readFileSync(DUONG_DAN_DAU_VAN, 'utf8'));
     if (!Array.isArray(cu.dia_chi)) return false;
-    // Router doi IP cho may chu -> chung chi cu khong con phu, phai sinh lai.
-    // Neu khong, dien thoai bao NET::ERR_CERT_COMMON_NAME_INVALID rat kho doan.
-    const thieu = dsHienTai.some((d) => !cu.dia_chi.includes(d));
+    /*
+      Chi xet dia chi tren card mang THAT.
+
+      Router doi IP cho may chu -> chung chi cu khong con phu, phai sinh lai;
+      neu khong, dien thoai bao NET::ERR_CERT_COMMON_NAME_INVALID rat kho doan.
+
+      Nhung dia chi card ao doi thi KHONG cap lai: xem ghi chu o `diaChiThat()`.
+      Truoc day lay ca card ao lam can cu, nen moi lan WSL doi dia chi la moi
+      dien thoai phai bam chap nhan chung chi lai tu dau.
+    */
+    const thieu = diaChiThat().some((d) => !cu.dia_chi.includes(d));
     if (thieu) return false;
     if (cu.het_han && new Date(cu.het_han).getTime() < Date.now() + 7 * 864e5) return false;
     return fs.existsSync(DUONG_DAN_KHOA) && fs.existsSync(DUONG_DAN_CHUNG_CHI);
@@ -152,4 +236,4 @@ async function layChungChi() {
   return { key: kq.private, cert: kq.cert, dia_chi: diaChiLan(), moi: true };
 }
 
-module.exports = { layChungChi, diaChiLan, THU_MUC };
+module.exports = { layChungChi, diaChiLan, diaChiThat, diaChiDeXuat, TEN_CARD_AO, THU_MUC };

@@ -1,12 +1,12 @@
 <%- include('partials/header') %>
 
-  <section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');"
+  <section class="hero-wrap hero-wrap-2 nh-wa-koshi"
     data-stellar-background-ratio="0.5">
     <div class="overlay"></div>
     <div class="container">
       <div class="row no-gutters slider-text align-items-end justify-content-center">
         <div class="col-md-9 ftco-animate text-center mb-4">
-          <h1 class="mb-2 bread">Đăng ký</h1>
+          <h1 class="mb-2 bread"><%= t('tai_khoan.dang_ky') %></h1>
         </div>
       </div>
     </div>
@@ -16,32 +16,32 @@
     <div class="container">
       <div class="row d-flex align-items-stretch no-gutters">
         <div class="col-md-6 pt-5 px-2 pb-2 p-md-5 order-md-last">
-          <h2 class="h4 mb-2 mb-md-5 font-weight-bold">Đăng ký tài khoản</h2>
+          <h2 class="h4 mb-2 mb-md-5 font-weight-bold"><%= t('tai_khoan.dang_ky_tai_khoan') %></h2>
           <% if (typeof message !=='undefined' ) { %>
             <div class="alert alert-info"><%- message %></div>
             <% } %>
               <form action="/register" method="post">
                 <div class="form-group">
-                  <input type="text" class="form-control" placeholder="Họ tên" required name="ten">
+                  <input type="text" class="form-control" placeholder="<%= t('chung.ho_ten') %>" required name="ten">
                 </div>
                 <div class="form-group">
-                  <input name="sodienthoai" type="text" class="form-control" placeholder="Số điện thoại" required>
+                  <input name="sodienthoai" type="text" class="form-control" placeholder="<%= t('chung.dien_thoai') %>" required>
                 </div>
                 <div class="form-group">
-                  <input name="email" type="email" class="form-control" placeholder="Email (để khôi phục mật khẩu)" required>
+                  <input name="email" type="email" class="form-control" placeholder="<%= t('tai_khoan.email_khoi_phuc') %>" required>
                 </div>
                 <div class="form-group">
-                  <input name="diachi" type="text" class="form-control" placeholder="Địa chỉ" required>
+                  <input name="diachi" type="text" class="form-control" placeholder="<%= t('chung.dia_chi') %>" required>
                 </div>
 
                 <div class="form-group">
-                  <input type="password" name="passwords" class="form-control" placeholder="Mật khẩu" required>
+                  <input type="password" name="passwords" class="form-control" placeholder="<%= t('tai_khoan.mat_khau') %>" required>
                 </div>
                 <div class="form-group">
-                  <input type="password" name="repass" class="form-control" placeholder="Xác nhận mật khẩu" required>
+                  <input type="password" name="repass" class="form-control" placeholder="<%= t('tai_khoan.xac_nhan_mat_khau') %>" required>
                 </div>
                 <div class="form-group">
-                  <input type="submit" value="Đăng ký" class="btn btn-primary py-3 px-5">
+                  <input type="submit" value="<%= t('tai_khoan.dang_ky') %>" class="btn btn-primary py-3 px-5">
                 </div>
               </form>
         </div>

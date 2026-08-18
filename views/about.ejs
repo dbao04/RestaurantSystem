@@ -1,33 +1,46 @@
-<%- include('partials/header', { title: 'Về chúng tôi', activeNav: 'about' }) %>
+<%- include('partials/header', { title: t('gioi_thieu.tieu_de'), activeNav: 'about' }) %>
+
+<%
+  /* Xem ghi chú đầu views/index.ejs — cùng cách làm: nền là hoa văn Nhật vẽ
+     bằng SVG, "ảnh" là món thật trong thực đơn. `monTrangTri` do route /about
+     truy vấn riêng; phải chịu được mảng rỗng khi CSDL lỗi. */
+  var dsTrangTri = (typeof monTrangTri !== 'undefined' && monTrangTri) ? monTrangTri : [];
+  function monTT(i) { return dsTrangTri.length ? dsTrangTri[i % dsTrangTri.length] : null; }
+%>
 
 <!-- ================= HERO NHỎ ================= -->
 <section class="nh-subhero">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_1.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-shippo"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Hành trình của chúng tôi</span>
-    <h1>Về chúng tôi</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Về chúng tôi</div>
+    <span class="nh-eyebrow"><%= t('gioi_thieu.hero_eyebrow') %></span>
+    <h1><%= t('gioi_thieu.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('gioi_thieu.tieu_de') %></div>
   </div>
 </section>
 
 <!-- ================= CÂU CHUYỆN ================= -->
 <section class="nh-section nh-section--cream">
   <div class="nh-container nh-about">
-    <div class="nh-about__imgs nh-reveal">
-      <img src="/about.jpg" alt="Không gian" onerror="this.src='/bg_2.jpg'">
-      <img src="/about-1.jpg" alt="Ẩm thực" onerror="this.src='/bg_4.jpg'">
+    <div class="nh-about__imgs nh-about__imgs--mon nh-reveal">
+      <% [0, 1].forEach(function (i) { var m = monTT(i); %>
+        <div class="nh-mon-khung <%= i % 2 ? 'nh-wa-shippo' : 'nh-wa-song' %>">
+          <% if (m) { %>
+            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+          <% } %>
+        </div>
+      <% }) %>
       <div class="nh-about__badge" style="font-family:var(--nh-serif)">
-        <span style="font-size:1rem;line-height:1.25;font-family:var(--nh-serif)">Tinh hoa<br>Pháp&nbsp;×&nbsp;Việt</span>
+        <span style="font-size:1rem;line-height:1.25;font-family:var(--nh-serif)"><%- t('gioi_thieu.huy_hieu') %></span>
       </div>
     </div>
     <div class="nh-about__text nh-reveal" data-delay="1">
-      <span class="nh-eyebrow">Về chúng tôi</span>
-      <h2 class="nh-section-title">Nơi hương vị<br>gặp gỡ nghệ thuật</h2>
+      <span class="nh-eyebrow"><%= t('trang_chu.ve_chung_toi') %></span>
+      <h2 class="nh-section-title"><%- t('gioi_thieu.tieu_de_chinh') %></h2>
       <div class="nh-divider" style="margin-left:0"></div>
-      <p>Với tâm huyết mang đến hương vị chuẩn mực, Nhà Hàng Bảo Đoàn không chỉ là nơi thưởng thức món ăn, mà còn là không gian kết nối những giá trị văn hóa ẩm thực tinh tế giữa Pháp và Việt.</p>
-      <p>Từ nguyên liệu tuyển chọn kỹ lưỡng đến bàn tay tài hoa của người đầu bếp, mỗi món ăn đều là kết tinh của đam mê và sự tận tâm.</p>
-      <div class="nh-sign">— Bếp trưởng Nhà Hàng Bảo Đoàn</div>
+      <p><%- t('gioi_thieu.doan_1') %></p>
+      <p><%- t('gioi_thieu.doan_2') %></p>
+      <div class="nh-sign"><%- t('trang_chu.ky_ten') %></div>
     </div>
   </div>
 </section>
@@ -36,25 +49,25 @@
 <section class="nh-section nh-section--dark">
   <div class="nh-container">
     <div class="nh-head nh-center nh-reveal">
-      <span class="nh-eyebrow">Điều làm nên khác biệt</span>
-      <h2 class="nh-section-title">Giá trị cốt lõi</h2>
+      <span class="nh-eyebrow"><%= t('gioi_thieu.gia_tri_eyebrow') %></span>
+      <h2 class="nh-section-title"><%= t('gioi_thieu.gia_tri') %></h2>
       <div class="nh-divider"></div>
     </div>
     <div class="nh-features">
       <div class="nh-feature nh-reveal" data-delay="1">
-        <div class="nh-feature__icon"><i class="fas fa-seedling"></i></div>
-        <h3>Tươi &amp; sạch</h3>
-        <p>Nguyên liệu chọn lọc mỗi ngày, đặt sức khỏe thực khách lên hàng đầu.</p>
+        <div class="nh-feature__icon"><i class="fas fa-fish"></i></div>
+        <h3><%= t('gioi_thieu.gt_1_tieu_de') %></h3>
+        <p><%= t('gioi_thieu.gt_1_mo_ta') %></p>
       </div>
       <div class="nh-feature nh-reveal" data-delay="2">
-        <div class="nh-feature__icon"><i class="fas fa-fire-alt"></i></div>
-        <h3>Đam mê ẩm thực</h3>
-        <p>Mỗi món ăn là một tác phẩm, chế biến bằng tất cả sự tận tâm.</p>
+        <div class="nh-feature__icon"><i class="fas fa-hands"></i></div>
+        <h3><%= t('gioi_thieu.gt_2_tieu_de') %></h3>
+        <p><%= t('gioi_thieu.gt_2_mo_ta') %></p>
       </div>
       <div class="nh-feature nh-reveal" data-delay="3">
         <div class="nh-feature__icon"><i class="fas fa-heart"></i></div>
-        <h3>Phục vụ từ tâm</h3>
-        <p>Chúng tôi trân trọng từng khoảnh khắc bạn dành cho nhà hàng.</p>
+        <h3><%= t('gioi_thieu.gt_3_tieu_de') %></h3>
+        <p><%= t('gioi_thieu.gt_3_mo_ta') %></p>
       </div>
     </div>
   </div>
@@ -62,13 +75,13 @@
 
 <!-- ================= CTA ================= -->
 <section class="nh-cta">
-  <div class="nh-cta__bg" style="background-image:url('/bg_5.jpg')"></div>
+  <div class="nh-cta__bg nh-wa-koshi"></div>
   <div class="nh-cta__veil"></div>
   <div class="nh-container nh-cta__inner nh-reveal">
-    <span class="nh-eyebrow">Mời bạn ghé thăm</span>
-    <h2>Hãy để chúng tôi<br>chiêu đãi bạn</h2>
-    <p>Đặt bàn ngay hôm nay và tận hưởng trải nghiệm ẩm thực đáng nhớ cùng Nhà Hàng Bảo Đoàn.</p>
-    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn ngay</a>
+    <span class="nh-eyebrow"><%= t('gioi_thieu.cta_eyebrow') %></span>
+    <h2><%- t('gioi_thieu.cta_tieu_de') %></h2>
+    <p><%= t('gioi_thieu.cta_mo_ta') %></p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
   </div>
 </section>
 

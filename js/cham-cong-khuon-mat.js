@@ -297,11 +297,30 @@
         function (vt) {
           if (xong) return;
           xong = true; clearTimeout(hen);
+          /*
+            Ban doc co sai so qua lon thi bao ro thay vi gui di.
+
+            Dinh vi bang tram phat song hay Wi-Fi cho sai so vai tram met den
+            vai km. Gui mot toa do nhu the len may chu thi no bi cham diem "sai
+            vi tri" trong khi nguoi dung dang dung dung cho - va thong bao ho
+            nhan duoc ("Ban dang o cach nha hang 6.681 m") vua sai vua kho hieu.
+
+            Nguong 200 m: rong hon moi ban kinh cham cong hop ly, nen khong bao
+            gio chan nham mot ban doc that su tu ve tinh.
+          */
+          var saiSo = vt.coords.accuracy != null ? Math.round(vt.coords.accuracy) : null;
+          if (saiSo !== null && saiSo > 200) {
+            return giai({
+              co: false,
+              ly_do: 'Tín hiệu GPS còn yếu (sai số ~' + saiSo + 'm). Hãy ra chỗ ' +
+                     'thoáng hoặc gần cửa sổ rồi thử lại sau vài giây.',
+            });
+          }
           giai({
             co: true,
             vi_do: vt.coords.latitude,
             kinh_do: vt.coords.longitude,
-            do_chinh_xac_m: vt.coords.accuracy != null ? Math.round(vt.coords.accuracy) : null,
+            do_chinh_xac_m: saiSo,
           });
         },
         function (e) {
@@ -314,7 +333,23 @@
                  : 'Không lấy được vị trí.';
           giai({ co: false, ly_do: ly });
         },
-        { enableHighAccuracy: true, timeout: tuy.hetHanMs || 10000, maximumAge: 30000 }
+        /*
+          maximumAge: 0 - KHONG nhan vi tri da luu san.
+
+          Ban dau la 30000, tuc chap nhan mot ban doc cu toi 30 giay. Voi mot
+          phep kiem tra chong gian lan thi do la lo hong: trinh duyet tra ve vi
+          tri TRUOC khi nguoi ta buoc vao nha hang, thuong la vi tri uoc luong
+          tu tram phat song (sai so hang km) chu chua phai tu ve tinh.
+
+          Da thay dung hau qua trong nhat ky: 12/8 luc 08:34:27 bi chan vi "cach
+          6681 m", roi 20 giay sau, 08:34:47, cham cong duoc voi "cach 0 m".
+          Nguoi that dung yen mot cho; chi co ban doc GPS la doi. Nhan vien bi
+          tu choi mot lan vo co roi phai thu lai.
+
+          Doi lai, moi lan cham cong phai cho chip GPS lay dinh vi moi - lau hon
+          vai giay. Doi vai giay mot lan van hon bi tu choi oan.
+        */
+        { enableHighAccuracy: true, timeout: tuy.hetHanMs || 15000, maximumAge: 0 }
       );
     });
   }
