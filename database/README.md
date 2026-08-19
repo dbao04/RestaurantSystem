@@ -8,7 +8,7 @@ Toàn bộ cơ sở dữ liệu của hệ thống nằm trong **một file duy 
 database/gs_restaurant.sql
 ```
 
-File này chứa đầy đủ **66 bảng** (cấu trúc + dữ liệu) và tự chứa lệnh
+File này chứa đầy đủ **73 bảng** (cấu trúc + dữ liệu) và tự chứa lệnh
 `CREATE DATABASE`, nên **không cần tạo database trước bằng tay**.
 
 > Mọi file `.sql` khác nằm rải rác trong dự án trước đây đều đã lỗi thời và
@@ -23,7 +23,7 @@ npm run db:setup
 ```
 
 Script sẽ tự tìm chương trình `mysql` (XAMPP, Laragon, MySQL Server hoặc trong
-PATH), import file trên, rồi kiểm tra lại xem đã đủ 66 bảng chưa.
+PATH), import file trên, rồi kiểm tra lại xem đã đủ 73 bảng chưa.
 
 ⚠️ Lệnh này **ghi đè toàn bộ** dữ liệu đang có trong database `gs_restaurant`.
 
