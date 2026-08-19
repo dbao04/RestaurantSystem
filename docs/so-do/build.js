@@ -146,7 +146,7 @@ const ANH_XA = [
 
 /* --- dem so ca su dung that su ve ra, khong go tay con so --- */
 const SVG_PHAN_RA = [uc.ucKhachHang(), uc.ucPhucVu(), uc.ucBepKho(),
-  uc.ucThanhToan(), uc.ucNhanSu(), uc.ucPhanTich()];
+  uc.ucThanhToan(), uc.ucNhanSu(), uc.ucPhanTich(), uc.ucGiaoHang()];
 const SO_CA = SVG_PHAN_RA.reduce((n, x) => n + (x.match(/class="uc /g) || []).length, 0);
 const SVG_TONG_QUAT = tq.tongQuatMau();
 const SO_CA_DAY_DU = (SVG_TONG_QUAT.match(/class="uc /g) || []).length;
@@ -443,6 +443,8 @@ tô nền là ca được gọi lại từ ca khác qua quan hệ <code>&laquo;i
     'Chấm công bằng khuôn mặt luôn kèm hai kiểm tra bắt buộc: ảnh sống (chống chụp lại ảnh) và vị trí GPS trong bán kính cho phép quanh nhà hàng.') +
   hinh(8, 'Phân hệ phân tích, dự báo AI và quản trị', SVG_PHAN_RA[5],
     'Mọi lần chạy dự báo đều so kết quả với baseline SeasonalNaive và ghi lại chỉ số vào bảng <code>danh_gia_mo_hinh</code>, để luôn trả lời được câu hỏi mô hình có thật sự tốt hơn cách làm ngây thơ hay không.') +
+  hinh(9, 'Phân hệ giao hàng', SVG_PHAN_RA[6],
+    'Bốn nhóm người dùng, bốn khu đường dẫn tách bạch: quản trị khai bảng giá, điều phối phân đơn, người giao dùng ứng dụng điện thoại, còn khách tra cứu đơn bằng mã giao mà không cần đăng nhập. Phí giao luôn được tính lại ở máy chủ từ toạ độ và bảng giá trong CSDL — con số hiện trên trang đặt hàng chỉ để xem.') +
   `</section>`;
 
 /* --- 5. Dac ta --- */
@@ -520,14 +522,14 @@ h += mo(5) + `
 <div class="van"><p>Bốn quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
 cũng là nơi dễ đứt gãy nhất khi vận hành. Mỗi sơ đồ là một pool chia thành bốn lằn;
 lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ việc người làm với việc máy làm.</p></div>` +
-  hinh(9, 'Chú giải ký hiệu BPMN', chuGiaiBpmn(), null) +
-  hinh(10, 'Quy trình phục vụ và chế biến tại bàn', bpmn.phucVu(),
+  hinh(10, 'Chú giải ký hiệu BPMN', chuGiaiBpmn(), null) +
+  hinh(11, 'Quy trình phục vụ và chế biến tại bàn', bpmn.phucVu(),
     'Vòng lặp gọi thêm món trong cùng một bữa lặp lại từ bước quét mã QR và không vẽ lại để giữ sơ đồ đọc được. Bước trừ tồn kho nằm trong cùng giao dịch với bước hoàn thành chế biến: hoặc cả hai cùng thành công, hoặc cả hai cùng quay lui.') +
-  hinh(11, 'Quy trình thanh toán và đối soát ngân hàng', bpmn.thanhToan(),
+  hinh(12, 'Quy trình thanh toán và đối soát ngân hàng', bpmn.thanhToan(),
     'Điểm đáng chú ý là sự kiện trung gian ở lằn ngân hàng: hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào, nên phiên thanh toán chuyển trạng thái ngay trên cả điện thoại khách lẫn màn hình thu ngân trong cùng một khoảnh khắc.') +
-  hinh(12, 'Quy trình dự báo bằng học máy', bpmn.duBao(),
+  hinh(13, 'Quy trình dự báo bằng học máy', bpmn.duBao(),
     'Rẽ nhánh đầu tiên là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python không được phép làm sập web. Khi nó không trả lời, trang vẫn hiển thị dự báo đã lưu lần chạy trước. Bốn mô hình được chấm điểm gồm SeasonalNaive (baseline), Ridge, RandomForest và GradientBoosting; mô hình có MAE thấp nhất trên 60 ngày cuối được chọn rồi huấn luyện lại trên toàn bộ dữ liệu.') +
-  hinh(13, 'Quy trình chấm công bằng khuôn mặt và GPS', bpmn.chamCong(),
+  hinh(14, 'Quy trình chấm công bằng khuôn mặt và GPS', bpmn.chamCong(),
     'Thứ tự hai kiểm tra là có chủ đích: kiểm tra vị trí đặt trước kiểm tra khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây thay vì phải đợi hết lượt nhận diện, và câu trả lời "bạn đang ở cách nhà hàng 4 km" không cần biết người đó là ai.') +
   `</section>`;
 
@@ -538,10 +540,10 @@ h += mo(6) + `
 dưới đây vì vậy dùng khuôn mẫu <code>«module»</code> — tên hộp là tên tệp, ngăn giữa là dữ liệu
 cấp mô-đun, ngăn dưới là các hàm được xuất ra. Vẽ như vậy giữ đúng cấu trúc mã nguồn thật
 thay vì dựng lên một mô hình hướng đối tượng không tồn tại trong dự án.</p></div>` +
-  hinh(14, 'Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động', chuGiaiMoi(), null) +
-  hinh(15, 'Sơ đồ lớp tầng dịch vụ nghiệp vụ', lop.tangDichVu(),
+  hinh(15, 'Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động', chuGiaiMoi(), null) +
+  hinh(16, 'Sơ đồ lớp tầng dịch vụ nghiệp vụ', lop.tangDichVu(),
     'Ranh giới quan trọng nhất trên sơ đồ là giữa tầng định tuyến và tầng dịch vụ: toàn bộ câu lệnh SQL nằm ở tầng dịch vụ, tầng định tuyến chỉ nhận tham số và kiểm tra quyền. Nhờ vậy đổi một câu truy vấn hay đổi cả lược đồ bảng chỉ phải sửa trong <code>services/</code>.') +
-  hinh(16, 'Sơ đồ lớp phân hệ học máy', lop.phanHeHocMay(),
+  hinh(17, 'Sơ đồ lớp phân hệ học máy', lop.phanHeHocMay(),
     'Bốn mô-đun nghiệp vụ của tiến trình Python đều được <code>main.py</code> gọi trực tiếp và không gọi lẫn nhau. Hai tiến trình chỉ nói chuyện qua HTTP JSON, không dùng chung bộ nhớ, nên tắt tiến trình Python thì tầng web vẫn chạy.') +
   `</section>`;
 
@@ -551,12 +553,14 @@ h += mo(7) + `
 trên giấy A4. Ba lược đồ dưới đây tách theo phân hệ và chỉ giữ những bảng có quan hệ khoá
 ngoại với nhau. Ký pháp chân quạ: đầu đơn là <b>một</b> bản ghi, đầu chia ba là <b>nhiều</b>
 bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> là khoá ngoại.</p></div>` +
-  hinh(17, 'Lược đồ quan hệ thực thể phân hệ bán hàng', erd.banHang(),
+  hinh(18, 'Lược đồ quan hệ thực thể phân hệ bán hàng', erd.banHang(),
     'Điểm cần chú ý nhất: mỗi dòng <code>hopdong</code> là một MÓN chứ không phải một hoá đơn. Các dòng của cùng một lần đặt gộp lại bằng mã phiên <code>sesis</code> — nhờ vậy mỗi món giữ được trạng thái bếp riêng trong khi cả đơn vẫn có một trạng thái chung.') +
-  hinh(18, 'Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu', erd.kho(),
+  hinh(19, 'Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu', erd.kho(),
     'Chuỗi <code>cong_thuc</code> → <code>xuat_kho</code> → <code>du_bao_nguyen_lieu</code> là chuỗi dữ liệu quan trọng nhất của phần AI: nếu thiếu bảng công thức định lượng thì mỗi món bán ra không để lại dấu vết tiêu hao, và bài toán dự báo nguyên liệu sẽ không có gì để học.') +
-  hinh(19, 'Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học', erd.nhanSu(),
+  hinh(20, 'Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học', erd.nhanSu(),
     'Ba bảng bên phải lưu dữ liệu sinh trắc học và bằng chứng chấm công. Quan hệ tự tham chiếu <code>chuc_danh.id_cd_cha</code> chính là cây cơ cấu tổ chức sáu cấp bậc.') +
+  hinh(21, 'Lược đồ quan hệ thực thể phân hệ giao hàng', erd.giaoHang(),
+    'Hai bảng vị trí cố ý không gộp vì trả lời hai câu hỏi có yêu cầu trái ngược nhau: <code>vi_tri_shipper_moi_nhat</code> ghi đè nên đọc rất nhanh cho bản đồ, còn <code>vi_tri_shipper</code> thêm một dòng mỗi nhịp nên giữ được vết đường để đối chiếu khi khách khiếu nại.') +
   `</section>`;
 
 /* --- 9. Tuan tu --- */
@@ -565,13 +569,13 @@ h += mo(8) + `
 qua những ai</i>, còn bốn sơ đồ tuần tự dưới đây trả lời <i>phần mềm chạy như thế nào</i>: mô-đun
 nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. Tên thông điệp là tên hàm và
 đường dẫn thật trong mã nguồn, đối chiếu được khi bảo vệ.</p></div>` +
-  hinh(20, 'Sơ đồ tuần tự luồng khách quét mã QR gọi món', tuanTu.goiMonQR(),
+  hinh(22, 'Sơ đồ tuần tự luồng khách quét mã QR gọi món', tuanTu.goiMonQR(),
     'Mã phiên <code>sesis</code> không nhận từ điện thoại khách mà luôn do máy chủ tra lại theo mã bàn. Nếu nhận từ client, người biết mã phiên của bàn khác có thể gọi món vào hoá đơn của bàn đó.') +
-  hinh(21, 'Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động', tuanTu.thanhToanVietQR(),
+  hinh(23, 'Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động', tuanTu.thanhToanVietQR(),
     'Hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào. Webhook luôn được trả HTTP 200 khi giao dịch đã ghi được vào hộp thư, kể cả lúc không khớp phiên nào — trả mã khác 200 thì bên gửi sẽ bắn lại liên tục.') +
-  hinh(22, 'Sơ đồ tuần tự luồng chạy dự báo lượt khách', tuanTu.duBaoLuotKhach(),
+  hinh(24, 'Sơ đồ tuần tự luồng chạy dự báo lượt khách', tuanTu.duBaoLuotKhach(),
     'Nhánh thứ hai của khối <code>alt</code> là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt, nhưng trang web vẫn phải mở được và hiển thị kết quả dự báo đã lưu lần trước.') +
-  hinh(23, 'Sơ đồ tuần tự luồng chấm công bằng khuôn mặt', tuanTu.chamCongKhuonMat(),
+  hinh(25, 'Sơ đồ tuần tự luồng chấm công bằng khuôn mặt', tuanTu.chamCongKhuonMat(),
     'Vị trí được kiểm tra trước khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây mà hệ thống chưa cần biết người đó là ai, và không tốn một lượt gọi dịch vụ nhận diện.') +
   `</section>`;
 
@@ -581,11 +585,11 @@ h += mo(9) + `
 động đi sâu hơn một mức so với BPMN: nó vẽ cả nhánh lỗi, nhánh quay lui giao dịch và điểm
 tách luồng song song <i>bên trong</i> một chức năng — những thứ mà sơ đồ quy trình mức tổng
 quan cố ý không thể hiện.</p></div>` +
-  hinh(24, 'Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc', hoatDong.datBan(),
+  hinh(26, 'Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc', hoatDong.datBan(),
     'Nhánh “ngày ở quá khứ” được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính <code>min</code> của ô ngày chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn bỏ qua được.') +
-  hinh(25, 'Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động', hoatDong.nhapKho(),
+  hinh(27, 'Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động', hoatDong.nhapKho(),
     'Thời điểm trừ kho đặt ở bước bếp <i>hoàn thành</i> món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.') +
-  hinh(26, 'Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo', hoatDong.troLyAo(),
+  hinh(28, 'Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo', hoatDong.troLyAo(),
     'Tầng ④ là lớp bảo vệ quan trọng nhất: mô hình chỉ chọn <i>mẫu</i> câu truy vấn rồi điền tham số đã kiểm tra kiểu, chứ không sinh chuỗi SQL tự do.') +
   `</section>`;
 

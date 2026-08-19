@@ -1,4 +1,4 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1323 728" role="img" aria-label="Sơ đồ tuần tự luồng chạy dự báo lượt khách, gồm cả nhánh dự phòng khi dịch vụ học máy không phản hồi"
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1280 770" role="img" aria-label="Sơ đồ tuần tự luồng khách quét mã QR gọi món tại bàn cho tới khi món hiện trên màn hình bếp"
      xmlns="http://www.w3.org/2000/svg"><style>svg{
 --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
 --mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
@@ -79,77 +79,84 @@ text{fill:currentColor;font-family:var(--sans);}
 .hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
 .qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
 .thanh-db{fill:currentColor;}</style><defs>
-    <marker id="mui-sqC" viewBox="0 0 10 10" refX="9" refY="5"
+    <marker id="mui-sqA" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
     </marker>
-    <marker id="mui-rong-sqC" viewBox="0 0 12 12" refX="11" refY="6"
+    <marker id="mui-rong-sqA" viewBox="0 0 12 12" refX="11" refY="6"
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
-  </defs><line class="duong-doi" x1="82" y1="56" x2="82" y2="670"/><line class="duong-doi" x1="270.8649999999999" y1="56" x2="270.8649999999999" y2="670"/><line class="duong-doi" x1="547.7199999999997" y1="56" x2="547.7199999999997" y2="670"/><line class="duong-doi" x1="758.4249999999995" y1="56" x2="758.4249999999995" y2="670"/><line class="duong-doi" x1="981.6249999999993" y1="56" x2="981.6249999999993" y2="670"/><line class="duong-doi" x1="1240.2099999999991" y1="56" x2="1240.2099999999991" y2="670"/><g class="khoi">
-    <rect class="khung-tt" x="680.4249999999995" y="180" width="637.7849999999996" height="432"/>
-    <path class="the" d="M680.4249999999995,180 h38 l10,14 v6 h-48 z"/>
-    <text class="tx-khoi" style="text-anchor:start" x="687.4249999999995" y="194">alt</text>
-    <text class="tx-dk" style="text-anchor:start" x="740.4249999999995" y="195">[dịch vụ ML trả lời trong 30 giây]</text>
-    <line class="chia" x1="680.4249999999995" y1="520" x2="1318.2099999999991" y2="520"/>
-      <text class="tx-dk" style="text-anchor:start" x="688.4249999999995" y="533">[dịch vụ ML không chạy hoặc quá hạn]</text>
-  </g><rect class="kich-hoat" x="1234.2099999999991" y="251" width="12" height="57"/><rect class="kich-hoat" x="975.6249999999993" y="209" width="12" height="267"/><rect class="kich-hoat" x="752.4249999999995" y="167" width="12" height="351"/><rect class="kich-hoat" x="541.7199999999997" y="125" width="12" height="519"/><rect class="kich-hoat" x="264.8649999999999" y="83" width="12" height="561"/><rect class="kich-hoat" x="1234.2099999999991" y="419" width="12" height="225"/><rect class="kich-hoat" x="1234.2099999999991" y="545" width="12" height="99"/><g class="td">
-    <line class="tin" x1="88" y1="90" x2="263.8649999999999" y2="90" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="175.93249999999995" y="84">chọn số ngày, bấm “Chạy dự báo”</text>
+  </defs><line class="duong-doi" x1="82" y1="56" x2="82" y2="712"/><line class="duong-doi" x1="322.5249999999998" y1="56" x2="322.5249999999998" y2="712"/><line class="duong-doi" x1="530.3949999999998" y1="56" x2="530.3949999999998" y2="712"/><line class="duong-doi" x1="763.3599999999996" y1="56" x2="763.3599999999996" y2="712"/><line class="duong-doi" x1="1045.9899999999993" y1="56" x2="1045.9899999999993" y2="712"/><line class="duong-doi" x1="1197.9899999999993" y1="56" x2="1197.9899999999993" y2="712"/><g class="khoi">
+    <rect class="khung-tt" x="685.3599999999996" y="306" width="438.62999999999977" height="96"/>
+    <path class="the" d="M685.3599999999996,306 h38 l10,14 v6 h-48 z"/>
+    <text class="tx-khoi" style="text-anchor:start" x="692.3599999999996" y="320">alt</text>
+    <text class="tx-dk" style="text-anchor:start" x="745.3599999999996" y="321">[bàn chưa có phiên mở]</text>
+    <line class="chia" x1="685.3599999999996" y1="352" x2="1123.9899999999993" y2="352"/>
+      <text class="tx-dk" style="text-anchor:start" x="693.3599999999996" y="365">[bàn đang có phiên]</text>
+  </g><rect class="kich-hoat" x="1039.9899999999993" y="209" width="12" height="57"/><rect class="kich-hoat" x="1039.9899999999993" y="461" width="12" height="57"/><rect class="kich-hoat" x="757.3599999999996" y="419" width="12" height="141"/><rect class="kich-hoat" x="524.3949999999998" y="125" width="12" height="519"/><rect class="kich-hoat" x="316.5249999999998" y="83" width="12" height="603"/><rect class="kich-hoat" x="757.3599999999996" y="167" width="12" height="519"/><rect class="kich-hoat" x="757.3599999999996" y="293" width="12" height="393"/><rect class="kich-hoat" x="1039.9899999999993" y="335" width="12" height="351"/><rect class="kich-hoat" x="1039.9899999999993" y="377" width="12" height="309"/><rect class="kich-hoat" x="1191.9899999999993" y="587" width="12" height="99"/><g class="td">
+    <line class="tin" x1="88" y1="90" x2="315.5249999999998" y2="90" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="201.7624999999999" y="84">chọn món, ghi chú, bấm “Gửi bếp”</text>
   </g><g class="td">
-    <line class="tin" x1="276.8649999999999" y1="132" x2="540.7199999999997" y2="132" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="408.7924999999998" y="126">POST /du-bao/api/chay-du-bao-khach {so_ngay}</text>
+    <line class="tin" x1="328.5249999999998" y1="132" x2="523.3949999999998" y2="132" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="425.9599999999998" y="126">POST /qr/add-dish {tableId, items}</text>
   </g><g class="td">
-    <line class="tin" x1="553.7199999999997" y1="174" x2="751.4249999999995" y2="174" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="652.5724999999995" y="168">duBaoLuotKhach(soNgay)</text>
+    <line class="tin" x1="536.3949999999998" y1="174" x2="756.3599999999996" y2="174" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="646.3774999999996" y="168">layBanQR(tableId)</text>
   </g><g class="td">
-    <line class="tin" x1="764.4249999999995" y1="216" x2="974.6249999999993" y2="216" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="869.5249999999994" y="210">POST /du-bao/luot-khach?so_ngay=14</text>
+    <line class="tin" x1="769.3599999999996" y1="216" x2="1038.9899999999993" y2="216" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="904.1749999999995" y="210">SELECT * FROM qr_tables WHERE table_id = ?</text>
   </g><g class="td">
-    <line class="tin" x1="987.6249999999993" y1="258" x2="1233.2099999999991" y2="258" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="1110.417499999999" y="252">_nap_chuoi_ngay(): SELECT lịch sử theo ngày</text>
+    <line class="tin-tra" x1="1039.9899999999993" y1="258" x2="770.3599999999996" y2="258" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="905.1749999999995" y="252">bản ghi bàn</text>
   </g><g class="td">
-    <line class="tin-tra" x1="1234.2099999999991" y1="300" x2="988.6249999999993" y2="300" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="1111.417499999999" y="294">368 ngày dữ liệu</text>
-  </g><g class="td"><polyline class="tin" points="987.6249999999993,333 1015.6249999999993,333 1015.6249999999993,351 989.6249999999993,351"
-      marker-end="url(#mui-sqC)"/><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="346">features.chuan_bi(): lịch, lễ Tết,</text><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="358">trung bình trượt 7/14/28 ngày</text></g><g class="td"><polyline class="tin" points="987.6249999999993,375 1015.6249999999993,375 1015.6249999999993,393 989.6249999999993,393"
-      marker-end="url(#mui-sqC)"/><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="388">huan_luyen_va_danh_gia(): 4 mô hình,</text><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="400">chọn mô hình có MAE thấp nhất</text></g><g class="td">
-    <line class="tin" x1="987.6249999999993" y1="426" x2="1233.2099999999991" y2="426" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="1110.417499999999" y="420">INSERT du_bao_luot_khach, danh_gia_mo_hinh</text>
+    <line class="tin" x1="536.3949999999998" y1="300" x2="756.3599999999996" y2="300" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="646.3774999999996" y="294">phienDangMoCuaBan(tableId)</text>
   </g><g class="td">
-    <line class="tin-tra" x1="975.6249999999993" y1="468" x2="765.4249999999995" y2="468" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="870.5249999999994" y="462">{ du_bao[], danh_gia[], mo_hinh }</text>
+    <line class="tin" x1="769.3599999999996" y1="342" x2="1038.9899999999993" y2="342" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="904.1749999999995" y="336">INSERT hopdong — mở phiên mới cho bàn</text>
   </g><g class="td">
-    <line class="tin-tra" x1="752.4249999999995" y1="510" x2="554.7199999999997" y2="510" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="653.5724999999995" y="504">kết quả dự báo</text>
+    <line class="tin" x1="769.3599999999996" y1="384" x2="1038.9899999999993" y2="384" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="904.1749999999995" y="378">UPDATE hopdong SET id_ban — gắn phiên cũ với bàn</text>
   </g><g class="td">
-    <line class="tin" x1="764.4249999999995" y1="552" x2="1233.2099999999991" y2="552" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="998.8174999999993" y="546">duBaoKhachDaLuu(): SELECT du_bao_luot_khach</text>
+    <line class="tin" x1="536.3949999999998" y1="426" x2="756.3599999999996" y2="426" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="646.3774999999996" y="420">addMultipleDishesToOrder(sesis, items)</text>
   </g><g class="td">
-    <line class="tin-tra" x1="752.4249999999995" y1="594" x2="554.7199999999997" y2="594" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="653.5724999999995" y="588">dự báo của lần chạy trước + cảnh báo</text>
+    <line class="tin" x1="769.3599999999996" y1="468" x2="1038.9899999999993" y2="468" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="904.1749999999995" y="462">BEGIN; INSERT từng dòng món; COMMIT</text>
   </g><g class="td">
-    <line class="tin-tra" x1="541.7199999999997" y1="636" x2="277.8649999999999" y2="636" marker-end="url(#mui-sqC)"/>
-    <text class="tx-tin" x="409.7924999999998" y="630">JSON vẽ biểu đồ</text>
+    <line class="tin-tra" x1="1039.9899999999993" y1="510" x2="770.3599999999996" y2="510" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="905.1749999999995" y="504">commit thành công</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="757.3599999999996" y1="552" x2="537.3949999999998" y2="552" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="647.3774999999996" y="546">sesis của bàn</text>
+  </g><g class="td">
+    <line class="tin" x1="536.3949999999998" y1="594" x2="1190.9899999999993" y2="594" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="863.6924999999995" y="588">emit 'new-order-to-kitchen' (Socket.IO)</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="524.3949999999998" y1="636" x2="329.5249999999998" y2="636" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="426.9599999999998" y="630">{ success: true, sesis }</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="316.5249999999998" y1="678" x2="89" y2="678" marker-end="url(#mui-sqA)"/>
+    <text class="tx-tin" x="202.7624999999999" y="672">màn hình “Đã gửi bếp” + theo dõi trạng thái</text>
   </g><g class="doi-tuong ngoai">
       <rect x="26" y="10" width="112" height="46" rx="4"/>
-      <text class="tx-dt" x="82" y="30">Quản lý</text><text class="tx-dt" x="82" y="45">(trình duyệt)</text>
+      <text class="tx-dt" x="82" y="30">Khách</text><text class="tx-dt" x="82" y="45">(điện thoại)</text>
     </g><g class="doi-tuong ">
-      <rect x="214.3649999999999" y="10" width="113" height="46" rx="4"/>
-      <text class="tx-dt" x="270.8649999999999" y="30">Trang Dự báo AI</text><text class="tx-dt" x="270.8649999999999" y="45">du-bao.ejs</text>
+      <rect x="266.5249999999998" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="322.5249999999998" y="30">Trang gọi món</text><text class="tx-dt" x="322.5249999999998" y="45">qr-menu.ejs</text>
     </g><g class="doi-tuong ">
-      <rect x="481.2199999999997" y="10" width="133" height="46" rx="4"/>
-      <text class="tx-dt" x="547.7199999999997" y="30">Web (Node)</text><text class="tx-dt" x="547.7199999999997" y="45">routes/forecast.js</text>
+      <rect x="474.39499999999975" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="530.3949999999998" y="30">Web (Node)</text><text class="tx-dt" x="530.3949999999998" y="45">server.js</text>
     </g><g class="doi-tuong ">
-      <rect x="702.4249999999995" y="10" width="112" height="40" rx="4"/>
-      <text class="tx-dt" x="758.4249999999995" y="34.5">mlService</text>
+      <rect x="707.3599999999996" y="10" width="112" height="40" rx="4"/>
+      <text class="tx-dt" x="763.3599999999996" y="34.5">orderService</text>
     </g><g class="doi-tuong ngoai">
-      <rect x="925.6249999999993" y="10" width="112" height="46" rx="4"/>
-      <text class="tx-dt" x="981.6249999999993" y="30">Dịch vụ ML</text><text class="tx-dt" x="981.6249999999993" y="45">FastAPI :8000</text>
+      <rect x="989.9899999999993" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="1045.9899999999993" y="30">MySQL</text><text class="tx-dt" x="1045.9899999999993" y="45">gs_restaurant</text>
     </g><g class="doi-tuong ngoai">
-      <rect x="1184.2099999999991" y="10" width="112" height="46" rx="4"/>
-      <text class="tx-dt" x="1240.2099999999991" y="30">MySQL</text><text class="tx-dt" x="1240.2099999999991" y="45">gs_restaurant</text>
+      <rect x="1141.9899999999993" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="1197.9899999999993" y="30">Màn hình bếp</text><text class="tx-dt" x="1197.9899999999993" y="45">kds.ejs</text>
     </g><g class="ghi-chu">
-    <text class="tx-ghi" x="26" y="696">Nhánh thứ hai của khối alt là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt,</text><text class="tx-ghi" x="26" y="709">nhưng trang web vẫn phải mở được. Khi đó hệ thống hiển thị kết quả dự báo đã lưu lần chạy gần nhất.</text>
+    <text class="tx-ghi" x="26" y="738">Mã phiên sesis KHÔNG nhận từ điện thoại khách mà luôn do máy chủ tra lại theo mã bàn (bước 3 và 6).</text><text class="tx-ghi" x="26" y="751">Nếu nhận từ client, người biết mã phiên của bàn khác có thể gọi món vào hoá đơn của bàn đó.</text>
   </g></svg>

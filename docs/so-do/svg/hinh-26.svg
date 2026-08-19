@@ -1,4 +1,4 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1240 950" role="img" aria-label="Sơ đồ hoạt động đường đi của một câu hỏi qua năm tầng xử lý của trợ lý ảo tiếng Việt"
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1240 930" role="img" aria-label="Sơ đồ hoạt động quy trình đặt bàn trực tuyến kèm nhánh đặt cọc giữ bàn bằng VietQR"
      xmlns="http://www.w3.org/2000/svg"><style>svg{
 --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
 --mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
@@ -79,59 +79,53 @@ text{fill:currentColor;font-family:var(--sans);}
 .hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
 .qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
 .thanh-db{fill:currentColor;}</style><defs>
-    <marker id="mui-hdC" viewBox="0 0 10 10" refX="9" refY="5"
+    <marker id="mui-hdA" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
     </marker>
-    <marker id="mui-rong-hdC" viewBox="0 0 12 12" refX="11" refY="6"
+    <marker id="mui-rong-hdA" viewBox="0 0 12 12" refX="11" refY="6"
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
   </defs><g class="lan-doc">
-    <rect class="lan" x="0" y="28" width="380" height="922"/>
-    <rect class="lan-nhan" x="0" y="0" width="380" height="28"/>
-    <text class="tx-lan" x="190" y="18">Người dùng</text>
+    <rect class="lan" x="0" y="28" width="420" height="902"/>
+    <rect class="lan-nhan" x="0" y="0" width="420" height="28"/>
+    <text class="tx-lan" x="210" y="18">Khách hàng</text>
   </g><g class="lan-doc">
-    <rect class="lan" x="380" y="28" width="390" height="922"/>
-    <rect class="lan-nhan" x="380" y="0" width="390" height="28"/>
-    <text class="tx-lan" x="575" y="18">Web (Node)</text>
+    <rect class="lan" x="420" y="28" width="430" height="902"/>
+    <rect class="lan-nhan" x="420" y="0" width="430" height="28"/>
+    <text class="tx-lan" x="635" y="18">Hệ thống (web)</text>
   </g><g class="lan-doc">
-    <rect class="lan" x="770" y="28" width="470" height="922"/>
-    <rect class="lan-nhan" x="770" y="0" width="470" height="28"/>
-    <text class="tx-lan" x="1005" y="18">Dịch vụ chatbot (Python)</text>
-  </g><g class="nut-dau"><circle cx="190" cy="90" r="10"/></g><g class="hd ">
-      <rect x="104" y="141" width="172" height="38" rx="13"/>
-      <text class="tx-viec" x="190" y="164.5">Gõ câu hỏi trong khung chat</text>
+    <rect class="lan" x="850" y="28" width="390" height="902"/>
+    <rect class="lan-nhan" x="850" y="0" width="390" height="28"/>
+    <text class="tx-lan" x="1045" y="18">Nhà hàng</text>
+  </g><g class="nut-dau"><circle cx="210" cy="90" r="10"/></g><g class="hd ">
+      <rect x="131.5" y="138" width="157" height="44" rx="13"/>
+      <text class="tx-viec" x="210" y="157.5">Chọn món trong thực đơn,</text><text class="tx-viec" x="210" y="171.5">thêm vào giỏ hàng</text>
     </g><g class="hd ">
-      <rect x="123.5" y="778" width="133" height="44" rx="13"/>
-      <text class="tx-viec" x="190" y="797.5">Đọc câu trả lời,</text><text class="tx-viec" x="190" y="811.5">bấm đánh giá hài lòng</text>
+      <rect x="139" y="228" width="142" height="44" rx="13"/>
+      <text class="tx-viec" x="210" y="247.5">Nhập ngày đến, giờ đến</text><text class="tx-viec" x="210" y="261.5">và số khách</text>
+    </g><g class="hd ">
+      <rect x="277" y="331" width="126" height="38" rx="13"/>
+      <text class="tx-viec" x="340" y="354.5">Sửa lại ngày giờ</text>
     </g><g class="hd tu-dong">
-      <rect x="488.5" y="228" width="173" height="44" rx="13"/>
-      <text class="tx-viec" x="575" y="247.5">Xác định quyền của người hỏi</text><text class="tx-viec" x="575" y="261.5">theo phiên đăng nhập</text>
-    </g><g class="hd ">
-      <rect x="491.5" y="588" width="167" height="44" rx="13"/>
-      <text class="tx-viec" x="575" y="607.5">Trả lời dự phòng và mời</text><text class="tx-viec" x="575" y="621.5">chuyển sang nhân viên trực</text>
+      <rect x="544" y="328" width="182" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="347.5">Ghi đơn: sinh mã phiên sesis,</text><text class="tx-viec" x="635" y="361.5">ghi từng dòng món vào hopdong</text>
     </g><g class="hd tu-dong">
-      <rect x="490.5" y="778" width="169" height="44" rx="13"/>
-      <text class="tx-viec" x="575" y="797.5">Ghi chatbot_hoi_thoai</text><text class="tx-viec" x="575" y="811.5">để phục vụ vòng lặp cải tiến</text>
+      <rect x="544.5" y="508" width="181" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="527.5">Hiện trang hợp đồng kèm</text><text class="tx-viec" x="635" y="541.5">số tiền cọc theo tỉ lệ cấu hình</text>
+    </g><g class="hd tu-dong">
+      <rect x="537.5" y="738" width="195" height="44" rx="13"/>
+      <text class="tx-viec" x="635" y="757.5">Sinh mã VietQR đúng số tiền cọc,</text><text class="tx-viec" x="635" y="771.5">chờ webhook ngân hàng đối soát</text>
     </g><g class="hd ">
-      <rect x="906.5" y="228" width="197" height="44" rx="13"/>
-      <text class="tx-viec" x="1005" y="247.5">① Tiền xử lý: chuẩn hoá teencode,</text><text class="tx-viec" x="1005" y="261.5">bỏ dấu câu, gom khoảng trắng</text>
-    </g><g class="hd ">
-      <rect x="887" y="328" width="236" height="44" rx="13"/>
-      <text class="tx-viec" x="1005" y="347.5">② Phân loại ý định: TF-IDF từ (1–2 gram)</text><text class="tx-viec" x="1005" y="361.5">⊕ TF-IDF n-gram ký tự (2–5)</text>
-    </g><g class="hd ">
-      <rect x="904.5" y="518" width="201" height="44" rx="13"/>
-      <text class="tx-viec" x="1005" y="537.5">③ Trích tham số: khoảng thời gian,</text><text class="tx-viec" x="1005" y="551.5">tên món, tên nguyên liệu</text>
-    </g><g class="hd ">
-      <rect x="923" y="618" width="164" height="44" rx="13"/>
-      <text class="tx-viec" x="1005" y="637.5">④ Chạy mẫu SQL có tham số</text><text class="tx-viec" x="1005" y="651.5">(không sinh SQL tự do)</text>
-    </g><g class="hd ">
-      <rect x="919" y="718" width="172" height="44" rx="13"/>
-      <text class="tx-viec" x="1005" y="737.5">⑤ Sinh câu trả lời tiếng Việt</text><text class="tx-viec" x="1005" y="751.5">kèm bảng số liệu và biểu đồ</text>
+      <rect x="979" y="508" width="132" height="44" rx="13"/>
+      <text class="tx-viec" x="1045" y="527.5">Gọi lại xác nhận</text><text class="tx-viec" x="1045" y="541.5">và giữ bàn cho khách</text>
     </g><g class="qd">
-    <polygon points="1005,424 1037,450 1005,476 973,450"/>
-    <text class="tx-sk" x="1005" y="414">Độ tin cậy ≥ ngưỡng?</text>
-  </g><g class="nut-cuoi"><circle class="ngoai" cx="190" cy="880" r="12"/><circle class="trong" cx="190" cy="880" r="7"/></g><polyline class="luong " points="190,100 190,141" marker-end="url(#mui-hdC)"/><polyline class="luong " points="276,160 575,160 575,228" marker-end="url(#mui-hdC)"/><polyline class="luong " points="661.5,250 906.5,250" marker-end="url(#mui-hdC)"/><polyline class="luong " points="1005,272 1005,328" marker-end="url(#mui-hdC)"/><polyline class="luong " points="1005,372 1005,424" marker-end="url(#mui-hdC)"/><polyline class="luong " points="1005,476 1005,518" marker-end="url(#mui-hdC)"/><text class="tx-luong" x="1035" y="508">đạt</text><polyline class="luong " points="975,450 718.5,450 718.5,610 658.5,610" marker-end="url(#mui-hdC)"/><text class="tx-luong" x="895" y="444">dưới ngưỡng</text><polyline class="luong " points="1005,562 1005,618" marker-end="url(#mui-hdC)"/><polyline class="luong " points="1005,662 1005,718" marker-end="url(#mui-hdC)"/><polyline class="luong " points="919,740 575,740 575,778" marker-end="url(#mui-hdC)"/><polyline class="luong " points="491.5,610 190,610 190,778" marker-end="url(#mui-hdC)"/><polyline class="luong " points="490.5,800 256.5,800" marker-end="url(#mui-hdC)"/><polyline class="luong " points="190,822 190,868" marker-end="url(#mui-hdC)"/><g class="ghi-chu">
-    <text class="tx-ghi" x="20" y="916">Tầng ④ là lớp bảo vệ quan trọng nhất: mô hình chỉ chọn MẪU câu truy vấn và điền tham số đã kiểm tra kiểu, chứ không</text><text class="tx-ghi" x="20" y="929">sinh chuỗi SQL tự do. Nhờ vậy một câu hỏi bịa đặt cũng không thể trở thành lệnh xoá dữ liệu.</text>
+    <polygon points="635,224 667,250 635,276 603,250"/>
+    <text class="tx-sk" x="635" y="214">Ngày giờ hợp lệ?</text>
+  </g><g class="qd">
+    <polygon points="210,624 242,650 210,676 178,650"/>
+    <text class="tx-sk" x="210" y="614">Đặt cọc ngay?</text>
+  </g><rect class="thanh-db" x="485" y="437" width="300" height="6" rx="2"/><g class="nut-cuoi"><circle class="ngoai" cx="210" cy="850" r="12"/><circle class="trong" cx="210" cy="850" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="1045" cy="630" r="12"/><circle class="trong" cx="1045" cy="630" r="7"/></g><polyline class="luong " points="210,100 210,138" marker-end="url(#mui-hdA)"/><polyline class="luong " points="210,182 210,228" marker-end="url(#mui-hdA)"/><polyline class="luong " points="281,250 605,250" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,274 635,328" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="669" y="310">hợp lệ</text><polyline class="luong " points="635,226 635,196 340,196 340,331" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="470" y="190">ngày ở quá khứ</text><polyline class="luong " points="277,350 40,350 40,250 139,250" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,372 635,437" marker-end="url(#mui-hdA)"/><polyline class="luong " points="635,443 635,508" marker-end="url(#mui-hdA)"/><polyline class="luong " points="785,443 1045,443 1045,508" marker-end="url(#mui-hdA)"/><polyline class="luong " points="1045,552 1045,618" marker-end="url(#mui-hdA)"/><polyline class="luong " points="544.5,530 210,530 210,624" marker-end="url(#mui-hdA)"/><polyline class="luong " points="240,650 635,650 635,738" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="280" y="644">có</text><polyline class="luong " points="210,676 210,838" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="302" y="730">để trả sau tại quầy</text><polyline class="luong " points="537.5,760 280,760 280,850 222,850" marker-end="url(#mui-hdA)"/><text class="tx-luong" x="326" y="820">đã cọc</text><g class="ghi-chu">
+    <text class="tx-ghi" x="20" y="898">Nhánh “ngày ở quá khứ” là ràng buộc được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính min của ô ngày</text><text class="tx-ghi" x="20" y="911">trên form chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn có thể bỏ qua nó.</text>
   </g></svg>
