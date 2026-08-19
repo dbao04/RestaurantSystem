@@ -141,37 +141,54 @@
     };
   }
 
-  // Lắng nghe tin nhắn mới
+  /*
+    Dung DOM thay vi ghep chuoi HTML.
+
+    Ban truoc nhet thang `${data.noi_dung}` vao insertAdjacentHTML. Noi dung do
+    la chu KHACH go ra, nen mot tin nhan kieu <img src=x onerror=...> se chay
+    ngay tren trinh duyet cua nhan vien dang truc - keo theo ca phien dang nhap
+    cua ho. Moi cho hien noi dung o day deu di qua textContent.
+  */
+  function taoThe(the, lop, chu) {
+    const e = document.createElement(the);
+    if (lop) e.className = lop;
+    if (chu !== undefined) e.textContent = chu;
+    return e;
+  }
+
   socket.on('new-message', (data) => {
-    // Chỉ hiển thị nếu tin nhắn thuộc về khách đang chat
-    // (Vì đã join vào room_${selectedId} nên socket mặc định chỉ nhận tin từ phòng đó)
-    
+    // Chi hien neu tin nhan thuoc ve khach dang chat: da join room_${selectedId}
+    // nen socket chi nhan tin tu phong do.
+    if (!chatBox) return;
+
     const isMe = data.nguoi_gui === 'nhanvien';
-    const msgHtml = isMe ? `
-      <div class="d-flex justify-content-end mb-3">
-        <div class="p-2 px-3 rounded" style="background:#4e342e;color:#fff;max-width:75%;">
-          <div>${data.noi_dung}</div>
-          <small style="opacity:.7;font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
-        </div>
-      </div>
-    ` : `
-      <div class="d-flex justify-content-start mb-3">
-        <div class="p-2 px-3 rounded" style="background:#fff;border:1px solid #ddd;max-width:75%;">
-          <small class="text-muted d-block"><strong>${data.ten_kh || 'Khách hàng'}</strong></small>
-          <div>${data.noi_dung}</div>
-          <small style="color:#999;font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
-        </div>
-      </div>
-    `;
+    const gio = new Date(data.thoigian || Date.now());
 
-    if (chatBox) {
-      // Xóa loading/empty state nếu có
-      const emptyMsg = chatBox.querySelector('.text-center.text-muted');
-      if (emptyMsg) emptyMsg.remove();
+    const dong = taoThe('div', 'd-flex mb-3 ' + (isMe ? 'justify-content-end' : 'justify-content-start'));
+    const bong = taoThe('div', 'p-2 px-3 rounded');
+    bong.style.cssText = isMe
+      ? 'background:#4e342e;color:#fff;max-width:75%;'
+      : 'background:#fff;border:1px solid #ddd;max-width:75%;';
 
-      chatBox.insertAdjacentHTML('beforeend', msgHtml);
-      scrollToBottom();
+    if (!isMe) {
+      const nhan = taoThe('small', 'text-muted d-block');
+      nhan.appendChild(taoThe('strong', null, data.ten_kh || 'Khách hàng'));
+      bong.appendChild(nhan);
     }
+    bong.appendChild(taoThe('div', null, data.noi_dung));
+
+    const nhanGio = taoThe('small', null, gio.toLocaleTimeString('vi-VN'));
+    nhanGio.style.cssText = isMe ? 'opacity:.7;font-size:11px;' : 'color:#999;font-size:11px;';
+    bong.appendChild(nhanGio);
+
+    dong.appendChild(bong);
+
+    // Xoa trang thai rong neu con
+    const rong = chatBox.querySelector('.text-center.text-muted');
+    if (rong) rong.remove();
+
+    chatBox.appendChild(dong);
+    scrollToBottom();
   });
 </script>
 
