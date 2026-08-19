@@ -13,6 +13,30 @@
 
     <script src="/admin-js/jquery-1.6.4.min.js"></script>
     <script src="/admin-js/table/jquery.dataTables.min.js"></script>
+    <script>
+      /*
+        Mặc định của DataTables chỉ cho chọn 10/25/50/100 dòng một trang, không có
+        lựa chọn xem hết. Thực đơn đã 258 món nên quản trị viên bị chặn ở 100 —
+        muốn tìm món thứ 200 phải lật trang. Đặt lại mặc định ở đây (trước khi các
+        trang gọi .dataTable()) để mọi bảng .datatable trong khu quản trị đều có
+        thêm mục "Tất cả", và mở sẵn 25 dòng thay vì 10 cho đỡ phải lật.
+      */
+      (function () {
+        if (!window.jQuery || !jQuery.fn.dataTable) return;
+        // Bản dùng ở đây là DataTables 1.8.2 — chưa có đối tượng defaults dùng
+        // chung, mà cũng chỉ nhận tên tuỳ chọn kiểu cũ (aLengthMenu /
+        // iDisplayLength). Nên bọc chính hàm .dataTable() lại: mỗi trang vẫn gọi
+        // .dataTable() tay không như cũ, còn tuỳ chọn thì trộn vào ở đây.
+        var goc = jQuery.fn.dataTable;
+        jQuery.fn.dataTable = function (tuyChon) {
+          return goc.call(this, jQuery.extend({
+            aLengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Tất cả']],
+            iDisplayLength: 25
+          }, tuyChon || {}));
+        };
+        jQuery.extend(jQuery.fn.dataTable, goc); // giữ fnVersionCheck, oApi...
+      })();
+    </script>
 </head>
 <body class="qt-body">
 

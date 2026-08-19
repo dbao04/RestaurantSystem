@@ -17,6 +17,69 @@
     .badge-unread { background:#e74a3b; color:#fff; border-radius:50%; padding:2px 6px; font-size:11px; }
     .staff-avatar { width:40px; height:40px; border-radius:50%; background:#c8a951; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:18px; }
     .card { border:none; box-shadow:0 .15rem 1.75rem 0 rgba(58,59,69,.15); }
+
+    /* Man che ngan keo. Khai bao NGOAI diem ngat de tren may tinh no cung la
+       display:none tuong minh - JS them the nay vao moi trang, de mac dinh thi
+       no la mot <div> tro khong kieu nam lo lung cuoi <body>. */
+    .sb-che { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1040; display: none; }
+
+    /* ===================================================================
+       DIEN THOAI - thanh ben thanh ngan keo truot
+       ===================================================================
+
+       Do tren Chrome kho 390x844 (iPhone 14), trang /staff:
+
+         thanh ben   104px  (6.5rem - dai bieu tuong hep cua sb-admin-2)
+         noi dung    286px  (73% man hinh, phan con lai)
+         .nav-link span  hien, rong 72px trong dai 104px
+         .sidebar-brand  104x70px chua chu 20px "Nha Hang Bao Doan"
+
+       sb-admin-2 co hai trang thai: mo rong (14rem, co chu) va thu gon
+       (6.5rem, CHI bieu tuong - lop .toggled an the <span> di). Duoi 768px no
+       ep be ngang xuong 6.5rem NHUNG khong tu them .toggled, nen chu van hien
+       trong dai rong 104px: nhan menu xuong 2-3 dong, con ten nha hang xuong 3
+       dong tran khoi o cao 70px va DE LEN muc "Tong quan" ngay duoi.
+
+       JS cua sb-admin-2 chi them .toggled trong su kien `resize`, khong chay
+       luc nap trang - nen mo tren dien thoai la dinh ngay trang thai hong nay.
+
+       Chon ngan keo truot chu khong phai dai bieu tuong: tren 390px thi 104px
+       la hon mot phan tu man hinh, ma man hinh nhan vien toan bang bieu va
+       danh sach - can tung pixel be ngang. Ngan keo tra lai het 390px cho noi
+       dung, va nut ba gach (#sidebarToggleTop) thi da co san.
+       =================================================================== */
+    @media (max-width: 767.98px) {
+      /* Ghi de ca .toggled: duoi day ngan keo chi co dong/mo, khong con khai
+         niem "thu gon" cua sb-admin-2 nua. */
+      .sidebar, .sidebar.toggled {
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 1045;
+        width: 15rem !important; min-height: 100vh;
+        transform: translateX(-100%); transition: transform .25s ease;
+        overflow-y: auto; -webkit-overflow-scrolling: touch;
+      }
+      body.sb-mo .sidebar, body.sb-mo .sidebar.toggled { transform: none; }
+
+      /* Tra lai nhan chu - .toggled cua sb-admin-2 an chung di */
+      .sidebar .nav-item .nav-link span,
+      .sidebar.toggled .nav-item .nav-link span { display: inline !important; font-size: 15px; }
+      .sidebar .nav-item .nav-link,
+      .sidebar.toggled .nav-item .nav-link {
+        display: flex; align-items: center; gap: .7rem;
+        padding: .8rem 1.1rem; min-height: 48px; text-align: left; width: 100%;
+      }
+      .sidebar .nav-item .nav-link i { width: 20px; text-align: center; }
+      .sidebar .sidebar-heading, .sidebar.toggled .sidebar-heading {
+        display: block !important; text-align: left !important; }
+      .sidebar-brand { height: auto !important; padding: 1rem !important; }
+      .sidebar-brand span { font-size: 17px !important; }
+
+      #content-wrapper { width: 100%; margin-left: 0 !important; }
+
+      /* Man che: bam ra ngoai la dong ngan keo - cu chi quen thuoc, va no cung
+         ngan viec bam nham vao noi dung dang bi ngan keo phu len. */
+      body.sb-mo .sb-che { display: block; }
+      body.sb-mo { overflow: hidden; }
+    }
   </style>
 </head>
 <body id="page-top">

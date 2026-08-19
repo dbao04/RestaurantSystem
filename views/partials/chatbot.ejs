@@ -21,6 +21,14 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, .28); transition: transform .18s ease;
   }
   .cb-nut:hover { transform: scale(1.07); }
+
+  /* Tren dien thoai nut nam de len goc phai duoi cua noi dung - o luoi mon 2 cot
+     no che mat ten mon o cot phai. An di khi khach dang cuon xuong (luc do ho
+     dang doc, khong dinh hoi gi), hien lai ngay khi cuon nguoc len. */
+  @media (max-width: 640px) {
+    .cb-nut { transition: transform .22s ease, opacity .22s ease; }
+    .cb-nut.cb-nut--an { transform: translateY(96px); opacity: 0; pointer-events: none; }
+  }
   .cb-nut__cham {
     position: absolute; top: 2px; right: 2px; width: 12px; height: 12px;
     background: #2ecc71; border: 2px solid #fff; border-radius: 50%;
@@ -333,5 +341,32 @@
   };
   document.getElementById('cb-dong').onclick = function () { khung.classList.remove('cb-mo'); };
   form.onsubmit = function (e) { e.preventDefault(); gui(oNhap.value); };
+
+  /*
+    An nut khi cuon xuong, hien khi cuon len - chi tren dien thoai.
+
+    Kiem tra be ngang trong chinh ham xu ly chu khong chi mot lan luc nap: xoay
+    ngang may hay doi cua so thi nguong 640px doi theo, va neu vua ra khoi kho
+    dien thoai phai go lop an di keo nut bien mat han tren may tinh.
+
+    Nguong 8px de rung tay khong lam nut nhap nhay; 160px de o dau trang - noi
+    khach hay bam hoi nhat - nut luon hien.
+  */
+  var mqDienThoai = window.matchMedia('(max-width: 640px)');
+  var yTruoc = window.scrollY;
+  var dangCho = false;
+  window.addEventListener('scroll', function () {
+    if (dangCho) return;
+    dangCho = true;
+    requestAnimationFrame(function () {
+      dangCho = false;
+      if (!mqDienThoai.matches) { nut.classList.remove('cb-nut--an'); return; }
+      var yNay = window.scrollY;
+      if (Math.abs(yNay - yTruoc) < 8) return;
+      nut.classList.toggle('cb-nut--an',
+        yNay > yTruoc && yNay > 160 && !khung.classList.contains('cb-mo'));
+      yTruoc = yNay;
+    });
+  }, { passive: true });
 })();
 </script>

@@ -55,4 +55,19 @@
 
 <%- include('partials/goi-y-mon') %>
 
+<script>
+  /*
+    Trên điện thoại dải danh mục cuộn ngang (xem @media 640px trong nhahang.css).
+    Bấm một danh mục là tải lại trang, dải cuộn về đầu — danh mục vừa chọn có thể
+    nằm ngoài màn hình, khách không biết mình đang xem nhóm nào. Kéo nó vào giữa
+    tầm nhìn. Chỉ chạy khi dải thực sự cuộn được, để không đụng bố cục máy tính.
+  */
+  (function () {
+    var dai = document.querySelector('.nh-cats');
+    var dangChon = dai && dai.querySelector('.nh-cat.is-active');
+    if (!dangChon || dai.scrollWidth <= dai.clientWidth) return;
+    dai.scrollLeft = dangChon.offsetLeft - (dai.clientWidth - dangChon.offsetWidth) / 2;
+  })();
+</script>
+
 <%- include('partials/footer') %>

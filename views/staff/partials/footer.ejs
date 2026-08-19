@@ -17,6 +17,53 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
 
+<script>
+  /*
+    Ngan keo thanh ben tren dien thoai - xem khoi @media 767.98px trong
+    staff/partials/header.ejs de biet vi sao phai lam.
+
+    Tu quan ly trang thai bang lop `sb-mo` tren <body> chu KHONG dung lop
+    `toggled` cua sb-admin-2, vi:
+      1. `toggled` cua no nghia la "thu gon con dai bieu tuong", khac han y
+         nghia dong/mo o day - dung chung mot lop cho hai y nghia se roi.
+      2. JS cua no tu them `toggled` trong su kien resize khi be ngang < 480px.
+         Neu ngan keo an theo lop do thi xoay ngang roi xoay lai la ngan keo tu
+         bat ra giua chung.
+
+    Chay sau sb-admin-2.min.js va dung addEventListener nen khong de len bo xu
+    ly san co cua no - hai ben cung nghe nut, chi khac la lop `toggled` no them
+    vao gio khong con tac dung gi duoi 768px.
+  */
+  (function () {
+    var nut = document.getElementById('sidebarToggleTop');
+    var thanhBen = document.querySelector('.sidebar');
+    if (!nut || !thanhBen) return;
+
+    var che = document.createElement('div');
+    che.className = 'sb-che';
+    document.body.appendChild(che);
+
+    var dong = function () { document.body.classList.remove('sb-mo'); };
+
+    nut.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.body.classList.toggle('sb-mo');
+    });
+    che.addEventListener('click', dong);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dong(); });
+
+    // Bam mot muc menu la sang trang khac -> dong ngan keo. Tru cac nut mo
+    // menu con (data-toggle="collapse"): bam vao do la de XEM them muc, dong
+    // ngan keo luc nay thi khong bao gio vao duoc menu con.
+    thanhBen.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      if (!a || a.getAttribute('data-toggle') === 'collapse') return;
+      var href = a.getAttribute('href') || '';
+      if (href && href !== '#') dong();
+    });
+  })();
+</script>
+
 <!-- Socket.io da nap trong header.ejs (truoc noi dung trang) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 

@@ -24,6 +24,18 @@
     <link rel="stylesheet" href="/nhahang.css">
     <style>
       @media (max-width: 760px) { .d-none-mobile { display: none !important; } }
+
+      /*
+        Cap doi cua .d-none-mobile: nhung muc CHI hien tren dien thoai.
+
+        Duoi 760px, nut "Dat ban" va bieu tuong dang nhap/dang xuat o hang cong
+        cu ben phai deu bi .d-none-mobile an di, ma ngan keo menu lai khong co
+        muc thay the - nen tren dien thoai khong con duong nao vao trang dang
+        nhap hay dat ban. Cac muc duoi day bu lai dung phan bi an do.
+      */
+      .nh-menu-mobile { display: none; }
+      @media (max-width: 760px) { .nh-menu-mobile { display: block; } }
+      .nh-menu-mobile--vach { border-top: 1px solid rgba(255, 255, 255, .16); padding-top: 1.1rem; margin-top: .2rem; }
     </style>
   </head>
 
@@ -44,6 +56,23 @@
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
           <% if (session.username) { %>
             <li><a href="/my-orders"><%= t('dieu_huong.don_cua_toi') %></a></li>
+          <% } %>
+
+          <%# Chi hien trong ngan keo tren dien thoai - xem chu thich .nh-menu-mobile o tren %>
+          <li class="nh-menu-mobile nh-menu-mobile--vach">
+            <a href="/datban"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
+          </li>
+          <% if (session.username) { %>
+            <li class="nh-menu-mobile">
+              <a href="/profile"><i class="fas fa-user"></i> <%= t('dieu_huong.tai_khoan') %></a>
+            </li>
+            <li class="nh-menu-mobile">
+              <a href="/logout"><i class="fas fa-sign-out-alt"></i> <%= t('dieu_huong.dang_xuat') %></a>
+            </li>
+          <% } else { %>
+            <li class="nh-menu-mobile">
+              <a href="/login"><i class="fas fa-user"></i> <%= t('dieu_huong.dang_nhap') %></a>
+            </li>
           <% } %>
         </ul>
 

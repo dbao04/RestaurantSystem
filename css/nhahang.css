@@ -80,7 +80,18 @@
 .nh-nav .nh-container { width: min(1360px, 94%); }
 .nh-nav:not(.is-solid) .nh-brand, .nh-nav:not(.is-solid) .nh-nav__links a,
 .nh-nav:not(.is-solid) .nh-lang__nut { text-shadow: 0 1px 8px rgba(0,0,0,.4); }
-.nh-nav.is-solid { background: rgba(30, 18, 12, .96); padding: .55rem 0; box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .6); backdrop-filter: blur(8px); }
+/* KHONG dat backdrop-filter (hay filter / transform) o day.
+   `backdrop-filter` bien thanh nav thanh khoi chua cua moi phan tu con
+   `position: fixed` ben trong no - day la quy dinh cua CSS, khong phai loi
+   trinh duyet. Ngan keo menu tren dien thoai (.nh-nav__links) dung
+   `position: fixed; inset: 0 0 0 auto` de phu kin chieu cao man hinh; khi thanh
+   nav thanh khoi chua thi `bottom: 0` khong con la day man hinh nua ma la day
+   thanh nav, nen ngan keo tut xuong con 128px trong khi man hinh cao 844px:
+   nen sam chi con che duoc hai muc dau, cac muc con lai la chu trang nam thang
+   tren nen kem cua trang - khong doc noi mot chu.
+   Nen da 96% duc roi nen lam mo hau canh gan nhu khong nhin thay - doi lay mot
+   ngan keo hong thi khong dang. */
+.nh-nav.is-solid { background: rgba(30, 18, 12, .96); padding: .55rem 0; box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .6); }
 .nh-brand { display: flex; align-items: center; gap: .6rem; color: #fff; min-width: 0; }
 .nh-brand img { height: 42px; width: auto; }
 .nh-brand__name { font-family: var(--nh-brand-font); font-weight: 700; font-size: 2rem; line-height: 1;
@@ -155,6 +166,10 @@
 .nh-subhero__bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .nh-subhero__veil { position: absolute; inset: 0; background: linear-gradient(rgba(24,14,9,.72), rgba(24,14,9,.82)); }
 .nh-subhero__inner { position: relative; z-index: 2; padding-top: 70px; }
+/* Giỏ hàng và chi tiết món dùng hero thấp hơn (trước đây viết thẳng
+   style="min-height:38vh" trong cart.ejs/detail.ejs). Đưa ra đây thành lớp để
+   điểm ngắt điện thoại ở cuối tệp còn ghi đè được — kiểu nội tuyến thì không. */
+.nh-subhero--sm { min-height: 38vh; }
 .nh-subhero h1 { color: #fff; font-size: clamp(2.2rem, 5vw, 3.6rem); }
 .nh-crumbs { margin-top: .6rem; color: rgba(255,255,255,.9); font-size: .9rem; }
 .nh-crumbs a { color: var(--nh-gold-soft); }
@@ -1024,4 +1039,148 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
 @media (max-height: 740px) {
   .nh-hero__scroll { display: none; }
   .nh-hero__inner { padding-bottom: 24px; }
+}
+
+/* ==========================================================================
+   ĐIỆN THOẠI (≤ 640px)
+   ==========================================================================
+
+   Cả tệp này chỉ có 13 điểm ngắt, hầu hết từ 640px trở lên, nên khu khách gần
+   như chưa được nắn cho màn hình dọc. Đo trên Chrome khổ 390×844 (iPhone 14):
+
+     .nh-subhero   439px  — hơn nửa màn hình đầu chỉ có tiêu đề + đường dẫn
+     .nh-cats      592px  — 22 danh mục xuống dòng thành 11 hàng, canh giữa
+     .nh-dish      432px  — mỗi thẻ món chiếm nửa màn, xem 258 món không nổi
+     .nh-footer   1184px  — bốn cột xếp chồng, dài hơn cả nội dung nhiều trang
+     .nh-cart       33px  — vùng chạm dưới ngưỡng 44px của cả Apple lẫn Google
+     .nh-lang__nut  26px
+
+   Không đụng tới bố cục máy tính: mọi thứ dưới đây nằm trong một điểm ngắt.
+   ========================================================================== */
+@media (max-width: 640px) {
+
+  /* -------- Hero trang trong: bỏ hẳn, thay bằng thanh tiêu đề mảnh --------
+     52vh trên màn dọc là 439px, cộng thanh điều hướng cố định nữa thành ~500px
+     trong 844px màn hình đầu — nửa màn hình đầu chỉ để nói "đây là trang Thực
+     đơn", điều mà khách vừa bấm vào nên đã biết. Hạ xuống 34vh vẫn còn 287px,
+     tức một phần ba màn hình, nên bỏ luôn tấm nền lớn.
+
+     Còn lại một dải sẫm mảnh nối liền với thanh điều hướng (cũng màu sẫm) thành
+     một khối đầu trang gọn. Dòng chữ ký trang trí (.nh-eyebrow) ẩn đi: ở cỡ chữ
+     vừa với dải mảnh thì nó không còn đọc ra nét chữ ký nữa, chỉ thành một dòng
+     chữ nhòe.
+
+     Trang chủ vẫn giữ hero tràn màn hình — đó là chỗ duy nhất đáng dành cả màn. */
+  /* Ngay sau thanh điều hướng cố định đã có sẵn một khối đệm cao 66px
+     (header.ejs:106) để đẩy nội dung xuống, nên .nh-subhero__inner KHÔNG cần
+     đệm thêm 62-76px nữa như bố cục cũ — cộng dồn thì dải mảnh lại dày trở lại.
+     Đệm ở đây chỉ còn là khoảng thở quanh dòng tiêu đề.
+
+     margin-top âm 5px: khối đệm cao 66px trong khi thanh điều hướng trên điện
+     thoại chỉ cao 62px, hở ra 4px nền kem thành một vạch sáng cắt ngang giữa hai
+     mảng sẫm. Kéo dải lên che đúng chỗ hở đó. */
+  .nh-subhero { min-height: 0; margin-top: -5px; }
+  .nh-subhero__inner { padding: 16px 0 18px; }
+  .nh-subhero .nh-eyebrow { display: none; }
+  .nh-subhero h1 { font-size: 1.45rem; margin: 0; }
+  .nh-crumbs { margin-top: .3rem; font-size: .78rem; }
+
+  /* -------- Hero trang chủ --------
+     clamp(2.6rem, 7vw, 5.2rem) ở 390px vẫn cho 2.6rem, tiêu đề ăn 3 dòng.
+     Đoạn mô tả 1.05rem giãn dòng 1.9 thì mất thêm 6 dòng nữa. */
+  .nh-hero h1 { font-size: 2.35rem; }
+  .nh-hero__inner { padding-top: 64px; }
+  .nh-hero p { font-size: .98rem; line-height: 1.65; }
+
+  /* -------- Khoảng thở giữa các khối --------
+     clamp(4rem, 8vw, 7rem) trên điện thoại luôn rơi vào 4rem = 64px trên và
+     64px dưới. Trên màn hình rộng đó là sang trọng; trên màn dọc là bắt cuộn. */
+  .nh-section { padding: 2.6rem 0; }
+  .nh-head { margin-bottom: 1.8rem; }
+
+  /* -------- Danh mục: cuộn ngang thay vì xuống dòng --------
+     22 danh mục canh giữa xuống dòng tạo một khối 592px — khách phải lướt qua
+     gần hai màn hình mới thấy món đầu tiên. Cho cuộn ngang một hàng: khối chỉ
+     còn ~48px, và cách này quen tay với người dùng điện thoại.
+
+     Âm lề rồi bù lại bằng padding để dải chạy sát mép máy (dấu hiệu "còn nữa,
+     vuốt tiếp"), thay vì dừng lơ lửng giữa lề của .nh-container. */
+  .nh-cats {
+    flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    margin: 0 -3vw 1.4rem; padding: .2rem 3vw .5rem;
+  }
+  .nh-cats::-webkit-scrollbar { display: none; }
+  .nh-cat { flex: 0 0 auto; scroll-snap-align: start; padding: .55rem 1.1rem; font-size: .84rem; }
+
+  /* -------- Lưới món: 2 cột --------
+     minmax(300px, 1fr) ở bề ngang 366px chỉ vừa đúng 1 cột, nên mỗi màn hình
+     hiện được 1,5 món. Hai cột đưa lên 4 món/màn; ảnh vuông thay vì 4:3 để thẻ
+     thấp lại, và chữ phải nhỏ theo cho vừa cột ~172px. */
+  .nh-grid { grid-template-columns: 1fr 1fr; gap: .85rem; }
+  .nh-dish { border-radius: 13px; }
+  .nh-dish__media { aspect-ratio: 1; }
+  .nh-dish__price { bottom: 8px; right: 8px; padding: .25rem .6rem; font-size: .82rem; }
+  .nh-dish__body { padding: .8rem .8rem 1rem; }
+  .nh-dish__body h3 { font-size: 1rem; line-height: 1.25; }
+  .nh-dish__body p { font-size: .78rem; margin-bottom: .7rem; }
+  .nh-dish__cta { font-size: .7rem; letter-spacing: .6px; }
+
+  /* -------- Vùng chạm --------
+     Giỏ hàng 33px và nút ngôn ngữ 26px đều dưới ngưỡng 44px. Nới bằng vùng chạm
+     chứ không phóng to biểu tượng, để thanh điều hướng nhìn vẫn như cũ. */
+  .nh-nav__actions > a,
+  .nh-nav__actions > button,
+  .nh-lang__nut,
+  .nh-burger { min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Nới vùng chạm làm hàng công cụ rộng thêm ~20px, và tên nhà hàng — vốn đã
+     sát nút vì viết bằng font chữ ký — bị cắt thành "Bao Doan Restau...".
+     Đo ở 390px: tên tiếng Việt cần 168px mà chỉ còn 151px. Thu chữ và bóp
+     khoảng cách giữa các nút để lấy lại đủ chỗ.
+     Bản tiếng Nhật (216px) vẫn phải cắt bớt — chữ Nhật rộng gấp rưỡi, giữ
+     nguyên cỡ thì không còn chỗ cho nút nào. */
+  .nh-nav__actions { gap: .55rem; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.2rem; }
+  .nh-cats .nh-cat { min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* Trong ngăn kéo, mục menu chỉ cao 34px và các mục cách nhau bằng gap — ngón
+     tay dễ bấm nhầm sang mục bên cạnh. Cho mỗi mục chiếm trọn bề ngang ngăn kéo
+     và cao 44px, thành một hàng bấm rõ ràng. */
+  /* gap: bo cuc flex nuot mat khoang trang giua <i> va chu, nen muc co bieu
+     tuong ("Dat ban", "Dang nhap") dinh lien thanh mot cuc. */
+  .nh-nav__links a { display: flex; align-items: center; gap: .55rem; min-height: 44px; width: 100%; }
+
+  /* -------- Chân trang --------
+     1184px cho một chân trang là dài hơn phần nội dung của nhiều trang. Bốn cột
+     đã xếp chồng từ 760px rồi, nên chỗ cắt được là khoảng đệm và cỡ chữ. */
+  .nh-footer { padding-top: 2.4rem; }
+  .nh-footer__grid { gap: 1.5rem; padding-bottom: 1.5rem; }
+  .nh-footer__brand { font-size: 1.7rem; margin-bottom: .6rem; }
+  .nh-footer h4 { font-size: 1.05rem; margin-bottom: .7rem; padding-bottom: .5rem; }
+  .nh-footer li { margin-bottom: .45rem; }
+  .nh-footer p { font-size: .9rem; }
+  .nh-social { margin-top: .9rem; gap: .5rem; }
+  .nh-social a { width: 38px; height: 38px; }
+  .nh-footer__bottom { padding: 1rem 0; font-size: .78rem; }
+
+  /* -------- Bong bóng trợ lý ảo --------
+     Neo ở right/bottom 22px với đường kính 58px, nó đè lên góc phải dưới của
+     nội dung — đo được nó che khuất một thẻ danh mục và một góc ảnh món. Thu
+     nhỏ và nép sát góc để phần bị che ít nhất có thể. */
+  .cb-nut { width: 50px !important; height: 50px !important;
+    right: 14px !important; bottom: 14px !important; font-size: 1.1rem !important; }
+  .cb-khung { right: 10px !important; left: 10px !important; bottom: 74px !important;
+    width: auto !important; }
+}
+
+/* Máy Android nhỏ (360px) hẹp hơn iPhone 30px — vừa đủ để tên nhà hàng lại bị
+   cắt. Hạ thêm một nấc: 149px xuống còn 127px, vừa khít 134px còn lại. */
+@media (max-width: 400px) {
+  .nh-brand img { max-height: 28px; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.02rem; }
 }
