@@ -2,101 +2,314 @@
   var activePage = 'schedule';
   var staffName = session.staffName || 'Nhân viên';
   var unreadCount = unread || 0;
+
+  // Gom lich thanh tra cuu O(1) theo khoa "ngay|ma_ca". Duyet mang long nhau
+  // trong view thi moi o cua luoi phai quet lai ca tuan - 21 o x N ca.
+  var oLich = {};
+  (schedule || []).forEach(function (s) { oLich[s.ngay + '|' + s.ca] = s; });
+
+  var TEN_THU = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+  var TEN_THU_NGAN = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  function ngayGon(iso) { return iso.slice(8, 10) + '/' + iso.slice(5, 7); }
+  function gio(v) { return v ? String(v).slice(-8).slice(0, 5) : ''; }
+
+  // Nhan trang thai: 0 cho duyet, 1 da duyet, 2 tu choi.
+  var NHAN_TT = { 0: 'Chờ duyệt', 1: 'Đã duyệt', 2: 'Từ chối' };
+  var LOP_TT  = { 0: 'cho', 1: 'duyet', 2: 'tuchoi' };
+
+  // Chi ca do CHINH minh dang ky va con cho duyet moi tu huy duoc - khop dung
+  // dieu kien trong personnelService.cancelSchedule, de nut khong hien ra roi
+  // bam vao lai bao loi.
+  function tuHuyDuoc(s) {
+    return Number(s.trangthai) === 0 && (!s.nguon || s.nguon === 'dang_ky');
+  }
+
+  var soDuyet = 0, soCho = 0, tongPhut = 0, caHomNay = 0;
+  (schedule || []).forEach(function (s) {
+    if (Number(s.trangthai) === 1) soDuyet++;
+    if (Number(s.trangthai) === 0) soCho++;
+    if (s.ngay === homNay && Number(s.trangthai) !== 2) caHomNay++;
+    if (Number(s.trangthai) !== 2 && s.gio_bat_dau && s.gio_ket_thuc) {
+      var a = gio(s.gio_bat_dau).split(':'), b = gio(s.gio_ket_thuc).split(':');
+      tongPhut += (b[0] * 60 + (+b[1])) - (a[0] * 60 + (+a[1]));
+    }
+  });
+  var tongGio = Math.round(tongPhut / 6) / 10;
 %>
 <%- include('partials/header') %>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+<style>
+  /* ---- Thoi khoa bieu ----------------------------------------------------
+     Dung CSS Grid chu khong phai <table>: o trong cua luoi can chua mot nut
+     bam chiem het o, ma <td> thi khong keo cao deu nhau khi mot cot co the
+     nhieu noi dung hon cot khac.                                          */
+  .tkb-luoi {
+    display: grid;
+    grid-template-columns: 108px repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+  }
+  .tkb-goc { }
+  .tkb-thu {
+    text-align: center; padding: 8px 4px; border-radius: 8px;
+    background: #f8f9fc; border: 1px solid #e3e6f0; line-height: 1.25;
+  }
+  .tkb-thu .ten { font-weight: 700; color: #4e73df; font-size: 13px; }
+  .tkb-thu .ngay { font-size: 12px; color: #858796; }
+  .tkb-thu.hom-nay { background: #4e73df; border-color: #4e73df; }
+  .tkb-thu.hom-nay .ten, .tkb-thu.hom-nay .ngay { color: #fff; }
+
+  .tkb-ca {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 10px 8px; border-radius: 8px;
+    background: #f8f9fc; border: 1px solid #e3e6f0;
+  }
+  .tkb-ca .ten { font-weight: 700; font-size: 13px; color: #5a5c69; }
+  .tkb-ca .gio { font-size: 11px; color: #858796; }
+
+  .tkb-o {
+    min-height: 78px; border-radius: 8px; padding: 8px;
+    border: 1px solid #e3e6f0; background: #fff;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .tkb-o.cot-hom-nay { border-color: #bac8f3; background: #fbfcff; }
+  .tkb-o.qua-khu { background: #fafafa; }
+
+  /* Trang thai: vien trai day mau, doc duoc ca khi in trang den trang. */
+  .tkb-o.co-ca { border-left-width: 4px; }
+  .tkb-o.duyet  { border-left-color: #1cc88a; background: #f2fbf7; }
+  .tkb-o.cho    { border-left-color: #f6c23e; background: #fffaf0; }
+  .tkb-o.tuchoi { border-left-color: #e74a3b; background: #fdf4f3; opacity: .75; }
+
+  .tkb-o .nhan { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+  .tkb-o.duyet  .nhan { color: #13855c; }
+  .tkb-o.cho    .nhan { color: #b98b12; }
+  .tkb-o.tuchoi .nhan { color: #c0392b; }
+  .tkb-o .gio-ca { font-size: 13px; font-weight: 600; color: #3a3b45; }
+  .tkb-o .ghi-chu { font-size: 11px; color: #858796; word-break: break-word; }
+  .tkb-o .nguon { font-size: 10px; color: #b7b9cc; margin-top: auto; }
+
+  .tkb-them {
+    border: 1px dashed #d1d3e2; background: transparent; color: #b7b9cc;
+    border-radius: 6px; width: 100%; flex: 1;
+    font-size: 18px; line-height: 1; cursor: pointer; transition: .15s;
+  }
+  .tkb-them:hover { border-color: #4e73df; color: #4e73df; background: #f4f6fd; }
+
+  .tkb-chu-thich { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: #858796; }
+  .tkb-chu-thich i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+
+  /* Dien thoai: luoi 8 cot khong the nhet vua man hinh 5 inch, doi han sang
+     danh sach theo ngay. Moi ngay mot khoi, trong khoi la cac ca.
+     Phai an ca khoi .tkb-luoi chu khong chi an hang tieu de va cot ca: grid
+     doi sang `display:block` thi cac o van con do, xep thanh mot chong o rong
+     ngay tren danh sach.                                                     */
+  @media (max-width: 991.98px) {
+    .tkb-luoi { display: none; }
+    .tkb-ngay-mobi { display: block; }
+  }
+  @media (min-width: 992px) { .tkb-ngay-mobi { display: none; } }
+
+  .tkb-ngay-mobi { margin-bottom: 14px; }
+  .tkb-ngay-mobi .dau-ngay {
+    font-weight: 700; color: #4e73df; font-size: 14px;
+    padding: 6px 10px; background: #f8f9fc; border-radius: 6px; margin-bottom: 6px;
+  }
+  .tkb-ngay-mobi.hom-nay .dau-ngay { background: #4e73df; color: #fff; }
+  .tkb-ngay-mobi .tkb-o { margin-bottom: 6px; min-height: 0; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 mb-0 text-gray-800">Lịch làm việc</h1>
+  <a href="/staff/attendance" class="btn btn-sm btn-outline-primary">
+    <i class="fas fa-clock fa-sm mr-1"></i> Bảng công của tôi
+  </a>
 </div>
 
+<% if (typeof msg !== 'undefined' && msg) { %>
+  <div class="alert alert-<%= msgType || 'info' %> alert-dismissible fade show">
+    <%= msg %>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+<% } %>
+
+<!-- Bon chi so cua tuan dang xem -->
 <div class="row">
-  <!-- Form đăng ký lịch -->
-  <div class="col-md-4 mb-4">
-    <div class="card shadow">
-      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Đăng ký ca làm</h6></div>
-      <div class="card-body">
-        <% if (typeof msg !== 'undefined' && msg) { %>
-          <div class="alert alert-<%= msgType||'info' %>"><%= msg %></div>
-        <% } %>
-        <form action="/staff/schedule" method="POST">
-          <div class="form-group">
-            <label>Ngày làm việc</label>
-            <input type="date" class="form-control" name="ngay" min="<%= new Date().toISOString().slice(0,10) %>" required>
+  <% var the = [
+       ['Ca đã duyệt', soDuyet, 'success', 'fa-check-circle'],
+       ['Chờ duyệt', soCho, 'warning', 'fa-hourglass-half'],
+       ['Tổng giờ trong tuần', tongGio + ' giờ', 'info', 'fa-stopwatch'],
+       ['Ca hôm nay', caHomNay, 'primary', 'fa-calendar-day']
+     ]; %>
+  <% the.forEach(function (t) { %>
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card border-left-<%= t[2] %> shadow h-100 py-2">
+        <div class="card-body py-2">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-<%= t[2] %> text-uppercase mb-1"><%= t[0] %></div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800"><%= t[1] %></div>
+            </div>
+            <div class="col-auto"><i class="fas <%= t[3] %> fa-2x text-gray-300"></i></div>
           </div>
-          <div class="form-group">
-            <label>Ca làm việc</label>
-            <select class="form-control" name="ca">
-              <option value="sang">Sáng (7:00 - 12:00)</option>
-              <option value="chieu">Chiều (12:00 - 17:00)</option>
-              <option value="toi">Tối (17:00 - 21:00)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Ghi chú</label>
-            <textarea class="form-control" name="ghi_chu" rows="2" placeholder="(Không bắt buộc)"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Đăng ký</button>
-        </form>
+        </div>
       </div>
+    </div>
+  <% }) %>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex flex-wrap align-items-center justify-content-between">
+    <h6 class="m-0 font-weight-bold text-primary">
+      Tuần <%= ngayGon(thuHai) %> – <%= ngayGon(chuNhat) %>
+    </h6>
+    <div class="btn-group btn-group-sm mt-2 mt-sm-0">
+      <a href="/staff/schedule?tuan=<%= tuanTruoc %>" class="btn btn-outline-secondary">
+        <i class="fas fa-chevron-left"></i> Tuần trước
+      </a>
+      <a href="/staff/schedule" class="btn btn-outline-primary">Tuần này</a>
+      <a href="/staff/schedule?tuan=<%= tuanSau %>" class="btn btn-outline-secondary">
+        Tuần sau <i class="fas fa-chevron-right"></i>
+      </a>
     </div>
   </div>
 
-  <!-- Bảng lịch làm việc -->
-  <div class="col-md-8 mb-4">
-    <div class="card shadow">
-      <div class="card-header py-3 d-flex align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Lịch làm việc của tôi</h6>
-        <form method="GET" class="d-flex">
-          <input type="month" class="form-control form-control-sm mr-2" name="thang" value="<%= currentMonth %>">
-          <button type="submit" class="btn btn-sm btn-outline-primary">Xem</button>
-        </form>
-      </div>
-      <div class="card-body">
-        <% if (schedule && schedule.length > 0) { %>
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-              <thead class="thead-light">
-                <tr>
-                  <th>Ngày</th>
-                  <th>Ca</th>
-                  <th>Giờ</th>
-                  <th>Trạng thái</th>
-                  <th>Ghi chú</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% schedule.forEach(s => { %>
-                  <tr>
-                    <td><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></td>
-                    <td>
-                      <span class="badge badge-<%= s.ca==='sang'?'info':s.ca==='chieu'?'warning':'dark' %>">
-                        <%= s.ca==='sang'?'Sáng':s.ca==='chieu'?'Chiều':'Tối' %>
-                      </span>
-                    </td>
-                    <td><small><%= s.gio_bat_dau ? s.gio_bat_dau.slice(0,5) : '–' %> – <%= s.gio_ket_thuc ? s.gio_ket_thuc.slice(0,5) : '–' %></small></td>
-                    <td>
-                      <span class="badge badge-<%= s.trangthai==1?'success':s.trangthai==2?'danger':'secondary' %>">
-                        <%= s.trangthai==1?'Đã duyệt':s.trangthai==2?'Từ chối':'Chờ duyệt' %>
-                      </span>
-                    </td>
-                    <td><small><%= s.ghi_chu || '–' %></small></td>
-                    <td>
-                      <% if (s.trangthai == 0) { %>
-                        <a href="/staff/schedule/cancel/<%= s.id_lich %>" class="btn btn-sm btn-danger" onclick="return confirm('Hủy đăng ký ca này?')">Hủy</a>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
+  <div class="card-body">
+    <!-- ---------- Luoi cho man hinh rong ---------- -->
+    <div class="tkb-luoi">
+      <div class="tkb-goc"></div>
+      <% ngayTrongTuan.forEach(function (ng, i) { %>
+        <div class="tkb-thu <%= ng === homNay ? 'hom-nay' : '' %>">
+          <div class="ten"><%= TEN_THU_NGAN[i] %></div>
+          <div class="ngay"><%= ngayGon(ng) %></div>
+        </div>
+      <% }) %>
+
+      <% dsCa.forEach(function (c) { %>
+        <div class="tkb-ca">
+          <div class="ten"><%= c.ten_ca %></div>
+          <div class="gio"><%= gio(c.gio_bat_dau) %> – <%= gio(c.gio_ket_thuc) %></div>
+        </div>
+        <% ngayTrongTuan.forEach(function (ng) {
+             var s = oLich[ng + '|' + c.ma_ca];
+             var quaKhu = ng < homNay;
+        %>
+          <div class="tkb-o <%= s ? 'co-ca ' + LOP_TT[Number(s.trangthai)] : (quaKhu ? 'qua-khu' : '') %> <%= ng === homNay ? 'cot-hom-nay' : '' %>">
+            <% if (s) { %>
+              <div class="nhan"><%= NHAN_TT[Number(s.trangthai)] %></div>
+              <div class="gio-ca"><%= gio(s.gio_bat_dau) %> – <%= gio(s.gio_ket_thuc) %></div>
+              <% if (s.ghi_chu) { %><div class="ghi-chu"><%= s.ghi_chu %></div><% } %>
+              <div class="nguon">
+                <%= s.nguon === 'dang_ky' ? 'Tôi tự đăng ký' : 'Quản lý phân ca' %>
+                <% if (tuHuyDuoc(s)) { %>
+                  · <a href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
+                       class="text-danger"
+                       onclick="return confirm('Huỷ đăng ký ca <%= c.ten_ca %> ngày <%= ngayGon(ng) %>?')">Huỷ</a>
+                <% } %>
+              </div>
+            <% } else if (!quaKhu) { %>
+              <button type="button" class="tkb-them"
+                      title="Đăng ký <%= c.ten_ca %> ngày <%= ngayGon(ng) %>"
+                      onclick="moDangKy('<%= ng %>', '<%= c.ma_ca %>', '<%= c.ten_ca %>')">+</button>
+            <% } %>
           </div>
-        <% } else { %>
-          <p class="text-center text-muted">Chưa có lịch làm việc trong tháng này.</p>
-        <% } %>
-      </div>
+        <% }) %>
+      <% }) %>
     </div>
+
+    <!-- ---------- Danh sach theo ngay cho dien thoai ---------- -->
+    <% ngayTrongTuan.forEach(function (ng, i) { %>
+      <div class="tkb-ngay-mobi <%= ng === homNay ? 'hom-nay' : '' %>">
+        <div class="dau-ngay"><%= TEN_THU[i] %> · <%= ngayGon(ng) %><%= ng === homNay ? ' · hôm nay' : '' %></div>
+        <% dsCa.forEach(function (c) {
+             var s = oLich[ng + '|' + c.ma_ca];
+             var quaKhu = ng < homNay;
+             if (!s && quaKhu) return;
+        %>
+          <div class="tkb-o <%= s ? 'co-ca ' + LOP_TT[Number(s.trangthai)] : '' %>">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong style="font-size:13px"><%= c.ten_ca %></strong>
+              <% if (s) { %><span class="nhan"><%= NHAN_TT[Number(s.trangthai)] %></span><% } %>
+            </div>
+            <% if (s) { %>
+              <div class="gio-ca"><%= gio(s.gio_bat_dau) %> – <%= gio(s.gio_ket_thuc) %></div>
+              <% if (s.ghi_chu) { %><div class="ghi-chu"><%= s.ghi_chu %></div><% } %>
+              <div class="nguon">
+                <%= s.nguon === 'dang_ky' ? 'Tôi tự đăng ký' : 'Quản lý phân ca' %>
+                <% if (tuHuyDuoc(s)) { %>
+                  · <a href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
+                       class="text-danger" onclick="return confirm('Huỷ đăng ký ca này?')">Huỷ</a>
+                <% } %>
+              </div>
+            <% } else { %>
+              <button type="button" class="btn btn-sm btn-outline-primary btn-block mt-1"
+                      onclick="moDangKy('<%= ng %>', '<%= c.ma_ca %>', '<%= c.ten_ca %>')">
+                <i class="fas fa-plus fa-sm"></i> Đăng ký ca này
+              </button>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% }) %>
+
+    <hr>
+    <div class="tkb-chu-thich">
+      <span><i style="background:#1cc88a"></i>Đã duyệt</span>
+      <span><i style="background:#f6c23e"></i>Chờ duyệt</span>
+      <span><i style="background:#e74a3b"></i>Từ chối</span>
+      <span><i style="background:#fff;border:1px dashed #d1d3e2"></i>Bấm dấu + để đăng ký ca trống</span>
+    </div>
+    <p class="text-muted mb-0 mt-2" style="font-size:12px">
+      Ca do quản lý phân không tự huỷ được. Muốn nghỉ ca đã phân thì nộp
+      <a href="/staff/leave">đơn nghỉ phép</a>.
+    </p>
   </div>
 </div>
+
+<!-- Hop thoai dang ky: dien san ngay va ca cua o vua bam, nguoi dung chi con
+     viec ghi chu neu can. Truoc day form nam mot cot rieng va phai tu chon lai
+     ngay + ca, tuc la gõ lai dung thu minh vua bam vao. -->
+<div class="modal fade" id="modalDangKy" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <form class="modal-content" action="/staff/schedule" method="POST">
+      <div class="modal-header">
+        <h5 class="modal-title">Đăng ký ca làm</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="tuan" value="<%= thuHai %>">
+        <div class="form-group">
+          <label class="text-xs font-weight-bold text-uppercase text-gray-600">Ngày làm việc</label>
+          <input type="date" class="form-control" name="ngay" id="dk-ngay" min="<%= homNay %>" required>
+        </div>
+        <div class="form-group">
+          <label class="text-xs font-weight-bold text-uppercase text-gray-600">Ca làm việc</label>
+          <select class="form-control" name="ca" id="dk-ca" required>
+            <% dsCa.forEach(function (c) { %>
+              <option value="<%= c.ma_ca %>"><%= c.ten_ca %> (<%= gio(c.gio_bat_dau) %> – <%= gio(c.gio_ket_thuc) %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="text-xs font-weight-bold text-uppercase text-gray-600">Ghi chú <span class="text-muted">(không bắt buộc)</span></label>
+          <textarea class="form-control" name="ghi_chu" rows="2" placeholder="Ví dụ: xin về sớm 30 phút"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-primary">Gửi đăng ký</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function moDangKy(ngay, maCa, tenCa) {
+    document.getElementById('dk-ngay').value = ngay;
+    document.getElementById('dk-ca').value = maCa;
+    $('#modalDangKy').modal('show');
+  }
+</script>
 
 <%- include('partials/footer') %>

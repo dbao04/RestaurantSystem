@@ -1,11 +1,46 @@
-<%- include('partials/header', { title: 'Tin tức', activeNav: 'blog' }) %>
+<%- include('partials/header', { title: t('dieu_huong.tin_tuc'), activeNav: 'blog' }) %>
 
 <%
   // ---- Dữ liệu & tiện ích hiển thị ----
-  var dsBaiViet = (typeof posts !== 'undefined' && posts) ? posts : [];
+  /*
+    Chon ban dich theo ngon ngu dang xem.
+
+    Ghi de thang `tieu_de` / `noi_dung` tren mot BAN SAO cua bai viet, nen moi
+    cho hien thi ben duoi khong phai sua gi - the anh, hop thoai, phan tom tat
+    va ca so phut doc deu tu dung ban dung ngon ngu.
+
+    Thieu ban dich thi lui ve tieng Viet va danh dau `chiTiengViet` de hien dong
+    bao cho DUNG bai do, thay vi bao ve moi bai nhu truoc.
+  */
+  function chonBan(p) {
+    var ma = (typeof nn !== 'undefined') ? nn : 'vi';
+    if (ma === 'en' && p.tieu_de_en) {
+      return { tieu_de: p.tieu_de_en, noi_dung: p.noi_dung_en || p.noi_dung, chiTiengViet: false };
+    }
+    if (ma === 'ja' && p.tieu_de_ja) {
+      return { tieu_de: p.tieu_de_ja, noi_dung: p.noi_dung_ja || p.noi_dung, chiTiengViet: false };
+    }
+    return { tieu_de: p.tieu_de, noi_dung: p.noi_dung, chiTiengViet: ma !== 'vi' };
+  }
+
+  var dsBaiViet = ((typeof posts !== 'undefined' && posts) ? posts : [])
+    .map(function (p) { return Object.assign({}, p, chonBan(p)); });
   var THANG = ['Th1','Th2','Th3','Th4','Th5','Th6','Th7','Th8','Th9','Th10','Th11','Th12'];
-  // Bộ ảnh nhà hàng dùng khi bài viết chưa có hình
-  var ANH_MAC_DINH = ['/blog-1.jpg', '/blog-2.jpg', '/blog-3.jpg', '/blog-4.jpg'];
+  /* Ảnh dùng khi bài viết chưa có hình riêng.
+
+     Route /blog truyền sang bốn ảnh MÓN lấy ngẫu nhiên từ thực đơn — trước đây
+     chỗ này là bốn tệp tĩnh /blog-1..4.jpg, ảnh stock của một nhà hàng Âu.
+     Vẫn giữ một đường lui cuối cùng phòng khi truy vấn lỗi: khi đó thà không
+     có ảnh còn hơn hiện ảnh sai nhà hàng, nên lùi về ảnh thay thế tự vẽ.
+
+     TÊN BIẾN PHẢI KHÁC TÊN HÀM `anhDuPhong()` NGAY BÊN DƯỚI.
+     Khai báo hàm được hoisted lên đầu, nên nếu đặt trùng tên thì tại dòng này
+     `anhDuPhong` đã là HÀM chứ không phải mảng route truyền sang — và
+     `hàm.length` bằng số tham số của nó (1), tức vẫn "truthy". Kết quả:
+     ANH_MAC_DINH nhận nguyên cái hàm, `ANH_MAC_DINH[0]` là undefined, và cả
+     trang Tin tức mất sạch ảnh mà không báo lỗi gì. */
+  var ANH_MAC_DINH = (typeof anhMonDuPhong !== 'undefined' && anhMonDuPhong && anhMonDuPhong.length)
+    ? anhMonDuPhong : ['/mon-thay-the.svg'];
 
   function anhBaiViet(p, i) {
     return p.hinh_anh ? ('/food/' + p.hinh_anh) : ANH_MAC_DINH[i % ANH_MAC_DINH.length];
@@ -13,8 +48,12 @@
   function anhDuPhong(i) {
     return ANH_MAC_DINH[i % ANH_MAC_DINH.length];
   }
+  /* Lay chuoi ra NGOAI ham: ben trong `tomTat` co bien `var t` che mat ham
+     t() cua he da ngon ngu (khai bao var duoc hoisted len dau ham), goi
+     t('...') o trong do se bao "t is not a function". */
+  var CHUA_CO_NOI_DUNG = t('tin_tuc.dang_cap_nhat');
   function tomTat(s, n) {
-    if (!s) return 'Bài viết đang được cập nhật nội dung.';
+    if (!s) return CHUA_CO_NOI_DUNG;
     var t = String(s).replace(/\s+/g, ' ').trim();
     return t.length > n ? t.substring(0, n).trim() + '…' : t;
   }
@@ -34,12 +73,12 @@
 
 <!-- ================= HERO NHỎ ================= -->
 <section class="nh-subhero">
-  <div class="nh-subhero__bg" style="background-image:url('/blog-hero.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Câu chuyện từ gian bếp</span>
-    <h1>Tin tức &amp; Sự kiện</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Tin tức</div>
+    <span class="nh-eyebrow"><%= t('tin_tuc.eyebrow') %></span>
+    <h1><%- t('tin_tuc.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.tin_tuc') %></div>
   </div>
 </section>
 
@@ -50,19 +89,19 @@
       <!-- ================= CHƯA CÓ BÀI VIẾT ================= -->
       <div class="nh-empty nh-reveal">
         <i class="far fa-newspaper"></i>
-        <h3>Chưa có bài viết nào</h3>
+        <h3><%= t('tin_tuc.chua_co_bai') %></h3>
         <p class="nh-lead" style="max-width:460px;margin:.6rem auto 1.6rem">
-          Nhà hàng đang chuẩn bị những câu chuyện thú vị về ẩm thực, sự kiện và ưu đãi. Mời bạn quay lại sau nhé!
+          <%= t('tin_tuc.chua_co_mo_ta') %>
         </p>
-        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-utensils"></i> Xem thực đơn</a>
+        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-utensils"></i> <%= t('chung.xem_thuc_don') %></a>
       </div>
 
     <% } else { %>
 
       <!-- ================= TRANG BÌA TẠP CHÍ ================= -->
       <div class="nh-head nh-center nh-reveal">
-        <span class="nh-eyebrow">Chuyên mục</span>
-        <h2 class="nh-section-title">Đọc gì hôm nay</h2>
+        <span class="nh-eyebrow"><%= t('tin_tuc.chuyen_muc') %></span>
+        <h2 class="nh-section-title"><%= t('tin_tuc.doc_gi_hom_nay') %></h2>
         <div class="nh-divider"></div>
       </div>
 
@@ -79,29 +118,37 @@
                onerror="this.src='<%= anhDuPhong(0) %>'">
           <div class="nh-mag__lead-veil"></div>
           <div class="nh-mag__lead-body">
-            <span class="nh-tag">Mới nhất</span>
+            <span class="nh-tag"><%= t('tin_tuc.moi_nhat') %></span>
             <h2><%= noiBat.tieu_de %></h2>
             <p><%= tomTat(noiBat.noi_dung, 190) %></p>
+            <%
+              /* Noi dung bai viet chi co ban tieng Viet (xem HUONG_DAN_NGON_NGU.md).
+                 Khach dang doc giao dien EN/JA can biet dieu do TRUOC khi bam vao,
+                 chu khong phai sau khi mo ra va gap mot buc tuong chu la. */
+            %>
+            <% if (noiBat.chiTiengViet) { %>
+              <p class="nh-blog-vi-only"><i class="fas fa-language"></i> <%= t('tin_tuc.chi_tieng_viet') %></p>
+            <% } %>
             <div class="nh-meta nh-meta--light">
               <span><i class="far fa-calendar"></i><%= ngayVN(noiBat.created_at) %></span>
-              <span><i class="far fa-user"></i>Ban biên tập</span>
-              <span><i class="far fa-clock"></i><%= thoiGianDoc(noiBat.noi_dung) %> phút đọc</span>
+              <span><i class="far fa-user"></i><%= t('tin_tuc.ban_bien_tap') %></span>
+              <span><i class="far fa-clock"></i><%= thoiGianDoc(noiBat.noi_dung) %> <%= t('tin_tuc.phut_doc') %></span>
             </div>
             <button type="button" class="nh-btn nh-btn--gold nh-btn--sm nh-open-post">
-              Đọc bài viết <i class="fas fa-arrow-right"></i>
+              <%= t('tin_tuc.doc_bai_viet') %> <i class="fas fa-arrow-right"></i>
             </button>
           </div>
         </article>
 
         <!-- Cột bài đọc thêm -->
         <aside class="nh-mag__side">
-          <h4 class="nh-mag__side-title">Đáng chú ý</h4>
+          <h4 class="nh-mag__side-title"><%= t('tin_tuc.dang_chu_y') %></h4>
 
           <% if (canhBen.length === 0) { %>
             <p class="nh-lead" style="font-size:.92rem">
-              Đây là bài viết duy nhất hiện có. Hãy quay lại để đón đọc những câu chuyện mới từ nhà hàng nhé!
+              <%= t('tin_tuc.chi_mot_bai') %>
             </p>
-            <a href="/menu" class="nh-post__more" style="margin-top:.4rem">Khám phá thực đơn <i class="fas fa-arrow-right"></i></a>
+            <a href="/menu" class="nh-post__more" style="margin-top:.4rem"><%= t('tin_tuc.kham_pha_thuc_don') %> <i class="fas fa-arrow-right"></i></a>
           <% } %>
 
           <% canhBen.forEach(function (p, i) { %>
@@ -121,7 +168,12 @@
                 <h3><%= p.tieu_de %></h3>
                 <div class="nh-meta">
                   <span><i class="far fa-calendar"></i><%= ngayVN(p.created_at) %></span>
-                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> phút</span>
+                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> <%= t('tin_tuc.phut_doc') %></span>
+                  <%# Bai chua co ban dich: bao ngay tren the, khong de khach bam
+                      vao roi moi gap mot buc tuong chu la. %>
+                  <% if (p.chiTiengViet) { %>
+                    <span title="<%= t('tin_tuc.chi_tieng_viet') %>"><i class="fas fa-language"></i> VI</span>
+                  <% } %>
                 </div>
               </div>
             </article>
@@ -132,16 +184,16 @@
       <!-- ================= KHO BÀI VIẾT ================= -->
       <% if (conLai.length > 0) { %>
         <div class="nh-head nh-center nh-reveal" style="margin-top:4.5rem">
-          <span class="nh-eyebrow">Kho bài viết</span>
-          <h2 class="nh-section-title">Tất cả tin tức</h2>
+          <span class="nh-eyebrow"><%= t('tin_tuc.kho_bai_viet') %></span>
+          <h2 class="nh-section-title"><%= t('tin_tuc.tat_ca') %></h2>
           <div class="nh-divider"></div>
         </div>
 
         <div class="nh-blog-toolbar nh-reveal">
-          <span class="nh-blog-count" id="nh-blog-count"><%= conLai.length %> bài viết</span>
+          <span class="nh-blog-count" id="nh-blog-count"><%= t('tin_tuc.so_bai', { n: conLai.length }) %></span>
           <div class="nh-search nh-search--sm">
-            <input type="text" id="nh-blog-search" placeholder="Tìm bài viết…" aria-label="Tìm bài viết">
-            <button type="button" aria-label="Tìm"><i class="fas fa-search"></i></button>
+            <input type="text" id="nh-blog-search" placeholder="<%= t('tin_tuc.tim_bai') %>" aria-label="<%= t('tin_tuc.tim_bai') %>">
+            <button type="button" aria-label="<%= t('chung.tim_kiem') %>"><i class="fas fa-search"></i></button>
           </div>
         </div>
 
@@ -165,13 +217,16 @@
               </div>
               <div class="nh-post__body">
                 <div class="nh-meta">
-                  <span><i class="far fa-user"></i>Ban biên tập</span>
-                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> phút đọc</span>
+                  <span><i class="far fa-user"></i><%= t('tin_tuc.ban_bien_tap') %></span>
+                  <span><i class="far fa-clock"></i><%= thoiGianDoc(p.noi_dung) %> <%= t('tin_tuc.phut_doc') %></span>
+                  <% if (p.chiTiengViet) { %>
+                    <span title="<%= t('tin_tuc.chi_tieng_viet') %>"><i class="fas fa-language"></i> VI</span>
+                  <% } %>
                 </div>
                 <h3 class="nh-open-post"><%= p.tieu_de %></h3>
                 <p><%= tomTat(p.noi_dung, 150) %></p>
                 <button type="button" class="nh-post__more nh-open-post">
-                  Đọc tiếp <i class="fas fa-arrow-right"></i>
+                  <%= t('chung.doc_tiep') %> <i class="fas fa-arrow-right"></i>
                 </button>
               </div>
             </article>
@@ -179,7 +234,7 @@
         </div>
 
         <p class="nh-lead nh-center" id="nh-no-result" style="display:none;margin-top:2rem">
-          Không tìm thấy bài viết nào phù hợp.
+          <%= t('tin_tuc.khong_tim_thay') %>
         </p>
       <% } %>
 
@@ -189,13 +244,13 @@
 
 <!-- ================= CTA ĐẶT BÀN ================= -->
 <section class="nh-cta">
-  <div class="nh-cta__bg" style="background-image:url('/blog-cta.jpg')"></div>
+  <div class="nh-cta__bg nh-wa-koshi"></div>
   <div class="nh-cta__veil"></div>
   <div class="nh-container nh-cta__inner nh-reveal">
-    <span class="nh-eyebrow">Đọc rồi, còn chờ gì nữa?</span>
-    <h2>Trải nghiệm câu chuyện<br>ngay trên bàn ăn của bạn</h2>
-    <p>Mỗi món ăn đều mang một câu chuyện riêng. Đặt bàn hôm nay để tự mình cảm nhận trọn vẹn hương vị Nhà Hàng Bảo Đoàn.</p>
-    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Đặt bàn ngay</a>
+    <span class="nh-eyebrow"><%= t('tin_tuc.cta_eyebrow') %></span>
+    <h2><%- t('tin_tuc.cta_tieu_de') %></h2>
+    <p><%= t('tin_tuc.cta_mo_ta') %></p>
+    <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban_ngay') %></a>
   </div>
 </section>
 
@@ -203,13 +258,13 @@
 <div class="nh-modal" id="nh-post-modal" role="dialog" aria-modal="true" aria-labelledby="nh-modal-title">
   <div class="nh-modal__veil" data-close></div>
   <div class="nh-modal__box">
-    <button type="button" class="nh-modal__close" data-close aria-label="Đóng"><i class="fas fa-times"></i></button>
-    <img class="nh-modal__img" id="nh-modal-img" src="/blog-1.jpg" alt="">
+    <button type="button" class="nh-modal__close" data-close aria-label="<%= t('chung.dong') %>"><i class="fas fa-times"></i></button>
+    <img class="nh-modal__img" id="nh-modal-img" src="/mon-thay-the.svg" alt="">
     <div class="nh-modal__inner">
       <div class="nh-meta">
         <span><i class="far fa-calendar"></i><span id="nh-modal-date"></span></span>
-        <span><i class="far fa-user"></i>Ban biên tập</span>
-        <span><i class="far fa-clock"></i><span id="nh-modal-read"></span> phút đọc</span>
+        <span><i class="far fa-user"></i><%= t('tin_tuc.ban_bien_tap') %></span>
+        <span><i class="far fa-clock"></i><span id="nh-modal-read"></span> <%= t('tin_tuc.phut_doc') %></span>
       </div>
       <h2 id="nh-modal-title"></h2>
       <div class="nh-divider" style="margin-left:0"></div>
@@ -219,6 +274,9 @@
 </div>
 
 <script>
+  /* Chuoi co bien {n} - may chu dich san, JS chi thay so vao. */
+  var SO_KET_QUA  = <%- JSON.stringify(t('tin_tuc.so_ket_qua')) %>;
+  var SO_BAI_VIET = <%- JSON.stringify(t('tin_tuc.so_bai_viet')) %>;
   (function () {
     var modal = document.getElementById('nh-post-modal');
     if (!modal) return;
@@ -229,7 +287,7 @@
       document.getElementById('nh-modal-read').textContent = el.dataset.read || '1';
       document.getElementById('nh-modal-text').textContent =
         (el.dataset.content || '').trim() || 'Nội dung đang được cập nhật.';
-      var duPhong = el.dataset.fallback || '/blog-1.jpg';
+      var duPhong = el.dataset.fallback || '/mon-thay-the.svg';
       var img = document.getElementById('nh-modal-img');
       img.onerror = function () { this.onerror = null; this.src = duPhong; };
       img.src = el.dataset.img || duPhong;
@@ -276,7 +334,9 @@
           if (khop) hien++;
         });
         if (trong) trong.style.display = hien === 0 ? '' : 'none';
-        if (demSo) demSo.textContent = tu ? (hien + ' kết quả') : (the.length + ' bài viết');
+        if (demSo) demSo.textContent = tu
+          ? SO_KET_QUA.split('{n}').join(hien)
+          : SO_BAI_VIET.split('{n}').join(the.length);
       });
     }
   })();

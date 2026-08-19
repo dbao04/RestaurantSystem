@@ -242,6 +242,29 @@ async function traLoiDuPhong(cauHoi, boiCanh) {
          GROUP BY h.id_mon, h.name_mon, m.gia_mon
          ORDER BY so_luong DESC LIMIT 8`
       );
+
+      // Thuc don vua thay moi thi chua mon nao co luot goi. Thay vi tra ve
+      // bang rong, gioi thieu mon dang ban - van tra loi dung cau hoi.
+      if (!rows.length) {
+        const [moi] = await db.query(
+          `SELECT name_mon, gia_mon FROM monan
+           WHERE tinhtrang = 1 ORDER BY id_mon DESC LIMIT 8`
+        );
+        if (moi.length) {
+          return {
+            van_ban: 'Thực đơn vừa được cập nhật nên chưa có thống kê lượt gọi ạ. ' +
+              'Đây là một số món đang phục vụ:' + ghiChu,
+            bang: moi,
+            cot: [
+              { khoa: 'name_mon', nhan: 'Món' },
+              { khoa: 'gia_mon', nhan: 'Giá' },
+            ],
+            y_dinh: 'hoi_thuc_don',
+            tin_cay: null,
+          };
+        }
+      }
+
       return {
         van_ban: 'Đây là những món khách gọi nhiều nhất ạ:' + ghiChu,
         bang: rows,

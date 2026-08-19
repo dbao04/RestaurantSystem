@@ -390,14 +390,64 @@ const personnelService = {
     return rows;
   },
 
+  /**
+   * Lich cua mot nhan vien trong mot khoang ngay, dung cho luoi thoi khoa bieu.
+   *
+   * Tach khoi `getSchedule` (loc theo thang) vi mot tuan co the vat qua hai
+   * thang: tuan chua ngay 31/7 va 1/8 ma loc theo thang thi mat mot nua luoi.
+   * `ngay` duoc ep ve chuoi 'YYYY-MM-DD' ngay tai day de view khong phai tu
+   * doi kieu Date - so sanh chuoi voi khoa o cua luoi la du va khong dinh mui
+   * gio.
+   */
+  getScheduleRange: async (staffId, tuNgay, denNgay) => {
+    const [rows] = await db.query(
+      `SELECT l.*, n.ten AS ten_nhanvien, n.chucvu
+       FROM lich_lam_viec l
+       JOIN nhan_vien n ON l.id_nv = n.id_nv
+       WHERE l.id_nv = ? AND l.ngay BETWEEN ? AND ? AND l.trangthai <> 3
+       ORDER BY l.ngay ASC, l.gio_bat_dau ASC`,
+      [staffId, tuNgay, denNgay]
+    );
+    return rows.map((r) => ({
+      ...r,
+      ngay: r.ngay instanceof Date
+        ? new Date(r.ngay.getTime() - r.ngay.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+        : String(r.ngay).slice(0, 10),
+    }));
+  },
+
+  /** Danh sach ca dang bat, theo dung thu tu hien thi tren thoi khoa bieu. */
+  getShifts: async () => {
+    const [rows] = await db.query(
+      'SELECT ma_ca, ten_ca, gio_bat_dau, gio_ket_thuc FROM ca_lam_viec WHERE trang_thai = 1 ORDER BY thu_tu ASC, ma_ca ASC'
+    );
+    return rows;
+  },
+
   registerSchedule: async (staffId, ngay, ca, ghi_chu) => {
+    // Gio cua tung ca lay tu bang `ca_lam_viec` chu khong ghi cung trong ham
+    // nay nua: quan ly doi gio ca o man hinh dinh muc ma cho nay van ghi gio cu
+    // thi bang cong tinh sai ma khong ai thay. Van giu duong lui ve ba ca mac
+    // dinh phong khi bang bi xoa trang.
+    const MAC_DINH = {
+      sang: ['07:00:00', '12:00:00'],
+      chieu: ['12:00:00', '17:00:00'],
+      toi: ['17:00:00', '21:00:00'],
+    };
+    const [caRows] = await db.query(
+      'SELECT gio_bat_dau, gio_ket_thuc FROM ca_lam_viec WHERE ma_ca = ? AND trang_thai = 1',
+      [ca]
+    );
     let gio_bat_dau = null, gio_ket_thuc = null;
-    if (ca === 'sang') { gio_bat_dau = '07:00:00'; gio_ket_thuc = '12:00:00'; }
-    else if (ca === 'chieu') { gio_bat_dau = '12:00:00'; gio_ket_thuc = '17:00:00'; }
-    else if (ca === 'toi') { gio_bat_dau = '17:00:00'; gio_ket_thuc = '21:00:00'; }
+    if (caRows[0]) {
+      gio_bat_dau = String(caRows[0].gio_bat_dau).slice(-8);
+      gio_ket_thuc = String(caRows[0].gio_ket_thuc).slice(-8);
+    } else if (MAC_DINH[ca]) {
+      [gio_bat_dau, gio_ket_thuc] = MAC_DINH[ca];
+    }
 
     await db.query(
-      'INSERT INTO lich_lam_viec (id_nv, ngay, ca, gio_bat_dau, gio_ket_thuc, ghi_chu, trangthai) VALUES (?, ?, ?, ?, ?, ?, 0)',
+      "INSERT INTO lich_lam_viec (id_nv, ngay, ca, gio_bat_dau, gio_ket_thuc, ghi_chu, trangthai, nguon) VALUES (?, ?, ?, ?, ?, ?, 0, 'dang_ky')",
       [staffId, ngay, ca, gio_bat_dau, gio_ket_thuc, ghi_chu]
     );
   },
@@ -663,25 +713,43 @@ const personnelService = {
     return rows[0] || null;
   },
 
+  /*
+    Ban dich de TRONG thi luu NULL chu khong luu chuoi rong.
+
+    Trang tin tuc xet `if (p.tieu_de_en)` de biet co ban dich hay khong. Chuoi
+    rong cung la gia tri "khong co", nhung luu NULL thi cau lenh dem ban dich
+    trong migration va bao cao ve sau khong phai xet hai truong hop.
+  */
   addPost: async (data) => {
     const { tieu_de, noi_dung, hinh_anh } = data;
+    const rong = (v) => (String(v || '').trim() ? String(v).trim() : null);
     await db.query(
-      'INSERT INTO bai_viet (tieu_de, noi_dung, hinh_anh, created_at) VALUES (?, ?, ?, NOW())',
-      [tieu_de, noi_dung, hinh_anh]
+      `INSERT INTO bai_viet
+         (tieu_de, noi_dung, hinh_anh, tieu_de_en, noi_dung_en, tieu_de_ja, noi_dung_ja, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [tieu_de, noi_dung, hinh_anh,
+       rong(data.tieu_de_en), rong(data.noi_dung_en),
+       rong(data.tieu_de_ja), rong(data.noi_dung_ja)]
     );
   },
 
   updatePost: async (id, data) => {
     const { tieu_de, noi_dung, hinh_anh } = data;
+    const rong = (v) => (String(v || '').trim() ? String(v).trim() : null);
+    const banDich = [
+      rong(data.tieu_de_en), rong(data.noi_dung_en),
+      rong(data.tieu_de_ja), rong(data.noi_dung_ja),
+    ];
+    const cotDich = 'tieu_de_en = ?, noi_dung_en = ?, tieu_de_ja = ?, noi_dung_ja = ?';
     if (hinh_anh) {
       await db.query(
-        'UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, hinh_anh = ? WHERE id_bv = ?',
-        [tieu_de, noi_dung, hinh_anh, id]
+        `UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, hinh_anh = ?, ${cotDich} WHERE id_bv = ?`,
+        [tieu_de, noi_dung, hinh_anh, ...banDich, id]
       );
     } else {
       await db.query(
-        'UPDATE bai_viet SET tieu_de = ?, noi_dung = ? WHERE id_bv = ?',
-        [tieu_de, noi_dung, id]
+        `UPDATE bai_viet SET tieu_de = ?, noi_dung = ?, ${cotDich} WHERE id_bv = ?`,
+        [tieu_de, noi_dung, ...banDich, id]
       );
     }
   },

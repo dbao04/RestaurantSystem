@@ -186,6 +186,112 @@ const BIEU_TUONG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512
         stroke-linecap="round"/>
 </svg>`;
 
+/**
+ * CUA THOAT - go service worker khi no tu giam nguoi dung.
+ *
+ * VI SAO KHONG DAT TRONG /cham-cong/
+ * ----------------------------------
+ * Vi chinh service worker cua /cham-cong/ la thu can go. Pham vi cua no la
+ * /cham-cong/ - moi lan chuyen trang trong do deu bi no bat truoc. Neu trang
+ * sua loi cung nam trong pham vi ay thi no cung bi chan y het, va nguoi dung
+ * khong con duong nao.
+ *
+ * Duong dan ngan va nam NGOAI pham vi do, nen dien thoai mo no la mot lan
+ * chuyen trang binh thuong: trinh duyet di thang ra mang, va neu chung chi co
+ * van de thi day la luc man hinh "Ket noi khong an toan" hien ra - dung thu
+ * nguoi dung can thay de bam "Nang cao -> Tiep tuc truy cap".
+ *
+ * KHONG doi dang nhap: nguoi dung dang ket o ngoai cua, chua vao duoc thi lay
+ * dau ra phien dang nhap.
+ */
+const TRANG_SUA = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Sửa lỗi chấm công</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+padding:22px;font-family:system-ui,sans-serif;background:linear-gradient(135deg,#2c1810,#4e342e);
+color:#fff;text-align:center}
+.hop{max-width:420px;width:100%}
+h1{font-size:20px;margin:0 0 8px}
+p{opacity:.85;font-size:14.5px;line-height:1.6;margin:0 0 18px}
+#tt{background:rgba(0,0,0,.25);border-radius:12px;padding:14px;text-align:left;font-size:13.5px;
+line-height:1.9;margin-bottom:16px}
+.ok{color:#7fd88f}.dang{color:#c8a951}
+a.nut{display:block;background:#c8a951;color:#2c1810;text-decoration:none;font-weight:700;
+font-size:15px;padding:14px;border-radius:12px;margin-top:8px}
+small{display:block;opacity:.55;font-size:12.5px;margin-top:16px;line-height:1.6}</style>
+</head><body><div class="hop">
+<h1>Đang dọn lại ứng dụng chấm công</h1>
+<p>Trang này gỡ bản lưu cũ trên điện thoại của bạn. Chỉ mất vài giây.</p>
+<div id="tt">Đang bắt đầu…</div>
+<a class="nut" id="tiep" href="/cham-cong/">Mở lại trang chấm công</a>
+<small>Nếu vừa rồi máy hỏi “Kết nối không an toàn”, đó là chứng chỉ tự ký của
+máy chủ nhà hàng — bấm <b>Nâng cao</b> rồi <b>Tiếp tục truy cập</b> là đúng.</small>
+</div>
+<script>
+var tt = document.getElementById('tt');
+var dong = [];
+function ghi(s, xong) {
+  dong.push((xong ? '<span class="ok">\u2713</span> ' : '<span class="dang">\u2026</span> ') + s);
+  tt.innerHTML = dong.join('<br>');
+}
+(function () {
+  if (!navigator.serviceWorker) { ghi('Trình duyệt không dùng service worker — không cần dọn', true); return; }
+  ghi('Tìm bản lưu cũ');
+  navigator.serviceWorker.getRegistrations().then(function (ds) {
+    ghi('Tìm thấy ' + ds.length + ' bản đã cài', true);
+    return Promise.all(ds.map(function (r) { return r.unregister(); }));
+  }).then(function () {
+    ghi('Đã gỡ service worker', true);
+    return (self.caches && caches.keys) ? caches.keys() : [];
+  }).then(function (ks) {
+    return Promise.all((ks || []).map(function (k) { return caches.delete(k); }));
+  }).then(function () {
+    ghi('Đã xoá bộ nhớ đệm', true);
+    ghi('Xong — bấm nút bên dưới', true);
+  }).catch(function (e) {
+    ghi('Không dọn được: ' + (e && e.message ? e.message : e), true);
+  });
+})();
+</script></body></html>`;
+
+/*
+ * Dat o CA HAI duong dan: /sua de go tren dien thoai cho nhanh, va
+ * /sua-cham-cong de con doc duoc y nghia khi thay trong ma nguon hay nhat ky.
+ */
+/**
+ * CUA VAO CUA MA QR - co y nam NGOAI pham vi service worker.
+ *
+ * VI SAO KHONG DE MA QR TRO THANG VAO /cham-cong/
+ * -----------------------------------------------
+ * Pham vi cua service worker la /cham-cong/. No bat MOI lan chuyen trang trong
+ * do - ke ca lan dau tien tu ma QR. Neu luc ay ket noi that bai vi chung chi
+ * chua duoc chap nhan, worker tra ve trang "mat ket noi" cua no, va trinh duyet
+ * KHONG BAO GIO kip hien man hinh "Ket noi khong an toan" co nut di tiep.
+ *
+ * Nguoi dung roi vao mot vong khep kin: muon chap nhan chung chi thi phai tai
+ * duoc trang, ma tai trang thi bi chinh worker chan. Quet lai ma QR bao nhieu
+ * lan cung ra dung mot ket qua.
+ *
+ * Duong dan nay nam ngoai pham vi do, nen quet ma QR la mot lan chuyen trang
+ * BINH THUONG: di thang ra mang, va neu chung chi co van de thi day la luc man
+ * hinh canh bao hien ra - dung thu nguoi dung can thay. Bam chap nhan xong,
+ * chuyen huong tiep vao /cham-cong/ luc nay da chay duoc, va worker moi tu cai.
+ *
+ * Ten ngan ('cc') de con doc duoc khi in ra giay dan canh may cham cong.
+ */
+router.get(['/cc', '/cham-cong-dien-thoai'], (req, res) => {
+  // 302 chu khong phai 301: 301 bi trinh duyet nho vinh vien, doi duong dan sau
+  // nay se khong con go bo duoc tren nhung may da tung vao.
+  res.redirect(302, '/cham-cong/');
+});
+
+router.get(['/sua', '/sua-cham-cong'], (req, res) => {
+  res.type('html')
+    // Tuyet doi khong de trinh duyet luu trang nay: no ton tai de sua mot van de
+    // ve bo nho dem, luu no lai la tu chuoc them mot van de cung loai.
+    .set('Cache-Control', 'no-store')
+    .send(TRANG_SUA);
+});
+
 router.get('/cham-cong/bieu-tuong.svg', (req, res) => {
   res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(BIEU_TUONG);
 });
@@ -222,32 +328,157 @@ router.get('/cham-cong/manifest.webmanifest', (req, res) => {
  * chi khi mat mang moi tra ve mot trang bao mat mang thay cho man hinh loi
  * trong tron cua trinh duyet.
  */
+/*
+ * Trang bao loi khi khong goi duoc may chu.
+ *
+ * NUT BAM PHAI TRO RA NGOAI PHAM VI SERVICE WORKER (/cham-cong/). Day khong
+ * phai chi tiet lam dep - no la ca cach thoat.
+ *
+ * Service worker nay chan moi lan dieu huong trong pham vi cua no. Khi chung
+ * chi tu ky vua duoc cap lai, dien thoai chua chap nhan ban moi thi `fetch`
+ * hong ngay o tang TLS, worker bat loi va tra ve chinh trang nay. Nghia la
+ * CANH BAO BAO MAT CUA TRINH DUYET KHONG BAO GIO HIEN RA, va nguoi dung khong
+ * co cho nao de bam "Tiep tuc truy cap" - bam "Thu lai" chi quay ve dung trang
+ * bao loi nay, vong lap kin khong loi ra.
+ *
+ * `/staff/login` nam ngoai pham vi worker nen trinh duyet tu di ra mang, canh
+ * bao chung chi hien len that, chap nhan xong thi tham so `tiep` dua nguoi
+ * dung tro lai /cham-cong/.
+ */
 const OFFLINE = `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Mất kết nối</title>
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-text-align:center;padding:24px;font-family:system-ui,sans-serif;
+text-align:center;padding:22px;font-family:system-ui,sans-serif;
 background:linear-gradient(135deg,#2c1810,#4e342e);color:#fff}
-h1{font-size:20px;margin:0 0 10px}p{opacity:.8;font-size:15px;line-height:1.5;margin:0 0 18px}
-a{display:inline-block;background:#c8a951;color:#2c1810;text-decoration:none;font-weight:700;
-padding:13px 26px;border-radius:12px}</style></head><body><div>
-<h1>Không có kết nối tới máy chủ</h1>
-<p>Điện thoại đang mất mạng, hoặc máy chủ nhà hàng chưa bật.<br>
-Hãy kiểm tra Wi-Fi rồi thử lại.</p>
-<a href="/cham-cong/">Thử lại</a></div></body></html>`;
+.hop{max-width:430px}
+h1{font-size:20px;margin:0 0 10px}
+p{opacity:.85;font-size:14.5px;line-height:1.6;margin:0 0 16px}
+a.nut,button.nut{display:block;width:100%;box-sizing:border-box;background:#c8a951;color:#2c1810;
+text-decoration:none;font-weight:700;font-size:15px;padding:13px 18px;border:0;border-radius:12px;
+margin:9px 0;cursor:pointer;font-family:inherit}
+a.phu{background:transparent;color:#c8a951;border:1px solid rgba(200,169,81,.5)}
+.khung{background:rgba(0,0,0,.22);border-radius:12px;padding:13px 15px;margin:16px 0;text-align:left}
+.khung b{color:#c8a951;display:block;margin-bottom:5px;font-size:14px}
+.khung p{font-size:13.5px;margin:0;opacity:.8}
+small{display:block;opacity:.55;font-size:12.5px;margin-top:14px;line-height:1.55}</style></head><body>
+<div class="hop">
+<h1>Không mở được trang</h1>
+<p>Điện thoại mất mạng, hoặc máy chủ nhà hàng chưa bật — nhưng cũng có thể là
+<b>chứng chỉ bảo mật vừa đổi</b>.</p>
 
-const SW = `/* Service worker cham cong - di thang ra mang, khong luu dem. */
+<div class="khung">
+<b>Nếu máy chủ đang bật</b>
+<p>Máy chủ cấp chứng chỉ mới mỗi khi địa chỉ mạng đổi. Điện thoại chưa chấp nhận
+chứng chỉ mới thì trang này hiện lên thay vì hỏi bạn — vì vậy phải chấp nhận
+chứng chỉ ở một trang khác trước.</p>
+</div>
+
+<a class="nut" href="/sua">Dọn lại và chấp nhận chứng chỉ</a>
+<p style="font-size:13px;opacity:.7;margin:-2px 0 14px">
+Bấm <b>Nâng cao</b> → <b>Tiếp tục truy cập</b>, rồi quay lại đây.</p>
+
+<button class="nut phu" id="nut-dat-lai" type="button">Xoá bộ nhớ đệm và tải lại</button>
+<a class="nut phu" href="/cham-cong/">Thử lại</a>
+
+<small>Nếu vẫn không được: kiểm tra điện thoại đã <b>tắt 4G</b> và nối
+<b>cùng Wi-Fi</b> với máy tính chạy máy chủ.</small>
+</div>
+<script>
+/*
+  Go service worker roi tai lai.
+
+  Can nut nay vi chinh service worker la thu dang giam nguoi dung o day: no bat
+  moi lan chuyen trang trong pham vi cua no, va khi fetch that bai - ke ca that
+  bai vi CHUNG CHI chu khong phai vi mat mang - no tra ve trang nay. Nguoi dung
+  khong bao gio thay duoc man hinh "Ket noi khong an toan" de bam chap nhan.
+
+  Go dang ky xong thi lan chuyen trang sau di thang ra mang, va trinh duyet moi
+  hien canh bao chung chi that.
+*/
+document.getElementById('nut-dat-lai').onclick = function () {
+  var nut = this;
+  nut.textContent = 'Đang xoá...';
+  var xong = function () { location.replace('/cham-cong/' + '?tuoi=' + Date.now()); };
+  if (!navigator.serviceWorker) return xong();
+  navigator.serviceWorker.getRegistrations()
+    .then(function (ds) { return Promise.all(ds.map(function (r) { return r.unregister(); })); })
+    .then(function () { return caches && caches.keys ? caches.keys() : []; })
+    .then(function (ks) { return Promise.all((ks || []).map(function (k) { return caches.delete(k); })); })
+    .then(xong)
+    .catch(xong);
+};
+
+/*
+  TU THU LAI - de mot lan khoi dong lai may chu khong ket nguoi dung o day.
+
+  Truoc day trang nay dung im: may chu bat lai roi ma dien thoai van hien "khong
+  ket noi duoc", cho toi khi nguoi dung tu bam. Ma khoi dong lai may chu la viec
+  binh thuong - chi mat khoang muoi lam giay - nen bat nhan vien ngoi doan xem
+  luc nao thi bam la vo ly.
+
+  Goi mot tep TINH trong pham vi (manifest), khong phai mot lan chuyen trang:
+  service worker chi bat mode === 'navigate' nen yeu cau nay di thang ra mang.
+  cache: 'no-store' de trinh duyet khong tra lai ban da luu.
+
+  Cach nhau 3 giay, va CHI khi trang dang hien - tab an di thi ngung, khong goi
+  vo ich trong tui nguoi ta.
+*/
+(function () {
+  var dang = false;
+  function thu() {
+    if (dang || document.hidden) return;
+    dang = true;
+    fetch('/cham-cong/manifest.webmanifest?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (r && r.ok) location.replace('/cham-cong/'); })
+      .catch(function () {})
+      .then(function () { dang = false; });
+  }
+  setInterval(thu, 3000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) thu(); });
+})();
+</script>
+</body></html>`;
+
+const SW = `/*
+  Service worker - KHONG luu dem gi ca.
+
+  No ton tai duy nhat de trinh duyet cho phep cai trang ra man hinh chinh.
+  Moi yeu cau deu di thang ra mang.
+
+  VI SAO KHONG CON BAT MOI LOI
+  ----------------------------
+  Ban truoc bat MOI loi cua fetch() va tra ve trang "mat ket noi". Nghe hop ly,
+  nhung no nuot ca mot loai loi hoan toan khac: LOI CHUNG CHI.
+
+  May chu dung chung chi tu ky. Moi khi dia chi mang doi, chung chi duoc cap
+  lai, va ngoai le ma dien thoai da bam chap nhan truoc do het hieu luc. Luc
+  do fetch() that bai - va worker nay bien no thanh "dien thoai dang mat mang,
+  hoac may chu chua bat".
+
+  Hau qua: nguoi dung KHONG BAO GIO thay duoc man hinh "Ket noi khong an toan"
+  de bam "Nang cao -> Tiep tuc truy cap", vi worker da chan truoc khi trinh
+  duyet kip hien no. Va vi thong bao noi sai nguyen nhan, ho di kiem tra Wi-Fi
+  va may chu - hai thu deu dang chay tot.
+
+  Nay chi hien trang cua minh khi CHAC CHAN la mat mang (navigator.onLine =
+  false). Moi truong hop khac deu nem tiep loi ra ngoai, de trinh duyet hien
+  dung man hinh that cua no - ke ca man hinh chung chi co nut di tiep.
+*/
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 self.addEventListener('fetch', function (e) {
-  // Chi dong vao dieu huong trang. Anh cham cong va loi goi API phai di thang,
-  // khong duoc worker xen vao giua.
+  // Chi dong vao dieu huong trang. Anh va loi goi API phai di thang.
   if (e.request.mode !== 'navigate') return;
-  e.respondWith(fetch(e.request).catch(function () {
-    return new Response(${JSON.stringify(OFFLINE)}, {
-      status: 503,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
-  }));
+  e.respondWith(
+    fetch(e.request).catch(function (loi) {
+      var thatSuMatMang = self.navigator && self.navigator.onLine === false;
+      if (!thatSuMatMang) throw loi;   // de trinh duyet tu bao - xem ghi chu tren
+      return new Response(${JSON.stringify(OFFLINE)}, {
+        status: 503,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    })
+  );
 });
 `;
 

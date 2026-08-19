@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="<%= typeof maHtml !== 'undefined' ? maHtml : 'vi' %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Theo dõi đơn giao hàng</title>
+  <title><%= t('theo_doi.tieu_de') %></title>
   <meta name="theme-color" content="#2c1810">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
@@ -29,18 +29,18 @@
 <body>
   <div class="hop">
     <i class="fas fa-motorcycle to"></i>
-    <h1>Đơn của bạn đang ở đâu?</h1>
-    <p>Nhập mã theo dõi in trên hóa đơn hoặc trong tin nhắn xác nhận.</p>
+    <h1><%= t('theo_doi.cau_hoi') %></h1>
+    <p><%= t('theo_doi.nhap_ma') %></p>
 
     <% if (loi) { %><div class="loi"><%= loi %></div><% } %>
 
     <form action="/theo-doi" method="GET">
       <input name="ma" required autofocus autocomplete="off" placeholder="GH0818-007"
              pattern="[A-Za-z0-9\-]{4,20}" maxlength="20">
-      <button type="submit"><i class="fas fa-magnifying-glass"></i> Xem đơn của tôi</button>
+      <button type="submit"><i class="fas fa-magnifying-glass"></i> <%= t('theo_doi.xem_don') %></button>
     </form>
 
-    <a href="/">← Về trang chủ nhà hàng</a>
+    <a href="/"><%= t('theo_doi.ve_trang_chu') %></a>
   </div>
 </body>
 </html>

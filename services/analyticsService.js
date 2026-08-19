@@ -349,12 +349,15 @@ const analyticsService = {
   theoDanhMuc: async (tu, den) => {
     const k = await khoangNgay(tu, den);
     const [rows] = await db.query(
-      `SELECT lm.name_loai, SUM(h.thanhtien) AS doanh_thu, SUM(h.soluong) AS so_luong
+      // LEFT JOIN chu khong JOIN: don cua nhung mon da bi go khoi thuc don van
+      // phai duoc tinh vao doanh thu, gom chung mot nhom, thay vi bien mat.
+      `SELECT COALESCE(lm.name_loai, 'Không còn trong thực đơn') AS name_loai,
+              SUM(h.thanhtien) AS doanh_thu, SUM(h.soluong) AS so_luong
        FROM hopdong h
-       JOIN monan m  ON m.id_mon = h.id_mon
-       JOIN loai_mon lm ON lm.id_loai = m.id_loai
+       LEFT JOIN monan m  ON m.id_mon = h.id_mon
+       LEFT JOIN loai_mon lm ON lm.id_loai = m.id_loai
        WHERE ${DON_HOAN_TAT} AND h.ngay_dat BETWEEN ? AND ?
-       GROUP BY lm.id_loai, lm.name_loai ORDER BY doanh_thu DESC`,
+       GROUP BY lm.id_loai, name_loai ORDER BY doanh_thu DESC`,
       [k.tu, k.den]
     );
     return rows;

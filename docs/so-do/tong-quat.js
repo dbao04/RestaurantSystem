@@ -62,6 +62,8 @@ const TRAI = [
       ['Đánh giá, bình luận sau khi', 'hoàn thành đơn hàng'],
       'Chat với nhân viên tư vấn',
       'Đổi điểm tích luỹ, áp mã giảm giá',
+      'Đặt món giao tận nơi',
+      'Theo dõi đơn giao bằng mã giao',
     ],
   },
   {
@@ -97,6 +99,7 @@ const TRAI = [
       ['Quản lý mã giảm giá,', 'phương thức thanh toán'],
       ['Cấu hình tài khoản nhận tiền,', 'khoá webhook'],
       'Quản lý cơ cấu tổ chức',
+      ['Quản lý đơn vị vận chuyển,', 'bảng giá và hồ sơ shipper'],
     ],
   },
 ];
@@ -144,6 +147,25 @@ const PHAI = [
     uc: [
       'Quản lý nguyên liệu, nhập kho',
       'Cảnh báo lô sắp hết hạn',
+    ],
+  },
+  {
+    ten: ['Điều phối', 'giao hàng'],
+    keThuaNvChung: true,
+    uc: [
+      'Quản lý đơn giao hàng',
+      'Phân đơn cho nhân viên giao hàng',
+      'Theo dõi bản đồ thời gian thực',
+      'Xử lý đơn giao thất bại',
+    ],
+  },
+  {
+    ten: ['Nhân viên', 'giao hàng'],
+    keThuaNvChung: true,
+    uc: [
+      'Xem đơn được phân cho mình',
+      'Cập nhật trạng thái giao hàng',
+      'Phát vị trí GPS khi đang giao',
     ],
   },
   {
@@ -304,9 +326,10 @@ function tongQuatMau() {
   s += `<line class="lk" x1="${X_THAN_KE_THUA}" y1="${nvChung.neoY}" x2="${nvChung.x + 20}" y2="${nvChung.neoY}" ${mui}/>`;
 
   const soCa = trai.hang.length + phai.hang.length + 2;
+  const soTacNhan = trai.tacNhan.length + phai.tacNhan.length;
   return v.khung(
     id, W, H,
-    `Sơ đồ use case tổng quát: ${soCa} ca sử dụng, chín tác nhân với quan hệ kế thừa, mọi chức năng cần phiên đăng nhập đều include về ca sử dụng Đăng nhập ở giữa`,
+    `Sơ đồ use case tổng quát: ${soCa} ca sử dụng, ${soTacNhan} tác nhân với quan hệ kế thừa, mọi chức năng cần phiên đăng nhập đều include về ca sử dụng Đăng nhập ở giữa`,
     s
   );
 }

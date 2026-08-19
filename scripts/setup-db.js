@@ -15,6 +15,8 @@ const { timChuongTrinh, thamSoKetNoi } = require('./lib-mysql');
 
 const FILE_SQL = path.join(__dirname, '..', 'database', 'gs_restaurant.sql');
 const TEN_DB = process.env.DB_NAME || 'gs_restaurant';
+// Phai khop voi SO_BANG_CAN trong check-db.js va so bang trong file SQL nguon.
+const SO_BANG_CAN = 73;
 
 function main() {
   if (!fs.existsSync(FILE_SQL)) {
@@ -71,11 +73,11 @@ function kiemTra(mysql) {
   );
 
   const soBang = parseInt((dem.stdout || '').trim(), 10);
-  if (soBang === 66) {
+  if (soBang === SO_BANG_CAN) {
     console.log(`\nHOAN TAT — da tao ${soBang} bang trong "${TEN_DB}".`);
     console.log('Buoc tiep theo: npm start   (hoac chay start_all.bat de bat ca he thong)');
   } else if (Number.isFinite(soBang)) {
-    console.warn(`\nCanh bao: chi tao duoc ${soBang}/66 bang. Xem lai thong bao loi ben tren.`);
+    console.warn(`\nCanh bao: chi tao duoc ${soBang}/${SO_BANG_CAN} bang. Xem lai thong bao loi ben tren.`);
     process.exit(1);
   } else {
     console.log('\nDa import xong (khong doc duoc so bang de doi chieu).');

@@ -1,4 +1,4 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1160 100" role="img" aria-label="Chú giải ký hiệu sơ đồ BPMN"
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1252 773" role="img" aria-label="Sơ đồ use case phân hệ giao hàng: khai đơn vị vận chuyển và bảng giá, điều phối phân đơn cho người giao, ứng dụng điện thoại của người giao phát vị trí GPS, và trang tự tra cứu đơn dành cho khách"
      xmlns="http://www.w3.org/2000/svg"><style>svg{
 --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
 --mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
@@ -79,27 +79,112 @@ text{fill:currentColor;font-family:var(--sans);}
 .hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
 .qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
 .thanh-db{fill:currentColor;}</style><defs>
-    <marker id="mui-cg2" viewBox="0 0 10 10" refX="9" refY="5"
+    <marker id="mui-ucG" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
     </marker>
-    <marker id="mui-rong-cg2" viewBox="0 0 12 12" refX="11" refY="6"
+    <marker id="mui-rong-ucG" viewBox="0 0 12 12" refX="11" refY="6"
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
-  </defs><g class="sk sk-dau"><circle cx="60" cy="46" r="19"/><text class="tx-sk" x="60" y="80">Bắt đầu</text></g><g class="sk sk-giua"><circle cx="220" cy="46" r="19"/><circle cx="220" cy="46" r="15"/><path class="thu" d="M212,41 h16 v10 h-16 z M212,41 l8,6 l8,-6"/><text class="tx-sk" x="220" y="80">Trung gian</text></g><g class="sk sk-cuoi"><circle cx="380" cy="46" r="19"/><text class="tx-sk" x="380" y="80">Kết thúc</text></g><g class="viec ">
-    <rect x="491" y="19" width="138" height="54" rx="7"/>
-    
-    <text class="tx-viec" x="560" y="50.5">Công việc của người</text>
-  </g><g class="viec tu-dong">
-    <rect x="691" y="19" width="138" height="54" rx="7"/>
-    <g class="bt"><rect x="697" y="25" width="11" height="11" rx="1.5"/>
-       <line x1="699.5" y1="28" x2="705.5" y2="28"/>
-       <line x1="699.5" y1="30.5" x2="705.5" y2="30.5"/></g>
-    <text class="tx-viec" x="760" y="50.5">Bước hệ thống tự chạy</text>
-  </g><g class="cong">
-    <polygon points="940,22 964,46 940,70 916,46"/>
-    <line x1="932" y1="38" x2="948" y2="54"/>
-    <line x1="932" y1="54" x2="948" y2="38"/>
-    <text class="tx-sk" x="940" y="14">Rẽ nhánh loại trừ</text>
-  </g><polyline class="luong " points="1010,46 1120,46" marker-end="url(#mui-cg2)"/><text class="tx-sk" x="1065" y="72">luồng trình tự</text></svg>
+  </defs><g class="bien">
+    <rect class="khung-bien" x="184" y="22" width="908" height="739" rx="6"/>
+    <text class="tx-bien" x="638" y="48">PHÂN HỆ GIAO HÀNG</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="76" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="73">Khai đơn vị vận chuyển</text><text class="tx-uc" x="412" y="89">&amp; bảng giá theo khoảng cách</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="154" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="159">Quản lý hồ sơ nhân viên giao hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="232" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="237">Đặt món giao tận nơi</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="310" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="315">Tra cứu đơn bằng mã giao</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="388" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="393">Xem danh sách đơn giao</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="466" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="471">Phân đơn cho nhân viên giao hàng</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="544" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="549">Theo dõi bản đồ thời gian thực</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="622" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="627">Cập nhật trạng thái đơn giao</text>
+  </g><g class="uc ">
+    <ellipse cx="412" cy="700" rx="152" ry="27"/>
+    <text class="tx-uc" x="412" y="705">Phát vị trí GPS khi đang giao</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="232" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="229">Tính phí giao theo khoảng cách</text><text class="tx-uc" x="812" y="245">(Haversine + bảng giá)</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="310" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="315">Chặn đơn ngoài bán kính phục vụ</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="466" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="471">Chọn đơn vị vận chuyển rẻ nhất</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="544" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="549">Xem lại lộ trình đã đi</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="622" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="627">Ghi nhật ký chuyển trạng thái</text>
+  </g><g class="uc uc-phu">
+    <ellipse cx="812" cy="700" rx="146" ry="27"/>
+    <text class="tx-uc" x="812" y="705">Loại điểm sai số lớn hơn 200 m</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="232" x2="666" y2="232" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="615" y="223">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="514.4" y1="252" x2="711.5" y2="290.4" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="638.95" y="287.2">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="466" x2="666" y2="466" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="615" y="457">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="544" x2="666" y2="544" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="615" y="535">&#171;extend&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="622" x2="666" y2="622" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="615" y="613">&#171;include&#187;</text>
+  </g><g class="qh">
+    <line class="lk-dut" x1="564" y1="700" x2="666" y2="700" marker-end="url(#mui-ucG)"/>
+    <text class="tx-khuon" x="615" y="691">&#171;include&#187;</text>
+  </g><g class="tn ">
+    <circle cx="84" cy="251" r="11"/>
+    <line x1="84" y1="262" x2="84" y2="288"/>
+    <line x1="67" y1="271" x2="101" y2="271"/>
+    <line x1="84" y1="288" x2="71" y2="310"/>
+    <line x1="84" y1="288" x2="97" y2="310"/>
+    <text class="tx-tn" x="84" y="228">Khách hàng</text>
+  </g><line class="lk" x1="84" y1="271" x2="260" y2="232"/><line class="lk" x1="84" y1="271" x2="260" y2="310"/><g class="tn ">
+    <circle cx="84" cy="485" r="11"/>
+    <line x1="84" y1="496" x2="84" y2="522"/>
+    <line x1="67" y1="505" x2="101" y2="505"/>
+    <line x1="84" y1="522" x2="71" y2="544"/>
+    <line x1="84" y1="522" x2="97" y2="544"/>
+    <text class="tx-tn" x="84" y="448">Điều phối</text><text class="tx-tn" x="84" y="462">giao hàng</text>
+  </g><line class="lk" x1="84" y1="505" x2="260" y2="388"/><line class="lk" x1="84" y1="505" x2="260" y2="466"/><line class="lk" x1="84" y1="505" x2="260" y2="544"/><line class="lk" x1="84" y1="505" x2="260" y2="622"/><g class="tn ">
+    <circle cx="84" cy="641" r="11"/>
+    <line x1="84" y1="652" x2="84" y2="678"/>
+    <line x1="67" y1="661" x2="101" y2="661"/>
+    <line x1="84" y1="678" x2="71" y2="700"/>
+    <line x1="84" y1="678" x2="97" y2="700"/>
+    <text class="tx-tn" x="84" y="604">Nhân viên</text><text class="tx-tn" x="84" y="618">giao hàng</text>
+  </g><line class="lk" x1="84" y1="661" x2="260" y2="622"/><line class="lk" x1="84" y1="661" x2="260" y2="700"/><g class="tn ">
+    <circle cx="1176" cy="95" r="11"/>
+    <line x1="1176" y1="106" x2="1176" y2="132"/>
+    <line x1="1159" y1="115" x2="1193" y2="115"/>
+    <line x1="1176" y1="132" x2="1163" y2="154"/>
+    <line x1="1176" y1="132" x2="1189" y2="154"/>
+    <text class="tx-tn" x="1176" y="58">Quản trị</text><text class="tx-tn" x="1176" y="72">hệ thống</text>
+  </g><line class="lk" x1="1176" y1="115" x2="564" y2="76"/><line class="lk" x1="1176" y1="115" x2="564" y2="154"/><g class="ht-ngoai">
+    <rect x="1101" y="516" width="150" height="56" rx="3"/>
+    <text class="tx-khuon" x="1176" y="531">&#171;h&#7879; th&#7889;ng ngo&#224;i&#187;</text>
+    <text class="tx-ht" x="1176" y="547">Bản đồ nền</text><text class="tx-ht" x="1176" y="562">OpenStreetMap</text>
+  </g><line class="lk" x1="1101" y1="544" x2="958" y2="544"/><g class="ghi-chu">
+    <text class="tx-ghi" x="236" y="744">Trang tra cứu bằng mã giao không cần đăng nhập.</text>
+  </g></svg>

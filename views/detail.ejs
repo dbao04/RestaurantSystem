@@ -1,12 +1,12 @@
-<%- include('partials/header', { title: dish ? dish.name_mon : 'Chi tiết món', activeNav: 'menu' }) %>
+<%- include('partials/header', { title: dish ? tenMon(dish).chinh : t('chi_tiet.tieu_de'), activeNav: 'menu' }) %>
 
-<section class="nh-subhero" style="min-height:38vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+<section class="nh-subhero nh-subhero--sm">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Tinh hoa từ căn bếp</span>
-    <h1>Chi tiết món</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/menu">Thực đơn</a> &nbsp;/&nbsp; Chi tiết</div>
+    <span class="nh-eyebrow"><%= t('thuc_don.eyebrow_bep') %></span>
+    <h1><%= t('chi_tiet.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; <%= t('chi_tiet.breadcrumb') %></div>
   </div>
 </section>
 
@@ -18,49 +18,49 @@
       <div class="nh-detail nh-reveal">
         <div class="nh-detail__media">
           <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>"
-               onerror="this.src='/bg_2.jpg'">
+               onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
         </div>
 
         <div>
-          <span class="nh-eyebrow nh-eyebrow--sm">Món đặc sắc</span>
+          <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chi_tiet.nhan') %></span>
           <h2 class="nh-section-title" style="font-size:clamp(1.7rem,3.4vw,2.5rem)">
-            <%= (dish.name_mon || '').trim() %>
+            <%= tenMon(dish).chinh %>
           </h2>
           <div class="nh-divider" style="margin-left:0"></div>
 
           <p class="nh-detail__price"><%= formatMoney(dish.gia_mon) %> ₫</p>
 
           <p class="nh-lead" style="margin-top:1rem">
-            <%= dish.ghichu_mon || 'Món ăn đặc sắc được chế biến từ nguyên liệu tươi ngon nhất, phục vụ nóng ngay khi rời bếp.' %>
+            <% var tmc = tenMon(dish); %><%= tmc.phu || t('chi_tiet.mo_ta_mac_dinh') %>
           </p>
 
           <form action="/add-to-cart" method="post" class="nh-detail__buy">
             <input type="hidden" name="monid" value="<%= dish.id_mon %>">
             <div class="nh-qty">
-              <button type="button" data-buoc="-1" aria-label="Bớt một phần"><i class="fas fa-minus"></i></button>
-              <input type="number" name="soluong" id="sl" value="1" min="1" max="100" aria-label="Số phần">
-              <button type="button" data-buoc="1" aria-label="Thêm một phần"><i class="fas fa-plus"></i></button>
+              <button type="button" data-buoc="-1" aria-label="<%= t('chi_tiet.bot_mot_phan') %>"><i class="fas fa-minus"></i></button>
+              <input type="number" name="soluong" id="sl" value="1" min="1" max="100" aria-label="<%= t('chung.so_luong') %>">
+              <button type="button" data-buoc="1" aria-label="<%= t('chi_tiet.them_mot_phan') %>"><i class="fas fa-plus"></i></button>
             </div>
             <button type="submit" class="nh-btn nh-btn--gold">
-              <i class="fas fa-shopping-bag"></i> Thêm vào giỏ
+              <i class="fas fa-shopping-bag"></i> <%= t('chi_tiet.them_gio') %>
             </button>
             <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
-              <i class="fas fa-arrow-left"></i> Chọn thêm món
+              <i class="fas fa-arrow-left"></i> <%= t('gio_hang.chon_them_mon') %>
             </a>
           </form>
 
           <p class="nh-note">
             <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
-            Món ăn được chuẩn bị theo đơn đặt bàn. Bạn chọn xong toàn bộ thực đơn rồi mới đặt bàn ở bước sau.
+            <%= t('chi_tiet.ghi_chu_dat') %>
           </p>
         </div>
       </div>
     <% } else { %>
       <div class="nh-empty">
         <i class="fas fa-utensils"></i>
-        <h3>Không tìm thấy món ăn này</h3>
-        <p class="nh-lead" style="margin:.6rem 0 1.6rem">Món có thể đã ngừng phục vụ hoặc đường dẫn không đúng.</p>
-        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> Xem thực đơn</a>
+        <h3><%= t('chi_tiet.khong_thay') %></h3>
+        <p class="nh-lead" style="margin:.6rem 0 1.6rem"><%= t('chi_tiet.khong_thay_mo_ta') %></p>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
       </div>
     <% } %>
   </div>

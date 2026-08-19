@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#141210">
-  <title>Đặt món tại bàn - Nhà Hàng Bảo Đoàn</title>
+  <title><%= t('qr.tieu_de') %> - <%= t('chung.ten_nha_hang') %></title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -470,7 +470,7 @@
 <div class="qr-header">
   <div class="brand">
     🍽️
-    <span>Nhà Hàng Bảo Đoàn<small>Gọi món tại bàn</small></span>
+    <span><%= t('chung.ten_nha_hang') %><small><%= t('qr.goi_mon_tai_ban') %></small></span>
   </div>
   <div style="display:flex; align-items:center; gap:10px">
     <!--
@@ -482,19 +482,19 @@
               color:#2dba6e; padding:6px 13px; border-radius:20px; font-size:13px;
               font-weight:600; text-decoration:none; white-space:nowrap;
               display:<%= sesis ? 'inline-block' : 'none' %>">
-      <i class="fas fa-wallet"></i> Thanh toán
+      <i class="fas fa-wallet"></i> <%= t('qr.thanh_toan') %>
     </a>
-    <div class="table-badge"><i class="fas fa-chair"></i> Bàn <%= tableName %></div>
+    <div class="table-badge"><i class="fas fa-chair"></i> <%= t('qr.ban') %> <%= tableName %></div>
   </div>
 </div>
 
 <!-- ===================== Thanh 4 buoc ===================== -->
 <div class="buoc-bar">
   <div class="buoc-list" id="thanhBuoc">
-    <button type="button" class="buoc" data-buoc="1"><span class="cham">1</span><span class="ten">Chọn món</span></button>
-    <button type="button" class="buoc" data-buoc="2"><span class="cham">2</span><span class="ten">Xem lại</span></button>
-    <button type="button" class="buoc" data-buoc="3"><span class="cham">3</span><span class="ten">Bếp chế biến</span></button>
-    <button type="button" class="buoc" data-buoc="4"><span class="cham">4</span><span class="ten">Thanh toán</span></button>
+    <button type="button" class="buoc" data-buoc="1"><span class="cham">1</span><span class="ten"><%= t('qr.b1') %></span></button>
+    <button type="button" class="buoc" data-buoc="2"><span class="cham">2</span><span class="ten"><%= t('qr.b2') %></span></button>
+    <button type="button" class="buoc" data-buoc="3"><span class="cham">3</span><span class="ten"><%= t('qr.b3') %></span></button>
+    <button type="button" class="buoc" data-buoc="4"><span class="cham">4</span><span class="ten"><%= t('qr.b4') %></span></button>
   </div>
 </div>
 
@@ -505,13 +505,13 @@
 <div class="search-bar">
   <div class="search-icon">
     <i class="fas fa-search"></i>
-    <input type="text" id="searchInput" placeholder="Tìm kiếm món ăn..." autocomplete="off">
+    <input type="text" id="searchInput" placeholder="<%= t('qr.tim_mon') %>" autocomplete="off">
   </div>
 </div>
 
 <!-- ===================== Danh muc ===================== -->
 <div class="categories-bar" id="catBar">
-  <button class="cat-btn active" data-cat="all">🍽️ Tất cả</button>
+  <button class="cat-btn active" data-cat="all">🍽️ <%= t('qr.tat_ca') %></button>
   <% categories.forEach(c => { %>
     <button class="cat-btn" data-cat="<%= c.id_loai %>"><%= c.name_loai %></button>
   <% }) %>
@@ -528,7 +528,7 @@
        data-gia="<%= d.gia_mon %>"
        data-anh="<%= d.images || '' %>"
        data-mota="<%= d.ghichu_mon || '' %>">
-    <span class="dish-dagoi"><i class="fas fa-check"></i> Trong giỏ</span>
+    <span class="dish-dagoi"><i class="fas fa-check"></i> <%= t('qr.trong_gio') %></span>
     <% if (d.images) { %>
       <img class="dish-img" src="/food/<%= d.images %>" alt="<%= d.name_mon %>" loading="lazy"
            onerror="this.outerHTML='<div class=\'dish-img-placeholder\'>🍜</div>'">
@@ -540,8 +540,8 @@
       <div class="dish-note"><%= d.ghichu_mon || '' %></div>
       <div class="dish-footer">
         <span class="dish-price"><%= Number(d.gia_mon).toLocaleString('vi-VN') %>đ</span>
-        <button class="btn-add" data-them="1" aria-label="Thêm <%= d.name_mon %> vào giỏ">
-          <i class="fas fa-plus"></i> Thêm
+        <button class="btn-add" data-them="1" aria-label="<%= t('qr.them_vao_gio_aria', { ten: d.name_mon }) %>">
+          <i class="fas fa-plus"></i> <%= t('qr.them') %>
         </button>
       </div>
     </div>
@@ -549,20 +549,20 @@
   <% }) %>
   <div class="luoi-trong" id="luoiTrong" style="display:none">
     <i class="fas fa-magnifying-glass"></i>
-    Không tìm thấy món nào phù hợp.
+    <%= t('qr.khong_thay_mon') %>
   </div>
 </div>
 
 <!-- ===================== Thanh duoi ===================== -->
 <div class="thanh-duoi" id="thanhDuoi">
   <button class="nut-don" id="nutXemDon" type="button">
-    <i class="fas fa-list-check"></i> Đơn
+    <i class="fas fa-list-check"></i> <%= t('qr.don') %>
     <span class="cham-do" id="chamDon">0</span>
   </button>
   <button class="nut-gio" id="nutMoGio" type="button">
     <span class="trai">
       <i class="fas fa-basket-shopping"></i>
-      Xem giỏ <span class="so" id="soMonGio">0</span>
+      <%= t('qr.xem_gio') %> <span class="so" id="soMonGio">0</span>
     </span>
     <span id="tienGio">0đ</span>
   </button>
@@ -572,7 +572,7 @@
 <div class="lop-phu" id="lopPhu"></div>
 
 <!-- ===================== Sheet: chi tiet mon ===================== -->
-<div class="sheet" id="sheetMon" role="dialog" aria-label="Chi tiết món">
+<div class="sheet" id="sheetMon" role="dialog" aria-label="<%= t('qr.chi_tiet_mon') %>">
   <div class="tay-nam"></div>
   <div id="ctAnhWrap"></div>
   <div class="ct-ten" id="ctTen"></div>
@@ -580,31 +580,31 @@
   <div class="ct-mota" id="ctMota"></div>
 
   <div class="ct-hang">
-    <span class="nhan">Số phần</span>
+    <span class="nhan"><%= t('qr.so_phan') %></span>
     <div class="qty-lon">
-      <button type="button" id="ctTru" aria-label="Bớt một phần"><i class="fas fa-minus"></i></button>
+      <button type="button" id="ctTru" aria-label="<%= t('qr.bot_mot_phan') %>"><i class="fas fa-minus"></i></button>
       <span id="ctSoLuong">1</span>
-      <button type="button" id="ctCong" aria-label="Thêm một phần"><i class="fas fa-plus"></i></button>
+      <button type="button" id="ctCong" aria-label="<%= t('qr.them_mot_phan') %>"><i class="fas fa-plus"></i></button>
     </div>
   </div>
 
   <div style="margin-top:16px">
-    <span class="nhan" style="font-size:13px; font-weight:600; color:var(--text-muted)">Ghi chú cho bếp</span>
-    <input class="o-ghi-chu" id="ctGhiChu" maxlength="120" placeholder="VD: ít cay, không hành...">
+    <span class="nhan" style="font-size:13px; font-weight:600; color:var(--text-muted)"><%= t('qr.ghi_chu_bep') %></span>
+    <input class="o-ghi-chu" id="ctGhiChu" maxlength="120" placeholder="<%= t('qr.vd_ghi_chu') %>">
     <div class="note-chips" id="ctChips"></div>
   </div>
 
   <button class="nut-chinh" id="ctThem">
-    <i class="fas fa-basket-shopping"></i> Thêm vào giỏ · <span id="ctTongTien"></span>
+    <i class="fas fa-basket-shopping"></i> <%= t('qr.them_vao_gio') %> · <span id="ctTongTien"></span>
   </button>
-  <button class="nut-phu" data-dong="1">Đóng</button>
+  <button class="nut-phu" data-dong="1"><%= t('qr.dong') %></button>
 </div>
 
 <!-- ===================== Sheet: gio mon (buoc 2) ===================== -->
-<div class="sheet" id="sheetGio" role="dialog" aria-label="Giỏ món">
+<div class="sheet" id="sheetGio" role="dialog" aria-label="<%= t('qr.gio_mon') %>">
   <div class="tay-nam"></div>
   <div class="sheet-dau">
-    <h3><i class="fas fa-basket-shopping"></i> Giỏ món của bạn</h3>
+    <h3><i class="fas fa-basket-shopping"></i> <%= t('qr.gio_mon_cua_ban') %></h3>
     <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
   </div>
   <div id="gioItems"></div>
@@ -614,57 +614,57 @@
     dang dung, dua tren luat ket hop Apriori trong bang `luat_ket_hop`.
   -->
   <div class="suggest-wrap" id="suggestWrap">
-    <div class="suggest-title"><i class="fas fa-wand-magic-sparkles"></i> <span id="suggestTitle">Ăn kèm ngon hơn</span></div>
+    <div class="suggest-title"><i class="fas fa-wand-magic-sparkles"></i> <span id="suggestTitle"><%= t('qr.an_kem') %></span></div>
     <div class="suggest-strip" id="suggestStrip"></div>
   </div>
 
   <div class="tong-hang" id="gioTongHang" style="display:none">
-    <span>Tạm tính</span>
+    <span><%= t('qr.tam_tinh') %></span>
     <span class="tien" id="gioTong">0đ</span>
   </div>
   <button class="nut-chinh" id="nutTiepTuc" style="display:none">
-    Tiếp tục · Xem lại đơn <i class="fas fa-arrow-right"></i>
+    <%= t('qr.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
   </button>
-  <button class="nut-phu" data-dong="1"><i class="fas fa-plus"></i> Chọn thêm món</button>
+  <button class="nut-phu" data-dong="1"><i class="fas fa-plus"></i> <%= t('qr.chon_them_mon') %></button>
 </div>
 
 <!-- ===================== Sheet: xac nhan (buoc 2b) ===================== -->
-<div class="sheet" id="sheetXacNhan" role="dialog" aria-label="Xác nhận đơn">
+<div class="sheet" id="sheetXacNhan" role="dialog" aria-label="<%= t('qr.xac_nhan_don') %>">
   <div class="tay-nam"></div>
   <div class="sheet-dau">
-    <button class="nut-tron" id="nutQuayLaiGio" aria-label="Quay lại giỏ"><i class="fas fa-arrow-left"></i></button>
-    <h3><i class="fas fa-clipboard-check"></i> Xác nhận gọi món</h3>
+    <button class="nut-tron" id="nutQuayLaiGio" aria-label="<%= t('qr.quay_lai_gio') %>"><i class="fas fa-arrow-left"></i></button>
+    <h3><i class="fas fa-clipboard-check"></i> <%= t('qr.xac_nhan_goi_mon') %></h3>
     <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
   </div>
 
   <div class="hop-nhac">
     <i class="fas fa-circle-info"></i>
     <div>
-      Đơn sẽ được gửi thẳng xuống bếp cho <b>Bàn <%= tableName %></b>.
-      Món đã gửi không tự hủy được — cần đổi, bạn báo nhân viên giúp nhà hàng nhé.
+      <%- t('qr.gui_thang_bep', { ban: '<b>' + t('qr.ban') + ' ' + tableName + '</b>' }) %>
+      <%= t('qr.khong_tu_huy') %>
     </div>
   </div>
 
   <div id="xnDanhSach"></div>
 
   <div class="tong-hang">
-    <span>Tổng cộng</span>
+    <span><%= t('qr.tong_cong') %></span>
     <span class="tien" id="xnTong">0đ</span>
   </div>
-  <p class="phu-chu">Giá đã gồm phí phục vụ theo niêm yết. Hóa đơn cuối cùng hiển thị ở bước thanh toán.</p>
+  <p class="phu-chu"><%= t('qr.gia_da_gom') %></p>
 
   <button class="nut-chinh" id="nutGuiBep">
-    <i class="fas fa-paper-plane"></i> Gửi bếp
+    <i class="fas fa-paper-plane"></i> <%= t('qr.gui_bep') %>
   </button>
-  <button class="nut-phu" id="nutSuaLai"><i class="fas fa-pen"></i> Sửa lại giỏ món</button>
+  <button class="nut-phu" id="nutSuaLai"><i class="fas fa-pen"></i> <%= t('qr.sua_lai_gio') %></button>
 </div>
 
 <!-- ===================== Sheet: don cua ban (buoc 3) ===================== -->
-<div class="sheet" id="sheetDon" role="dialog" aria-label="Đơn của bàn">
+<div class="sheet" id="sheetDon" role="dialog" aria-label="<%= t('qr.don') %>">
   <div class="tay-nam"></div>
   <div class="sheet-dau">
-    <h3><i class="fas fa-list-check"></i> Đơn của bàn <%= tableName %></h3>
-    <button class="nut-tron" id="nutLamMoi" aria-label="Làm mới"><i class="fas fa-rotate"></i></button>
+    <h3><i class="fas fa-list-check"></i> <%= t('qr.don_cua_ban', { ban: t('qr.ban') + ' ' + tableName }) %></h3>
+    <button class="nut-tron" id="nutLamMoi" aria-label="<%= t('qr.lam_moi') %>"><i class="fas fa-rotate"></i></button>
     <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
   </div>
 
@@ -673,27 +673,27 @@
     <div class="tien-trinh"><i id="donThanh"></i></div>
   </div>
 
-  <div id="donItems"><div class="dang-tai"><i class="fas fa-spinner fa-spin"></i> Đang tải đơn...</div></div>
+  <div id="donItems"><div class="dang-tai"><i class="fas fa-spinner fa-spin"></i> <%= t('qr.dang_tai_don') %></div></div>
 
   <div class="tong-hang" id="donTongHang" style="display:none">
-    <span>Tạm tính</span>
+    <span><%= t('qr.tam_tinh') %></span>
     <span class="tien" id="donTong">0đ</span>
   </div>
 
   <a class="nut-chinh" id="nutThanhToanDon" style="display:none; text-decoration:none">
-    <i class="fas fa-wallet"></i> Thanh toán
+    <i class="fas fa-wallet"></i> <%= t('qr.thanh_toan') %>
   </a>
-  <button class="nut-phu" data-dong="1"><i class="fas fa-plus"></i> Gọi thêm món</button>
+  <button class="nut-phu" data-dong="1"><i class="fas fa-plus"></i> <%= t('qr.goi_them_mon') %></button>
 </div>
 
 <!-- ===================== Man hinh gui xong ===================== -->
 <div class="man-xong" id="manXong">
   <div class="icon"><i class="fas fa-check"></i></div>
-  <h2>Đã gửi bếp!</h2>
-  <p id="xongMoTa">Đơn của bạn đã được ghi nhận.<br>Bếp sẽ chuẩn bị và nhân viên mang ra bàn ngay.</p>
+  <h2><%= t('qr.da_gui_bep') %></h2>
+  <p id="xongMoTa"><%- t('qr.da_ghi_nhan') %></p>
   <div class="nhom">
-    <button class="nut-chinh" id="nutTheoDoi"><i class="fas fa-list-check"></i> Theo dõi đơn</button>
-    <button class="nut-phu" id="nutDatThem"><i class="fas fa-plus"></i> Gọi thêm món</button>
+    <button class="nut-chinh" id="nutTheoDoi"><i class="fas fa-list-check"></i> <%= t('qr.theo_doi_don') %></button>
+    <button class="nut-phu" id="nutDatThem"><i class="fas fa-plus"></i> <%= t('qr.goi_them_mon') %></button>
     <button class="nut-phu" id="nutThanhToanXong"><i class="fas fa-wallet"></i> Thanh toán</button>
   </div>
 </div>
@@ -706,6 +706,49 @@
    * khach khong bi mat vi tri dang xem trong thuc don.
    * ===================================================================== */
 
+  /*
+    Tu dien cho phan JavaScript chay tren trinh duyet.
+
+    `t()` la ham cua may chu, JS phia khach khong goi duoc. Nen may chu day
+    san nhung chuoi can dung xuong day duoi dang JSON, xuat bang the KHONG
+    escape vi JSON.stringify da tu lo phan thoat ky tu roi.
+
+    (Khong viet ky hieu the EJS trong chinh chu thich nay: EJS quet ca tep chu
+    khong hieu dau la comment JavaScript, gap ky hieu do la no tuong gap mot
+    the mo that va bao "Could not find matching close tag".)
+  */
+  var T = <%- JSON.stringify({
+    da_them: t('qr.da_them'),
+    da_them_n: t('qr.da_them_n'),
+    moi_phan: t('qr.moi_phan'),
+    mo_ta_mac_dinh: t('qr.mo_ta_mac_dinh'),
+    gio_trong: t('qr.gio_trong'),
+    them_ghi_chu: t('qr.them_ghi_chu'),
+    bot: t('qr.bot'),
+    them: t('qr.them'),
+    vd_ghi_chu: t('qr.vd_ghi_chu'),
+    goi_y_ket_hop: t('qr.goi_y_ket_hop'),
+    goi_y_mon_moi: t('qr.goi_y_mon_moi'),
+    goi_y_ban_chay: t('qr.goi_y_ban_chay'),
+    dang_gui: t('qr.dang_gui'),
+    gui_bep: t('qr.gui_bep'),
+    khong_gui_duoc: t('qr.khong_gui_duoc'),
+    loi_ket_noi: t('qr.loi_ket_noi'),
+    da_gui_n_phan: t('qr.da_gui_n_phan'),
+    co_the_theo_doi: t('qr.co_the_theo_doi'),
+    ban_chua_goi: t('qr.ban_chua_goi'),
+    da_phuc_vu: t('qr.da_phuc_vu'),
+    dang_cap_nhat: t('qr.dang_cap_nhat'),
+    ban: t('qr.ban')
+  }) %>;
+
+  /** Thay {khoa} trong chuoi mau bang gia tri - ban rut gon cua t() ben may chu. */
+  function tt(mau, bien) {
+    var r = String(mau || '');
+    for (var k in (bien || {})) r = r.split('{' + k + '}').join(String(bien[k]));
+    return r;
+  }
+
   var TABLE_ID = '<%= tableId %>';
   var TABLE_NAME = '<%= tableName %>';
   var maDon = '<%= sesis %>';          // sesis cua ban, may chu tra ve
@@ -714,7 +757,10 @@
   var sheetDangMo = null;
   var hendonPoll = null;
 
-  var GOI_Y_GHI_CHU = ['Ít cay', 'Không cay', 'Không hành', 'Không rau', 'Ít đá', 'Không đường', 'Mang về'];
+  var GOI_Y_GHI_CHU = <%- JSON.stringify([
+    t('qr.gc_it_cay'), t('qr.gc_khong_cay'), t('qr.gc_khong_hanh'), t('qr.gc_khong_rau'),
+    t('qr.gc_it_da'), t('qr.gc_khong_duong'), t('qr.gc_mang_ve')
+  ]) %>;
 
   /* ---------------- Tien ich ---------------- */
 
@@ -827,7 +873,7 @@
     // luong va ghi chu truoc.
     if (e.target.closest('[data-them]')) {
       themVaoGio(mon, 1, '');
-      showToast('✓ Đã thêm "' + mon.ten + '"');
+      showToast('✓ ' + tt(T.da_them, { ten: mon.ten }));
     } else {
       moChiTietMon(mon);
     }
@@ -842,8 +888,8 @@
         '" onerror="this.outerHTML=\'<div class=&quot;ct-anh-ph&quot;>🍜</div>\'">'
       : '<div class="ct-anh-ph">🍜</div>';
     document.getElementById('ctTen').textContent = mon.ten;
-    document.getElementById('ctGia').textContent = tien(mon.gia) + ' / phần';
-    document.getElementById('ctMota').textContent = mon.mota || 'Món ăn được chế biến từ nguyên liệu tươi trong ngày.';
+    document.getElementById('ctGia').textContent = tien(mon.gia) + ' ' + T.moi_phan;
+    document.getElementById('ctMota').textContent = mon.mota || T.mo_ta_mac_dinh;
     document.getElementById('ctGhiChu').value = '';
     document.getElementById('ctChips').innerHTML = GOI_Y_GHI_CHU.map(function (t) {
       return '<span class="note-chip" data-chip="' + escHtml(t) + '">' + escHtml(t) + '</span>';
@@ -876,7 +922,7 @@
   document.getElementById('ctThem').addEventListener('click', function () {
     if (!monDangXem) return;
     themVaoGio(monDangXem, slDangChon, document.getElementById('ctGhiChu').value);
-    showToast('✓ Đã thêm ' + slDangChon + ' phần "' + monDangXem.ten + '"');
+    showToast('✓ ' + tt(T.da_them_n, { n: slDangChon, ten: monDangXem.ten }));
     dongSheet();
   });
 
@@ -933,7 +979,7 @@
 
     if (gio.length === 0) {
       khung.innerHTML = '<div class="empty-cart"><i class="fas fa-basket-shopping"></i>' +
-        '<p>Chưa có món nào trong giỏ</p></div>';
+        '<p>' + T.gio_trong + '</p></div>';
       hangTong.style.display = 'none';
       nutTiep.style.display = 'none';
       document.getElementById('suggestWrap').classList.remove('show');
@@ -951,17 +997,17 @@
             '<div class="cart-item-name">' + escHtml(m.ten) + '</div>' +
             '<div class="cart-item-price">' + tien(m.gia) + ' × ' + m.sl + ' = ' + tien(m.gia * m.sl) + '</div>' +
             '<button class="note-toggle ' + (coGhiChu ? 'has-note' : '') + '" data-mo-ghichu="' + i + '">' +
-              '<i class="fas fa-pen"></i>' + (coGhiChu ? escHtml(m.ghi_chu) : 'Thêm ghi chú') +
+              '<i class="fas fa-pen"></i>' + (coGhiChu ? escHtml(m.ghi_chu) : T.them_ghi_chu) +
             '</button>' +
           '</div>' +
           '<div class="qty-control">' +
-            '<button class="qty-btn" data-sl="' + i + '" data-buoc="-1" aria-label="Bớt">−</button>' +
+            '<button class="qty-btn" data-sl="' + i + '" data-buoc="-1" aria-label="' + T.bot + '">−</button>' +
             '<span class="qty-num">' + m.sl + '</span>' +
-            '<button class="qty-btn" data-sl="' + i + '" data-buoc="1" aria-label="Thêm">+</button>' +
+            '<button class="qty-btn" data-sl="' + i + '" data-buoc="1" aria-label="' + T.them + '">+</button>' +
           '</div>' +
           '<div class="note-box" id="hopGhiChu' + i + '">' +
             '<input class="o-ghi-chu" id="oGhiChu' + i + '" maxlength="120" data-ghichu="' + i + '" ' +
-                   'placeholder="VD: ít cay, không hành..." value="' + escHtml(m.ghi_chu) + '">' +
+                   'placeholder="' + T.vd_ghi_chu + '" value="' + escHtml(m.ghi_chu) + '">' +
             '<div class="note-chips">' +
               GOI_Y_GHI_CHU.map(function (t) {
                 return '<span class="note-chip" data-chip-gio="' + i + '" data-chip="' + escHtml(t) + '">' + escHtml(t) + '</span>';
@@ -1047,7 +1093,8 @@
       if (!ds.length) { wrap.classList.remove('show'); return; }
 
       document.getElementById('suggestTitle').textContent =
-        data.nguon === 'luat_ket_hop' ? 'Khách hay gọi kèm' : 'Món bán chạy';
+        data.nguon === 'luat_ket_hop' ? T.goi_y_ket_hop
+          : data.nguon === 'mon_moi' ? T.goi_y_mon_moi : T.goi_y_ban_chay;
 
       strip.innerHTML = ds.map(function (m) {
         return '<div class="suggest-card" data-goiy="1" data-id="' + Number(m.id_mon) + '"' +
@@ -1074,7 +1121,7 @@
       id: Number(the.dataset.id), ten: the.dataset.ten,
       gia: Number(the.dataset.gia), anh: the.dataset.anh
     }, 1, '');
-    showToast('✓ Đã thêm "' + the.dataset.ten + '"');
+    showToast('✓ ' + tt(T.da_them, { ten: the.dataset.ten }));
   });
 
   /* ---------------- Buoc 2b: xac nhan ---------------- */
@@ -1100,7 +1147,7 @@
     if (gio.length === 0) return;
     var nut = document.getElementById('nutGuiBep');
     nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + T.dang_gui;
 
     try {
       // Chi gui ma QR va gio hang. Ten ban va ma phien do may chu tu tra ra tu
@@ -1115,7 +1162,7 @@
         })
       });
       var data = await res.json();
-      if (!data.success) { showToast(data.message || 'Không gửi được đơn, vui lòng báo nhân viên!', true); return; }
+      if (!data.success) { showToast(data.message || T.khong_gui_duoc, true); return; }
 
       // Ban chua co don thi /qr/add-dish vua tao sesis moi va tra ve day. Phai
       // dung ma do cho lien ket thanh toan, neu khong khach bam vao mot duong
@@ -1128,15 +1175,17 @@
       dongSheet();
       capNhatGio();
       document.getElementById('xongMoTa').innerHTML =
-        '<b>' + soPhan + ' phần</b> đã được gửi xuống bếp cho <b>Bàn ' + escHtml(TABLE_NAME) + '</b>.<br>' +
-        'Bạn có thể theo dõi tiến độ từng món ngay tại đây.';
+        tt(T.da_gui_n_phan, {
+          n: '<b>' + soPhan + '</b>',
+          ban: '<b>' + T.ban + ' ' + escHtml(TABLE_NAME) + '</b>'
+        }) + '<br>' + T.co_the_theo_doi;
       document.getElementById('manXong').classList.add('hien');
       taiDon();
     } catch (e) {
-      showToast('Lỗi kết nối, vui lòng báo nhân viên!', true);
+      showToast(T.loi_ket_noi, true);
     } finally {
       nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi bếp';
+      nut.innerHTML = '<i class="fas fa-paper-plane"></i> ' + T.gui_bep;
     }
   }
 
@@ -1186,7 +1235,7 @@
 
     if (donHienTai.mon.length === 0) {
       khung.innerHTML = '<div class="empty-cart"><i class="fas fa-utensils"></i>' +
-        '<p>Bàn chưa gọi món nào.<br>Chọn món trong thực đơn để bắt đầu nhé!</p></div>';
+        '<p>' + T.ban_chua_goi + '</p></div>';
       hangTong.style.display = 'none';
       nutTT.style.display = 'none';
       tienTrinh.style.display = 'none';
@@ -1209,7 +1258,7 @@
     var xong = donHienTai.mon.filter(function (m) { return m.trang_thai === 3; }).length;
     var tong = donHienTai.mon.length;
     tienTrinh.style.display = 'block';
-    document.getElementById('donTomTat').textContent = 'Đã phục vụ ' + xong + '/' + tong + ' món';
+    document.getElementById('donTomTat').textContent = tt(T.da_phuc_vu, { xong: xong, tong: tong });
     document.getElementById('donThanh').style.width = Math.round(xong / tong * 100) + '%';
 
     hangTong.style.display = 'flex';
@@ -1244,7 +1293,7 @@
   });
   document.getElementById('nutLamMoi').addEventListener('click', function () {
     document.getElementById('donItems').innerHTML =
-      '<div class="dang-tai"><i class="fas fa-spinner fa-spin"></i> Đang cập nhật...</div>';
+      '<div class="dang-tai"><i class="fas fa-spinner fa-spin"></i> ' + T.dang_cap_nhat + '</div>';
     taiDon();
   });
 

@@ -47,13 +47,19 @@
 .nh-divider::before { left: -12px; } .nh-divider::after { right: -12px; }
 
 /* -------- Nút -------- */
-.nh-btn { display: inline-flex; align-items: center; gap: .6rem; padding: .85rem 2rem; border-radius: 999px;
+.nh-btn { display: inline-flex; align-items: center; gap: .6rem; white-space: nowrap; padding: .85rem 2rem; border-radius: 999px;
   font-family: var(--nh-sans); font-weight: 600; font-size: .82rem; letter-spacing: 1.5px; text-transform: uppercase;
   border: 1.5px solid transparent; cursor: pointer; transition: all .3s var(--nh-ease); }
 .nh-btn--gold { background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-soft)); color: var(--nh-espresso); box-shadow: 0 10px 24px -10px rgba(200, 162, 75, .8); }
 .nh-btn--gold:hover { transform: translateY(-3px); box-shadow: 0 16px 30px -10px rgba(200, 162, 75, .9); color: var(--nh-espresso); }
+/* --ghost: nút viền dành cho NỀN TỐI (hero, ảnh phủ tối). Chữ trắng. */
 .nh-btn--ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .55); }
 .nh-btn--ghost:hover { background: #fff; color: var(--nh-espresso); border-color: #fff; transform: translateY(-3px); }
+/* --outline: bản tương ứng cho NỀN SÁNG (thẻ trắng, khối nền kem).
+   Phải dùng cái này thay --ghost ở đó, nếu không sẽ là chữ trắng trên nền
+   trắng - nút nhìn như ô rỗng, khách không đọc được chữ. */
+.nh-btn--outline { background: transparent; color: var(--nh-espresso); border-color: rgba(43, 26, 18, .35); }
+.nh-btn--outline:hover { background: var(--nh-espresso); color: var(--nh-cream); border-color: var(--nh-espresso); transform: translateY(-3px); }
 .nh-btn--dark { background: var(--nh-espresso); color: var(--nh-cream); }
 .nh-btn--dark:hover { background: var(--nh-brown); color: #fff; transform: translateY(-3px); }
 .nh-btn--sm { padding: .6rem 1.3rem; font-size: .72rem; }
@@ -66,20 +72,38 @@
 /* Khi trong suốt (trên hero): thêm lớp phủ tối mờ ở đỉnh để chữ luôn đọc rõ. */
 .nh-nav:not(.is-solid)::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(to bottom, rgba(20,12,8,.6), rgba(20,12,8,0)); }
-.nh-nav__inner { display: flex; align-items: center; gap: 2rem; position: relative; }
-.nh-nav:not(.is-solid) .nh-brand, .nh-nav:not(.is-solid) .nh-nav__links a { text-shadow: 0 1px 8px rgba(0,0,0,.4); }
-.nh-nav.is-solid { background: rgba(30, 18, 12, .96); padding: .55rem 0; box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .6); backdrop-filter: blur(8px); }
-.nh-brand { display: flex; align-items: center; gap: .6rem; color: #fff; }
+.nh-nav__inner { display: flex; align-items: center; gap: 2rem; position: relative; flex-wrap: nowrap; }
+/* Thanh nav phai rong hon khung noi dung 1200px cua .nh-container. Khi khach
+   DA dang nhap, hang nay phai chua them muc "Don cua toi", chu cai dai dien,
+   ten khach va nut dang xuat - vua dung 1200px thi khong con cho, cac muc
+   menu bi ep xuong hai dong va ten nha hang tran de len muc "Trang chu". */
+.nh-nav .nh-container { width: min(1360px, 94%); }
+.nh-nav:not(.is-solid) .nh-brand, .nh-nav:not(.is-solid) .nh-nav__links a,
+.nh-nav:not(.is-solid) .nh-lang__nut { text-shadow: 0 1px 8px rgba(0,0,0,.4); }
+/* KHONG dat backdrop-filter (hay filter / transform) o day.
+   `backdrop-filter` bien thanh nav thanh khoi chua cua moi phan tu con
+   `position: fixed` ben trong no - day la quy dinh cua CSS, khong phai loi
+   trinh duyet. Ngan keo menu tren dien thoai (.nh-nav__links) dung
+   `position: fixed; inset: 0 0 0 auto` de phu kin chieu cao man hinh; khi thanh
+   nav thanh khoi chua thi `bottom: 0` khong con la day man hinh nua ma la day
+   thanh nav, nen ngan keo tut xuong con 128px trong khi man hinh cao 844px:
+   nen sam chi con che duoc hai muc dau, cac muc con lai la chu trang nam thang
+   tren nen kem cua trang - khong doc noi mot chu.
+   Nen da 96% duc roi nen lam mo hau canh gan nhu khong nhin thay - doi lay mot
+   ngan keo hong thi khong dang. */
+.nh-nav.is-solid { background: rgba(30, 18, 12, .96); padding: .55rem 0; box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .6); }
+.nh-brand { display: flex; align-items: center; gap: .6rem; color: #fff; min-width: 0; }
 .nh-brand img { height: 42px; width: auto; }
 .nh-brand__name { font-family: var(--nh-brand-font); font-weight: 700; font-size: 2rem; line-height: 1;
-  color: var(--nh-gold-soft); white-space: nowrap; }
+  color: var(--nh-gold-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nh-nav.is-solid .nh-brand__name { font-size: 1.8rem; }
-.nh-nav__links { display: flex; align-items: center; gap: 1.9rem; margin-left: auto; list-style: none; padding: 0; margin-block: 0; }
-.nh-nav__links a { color: rgba(255, 255, 255, .95); font-weight: 500; font-size: .93rem; position: relative; padding: .3rem 0; }
+.nh-nav__links { display: flex; align-items: center; gap: 1.9rem; margin-left: auto; list-style: none; padding: 0; margin-block: 0;
+  flex-wrap: nowrap; flex-shrink: 0; }
+.nh-nav__links a { color: rgba(255, 255, 255, .95); font-weight: 500; font-size: .93rem; position: relative; padding: .3rem 0; white-space: nowrap; }
 .nh-nav__links a::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px; background: var(--nh-gold); transition: width .3s var(--nh-ease); }
 .nh-nav__links a:hover, .nh-nav__links a.is-active { color: #fff; }
 .nh-nav__links a:hover::after, .nh-nav__links a.is-active::after { width: 100%; }
-.nh-nav__actions { display: flex; align-items: center; gap: 1rem; }
+.nh-nav__actions { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .nh-cart { position: relative; color: #fff; font-size: 1.2rem; }
 .nh-cart__badge { position: absolute; top: -8px; right: -12px; background: var(--nh-gold); color: var(--nh-espresso);
   font-family: var(--nh-sans); font-size: .62rem; font-weight: 700; min-width: 17px; height: 17px; border-radius: 999px;
@@ -88,6 +112,37 @@
 .nh-user__avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--nh-gold); color: var(--nh-espresso);
   display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--nh-sans); }
 .nh-burger { display: none; background: none; border: 0; color: #fff; font-size: 1.5rem; cursor: pointer; margin-left: auto; }
+
+/* -------- Thanh nav thu hep dan theo be ngang man hinh --------
+   Hang nay dai ra khi khach dang nhap. Thay vi de trinh duyet tu ep chu xuong
+   dong, ta chu dong bot khoang cach truoc, roi bot chu, cuoi cung moi doi sang
+   menu truot. */
+@media (max-width: 1300px) {
+  .nh-nav__inner { gap: 1.2rem; }
+  .nh-nav__links { gap: 1.25rem; }
+  .nh-nav__links a { font-size: .88rem; }
+  .nh-nav__actions { gap: .8rem; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.65rem; }
+  .nh-brand img { height: 36px; }
+}
+@media (max-width: 1140px) {
+  /* Chu cai dai dien van con, nen khach van biet minh dang dang nhap. */
+  .nh-nav__actions .nh-user__name { display: none; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.5rem; }
+}
+@media (max-width: 1024px) {
+  /* Duoi muc nay hang ngang khong con du cho khi da dang nhap - chuyen menu
+     vao ngan keo truot. Truoc day moc nay la 760px, nen khoang 761-1024px
+     thanh nav bi chen ep den vo. */
+  .nh-burger { display: block; }
+  .nh-nav__links { position: fixed; inset: 0 0 0 auto; width: min(300px, 82%); flex-direction: column; align-items: flex-start;
+    gap: 1.4rem; background: var(--nh-espresso); padding: 6rem 2rem 2rem; transform: translateX(100%);
+    transition: transform .4s var(--nh-ease); box-shadow: -20px 0 40px rgba(0,0,0,.4); z-index: 20; }
+  .nh-nav__links.is-open { transform: none; }
+  .nh-nav__links a { font-size: 1.05rem; }
+  .nh-burger { margin-left: 0; }
+  .nh-nav__inner > .nh-nav__actions { margin-left: auto; }
+}
 
 /* =========================================================================
    HERO
@@ -111,6 +166,10 @@
 .nh-subhero__bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .nh-subhero__veil { position: absolute; inset: 0; background: linear-gradient(rgba(24,14,9,.72), rgba(24,14,9,.82)); }
 .nh-subhero__inner { position: relative; z-index: 2; padding-top: 70px; }
+/* Giỏ hàng và chi tiết món dùng hero thấp hơn (trước đây viết thẳng
+   style="min-height:38vh" trong cart.ejs/detail.ejs). Đưa ra đây thành lớp để
+   điểm ngắt điện thoại ở cuối tệp còn ghi đè được — kiểu nội tuyến thì không. */
+.nh-subhero--sm { min-height: 38vh; }
 .nh-subhero h1 { color: #fff; font-size: clamp(2.2rem, 5vw, 3.6rem); }
 .nh-crumbs { margin-top: .6rem; color: rgba(255,255,255,.9); font-size: .9rem; }
 .nh-crumbs a { color: var(--nh-gold-soft); }
@@ -177,6 +236,12 @@
   font-size: 1.7rem; color: var(--nh-gold); border: 1.5px solid var(--nh-gold); }
 .nh-feature h3 { font-size: 1.2rem; margin-bottom: .5rem; }
 .nh-feature p { color: rgba(255,255,255,.82); font-size: .9rem; margin: 0; }
+/* --light: bản cho NỀN SÁNG. Bản mặc định ở trên dựng cho .nh-section--dark
+   nên chữ trắng và nền/viền gần như trong suốt; đặt nó lên nền kem thì đoạn
+   mô tả là chữ trắng trên nền trắng và cái thẻ cũng không còn đường viền. */
+.nh-feature--light { background: #fff; border-color: var(--nh-line); }
+.nh-feature--light p { color: var(--nh-muted); }
+.nh-feature--light:hover { transform: translateY(-6px); box-shadow: var(--nh-shadow-sm); }
 
 /* -------- Thống kê -------- */
 .nh-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; text-align: center; }
@@ -517,7 +582,6 @@
   .nh-mag__lead { min-height: 400px; }
 }
 @media (max-width: 760px) {
-  .nh-burger { display: block; }
   /* Tên nhà hàng viết bằng font chữ ký nên rất rộng; ở 390px nó tràn sang tận
      biểu tượng giỏ hàng. Thu nhỏ và cho phép cắt bớt thay vì để hai thứ chồng
      lên nhau. */
@@ -527,12 +591,6 @@
     font-size: 1.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nh-brand img { max-height: 34px; }
   .nh-nav__actions { flex: none; gap: .9rem; }
-  .nh-nav__links { position: fixed; inset: 0 0 0 auto; width: min(300px, 82%); flex-direction: column; align-items: flex-start;
-    gap: 1.4rem; background: var(--nh-espresso); padding: 6rem 2rem 2rem; transform: translateX(100%);
-    transition: transform .4s var(--nh-ease); box-shadow: -20px 0 40px rgba(0,0,0,.4); }
-  .nh-nav__links.is-open { transform: none; }
-  .nh-nav__links a { font-size: 1.05rem; }
-  .nh-nav__actions .nh-user__name { display: none; }
   .nh-footer__grid { grid-template-columns: 1fr; }
   .nh-hero__inner { text-align: left; }
   .nh-posts { grid-template-columns: 1fr; }
@@ -560,4 +618,569 @@
 
   .nh-order__actions { margin-left: 0; width: 100%; }
   .nh-order__actions .nh-btn { flex: 1; justify-content: center; }
+}
+
+/* ==========================================================================
+   NỀN HOA VĂN NHẬT — thay cho bộ ảnh stock phương Tây
+   ==========================================================================
+
+   VÌ SAO KHÔNG DÙNG ẢNH NỮA
+
+   Bảy ảnh nền cũ (bg_1..bg_5, about.jpg, about-1.jpg) là ảnh stock của một nhà
+   hàng Âu: đầu bếp đội mũ toque Pháp bày bít tết, bánh croissant với cà phê,
+   oải hương Provence, xiên thịt nướng Trung Đông, và một người nướng BBQ ngoài
+   sân vườn. Khi nhà hàng chuyển sang thực đơn Nhật, chúng nói ngược lại tất cả
+   những gì phần chữ vừa nói — tệ hơn là không có ảnh nào.
+
+   Thay bằng ảnh Nhật thì phải mua hoặc chụp. Ở đây dùng cách không cần ảnh:
+   hoa văn truyền thống Nhật VẼ BẰNG SVG nhúng thẳng vào CSS, cộng ảnh MÓN đã
+   có sẵn trong `images/food/` (255 ảnh, nền trong suốt nhờ chunk tRNS nên đặt
+   lên nền tối rất gọn).
+
+   Ba cái được cùng lúc: không phụ thuộc ảnh bên ngoài, không lo bản quyền, và
+   nhẹ hơn — cả bộ hoa văn dưới đây chưa tới 2KB, trong khi riêng bg_1.jpg đã
+   950KB.
+
+   HAI HOA VĂN
+
+   seigaiha (青海波 - "sóng biển xanh")  vòng cung lồng nhau, hoa văn Nhật cổ
+                                        nhất và dễ nhận nhất → dùng cho hero
+   kōshi    (格子 - lưới cửa shoji)      lưới ô vuông mảnh như khung cửa giấy
+                                        → dùng cho subhero và khối kêu gọi
+
+   Màu vạch lấy thẳng --nh-gold nên hoa văn hoà vào tông vàng-nâu sẵn có của
+   thương hiệu, không tạo ra một bảng màu thứ hai.
+   ========================================================================== */
+
+:root {
+  /* Dấu # trong màu phải viết %23: đây là URI, # sẽ bị hiểu là dấu neo. */
+  --nh-seigaiha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cg fill='none' stroke='%23c8a24b' stroke-opacity='0.20' stroke-width='1'%3E%3Ccircle cx='0' cy='20' r='19.5'/%3E%3Ccircle cx='0' cy='20' r='13.5'/%3E%3Ccircle cx='0' cy='20' r='7.5'/%3E%3Ccircle cx='0' cy='20' r='2'/%3E%3Ccircle cx='20' cy='20' r='19.5'/%3E%3Ccircle cx='20' cy='20' r='13.5'/%3E%3Ccircle cx='20' cy='20' r='7.5'/%3E%3Ccircle cx='20' cy='20' r='2'/%3E%3Ccircle cx='40' cy='20' r='19.5'/%3E%3Ccircle cx='40' cy='20' r='13.5'/%3E%3Ccircle cx='40' cy='20' r='7.5'/%3E%3Ccircle cx='40' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  --nh-koshi: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cg stroke='%23c8a24b' stroke-opacity='0.16' stroke-width='1' fill='none'%3E%3Cpath d='M0 .5H28M0 14.5H28M0 27.5H28M.5 0V28M14.5 0V28M27.5 0V28'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --- Nền chung ------------------------------------------------------------
+   Ba lớp chồng lên nhau, thứ tự trong `background` là trên xuống dưới:
+     1. vệt sáng toả từ một góc  → cho khối đỡ phẳng
+     2. hoa văn lặp
+     3. màu nền đặc
+   Không dùng ảnh nên KHÔNG cần `background-size: cover` hay hiệu ứng phóng to
+   như bản cũ — hoa văn lặp thì kích thước màn hình nào cũng vừa. */
+.nh-wa-song,
+.nh-wa-koshi { background-color: #1c1410; }
+
+.nh-wa-song {
+  background-image:
+    radial-gradient(1200px 620px at 12% 10%, rgba(200, 162, 75, .16), transparent 62%),
+    var(--nh-seigaiha),
+    linear-gradient(160deg, #241a13 0%, #1a1210 55%, #2b1a12 100%);
+  background-size: auto, 80px 40px, auto;
+}
+
+.nh-wa-koshi {
+  background-image:
+    radial-gradient(900px 520px at 50% 0%, rgba(200, 162, 75, .14), transparent 65%),
+    var(--nh-koshi),
+    linear-gradient(150deg, #2b1a12 0%, #1a1210 100%);
+  background-size: auto, 28px 28px, auto;
+}
+
+/* Hero cũ có hiệu ứng phóng to chậm dành cho ảnh. Hoa văn mà phóng to thì lưới
+   bị giãn ra rồi giật về — tắt hẳn cho hai lớp nền mới. */
+.nh-hero__bg.nh-wa-song,
+.nh-hero__bg.nh-wa-koshi { transform: none; animation: none; }
+
+/* Màn che của hero cũ rất tối (để chữ nổi trên ảnh). Nền hoa văn đã tối sẵn,
+   giữ nguyên độ che đó sẽ nuốt mất hoa văn — nhẹ tay lại. */
+.nh-hero__bg.nh-wa-song + .nh-hero__veil {
+  background: linear-gradient(105deg, rgba(20, 12, 8, .78) 0%, rgba(20, 12, 8, .42) 48%, rgba(20, 12, 8, .12) 100%);
+}
+.nh-subhero__bg.nh-wa-koshi + .nh-subhero__veil {
+  background: linear-gradient(rgba(20, 12, 8, .55), rgba(20, 12, 8, .70));
+}
+.nh-cta__bg.nh-wa-koshi + .nh-cta__veil {
+  background: linear-gradient(rgba(20, 12, 8, .58), rgba(20, 12, 8, .74));
+}
+
+/* --- Món ăn nổi trong hero ------------------------------------------------
+   Ảnh trong images/food/ là PNG bảng màu CÓ chunk tRNS, tức nền trong suốt
+   thật. Đặt thẳng lên nền tối là được, không cần khung, không cần bo góc.
+   `drop-shadow` (không phải box-shadow) đổ bóng theo ĐÚNG hình món chứ không
+   theo khung chữ nhật — đó là điểm khiến nó trông như món đang nổi. */
+.nh-hero__mon {
+  position: absolute; right: 3%; bottom: 6%; z-index: 1;
+  width: min(40vw, 460px); pointer-events: none;
+  filter: drop-shadow(0 26px 54px rgba(0, 0, 0, .6));
+  animation: nh-troi 9s ease-in-out infinite;
+}
+@keyframes nh-troi { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
+
+/* Dưới 1000px thì cột chữ đã chiếm gần hết bề ngang - món sẽ nằm đè lên chữ. */
+@media (max-width: 1000px) { .nh-hero__mon { display: none } }
+@media (prefers-reduced-motion: reduce) { .nh-hero__mon { animation: none } }
+
+/* --- Khối ảnh "Câu chuyện" ------------------------------------------------
+   Bản cũ là hai ảnh chụp cắt theo khung (`object-fit: cover`). Ảnh món là hình
+   cắt nền, cắt theo khung sẽ xén mất mép đĩa - nên đổi sang `contain` và cho
+   nó một tấm nền tối có hoa văn để hình cắt có chỗ đứng. */
+.nh-about__imgs--mon .nh-mon-khung {
+  border-radius: 14px; box-shadow: var(--nh-shadow); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.1rem; min-height: 210px;
+}
+.nh-about__imgs--mon .nh-mon-khung:first-child { margin-top: 2.2rem; }
+.nh-about__imgs--mon img {
+  width: 100%; height: auto; max-height: 230px; object-fit: contain;
+  border-radius: 0; box-shadow: none; margin: 0;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, .45));
+}
+
+/* --- Thư viện món ---------------------------------------------------------
+   Cùng lý do trên: ô thư viện cũ cắt ảnh theo khung. Hình cắt nền cần nền
+   riêng và khoảng thở, nếu không món sẽ chạm sát mép ô. */
+.nh-gallery--mon a {
+  display: flex; align-items: center; justify-content: center; padding: .9rem;
+}
+.nh-gallery--mon img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .4));
+}
+.nh-gallery--mon a::after {
+  content: attr(data-ten);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 26px 12px 10px; font-size: .72rem; line-height: 1.35;
+  color: #fff; text-align: center;
+  background: linear-gradient(transparent, rgba(12, 8, 5, .88));
+  opacity: 0; transition: opacity .3s var(--nh-ease);
+}
+.nh-gallery--mon a:hover::after { opacity: 1; }
+
+/* ==========================================================================
+   LỚP 2 — LÀM NỀN CÓ CHIỀU SÂU
+   ==========================================================================
+
+   Bản đầu chỉ có hoa văn lặp trên nền gradient. Đúng chủ đề nhưng PHẲNG: hoa
+   văn đều tăm tắp từ mép này sang mép kia, mắt không có chỗ dừng, nên nhìn ra
+   ngay là nền máy sinh chứ không phải ảnh chụp.
+
+   Ba thứ dưới đây thêm chiều sâu mà vẫn không cần một tệp ảnh nào:
+
+     1. HẠT NHIỄU (grain)  — feTurbulence của SVG. Đây là thứ tạo khác biệt lớn
+        nhất: ảnh chụp thật luôn có hạt, nền tô màu tuyệt đối mịn thì không.
+        Rải một lớp nhiễu rất mờ lên trên là màu lập tức "có chất liệu".
+
+     2. ĐÈN RỌI (spotlight) — hai vệt sáng vàng lệch tâm, một to một nhỏ. Hoa
+        văn dưới vệt sáng hiện rõ hơn ở rìa tối, tạo ra chỗ đậm chỗ nhạt.
+
+     3. ENSŌ (円相) — vòng tròn vẽ một nét của thiền Nhật, cố ý hở một khoảng.
+        Đặt lớn phía sau món ăn, mờ, làm điểm tựa thị giác cho khối hero.
+
+   Cả ba đều là SVG/gradient nội tuyến — tổng thêm khoảng 3KB.
+   ========================================================================== */
+
+:root {
+  /* Nhiễu: feTurbulence tần số cao rồi khử màu. baseFrequency càng lớn hạt càng mịn. */
+  --nh-hat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* Shippō (七宝 - "bảy báu"): các vòng tròn lồng nhau tạo hình bốn cánh.
+     Rối mắt hơn lưới kōshi nên hợp làm nền cho khối lớn. */
+  --nh-shippo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cg fill='none' stroke='%23c8a24b' stroke-opacity='0.22' stroke-width='1'%3E%3Ccircle cx='0' cy='0' r='20'/%3E%3Ccircle cx='40' cy='0' r='20'/%3E%3Ccircle cx='0' cy='40' r='20'/%3E%3Ccircle cx='40' cy='40' r='20'/%3E%3Ccircle cx='20' cy='20' r='20'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --- Hạt nhiễu phủ lên mọi lớp nền hoa văn -------------------------------
+
+   TUYỆT ĐỐI KHÔNG đặt `position: relative` cho .nh-wa-* nói chung.
+
+   Lớp `::after` cần một tổ tiên đã được định vị, nên phản xạ đầu tiên là thêm
+   `position: relative` cho cả ba lớp hoa văn. Nhưng `.nh-hero__bg`,
+   `.nh-subhero__bg` và `.nh-cta__bg` vốn là `position: absolute; inset: 0` —
+   ghi đè thành `relative` là chúng rơi khỏi vị trí tuyệt đối, co lại thành một
+   khối cao 0 và thôi phủ lên hero. Kết quả: nền tối cùng hoa văn biến mất
+   sạch, chỉ còn tấm màn che nằm trên nền kem của body — cả hero bạc trắng ra.
+
+   Nên chỉ định vị đúng những phần tử CHƯA được định vị: khung món và các
+   `<section>` dùng khung `hero-wrap` cũ. */
+.nh-mon-khung,
+section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relative; }
+.nh-wa-song::after,
+.nh-wa-koshi::after,
+.nh-wa-shippo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--nh-hat);
+  /*
+    KHÔNG dùng mix-blend-mode ở đây.
+
+    Bản đầu để `overlay` với opacity .5, nghĩ rằng sẽ giữ được cả vùng sáng lẫn
+    vùng tối. Thực tế nhiễu fractal có giá trị quanh mức xám giữa, mà overlay
+    trên nền TỐI thì xám giữa làm sáng bung lên — cả khối hero bạc trắng ra và
+    mất sạch hoa văn bên dưới.
+
+    Hạt chỉ cần đủ để phá độ mịn tuyệt đối của màu tô. Chồng thẳng ở độ mờ rất
+    thấp làm đúng việc đó và không đụng gì tới màu nền.
+  */
+  opacity: .045;
+}
+
+/* --- Hero: hoa văn lớn hơn + hai vệt đèn --------------------------------- */
+.nh-wa-song {
+  background-image:
+    radial-gradient(760px 460px at 74% 62%, rgba(200, 162, 75, .22), transparent 60%),
+    radial-gradient(1400px 800px at 8% 4%, rgba(200, 162, 75, .13), transparent 58%),
+    var(--nh-seigaiha),
+    linear-gradient(158deg, #2a1f16 0%, #191110 48%, #2f1d13 100%);
+  /* 116px thay vì 80px: sóng to hơn thì thưa hơn, đỡ rối và ra dáng hoa văn
+     truyền thống hơn là ra dáng họa tiết nền web. */
+  background-size: auto, auto, 116px 58px, auto;
+}
+
+.nh-wa-koshi {
+  background-image:
+    radial-gradient(820px 480px at 50% -8%, rgba(200, 162, 75, .17), transparent 62%),
+    var(--nh-koshi),
+    linear-gradient(150deg, #2c1c13 0%, #191110 100%);
+  background-size: auto, 30px 30px, auto;
+}
+
+.nh-wa-shippo {
+  background-image:
+    radial-gradient(700px 420px at 30% 10%, rgba(200, 162, 75, .18), transparent 62%),
+    var(--nh-shippo),
+    linear-gradient(145deg, #2b1a12 0%, #1a1210 100%);
+  background-size: auto, 46px 46px, auto;
+}
+
+/* --- Sóng trôi trong hero -------------------------------------------------
+
+   Seigaiha là hoa văn SÓNG BIỂN, để yên một chỗ thì phí. Cho nó trôi ngang
+   thật chậm là hero có nhịp thở mà không ai bị phân tâm khỏi phần chữ.
+
+   VÌ SAO DỊCH ĐÚNG 116px: đó là bề ngang một ô hoa văn (xem `background-size`
+   của .nh-wa-song ở trên). Trôi hết đúng một ô thì khung hình cuối trùng khít
+   khung hình đầu, vòng lặp không có điểm giật. Lấy số khác là cứ 20 giây lại
+   thấy hoa văn nhảy một cái.
+
+   Bốn giá trị trong `background-position` khớp bốn lớp của .nh-wa-song theo
+   đúng thứ tự. Chỉ lớp thứ ba - hoa văn - được dịch; hai vệt đèn và lớp màu
+   nền phải đứng yên, nếu không cả khối sáng tối sẽ trôi theo trông rất lạ.
+
+   Ghi đè có chủ đích quy tắc `animation: none` ở phần trên (nó dựng ra để tắt
+   hiệu ứng phóng to `nh-zoom` vốn dành cho ảnh - hoa văn mà phóng to thì lưới
+   giãn rồi giật về). Ở đây thay hẳn bằng animation khác, nên `nh-zoom` vẫn tắt.
+   ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   VÌ SAO KHÔNG CÒN LÀ "TRÔI HOA VĂN"
+
+   Bản trước cho lớp hoa văn dịch ngang đúng một ô rồi lặp lại. Về lý thì mượt,
+   nhưng trên màn hình nó nhìn y hệt lúc đứng yên — vì hoa văn lặp kín thì MỌI
+   vị trí đều giống hệt nhau. Dịch một ô hay dịch trăm ô, mắt không phân biệt
+   được. Hiệu ứng chạy suốt mà không ai thấy gì.
+
+   Thứ mắt bắt được là ÁNH SÁNG đổi chỗ. Nên thay bằng một quầng sáng vàng lớn,
+   rất mờ, trôi chậm theo hình bầu dục phía sau hoa văn. Hoa văn đứng yên, chỉ
+   chỗ sáng chỗ tối trên nó thay đổi — giống ánh đèn lồng lay trong phòng.
+
+   Dùng `transform` chứ không phải `background-position`: transform chạy trên
+   card đồ họa nên mượt ở mọi kích thước, còn dịch nền thì trình duyệt phải vẽ
+   lại cả lớp mỗi khung hình.
+   ------------------------------------------------------------------------- */
+.nh-hero__bg.nh-wa-song::before {
+  content: ""; position: absolute; inset: -25%;
+  background: radial-gradient(closest-side, rgba(200, 162, 75, .20), transparent 70%);
+  animation: nh-den-lay 26s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes nh-den-lay {
+  0%   { transform: translate3d(-14%, -6%, 0) scale(1); }
+  25%  { transform: translate3d(  8%, -12%, 0) scale(1.12); }
+  50%  { transform: translate3d( 16%,   6%, 0) scale(1); }
+  75%  { transform: translate3d( -4%,  12%, 0) scale(1.1); }
+  100% { transform: translate3d(-14%, -6%, 0) scale(1); }
+}
+
+/* Ensō đung đưa nhẹ như nét mực còn chưa khô. Biên độ nhỏ (4 độ) và chu kỳ dài
+   (18 giây) — đủ để thấy là sống, không đủ để làm phân tâm khi đọc chữ. */
+.nh-hero__enso { animation: nh-enso-lay 18s ease-in-out infinite; }
+@keyframes nh-enso-lay {
+  0%, 100% { transform: translate(6%, 12%) rotate(-18deg) scale(1); }
+  50%      { transform: translate(6%, 12%) rotate(-14deg) scale(1.03); }
+}
+
+/* Người bật "giảm chuyển động" trong hệ điều hành thường vì chóng mặt hoặc
+   nhạy cảm tiền đình. Trả mọi thứ về đứng yên. */
+@media (prefers-reduced-motion: reduce) {
+  .nh-hero__bg.nh-wa-song::before,
+  .nh-hero__enso { animation: none; }
+}
+
+/* --- Ensō sau món trong hero --------------------------------------------
+   `stroke-dasharray` để lại một khoảng hở - ensō luôn hở, đó là điểm cốt lõi
+   của nó chứ không phải nét vẽ chưa xong. */
+.nh-hero__enso {
+  position: absolute; right: 3%; bottom: 6%; z-index: 0; pointer-events: none;
+  width: min(46vw, 540px); aspect-ratio: 1;
+  transform: translate(6%, 12%) rotate(-18deg);
+  opacity: .38;
+}
+@media (max-width: 1000px) { .nh-hero__enso { display: none } }
+
+/* Quầng sáng ngay sau món, tách món khỏi nền tối. */
+.nh-hero__mon::before { content: none; }
+.nh-hero__quang {
+  position: absolute; right: 3%; bottom: 6%; z-index: 0; pointer-events: none;
+  width: min(40vw, 460px); aspect-ratio: 1;
+  transform: translate(8%, 14%);
+  background: radial-gradient(circle, rgba(200, 162, 75, .22) 0%, rgba(200, 162, 75, .07) 44%, transparent 70%);
+  filter: blur(10px);
+}
+@media (max-width: 1000px) { .nh-hero__quang { display: none } }
+
+/* --- Khung món: viền vàng mảnh + sáng dần khi rê chuột ------------------- */
+.nh-about__imgs--mon .nh-mon-khung,
+.nh-gallery--mon a {
+  border: 1px solid rgba(200, 162, 75, .22);
+  transition: border-color .35s var(--nh-ease), transform .35s var(--nh-ease),
+              box-shadow .35s var(--nh-ease);
+}
+.nh-gallery--mon a:hover {
+  border-color: rgba(200, 162, 75, .6);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px -14px rgba(0, 0, 0, .7);
+}
+.nh-gallery--mon img { transition: transform .5s var(--nh-ease); }
+.nh-gallery--mon a:hover img { transform: scale(1.07); }
+
+/* Góc trên-trái mỗi khung có một nét vàng nhỏ, kiểu dấu triện trên tranh Nhật. */
+.nh-about__imgs--mon .nh-mon-khung::before,
+.nh-gallery--mon a::before {
+  content: ""; position: absolute; top: 10px; left: 10px; width: 16px; height: 16px;
+  border-top: 2px solid rgba(200, 162, 75, .55);
+  border-left: 2px solid rgba(200, 162, 75, .55);
+  border-radius: 3px 0 0 0; pointer-events: none; z-index: 2;
+}
+.nh-about__imgs--mon .nh-mon-khung { position: relative; }
+
+/* ==========================================================================
+   NUT DOI NGON NGU
+   ========================================================================== */
+.nh-lang { position: relative; }
+.nh-lang__nut {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid rgba(255, 255, 255, .28);
+  /* Phai ghi mau ro rang, KHONG dung `inherit`: nut nay nam trong thanh nav
+     nhung to tien co mau chu la body (mau muc toi, dung cho nen kem). Thua ke
+     xuong day thanh chu toi tren nen nau dam - nhin nhu cai nut rong. Lay dung
+     mau cua cac muc menu ben canh (.nh-nav__links a). */
+  color: rgba(255, 255, 255, .95); border-radius: 999px; padding: 6px 12px;
+  font-family: var(--nh-sans); font-size: .74rem; font-weight: 600;
+  letter-spacing: .5px; cursor: pointer;
+  transition: all .25s var(--nh-ease);
+}
+.nh-lang__nut:hover { border-color: var(--nh-gold); color: var(--nh-gold); }
+/* Vien khi nav dac. Ban dau la rgba(0,0,0,.18) - viet theo gia dinh nav dac co
+   nen sang, nhung .nh-nav.is-solid lai la nau dam rgba(30,18,12,.96), nen vien
+   den tren nen den coi nhu bien mat. Sang len mot chut cho no con vien. */
+.nh-nav.is-solid .nh-lang__nut { border-color: rgba(255, 255, 255, .34); }
+
+.nh-lang__menu {
+  position: absolute; right: 0; top: calc(100% + 10px); min-width: 176px;
+  background: #fff; border-radius: 12px; padding: 6px; margin: 0;
+  list-style: none; box-shadow: var(--nh-shadow); z-index: 60;
+  /* An bang opacity + visibility chu khong phai display:none: co the chuyen
+     dong muot, va trinh doc man hinh van bo qua dung cach nho `visibility`. */
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity .22s var(--nh-ease), transform .22s var(--nh-ease), visibility .22s;
+}
+.nh-lang.is-open .nh-lang__menu { opacity: 1; visibility: visible; transform: none; }
+
+.nh-lang__menu a {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+  border-radius: 8px; font-size: .9rem; color: var(--nh-ink);
+  transition: background .2s var(--nh-ease);
+}
+.nh-lang__menu a:hover { background: var(--nh-cream-2); color: var(--nh-ink); }
+.nh-lang__menu a.is-active { color: var(--nh-gold); font-weight: 600; }
+.nh-lang__menu a i { margin-left: auto; font-size: .72rem; }
+.nh-lang__co { font-size: 1.05rem; line-height: 1; }
+
+/* Tren dien thoai nut nam trong hang cong cu, bo chu chi con qua dia cau. */
+@media (max-width: 640px) {
+  .nh-lang__nut span { display: none; }
+  .nh-lang__nut { padding: 6px 9px; }
+}
+
+/* Nhan "bai viet chi co ban tieng Viet" tren trang Tin tuc. */
+.nh-blog-vi-only {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(200, 162, 75, .14); border: 1px solid rgba(200, 162, 75, .32);
+  color: var(--nh-gold); border-radius: 999px; padding: 5px 13px;
+  font-size: .78rem; margin: .5rem 0 0;
+}
+
+/* ==========================================================================
+   HERO TREN MAN HINH THAP - CHUA CHO DAI "CUON XUONG"
+   ==========================================================================
+
+   `.nh-hero__scroll` duoc ghim cung vao day hero (`bottom: 26px`), con khoi
+   chu thi cao len theo noi dung. Tren man hinh cao 900px thi con thua cho;
+   xuong 760px la hai cai cham nhau, va 650px thi chu de han len dai.
+
+   Do duoc: nut[620..672] va dai[664..734] o cua so 1440x760 - de nhau 8px.
+   Loi nay CO O CA BA NGON NGU, khong phai loi rieng cua ban tieng Anh; chi la
+   ban tieng Nhat chu ngan hon nen cham nguong muon hon mot nhip.
+
+   Hai lop chan:
+     1. Chua san mot khoang o day khoi chu, de noi dung khong voi toi dai.
+     2. Man hinh qua thap thi AN han dai di - do la mot goi y trang tri, va
+        tren man hinh thap nguoi dung dang nhien phai cuon, khong can nhac.
+   ========================================================================== */
+.nh-hero__inner { padding-bottom: 96px; }
+
+/* Nguong 740 chu khong phai 700: do o cua so cao 710px thi khoang ho chi con
+   15px - khong de len nhau nhung nhin da thay chat. */
+@media (max-height: 740px) {
+  .nh-hero__scroll { display: none; }
+  .nh-hero__inner { padding-bottom: 24px; }
+}
+
+/* ==========================================================================
+   ĐIỆN THOẠI (≤ 640px)
+   ==========================================================================
+
+   Cả tệp này chỉ có 13 điểm ngắt, hầu hết từ 640px trở lên, nên khu khách gần
+   như chưa được nắn cho màn hình dọc. Đo trên Chrome khổ 390×844 (iPhone 14):
+
+     .nh-subhero   439px  — hơn nửa màn hình đầu chỉ có tiêu đề + đường dẫn
+     .nh-cats      592px  — 22 danh mục xuống dòng thành 11 hàng, canh giữa
+     .nh-dish      432px  — mỗi thẻ món chiếm nửa màn, xem 258 món không nổi
+     .nh-footer   1184px  — bốn cột xếp chồng, dài hơn cả nội dung nhiều trang
+     .nh-cart       33px  — vùng chạm dưới ngưỡng 44px của cả Apple lẫn Google
+     .nh-lang__nut  26px
+
+   Không đụng tới bố cục máy tính: mọi thứ dưới đây nằm trong một điểm ngắt.
+   ========================================================================== */
+@media (max-width: 640px) {
+
+  /* -------- Hero trang trong: bỏ hẳn, thay bằng thanh tiêu đề mảnh --------
+     52vh trên màn dọc là 439px, cộng thanh điều hướng cố định nữa thành ~500px
+     trong 844px màn hình đầu — nửa màn hình đầu chỉ để nói "đây là trang Thực
+     đơn", điều mà khách vừa bấm vào nên đã biết. Hạ xuống 34vh vẫn còn 287px,
+     tức một phần ba màn hình, nên bỏ luôn tấm nền lớn.
+
+     Còn lại một dải sẫm mảnh nối liền với thanh điều hướng (cũng màu sẫm) thành
+     một khối đầu trang gọn. Dòng chữ ký trang trí (.nh-eyebrow) ẩn đi: ở cỡ chữ
+     vừa với dải mảnh thì nó không còn đọc ra nét chữ ký nữa, chỉ thành một dòng
+     chữ nhòe.
+
+     Trang chủ vẫn giữ hero tràn màn hình — đó là chỗ duy nhất đáng dành cả màn. */
+  /* Ngay sau thanh điều hướng cố định đã có sẵn một khối đệm cao 66px
+     (header.ejs:106) để đẩy nội dung xuống, nên .nh-subhero__inner KHÔNG cần
+     đệm thêm 62-76px nữa như bố cục cũ — cộng dồn thì dải mảnh lại dày trở lại.
+     Đệm ở đây chỉ còn là khoảng thở quanh dòng tiêu đề.
+
+     margin-top âm 5px: khối đệm cao 66px trong khi thanh điều hướng trên điện
+     thoại chỉ cao 62px, hở ra 4px nền kem thành một vạch sáng cắt ngang giữa hai
+     mảng sẫm. Kéo dải lên che đúng chỗ hở đó. */
+  .nh-subhero { min-height: 0; margin-top: -5px; }
+  .nh-subhero__inner { padding: 16px 0 18px; }
+  .nh-subhero .nh-eyebrow { display: none; }
+  .nh-subhero h1 { font-size: 1.45rem; margin: 0; }
+  .nh-crumbs { margin-top: .3rem; font-size: .78rem; }
+
+  /* -------- Hero trang chủ --------
+     clamp(2.6rem, 7vw, 5.2rem) ở 390px vẫn cho 2.6rem, tiêu đề ăn 3 dòng.
+     Đoạn mô tả 1.05rem giãn dòng 1.9 thì mất thêm 6 dòng nữa. */
+  .nh-hero h1 { font-size: 2.35rem; }
+  .nh-hero__inner { padding-top: 64px; }
+  .nh-hero p { font-size: .98rem; line-height: 1.65; }
+
+  /* -------- Khoảng thở giữa các khối --------
+     clamp(4rem, 8vw, 7rem) trên điện thoại luôn rơi vào 4rem = 64px trên và
+     64px dưới. Trên màn hình rộng đó là sang trọng; trên màn dọc là bắt cuộn. */
+  .nh-section { padding: 2.6rem 0; }
+  .nh-head { margin-bottom: 1.8rem; }
+
+  /* -------- Danh mục: cuộn ngang thay vì xuống dòng --------
+     22 danh mục canh giữa xuống dòng tạo một khối 592px — khách phải lướt qua
+     gần hai màn hình mới thấy món đầu tiên. Cho cuộn ngang một hàng: khối chỉ
+     còn ~48px, và cách này quen tay với người dùng điện thoại.
+
+     Âm lề rồi bù lại bằng padding để dải chạy sát mép máy (dấu hiệu "còn nữa,
+     vuốt tiếp"), thay vì dừng lơ lửng giữa lề của .nh-container. */
+  .nh-cats {
+    flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    margin: 0 -3vw 1.4rem; padding: .2rem 3vw .5rem;
+  }
+  .nh-cats::-webkit-scrollbar { display: none; }
+  .nh-cat { flex: 0 0 auto; scroll-snap-align: start; padding: .55rem 1.1rem; font-size: .84rem; }
+
+  /* -------- Lưới món: 2 cột --------
+     minmax(300px, 1fr) ở bề ngang 366px chỉ vừa đúng 1 cột, nên mỗi màn hình
+     hiện được 1,5 món. Hai cột đưa lên 4 món/màn; ảnh vuông thay vì 4:3 để thẻ
+     thấp lại, và chữ phải nhỏ theo cho vừa cột ~172px. */
+  .nh-grid { grid-template-columns: 1fr 1fr; gap: .85rem; }
+  .nh-dish { border-radius: 13px; }
+  .nh-dish__media { aspect-ratio: 1; }
+  .nh-dish__price { bottom: 8px; right: 8px; padding: .25rem .6rem; font-size: .82rem; }
+  .nh-dish__body { padding: .8rem .8rem 1rem; }
+  .nh-dish__body h3 { font-size: 1rem; line-height: 1.25; }
+  .nh-dish__body p { font-size: .78rem; margin-bottom: .7rem; }
+  .nh-dish__cta { font-size: .7rem; letter-spacing: .6px; }
+
+  /* -------- Vùng chạm --------
+     Giỏ hàng 33px và nút ngôn ngữ 26px đều dưới ngưỡng 44px. Nới bằng vùng chạm
+     chứ không phóng to biểu tượng, để thanh điều hướng nhìn vẫn như cũ. */
+  .nh-nav__actions > a,
+  .nh-nav__actions > button,
+  .nh-lang__nut,
+  .nh-burger { min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Nới vùng chạm làm hàng công cụ rộng thêm ~20px, và tên nhà hàng — vốn đã
+     sát nút vì viết bằng font chữ ký — bị cắt thành "Bao Doan Restau...".
+     Đo ở 390px: tên tiếng Việt cần 168px mà chỉ còn 151px. Thu chữ và bóp
+     khoảng cách giữa các nút để lấy lại đủ chỗ.
+     Bản tiếng Nhật (216px) vẫn phải cắt bớt — chữ Nhật rộng gấp rưỡi, giữ
+     nguyên cỡ thì không còn chỗ cho nút nào. */
+  .nh-nav__actions { gap: .55rem; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.2rem; }
+  .nh-cats .nh-cat { min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* Trong ngăn kéo, mục menu chỉ cao 34px và các mục cách nhau bằng gap — ngón
+     tay dễ bấm nhầm sang mục bên cạnh. Cho mỗi mục chiếm trọn bề ngang ngăn kéo
+     và cao 44px, thành một hàng bấm rõ ràng. */
+  /* gap: bo cuc flex nuot mat khoang trang giua <i> va chu, nen muc co bieu
+     tuong ("Dat ban", "Dang nhap") dinh lien thanh mot cuc. */
+  .nh-nav__links a { display: flex; align-items: center; gap: .55rem; min-height: 44px; width: 100%; }
+
+  /* -------- Chân trang --------
+     1184px cho một chân trang là dài hơn phần nội dung của nhiều trang. Bốn cột
+     đã xếp chồng từ 760px rồi, nên chỗ cắt được là khoảng đệm và cỡ chữ. */
+  .nh-footer { padding-top: 2.4rem; }
+  .nh-footer__grid { gap: 1.5rem; padding-bottom: 1.5rem; }
+  .nh-footer__brand { font-size: 1.7rem; margin-bottom: .6rem; }
+  .nh-footer h4 { font-size: 1.05rem; margin-bottom: .7rem; padding-bottom: .5rem; }
+  .nh-footer li { margin-bottom: .45rem; }
+  .nh-footer p { font-size: .9rem; }
+  .nh-social { margin-top: .9rem; gap: .5rem; }
+  .nh-social a { width: 38px; height: 38px; }
+  .nh-footer__bottom { padding: 1rem 0; font-size: .78rem; }
+
+  /* -------- Bong bóng trợ lý ảo --------
+     Neo ở right/bottom 22px với đường kính 58px, nó đè lên góc phải dưới của
+     nội dung — đo được nó che khuất một thẻ danh mục và một góc ảnh món. Thu
+     nhỏ và nép sát góc để phần bị che ít nhất có thể. */
+  .cb-nut { width: 50px !important; height: 50px !important;
+    right: 14px !important; bottom: 14px !important; font-size: 1.1rem !important; }
+  .cb-khung { right: 10px !important; left: 10px !important; bottom: 74px !important;
+    width: auto !important; }
+}
+
+/* Máy Android nhỏ (360px) hẹp hơn iPhone 30px — vừa đủ để tên nhà hàng lại bị
+   cắt. Hạ thêm một nấc: 149px xuống còn 127px, vừa khít 134px còn lại. */
+@media (max-width: 400px) {
+  .nh-brand img { max-height: 28px; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.02rem; }
 }

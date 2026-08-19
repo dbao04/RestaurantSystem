@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Phiếu đặt bàn' }) %>
+<%- include('partials/header', { title: t('phieu.tieu_de') }) %>
 
 <%
   var co = orderDetails && orderDetails.length > 0;
@@ -8,12 +8,12 @@
 %>
 
 <section class="nh-subhero" style="min-height:38vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Đã ghi nhận</span>
-    <h1>Phiếu đặt bàn</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; Phiếu đặt bàn</div>
+    <span class="nh-eyebrow"><%= t('phieu.da_ghi_nhan') %></span>
+    <h1><%= t('phieu.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('phieu.tieu_de') %></div>
   </div>
 </section>
 
@@ -26,39 +26,38 @@
            được chưa và tiếp theo thế nào", không phải bảng số liệu. -->
       <div class="nh-done nh-reveal" style="margin-bottom:2.4rem">
         <div class="nh-done__seal"><i class="fas fa-check"></i></div>
-        <h2 class="nh-section-title" style="font-size:clamp(1.6rem,3.4vw,2.3rem)">Đã nhận yêu cầu đặt bàn</h2>
+        <h2 class="nh-section-title" style="font-size:clamp(1.6rem,3.4vw,2.3rem)"><%= t('phieu.da_nhan_yeu_cau') %></h2>
         <p class="nh-lead" style="margin-top:.8rem">
-          Nhà hàng sẽ gọi lại số <strong><%= d.sodienthoai || session.usersdt %></strong>
-          để xác nhận và giữ bàn cho bạn. Bạn chưa cần thanh toán gì lúc này.
+          <%- t('phieu.se_goi_lai', { sdt: '<strong>' + (d.sodienthoai || session.usersdt) + '</strong>' }) %>
         </p>
       </div>
 
       <div class="nh-receipt nh-reveal">
         <div class="nh-receipt__head">
-          <span class="nh-eyebrow">Nhà Hàng Bảo Đoàn</span>
-          <h2>PHIẾU ĐẶT BÀN</h2>
+          <span class="nh-eyebrow"><%= t('chung.ten_nha_hang') %></span>
+          <h2><%= t('phieu.tieu_de').toUpperCase() %></h2>
           <div style="font-size:.78rem; letter-spacing:1.4px; opacity:.75; margin-top:.5rem">
-            MÃ ĐƠN &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(d.sesis).slice(0, 10).toUpperCase() %></strong>
+            <%= t('don.ma_don').toUpperCase() %> &nbsp;<strong style="color:var(--nh-gold-soft)"><%= String(d.sesis).slice(0, 10).toUpperCase() %></strong>
           </div>
         </div>
 
         <div class="nh-receipt__facts">
-          <div class="nh-receipt__fact">Người đặt
+          <div class="nh-receipt__fact"><%= t('phieu.nguoi_dat') %>
             <b><%= d.ten_khach || d.ten || session.username %></b></div>
-          <div class="nh-receipt__fact">Số điện thoại
+          <div class="nh-receipt__fact"><%= t('chung.dien_thoai') %>
             <b><%= d.sodienthoai || session.usersdt %></b></div>
-          <div class="nh-receipt__fact">Ngày đến
+          <div class="nh-receipt__fact"><%= t('phieu.ngay_den') %>
             <b><%= ngayVN(d.dates) %></b></div>
-          <div class="nh-receipt__fact">Giờ đến
+          <div class="nh-receipt__fact"><%= t('phieu.gio_den') %>
             <b><%= gioVN(d.tg) %></b></div>
-          <div class="nh-receipt__fact">Số khách
-            <b><%= d.so_user %> người</b></div>
-          <div class="nh-receipt__fact">Dịp
+          <div class="nh-receipt__fact"><%= t('don.so_khach') %>
+            <b><%= nhanSoKhach(d.so_user) %></b></div>
+          <div class="nh-receipt__fact"><%= t('don.dip') %>
             <b><%= d.noidung %></b></div>
         </div>
 
         <div class="nh-receipt__body">
-          <h3 class="nh-panel__title"><i class="fas fa-utensils"></i> Thực đơn đã chọn</h3>
+          <h3 class="nh-panel__title"><i class="fas fa-utensils"></i> <%= t('phieu.thuc_don_da_chon') %></h3>
 
           <% orderDetails.forEach(function (item) { %>
             <div class="nh-line" style="grid-template-columns:1fr auto auto">
@@ -72,7 +71,7 @@
           <% }) %>
 
           <div class="nh-summary__total">
-            <span>Tổng cộng</span>
+            <span><%= t('chung.tong_cong') %></span>
             <b><%= formatMoney(tong) %> ₫</b>
           </div>
 
@@ -91,23 +90,23 @@
         %>
         <% if (tong > 0 && Number(d.tinhtrang) !== 3 && Number(d.tinhtrang) !== 4) { %>
           <a href="/thanh-toan/dat-coc/<%= d.sesis %>" class="nh-btn nh-btn--gold">
-            <i class="fas fa-shield-halved"></i> Đặt cọc giữ bàn
+            <i class="fas fa-shield-halved"></i> <%= t('dat_coc.tieu_de') %>
           </a>
         <% } %>
-        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> Xem đơn của tôi</a>
-        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-book-open"></i> Về thực đơn</a>
+        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> <%= t('phieu.xem_don_cua_toi') %></a>
+        <a href="/menu" class="nh-btn nh-btn--dark"><i class="fas fa-book-open"></i> <%= t('phieu.ve_thuc_don') %></a>
         <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="window.print()">
-          <i class="fas fa-print"></i> In phiếu
+          <i class="fas fa-print"></i> <%= t('phieu.in_phieu') %>
         </button>
       </div>
     <% } else { %>
       <div class="nh-empty">
         <i class="fas fa-file-circle-question"></i>
-        <h3>Không tìm thấy phiếu đặt bàn</h3>
+        <h3><%= t('phieu.khong_tim_thay') %></h3>
         <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
-          Đường dẫn có thể không đúng, hoặc đơn đã bị xoá.
+          <%= t('phieu.duong_dan_sai') %>
         </p>
-        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> Xem đơn của tôi</a>
+        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> <%= t('phieu.xem_don_cua_toi') %></a>
       </div>
     <% } %>
   </div>

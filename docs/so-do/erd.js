@@ -355,4 +355,107 @@ function nhanSu() {
     'Lược đồ quan hệ thực thể của phân hệ nhân sự: cơ cấu tổ chức, phân quyền, chấm công và dữ liệu sinh trắc học', s);
 }
 
-module.exports = { banHang, kho, nhanSu };
+/* ======================================================================== */
+/* 4. PHAN HE GIAO HANG                                                     */
+/* ======================================================================== */
+
+// Chieu cao mot hop = 30 + 16 * so_cot. Toa do dat theo do cao thuc te cua
+// tung hop de duong noi ngang luon chay qua khoang trong giua cac hop.
+function giaoHang() {
+  const id = 'erdD';
+  let s = '';
+
+  // Cot 1 -------------------------------------------------- y 40..230
+  const dvvc = v.hopBang(30, 40, 'don_vi_van_chuyen', [
+    'PK id_dv', 'ma_dv', 'ten_dv', 'loai', 'phi_co_ban', 'so_km_dau',
+    'phi_moi_km', 'ban_kinh_km', 'thu_tu', 'trang_thai',
+  ]);
+  const nhanVien = v.hopBang(30, 430, 'nhan_vien', [
+    'PK id_nv', 'ten', 'sodienthoai', 'FK id_cd',
+  ]);
+  const hopDong = v.hopBang(30, 600, 'hopdong', [
+    'PK id', 'sesis', 'FK id_mon', 'loai_don', 'tinhtrang',
+  ]);
+
+  // Cot 2 -------------------------------------------------- y 40..230
+  const shipper = v.hopBang(370, 40, 'shipper', [
+    'PK id_shipper', 'FK id_dv', 'FK id_nv', 'ten', 'sdt', 'loai_xe',
+    'bien_so', 'so_don_toi_da', 'trang_thai', 'tong_don',
+  ]);
+
+  // Cot 3 -------------------------------------------------- y 40..374
+  const donGiao = v.hopBang(710, 40, 'don_giao_hang', [
+    'PK id_giao', 'FK sesis', 'ma_giao', 'FK id_dv', 'FK id_shipper',
+    'ten_nguoi_nhan', 'sdt_nguoi_nhan', 'dia_chi_giao', 'vi_do', 'kinh_do',
+    'khoang_cach_km', 'phi_giao', 'tien_thu_ho', 'trang_thai',
+    'FK id_nv_phan', 'phan_luc', 'lay_luc', 'giao_luc', 'hoan_tat_luc',
+  ]);
+
+  // Cot 4 -------------------------------------------------- 40..214 / 300..490 / 540..666
+  const nhatKy = v.hopBang(1040, 40, 'nhat_ky_giao_hang', [
+    'PK id', 'FK id_giao', 'tu_trang_thai', 'den_trang_thai', 'FK id_nv',
+    'ten_nguoi', 'vi_do', 'kinh_do', 'luc',
+  ]);
+  const viTri = v.hopBang(1040, 300, 'vi_tri_shipper', [
+    'PK id', 'FK id_shipper', 'FK id_giao', 'vi_do', 'kinh_do',
+    'do_chinh_xac_m', 'toc_do_kmh', 'huong', 'pin', 'luc',
+  ]);
+  const viTriMoi = v.hopBang(1040, 540, 'vi_tri_shipper_moi_nhat', [
+    'PK id_shipper', 'FK id_giao', 'vi_do', 'kinh_do', 'do_chinh_xac_m', 'luc',
+  ]);
+
+  [dvvc, nhanVien, hopDong, shipper, donGiao, nhatKy, viTri, viTriMoi]
+    .forEach((b) => { s += b.svg; });
+
+  /* --- quan he --- */
+
+  // don_vi_van_chuyen 1 --- n shipper
+  s += v.noiBang([[dvvc.canh.phai, 100], [shipper.canh.trai, 100]],
+    { nhan: 'thuộc', viTriNhan: [(dvvc.canh.phai + shipper.canh.trai) / 2, 92] });
+
+  // don_vi_van_chuyen 1 --- n don_giao_hang: vong len tren dinh hai hop
+  s += v.noiBang([
+    [dvvc.canh.giuaX, dvvc.canh.tren], [dvvc.canh.giuaX, 18],
+    [donGiao.canh.giuaX, 18], [donGiao.canh.giuaX, donGiao.canh.tren],
+  ], { nhan: 'nhận giao', viTriNhan: [(dvvc.canh.giuaX + donGiao.canh.giuaX) / 2, 12] });
+
+  // nhan_vien 1 --- 1 shipper: mot nhan vien co toi da mot ho so nguoi giao
+  s += v.noiBang([
+    [nhanVien.canh.phai, 474], [300, 474], [300, 200], [shipper.canh.trai, 200],
+  ], { cuoi: 'mot', nhan: 'lập hồ sơ', viTriNhan: [246, 466] });
+
+  // shipper 1 --- n don_giao_hang
+  s += v.noiBang([[shipper.canh.phai, 170], [donGiao.canh.trai, 170]],
+    { nhan: 'cầm', viTriNhan: [(shipper.canh.phai + donGiao.canh.trai) / 2, 162] });
+
+  // hopdong 1 --- 1 don_giao_hang: moi phien don hang sinh toi da mot don giao
+  s += v.noiBang([
+    [hopDong.canh.phai, 650], [650, 650], [650, 340], [donGiao.canh.trai, 340],
+  ], { cuoi: 'mot', nhan: 'phát sinh từ', viTriNhan: [650, 642] });
+
+  // don_giao_hang 1 --- n nhat_ky_giao_hang
+  s += v.noiBang([[donGiao.canh.phai, 100], [nhatKy.canh.trai, 100]],
+    { nhan: 'ghi vết', viTriNhan: [(donGiao.canh.phai + nhatKy.canh.trai) / 2, 92] });
+
+  // shipper 1 --- n vi_tri_shipper (vet duong: them mot dong moi nhip)
+  const xVet = shipper.canh.giuaX - 50;
+  s += v.noiBang([
+    [xVet, shipper.canh.duoi], [xVet, 420], [viTri.canh.trai, 420],
+  ], { nhan: 'vết đường', viTriNhan: [xVet + 90, 412] });
+
+  // shipper 1 --- 1 vi_tri_shipper_moi_nhat (ghi de, moi nguoi giao mot dong)
+  const xMoi = shipper.canh.giuaX + 50;
+  s += v.noiBang([
+    [xMoi, shipper.canh.duoi], [xMoi, 596], [viTriMoi.canh.trai, 596],
+  ], { cuoi: 'mot', nhan: 'vị trí hiện tại', viTriNhan: [xMoi + 110, 588] });
+
+  s += v.ghiChu(30, 730, [
+    'Hai bảng vị trí cố ý không gộp: vi_tri_shipper thêm một dòng mỗi nhịp để trả lời "đã đi đường nào"; vi_tri_shipper_moi_nhat ghi đè,',
+    'mỗi người giao đúng một dòng, để bản đồ trả lời "đang ở đâu" mà không phải quét cả vết đường.',
+  ]);
+
+  return v.khung(id, 1400, 790,
+    'Lược đồ quan hệ thực thể của phân hệ giao hàng: đơn vị vận chuyển, hồ sơ người giao, đơn giao kèm nhật ký chuyển trạng thái và hai bảng vị trí', s);
+}
+
+module.exports = { banHang, kho, nhanSu, giaoHang };

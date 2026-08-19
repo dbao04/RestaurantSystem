@@ -19,6 +19,8 @@
     "giaohang:check": "node scripts/kiemTraGiaoHang.js",
     "giaohang:nhansu": "node scripts/taoNhanSuGiaoHang.js",
     "giaohang:mophong": "node scripts/moPhongGiaoHang.js",
+    "ngonngu:check": "node scripts/kiemTraNgonNgu.js",
+    "dienthoai:check": "node scripts/kiemTraDienThoai.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

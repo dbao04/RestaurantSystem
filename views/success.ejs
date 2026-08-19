@@ -1,11 +1,11 @@
-<%- include('partials/header', { title: 'Đặt bàn thành công' }) %>
+<%- include('partials/header', { title: t('ket_qua.dat_thanh_cong') }) %>
 
 <section class="nh-subhero" style="min-height:38vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Hẹn gặp bạn</span>
-    <h1>Đặt bàn thành công</h1>
+    <span class="nh-eyebrow"><%= t('ket_qua.hen_gap') %></span>
+    <h1><%= t('ket_qua.dat_thanh_cong') %></h1>
   </div>
 </section>
 
@@ -15,7 +15,7 @@
 
     <div class="nh-done nh-reveal">
       <div class="nh-done__seal"><i class="fas fa-check"></i></div>
-      <h2 class="nh-section-title" style="font-size:clamp(1.7rem,3.6vw,2.5rem)">Cảm ơn bạn!</h2>
+      <h2 class="nh-section-title" style="font-size:clamp(1.7rem,3.6vw,2.5rem)"><%= t('ket_qua.cam_on_ban') %></h2>
       <div class="nh-divider"></div>
       <p class="nh-lead">
         Yêu cầu đặt bàn của bạn đã được gửi tới nhà hàng. Chúng tôi sẽ gọi lại để xác nhận
@@ -24,29 +24,29 @@
 
       <!-- Ba việc tiếp theo, xếp đúng thứ tự khách quan tâm. -->
       <div class="nh-panel" style="text-align:left; margin-top:2rem">
-        <h3 class="nh-panel__title"><i class="fas fa-list-check"></i> Tiếp theo là gì</h3>
+        <h3 class="nh-panel__title"><i class="fas fa-list-check"></i> <%= t('ket_qua.tiep_theo') %></h3>
         <div style="display:grid; gap:1rem">
           <div style="display:flex; gap:.9rem; align-items:flex-start">
             <span class="nh-step__dot" style="flex:none; width:32px; height:32px; font-size:.8rem">1</span>
-            <div><strong style="color:var(--nh-espresso)">Nhà hàng gọi lại xác nhận</strong>
-              <p class="nh-note" style="margin:.2rem 0 0">Theo số điện thoại trong tài khoản của bạn.</p></div>
+            <div><strong style="color:var(--nh-espresso)"><%= t('ket_qua.b1_tieu_de') %></strong>
+              <p class="nh-note" style="margin:.2rem 0 0"><%= t('ket_qua.b1_mo_ta') %></p></div>
           </div>
           <div style="display:flex; gap:.9rem; align-items:flex-start">
             <span class="nh-step__dot" style="flex:none; width:32px; height:32px; font-size:.8rem">2</span>
-            <div><strong style="color:var(--nh-espresso)">Bếp chuẩn bị thực đơn bạn đã chọn</strong>
-              <p class="nh-note" style="margin:.2rem 0 0">Món được làm gần giờ bạn đến để phục vụ nóng.</p></div>
+            <div><strong style="color:var(--nh-espresso)"><%= t('ket_qua.b2_tieu_de') %></strong>
+              <p class="nh-note" style="margin:.2rem 0 0"><%= t('ket_qua.b2_mo_ta') %></p></div>
           </div>
           <div style="display:flex; gap:.9rem; align-items:flex-start">
             <span class="nh-step__dot" style="flex:none; width:32px; height:32px; font-size:.8rem">3</span>
-            <div><strong style="color:var(--nh-espresso)">Thanh toán tại nhà hàng</strong>
-              <p class="nh-note" style="margin:.2rem 0 0">Sau khi dùng bữa — đặt bàn không cần trả trước.</p></div>
+            <div><strong style="color:var(--nh-espresso)"><%= t('ket_qua.b3_tieu_de') %></strong>
+              <p class="nh-note" style="margin:.2rem 0 0"><%= t('ket_qua.b3_mo_ta') %></p></div>
           </div>
         </div>
       </div>
 
       <div class="nh-done__actions">
-        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> Theo dõi đơn</a>
-        <a href="/" class="nh-btn nh-btn--dark"><i class="fas fa-house"></i> Về trang chủ</a>
+        <a href="/my-orders" class="nh-btn nh-btn--gold"><i class="fas fa-list-check"></i> <%= t('ket_qua.theo_doi_don') %></a>
+        <a href="/" class="nh-btn nh-btn--dark"><i class="fas fa-house"></i> <%= t('ket_qua.ve_trang_chu') %></a>
       </div>
     </div>
   </div>

@@ -27,6 +27,7 @@ const personnelService = require('./services/personnelService');
 const menuService = require('./services/menuService');
 const orderService = require('./services/orderService');
 const engagementService = require('./services/engagementService');
+const equipmentService = require('./services/equipmentService');
 const mailer = require('./utils/mailer');
 const diaChiQR = require('./utils/diaChiQR');
 const md5 = require('md5');
@@ -118,6 +119,43 @@ app.use(async (req, res, next) => {
 });
 
 
+/*
+  Ngon ngu cua khu khach (vi / en / ja).
+
+  Dat TRUOC moi route de `t()` co mat trong res.locals o khap noi. Chi khu khach
+  duoc dich; /admin, /staff va /shipper bi middleware nay bo qua - xem
+  middleware/ngonNgu.js.
+*/
+/*
+  Nhat ky truy cap cho khu CHAM CONG va cua thoat /sua.
+
+  Khi nhan vien bao "vao trang cham cong tren dien thoai khong duoc", cau hoi
+  dau tien luon la: dien thoai co CHAM toi may chu khong? Khong co dong nhat ky
+  nao thi khong ai tra loi duoc, va ca hai ben doan mo.
+
+  Mot dong o day phan biet duoc ngay hai tinh huong hoan toan khac nhau:
+    - KHONG co dong nao  -> goi tin khong toi may chu: khac Wi-Fi, sai dia chi,
+                            router chan thiet bi noi voi nhau, hoac chung chi bi
+                            tu choi ngay tu buoc bat tay TLS
+    - CO dong, ma 302/200 -> mang thong, van de nam o phia trinh duyet (service
+                            worker cu, bo nho dem, chung chi chua duoc chap nhan)
+
+  Chi ghi yeu cau tu MAY KHAC, bo qua localhost - neu khong nhat ky day nhung
+  lan thu tu chinh may chu va che mat dong dang can tim.
+*/
+app.use((req, res, next) => {
+  if (!/^\/(cham-cong|sua|sua-cham-cong|shipper)(\/|$)/.test(req.path)) return next();
+  const ip = String(req.ip || '').replace('::ffff:', '');
+  if (ip === '127.0.0.1' || ip === '::1' || !ip) return next();
+  res.on('finish', () => {
+    console.log(`[dien-thoai] ${new Date().toLocaleTimeString('vi-VN')}  ${ip}  ` +
+      `${req.method} ${req.originalUrl}  -> ${res.statusCode}`);
+  });
+  next();
+});
+
+app.use(require('./middleware/ngonNgu')());
+
 // Nap ho so quyen theo co cau to chuc vao req.hoSo / res.locals.hoSo cho moi
 // request cua nhan vien. Phai dat SAU session va TRUOC moi route co phan quyen.
 const phanQuyenMw = require('./middleware/phanQuyen');
@@ -207,50 +245,209 @@ realtime.khoiTao(io);
 app.get('/', async (req, res) => {
   // Lay vai mon dang ban de lam khoi "mon noi bat" tren trang chu.
   let mons = [];
+  // Mon dung lam hoa tiet: hero, khoi "Cau chuyen", thu vien. Xem ghi chu ben duoi.
+  let monTrangTri = [];
   // So lieu THAT tu CSDL cho phan thong ke (khong bia so).
   let thongKe = { soMon: 0, soDanhMuc: 0, soNhanVien: 0, soDon: 0 };
   try {
-    // Mon noi bat: chi lay MON AN (bo do uong), phai co anh, uu tien mon ban chay
-    // -> khoi "Mon an dac sac" luon dep va khong lan do uong.
+    /*
+      Mon noi bat: chi lay MON AN (bo do uong), phai co anh, uu tien mon ban chay.
+
+      HAI TANG: LOC BAN CHAY TRUOC, ROI MOI BOC NGAU NHIEN
+      ----------------------------------------------------
+      Ban truoc viet `ORDER BY da_ban DESC, RAND() LIMIT 13` va dua vao mot gia
+      dinh da het dung: rang thuc don moi thay nen `da_ban` deu bang 0, va khi
+      moi gia tri bang nhau thi RAND() quyet dinh tat ca.
+
+      Nay ca 232 mon deu co lich su ban voi so luong KHAC NHAU. RAND() chi con
+      pha the hoa, ma khong con the hoa nao - truy van tro thanh tat dinh. Hau
+      qua: tai lai trang bao nhieu lan cung ra dung 13 mon do, va vi 13 mon ban
+      chay nhat tinh co deu la mon com nen khoi "Mon an dac sac" chi toan com.
+
+      Sua bang cach tach lam hai buoc:
+        1. truy van trong: lay NHOM 60 mon ban chay nhat
+        2. truy van ngoai: boc ngau nhien 13 mon trong nhom do
+
+      Nho vay "noi bat" van co nghia la ban chay that, nhung moi lan tai lai
+      trang la mot to hop khac va trai deu nhieu danh muc.
+    */
     const [dep] = await db.query(`
-      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon,
-             COALESCE(SUM(h.soluong), 0) AS da_ban
-      FROM monan m
-      LEFT JOIN hopdong h ON h.id_mon = m.id_mon AND h.tinhtrang = 3
-      WHERE m.tinhtrang = 1 AND m.images IS NOT NULL AND m.images <> ''
-        AND m.id_loai NOT IN (SELECT id_loai FROM loai_mon
-            WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
-               OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%')
-      GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
-      ORDER BY da_ban DESC, m.id_mon DESC
-      LIMIT 6`);
-    mons = dep;
+      SELECT * FROM (
+        SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon,
+               COALESCE(SUM(h.soluong), 0) AS da_ban
+        FROM monan m
+        LEFT JOIN hopdong h ON h.id_mon = m.id_mon AND h.tinhtrang = 3
+        WHERE m.tinhtrang = 1 AND m.images IS NOT NULL AND m.images <> ''
+          AND m.id_loai NOT IN (SELECT id_loai FROM loai_mon
+              WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
+                 OR name_loai LIKE '%nước%' OR name_loai LIKE '%nuoc%'
+                 OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+                 OR name_loai LIKE '%beer%' OR name_loai LIKE '%wine%')
+        GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
+        ORDER BY da_ban DESC
+        LIMIT 60
+      ) AS ban_chay
+      ORDER BY RAND()
+      LIMIT 13`);
+    // Sau mon dau cho khoi "Mon an dac sac", bay mon con lai de trang tri
+    // (mon noi trong hero, hai anh khoi "Cau chuyen", sau o thu vien).
+    //
+    // Lay MOT lan roi cat lam hai thay vi hai truy van: hai truy van co RAND()
+    // rieng se cho ra mon trung nhau, va trang chu hien cung mot dia sashimi o
+    // ba cho khac nhau - trong nhu thuc don chi co mot mon.
+    mons = dep.slice(0, 6);
+    monTrangTri = dep.slice(6);
     // Du phong: neu vi ly do gi khong co mon co anh, lay tam mon an bat ky.
     if (!mons.length) {
       const tatCa = await menuService.getAllDishes();
       mons = (tatCa || []).filter((m) => m.tinhtrang == 1).slice(0, 6);
     }
 
+    /*
+      Bon con so cho dai thong ke o cuoi trang chu.
+
+      `FORCE INDEX` o cau dem don KHONG phai lam mau. Bang `hopdong` co
+      110.113 dong `tinhtrang = 3`, va MySQL o day chon SAI chi muc mot cach
+      on dinh:
+
+        tu chon  -> idx_hopdong_tt_mon    12.911 ms
+        ep dung  -> idx_hopdong_tt_sesis     222 ms   (Using index)
+        quet bang                            373 ms
+
+      `idx_hopdong_tt_mon (tinhtrang, id_mon, soluong)` bat dau bang `tinhtrang`
+      nen trinh toi uu thay hap dan, nhung no khong chua `sesis`. Ket qua la
+      MySQL nhay ve bang tra tung dong cho 110 nghin ban ghi - cham hon ca quet
+      tuan tu. `ANALYZE TABLE` da thu, khong doi duoc lua chon do.
+
+      `idx_hopdong_tt_sesis (tinhtrang, sesis)` phu du ca hai cot nen dem duoc
+      thang tren chi muc. Ep dung no la cach duy nhat con lai.
+
+      Neu sau nay bo chi muc `idx_hopdong_tt_sesis` thi PHAI bo ca `FORCE INDEX`
+      nay, neu khong truy van se nem loi thay vi chi cham di.
+    */
     const [[tk]] = await db.query(`
-      SELECT (SELECT COUNT(*) FROM monan WHERE tinhtrang = 1)            AS soMon,
-             (SELECT COUNT(*) FROM loai_mon)                            AS soDanhMuc,
-             (SELECT COUNT(*) FROM nhan_vien WHERE trangthai = 1)       AS soNhanVien,
-             (SELECT COUNT(DISTINCT sesis) FROM hopdong WHERE tinhtrang = 3) AS soDon`);
+      SELECT (SELECT COUNT(*) FROM monan WHERE tinhtrang = 1)      AS soMon,
+             (SELECT COUNT(*) FROM loai_mon)                       AS soDanhMuc,
+             (SELECT COUNT(*) FROM nhan_vien WHERE trangthai = 1)  AS soNhanVien,
+             (SELECT COUNT(DISTINCT sesis) FROM hopdong
+                FORCE INDEX (idx_hopdong_tt_sesis)
+              WHERE tinhtrang = 3)                                 AS soDon`);
     if (tk) thongKe = { soMon: +tk.soMon, soDanhMuc: +tk.soDanhMuc, soNhanVien: +tk.soNhanVien, soDon: +tk.soDon };
   } catch (err) {
     console.error('Không lấy được dữ liệu trang chủ:', err.message);
   }
-  res.render('index', { title: 'Trang chủ', mons, thongKe });
+  res.render('index', { title: res.locals.t('dieu_huong.trang_chu'), mons, monTrangTri, thongKe });
 });
 
-app.get('/about', (req, res) => {
-  res.render('about', { title: 'Về chúng tôi' });
+app.get('/about', async (req, res) => {
+  /*
+    Trang gioi thieu cung dung anh MON lam hoa tiet thay cho anh stock cu.
+
+    Khong dung chung truy van voi trang chu: hai trang duoc mo o hai thoi diem
+    khac nhau va deu co RAND(), gan cung mot ket qua vao bien toan cuc chi lam
+    hai trang thinh thoang giong het nhau. Truy van rieng, hai mon, la du.
+
+    Loi truy van khong duoc lam hong trang: neu CSDL tam khong doc duoc thi
+    `monTrangTri` rong, va view tu quay ve tam nen hoa van khong co mon.
+  */
+  let monTrangTri = [];
+  try {
+    const [r] = await db.query(`
+      SELECT id_mon, name_mon, images FROM monan
+      WHERE tinhtrang = 1 AND images IS NOT NULL AND images <> ''
+        AND id_loai NOT IN (SELECT id_loai FROM loai_mon
+            WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
+               OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+               OR name_loai LIKE '%beer%')
+      ORDER BY RAND() LIMIT 2`);
+    monTrangTri = r;
+  } catch (err) {
+    console.error('Không lấy được món trang trí cho /about:', err.message);
+  }
+  res.render('about', { title: res.locals.t('gioi_thieu.tieu_de'), monTrangTri });
+});
+
+/*
+  Trang gioi thieu chuong trinh thanh vien.
+
+  Mo cho ca khach chua dang nhap: nguoi chua co tai khoan can doc duoc quyen loi
+  TRUOC khi quyet dinh dang ky. Khach da dang nhap thi thay them the diem cua
+  chinh minh.
+
+  Moi con so tren trang deu lay tu cau hinh dang chay (`cau_hinh_thanh_toan`) va
+  tu nguong hang trong loyaltyService, khong viet cung trong view - admin sua
+  cau hinh la trang tu doi theo, khong ai phai nho di sua chu.
+*/
+app.get('/thanh-vien', async (req, res) => {
+  const loyaltyService = require('./services/loyaltyService');
+  const thanhToanService = require('./services/thanhToanService');
+
+  // Mac dinh dung bang MAC_DINH trong thanhToanService, de trang van dung
+  // ngay ca khi bang cau hinh chua duoc tao.
+  let cauHinh = { ty_le_tich_diem: 10000, gia_tri_1_diem: 1000, toi_da_diem_moi_don: 50 };
+  let viDiem = null;
+  let giaoDich = [];
+
+  try {
+    const ch = await thanhToanService.layCauHinh();
+    cauHinh = {
+      ty_le_tich_diem: Number(ch.ty_le_tich_diem) || cauHinh.ty_le_tich_diem,
+      gia_tri_1_diem: Number(ch.gia_tri_1_diem) || cauHinh.gia_tri_1_diem,
+      toi_da_diem_moi_don: Number(ch.toi_da_diem_moi_don) || cauHinh.toi_da_diem_moi_don,
+    };
+  } catch (err) {
+    console.error('Không lấy được cấu hình tích điểm:', err.message);
+  }
+
+  // Chi truy van vi diem khi khach thuc su dang dang nhap. getLoyaltyInfo tu
+  // tao vi neu chua co, nen khach moi dang ky van xem duoc the cua minh.
+  if (req.session.userlogin && req.session.userId) {
+    try {
+      viDiem = await loyaltyService.getLoyaltyInfo(req.session.userId);
+      giaoDich = await loyaltyService.getTransactions(req.session.userId, 10);
+    } catch (err) {
+      console.error('Không lấy được ví điểm khách:', err.message);
+    }
+  }
+
+  res.render('thanh-vien', {
+    title: res.locals.t('thanh_vien.tieu_de'),
+    cauHinh,
+    viDiem,
+    giaoDich,
+    NGUONG_HANG: loyaltyService.NGUONG_HANG,
+    TEN_HANG: loyaltyService.TEN_HANG,
+  });
 });
 
 app.get('/blog', async (req, res) => {
   try {
     const [posts] = await db.query('SELECT * FROM bai_viet ORDER BY created_at DESC');
-    res.render('blog', { title: 'Tin tức', posts });
+
+    /*
+      Anh du phong cho bai chua co hinh.
+
+      Truoc day la bon tep tinh /blog-1..4.jpg - anh stock cua mot nha hang Au.
+      Bon tren sau bai viet dang khong co hinh rieng, nen phan lon trang Tin tuc
+      thuc chat la anh du phong do. Doi sang anh MON that trong thuc don: dung
+      dinh danh nha hang, va tu doi theo thuc don ma khong ai phai nho.
+    */
+    let anhMonDuPhong = [];
+    try {
+      const [r] = await db.query(`
+        SELECT images FROM monan
+        WHERE tinhtrang = 1 AND images IS NOT NULL AND images <> ''
+          AND id_loai NOT IN (SELECT id_loai FROM loai_mon
+              WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%uong%'
+                 OR name_loai LIKE '%drink%' OR name_loai LIKE '%sake%'
+                 OR name_loai LIKE '%beer%')
+        ORDER BY RAND() LIMIT 4`);
+      anhMonDuPhong = r.map((x) => '/food/' + x.images);
+    } catch (e) {
+      console.error('Không lấy được ảnh dự phòng cho /blog:', e.message);
+    }
+
+    res.render('blog', { title: res.locals.t('dieu_huong.tin_tuc'), posts, anhMonDuPhong });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -264,7 +461,7 @@ app.get('/menu', async (req, res) => {
     const dishes = await menuService.getDishesByCategory(id_loai);
 
     res.render('menu', {
-      title: 'Thực đơn',
+      title: res.locals.t('dieu_huong.thuc_don'),
       categories,
       dishes,
       currentCategory: id_loai,
@@ -288,7 +485,7 @@ app.post('/menu', async (req, res) => {
     const dishes = await menuService.searchDishes(key);
 
     res.render('menu', {
-      title: 'Thực đơn - Tìm kiếm',
+      title: res.locals.t('dieu_huong.thuc_don') + ' — ' + res.locals.t('chung.tim_kiem'),
       categories,
       dishes,
       currentCategory: null,
@@ -304,7 +501,7 @@ app.get('/detail', async (req, res) => {
   const monid = req.query.monid;
   try {
     const dish = await menuService.getDishById(monid);
-    res.render('detail', { title: dish ? dish.name_mon : 'Detail', dish });
+    res.render('detail', { title: dish ? dish.name_mon : res.locals.t('chi_tiet.tieu_de'), dish });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -326,7 +523,7 @@ app.get('/cart', async (req, res) => {
   try {
     const cartItems = await orderService.getCart(req.sessionID);
     const subtotal = await orderService.getCartTotal(req.sessionID);
-    res.render('cart', { title: 'Giỏ hàng', cartItems, subtotal });
+    res.render('cart', { title: res.locals.t('gio_hang.tieu_de'), cartItems, subtotal });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -359,7 +556,7 @@ app.get('/datban', requireLogin, async (req, res) => {
   try {
     const cartItems = await orderService.getCart(req.sessionID);
     if (cartItems.length === 0) {
-      return res.render('cart', { title: 'Giỏ hàng', cartItems: [], subtotal: 0, error: 'Giỏ hàng của bạn đang trống. Vui lòng thêm món ăn trước khi đặt bàn!' });
+      return res.render('cart', { title: res.locals.t('gio_hang.tieu_de'), cartItems: [], subtotal: 0, error: res.locals.t('gio_hang.trong_canh_bao') });
     }
     // Trang dat ban hien tom tat don ben canh form, de khach doi chieu truoc khi
     // xac nhan ma khong phai bam qua lai giua hai trang.
@@ -376,7 +573,7 @@ app.get('/datban', requireLogin, async (req, res) => {
     ]);
 
     res.render('booking', {
-      title: 'Đặt bàn',
+      title: res.locals.t('dat_ban.tieu_de'),
       cartItems,
       subtotal,
       giaoHang: {
@@ -537,7 +734,7 @@ app.get('/contract', requireLogin, async (req, res) => {
   try {
     const sessionId = req.query.sesis || req.sessionID;
     const orderDetails = await orderService.getOrderDetails(sessionId);
-    res.render('contract', { title: 'Hợp đồng', orderDetails });
+    res.render('contract', { title: res.locals.t('phieu.tieu_de'), orderDetails });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -550,7 +747,7 @@ app.get('/my-orders', requireLogin, async (req, res) => {
     // /cancel-order chuyen ve day kem ?msg=... - phai truyen vao view thi khach
     // moi biet yeu cau huy da gui duoc hay chua.
     res.render('my-orders', {
-      title: 'Đơn hàng của tôi',
+      title: res.locals.t('tai_khoan.don_cua_toi'),
       orders: kq.danhSach,
       phanTrang: kq,
       msg: req.query.msg || null,
@@ -587,7 +784,7 @@ app.get('/rate', requireLogin, async (req, res) => {
     // Chi duoc danh gia khi da co it nhat mot don duoc xac nhan.
     const canRate = await orderService.coDonDaXacNhan(req.session.userId);
     res.render('rating', { 
-      title: 'Đánh giá dịch vụ', 
+      title: res.locals.t('danh_gia.tieu_de'), 
       ratings, 
       canRate,
       msg: req.query.msg || null,
@@ -611,11 +808,11 @@ app.post('/rating', requireLogin, async (req, res) => {
 });
 
 app.get('/success', (req, res) => {
-  res.render('success', { title: 'Thành công' });
+  res.render('success', { title: res.locals.t('ket_qua.dat_thanh_cong') });
 });
 
 app.get('/login', (req, res) => {
-  res.render('login', { title: 'Đăng nhập' });
+  res.render('login', { title: res.locals.t('tai_khoan.dang_nhap') });
 });
 
 app.post('/login', async (req, res) => {
@@ -635,16 +832,16 @@ app.post('/login', async (req, res) => {
       req.session.username = user.ten;
       res.redirect('/');
     } else {
-      res.render('login', { title: 'Đăng nhập', error: 'Incorrect phone number or password!' });
+      res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), error: 'Incorrect phone number or password!' });
     }
   } catch (err) {
     console.error(err);
-    res.render('login', { title: 'Đăng nhập', error: 'Server error occurred.' });
+    res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), error: 'Server error occurred.' });
   }
 });
 
 app.get('/register', (req, res) => {
-  res.render('register', { title: 'Đăng ký' });
+  res.render('register', { title: res.locals.t('tai_khoan.dang_ky') });
 });
 
 app.post('/register', async (req, res) => {
@@ -660,21 +857,21 @@ app.post('/register', async (req, res) => {
   repass = repass || '';
 
   if (passwords !== repass) {
-    return res.render('register', { title: 'Đăng ký', message: 'Mật khẩu xác nhận không khớp!' });
+    return res.render('register', { title: res.locals.t('tai_khoan.dang_ky'), message: 'Mật khẩu xác nhận không khớp!' });
   }
   try {
     await orderService.userRegister({ ten, sodienthoai, email, diachi, passwords });
-    res.render('login', { title: 'Đăng nhập', message: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+    res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), message: 'Đăng ký thành công! Vui lòng đăng nhập.' });
   } catch (err) {
     console.error('Registration error:', err);
-    res.render('register', { title: 'Đăng ký', message: err.message });
+    res.render('register', { title: res.locals.t('tai_khoan.dang_ky'), message: err.message });
   }
 });
 
 // --- Forgot Password ---
 
 app.get('/forgot-password', (req, res) => {
-  res.render('forgot-password', { title: 'Quên mật khẩu' });
+  res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de') });
 });
 
 app.post('/forgot-password', async (req, res) => {
@@ -682,7 +879,7 @@ app.post('/forgot-password', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM khach_hang WHERE email = ? LIMIT 1', [email]);
     if (!rows[0]) {
-      return res.render('forgot-password', { title: 'Quên mật khẩu', error: 'Email không tồn tại trong hệ thống!' });
+      return res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), error: 'Email không tồn tại trong hệ thống!' });
     }
 
     // Generate new random password (8 chars)
@@ -698,12 +895,12 @@ app.post('/forgot-password', async (req, res) => {
     await mailer.sendNewPassword(email, newPassword);
     await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [hashedPassword, rows[0].id]);
 
-    res.render('forgot-password', { title: 'Quên mật khẩu', message: 'Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và thư mục rác).' });
+    res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), message: 'Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và thư mục rác).' });
   } catch (err) {
     // Chi tiet loi chi ghi ra console cho nguoi van hanh. Day la trang CONG KHAI
     // nen khong ha ra "chua cau hinh EMAIL_USER trong .env" cho khach doc.
     console.error('Forgot password error:', err);
-    res.render('forgot-password', { title: 'Quên mật khẩu', error: 'Chưa gửi được email lúc này. Mật khẩu của bạn vẫn giữ nguyên, vui lòng thử lại sau.' });
+    res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), error: 'Chưa gửi được email lúc này. Mật khẩu của bạn vẫn giữ nguyên, vui lòng thử lại sau.' });
   }
 });
 
@@ -711,7 +908,7 @@ app.get('/profile', requireLogin, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM khach_hang WHERE id = ?', [req.session.userId]);
     res.render('profile', { 
-      title: 'Thông tin cá nhân', 
+      title: res.locals.t('tai_khoan.thong_tin'), 
       user: rows[0],
       msg: req.query.msg || null,
       msgType: req.query.msgType || 'info'
@@ -1603,7 +1800,7 @@ app.get('/staff/accountant/salary/print/:id', requireRole(['Ke toan']), async (r
 app.get('/profile', requireLogin, async (req, res) => {
   try {
     const user = await orderService.getUserById(req.session.userId);
-    res.render('profile', { title: 'Thông tin cá nhân', user, msg: null });
+    res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: null });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -1618,20 +1815,20 @@ app.post('/profile', requireLogin, async (req, res) => {
       // Cập nhật lại session name nếu cần
       req.session.username = ten;
       const user = await orderService.getUserById(req.session.userId);
-      res.render('profile', { title: 'Thông tin cá nhân', user, msg: 'Cập nhật thông tin thành công!', msgType: 'success' });
+      res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Cập nhật thông tin thành công!', msgType: 'success' });
     } else if (action === 'password') {
       if (new_pass !== re_pass) {
         const user = await orderService.getUserById(req.session.userId);
-        return res.render('profile', { title: 'Thông tin cá nhân', user, msg: 'Mật khẩu xác nhận không khớp!', msgType: 'danger' });
+        return res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Mật khẩu xác nhận không khớp!', msgType: 'danger' });
       }
       await orderService.changePassword(req.session.userId, old_pass, new_pass);
       const user = await orderService.getUserById(req.session.userId);
-      return res.render('profile', { title: 'Thông tin cá nhân', user, msg: 'Đổi mật khẩu thành công!', msgType: 'success' });
+      return res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Đổi mật khẩu thành công!', msgType: 'success' });
     }
     res.redirect('/profile');
   } catch (err) {
     const user = await orderService.getUserById(req.session.userId);
-    res.render('profile', { title: 'Thông tin cá nhân', user, msg: err.message, msgType: 'danger' });
+    res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: err.message, msgType: 'danger' });
   }
 });
 
@@ -1692,7 +1889,7 @@ app.get('/rating', requireLogin, async (req, res) => {
     console.log('userId:', req.session.userId);
     console.log('canRate:', canRate);
     console.log('-------------------------');
-    res.render('rating', { title: 'Đánh giá dịch vụ', ratings, msg: null, canRate });
+    res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: null, canRate });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -1705,12 +1902,12 @@ app.post('/rating', requireLogin, async (req, res) => {
     const canRate = await orderService.hasCompletedOrder(req.session.userId);
     if (!canRate) {
       const ratings = await engagementService.getAllRatings();
-      return res.render('rating', { title: 'Đánh giá dịch vụ', ratings, msg: 'Bạn cần hoàn thành ít nhất 1 đơn đặt bàn để gửi đánh giá.', msgType: 'danger', canRate });
+      return res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: 'Bạn cần hoàn thành ít nhất 1 đơn đặt bàn để gửi đánh giá.', msgType: 'danger', canRate });
     }
 
     await engagementService.addRating(req.session.userId, sao, noi_dung);
     const ratings = await engagementService.getAllRatings();
-    res.render('rating', { title: 'Đánh giá dịch vụ', ratings, msg: 'Cảm ơn bạn đã đánh giá!', msgType: 'success', canRate: true });
+    res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: 'Cảm ơn bạn đã đánh giá!', msgType: 'success', canRate: true });
   } catch (err) {
     console.error(err);
     res.redirect('/rating');
@@ -2194,7 +2391,7 @@ app.post('/staff/kitchen/recipe/edit/:id', requireRole(['Bep']), async (req, res
 
 app.get('/staff/kitchen/equipment', requireRole(['Bep']), async (req, res) => {
   try {
-    const equipment = await menuService.getAllEquipment();
+    const equipment = await equipmentService.getAllEquipment();
     res.render('staff/kitchen/equipment', {
       title: 'Quản lý Thiết bị',
       equipment,
@@ -2209,7 +2406,7 @@ app.get('/staff/kitchen/equipment', requireRole(['Bep']), async (req, res) => {
 
 app.post('/staff/kitchen/equipment/add', requireRole(['Bep']), async (req, res) => {
   try {
-    await menuService.addEquipment(req.body);
+    await equipmentService.addEquipment(req.body);
     res.redirect('/staff/kitchen/equipment');
   } catch (err) {
     console.error(err);
@@ -2219,7 +2416,7 @@ app.post('/staff/kitchen/equipment/add', requireRole(['Bep']), async (req, res) 
 
 app.post('/staff/kitchen/equipment/edit/:id', requireRole(['Bep']), async (req, res) => {
   try {
-    await menuService.updateEquipment(req.params.id, req.body);
+    await equipmentService.updateEquipment(req.params.id, req.body);
     res.redirect('/staff/kitchen/equipment');
   } catch (err) {
     console.error(err);
@@ -2229,7 +2426,7 @@ app.post('/staff/kitchen/equipment/edit/:id', requireRole(['Bep']), async (req, 
 
 app.get('/staff/kitchen/equipment/delete/:id', requireRole(['Bep']), async (req, res) => {
   try {
-    await menuService.deleteEquipment(req.params.id);
+    await equipmentService.deleteEquipment(req.params.id);
     res.redirect('/staff/kitchen/equipment');
   } catch (err) {
     console.error(err);
@@ -2517,16 +2714,42 @@ app.post('/staff/emails/send', requireRole(['Ke toan', 'Quay', 'Thu ngan']), asy
   }
 });
 
-// Staff Schedule
+// Staff Schedule - thoi khoa bieu theo tuan
+//
+// Xem theo TUAN chu khong theo thang: mot luoi ca x 7 ngay doc duoc trong mot
+// cai liec, con luoi ca x 31 ngay thi khong con la thoi khoa bieu nua. Tham so
+// `?tuan=` nhan mot ngay bat ky roi tu lui ve thu Hai, nen link tuan truoc /
+// tuan sau chi can cong tru 7 ngay ma khong phai xu ly ranh gioi thang.
 app.get('/staff/schedule', requireStaff, async (req, res) => {
   try {
-    const [year, month] = (req.query.thang || new Date().toISOString().slice(0, 7)).split('-').map(Number);
-    const schedule = await personnelService.getSchedule(req.session.staffId, year, month);
+    const { thuHaiCuaTuan, ngayISO } = require('./services/xepCa');
+    const homNay = ngayISO(new Date());
+
+    // Con ho tro `?thang=` cua ban cu: link da luu hoac dan o cho khac van vao
+    // dung tuan dau cua thang do thay vi bao loi.
+    let moc = req.query.tuan || homNay;
+    if (!req.query.tuan && req.query.thang) moc = req.query.thang + '-01';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(moc)) moc = homNay;
+
+    const thuHai = thuHaiCuaTuan(moc);
+    const chuNhat = ngayISO(new Date(new Date(thuHai + 'T00:00:00').getTime() + 6 * 86400000));
+    const dich = (goc, soNgay) =>
+      ngayISO(new Date(new Date(goc + 'T00:00:00').getTime() + soNgay * 86400000));
+
+    const [dsCa, schedule, unread] = await Promise.all([
+      personnelService.getShifts(),
+      personnelService.getScheduleRange(req.session.staffId, thuHai, chuNhat),
+      personnelService.countUnread(req.session.staffId),
+    ]);
+
     res.render('staff/schedule', {
-      title: 'Lịch làm việc', schedule,
-      currentMonth: req.query.thang || new Date().toISOString().slice(0, 7),
+      title: 'Lịch làm việc',
+      schedule, dsCa, thuHai, chuNhat, homNay,
+      tuanTruoc: dich(thuHai, -7),
+      tuanSau: dich(thuHai, 7),
+      ngayTrongTuan: Array.from({ length: 7 }, (_, i) => dich(thuHai, i)),
       msg: req.query.msg || null, msgType: req.query.msgType || null,
-      unread: await personnelService.countUnread(req.session.staffId)
+      unread,
     });
   } catch (err) {
     console.error(err);
@@ -2534,22 +2757,37 @@ app.get('/staff/schedule', requireStaff, async (req, res) => {
   }
 });
 
+// Sau khi dang ky / huy phai quay ve DUNG tuan vua xem. Truoc day redirect
+// tro tay khong nen nguoi dang xem tuan sau bam Dang ky xong lai bi nem ve tuan
+// hien tai, khong thay ca minh vua tao dau.
+function urlLichTuan(req, msg, loai) {
+  // `req.body` khong ton tai o route GET (huy ca), nen phai kiem tra truoc khi
+  // doc - doc thang la nem TypeError va bien mot lan huy thanh cong thanh loi
+  // 500, trong khi ca thi da xoa roi.
+  const tuan = (req.body && req.body.tuan) || req.query.tuan || '';
+  const p = new URLSearchParams();
+  if (tuan) p.set('tuan', tuan);
+  if (msg) { p.set('msg', msg); p.set('msgType', loai || 'info'); }
+  const qs = p.toString();
+  return '/staff/schedule' + (qs ? '?' + qs : '');
+}
+
 app.post('/staff/schedule', requireStaff, async (req, res) => {
   const { ngay, ca, ghi_chu } = req.body;
   try {
     await personnelService.registerSchedule(req.session.staffId, ngay, ca, ghi_chu);
-    res.redirect('/staff/schedule?msg=Đăng+ký+lịch+thành+công!&msgType=success');
+    res.redirect(urlLichTuan(req, 'Đã đăng ký ca làm.', 'success'));
   } catch (err) {
-    res.redirect('/staff/schedule?msg=' + encodeURIComponent(err.message) + '&msgType=danger');
+    res.redirect(urlLichTuan(req, err.message, 'danger'));
   }
 });
 
 app.get('/staff/schedule/cancel/:id', requireStaff, async (req, res) => {
   try {
     await personnelService.cancelSchedule(req.params.id, req.session.staffId);
-    res.redirect('/staff/schedule?msg=Đã+hủy+đăng+ký&msgType=info');
+    res.redirect(urlLichTuan(req, 'Đã huỷ đăng ký.', 'info'));
   } catch (err) {
-    res.redirect('/staff/schedule');
+    res.redirect(urlLichTuan(req, err.message, 'danger'));
   }
 });
 
@@ -2584,7 +2822,16 @@ app.get('/staff/attendance', requireStaff, async (req, res) => {
     try {
       const dc = diaChiQR.diaChiDienThoai(req);
       if (dc) {
-        diDong = { ...dc, url: dc.url + '/cham-cong/' };
+        /*
+          Ma QR tro vao '/cc' chu KHONG phai '/cham-cong/'.
+
+          '/cham-cong/' nam trong pham vi service worker; quet ma QR vao thang
+          do thi lan dau tien - luc chua ai chap nhan chung chi tu ky - se bi
+          worker chan va tra ve trang "mat ket noi", va nguoi dung khong con
+          duong nao ra. Xem ghi chu day du o route '/cc' trong
+          routes/chamCongDiDong.js.
+        */
+        diDong = { ...dc, url: dc.url + '/cc' };
         diDong.anh = await require('qrcode').toDataURL(diDong.url, {
           errorCorrectionLevel: 'M', margin: 1, width: 220,
         });
@@ -2695,7 +2942,7 @@ app.get('/staff/profile', requireStaff, async (req, res) => {
   try {
     const staff = await personnelService.getStaffById(req.session.staffId);
     res.render('staff/profile', {
-      title: 'Thông tin cá nhân', staff,
+      title: res.locals.t('tai_khoan.thong_tin'), staff,
       msg: req.query.msg || null, msgType: req.query.msgType || null,
       unread: await personnelService.countUnread(req.session.staffId)
     });
@@ -3081,19 +3328,49 @@ function inBangDiaChi(dsLan, coHttps) {
   d(`Máy tại chỗ:      http://localhost:${PORT}`);
   if (coHttps) d(`Máy tại chỗ (bảo mật): https://localhost:${PORT_HTTPS}`);
   if (dsLan.length) {
+    /*
+      MOT dia chi duoc chi ro, phan con lai la du phong.
+
+      Truoc day cho in ca nam dia chi ngang hang nhau. May nay co card ao cua
+      WSL, VMware va VirtualBox, nen nguoi dung nhin thay nam dong giong het
+      nhau va khong co cach nao biet dong nao dien thoai vao duoc - bon trong
+      so do la mang rieng cua may ao, dien thoai goi vao chi thay khong phan
+      hoi. Do la ly do that su khien "vao trang cham cong tren dien thoai
+      khong duoc".
+
+      `diaChiDeXuat()` xep dia chi kha nang dung nhat len dau (xem ghi chu cua
+      no trong config/chungChi.js). No chi SAP XEP chu khong bo dia chi nao,
+      nen neu phong doan sai thi cac dia chi con lai van con day de thu.
+    */
+    const dsXep = chungChi.diaChiDeXuat().filter((ip) => dsLan.includes(ip));
+    const ds = dsXep.length ? dsXep : dsLan;
+    const duong = (ip) => (coHttps
+      ? `https://${ip}:${PORT_HTTPS}/cham-cong/`
+      : `http://${ip}:${PORT}/cham-cong/`);
+
     console.log('');
-    d('Điện thoại trong cùng mạng Wi-Fi — CHẤM CÔNG KHUÔN MẶT');
-    d('phải dùng địa chỉ https:// dưới đây, http:// sẽ không mở được camera:');
-    dsLan.forEach((ip) => d(coHttps
-      ? `   https://${ip}:${PORT_HTTPS}/cham-cong/`
-      : `   http://${ip}:${PORT}/cham-cong/ (KHÔNG dùng được camera)`));
+    d('ĐIỆN THOẠI CHẤM CÔNG — mở đúng địa chỉ này:');
+    d('');
+    d(`   >>>  ${duong(ds[0])}`);
+    d('');
+    if (!coHttps) {
+      d('   (đang chạy HTTP nên camera và GPS sẽ KHÔNG mở được —');
+      d('    xem khóa BAT_HTTPS trong .env)');
+    }
+    d('Điện thoại phải nối CÙNG mạng Wi-Fi với máy này.');
+
+    if (ds.length > 1) {
+      d('');
+      d('Nếu địa chỉ trên không mở được, các địa chỉ còn lại của máy (phần lớn');
+      d('là card mạng ảo, điện thoại thường KHÔNG vào được):');
+      ds.slice(1).forEach((ip) => d(`   ${duong(ip)}`));
+    }
+
     console.log('');
     d(`Mã QR dán ở bàn đang dùng địa chỉ: ${diaChiQR.goc(null)}`);
-    if (dsLan.length > 1) {
-      d('Máy này có nhiều địa chỉ (card mạng ảo của WSL / VMware / VirtualBox).');
-      d('Nếu điện thoại quét mã QR mà không mở được trang, hãy thử từng địa chỉ');
-      d('phía trên bằng trình duyệt điện thoại, rồi ghi địa chỉ chạy được vào');
-      d('khóa QR_BASE_URL trong file .env (ví dụ QR_BASE_URL=http://192.168.1.5:3000).');
+    if (ds.length > 1) {
+      d('Nếu quét mã QR mà không mở được trang, ghi địa chỉ chạy được vào khóa');
+      d('QR_BASE_URL trong file .env (ví dụ QR_BASE_URL=http://192.168.1.5:3000).');
     }
     if (coHttps) {
       console.log('');

@@ -1,134 +1,442 @@
 <%- include('partials/header') %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
   <div class="overlay"></div>
   <div class="container">
     <div class="row no-gutters slider-text align-items-end justify-content-center">
       <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Chat với nhân viên</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
+        <h1 class="mb-2 bread"><%= t('chat.tieu_de') %></h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
       </div>
     </div>
   </div>
 </section>
 
+<style>
+  /* ================= Khung chat =================
+     Bang mau va hoa tiet lay tu bien cua nhahang.css de trang nay khong lac
+     ra khoi phan con lai cua khu khach.                                     */
+  .ct-vo {
+    max-width: 760px; margin: 0 auto;
+    background: #fff; border-radius: 20px; overflow: hidden;
+    box-shadow: var(--nh-shadow, 0 18px 50px -18px rgba(43,26,18,.45));
+    border: 1px solid var(--nh-line, rgba(0,0,0,.08));
+    display: flex; flex-direction: column;
+  }
+
+  /* ---- Dau khung ---- */
+  .ct-dau {
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+    background: linear-gradient(135deg, var(--nh-brown, #4e342e), var(--nh-espresso, #2b1a12));
+    color: #fff; position: relative;
+  }
+  .ct-dau::after {                       /* vien vang mong duoi dau khung */
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--nh-gold, #c8a24b), transparent);
+  }
+  .ct-dau__anh {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--nh-gold, #c8a24b), var(--nh-gold-soft, #d9bd7e));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--nh-espresso, #2b1a12); font-size: 22px;
+  }
+  .ct-dau__ten { font-family: var(--nh-serif, Georgia, serif); font-size: 18px; line-height: 1.2; }
+  .ct-dau__phu { font-size: 12px; opacity: .75; }
+  .ct-song {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(255,255,255,.12); margin-left: auto; white-space: nowrap;
+  }
+  .ct-song i {
+    width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+    box-shadow: 0 0 0 0 rgba(74,222,128,.7); animation: ct-dap 2s infinite;
+  }
+  @keyframes ct-dap {
+    70%  { box-shadow: 0 0 0 7px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+
+  /* ---- Vung tin nhan ---- */
+  .ct-than {
+    position: relative; height: 460px; overflow-y: auto;
+    padding: 20px; scroll-behavior: smooth;
+    /* Hoa tiet ke Nhat (koshi) lam nen. Phong doi kich thuoc o va phu them mot
+       lop kem ban trong suot len tren: de nguyen thi luoi ke qua day, nhin nhu
+       giay ke o ly va tranh mat voi chinh cac bong bong. */
+    background-color: var(--nh-cream, #faf6ef);
+    background-image: linear-gradient(rgba(250,246,239,.74), rgba(250,246,239,.74)), var(--nh-koshi);
+    background-size: auto, 56px 56px;
+  }
+  .ct-than::-webkit-scrollbar { width: 8px; }
+  .ct-than::-webkit-scrollbar-thumb { background: rgba(43,26,18,.18); border-radius: 8px; }
+
+  .ct-ngay { text-align: center; margin: 18px 0 14px; }
+  .ct-ngay span {
+    display: inline-block; padding: 4px 14px; border-radius: 999px;
+    background: rgba(43,26,18,.07); color: var(--nh-muted, #5c5148);
+    font-size: 11px; letter-spacing: .4px;
+  }
+
+  .ct-dong { display: flex; margin-bottom: 4px; align-items: flex-end; gap: 8px; }
+  .ct-dong--toi { justify-content: flex-end; }
+  .ct-dong--cuoi-nhom { margin-bottom: 14px; }
+
+  .ct-anh-nv {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--nh-brown, #4e342e), var(--nh-espresso, #2b1a12));
+    color: var(--nh-gold, #c8a24b);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .ct-anh-nv--an { visibility: hidden; }   /* giu cho, khong day bong bong lech */
+
+  .ct-bong {
+    max-width: 74%; padding: 10px 14px; position: relative;
+    font-size: 14.5px; line-height: 1.55;
+    animation: ct-hien .22s var(--nh-ease, ease);
+  }
+  /* pre-wrap chi dat o chinh cau chu, KHONG dat o ca bong bong: neu dat o bong
+     bong thi moi dau xuong dong va thut le cua template EJS deu bien thanh
+     khoang trang that, bong bong phinh to va cau chu bi day lech. */
+  .ct-loi { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+  @keyframes ct-hien { from { opacity: 0; transform: translateY(6px); } }
+
+  .ct-dong--ho  .ct-bong {
+    background: #fff; color: var(--nh-ink, #241d18);
+    border: 1px solid var(--nh-line, rgba(0,0,0,.08));
+    border-radius: 16px 16px 16px 4px;
+    box-shadow: var(--nh-shadow-sm, 0 8px 24px -12px rgba(43,26,18,.35));
+  }
+  .ct-dong--toi .ct-bong {
+    background: linear-gradient(135deg, var(--nh-gold, #c8a24b), #b8923f);
+    color: #fff; border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 8px 20px -12px rgba(200,162,75,.9);
+  }
+  /* Tin giua nhom: bo goc deu hai dau cho lien mach */
+  .ct-dong--ho.ct-dong--tiep  .ct-bong { border-radius: 4px 16px 16px 4px; }
+  .ct-dong--toi.ct-dong--tiep .ct-bong { border-radius: 16px 4px 4px 16px; }
+
+  .ct-ten-nv {
+    font-size: 11.5px; font-weight: 600; margin-bottom: 3px;
+    color: var(--nh-brown, #4e342e);
+  }
+  .ct-gio { font-size: 10.5px; opacity: .6; margin-top: 4px; display: block; }
+  .ct-dong--toi .ct-gio { text-align: right; }
+
+  .ct-bong--cho { opacity: .55; }
+  .ct-bong--loi { background: #b3453a !important; cursor: pointer; }
+
+  /* ---- Trang thai rong ---- */
+  .ct-rong { text-align: center; padding: 70px 20px; color: var(--nh-muted, #5c5148); }
+  .ct-rong__vong {
+    width: 84px; height: 84px; margin: 0 auto 16px; border-radius: 50%;
+    background: rgba(200,162,75,.14); color: var(--nh-gold, #c8a24b);
+    display: flex; align-items: center; justify-content: center; font-size: 40px;
+  }
+  .ct-rong h5 { font-family: var(--nh-serif, Georgia, serif); color: var(--nh-ink, #241d18); }
+
+  /* ---- Nut xuong cuoi ---- */
+  .ct-xuong {
+    position: absolute; right: 18px; bottom: 16px; z-index: 3;
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: #fff; color: var(--nh-brown, #4e342e);
+    box-shadow: 0 6px 18px -6px rgba(43,26,18,.5);
+    display: none; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform .18s var(--nh-ease, ease);
+  }
+  .ct-xuong:hover { transform: translateY(-2px); }
+  .ct-xuong.hien { display: flex; }
+
+  /* ---- O nhap ---- */
+  .ct-chan { padding: 14px 16px; background: #fff; border-top: 1px solid var(--nh-line, rgba(0,0,0,.08)); }
+  .ct-hang { display: flex; align-items: flex-end; gap: 10px; }
+  .ct-nhap {
+    flex: 1; resize: none; border: 1px solid var(--nh-line, rgba(0,0,0,.12));
+    border-radius: 22px; padding: 11px 18px; font-size: 14.5px; line-height: 1.5;
+    max-height: 132px; outline: none; font-family: inherit;
+    background: var(--nh-cream, #faf6ef); color: var(--nh-ink, #241d18);
+    transition: border-color .18s, background .18s;
+  }
+  .ct-nhap:focus { border-color: var(--nh-gold, #c8a24b); background: #fff; }
+  .ct-gui {
+    width: 46px; height: 46px; border-radius: 50%; border: none; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--nh-gold, #c8a24b), #b8923f);
+    color: #fff; font-size: 17px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .18s var(--nh-ease, ease), opacity .18s;
+  }
+  .ct-gui:hover:not(:disabled) { transform: scale(1.07); }
+  .ct-gui:disabled { opacity: .4; cursor: default; }
+  .ct-meo { font-size: 11px; color: var(--nh-muted, #5c5148); opacity: .8; margin: 8px 0 0 6px; }
+
+  /* An nut tro ly ao noi tren chinh trang nay. Khach dang o day la dang muon
+     noi chuyen voi NGUOI THAT; de hai khung chat chong len nhau vua roi vua
+     che mat bong bong tin nhan o goc phai duoi tren dien thoai. */
+  .cb-nut { display: none !important; }
+
+  @media (max-width: 575.98px) {
+    .ct-than { height: 60vh; padding: 14px; }
+    .ct-bong { max-width: 84%; font-size: 14px; }
+    .ct-dau { padding: 13px 15px; }
+    .ct-meo { display: none; }        /* dien thoai khong co Shift + Enter */
+  }
+</style>
+
 <section class="ftco-section">
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white d-flex align-items-center">
-            <i class="ion-ios-chatbubbles mr-2" style="font-size:20px;"></i>
-            <strong>Hỗ trợ trực tuyến</strong>
-            <span class="ml-auto badge badge-success">Đang hoạt động</span>
-          </div>
-          <!-- Khu vực hiển thị tin nhắn -->
-          <div class="card-body" id="chat-box" style="height:420px; overflow-y:auto; background:#f8f9fa;">
-            <% if (messages && messages.length > 0) { %>
-              <% messages.forEach(m => { %>
-                <% if (m.nguoi_gui === 'khach') { %>
-                  <div class="d-flex justify-content-end mb-3">
-                    <div class="p-2 px-3 rounded" style="background:#c8a951; color:#fff; max-width:70%;">
-                      <div><%= m.noi_dung %></div>
-                      <small style="opacity:0.8; font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
-                    </div>
-                  </div>
-                <% } else { %>
-                  <div class="d-flex justify-content-start mb-3">
-                    <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
-                      <small class="text-muted d-block"><strong><%= m.ten_nv || 'Nhân viên' %></strong></small>
-                      <div><%= m.noi_dung %></div>
-                      <small style="color:#999; font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
-                    </div>
-                  </div>
-                <% } %>
-              <% }) %>
-            <% } else { %>
-              <div class="text-center text-muted mt-5">
-                <i class="ion-ios-chatbubbles" style="font-size:48px; color:#ddd;"></i>
-                <p class="mt-2">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
-              </div>
-            <% } %>
-          </div>
-          <!-- Form gửi tin nhắn -->
-          <div class="card-footer">
-            <form action="/chat/send" method="POST" class="d-flex">
-              <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập tin nhắn..." required autocomplete="off">
-              <button type="submit" class="btn btn-primary px-4">Gửi</button>
-            </form>
-          </div>
+    <div class="ct-vo">
+
+      <div class="ct-dau">
+        <div class="ct-dau__anh"><i class="fas fa-headset"></i></div>
+        <div>
+          <div class="ct-dau__ten"><%= t('chat.ho_tro') %></div>
+          <div class="ct-dau__phu"><%= t('chat.gio_lam') %></div>
         </div>
+        <span class="ct-song"><i></i><%= t('chat.dang_hoat_dong') %></span>
       </div>
+
+      <div class="ct-than" id="ct-than">
+        <%
+          // Dung mot bo dem duy nhat cho ca lan dung dau va cac tin den sau:
+          // cung mot ham quyet dinh "co phai tin tiep theo cung nguoi khong" va
+          // "da sang ngay moi chua", nen khong the lech giua HTML dung san va
+          // HTML do JavaScript chen vao.
+          var truoc = null;
+        %>
+        <% if (messages && messages.length > 0) { %>
+          <% messages.forEach(function (m, i) {
+               var d = new Date(m.thoigian);
+               var toi = m.nguoi_gui === 'khach';
+               var ngayMoi = !truoc || new Date(truoc.thoigian).toDateString() !== d.toDateString();
+               var tiep = !ngayMoi && truoc && truoc.nguoi_gui === m.nguoi_gui;
+               var ke = messages[i + 1];
+               var cuoiNhom = !ke || ke.nguoi_gui !== m.nguoi_gui
+                            || new Date(ke.thoigian).toDateString() !== d.toDateString();
+               truoc = m;
+          %>
+            <% if (ngayMoi) { %>
+              <div class="ct-ngay"><span data-ngay="<%= d.toISOString().slice(0,10) %>"><%= d.toLocaleDateString('vi-VN', { weekday:'long', day:'2-digit', month:'2-digit' }) %></span></div>
+            <% } %>
+            <div class="ct-dong <%= toi ? 'ct-dong--toi' : 'ct-dong--ho' %> <%= tiep ? 'ct-dong--tiep' : '' %> <%= cuoiNhom ? 'ct-dong--cuoi-nhom' : '' %>">
+              <% if (!toi) { %>
+                <div class="ct-anh-nv <%= tiep ? 'ct-anh-nv--an' : '' %>"><%= (m.ten_nv || t('chat.nhan_vien')).charAt(0).toUpperCase() %></div>
+              <% } %>
+              <div class="ct-bong"><% if (!toi && !tiep) { %><div class="ct-ten-nv"><%= m.ten_nv || t('chat.nhan_vien') %></div><% } %><div class="ct-loi"><%= m.noi_dung %></div><span class="ct-gio" title="<%= d.toLocaleString('vi-VN') %>"><%= d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }) %></span></div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="ct-rong" id="ct-rong">
+            <div class="ct-rong__vong"><i class="fas fa-comments"></i></div>
+            <h5><%= t('chat.bat_dau') %></h5>
+            <p class="mb-0"><%= t('chat.chua_co_tin') %></p>
+          </div>
+        <% } %>
+        <button type="button" class="ct-xuong" id="ct-xuong" title="<%= t('chat.xuong_cuoi') %>">
+          <i class="fas fa-arrow-down"></i>
+        </button>
+      </div>
+
+      <div class="ct-chan">
+        <form action="/chat/send" method="POST" class="ct-hang" id="ct-form">
+          <textarea class="ct-nhap" id="ct-nhap" name="noi_dung" rows="1"
+                    placeholder="<%= t('chat.nhap_tin') %>" autocomplete="off" required></textarea>
+          <button type="submit" class="ct-gui" id="ct-gui" title="<%= t('chung.gui') %>" disabled>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+        <div class="ct-meo"><%= t('chat.goi_y_enter') %></div>
+      </div>
+
     </div>
   </div>
 </section>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  const socket = io();
-  const userId = '<%= session.userId %>';
-  const chatBox = document.getElementById('chat-box');
-  const chatForm = document.querySelector('form[action="/chat/send"]');
-  const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
+(function () {
+  var NHAN = {
+    nhanVien: <%- JSON.stringify(t('chat.nhan_vien')) %>,
+    homNay:   <%- JSON.stringify(t('chat.hom_nay')) %>,
+    homQua:   <%- JSON.stringify(t('chat.hom_qua')) %>,
+    dangGui:  <%- JSON.stringify(t('chat.dang_gui')) %>,
+    loiGui:   <%- JSON.stringify(t('chat.loi_gui')) %>
+  };
+  var NN = <%- JSON.stringify(nn) %>;
 
-  // Join room cá nhân
-  if (userId) {
-    socket.emit('join-room', userId);
+  var than  = document.getElementById('ct-than');
+  var form  = document.getElementById('ct-form');
+  var nhap  = document.getElementById('ct-nhap');
+  var nutGui = document.getElementById('ct-gui');
+  var nutXuong = document.getElementById('ct-xuong');
+  var userId = '<%= session.userId %>';
+
+  var socket = io();
+  if (userId) socket.emit('join-room', userId);
+
+  /* Noi dung tin nhan do NGUOI DUNG go ra, khong bao gio duoc ghep thang vao
+     innerHTML. Ban truoc dung template string nen mot tin nhan chua the <img
+     onerror=...> se chay ngay tren trinh duyet nguoi doi thoai. Moi cho hien
+     noi dung o day deu di qua textContent. */
+  function el(the, lop, chu) {
+    var e = document.createElement(the);
+    if (lop) e.className = lop;
+    if (chu !== undefined) e.textContent = chu;
+    return e;
   }
 
-  // Cuộn xuống cuối chat box
-  function scrollToBottom() {
-    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-  }
-  scrollToBottom();
+  var dinhDangGio = new Intl.DateTimeFormat(NN, { hour: '2-digit', minute: '2-digit' });
+  var dinhDangNgay = new Intl.DateTimeFormat(NN, { weekday: 'long', day: '2-digit', month: '2-digit' });
 
-  // Xử lý gửi tin nhắn qua AJAX
-  chatForm.onsubmit = async (e) => {
+  function khoaNgay(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+         + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function nhanNgay(d) {
+    var nay = new Date(), qua = new Date(); qua.setDate(nay.getDate() - 1);
+    if (khoaNgay(d) === khoaNgay(nay)) return NHAN.homNay;
+    if (khoaNgay(d) === khoaNgay(qua)) return NHAN.homQua;
+    return dinhDangNgay.format(d);
+  }
+
+  function ngayCuoiCung() {
+    var ds = than.querySelectorAll('.ct-ngay span[data-ngay]');
+    return ds.length ? ds[ds.length - 1].getAttribute('data-ngay') : null;
+  }
+  function dongCuoiCung() {
+    var ds = than.querySelectorAll('.ct-dong');
+    return ds.length ? ds[ds.length - 1] : null;
+  }
+
+  /**
+   * Chen mot tin nhan vao cuoi khung.
+   *
+   * `tam` = bong bong lac quan: hien ngay luc bam Gui de nguoi dung thay phan
+   * hoi tuc thi, roi duoc thay bang ban that khi may chu doi lai qua socket.
+   * Khong chen thang ban that luc gui vi may chu van phat lai tin do ve phong,
+   * lam moi tin hien hai lan.
+   */
+  function chen(tin, tam) {
+    var rong = document.getElementById('ct-rong');
+    if (rong) rong.remove();
+
+    var d = tin.thoigian ? new Date(tin.thoigian) : new Date();
+    var toi = tin.nguoi_gui === 'khach';
+
+    if (ngayCuoiCung() !== khoaNgay(d)) {
+      var vach = el('div', 'ct-ngay');
+      var nhan = el('span', null, nhanNgay(d));
+      nhan.setAttribute('data-ngay', khoaNgay(d));
+      vach.appendChild(nhan);
+      than.insertBefore(vach, nutXuong);
+    }
+
+    var cuoi = dongCuoiCung();
+    var tiep = !!cuoi && cuoi.classList.contains(toi ? 'ct-dong--toi' : 'ct-dong--ho')
+               && !cuoi.classList.contains('ct-dong--cuoi-nhom');
+    if (cuoi && tiep) cuoi.classList.remove('ct-dong--cuoi-nhom');
+
+    var dong = el('div', 'ct-dong ' + (toi ? 'ct-dong--toi' : 'ct-dong--ho')
+                       + (tiep ? ' ct-dong--tiep' : '') + ' ct-dong--cuoi-nhom');
+
+    if (!toi) {
+      var ten = tin.ten_nv || NHAN.nhanVien;
+      dong.appendChild(el('div', 'ct-anh-nv' + (tiep ? ' ct-anh-nv--an' : ''),
+                          ten.charAt(0).toUpperCase()));
+    }
+
+    var bong = el('div', 'ct-bong' + (tam ? ' ct-bong--cho' : ''));
+    if (!toi && !tiep) bong.appendChild(el('div', 'ct-ten-nv', tin.ten_nv || NHAN.nhanVien));
+    bong.appendChild(el('div', 'ct-loi', tin.noi_dung));
+    var gio = el('span', 'ct-gio', tam ? NHAN.dangGui : dinhDangGio.format(d));
+    gio.title = d.toLocaleString(NN);
+    bong.appendChild(gio);
+    dong.appendChild(bong);
+
+    than.insertBefore(dong, nutXuong);
+    return dong;
+  }
+
+  /* ---------- cuon ---------- */
+  function xuongCuoi(muot) {
+    than.scrollTo({ top: than.scrollHeight, behavior: muot ? 'smooth' : 'auto' });
+  }
+  function ganDay() { return than.scrollHeight - than.scrollTop - than.clientHeight < 120; }
+  than.addEventListener('scroll', function () { nutXuong.classList.toggle('hien', !ganDay()); });
+  nutXuong.onclick = function () { xuongCuoi(true); };
+  xuongCuoi(false);
+
+  /* ---------- o nhap tu gian cao ---------- */
+  function chinhCao() {
+    nhap.style.height = 'auto';
+    nhap.style.height = Math.min(nhap.scrollHeight, 132) + 'px';
+    nutGui.disabled = !nhap.value.trim();
+  }
+  nhap.addEventListener('input', chinhCao);
+  nhap.addEventListener('keydown', function (e) {
+    // Enter gui, Shift + Enter xuong dong. Tren dien thoai ban phim ao khong co
+    // Shift nen giu nguyen hanh vi xuong dong mac dinh.
+    if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(min-width: 576px)').matches) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  /* ---------- gui ---------- */
+  var hangCho = [];      // cac bong bong tam dang doi may chu doi lai
+
+  form.onsubmit = async function (e) {
     e.preventDefault();
-    const content = inputMsg.value.trim();
-    if (!content) return;
+    var noiDung = nhap.value.trim();
+    if (!noiDung) return;
+
+    nhap.value = ''; chinhCao();
+    var bongTam = chen({ noi_dung: noiDung, nguoi_gui: 'khach' }, true);
+    hangCho.push({ noiDung: noiDung, dong: bongTam });
+    xuongCuoi(true);
 
     try {
-      const response = await fetch('/chat/send', {
+      var res = await fetch('/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-        body: new URLSearchParams({ 'noi_dung': content })
+        body: new URLSearchParams({ noi_dung: noiDung })
       });
-      if (response.ok) {
-        inputMsg.value = '';
-      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
     } catch (err) {
-      console.error('Lỗi gửi tin nhắn:', err);
+      console.error('Loi gui tin nhan:', err);
+      var i = hangCho.findIndex(function (x) { return x.dong === bongTam; });
+      if (i > -1) hangCho.splice(i, 1);
+      var b = bongTam.querySelector('.ct-bong');
+      b.classList.remove('ct-bong--cho');
+      b.classList.add('ct-bong--loi');
+      b.querySelector('.ct-gio').textContent = NHAN.loiGui;
+      b.onclick = function () { bongTam.remove(); nhap.value = noiDung; chinhCao(); nhap.focus(); };
     }
   };
 
-  // Lắng nghe tin nhắn mới
-  socket.on('new-message', (data) => {
-    const isMe = data.nguoi_gui === 'khach';
-    const msgHtml = isMe ? `
-      <div class="d-flex justify-content-end mb-3">
-        <div class="p-2 px-3 rounded" style="background:#c8a951; color:#fff; max-width:70%;">
-          <div>${data.noi_dung}</div>
-          <small style="opacity:0.8; font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
-        </div>
-      </div>
-    ` : `
-      <div class="d-flex justify-content-start mb-3">
-        <div class="p-2 px-3 rounded" style="background:#fff; border:1px solid #ddd; max-width:70%;">
-          <small class="text-muted d-block"><strong>${data.ten_nv || 'Nhân viên'}</strong></small>
-          <div>${data.noi_dung}</div>
-          <small style="color:#999; font-size:11px;">${new Date(data.thoigian).toLocaleTimeString('vi-VN')}</small>
-        </div>
-      </div>
-    `;
-    
-    // Xóa thông báo "chưa có tin nhắn" nếu có
-    const emptyMsg = chatBox.querySelector('.text-center.text-muted');
-    if (emptyMsg) emptyMsg.remove();
-
-    chatBox.insertAdjacentHTML('beforeend', msgHtml);
-    scrollToBottom();
+  /* ---------- nhan tin ---------- */
+  socket.on('new-message', function (data) {
+    if (data.nguoi_gui === 'khach') {
+      // Tin cua chinh minh do may chu phat lai: thay bong bong tam thay vi them
+      // mot bong bong nua. Khop theo noi dung cua phan tu dau hang doi - du
+      // dung vi mot nguoi khong the gui hai tin cung luc.
+      var i = hangCho.findIndex(function (x) { return x.noiDung === data.noi_dung; });
+      if (i > -1) {
+        var muc = hangCho.splice(i, 1)[0];
+        var b = muc.dong.querySelector('.ct-bong');
+        b.classList.remove('ct-bong--cho');
+        var g = b.querySelector('.ct-gio');
+        var d = new Date(data.thoigian || Date.now());
+        g.textContent = dinhDangGio.format(d);
+        g.title = d.toLocaleString(NN);
+        return;
+      }
+    }
+    var gan = ganDay();
+    chen(data, false);
+    if (gan) xuongCuoi(true); else nutXuong.classList.add('hien');
   });
+})();
 </script>
 
 <%- include('partials/footer') %>

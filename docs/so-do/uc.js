@@ -362,6 +362,46 @@ const ucPhanTich = () =>
     ngoai: [[194, ['Dịch vụ ML', '(Python/FastAPI)'], [1, 2], 150]],
   });
 
+/* ----------------------------------------- G. Giao hang & shipper ------- */
+
+// Thu tu ca su dung xep theo tac nhan (quan tri -> khach -> dieu phoi ->
+// nguoi giao) de moi tac nhan chi noi toi mot khoi hang lien tuc, duong lien
+// ket khong phai cat doc qua ca so do.
+const ucGiaoHang = () =>
+  phanRa({
+    id: 'ucG',
+    ten: 'PHÂN HỆ GIAO HÀNG',
+    moTa: 'Sơ đồ use case phân hệ giao hàng: khai đơn vị vận chuyển và bảng giá, điều phối phân đơn cho người giao, ứng dụng điện thoại của người giao phát vị trí GPS, và trang tự tra cứu đơn dành cho khách',
+    chinh: [
+      ['Khai đơn vị vận chuyển', '& bảng giá theo khoảng cách'],
+      'Quản lý hồ sơ nhân viên giao hàng',
+      'Đặt món giao tận nơi',
+      'Tra cứu đơn bằng mã giao',
+      'Xem danh sách đơn giao',
+      'Phân đơn cho nhân viên giao hàng',
+      'Theo dõi bản đồ thời gian thực',
+      'Cập nhật trạng thái đơn giao',
+      'Phát vị trí GPS khi đang giao',
+    ],
+    phu: [
+      [2, ['Tính phí giao theo khoảng cách', '(Haversine + bảng giá)'], 'include'],
+      [3, ['Chặn đơn ngoài bán kính phục vụ'], 'extend', 2, { x: 26, y: 16 }],
+      [5, ['Chọn đơn vị vận chuyển rẻ nhất'], 'include'],
+      [6, ['Xem lại lộ trình đã đi'], 'extend'],
+      [7, ['Ghi nhật ký chuyển trạng thái'], 'include'],
+      [8, ['Loại điểm sai số lớn hơn 200 m'], 'include'],
+    ],
+    trai: [
+      [240, ['Khách hàng'], [2, 3]],
+      [474, ['Điều phối', 'giao hàng'], [4, 5, 6, 7]],
+      [630, ['Nhân viên', 'giao hàng'], [7, 8]],
+    ],
+    phai: [[84, ['Quản trị', 'hệ thống'], [0, 1], 'chinh']],
+    ngoai: [[544, ['Bản đồ nền', 'OpenStreetMap'], [6], 150]],
+    chuThich: [[236, 744, ['Trang tra cứu bằng mã giao không cần đăng nhập.']]],
+  });
+
 module.exports = {
   tongQuat, ucKhachHang, ucPhucVu, ucBepKho, ucThanhToan, ucNhanSu, ucPhanTich,
+  ucGiaoHang,
 };

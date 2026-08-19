@@ -53,6 +53,36 @@ SQL_NGUYEN_LIEU = """
 """
 
 
+# Cua so va nguong dung de tim ngay cuoi cua giai doan van hanh deu dan.
+CUA_SO_VAN_HANH = 7
+NGAY_CO_DON_TOI_THIEU = 4
+
+
+def _cat_duoi_chua_van_hanh(df: pd.DataFrame) -> pd.DataFrame:
+    """Bo phan duoi chuoi khi nha hang chua thuc su van hanh.
+
+    "Chua co du lieu" khong giong "ban duoc 0 khach". Sau ngay cuoi cung cua
+    du lieu lich su, bang `hopdong` thuong con vai don le do chay thu he thong
+    - hai ngay cach nhau ca tuan, moi ngay vai don. Buoc dien 0 ngay duoi bien
+    ca doan do thanh mot chuoi "0 khach"; ma 60 ngay cuoi lai chinh la tap kiem
+    thu, nen moi mo hinh deu bi cham diem tren mot doan khong co that. Hau qua
+    do duoc: MAPE bung len hang chuc phan tram, mo hinh nen SeasonalNaive
+    thang moi mo hinh hoc may, va du bao de quy tra ve 0 khach cho moi ngay toi
+    vi toan bo lag deu bang 0.
+
+    Cach nhan biet mot ngay con thuoc giai doan van hanh: chinh ngay do phai co
+    don, va trong cua so 7 ngay ket thuc tai do phai co it nhat 4 ngay co don.
+    Vai don chay thu rai rac khong dat nguong nay; giai doan van hanh that thi
+    luon dat, ke ca tuan co ngay nghi.
+    """
+    co_don = df["so_don"] > 0
+    du_dac = co_don.rolling(CUA_SO_VAN_HANH, min_periods=1).sum() >= NGAY_CO_DON_TOI_THIEU
+    hop_le = df.index[co_don & du_dac]
+    if not len(hop_le):
+        return df
+    return df.loc[: hop_le[-1]].reset_index(drop=True)
+
+
 def _nap_chuoi_ngay() -> pd.DataFrame:
     """Chuoi so don + luot khach theo ngay, da dien day du cac ngay trong."""
     don = doc_sql(SQL_LUOT_KHACH)
@@ -66,7 +96,7 @@ def _nap_chuoi_ngay() -> pd.DataFrame:
     df = day_du.merge(df, on="ngay", how="left").fillna(0)
     for c in ["so_don", "so_mon", "so_khach"]:
         df[c] = df[c].astype(float)
-    return df
+    return _cat_duoi_chua_van_hanh(df)
 
 
 # --------------------------------------------------------------------------
@@ -168,6 +198,13 @@ def du_bao_luot_khach(so_ngay: int = 14, cot_muc_tieu: str = "so_khach", luu_db:
 
 
 def _luu_du_bao_khach(du_bao: pd.DataFrame, ten_mo_hinh: str) -> None:
+    # Xoa het du bao cu truoc khi ghi tap moi. Khoa duy nhat cua bang la
+    # (ngay_du_bao, mo_hinh) chu khong phai rieng ngay, nen ON DUPLICATE KEY chi
+    # ghi de khi lan chay moi VAN chon dung mo hinh cu. Doi mo hinh mot lan la
+    # bang con lai ca hai tap du bao chong len nhau, va nhung ngay chi co o tap
+    # cu thi nam lai vinh vien - trang /du-bao ve hai duong cho cung mot ngay.
+    # Bang nay luu du bao HIEN HANH, khong phai nhat ky, nen xoa la dung.
+    chay_sql("DELETE FROM du_bao_luot_khach")
     chay_sql(
         """INSERT INTO du_bao_luot_khach
              (ngay_du_bao, so_khach_du_bao, can_duoi, can_tren, mo_hinh)
@@ -311,6 +348,10 @@ def du_bao_nguyen_lieu(so_ngay: int = 7, toi_thieu_ngay: int = 90, luu_db: bool 
             )
 
     if luu_db and ban_ghi_db:
+        # Xoa truoc khi ghi, cung ly do nhu _luu_du_bao_khach: khoa duy nhat co
+        # ca cot mo_hinh, ma moi nguyen lieu lai co the doi mo hinh giua hai lan
+        # chay, nen khong xoa thi ban ghi cu tich luy lai mai.
+        chay_sql("DELETE FROM du_bao_nguyen_lieu")
         chay_sql(
             """INSERT INTO du_bao_nguyen_lieu
                  (ngay_du_bao, id_nl, so_luong_can, ton_hien_tai, can_nhap_them, mo_hinh)

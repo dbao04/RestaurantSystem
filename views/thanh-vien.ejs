@@ -1,0 +1,293 @@
+<%- include('partials/header', { title: t('thanh_vien.tieu_de'), activeNav: 'thanhvien' }) %>
+
+<%
+  /* Moi con so o day den tu route /thanh-vien (cau hinh that dang chay), khong
+     viet cung trong view. Xem ghi chu o route de biet ly do.
+
+     Trang phai chay duoc o ca hai trang thai: khach vang lai (viDiem = null) va
+     khach da dang nhap (viDiem la ban ghi trong loyalty_points). */
+  var tien = function (v) { return Number(v || 0).toLocaleString('vi-VN') + 'đ'; };
+  var so   = function (v) { return Number(v || 0).toLocaleString('vi-VN'); };
+
+  var thuTu   = ['bronze', 'silver', 'gold', 'platinum'];
+  /* Ten hang the phai theo ngon ngu dang xem. `TEN_HANG` do server truyen sang
+     la hang so tieng Viet trong loyaltyService, dung thang thi khach xem ban
+     tieng Anh van thay "Bach kim". Lay tu tu dien, thieu khoa moi lui ve no. */
+  var tenHang = function (h) {
+    return t('thanh_vien.hang_' + h) !== ('thanh_vien.hang_' + h)
+      ? t('thanh_vien.hang_' + h)
+      : (TEN_HANG[h] || h);
+  };
+  var bieuTuong = { bronze: 'fa-medal', silver: 'fa-award', gold: 'fa-crown', platinum: 'fa-gem' };
+
+  var hangHienTai = viDiem ? (viDiem.tier || 'bronze') : null;
+  var daTieu      = viDiem ? Number(viDiem.total_spent || 0) : 0;
+
+  /* Hang ke tiep va so tien con thieu de len hang - chi tinh khi da dang nhap. */
+  var hangKe = null, conThieu = 0;
+  if (viDiem) {
+    for (var i = 0; i < thuTu.length; i++) {
+      if (Number(NGUONG_HANG[thuTu[i]]) > daTieu) { hangKe = thuTu[i]; break; }
+    }
+    if (hangKe) conThieu = Number(NGUONG_HANG[hangKe]) - daTieu;
+  }
+
+  /* Phan tram tien do toi hang ke tiep, chan trong khoang 0-100. */
+  var tienDo = 100;
+  if (hangKe) {
+    var moc = Number(NGUONG_HANG[hangKe]) || 1;
+    tienDo = Math.max(0, Math.min(100, Math.round((daTieu / moc) * 100)));
+  }
+%>
+
+<!-- ================= HERO NHỎ ================= -->
+<section class="nh-subhero">
+  <div class="nh-subhero__bg nh-wa-shippo"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('thanh_vien.eyebrow') %></span>
+    <h1><%= t('thanh_vien.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('thanh_vien.tieu_de') %></div>
+  </div>
+</section>
+
+<% if (viDiem) { %>
+<!-- ================= THẺ CỦA TÔI (đã đăng nhập) ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <div class="nh-panel nh-reveal tv-the">
+      <div class="tv-the__trai">
+        <span class="nh-eyebrow nh-eyebrow--sm"><%= t('thanh_vien.the_cua_ban') %></span>
+        <div class="tv-the__hang">
+          <i class="fas <%= bieuTuong[hangHienTai] || 'fa-medal' %>"></i>
+          <span><%= t('thanh_vien.hang') %> <%= tenHang(hangHienTai) %></span>
+        </div>
+        <div class="tv-the__diem"><%= so(viDiem.points) %> <small><%= t('thanh_vien.don_vi_diem') %></small></div>
+        <p class="tv-the__quy">
+          <%- t('thanh_vien.doi_duoc_khoang', { tien: '<b>' + tien(Number(viDiem.points || 0) * cauHinh.gia_tri_1_diem) + '</b>' }) %>
+        </p>
+      </div>
+
+      <div class="tv-the__phai">
+        <div class="tv-tiendo__nhan">
+          <% if (hangKe) { %>
+            <%- t('thanh_vien.con_de_len_hang', {
+                  tien: '<b>' + tien(conThieu) + '</b>',
+                  hang: '<b>' + tenHang(hangKe) + '</b>' }) %>
+          <% } else { %>
+            <%= t('thanh_vien.hang_cao_nhat') %>
+          <% } %>
+        </div>
+        <div class="tv-tiendo"><span style="width: <%= tienDo %>%"></span></div>
+        <div class="tv-tiendo__moc">
+          <span><%= t('thanh_vien.da_chi_tieu') %> <%= tien(daTieu) %></span>
+          <% if (hangKe) { %><span><%= tien(NGUONG_HANG[hangKe]) %></span><% } %>
+        </div>
+      </div>
+    </div>
+
+    <% if (giaoDich && giaoDich.length) { %>
+      <div class="nh-panel nh-reveal" style="margin-top:22px">
+        <h3 class="nh-panel__title"><i class="fas fa-clock-rotate-left"></i> <%= t('thanh_vien.lich_su') %></h3>
+        <div class="tv-bang-bao">
+          <table class="tv-bang">
+            <thead>
+              <tr><th><%= t('thanh_vien.thoi_gian') %></th><th><%= t('thanh_vien.noi_dung') %></th><th class="tv-phai"><%= t('thanh_vien.diem') %></th></tr>
+            </thead>
+            <tbody>
+              <% giaoDich.forEach(function (g) { %>
+                <tr>
+                  <td><%= g.created_at ? new Date(g.created_at).toLocaleString('vi-VN') : '—' %></td>
+                  <td><%= g.description || (g.type === 'earn' ? t('thanh_vien.tich_diem') : t('thanh_vien.dung_diem')) %></td>
+                  <td class="tv-phai <%= g.type === 'earn' ? 'tv-cong' : 'tv-tru' %>">
+                    <%= g.type === 'earn' ? '+' : '−' %><%= so(g.points) %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } else { %>
+      <p class="nh-hint" style="margin-top:18px">
+        <%= t('thanh_vien.chua_giao_dich') %>
+      </p>
+    <% } %>
+  </div>
+</section>
+<% } %>
+
+<!-- ================= QUYỀN LỢI ================= -->
+<section class="nh-section">
+  <div class="nh-container">
+    <div class="nh-head nh-center">
+      <span class="nh-eyebrow"><%= t('thanh_vien.quyen_loi') %></span>
+      <h2><%= t('thanh_vien.khau_hieu') %></h2>
+      <p class="nh-lead">
+        <%= t('thanh_vien.mo_ta') %>
+      </p>
+    </div>
+
+    <div class="nh-features">
+      <div class="nh-feature nh-feature--light nh-reveal" data-delay="1">
+        <div class="nh-feature__icon"><i class="fas fa-coins"></i></div>
+        <h3><%= t('thanh_vien.cu_duoc_diem', { tien: tien(cauHinh.ty_le_tich_diem) }) %></h3>
+        <p>
+          <%= t('thanh_vien.cong_tu_dong', { tien: tien(cauHinh.ty_le_tich_diem * 30) }) %>
+        </p>
+      </div>
+      <div class="nh-feature nh-feature--light nh-reveal" data-delay="2">
+        <div class="nh-feature__icon"><i class="fas fa-tags"></i></div>
+        <h3><%= t('thanh_vien.diem_tru', { tien: tien(cauHinh.gia_tri_1_diem) }) %></h3>
+        <p>
+          <%= t('thanh_vien.tru_truc_tiep', { diem: so(cauHinh.toi_da_diem_moi_don), tien: tien(cauHinh.toi_da_diem_moi_don * cauHinh.gia_tri_1_diem) }) %>
+        </p>
+      </div>
+      <div class="nh-feature nh-feature--light nh-reveal" data-delay="3">
+        <div class="nh-feature__icon"><i class="fas fa-crown"></i></div>
+        <h3><%= t('thanh_vien.len_hang') %></h3>
+        <p>
+          <%= t('thanh_vien.tong_chi_tieu') %>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BỐN HẠNG THẺ ================= -->
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <div class="nh-head nh-center">
+      <span class="nh-eyebrow"><%= t('thanh_vien.hang_the') %></span>
+      <h2><%= t('thanh_vien.bon_hang') %></h2>
+    </div>
+
+    <div class="tv-hangs">
+      <% thuTu.forEach(function (h) { %>
+        <div class="tv-hang <%= hangHienTai === h ? 'is-cua-toi' : '' %> nh-reveal">
+          <% if (hangHienTai === h) { %><span class="tv-hang__co"><%= t('thanh_vien.hang_cua_ban') %></span><% } %>
+          <div class="tv-hang__icon"><i class="fas <%= bieuTuong[h] %>"></i></div>
+          <h3><%= tenHang(h) %></h3>
+          <div class="tv-hang__moc">
+            <% if (Number(NGUONG_HANG[h]) === 0) { %>
+              <%= t('thanh_vien.tu_hoa_don_dau') %>
+            <% } else { %>
+              <%= t('thanh_vien.tong_chi_tu', { tien: tien(NGUONG_HANG[h]) }) %>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CÁCH THAM GIA ================= -->
+<section class="nh-section">
+  <div class="nh-container nh-container-narrow">
+    <div class="nh-head nh-center">
+      <span class="nh-eyebrow"><%= t('thanh_vien.cach_tham_gia') %></span>
+      <h2><%= t('thanh_vien.ba_buoc') %></h2>
+    </div>
+
+    <ol class="tv-buoc">
+      <li>
+        <span class="tv-buoc__so">1</span>
+        <div>
+          <h3><%= t('thanh_vien.b1') %></h3>
+          <p><%= t('thanh_vien.b1_mo_ta') %></p>
+        </div>
+      </li>
+      <li>
+        <span class="tv-buoc__so">2</span>
+        <div>
+          <h3><%= t('thanh_vien.b2') %></h3>
+          <p><%= t('thanh_vien.b2_mo_ta') %></p>
+        </div>
+      </li>
+      <li>
+        <span class="tv-buoc__so">3</span>
+        <div>
+          <h3><%= t('thanh_vien.b3') %></h3>
+          <p><%= t('thanh_vien.diem_vao_vi') %></p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="nh-center" style="margin-top:30px">
+      <% if (!viDiem) { %>
+        <a href="/register" class="nh-btn nh-btn--gold"><i class="fas fa-user-plus"></i> <%= t('thanh_vien.dang_ky') %></a>
+        <a href="/login" class="nh-btn nh-btn--outline"><%= t('thanh_vien.da_co_tk') %></a>
+      <% } else { %>
+        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> <%= t('chung.xem_thuc_don') %></a>
+        <a href="/datban" class="nh-btn nh-btn--outline"><%= t('chung.dat_ban') %></a>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Khoi rieng cua trang thanh vien. Dat o day thay vi nhahang.css vi chi trang
+     nay dung - tranh lam phinh tep CSS chung ma moi trang deu phai tai. */
+  .tv-the { display: flex; flex-wrap: wrap; gap: 30px; align-items: center; }
+  .tv-the__trai { flex: 1 1 260px; }
+  .tv-the__phai { flex: 1 1 300px; }
+  .tv-the__hang {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 19px; font-weight: 700; color: #b8860b; margin: 6px 0 12px;
+  }
+  .tv-the__hang i { font-size: 22px; }
+  .tv-the__diem { font-size: 42px; font-weight: 800; color: #1a1a1a; line-height: 1; }
+  .tv-the__diem small { font-size: 17px; font-weight: 600; color: #888; }
+  .tv-the__quy { margin: 10px 0 0; color: #555; font-size: 14.5px; }
+
+  .tv-tiendo {
+    height: 10px; background: #eee; border-radius: 20px; overflow: hidden; margin: 10px 0 8px;
+  }
+  .tv-tiendo span {
+    display: block; height: 100%; border-radius: 20px;
+    background: linear-gradient(90deg, #d4a017, #b8860b);
+  }
+  .tv-tiendo__nhan { font-size: 14.5px; color: #444; }
+  .tv-tiendo__moc { display: flex; justify-content: space-between; font-size: 12.5px; color: #999; }
+
+  .tv-bang-bao { overflow-x: auto; }
+  .tv-bang { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .tv-bang th, .tv-bang td { padding: 11px 12px; border-bottom: 1px solid #eee; text-align: left; }
+  .tv-bang th { color: #888; font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .tv-phai { text-align: right; }
+  .tv-cong { color: #16a34a; font-weight: 700; }
+  .tv-tru  { color: #c0392b; font-weight: 700; }
+
+  .tv-hangs {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px;
+  }
+  .tv-hang {
+    position: relative; background: #fff; border: 1px solid #ececec; border-radius: 12px;
+    padding: 26px 20px; text-align: center;
+  }
+  .tv-hang.is-cua-toi { border-color: #d4a017; box-shadow: 0 6px 22px rgba(212,160,23,.18); }
+  .tv-hang__co {
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    background: #d4a017; color: #fff; font-size: 11.5px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+  }
+  .tv-hang__icon { font-size: 30px; color: #d4a017; margin-bottom: 10px; }
+  .tv-hang h3 { font-size: 19px; margin: 0 0 6px; }
+  .tv-hang__moc { font-size: 13.5px; color: #777; }
+
+  .tv-buoc { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; }
+  .tv-buoc li { display: flex; gap: 16px; align-items: flex-start; }
+  .tv-buoc__so {
+    flex: 0 0 40px; height: 40px; border-radius: 50%;
+    background: #d4a017; color: #fff; font-weight: 800; font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tv-buoc h3 { font-size: 17.5px; margin: 6px 0 4px; }
+  .tv-buoc p { margin: 0; color: #666; font-size: 14.5px; }
+
+  @media (max-width: 575px) {
+    .tv-the__diem { font-size: 34px; }
+  }
+</style>
+
+<%- include('partials/footer') %>

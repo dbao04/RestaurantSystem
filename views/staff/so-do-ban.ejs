@@ -18,9 +18,23 @@
              align-items:center; flex-wrap:wrap; gap:12px; }
     header h1 { margin:0; font-size:19px; }
     header .sub { font-size:12.5px; opacity:.85; margin-top:2px; }
+    /* nav la flex co gap chu khong phai cac the a noi tiep nhau cach nhau bang
+       margin-left: the <a> mac dinh la inline, ma padding tren o inline KHONG
+       lam giay dong ra - nen khi ba nut xuong dong tren dien thoai, khung vien
+       cua nut dong duoi de len nut dong tren. Do o 390px: nut "Trang nhan vien"
+       xuong dong va khung cua no cat ngang nut "Man hinh bep". */
+    header nav { display:flex; flex-wrap:wrap; gap:8px; }
     header nav a { color:#fff; text-decoration:none; font-size:13px; padding:7px 13px;
-                   border:1px solid rgba(255,255,255,.35); border-radius:7px; margin-left:8px; }
+                   border:1px solid rgba(255,255,255,.35); border-radius:7px;
+                   display:inline-flex; align-items:center; min-height:38px; }
     header nav a:hover { background:rgba(255,255,255,.16); }
+
+    /* Dien thoai: le 26px hai ben la qua rong tren man 390px. */
+    @media (max-width:640px) {
+      header { padding:14px 16px; }
+      header h1 { font-size:17px; }
+      .wrap { padding:14px 16px 40px; }
+    }
     .cham { display:inline-block; width:9px; height:9px; border-radius:50%;
             background:#4ade80; margin-right:6px; }
     .cham.tat { background:#f87171; }

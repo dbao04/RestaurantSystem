@@ -33,7 +33,22 @@ function laTaiKhoanQR(sdt) {
 const orderService = {
   // ============ CART OPERATIONS ============
   getCart: async (sessionId) => {
-    const [rows] = await db.query('SELECT * FROM cart WHERE sesid = ?', [sessionId]);
+    /*
+      Lay kem `ghichu_mon` cua mon goc.
+
+      Bang `cart` chi chup lai ten va gia luc khach bam them - dung the de gia
+      da chot khong doi khi nha hang sua bang gia giua chung. Nhung ten tieng
+      Anh / tieng Nhat thi phai lay tu `monan`, vi cart khong co cot do; thieu
+      no thi doi sang English hay 日本語 xong, rieng gio hang van tieng Viet.
+
+      LEFT JOIN chu khong phai JOIN: mon bi xoa khoi thuc don ma con trong gio
+      cua ai do thi dong gio hang phai con nguyen, chi la khong co ten dich.
+    */
+    const [rows] = await db.query(
+      `SELECT c.*, m.ghichu_mon
+       FROM cart c LEFT JOIN monan m ON m.id_mon = c.id_mon
+       WHERE c.sesid = ?`, [sessionId]
+    );
     return rows;
   },
 

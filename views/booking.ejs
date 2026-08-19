@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Đặt bàn' }) %>
+<%- include('partials/header', { title: t('dat_ban.tieu_de') }) %>
 
 <%
   /*
@@ -58,12 +58,12 @@
 </style>
 
 <section class="nh-subhero" style="min-height:38vh">
-  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Giữ chỗ cho bạn</span>
-    <h1 id="tieu-de">Đặt bàn</h1>
-    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/cart">Giỏ hàng</a> &nbsp;/&nbsp; <span id="crumb">Đặt bàn</span></div>
+    <span class="nh-eyebrow"><%= t('dat_ban.eyebrow') %></span>
+    <h1 id="tieu-de"><%= t('dat_ban.tieu_de') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <a href="/cart"><%= t('gio_hang.tieu_de') %></a> &nbsp;/&nbsp; <span id="crumb"><%= t('dat_ban.tieu_de') %></span></div>
   </div>
 </section>
 
@@ -86,23 +86,23 @@
           <% if (coGiaoHang) { %>
             <!-- Hình thức -->
             <div class="nh-panel nh-reveal">
-              <h3 class="nh-panel__title"><i class="fas fa-hand-pointer"></i> Bạn muốn dùng bữa thế nào?</h3>
+              <h3 class="nh-panel__title"><i class="fas fa-hand-pointer"></i> <%= t('dat_ban.hinh_thuc') %></h3>
               <div class="hinh-thuc">
                 <label class="ht-o">
                   <input type="radio" name="hinh_thuc" value="tai_cho" checked>
                   <span>
-                    <b><i class="fas fa-utensils"></i>Ăn tại nhà hàng</b>
-                    <small>Giữ bàn theo giờ bạn chọn. Nhà hàng gọi lại xác nhận.</small>
+                    <b><i class="fas fa-utensils"></i><%= t('dat_ban.tai_cho') %></b>
+                    <small><%= t('dat_ban.tai_cho_mo_ta') %></small>
                   </span>
                 </label>
                 <label class="ht-o">
                   <input type="radio" name="hinh_thuc" value="giao_hang">
                   <span>
-                    <b><i class="fas fa-motorcycle"></i>Giao tận nơi</b>
+                    <b><i class="fas fa-motorcycle"></i><%= t('dat_ban.giao_hang') %></b>
                     <small>
-                      Trong bán kính <%= giaoHang.ban_kinh_km %> km.
+                      <%= t('dat_ban.giao_hang_mo_ta', { km: giaoHang.ban_kinh_km }) %>
                       <% if (giaoHang.mien_phi_tu > 0) { %>
-                        Miễn phí giao cho đơn từ <%= formatMoney(giaoHang.mien_phi_tu) %>₫.
+                        <%= t('dat_ban.mien_phi_tu', { tien: formatMoney(giaoHang.mien_phi_tu) }) %>
                       <% } %>
                     </small>
                   </span>
@@ -112,43 +112,42 @@
 
             <!-- Địa chỉ giao (chỉ hiện khi chọn giao hàng) -->
             <div class="nh-panel nh-reveal" id="khoi-giao" style="display:none">
-              <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> Giao tới đâu?</h3>
+              <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> <%= t('dat_ban.giao_toi_dau') %></h3>
 
               <div class="nh-field">
-                <label>Địa chỉ nhận hàng <span class="req">*</span></label>
+                <label><%= t('dat_ban.dia_chi_nhan') %> <span class="req">*</span></label>
                 <input class="nh-input" name="dia_chi_giao" id="o-dia-chi" maxlength="300"
-                       value="<%= diaChiCu %>" placeholder="Số nhà, tên đường, phường, quận">
-                <span class="nh-hint">Ghi càng chi tiết càng đỡ mất thời gian gọi lại hỏi đường.</span>
+                       value="<%= diaChiCu %>" placeholder="<%= t('dat_ban.dia_chi_goi_y') %>">
+                <span class="nh-hint"><%= t('dat_ban.dia_chi_chi_tiet') %></span>
               </div>
 
               <div class="nh-fields">
                 <div class="nh-field">
-                  <label>Người nhận</label>
+                  <label><%= t('dat_ban.nguoi_nhan') %></label>
                   <input class="nh-input" name="ten_nguoi_nhan" maxlength="120"
                          value="<%= session.username %>">
                 </div>
                 <div class="nh-field">
-                  <label>Số điện thoại người nhận</label>
+                  <label><%= t('dat_ban.sdt_nguoi_nhan') %></label>
                   <input class="nh-input" name="sdt_nguoi_nhan" maxlength="20"
                          value="<%= session.usersdt %>">
                 </div>
               </div>
 
               <div class="nh-field">
-                <label>Ghi chú cho shipper</label>
+                <label><%= t('dat_ban.ghi_chu_shipper') %></label>
                 <input class="nh-input" name="ghi_chu_giao" maxlength="300"
-                       placeholder="Gọi trước khi tới, nhà cổng xanh, gửi bảo vệ…">
+                       placeholder="<%= t('dat_ban.ghi_chu_shipper_goi_y') %>">
               </div>
 
               <label style="display:block; margin-top:6px; font-weight:600">
-                Ghim đúng vị trí trên bản đồ <span class="req">*</span>
+                <%= t('dat_ban.ghim_ban_do') %> <span class="req">*</span>
               </label>
               <span class="nh-hint">
-                Bấm vào bản đồ để đặt ghim, hoặc dùng nút bên dưới. Ghim quyết định phí giao và
-                giúp shipper tới đúng nơi — địa chỉ viết tay dễ trùng tên đường.
+                <%= t('dat_ban.ghim_huong_dan') %>
               </span>
               <button type="button" class="gh-nut" id="nut-vi-tri">
-                <i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi
+                <i class="fas fa-crosshairs"></i> <%= t('dat_ban.dung_vi_tri') %>
               </button>
               <div id="gh-ban-do"></div>
 
@@ -156,7 +155,7 @@
               <input type="hidden" name="kinh_do" id="o-kinh-do">
 
               <div class="gh-phi" id="gh-phi">
-                Chưa đặt ghim — hãy bấm vào bản đồ để hệ thống tính phí giao.
+                <%= t('dat_ban.chua_ghim') %>
               </div>
             </div>
 
@@ -171,49 +170,49 @@
 
           <!-- Người đặt -->
           <div class="nh-panel nh-reveal">
-            <h3 class="nh-panel__title"><i class="fas fa-user"></i> Người đặt</h3>
+            <h3 class="nh-panel__title"><i class="fas fa-user"></i> <%= t('dat_ban.nguoi_dat') %></h3>
             <div class="nh-fields">
               <div class="nh-field">
-                <label>Họ tên <span class="nh-locked">tự động</span></label>
+                <label><%= t('chung.ho_ten') %> <span class="nh-locked"><%= t('chung.tu_dong') %></span></label>
                 <input class="nh-input" type="text" value="<%= session.username %>" readonly>
               </div>
               <div class="nh-field">
-                <label>Số điện thoại <span class="nh-locked">tự động</span></label>
+                <label><%= t('chung.dien_thoai') %> <span class="nh-locked"><%= t('chung.tu_dong') %></span></label>
                 <input class="nh-input" type="text" value="<%= session.usersdt %>" readonly>
               </div>
             </div>
             <p class="nh-note">
-              Lấy từ tài khoản của bạn. Cần đổi thì sửa trong
-              <a href="/profile" style="color:var(--nh-gold); font-weight:600">thông tin cá nhân</a>.
+              <%= t('dat_ban.lay_tu_tai_khoan') %>
+              <a href="/profile" style="color:var(--nh-gold); font-weight:600"><%= t('dat_ban.thong_tin_ca_nhan') %></a>.
             </p>
           </div>
 
           <!-- Thời gian -->
           <div class="nh-panel nh-reveal">
-            <h3 class="nh-panel__title"><i class="fas fa-calendar-alt"></i> Thời gian</h3>
+            <h3 class="nh-panel__title"><i class="fas fa-calendar-alt"></i> <%= t('dat_ban.thoi_gian') %></h3>
             <div class="nh-fields">
               <div class="nh-field">
-                <label id="nhan-ngay">Ngày đến <span class="req">*</span></label>
+                <label id="nhan-ngay"><%= t('dat_ban.ngay_den') %> <span class="req">*</span></label>
                 <input class="nh-input" type="date" name="datebook" id="o-ngay" required
                        min="<%= new Date().toISOString().slice(0,10) %>">
-                <span class="nh-hint" id="hint-ngay">Chỉ nhận đặt từ hôm nay trở đi.</span>
+                <span class="nh-hint" id="hint-ngay"><%= t('dat_ban.chi_tu_hom_nay') %></span>
               </div>
               <div class="nh-field">
-                <label id="nhan-gio">Giờ đến <span class="req">*</span></label>
+                <label id="nhan-gio"><%= t('dat_ban.gio_den') %> <span class="req">*</span></label>
                 <input class="nh-input" type="time" name="timebook" id="o-gio" required value="18:00">
-                <span class="nh-hint">Nhà hàng phục vụ 10:00 – 22:00.</span>
+                <span class="nh-hint"><%= t('dat_ban.gio_phuc_vu') %></span>
               </div>
             </div>
           </div>
 
           <!-- Số khách -->
           <div class="nh-panel nh-reveal" id="khoi-khach">
-            <h3 class="nh-panel__title"><i class="fas fa-users"></i> Số khách <span class="req" style="color:#c0392b">*</span></h3>
+            <h3 class="nh-panel__title"><i class="fas fa-users"></i> <%= t('dat_ban.so_khach') %> <span class="req" style="color:#c0392b">*</span></h3>
             <div class="nh-chips">
               <% ['2','4','6','8','10-15','15-20'].forEach(function (n, i) { %>
                 <label class="nh-chip">
                   <input type="radio" name="khach" value="<%= n %>" required <%= i === 0 ? '' : '' %>>
-                  <span><i class="fas fa-user-friends"></i> <%= n %> người</span>
+                  <span><i class="fas fa-user-friends"></i> <%= n %> <%= t('chung.nguoi') %></span>
                 </label>
               <% }) %>
             </div>
@@ -221,21 +220,21 @@
 
           <!-- Dịp -->
           <div class="nh-panel nh-reveal" id="khoi-dip">
-            <h3 class="nh-panel__title"><i class="fas fa-champagne-glasses"></i> Dịp đặt bàn <span class="req" style="color:#c0392b">*</span></h3>
+            <h3 class="nh-panel__title"><i class="fas fa-champagne-glasses"></i> <%= t('dat_ban.dip') %> <span class="req" style="color:#c0392b">*</span></h3>
             <div class="nh-chips">
               <%
                 var DIP = [
-                  { v: 'Dùng bữa thường', i: 'fa-utensils' },
-                  { v: 'Sinh nhật',       i: 'fa-cake-candles' },
-                  { v: 'Tiệc cưới',       i: 'fa-ring' },
-                  { v: 'Cuộc họp',        i: 'fa-briefcase' },
-                  { v: 'Khác',            i: 'fa-ellipsis' },
+                  { v: 'Dùng bữa thường', nhan: t('dat_ban.dip_thuong'), i: 'fa-utensils' },
+                  { v: 'Sinh nhật', nhan: t('dat_ban.dip_sinh_nhat'), i: 'fa-cake-candles' },
+                  { v: 'Tiệc cưới', nhan: t('dat_ban.dip_cuoi'), i: 'fa-ring' },
+                  { v: 'Cuộc họp', nhan: t('dat_ban.dip_hop'), i: 'fa-briefcase' },
+                  { v: 'Khác', nhan: t('dat_ban.dip_khac'), i: 'fa-ellipsis' },
                 ];
               %>
               <% DIP.forEach(function (d) { %>
                 <label class="nh-chip">
                   <input type="radio" name="noidung" value="<%= d.v %>" required>
-                  <span><i class="fas <%= d.i %>"></i> <%= d.v %></span>
+                  <span><i class="fas <%= d.i %>"></i> <%= d.nhan %></span>
                 </label>
               <% }) %>
             </div>
@@ -245,7 +244,7 @@
         <!-- Tóm tắt đơn -->
         <aside class="nh-summary nh-reveal">
           <div class="nh-panel">
-            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> Đơn của bạn</h3>
+            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('dat_ban.don_cua_ban') %></h3>
 
             <% if (typeof cartItems !== 'undefined' && cartItems && cartItems.length) { %>
               <% cartItems.forEach(function (item) { %>
@@ -256,26 +255,25 @@
               <% }) %>
               <% if (coGiaoHang) { %>
                 <div class="nh-summary__row" id="dong-phi" style="display:none">
-                  <span>Phí giao hàng</span>
+                  <span><%= t('dat_ban.phi_giao') %></span>
                   <span id="dong-phi-so">—</span>
                 </div>
               <% } %>
               <div class="nh-summary__total">
-                <span>Tổng cộng</span>
+                <span><%= t('chung.tong_cong') %></span>
                 <b><span id="tong-tien"><%= formatMoney(subtotal) %></span> ₫</b>
               </div>
               <a href="/cart" class="nh-hint" style="display:inline-block; margin-top:.6rem; color:var(--nh-gold); font-weight:600">
-                <i class="fas fa-pen"></i> Sửa món
+                <i class="fas fa-pen"></i> <%= t('dat_ban.sua_mon') %>
               </a>
             <% } %>
 
             <button type="submit" class="nh-btn nh-btn--gold" id="nut-gui">
-              <span id="chu-nut">Xác nhận đặt bàn</span> <i class="fas fa-arrow-right"></i>
+              <span id="chu-nut"><%= t('dat_ban.xac_nhan_dat_ban') %></span> <i class="fas fa-arrow-right"></i>
             </button>
 
             <p class="nh-note" id="ghi-chu-cuoi">
-              Bấm xác nhận là gửi yêu cầu giữ bàn. Nhà hàng gọi lại theo số điện thoại của bạn để chốt —
-              <strong>chưa thanh toán</strong> ở bước này.
+              <%- t('dat_ban.ghi_chu_tai_cho') %>
             </p>
           </div>
         </aside>
@@ -286,6 +284,47 @@
 
 <% if (coGiaoHang) { %><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><% } %>
 <script>
+/*
+  Chuoi ngon ngu cho phan JavaScript cua trang nay.
+
+  Cac chuoi trong ma JavaScript khong the goi thang `t()` - `t()` chay o may
+  chu luc dung HTML, con doan nay chay o trinh duyet sau do. Nen dong het vao
+  mot doi tuong duy nhat, sinh boi may chu ngay tai day.
+
+  Gom thanh MOT khoi thay vi rai `<%%= t(...) %%>` giua ma JavaScript vi hai le:
+  ma con doc duoc nhu ma, va them mot chuoi moi chi la them mot dong o day.
+*/
+var NN = {
+  chiTuHomNay:   <%- JSON.stringify(t('dat_ban.chi_tu_hom_nay')) %>,
+  gioDaQua:      <%- JSON.stringify(t('dat_ban.gio_da_qua')) %>,
+  datHomNay:     <%- JSON.stringify(t('dat_ban.dat_trong_hom_nay')) %>,
+  dangGui:       <%- JSON.stringify(t('chung.dang_gui')) %>,
+  tieuDe:        <%- JSON.stringify(t('dat_ban.tieu_de')) %>,
+  tieuDeGiao:    <%- JSON.stringify(t('dat_ban.tieu_de_giao')) %>,
+  giaoHang:      <%- JSON.stringify(t('dat_ban.giao_hang')) %>,
+  ngayDen:       <%- JSON.stringify(t('dat_ban.ngay_den')) %>,
+  gioDen:        <%- JSON.stringify(t('dat_ban.gio_den')) %>,
+  ngayNhan:      <%- JSON.stringify(t('dat_ban.ngay_nhan')) %>,
+  gioNhan:       <%- JSON.stringify(t('dat_ban.gio_nhan')) %>,
+  xacNhanDatBan: <%- JSON.stringify(t('dat_ban.xac_nhan_dat_ban')) %>,
+  datGiaoHang:   <%- JSON.stringify(t('dat_ban.dat_giao_hang')) %>,
+  ghiChuTaiCho:  <%- JSON.stringify(t('dat_ban.ghi_chu_tai_cho')) %>,
+  ghiChuGiao:    <%- JSON.stringify(t('dat_ban.ghi_chu_giao')) %>,
+  dangTinhPhi:   <%- JSON.stringify(t('dat_ban.dang_tinh_phi')) %>,
+  dangLayViTri:  <%- JSON.stringify(t('dat_ban.dang_lay_vi_tri')) %>,
+  dungViTri:     <%- JSON.stringify(t('dat_ban.dung_vi_tri')) %>,
+  cachNhaHang:   <%- JSON.stringify(t('dat_ban.cach_nha_hang')) %>,
+  phiGiao:       <%- JSON.stringify(t('dat_ban.phi_giao')) %>,
+  mienPhi:       <%- JSON.stringify(t('chung.mien_phi')) %>,
+  duocMienPhi:   <%- JSON.stringify(t('dat_ban.duoc_mien_phi')) %>,
+  camKetTrong:   <%- JSON.stringify(t('dat_ban.cam_ket_trong')) %>,
+  loiDiaChi:     <%- JSON.stringify(t('dat_ban.loi_dia_chi')) %>,
+  loiGhim:       <%- JSON.stringify(t('dat_ban.loi_ghim')) %>,
+  loiViTri:      <%- JSON.stringify(t('dat_ban.loi_vi_tri')) %>,
+  khongHoTro:    <%- JSON.stringify(t('dat_ban.loi_khong_ho_tro')) %>,
+  loiBaoGia:     <%- JSON.stringify(t('dat_ban.loi_bao_gia')) %>,
+  khongGiaoDuoc: <%- JSON.stringify(t('dat_ban.loi_bao_gia')) %>,
+};
 (function () {
   var form = document.getElementById('form-datban');
   var oNgay = document.getElementById('o-ngay');
@@ -302,16 +341,16 @@
   // Đặt trong ngày mà chọn giờ đã trôi qua thì báo ngay tại chỗ, chứ để server
   // trả về alert() rồi history.back() là mất hết những gì vừa điền.
   function kiemTra() {
-    if (oNgay.value !== yyyymmdd) { hint.textContent = 'Chỉ nhận đặt từ hôm nay trở đi.'; hint.style.color = ''; return true; }
+    if (oNgay.value !== yyyymmdd) { hint.textContent = NN.chiTuHomNay; hint.style.color = ''; return true; }
     var g = (oGio.value || '').split(':');
     if (g.length < 2) return true;
     var chon = new Date(); chon.setHours(Number(g[0]), Number(g[1]), 0, 0);
     if (chon <= new Date()) {
-      hint.textContent = 'Giờ này đã qua rồi — chọn giờ muộn hơn hoặc đổi sang ngày khác.';
+      hint.textContent = NN.gioDaQua;
       hint.style.color = '#c0392b';
       return false;
     }
-    hint.textContent = 'Đặt trong hôm nay.'; hint.style.color = '';
+    hint.textContent = NN.datHomNay; hint.style.color = '';
     return true;
   }
   oNgay.onchange = kiemTra;
@@ -322,7 +361,7 @@
     if (typeof kiemTraGiaoHang === 'function' && !kiemTraGiaoHang()) { e.preventDefault(); return false; }
     var nut = form.querySelector('button[type=submit]');
     nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + NN.dangGui;
   };
 
 <% if (coGiaoHang) { %>
@@ -365,16 +404,12 @@
     ghKhach.disabled = !giao;
     ghNoiDung.disabled = !giao;
 
-    document.getElementById('tieu-de').textContent = giao ? 'Giao hàng tận nơi' : 'Đặt bàn';
-    document.getElementById('crumb').textContent = giao ? 'Giao hàng' : 'Đặt bàn';
-    document.getElementById('nhan-ngay').innerHTML = (giao ? 'Ngày nhận hàng' : 'Ngày đến') + ' <span class="req">*</span>';
-    document.getElementById('nhan-gio').innerHTML = (giao ? 'Giờ muốn nhận' : 'Giờ đến') + ' <span class="req">*</span>';
-    document.getElementById('chu-nut').textContent = giao ? 'Đặt giao hàng' : 'Xác nhận đặt bàn';
-    document.getElementById('ghi-chu-cuoi').innerHTML = giao
-      ? 'Bấm đặt là đơn xuống bếp ngay. Bạn <strong>trả tiền mặt cho shipper</strong> khi nhận hàng, ' +
-        'và theo dõi được shipper đang ở đâu trên bản đồ.'
-      : 'Bấm xác nhận là gửi yêu cầu giữ bàn. Nhà hàng gọi lại theo số điện thoại của bạn để chốt — ' +
-        '<strong>chưa thanh toán</strong> ở bước này.';
+    document.getElementById('tieu-de').textContent = giao ? NN.tieuDeGiao : NN.tieuDe;
+    document.getElementById('crumb').textContent = giao ? NN.giaoHang : NN.tieuDe;
+    document.getElementById('nhan-ngay').innerHTML = (giao ? NN.ngayNhan : NN.ngayDen) + ' <span class="req">*</span>';
+    document.getElementById('nhan-gio').innerHTML = (giao ? NN.gioNhan : NN.gioDen) + ' <span class="req">*</span>';
+    document.getElementById('chu-nut').textContent = giao ? NN.datGiaoHang : NN.xacNhanDatBan;
+    document.getElementById('ghi-chu-cuoi').innerHTML = giao ? NN.ghiChuGiao : NN.ghiChuTaiCho;
 
     dongPhi.style.display = (giao && baoGia && baoGia.giao_duoc) ? '' : 'none';
     veTong();
@@ -408,7 +443,7 @@
                 'box-shadow:0 2px 8px rgba(0,0,0,.35)"><i class="fas fa-utensils"></i></div>',
           iconSize: [28, 28], iconAnchor: [14, 14],
         }),
-      }).addTo(ban_do).bindPopup('Nhà hàng');
+      }).addTo(ban_do).bindPopup(<%- JSON.stringify(t('chung.ten_nha_hang')) %>);
     }
 
     ban_do.on('click', function (e) { datGhim(e.latlng.lat, e.latlng.lng); });
@@ -436,7 +471,7 @@
   function hoiPhi() {
     clearTimeout(henHoi);
     hopPhi.className = 'gh-phi';
-    hopPhi.textContent = 'Đang tính phí giao…';
+    hopPhi.textContent = NN.dangTinhPhi;
     // Gom các lần kéo ghim liên tiếp thành một lần hỏi.
     henHoi = setTimeout(function () {
       fetch('/api/giao-hang/bao-gia?vi_do=' + oViDo.value + '&kinh_do=' + oKinhDo.value +
@@ -446,46 +481,46 @@
           baoGia = d;
           if (!d.giao_duoc) {
             hopPhi.className = 'gh-phi gh-phi--loi';
-            hopPhi.textContent = d.ly_do || 'Không giao được tới vị trí này.';
+            hopPhi.textContent = d.ly_do || NN.khongGiaoDuoc;
             dongPhi.style.display = 'none';
             veTong();
             return;
           }
           hopPhi.className = 'gh-phi';
           hopPhi.innerHTML =
-            'Cách nhà hàng <b>' + d.khoang_cach_km + ' km</b> · phí giao <b>' +
-            (d.phi > 0 ? tien(d.phi) + ' ₫' : 'miễn phí') + '</b>' +
-            (d.mien_phi ? ' <span style="color:#198754">(đơn của bạn được miễn phí giao)</span>' : '') +
-            (d.don_vi ? '<br><span style="color:#8a8a8a">' + d.don_vi.ten_dv +
-              ' · cam kết giao trong ' + d.don_vi.thoi_gian_cam_ket_phut + ' phút</span>' : '');
+            NN.cachNhaHang + ' <b>' + d.khoang_cach_km + ' km</b> · ' + NN.phiGiao + ' <b>' +
+            (d.phi > 0 ? tien(d.phi) + ' ₫' : NN.mienPhi) + '</b>' +
+            (d.mien_phi ? ' <span style="color:#198754">' + NN.duocMienPhi + '</span>' : '') +
+            (d.don_vi ? '<br><span style="color:#8a8a8a">' + d.don_vi.ten_dv + ' · ' +
+              NN.camKetTrong.replace('{phut}', d.don_vi.thoi_gian_cam_ket_phut) + '</span>' : '');
           dongPhiSo.textContent = (d.phi > 0 ? tien(d.phi) : 0) + ' ₫';
           dongPhi.style.display = '';
           veTong();
         })
         .catch(function () {
           hopPhi.className = 'gh-phi gh-phi--loi';
-          hopPhi.textContent = 'Không hỏi được phí giao — kiểm tra kết nối rồi thử lại.';
+          hopPhi.textContent = NN.loiBaoGia;
         });
     }, 350);
   }
 
   document.getElementById('nut-vi-tri').onclick = function () {
     var nut = this;
-    if (!navigator.geolocation) { alert('Trình duyệt của bạn không hỗ trợ định vị.'); return; }
+    if (!navigator.geolocation) { alert(NN.khongHoTro); return; }
     nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lấy vị trí…';
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + NN.dangLayViTri;
     navigator.geolocation.getCurrentPosition(function (v) {
       dungBanDo();
       ban_do.setView([v.coords.latitude, v.coords.longitude], 17);
       datGhim(v.coords.latitude, v.coords.longitude);
       nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi';
+      nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + NN.dungViTri;
     }, function () {
       // Không nói "lỗi": người dùng vừa chủ động từ chối, hoặc đang ở trong nhà
       // không bắt được vệ tinh. Cả hai đều có cách đi tiếp là bấm vào bản đồ.
-      alert('Chưa lấy được vị trí. Bạn bấm thẳng vào bản đồ để đặt ghim nhé.');
+      alert(NN.loiViTri);
       nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-crosshairs"></i> Dùng vị trí hiện tại của tôi';
+      nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + NN.dungViTri;
     }, { enableHighAccuracy: true, timeout: 12000 });
   };
 
@@ -494,9 +529,9 @@
      khách biết ngay tại chỗ, thay vì mất hết những gì vừa điền rồi mới biết. */
   window.kiemTraGiaoHang = function () {
     if (!laGiao) return true;
-    if (!oDiaChi.value.trim()) { alert('Hãy nhập địa chỉ nhận hàng.'); oDiaChi.focus(); return false; }
-    if (!oViDo.value) { alert('Hãy bấm vào bản đồ để ghim vị trí nhận hàng.'); return false; }
-    if (baoGia && !baoGia.giao_duoc) { alert(baoGia.ly_do || 'Không giao được tới vị trí này.'); return false; }
+    if (!oDiaChi.value.trim()) { alert(NN.loiDiaChi); oDiaChi.focus(); return false; }
+    if (!oViDo.value) { alert(NN.loiGhim); return false; }
+    if (baoGia && !baoGia.giao_duoc) { alert(baoGia.ly_do || NN.khongGiaoDuoc); return false; }
     return true;
   };
 

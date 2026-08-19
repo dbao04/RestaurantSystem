@@ -1,12 +1,12 @@
 <%- include('partials/header') %>
 
-<section class="hero-wrap hero-wrap-2" style="background-image: url('/bg_3.jpg');" data-stellar-background-ratio="0.5">
+<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
   <div class="overlay"></div>
   <div class="container">
     <div class="row no-gutters slider-text align-items-end justify-content-center">
       <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread">Thông tin cá nhân</h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/">Trang chủ <i class="ion-ios-arrow-forward"></i></a></span> <span>Tài khoản <i class="ion-ios-arrow-forward"></i></span></p>
+        <h1 class="mb-2 bread"><%= t('tai_khoan.thong_tin') %></h1>
+        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span><%= t('dieu_huong.tai_khoan') %> <i class="ion-ios-arrow-forward"></i></span></p>
       </div>
     </div>
   </div>
@@ -21,66 +21,66 @@
       <!-- Cập nhật thông tin -->
       <div class="col-md-6">
         <div class="card shadow-sm mb-4">
-          <div class="card-header bg-dark text-white"><i class="icon-person mr-2"></i>Thông tin cá nhân</div>
+          <div class="card-header bg-dark text-white"><i class="icon-person mr-2"></i><%= t('tai_khoan.thong_tin') %></div>
           <div class="card-body">
             <form action="/profile" method="POST">
               <input type="hidden" name="action" value="update">
               <div class="form-group">
-                <label>Họ và tên</label>
+                <label><%= t('tai_khoan.ho_va_ten') %></label>
                 <input type="text" class="form-control" name="ten" value="<%= user.ten %>" required>
               </div>
               <div class="form-group">
-                <label>Số điện thoại</label>
+                <label><%= t('chung.dien_thoai') %></label>
                 <input type="text" class="form-control" value="<%= user.sodienthoai %>" readonly disabled>
-                <small class="text-muted">Không thể thay đổi số điện thoại</small>
+                <small class="text-muted"><%= t('tai_khoan.khong_doi_sdt') %></small>
               </div>
               <div class="form-group">
                 <label>Email</label>
                 <input type="email" class="form-control" name="email" value="<%= user.email || '' %>" required>
               </div>
               <div class="form-group">
-                <label>Địa chỉ</label>
+                <label><%= t('chung.dia_chi') %></label>
                 <input type="text" class="form-control" name="diachi" value="<%= user.diachi || '' %>">
               </div>
-              <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+              <button type="submit" class="btn btn-primary"><%= t('tai_khoan.luu_thong_tin') %></button>
             </form>
           </div>
         </div>
       </div>
 
-      <!-- Đổi mật khẩu -->
+      <!-- <%= t('tai_khoan.doi_mat_khau') %> -->
       <div class="col-md-6">
         <div class="card shadow-sm mb-4">
-          <div class="card-header bg-dark text-white"><i class="icon-lock mr-2"></i>Đổi mật khẩu</div>
+          <div class="card-header bg-dark text-white"><i class="icon-lock mr-2"></i><%= t('tai_khoan.doi_mat_khau') %></div>
           <div class="card-body">
             <form action="/profile" method="POST">
               <input type="hidden" name="action" value="password">
               <div class="form-group">
-                <label>Mật khẩu cũ</label>
+                <label><%= t('tai_khoan.mat_khau_cu') %></label>
                 <input type="password" class="form-control" name="old_pass" required>
               </div>
               <div class="form-group">
-                <label>Mật khẩu mới</label>
+                <label><%= t('tai_khoan.mat_khau_moi') %></label>
                 <input type="password" class="form-control" name="new_pass" minlength="6" required>
               </div>
               <div class="form-group">
-                <label>Xác nhận mật khẩu mới</label>
+                <label><%= t('tai_khoan.xac_nhan_mat_khau_moi') %></label>
                 <input type="password" class="form-control" name="re_pass" minlength="6" required>
               </div>
-              <button type="submit" class="btn btn-warning">Đổi mật khẩu</button>
+              <button type="submit" class="btn btn-warning"><%= t('tai_khoan.doi_mat_khau') %></button>
             </form>
           </div>
         </div>
 
         <!-- Liên kết nhanh -->
         <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="icon-menu mr-2"></i>Tài khoản</div>
+          <div class="card-header bg-dark text-white"><i class="icon-menu mr-2"></i><%= t('dieu_huong.tai_khoan') %></div>
           <div class="card-body">
             <ul class="list-group list-group-flush">
-              <li class="list-group-item"><a href="/my-orders"><i class="ion-ios-list mr-2"></i>Đơn đặt bàn của tôi</a></li>
-              <li class="list-group-item"><a href="/chat"><i class="ion-ios-chatbubbles mr-2"></i>Chat với nhân viên</a></li>
-              <li class="list-group-item"><a href="/rating"><i class="ion-ios-star mr-2"></i>Đánh giá dịch vụ</a></li>
-              <li class="list-group-item text-danger"><a href="/logout" class="text-danger"><i class="ion-ios-power mr-2"></i>Đăng xuất</a></li>
+              <li class="list-group-item"><a href="/my-orders"><i class="ion-ios-list mr-2"></i><%= t('tai_khoan.don_dat_ban_cua_toi') %></a></li>
+              <li class="list-group-item"><a href="/chat"><i class="ion-ios-chatbubbles mr-2"></i><%= t('tai_khoan.chat_nhan_vien') %></a></li>
+              <li class="list-group-item"><a href="/rating"><i class="ion-ios-star mr-2"></i><%= t('danh_gia.tieu_de') %></a></li>
+              <li class="list-group-item text-danger"><a href="/logout" class="text-danger"><i class="ion-ios-power mr-2"></i><%= t('dieu_huong.dang_xuat') %></a></li>
             </ul>
           </div>
         </div>

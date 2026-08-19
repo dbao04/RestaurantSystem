@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ảnh thay thế khi ảnh món không tải được.
+
+  Trước đây bốn chỗ trong views/ đều lùi về /bg_1..5.jpg — ảnh stock của một
+  nhà hàng Âu. Nghĩa là chỉ cần một tệp ảnh món bị thiếu là trang bán sushi
+  hiện ra đĩa bít tết hoặc bánh croissant.
+
+  Vẽ bằng SVG nên chưa tới 1KB, không bao giờ hỏng, và giữ đúng tông vàng–nâu
+  của thương hiệu. Hoa văn nền là kōshi (格子) — lưới cửa shoji, cùng bộ với
+  nền các trang trong css/nhahang.css.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <defs>
+    <linearGradient id="nen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b1a12"/>
+      <stop offset="1" stop-color="#1a1210"/>
+    </linearGradient>
+    <pattern id="koshi" width="28" height="28" patternUnits="userSpaceOnUse">
+      <g stroke="#c8a24b" stroke-opacity="0.16" stroke-width="1" fill="none">
+        <path d="M0 .5H28M0 14.5H28M0 27.5H28M.5 0V28M14.5 0V28M27.5 0V28"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="600" height="450" fill="url(#nen)"/>
+  <rect width="600" height="450" fill="url(#koshi)"/>
+
+  <!-- Bát và đũa: hai nét đủ để hiểu là món ăn, không cần chi tiết hơn. -->
+  <g fill="none" stroke="#c8a24b" stroke-opacity="0.62" stroke-width="7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M212 232h176c0 46-39 80-88 80s-88-34-88-80z"/>
+    <path d="M196 232h208"/>
+    <path d="M258 196l84-46M270 208l84-46"/>
+  </g>
+
+  <text x="300" y="368" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif" font-size="21"
+        fill="#c8a24b" fill-opacity="0.8">Nhà Hàng Bảo Đoàn</text>
+  <text x="300" y="396" text-anchor="middle"
+        font-family="system-ui, sans-serif" font-size="13" letter-spacing="2.5"
+        fill="#c8a24b" fill-opacity="0.45">ẨM THỰC NHẬT BẢN</text>
+</svg>
