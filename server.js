@@ -2714,16 +2714,42 @@ app.post('/staff/emails/send', requireRole(['Ke toan', 'Quay', 'Thu ngan']), asy
   }
 });
 
-// Staff Schedule
+// Staff Schedule - thoi khoa bieu theo tuan
+//
+// Xem theo TUAN chu khong theo thang: mot luoi ca x 7 ngay doc duoc trong mot
+// cai liec, con luoi ca x 31 ngay thi khong con la thoi khoa bieu nua. Tham so
+// `?tuan=` nhan mot ngay bat ky roi tu lui ve thu Hai, nen link tuan truoc /
+// tuan sau chi can cong tru 7 ngay ma khong phai xu ly ranh gioi thang.
 app.get('/staff/schedule', requireStaff, async (req, res) => {
   try {
-    const [year, month] = (req.query.thang || new Date().toISOString().slice(0, 7)).split('-').map(Number);
-    const schedule = await personnelService.getSchedule(req.session.staffId, year, month);
+    const { thuHaiCuaTuan, ngayISO } = require('./services/xepCa');
+    const homNay = ngayISO(new Date());
+
+    // Con ho tro `?thang=` cua ban cu: link da luu hoac dan o cho khac van vao
+    // dung tuan dau cua thang do thay vi bao loi.
+    let moc = req.query.tuan || homNay;
+    if (!req.query.tuan && req.query.thang) moc = req.query.thang + '-01';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(moc)) moc = homNay;
+
+    const thuHai = thuHaiCuaTuan(moc);
+    const chuNhat = ngayISO(new Date(new Date(thuHai + 'T00:00:00').getTime() + 6 * 86400000));
+    const dich = (goc, soNgay) =>
+      ngayISO(new Date(new Date(goc + 'T00:00:00').getTime() + soNgay * 86400000));
+
+    const [dsCa, schedule, unread] = await Promise.all([
+      personnelService.getShifts(),
+      personnelService.getScheduleRange(req.session.staffId, thuHai, chuNhat),
+      personnelService.countUnread(req.session.staffId),
+    ]);
+
     res.render('staff/schedule', {
-      title: 'Lịch làm việc', schedule,
-      currentMonth: req.query.thang || new Date().toISOString().slice(0, 7),
+      title: 'Lịch làm việc',
+      schedule, dsCa, thuHai, chuNhat, homNay,
+      tuanTruoc: dich(thuHai, -7),
+      tuanSau: dich(thuHai, 7),
+      ngayTrongTuan: Array.from({ length: 7 }, (_, i) => dich(thuHai, i)),
       msg: req.query.msg || null, msgType: req.query.msgType || null,
-      unread: await personnelService.countUnread(req.session.staffId)
+      unread,
     });
   } catch (err) {
     console.error(err);
@@ -2731,22 +2757,37 @@ app.get('/staff/schedule', requireStaff, async (req, res) => {
   }
 });
 
+// Sau khi dang ky / huy phai quay ve DUNG tuan vua xem. Truoc day redirect
+// tro tay khong nen nguoi dang xem tuan sau bam Dang ky xong lai bi nem ve tuan
+// hien tai, khong thay ca minh vua tao dau.
+function urlLichTuan(req, msg, loai) {
+  // `req.body` khong ton tai o route GET (huy ca), nen phai kiem tra truoc khi
+  // doc - doc thang la nem TypeError va bien mot lan huy thanh cong thanh loi
+  // 500, trong khi ca thi da xoa roi.
+  const tuan = (req.body && req.body.tuan) || req.query.tuan || '';
+  const p = new URLSearchParams();
+  if (tuan) p.set('tuan', tuan);
+  if (msg) { p.set('msg', msg); p.set('msgType', loai || 'info'); }
+  const qs = p.toString();
+  return '/staff/schedule' + (qs ? '?' + qs : '');
+}
+
 app.post('/staff/schedule', requireStaff, async (req, res) => {
   const { ngay, ca, ghi_chu } = req.body;
   try {
     await personnelService.registerSchedule(req.session.staffId, ngay, ca, ghi_chu);
-    res.redirect('/staff/schedule?msg=Đăng+ký+lịch+thành+công!&msgType=success');
+    res.redirect(urlLichTuan(req, 'Đã đăng ký ca làm.', 'success'));
   } catch (err) {
-    res.redirect('/staff/schedule?msg=' + encodeURIComponent(err.message) + '&msgType=danger');
+    res.redirect(urlLichTuan(req, err.message, 'danger'));
   }
 });
 
 app.get('/staff/schedule/cancel/:id', requireStaff, async (req, res) => {
   try {
     await personnelService.cancelSchedule(req.params.id, req.session.staffId);
-    res.redirect('/staff/schedule?msg=Đã+hủy+đăng+ký&msgType=info');
+    res.redirect(urlLichTuan(req, 'Đã huỷ đăng ký.', 'info'));
   } catch (err) {
-    res.redirect('/staff/schedule');
+    res.redirect(urlLichTuan(req, err.message, 'danger'));
   }
 });
 
