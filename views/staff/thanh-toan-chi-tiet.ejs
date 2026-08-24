@@ -2,6 +2,9 @@
   var activePage = 'thanh-toan';
   var staffName = session.staffName || 'Nhân viên';
   var t = hoaDon.tien;
+  var coThanhToanGiaLap = typeof choPhepThanhToanGiaLap !== 'undefined'
+    ? choPhepThanhToanGiaLap
+    : true;
 %>
 <%- include('partials/header') %>
 
@@ -247,7 +250,7 @@
         <button class="btn btn-success btn-lg btn-block mt-3" id="nut-thu">
           <i class="fas fa-check-double"></i> <span id="chu-nut-thu">Xác nhận thu tiền</span>
         </button>
-        <% if (choPhepThanhToanGiaLap) { %>
+        <% if (coThanhToanGiaLap) { %>
           <button class="btn btn-outline-warning btn-block mt-2" id="nut-gia-lap">
             <i class="fas fa-flask"></i> Thanh toán giả lập
           </button>
