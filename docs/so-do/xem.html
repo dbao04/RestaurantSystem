@@ -248,13 +248,13 @@ footer{border-top:1px solid var(--vien); padding-top:24px; color:var(--muc-mo);
 <header class="dau">
   <div class="mac">Tài liệu phân tích thiết kế &middot; Khoá luận Hệ thống thông tin</div>
   <h1>Sơ đồ Use Case &amp; BPMN<br>Hệ thống quản lý nhà hàng thông minh</h1>
-  <p class="phu-de">Bảy sơ đồ ca sử dụng và bốn sơ đồ quy trình nghiệp vụ, dựng trực tiếp
+  <p class="phu-de">Bảy sơ đồ ca sử dụng và năm sơ đồ quy trình nghiệp vụ, dựng trực tiếp
   từ mã nguồn đang chạy: <b>Node/Express + EJS + MySQL</b> cho phần nghiệp vụ và
   <b>Python/FastAPI</b> tách riêng cho phần học máy.</p>
   <div class="mo-ta-du-an">
     <span>Tác nhân: <b>8 người dùng + 2 hệ thống ngoài</b></span>
     <span>Ca sử dụng: <b>68</b></span>
-    <span>Quy trình: <b>4</b></span>
+    <span>Quy trình: <b>5</b></span>
     <span>Quy mô: <b>40 bàn / 4 khu</b></span>
   </div>
 </header><nav class="muc-luc"><h2>Nội dung</h2><ol><li><a href="#pham-vi">Phạm vi và cách lập sơ đồ</a></li><li><a href="#tac-nhan">Tác nhân của hệ thống</a></li><li><a href="#uc-tong-quat">Sơ đồ use case tổng quát</a></li><li><a href="#uc-phan-ra">Sơ đồ use case phân rã theo phân hệ</a></li><li><a href="#dac-ta">Đặc tả ba use case tiêu biểu</a></li><li><a href="#bpmn">Sơ đồ quy trình nghiệp vụ (BPMN)</a></li><li><a href="#lop">Sơ đồ lớp</a></li><li><a href="#erd">Lược đồ quan hệ thực thể (ERD)</a></li><li><a href="#tuan-tu">Sơ đồ tuần tự</a></li><li><a href="#hoat-dong">Sơ đồ hoạt động</a></li><li><a href="#anh-xa">Ánh xạ sơ đồ sang mã nguồn</a></li></ol></nav><section id="pham-vi"><h2 class="muc"><span class="so">01</span>Phạm vi và cách lập sơ đồ</h2>
@@ -1382,7 +1382,7 @@ một ca liên quan tới dữ liệu sinh trắc học.</p></div>
     <tr><th>Hậu điều kiện</th><td>Có bản ghi chấm công kèm bằng chứng ảnh và toạ độ; hoặc có bản ghi nhật ký giải thích vì sao bị từ chối.</td></tr>
   </tbody>
 </table></div></section><section id="bpmn"><h2 class="muc"><span class="so">06</span>Sơ đồ quy trình nghiệp vụ (BPMN)</h2>
-<div class="van"><p>Bốn quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
+<div class="van"><p>Năm quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
 cũng là nơi dễ đứt gãy nhất khi vận hành. Mỗi sơ đồ là một pool chia thành bốn lằn;
 lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ việc người làm với việc máy làm.</p></div>
 <figure class="khoi-hinh">
@@ -1488,7 +1488,90 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
   <p class="cap-duoi">Vòng lặp gọi thêm món trong cùng một bữa lặp lại từ bước quét mã QR và không vẽ lại để giữ sơ đồ đọc được. Bước trừ tồn kho nằm trong cùng giao dịch với bước hoàn thành chế biến: hoặc cả hai cùng thành công, hoặc cả hai cùng quay lui.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 12</span>Quy trình thanh toán và đối soát ngân hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 12</span>Quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình đặt bàn trực tuyến với kiểm tra bàn trống, giữ bàn tạm thời và nhánh đặt cọc qua VietQR"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpDatBan" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpDatBan" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Lễ tân</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Hệ thống</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Ngân hàng</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Muốn đặt bàn</text></g><g class="viec ">
+    <rect x="199" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="80.5">Nhập ngày, giờ,</text><text class="tx-viec" x="268" y="94.5">số khách và liên hệ</text>
+  </g><g class="viec tu-dong">
+    <rect x="347" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="353" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="355.5" y1="365" x2="361.5" y2="365"/>
+       <line x1="355.5" y1="367.5" x2="361.5" y2="367.5"/></g>
+    <text class="tx-viec" x="416" y="380.5">Kiểm tra bàn trống</text><text class="tx-viec" x="416" y="394.5">và điều kiện đặt bàn</text>
+  </g><g class="cong">
+    <polygon points="564,359 588,383 564,407 540,383"/>
+    <line x1="556" y1="375" x2="572" y2="391"/>
+    <line x1="556" y1="391" x2="572" y2="375"/>
+    <text class="tx-sk" x="564" y="351">Có bàn phù hợp?</text>
+  </g><g class="viec ">
+    <rect x="643" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="712" y="80.5">Chọn khung giờ</text><text class="tx-viec" x="712" y="94.5">khác</text>
+  </g><g class="sk sk-cuoi"><circle cx="860" cy="83" r="19"/><text class="tx-sk" x="860" y="117">Không đặt được</text></g><g class="viec tu-dong">
+    <rect x="643" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="365" x2="657.5" y2="365"/>
+       <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
+    <text class="tx-viec" x="712" y="380.5">Giữ bàn tạm thời,</text><text class="tx-viec" x="712" y="394.5">tạo mã đặt chỗ</text>
+  </g><g class="cong">
+    <polygon points="860,359 884,383 860,407 836,383"/>
+    <line x1="852" y1="375" x2="868" y2="391"/>
+    <line x1="852" y1="391" x2="868" y2="375"/>
+    <text class="tx-sk" x="860" y="351">Có cần đặt cọc?</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="380.5">Xác nhận đặt bàn,</text><text class="tx-viec" x="1008" y="394.5">gửi thông tin cho khách</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="380.5">Sinh mã VietQR</text><text class="tx-viec" x="1008" y="394.5">tiền đặt cọc</text>
+  </g><g class="viec ">
+    <rect x="1087" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="87.5">Chuyển khoản đặt cọc</text>
+  </g><g class="sk sk-giua"><circle cx="1156" cy="533" r="19"/><circle cx="1156" cy="533" r="15"/><path class="thu" d="M1148,528 h16 v10 h-16 z M1148,528 l8,6 l8,-6"/><text class="tx-sk" x="1156" y="567">Ngân hàng báo có</text></g><g class="viec tu-dong">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
+       <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1156" y="380.5">Đối soát tiền cọc,</text><text class="tx-viec" x="1156" y="394.5">xác nhận giữ bàn</text>
+  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đặt bàn thành công</text></g><polyline class="luong " points="139,83 199,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="337,83 374,83 374,383 347,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="485,383 540,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="588,383 643,383" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="606" y="374">Có</text><polyline class="luong " points="564,407 564,83 643,83" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="580" y="449">Không</text><polyline class="luong " points="781,83 841,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="781,383 818,383 818,359" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="860,407 860,233 966,233 939,233" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="878" y="224">Không</text><polyline class="luong " points="1077,233 1085,233 1085,83 1137,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="860,407 860,533 1050,533 939,533" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="876" y="449">Có</text><polyline class="luong " points="1077,533 1114,533 1114,83 1087,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1156,110 1156,514" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1175,533 1176,533 1176,383 1225,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1225,383 1237,383 1237,83 1175,83" marker-end="url(#mui-bpDatBan)"/></svg></div>
+  <p class="cap-duoi">Hệ thống kiểm tra bàn trống trước khi giữ chỗ. Nếu nhà hàng yêu cầu đặt cọc, mã VietQR được sinh theo đúng số tiền và chỉ khi ngân hàng báo có thì bàn mới được xác nhận chắc chắn.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 13</span>Quy trình thanh toán và đối soát ngân hàng</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình thanh toán với nhánh tiền mặt và nhánh chuyển khoản VietQR được đối soát tự động từ thông báo của ngân hàng"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1554,7 +1637,7 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
   <p class="cap-duoi">Điểm đáng chú ý là sự kiện trung gian ở lằn ngân hàng: hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào, nên phiên thanh toán chuyển trạng thái ngay trên cả điện thoại khách lẫn màn hình thu ngân trong cùng một khoảnh khắc.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 13</span>Quy trình dự báo bằng học máy</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 14</span>Quy trình dự báo bằng học máy</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1279 638" role="img" aria-label="Sơ đồ BPMN quy trình dự báo bằng học máy: web gọi dịch vụ Python, dịch vụ đọc lịch sử, huấn luyện bốn mô hình rồi chọn mô hình có sai số thấp nhất"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1626,7 +1709,7 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
   <p class="cap-duoi">Rẽ nhánh đầu tiên là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python không được phép làm sập web. Khi nó không trả lời, trang vẫn hiển thị dự báo đã lưu lần chạy trước. Bốn mô hình được chấm điểm gồm SeasonalNaive (baseline), Ridge, RandomForest và GradientBoosting; mô hình có MAE thấp nhất trên 60 ngày cuối được chọn rồi huấn luyện lại trên toàn bộ dữ liệu.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 14</span>Quy trình chấm công bằng khuôn mặt và GPS</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 15</span>Quy trình chấm công bằng khuôn mặt và GPS</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó kiểm tra ảnh sống rồi nhận diện khuôn mặt"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1700,7 +1783,7 @@ dưới đây vì vậy dùng khuôn mẫu <code>«module»</code> — tên hộ
 cấp mô-đun, ngăn dưới là các hàm được xuất ra. Vẽ như vậy giữ đúng cấu trúc mã nguồn thật
 thay vì dựng lên một mô hình hướng đối tượng không tồn tại trong dự án.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 15</span>Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 16</span>Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1010 390" role="img" aria-label="Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-cg3" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1743,7 +1826,7 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
   
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 16</span>Sơ đồ lớp tầng dịch vụ nghiệp vụ</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 17</span>Sơ đồ lớp tầng dịch vụ nghiệp vụ</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1260 800" role="img" aria-label="Sơ đồ lớp tầng dịch vụ nghiệp vụ: quan hệ giữa tầng định tuyến, tầng dịch vụ và pool cơ sở dữ liệu"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-lopA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1760,7 +1843,7 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
   <p class="cap-duoi">Ranh giới quan trọng nhất trên sơ đồ là giữa tầng định tuyến và tầng dịch vụ: toàn bộ câu lệnh SQL nằm ở tầng dịch vụ, tầng định tuyến chỉ nhận tham số và kiểm tra quyền. Nhờ vậy đổi một câu truy vấn hay đổi cả lược đồ bảng chỉ phải sửa trong <code>services/</code>.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 17</span>Sơ đồ lớp phân hệ học máy</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 18</span>Sơ đồ lớp phân hệ học máy</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1260 760" role="img" aria-label="Sơ đồ lớp phân hệ học máy: mô-đun phía Node gọi sang tiến trình Python và các mô-đun dự báo, khai phá luật, nhận diện khuôn mặt, trợ lý ảo"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-lopB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1787,7 +1870,7 @@ trên giấy A4. Ba lược đồ dưới đây tách theo phân hệ và chỉ 
 ngoại với nhau. Ký pháp chân quạ: đầu đơn là <b>một</b> bản ghi, đầu chia ba là <b>nhiều</b>
 bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> là khoá ngoại.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 18</span>Lược đồ quan hệ thực thể phân hệ bán hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 19</span>Lược đồ quan hệ thực thể phân hệ bán hàng</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1250 790" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ bán hàng: thực đơn, đơn hàng, bàn và thanh toán"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1837,7 +1920,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Điểm cần chú ý nhất: mỗi dòng <code>hopdong</code> là một MÓN chứ không phải một hoá đơn. Các dòng của cùng một lần đặt gộp lại bằng mã phiên <code>sesis</code> — nhờ vậy mỗi món giữ được trạng thái bếp riêng trong khi cả đơn vẫn có một trạng thái chung.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 19</span>Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 20</span>Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1290 745" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ kho: nhập theo lô, định lượng công thức, nhật ký tiêu hao và các bảng kết quả học máy"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1884,7 +1967,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Chuỗi <code>cong_thuc</code> → <code>xuat_kho</code> → <code>du_bao_nguyen_lieu</code> là chuỗi dữ liệu quan trọng nhất của phần AI: nếu thiếu bảng công thức định lượng thì mỗi món bán ra không để lại dấu vết tiêu hao, và bài toán dự báo nguyên liệu sẽ không có gì để học.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 20</span>Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 21</span>Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1290 770" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ nhân sự: cơ cấu tổ chức, phân quyền, chấm công và dữ liệu sinh trắc học"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1940,7 +2023,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Ba bảng bên phải lưu dữ liệu sinh trắc học và bằng chứng chấm công. Quan hệ tự tham chiếu <code>chuc_danh.id_cd_cha</code> chính là cây cơ cấu tổ chức sáu cấp bậc.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 21</span>Lược đồ quan hệ thực thể phân hệ giao hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 22</span>Lược đồ quan hệ thực thể phân hệ giao hàng</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1400 790" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ giao hàng: đơn vị vận chuyển, hồ sơ người giao, đơn giao kèm nhật ký chuyển trạng thái và hai bảng vị trí"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1951,32 +2034,32 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
-  </defs><g class="bang "><rect class="vien" x="30" y="40" width="134" height="190" rx="3"/><rect class="ngan-ten" x="30" y="40" width="134" height="24" rx="3"/><text class="tx-bang-ten" x="97" y="56">don_vi_van_chuyen</text><line x1="30" y1="64" x2="164" y2="64"/><text class="tx-khoa" x="38" y="77">PK</text><text class="tx-cot" x="60" y="77">id_dv</text><text class="tx-cot" x="40" y="93">ma_dv</text><text class="tx-cot" x="40" y="109">ten_dv</text><text class="tx-cot" x="40" y="125">loai</text><text class="tx-cot" x="40" y="141">phi_co_ban</text><text class="tx-cot" x="40" y="157">so_km_dau</text><text class="tx-cot" x="40" y="173">phi_moi_km</text><text class="tx-cot" x="40" y="189">ban_kinh_km</text><text class="tx-cot" x="40" y="205">thu_tu</text><text class="tx-cot" x="40" y="221">trang_thai</text></g><g class="bang "><rect class="vien" x="30" y="400" width="124" height="94" rx="3"/><rect class="ngan-ten" x="30" y="400" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="416">nhan_vien</text><line x1="30" y1="424" x2="154" y2="424"/><text class="tx-khoa" x="38" y="437">PK</text><text class="tx-cot" x="60" y="437">id_nv</text><text class="tx-cot" x="40" y="453">ten</text><text class="tx-cot" x="40" y="469">sodienthoai</text><text class="tx-khoa" x="38" y="485">FK</text><text class="tx-cot" x="60" y="485">id_cd</text></g><g class="bang "><rect class="vien" x="30" y="570" width="124" height="110" rx="3"/><rect class="ngan-ten" x="30" y="570" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="586">hopdong</text><line x1="30" y1="594" x2="154" y2="594"/><text class="tx-khoa" x="38" y="607">PK</text><text class="tx-cot" x="60" y="607">id</text><text class="tx-cot" x="40" y="623">sesis</text><text class="tx-khoa" x="38" y="639">FK</text><text class="tx-cot" x="60" y="639">id_mon</text><text class="tx-cot" x="40" y="655">loai_don</text><text class="tx-cot" x="40" y="671">tinhtrang</text></g><g class="bang "><rect class="vien" x="370" y="40" width="124" height="190" rx="3"/><rect class="ngan-ten" x="370" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="432" y="56">shipper</text><line x1="370" y1="64" x2="494" y2="64"/><text class="tx-khoa" x="378" y="77">PK</text><text class="tx-cot" x="400" y="77">id_shipper</text><text class="tx-khoa" x="378" y="93">FK</text><text class="tx-cot" x="400" y="93">id_dv</text><text class="tx-khoa" x="378" y="109">FK</text><text class="tx-cot" x="400" y="109">id_nv</text><text class="tx-cot" x="380" y="125">ten</text><text class="tx-cot" x="380" y="141">sdt</text><text class="tx-cot" x="380" y="157">loai_xe</text><text class="tx-cot" x="380" y="173">bien_so</text><text class="tx-cot" x="380" y="189">so_don_toi_da</text><text class="tx-cot" x="380" y="205">trang_thai</text><text class="tx-cot" x="380" y="221">tong_don</text></g><g class="bang "><rect class="vien" x="710" y="40" width="124" height="334" rx="3"/><rect class="ngan-ten" x="710" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="772" y="56">don_giao_hang</text><line x1="710" y1="64" x2="834" y2="64"/><text class="tx-khoa" x="718" y="77">PK</text><text class="tx-cot" x="740" y="77">id_giao</text><text class="tx-khoa" x="718" y="93">FK</text><text class="tx-cot" x="740" y="93">sesis</text><text class="tx-cot" x="720" y="109">ma_giao</text><text class="tx-khoa" x="718" y="125">FK</text><text class="tx-cot" x="740" y="125">id_dv</text><text class="tx-khoa" x="718" y="141">FK</text><text class="tx-cot" x="740" y="141">id_shipper</text><text class="tx-cot" x="720" y="157">ten_nguoi_nhan</text><text class="tx-cot" x="720" y="173">sdt_nguoi_nhan</text><text class="tx-cot" x="720" y="189">dia_chi_giao</text><text class="tx-cot" x="720" y="205">vi_do</text><text class="tx-cot" x="720" y="221">kinh_do</text><text class="tx-cot" x="720" y="237">khoang_cach_km</text><text class="tx-cot" x="720" y="253">phi_giao</text><text class="tx-cot" x="720" y="269">tien_thu_ho</text><text class="tx-cot" x="720" y="285">trang_thai</text><text class="tx-khoa" x="718" y="301">FK</text><text class="tx-cot" x="740" y="301">id_nv_phan</text><text class="tx-cot" x="720" y="317">phan_luc</text><text class="tx-cot" x="720" y="333">lay_luc</text><text class="tx-cot" x="720" y="349">giao_luc</text><text class="tx-cot" x="720" y="365">hoan_tat_luc</text></g><g class="bang "><rect class="vien" x="1040" y="40" width="134" height="174" rx="3"/><rect class="ngan-ten" x="1040" y="40" width="134" height="24" rx="3"/><text class="tx-bang-ten" x="1107" y="56">nhat_ky_giao_hang</text><line x1="1040" y1="64" x2="1174" y2="64"/><text class="tx-khoa" x="1048" y="77">PK</text><text class="tx-cot" x="1070" y="77">id</text><text class="tx-khoa" x="1048" y="93">FK</text><text class="tx-cot" x="1070" y="93">id_giao</text><text class="tx-cot" x="1050" y="109">tu_trang_thai</text><text class="tx-cot" x="1050" y="125">den_trang_thai</text><text class="tx-khoa" x="1048" y="141">FK</text><text class="tx-cot" x="1070" y="141">id_nv</text><text class="tx-cot" x="1050" y="157">ten_nguoi</text><text class="tx-cot" x="1050" y="173">vi_do</text><text class="tx-cot" x="1050" y="189">kinh_do</text><text class="tx-cot" x="1050" y="205">luc</text></g><g class="bang "><rect class="vien" x="1040" y="300" width="124" height="190" rx="3"/><rect class="ngan-ten" x="1040" y="300" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="1102" y="316">vi_tri_shipper</text><line x1="1040" y1="324" x2="1164" y2="324"/><text class="tx-khoa" x="1048" y="337">PK</text><text class="tx-cot" x="1070" y="337">id</text><text class="tx-khoa" x="1048" y="353">FK</text><text class="tx-cot" x="1070" y="353">id_shipper</text><text class="tx-khoa" x="1048" y="369">FK</text><text class="tx-cot" x="1070" y="369">id_giao</text><text class="tx-cot" x="1050" y="385">vi_do</text><text class="tx-cot" x="1050" y="401">kinh_do</text><text class="tx-cot" x="1050" y="417">do_chinh_xac_m</text><text class="tx-cot" x="1050" y="433">toc_do_kmh</text><text class="tx-cot" x="1050" y="449">huong</text><text class="tx-cot" x="1050" y="465">pin</text><text class="tx-cot" x="1050" y="481">luc</text></g><g class="bang "><rect class="vien" x="1040" y="578" width="164" height="126" rx="3"/><rect class="ngan-ten" x="1040" y="578" width="164" height="24" rx="3"/><text class="tx-bang-ten" x="1122" y="594">vi_tri_shipper_moi_nhat</text><line x1="1040" y1="602" x2="1204" y2="602"/><text class="tx-khoa" x="1048" y="615">PK</text><text class="tx-cot" x="1070" y="615">id_shipper</text><text class="tx-khoa" x="1048" y="631">FK</text><text class="tx-cot" x="1070" y="631">id_giao</text><text class="tx-cot" x="1050" y="647">vi_do</text><text class="tx-cot" x="1050" y="663">kinh_do</text><text class="tx-cot" x="1050" y="679">do_chinh_xac_m</text><text class="tx-cot" x="1050" y="695">luc</text></g><g class="noi-bang">
+  </defs><g class="bang "><rect class="vien" x="30" y="40" width="134" height="190" rx="3"/><rect class="ngan-ten" x="30" y="40" width="134" height="24" rx="3"/><text class="tx-bang-ten" x="97" y="56">don_vi_van_chuyen</text><line x1="30" y1="64" x2="164" y2="64"/><text class="tx-khoa" x="38" y="77">PK</text><text class="tx-cot" x="60" y="77">id_dv</text><text class="tx-cot" x="40" y="93">ma_dv</text><text class="tx-cot" x="40" y="109">ten_dv</text><text class="tx-cot" x="40" y="125">loai</text><text class="tx-cot" x="40" y="141">phi_co_ban</text><text class="tx-cot" x="40" y="157">so_km_dau</text><text class="tx-cot" x="40" y="173">phi_moi_km</text><text class="tx-cot" x="40" y="189">ban_kinh_km</text><text class="tx-cot" x="40" y="205">thu_tu</text><text class="tx-cot" x="40" y="221">trang_thai</text></g><g class="bang "><rect class="vien" x="30" y="430" width="124" height="94" rx="3"/><rect class="ngan-ten" x="30" y="430" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="446">nhan_vien</text><line x1="30" y1="454" x2="154" y2="454"/><text class="tx-khoa" x="38" y="467">PK</text><text class="tx-cot" x="60" y="467">id_nv</text><text class="tx-cot" x="40" y="483">ten</text><text class="tx-cot" x="40" y="499">sodienthoai</text><text class="tx-khoa" x="38" y="515">FK</text><text class="tx-cot" x="60" y="515">id_cd</text></g><g class="bang "><rect class="vien" x="30" y="600" width="124" height="110" rx="3"/><rect class="ngan-ten" x="30" y="600" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="92" y="616">hopdong</text><line x1="30" y1="624" x2="154" y2="624"/><text class="tx-khoa" x="38" y="637">PK</text><text class="tx-cot" x="60" y="637">id</text><text class="tx-cot" x="40" y="653">sesis</text><text class="tx-khoa" x="38" y="669">FK</text><text class="tx-cot" x="60" y="669">id_mon</text><text class="tx-cot" x="40" y="685">loai_don</text><text class="tx-cot" x="40" y="701">tinhtrang</text></g><g class="bang "><rect class="vien" x="370" y="40" width="124" height="190" rx="3"/><rect class="ngan-ten" x="370" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="432" y="56">shipper</text><line x1="370" y1="64" x2="494" y2="64"/><text class="tx-khoa" x="378" y="77">PK</text><text class="tx-cot" x="400" y="77">id_shipper</text><text class="tx-khoa" x="378" y="93">FK</text><text class="tx-cot" x="400" y="93">id_dv</text><text class="tx-khoa" x="378" y="109">FK</text><text class="tx-cot" x="400" y="109">id_nv</text><text class="tx-cot" x="380" y="125">ten</text><text class="tx-cot" x="380" y="141">sdt</text><text class="tx-cot" x="380" y="157">loai_xe</text><text class="tx-cot" x="380" y="173">bien_so</text><text class="tx-cot" x="380" y="189">so_don_toi_da</text><text class="tx-cot" x="380" y="205">trang_thai</text><text class="tx-cot" x="380" y="221">tong_don</text></g><g class="bang "><rect class="vien" x="710" y="40" width="124" height="334" rx="3"/><rect class="ngan-ten" x="710" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="772" y="56">don_giao_hang</text><line x1="710" y1="64" x2="834" y2="64"/><text class="tx-khoa" x="718" y="77">PK</text><text class="tx-cot" x="740" y="77">id_giao</text><text class="tx-khoa" x="718" y="93">FK</text><text class="tx-cot" x="740" y="93">sesis</text><text class="tx-cot" x="720" y="109">ma_giao</text><text class="tx-khoa" x="718" y="125">FK</text><text class="tx-cot" x="740" y="125">id_dv</text><text class="tx-khoa" x="718" y="141">FK</text><text class="tx-cot" x="740" y="141">id_shipper</text><text class="tx-cot" x="720" y="157">ten_nguoi_nhan</text><text class="tx-cot" x="720" y="173">sdt_nguoi_nhan</text><text class="tx-cot" x="720" y="189">dia_chi_giao</text><text class="tx-cot" x="720" y="205">vi_do</text><text class="tx-cot" x="720" y="221">kinh_do</text><text class="tx-cot" x="720" y="237">khoang_cach_km</text><text class="tx-cot" x="720" y="253">phi_giao</text><text class="tx-cot" x="720" y="269">tien_thu_ho</text><text class="tx-cot" x="720" y="285">trang_thai</text><text class="tx-khoa" x="718" y="301">FK</text><text class="tx-cot" x="740" y="301">id_nv_phan</text><text class="tx-cot" x="720" y="317">phan_luc</text><text class="tx-cot" x="720" y="333">lay_luc</text><text class="tx-cot" x="720" y="349">giao_luc</text><text class="tx-cot" x="720" y="365">hoan_tat_luc</text></g><g class="bang "><rect class="vien" x="1040" y="40" width="134" height="174" rx="3"/><rect class="ngan-ten" x="1040" y="40" width="134" height="24" rx="3"/><text class="tx-bang-ten" x="1107" y="56">nhat_ky_giao_hang</text><line x1="1040" y1="64" x2="1174" y2="64"/><text class="tx-khoa" x="1048" y="77">PK</text><text class="tx-cot" x="1070" y="77">id</text><text class="tx-khoa" x="1048" y="93">FK</text><text class="tx-cot" x="1070" y="93">id_giao</text><text class="tx-cot" x="1050" y="109">tu_trang_thai</text><text class="tx-cot" x="1050" y="125">den_trang_thai</text><text class="tx-khoa" x="1048" y="141">FK</text><text class="tx-cot" x="1070" y="141">id_nv</text><text class="tx-cot" x="1050" y="157">ten_nguoi</text><text class="tx-cot" x="1050" y="173">vi_do</text><text class="tx-cot" x="1050" y="189">kinh_do</text><text class="tx-cot" x="1050" y="205">luc</text></g><g class="bang "><rect class="vien" x="1040" y="300" width="124" height="190" rx="3"/><rect class="ngan-ten" x="1040" y="300" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="1102" y="316">vi_tri_shipper</text><line x1="1040" y1="324" x2="1164" y2="324"/><text class="tx-khoa" x="1048" y="337">PK</text><text class="tx-cot" x="1070" y="337">id</text><text class="tx-khoa" x="1048" y="353">FK</text><text class="tx-cot" x="1070" y="353">id_shipper</text><text class="tx-khoa" x="1048" y="369">FK</text><text class="tx-cot" x="1070" y="369">id_giao</text><text class="tx-cot" x="1050" y="385">vi_do</text><text class="tx-cot" x="1050" y="401">kinh_do</text><text class="tx-cot" x="1050" y="417">do_chinh_xac_m</text><text class="tx-cot" x="1050" y="433">toc_do_kmh</text><text class="tx-cot" x="1050" y="449">huong</text><text class="tx-cot" x="1050" y="465">pin</text><text class="tx-cot" x="1050" y="481">luc</text></g><g class="bang "><rect class="vien" x="1040" y="540" width="164" height="126" rx="3"/><rect class="ngan-ten" x="1040" y="540" width="164" height="24" rx="3"/><text class="tx-bang-ten" x="1122" y="556">vi_tri_shipper_moi_nhat</text><line x1="1040" y1="564" x2="1204" y2="564"/><text class="tx-khoa" x="1048" y="577">PK</text><text class="tx-cot" x="1070" y="577">id_shipper</text><text class="tx-khoa" x="1048" y="593">FK</text><text class="tx-cot" x="1070" y="593">id_giao</text><text class="tx-cot" x="1050" y="609">vi_do</text><text class="tx-cot" x="1050" y="625">kinh_do</text><text class="tx-cot" x="1050" y="641">do_chinh_xac_m</text><text class="tx-cot" x="1050" y="657">luc</text></g><g class="noi-bang">
     <polyline class="qh-lop" points="164,100 370,100"/>
     <line x1="175" y1="93" x2="175" y2="107"/><line x1="370" y1="100" x2="359" y2="100"/><line x1="370" y1="100" x2="359" y2="93"/><line x1="370" y1="100" x2="359" y2="107"/><text class="tx-boi" x="267" y="92">thuộc</text>
   </g><g class="noi-bang">
     <polyline class="qh-lop" points="97,40 97,18 772,18 772,40"/>
     <line x1="90" y1="29" x2="104" y2="29"/><line x1="772" y1="40" x2="772" y2="29"/><line x1="772" y1="40" x2="779" y2="29"/><line x1="772" y1="40" x2="765" y2="29"/><text class="tx-boi" x="434.5" y="12">nhận giao</text>
   </g><g class="noi-bang">
-    <polyline class="qh-lop" points="154,444 300,444 300,190 370,190"/>
-    <line x1="165" y1="437" x2="165" y2="451"/><line x1="359" y1="197" x2="359" y2="183"/><text class="tx-boi" x="300" y="436">lập hồ sơ</text>
+    <polyline class="qh-lop" points="154,474 300,474 300,200 370,200"/>
+    <line x1="165" y1="467" x2="165" y2="481"/><line x1="359" y1="207" x2="359" y2="193"/><text class="tx-boi" x="246" y="466">lập hồ sơ</text>
   </g><g class="noi-bang">
-    <polyline class="qh-lop" points="494,160 710,160"/>
-    <line x1="505" y1="153" x2="505" y2="167"/><line x1="710" y1="160" x2="699" y2="160"/><line x1="710" y1="160" x2="699" y2="153"/><line x1="710" y1="160" x2="699" y2="167"/><text class="tx-boi" x="602" y="152">cầm</text>
+    <polyline class="qh-lop" points="494,170 710,170"/>
+    <line x1="505" y1="163" x2="505" y2="177"/><line x1="710" y1="170" x2="699" y2="170"/><line x1="710" y1="170" x2="699" y2="163"/><line x1="710" y1="170" x2="699" y2="177"/><text class="tx-boi" x="602" y="162">cầm</text>
   </g><g class="noi-bang">
-    <polyline class="qh-lop" points="154,614 640,614 640,334 710,334"/>
-    <line x1="165" y1="607" x2="165" y2="621"/><line x1="699" y1="341" x2="699" y2="327"/><text class="tx-boi" x="640" y="606">phát sinh từ</text>
+    <polyline class="qh-lop" points="154,650 650,650 650,340 710,340"/>
+    <line x1="165" y1="643" x2="165" y2="657"/><line x1="699" y1="347" x2="699" y2="333"/><text class="tx-boi" x="650" y="642">phát sinh từ</text>
   </g><g class="noi-bang">
     <polyline class="qh-lop" points="834,100 1040,100"/>
     <line x1="845" y1="93" x2="845" y2="107"/><line x1="1040" y1="100" x2="1029" y2="100"/><line x1="1040" y1="100" x2="1029" y2="93"/><line x1="1040" y1="100" x2="1029" y2="107"/><text class="tx-boi" x="937" y="92">ghi vết</text>
   </g><g class="noi-bang">
-    <polyline class="qh-lop" points="432,230 432,390 1040,390"/>
-    <line x1="439" y1="241" x2="425" y2="241"/><line x1="1040" y1="390" x2="1029" y2="390"/><line x1="1040" y1="390" x2="1029" y2="383"/><line x1="1040" y1="390" x2="1029" y2="397"/><text class="tx-boi" x="492" y="382">vết đường</text>
+    <polyline class="qh-lop" points="382,230 382,420 1040,420"/>
+    <line x1="389" y1="241" x2="375" y2="241"/><line x1="1040" y1="420" x2="1029" y2="420"/><line x1="1040" y1="420" x2="1029" y2="413"/><line x1="1040" y1="420" x2="1029" y2="427"/><text class="tx-boi" x="472" y="412">vết đường</text>
   </g><g class="noi-bang">
-    <polyline class="qh-lop" points="492,230 492,622 1040,622"/>
-    <line x1="499" y1="241" x2="485" y2="241"/><line x1="1029" y1="629" x2="1029" y2="615"/><text class="tx-boi" x="582" y="614">vị trí hiện tại</text>
+    <polyline class="qh-lop" points="482,230 482,596 1040,596"/>
+    <line x1="489" y1="241" x2="475" y2="241"/><line x1="1029" y1="603" x2="1029" y2="589"/><text class="tx-boi" x="592" y="588">vị trí hiện tại</text>
   </g><g class="ghi-chu">
-    <text class="tx-ghi" x="30" y="700">Hai bảng vị trí cố ý không gộp: vi_tri_shipper thêm một dòng mỗi nhịp để trả lời "đã đi đường nào"; vi_tri_shipper_moi_nhat ghi đè,</text><text class="tx-ghi" x="30" y="713">mỗi người giao đúng một dòng, để bản đồ trả lời "đang ở đâu" mà không phải quét cả vết đường.</text>
+    <text class="tx-ghi" x="30" y="730">Hai bảng vị trí cố ý không gộp: vi_tri_shipper thêm một dòng mỗi nhịp để trả lời "đã đi đường nào"; vi_tri_shipper_moi_nhat ghi đè,</text><text class="tx-ghi" x="30" y="743">mỗi người giao đúng một dòng, để bản đồ trả lời "đang ở đâu" mà không phải quét cả vết đường.</text>
   </g></svg></div>
   <p class="cap-duoi">Hai bảng vị trí cố ý không gộp vì trả lời hai câu hỏi có yêu cầu trái ngược nhau: <code>vi_tri_shipper_moi_nhat</code> ghi đè nên đọc rất nhanh cho bản đồ, còn <code>vi_tri_shipper</code> thêm một dòng mỗi nhịp nên giữ được vết đường để đối chiếu khi khách khiếu nại.</p>
 </figure></section><section id="tuan-tu"><h2 class="muc"><span class="so">09</span>Sơ đồ tuần tự</h2>
@@ -1985,7 +2068,7 @@ qua những ai</i>, còn bốn sơ đồ tuần tự dưới đây trả lời <
 nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. Tên thông điệp là tên hàm và
 đường dẫn thật trong mã nguồn, đối chiếu được khi bảo vệ.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 22</span>Sơ đồ tuần tự luồng khách quét mã QR gọi món</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 23</span>Sơ đồ tuần tự luồng khách quét mã QR gọi món</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1280 770" role="img" aria-label="Sơ đồ tuần tự luồng khách quét mã QR gọi món tại bàn cho tới khi món hiện trên màn hình bếp"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2072,7 +2155,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Mã phiên <code>sesis</code> không nhận từ điện thoại khách mà luôn do máy chủ tra lại theo mã bàn. Nếu nhận từ client, người biết mã phiên của bàn khác có thể gọi món vào hoá đơn của bàn đó.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 23</span>Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 24</span>Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1338 812" role="img" aria-label="Sơ đồ tuần tự luồng thanh toán chuyển khoản VietQR và đối soát tự động khi ngân hàng gọi webhook"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2159,7 +2242,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào. Webhook luôn được trả HTTP 200 khi giao dịch đã ghi được vào hộp thư, kể cả lúc không khớp phiên nào — trả mã khác 200 thì bên gửi sẽ bắn lại liên tục.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 24</span>Sơ đồ tuần tự luồng chạy dự báo lượt khách</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 25</span>Sơ đồ tuần tự luồng chạy dự báo lượt khách</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1323 728" role="img" aria-label="Sơ đồ tuần tự luồng chạy dự báo lượt khách, gồm cả nhánh dự phòng khi dịch vụ học máy không phản hồi"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2239,7 +2322,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Nhánh thứ hai của khối <code>alt</code> là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt, nhưng trang web vẫn phải mở được và hiển thị kết quả dự báo đã lưu lần trước.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 25</span>Sơ đồ tuần tự luồng chấm công bằng khuôn mặt</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 26</span>Sơ đồ tuần tự luồng chấm công bằng khuôn mặt</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1365 728" role="img" aria-label="Sơ đồ tuần tự luồng chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó mới nhận diện"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2323,7 +2406,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
 tách luồng song song <i>bên trong</i> một chức năng — những thứ mà sơ đồ quy trình mức tổng
 quan cố ý không thể hiện.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 26</span>Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 27</span>Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 930" role="img" aria-label="Sơ đồ hoạt động quy trình đặt bàn trực tuyến kèm nhánh đặt cọc giữ bàn bằng VietQR"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2379,7 +2462,7 @@ quan cố ý không thể hiện.</p></div>
   <p class="cap-duoi">Nhánh “ngày ở quá khứ” được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính <code>min</code> của ô ngày chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn bỏ qua được.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 27</span>Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 28</span>Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 940" role="img" aria-label="Sơ đồ hoạt động quy trình nhập kho theo lô và cơ chế trừ tồn kho tự động khi bếp hoàn thành món"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2435,7 +2518,7 @@ quan cố ý không thể hiện.</p></div>
   <p class="cap-duoi">Thời điểm trừ kho đặt ở bước bếp <i>hoàn thành</i> món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 28</span>Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 29</span>Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 950" role="img" aria-label="Sơ đồ hoạt động đường đi của một câu hỏi qua năm tầng xử lý của trợ lý ảo tiếng Việt"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdC" viewBox="0 0 10 10" refX="9" refY="5"
