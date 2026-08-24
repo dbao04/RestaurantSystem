@@ -247,6 +247,14 @@
         <button class="btn btn-success btn-lg btn-block mt-3" id="nut-thu">
           <i class="fas fa-check-double"></i> <span id="chu-nut-thu">Xác nhận thu tiền</span>
         </button>
+        <% if (choPhepThanhToanGiaLap) { %>
+          <button class="btn btn-outline-warning btn-block mt-2" id="nut-gia-lap">
+            <i class="fas fa-flask"></i> Thanh toán giả lập
+          </button>
+          <small class="form-text text-muted text-center">
+            Chỉ dùng để kiểm thử, không kết nối ngân hàng thật.
+          </small>
+        <% } %>
       </div>
     </div>
 
@@ -486,6 +494,47 @@
       .catch(function (e) { Swal.fire('Không thu được', e.message, 'error'); })
       .then(function () { nut.disabled = false; });
   };
+
+  var nutGiaLap = $('nut-gia-lap');
+  if (nutGiaLap) {
+    nutGiaLap.onclick = function () {
+      var nut = this;
+      var soTien = Number($('so-tien').value) || 0;
+      if (soTien <= 0) return Swal.fire('Số tiền không hợp lệ', 'Nhập số tiền lớn hơn 0.', 'warning');
+
+      Swal.fire({
+        title: 'Thanh toán giả lập?',
+        text: 'Giao dịch sẽ được tự động xác nhận thành công để kiểm thử.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xác nhận giả lập',
+        cancelButtonText: 'Hủy',
+      }).then(function (r) {
+        if (!r.isConfirmed) return;
+        nut.disabled = true;
+        fetch('/staff/thanh-toan/' + encodeURIComponent(SESIS) + '/gia-lap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            so_tien: soTien,
+            ma_giam_gia: $('ma-giam-gia').value.trim() || null,
+            diem_dung: Number($('diem-dung').value) || 0,
+            tien_tip: Number($('tien-tip').value) || 0,
+            ghi_chu_phan_chia: $('ghi-chu-chia').value.trim() || null,
+          }),
+        })
+          .then(function (x) {
+            return x.json().then(function (j) {
+              if (!x.ok) throw new Error(j.message || j.loi || 'Lỗi thanh toán giả lập');
+              return j;
+            });
+          })
+          .then(function (kq) { xongXuoi(kq.payment); })
+          .catch(function (e) { Swal.fire('Không thanh toán được', e.message, 'error'); })
+          .then(function () { nut.disabled = false; });
+      });
+    };
+  }
 
   /* --------------------------------------------------------- khung QR --- */
   function hienQR(kq) {

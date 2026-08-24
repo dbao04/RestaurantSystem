@@ -395,6 +395,7 @@ module.exports = function (io) {
       activePage: 'thanh-toan',
       staffName: req.session.staffName,
       hoaDon, phuongThuc, taiKhoan,
+      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
     });
   }));
 
@@ -436,6 +437,40 @@ module.exports = function (io) {
       });
     }
     res.json({ thanhCong: true, ...kq });
+  }));
+
+  // Thanh toán giả lập cho môi trường demo: vẫn đi qua toàn bộ hậu kỳ thanh
+  // toán (trừ điểm, cộng điểm, cập nhật đơn và nhật ký), nhưng không cần ngân
+  // hàng thật. Không mở chức năng này khi chạy production.
+  router.post('/staff/thanh-toan/:sesis/gia-lap', requireThuNgan, batJson(async (req, res) => {
+    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+      return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
+    }
+
+    const kq = await tt.taoPhien({
+      sesis: req.params.sesis,
+      soTien: req.body.so_tien,
+      maPhuongThuc: 'vietqr',
+      loai: 'thanh_toan',
+      nguon: 'quay',
+      maGiamGia: req.body.ma_giam_gia || null,
+      diemDung: Number(req.body.diem_dung) || 0,
+      tienTip: Number(req.body.tien_tip) || 0,
+      ghiChuPhanChia: req.body.ghi_chu_phan_chia || null,
+      ghiChu: 'Thanh toán giả lập',
+      nhanVienId: req.session.staffId || null,
+    });
+    const daXacNhan = await tt.xacNhan(kq.payment.id, {
+      maGiaoDich: 'SIM-' + Date.now(),
+      nhanVienId: req.session.staffId || null,
+      ghiChu: 'Xác nhận thanh toán giả lập',
+    });
+    await ghiNhatKy(req, 'thanh_toan_gia_lap', daXacNhan.payment.id, daXacNhan.payment);
+    phat(req.params.sesis, 'tt:da-thanh-toan', {
+      paymentId: daXacNhan.payment.id, sesis: req.params.sesis,
+      soTien: Number(daXacNhan.payment.amount), donDaTraDu: !!daXacNhan.donDaTraDu,
+    });
+    res.json({ thanhCong: true, ...daXacNhan });
   }));
 
   /* ======================================================================== */
