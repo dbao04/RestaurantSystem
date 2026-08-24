@@ -111,6 +111,10 @@
 </div>
 <div class="hang"><span class="nhan">Hình thức</span><span><%= p.ten_phuong_thuc %></span></div>
 
+<% if (diemTichDuoc > 0) { %>
+  <div class="hang"><span class="nhan">Điểm tích lũy nhận được</span><span><b>+<%= diemTichDuoc %> điểm</b></span></div>
+<% } %>
+
 <% if (p.tien_khach_dua != null) { %>
   <div class="hang"><span class="nhan">Khách đưa</span><span><%= Number(p.tien_khach_dua).toLocaleString('vi-VN') %>đ</span></div>
   <div class="hang"><span class="nhan">Tiền thối</span><span><b><%= Number(p.tien_thoi_lai || 0).toLocaleString('vi-VN') %>đ</b></span></div>

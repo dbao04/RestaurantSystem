@@ -235,7 +235,10 @@ module.exports = function (io) {
     if (!p) return res.status(404).send('Không tìm thấy biên lai');
     // Bien lai chi can cac con so - khong goi y ma khuyen mai o day.
     const hoaDon = await tt.layHoaDon(p.sesis, { goiY: false });
-    res.render('staff/thanh-toan-bien-lai', { layout: false, p, hoaDon });
+    const diemTichDuoc = p.status === 'success' && p.loai === 'thanh_toan'
+      ? Math.floor(Number(p.amount || 0) / Number(hoaDon.tyLe.ty_le_tich_diem || 10000))
+      : 0;
+    res.render('staff/thanh-toan-bien-lai', { layout: false, p, hoaDon, diemTichDuoc });
   }));
 
   router.post('/staff/thanh-toan/doi-soat/:id/ghep', requireThuNgan, batJson(async (req, res) => {
