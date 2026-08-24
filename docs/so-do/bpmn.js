@@ -65,6 +65,57 @@ function phucVu() {
 }
 
 /* ======================================================================== */
+/* B. DAT BAN TRUC TUYEN                                                   */
+/* ======================================================================== */
+
+function datBan() {
+  const [L1, L2, L3, L4] = TAM;
+  const id = 'bpDatBan';
+  let s = '';
+
+  s += v.lan(LAN_Y[0], 'Khách hàng', W);
+  s += v.lan(LAN_Y[1], 'Lễ tân', W);
+  s += v.lan(LAN_Y[2], 'Hệ thống', W);
+  s += v.lan(LAN_Y[3], 'Ngân hàng', W);
+
+  s += v.suKien(X(1), L1, 'Muốn đặt bàn', 'dau', true);
+  s += v.viec(X(2), L1, ['Nhập ngày, giờ,', 'số khách và liên hệ']);
+  s += v.viec(X(3), L3, ['Kiểm tra bàn trống', 'và điều kiện đặt bàn'], 'tu-dong');
+  s += v.cong(X(4), L3, 'Có bàn phù hợp?');
+  s += v.viec(X(5), L1, ['Chọn khung giờ', 'khác']);
+  s += v.suKien(X(6), L1, 'Không đặt được', 'cuoi');
+  s += v.viec(X(5), L3, ['Giữ bàn tạm thời,', 'tạo mã đặt chỗ'], 'tu-dong');
+  s += v.cong(X(6), L3, 'Có cần đặt cọc?');
+  s += v.viec(X(7), L3, ['Xác nhận đặt bàn,', 'gửi thông tin cho khách'], 'tu-dong');
+  s += v.viec(X(7), L3, ['Sinh mã VietQR', 'tiền đặt cọc'], 'tu-dong');
+  s += v.viec(X(8), L1, 'Chuyển khoản đặt cọc');
+  s += v.suKien(X(8), L4, 'Ngân hàng báo có', 'giua');
+  s += v.viec(X(8), L3, ['Đối soát tiền cọc,', 'xác nhận giữ bàn'], 'tu-dong');
+  s += v.suKien(X(8), L1, 'Đặt bàn thành công', 'cuoi', true);
+
+  s += v.luong([[X(1) + c.sk, L1], [c.vTrai(X(2)), L1]], id);
+  s += v.luong([[c.vPhai(X(2)), L1], [X(3) - 42, L1], [X(3) - 42, L3], [c.vTrai(X(3)), L3]], id);
+  s += v.luong([[c.vPhai(X(3)), L3], [c.cTrai(X(4)), L3]], id);
+  s += v.luong([[c.cPhai(X(4)), L3], [c.vTrai(X(5)), L3]], id, 'Có', [X(4) + 42, L3 - 9]);
+  s += v.luong([[X(4), c.cDuoi(L3)], [X(4), L1], [c.vTrai(X(5)), L1]], id, 'Không', [X(4) + 16, L3 + 66]);
+  s += v.luong([[c.vPhai(X(5)), L1], [X(6) - c.sk, L1]], id);
+  s += v.luong([[c.vPhai(X(5)), L3], [X(6) - 42, L3], [X(6) - 42, c.cTren(L3)]], id);
+  s += v.luong([[X(6), c.cDuoi(L3)], [X(6), L2], [X(7) - 42, L2], [c.vTrai(X(7)), L2]], id, 'Không', [X(6) + 18, L2 - 9]);
+  s += v.luong([[c.vPhai(X(7)), L2], [c.vPhai(X(7)) + 8, L2], [c.vPhai(X(7)) + 8, L1], [X(8) - c.sk, L1]], id);
+  s += v.luong([[X(6), c.cDuoi(L3)], [X(6), L4], [X(7) + 42, L4], [c.vTrai(X(7)), L4]], id, 'Có', [X(6) + 16, L3 + 66]);
+  s += v.luong([[c.vPhai(X(7)), L4], [X(8) - 42, L4], [X(8) - 42, L1], [c.vTrai(X(8)), L1]], id);
+  s += v.luong([[X(8), c.vDuoi(L1)], [X(8), L4 - c.sk]], id);
+  s += v.luong([[X(8) + c.sk, L4], [X(8) + 20, L4], [X(8) + 20, L3], [c.vPhai(X(8)), L3]], id);
+  s += v.luong([[c.vPhai(X(8)), L3], [W - 12, L3], [W - 12, L1], [X(8) + c.sk, L1]], id);
+
+  return v.khung(
+    id, W, CAO,
+    'Sơ đồ BPMN quy trình đặt bàn trực tuyến với kiểm tra bàn trống, giữ bàn tạm thời và nhánh đặt cọc qua VietQR',
+    s
+  );
+}
+
+/* ======================================================================== */
 /* B. THANH TOAN & DOI SOAT NGAN HANG                                       */
 /* ======================================================================== */
 
@@ -199,4 +250,4 @@ function chamCong() {
   );
 }
 
-module.exports = { phucVu, thanhToan, duBao, chamCong };
+module.exports = { phucVu, datBan, thanhToan, duBao, chamCong };
