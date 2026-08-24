@@ -1,0 +1,967 @@
+<%
+/*
+  TRUNG TAM DAT BAN - man hinh chinh cua nhan vien phuc vu / quay.
+
+  BA CACH NHIN CUNG MOT NGAY
+  --------------------------
+    Danh sach   ai den luc may gio, xu ly tung luot        -> lam viec
+    So do ban   ban nao trong NGAY LUC NAY                 -> xep khach vao cho
+    Timeline    ban nao ban luc nao trong ca ngay          -> nhin ra khoang trong
+
+  Ba tab, mot nguon du lieu. Khong tach thanh ba trang vi trong mot ca lam viec
+  nhan vien doi qua doi lai giua chung lien tuc: khach den quay hoi "gio con ban
+  cho 6 nguoi khong" thi phai tra loi trong hai giay, khong phai sau hai lan tai
+  trang.
+
+  DAI CANH BAO O TREN CUNG
+  ------------------------
+  Nhung viec KHONG duoc phep bo lo duoc day len dau trang, khong nam trong bang:
+  khach qua han giu ban, luot dat cho duyet, ban sap het gio. Mot bang 40 dong
+  thi dong quan trong nhat cung chi la mot dong nhu moi dong khac.
+
+  MOI THAO TAC HONG LUI LAI DUOC DEU CO HOP XAC NHAN (muc 26)
+  -----------------------------------------------------------
+  Huy, no-show, tu choi. Khong dung `confirm()` cua trinh duyet vi no khong hien
+  duoc so tien hoan lai - ma do chinh la thong tin quyet dinh viec bam hay khong.
+*/
+var activePage = 'reservations';
+var dem = bang.dem || {};
+%>
+<%- include('partials/header') %>
+<%- include('../partials/so-do-dat-ban') %>
+
+<style>
+  .db-chiso { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:.8rem; margin-bottom:1.2rem; }
+  .db-chiso .o { background:#fff; border-radius:10px; padding:.75rem .9rem; border-left:4px solid #e3e6f0;
+    box-shadow:0 .1rem .8rem rgba(58,59,69,.1); }
+  .db-chiso .n { font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:#858796; font-weight:700; }
+  .db-chiso .v { font-size:1.5rem; font-weight:800; color:#3a3b45; line-height:1.2; margin-top:.15rem; }
+  .db-chiso .p { font-size:.7rem; color:#858796; }
+  .db-chiso .o.tong { border-left-color:#4e73df; } .db-chiso .o.cho { border-left-color:#f6c23e; }
+  .db-chiso .o.ngoi { border-left-color:#1cc88a; } .db-chiso .o.khach { border-left-color:#36b9cc; }
+  .db-chiso .o.xau { border-left-color:#e74a3b; } .db-chiso .o.day { border-left-color:#6f42c1; }
+
+  .db-canhbao { border-radius:10px; padding:.85rem 1rem; margin-bottom:.7rem; display:flex; gap:.8rem;
+    align-items:flex-start; font-size:.9rem; }
+  .db-canhbao--do { background:#fdeeec; border:1px solid #f5c6c0; color:#8b2c22; }
+  .db-canhbao--vang { background:#fff8e6; border:1px solid #f5dfa3; color:#7a5c11; }
+  .db-canhbao--xanh { background:#eaf7f1; border:1px solid #b7e3cd; color:#155c3c; }
+  .db-canhbao b { display:block; margin-bottom:.2rem; }
+  .db-canhbao__ds { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem; }
+  .db-canhbao__ds button { border:1px solid currentColor; background:#fff; border-radius:999px;
+    padding:.25rem .75rem; font-size:.8rem; font-weight:600; cursor:pointer; color:inherit; }
+
+  .db-tab { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1rem; }
+  .db-tab button { border:1px solid #d1d3e2; background:#fff; border-radius:8px; padding:.5rem 1rem;
+    font-size:.88rem; font-weight:600; color:#5a5c69; cursor:pointer; }
+  .db-tab button[aria-selected="true"] { background:#4e73df; border-color:#4e73df; color:#fff; }
+
+  .db-nhan { display:inline-flex; align-items:center; gap:.3rem; padding:.15rem .6rem; border-radius:999px;
+    font-size:.72rem; font-weight:700; white-space:nowrap; }
+  .db-vip { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; padding:.05rem .45rem;
+    border-radius:4px; font-size:.66rem; font-weight:800; letter-spacing:.04em; }
+  .db-rui-ro { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:.05rem .45rem;
+    border-radius:4px; font-size:.66rem; font-weight:800; }
+
+  table.db-bang td { vertical-align:middle; font-size:.9rem; }
+  table.db-bang .gio { font-weight:800; font-size:1rem; color:#3a3b45; }
+
+  /* --------- Timeline --------- */
+  .tl { overflow-x:auto; }
+  .tl__trong { min-width:760px; }
+  .tl__moc { position:relative; height:22px; margin-left:110px; border-bottom:1px solid #e3e6f0; }
+  .tl__moc span { position:absolute; transform:translateX(-50%); font-size:.7rem; color:#858796; font-weight:700; }
+  .tl__hang { display:flex; align-items:center; border-bottom:1px solid #f1f2f7; min-height:38px; }
+  .tl__ten { width:110px; flex:none; font-size:.82rem; font-weight:700; color:#5a5c69; padding-right:.5rem; }
+  .tl__ten small { display:block; font-weight:600; color:#b7b9cc; font-size:.68rem; }
+  .tl__rai { position:relative; flex:1; height:30px; background:
+    repeating-linear-gradient(90deg,#fafbfe 0 1px,transparent 1px 100%); }
+  .tl__luot { position:absolute; top:3px; height:24px; border-radius:6px; padding:0 .45rem;
+    font-size:.72rem; font-weight:700; color:#fff; display:flex; align-items:center; overflow:hidden;
+    white-space:nowrap; cursor:pointer; border:none; }
+  .tl__don { position:absolute; top:3px; height:24px; background:repeating-linear-gradient(45deg,
+    rgba(100,116,139,.25) 0 4px, transparent 4px 8px); border-radius:0 6px 6px 0; pointer-events:none; }
+  .tl__bay-gio { position:absolute; top:0; bottom:0; width:2px; background:#e74a3b; z-index:5; }
+  .tl__bay-gio::before { content:''; position:absolute; top:-4px; left:-3px; width:8px; height:8px;
+    border-radius:50%; background:#e74a3b; }
+
+  /* --------- Ngăn chi tiết --------- */
+  .db-ngan { position:fixed; top:0; right:0; bottom:0; width:min(480px,100%); background:#fff; z-index:1300;
+    box-shadow:-10px 0 40px rgba(0,0,0,.25); transform:translateX(100%); transition:transform .25s ease;
+    overflow-y:auto; }
+  .db-ngan.mo { transform:none; }
+  .db-che { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1299; display:none; }
+  .db-che.mo { display:block; }
+  .db-ngan__dau { padding:1.1rem 1.3rem; border-bottom:1px solid #e3e6f0; position:sticky; top:0;
+    background:#fff; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+  .db-ngan__than { padding:1.1rem 1.3rem 3rem; }
+  .db-ngan dl { display:grid; grid-template-columns:120px 1fr; gap:.4rem .8rem; font-size:.88rem; margin:0; }
+  .db-ngan dt { color:#858796; font-size:.72rem; text-transform:uppercase; font-weight:700; padding-top:.15rem; }
+  .db-ngan dd { margin:0; font-weight:600; color:#3a3b45; }
+  .db-ngan__nut { display:flex; flex-wrap:wrap; gap:.45rem; margin:1.1rem 0; }
+  .db-nk { border-left:2px solid #e3e6f0; padding-left:.9rem; margin-top:.4rem; }
+  .db-nk li { list-style:none; font-size:.82rem; color:#5a5c69; padding:.3rem 0; position:relative; }
+  .db-nk li::before { content:''; position:absolute; left:-1.22rem; top:.7rem; width:7px; height:7px;
+    border-radius:50%; background:#b7b9cc; }
+  .db-nk time { display:block; color:#b7b9cc; font-size:.7rem; }
+
+  @media (max-width:576px) { .db-ngan dl { grid-template-columns:1fr; gap:.05rem; }
+    .db-ngan dd { margin-bottom:.55rem; } }
+</style>
+
+<!-- ==================================================== ĐẦU TRANG ===== -->
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800">Trung tâm đặt bàn</h1>
+    <p class="text-muted mb-0">
+      <%= new Date(ngay + 'T00:00:00').toLocaleDateString('vi-VN', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }) %>
+      · giữ bàn <%= cauHinh.giu_ban_phut %> phút sau giờ đặt
+    </p>
+  </div>
+  <div class="d-flex flex-wrap" style="gap:.5rem">
+    <form method="GET" class="d-flex" style="gap:.4rem">
+      <input class="form-control" type="date" name="ngay" value="<%= ngay %>" aria-label="Ngày xem"
+             onchange="this.form.submit()">
+    </form>
+    <button class="btn btn-success" id="btnWalkIn"><i class="fas fa-walking mr-1"></i>Khách vãng lai</button>
+    <button class="btn btn-primary" id="btnTaoMoi"><i class="fas fa-plus mr-1"></i>Đặt bàn mới</button>
+    <% if (laQuanLy) { %>
+      <a class="btn btn-outline-secondary" href="/staff/dat-ban/phan-tich"><i class="fas fa-chart-line mr-1"></i>Phân tích</a>
+    <% } %>
+  </div>
+</div>
+
+<!-- ==================================================== CẢNH BÁO ====== -->
+<div id="daiCanhBao">
+  <% if (bang.canh_bao.length) { %>
+    <div class="db-canhbao db-canhbao--do">
+      <i class="fas fa-user-clock fa-lg"></i>
+      <div style="flex:1">
+        <b><%= bang.canh_bao.length %> lượt đặt đã quá giờ giữ bàn</b>
+        Gọi cho khách, giữ thêm giờ, hoặc đóng lượt đặt để nhường bàn.
+        <div class="db-canhbao__ds">
+          <% bang.canh_bao.forEach(function (r) { %>
+            <button type="button" data-mo="<%= r.id %>">
+              <%= r.gio %> · <%= r.customer_name %> · <%= r.guest_count %> khách
+              <%= r.ban.length ? '· ' + r.ban.join(', ') : '' %>
+            </button>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (bang.cho_duyet.length) { %>
+    <div class="db-canhbao db-canhbao--vang">
+      <i class="fas fa-hourglass-half fa-lg"></i>
+      <div style="flex:1">
+        <b><%= bang.cho_duyet.length %> yêu cầu đang chờ xác nhận</b>
+        Khách đặt online, chưa có ai xác nhận.
+        <div class="db-canhbao__ds">
+          <% bang.cho_duyet.forEach(function (r) { %>
+            <button type="button" data-mo="<%= r.id %>"><%= r.gio %> · <%= r.customer_name %> · <%= r.guest_count %> khách</button>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (bang.danh_sach_cho.length) { %>
+    <div class="db-canhbao db-canhbao--vang">
+      <i class="fas fa-list-ol fa-lg"></i>
+      <div style="flex:1">
+        <b><%= bang.danh_sach_cho.length %> khách trong danh sách chờ</b>
+        Có bàn trống thì gán bàn rồi xác nhận cho khách.
+        <div class="db-canhbao__ds">
+          <% bang.danh_sach_cho.forEach(function (r) { %>
+            <button type="button" data-mo="<%= r.id %>"><%= r.gio %> · <%= r.customer_name %> · <%= r.guest_count %> khách</button>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if (bang.sap_het_gio.length) { %>
+    <div class="db-canhbao db-canhbao--xanh">
+      <i class="fas fa-stopwatch fa-lg"></i>
+      <div style="flex:1">
+        <b><%= bang.sap_het_gio.length %> bàn sắp hết giờ sử dụng</b>
+        Có lượt đặt tiếp theo trên các bàn này — chuẩn bị dọn.
+        <div class="db-canhbao__ds">
+          <% bang.sap_het_gio.forEach(function (r) { %>
+            <button type="button" data-mo="<%= r.id %>">
+              <%= r.ban.join(', ') || r.customer_name %> · còn <%= Math.max(0, r.con_tren_ban_phut) %> phút
+            </button>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- ==================================================== CHỈ SỐ ======== -->
+<div class="db-chiso">
+  <div class="o tong"><div class="n">Tổng lượt</div><div class="v"><%= bang.tong_luot %></div>
+    <div class="p"><%= bang.online %> online · <%= bang.walk_in %> vãng lai</div></div>
+  <div class="o cho"><div class="n">Chờ xác nhận</div><div class="v"><%= dem.PENDING || 0 %></div>
+    <div class="p"><%= dem.WAITLIST || 0 %> trong danh sách chờ</div></div>
+  <div class="o"><div class="n">Đã xác nhận</div><div class="v"><%= dem.CONFIRMED || 0 %></div>
+    <div class="p"><%= bang.sap_den.length %> sắp đến trong 1 giờ</div></div>
+  <div class="o ngoi"><div class="n">Đang ngồi</div><div class="v"><%= dem.SEATED || 0 %></div>
+    <div class="p"><%= dem.ARRIVED || 0 %> đã đến, chờ xếp</div></div>
+  <div class="o khach"><div class="n">Tổng khách</div><div class="v"><%= bang.tong_khach %></div>
+    <div class="p">trung bình <%= bang.quy_mo_trung_binh %> khách/lượt</div></div>
+  <div class="o day"><div class="n">Tỷ lệ lấp đầy</div><div class="v"><%= bang.ty_le_lap_day %>%</div>
+    <div class="p"><%= bang.tong_cho %> chỗ khả dụng</div></div>
+  <div class="o xau"><div class="n">No-show</div><div class="v"><%= dem.NO_SHOW || 0 %></div>
+    <div class="p"><%= bang.ty_le_no_show %>% lượt đã đóng</div></div>
+  <div class="o xau"><div class="n">Đã hủy</div><div class="v"><%= (dem.CANCELLED || 0) + (dem.REJECTED || 0) %></div>
+    <div class="p"><%= bang.ty_le_huy %>% lượt đã đóng</div></div>
+</div>
+
+<!-- ==================================================== TAB =========== -->
+<div class="db-tab" role="tablist">
+  <button type="button" role="tab" aria-selected="true" data-tab="ds"><i class="fas fa-list mr-1"></i>Danh sách</button>
+  <button type="button" role="tab" aria-selected="false" data-tab="sodo"><i class="fas fa-map-marked-alt mr-1"></i>Sơ đồ bàn</button>
+  <button type="button" role="tab" aria-selected="false" data-tab="tl"><i class="fas fa-stream mr-1"></i>Timeline</button>
+</div>
+
+<!-- ------------------------------------------------ TAB: DANH SÁCH ---- -->
+<div class="card shadow mb-4" id="tabDs">
+  <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold text-primary">Lịch đặt bàn</h6>
+    <div class="d-flex flex-wrap" style="gap:.4rem">
+      <input class="form-control form-control-sm" id="loc" placeholder="Tìm tên, SĐT hoặc mã…" style="width:190px">
+      <select class="form-control form-control-sm" id="locTrangThai" style="width:150px">
+        <option value="">Mọi trạng thái</option>
+        <% danhMuc.trang_thai.forEach(function (t) { %>
+          <option value="<%= t.code %>"><%= t.label_vi %></option>
+        <% }); %>
+      </select>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if (!bang.ds.length) { %>
+      <div class="text-center text-muted py-5">
+        <i class="fas fa-calendar-check fa-3x mb-3 d-block text-gray-300"></i>
+        Chưa có lượt đặt bàn nào trong ngày này.
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover db-bang mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th style="width:88px">Giờ</th><th>Khách hàng</th><th style="width:78px">Khách</th>
+              <th>Bàn</th><th style="width:110px">Nguồn</th><th style="width:130px">Trạng thái</th>
+              <th style="width:220px" class="text-right">Xử lý</th>
+            </tr>
+          </thead>
+          <tbody id="bangDs">
+            <% bang.ds.forEach(function (r) {
+              var tt = danhMuc.trang_thai.filter(function (x) { return x.code === r.status; })[0] || {};
+              var ruiRo = Number(r.khach_no_show) >= 2;
+            %>
+              <tr data-id="<%= r.id %>" data-trang-thai="<%= r.status %>"
+                  data-tim="<%= (r.customer_name + ' ' + r.phone + ' ' + r.reservation_code).toLowerCase() %>">
+                <td>
+                  <div class="gio"><%= r.gio %></div>
+                  <small class="text-muted">→ <%= r.gio_ket_thuc %></small>
+                </td>
+                <td>
+                  <div class="font-weight-bold">
+                    <%= r.customer_name %>
+                    <% if (r.customer_type === 'VIP') { %><span class="db-vip">VIP</span><% } %>
+                    <% if (r.customer_type === 'CORPORATE') { %><span class="db-vip" style="background:#dbeafe;color:#1e40af;border-color:#93c5fd">DN</span><% } %>
+                    <% if (ruiRo) { %><span class="db-rui-ro" title="Đã có <%= r.khach_no_show %> lần không đến"><%= r.khach_no_show %>× no-show</span><% } %>
+                  </div>
+                  <small class="text-muted"><%= r.phone %> · <%= r.reservation_code %></small>
+                  <% if (r.occasion || (r.tags && r.tags.length)) { %>
+                    <div><small class="text-warning"><i class="fas fa-star"></i>
+                      <%= [r.occasion].concat(r.tags || []).filter(Boolean).join(' · ') %></small></div>
+                  <% } %>
+                </td>
+                <td class="text-center font-weight-bold"><%= r.guest_count %></td>
+                <td>
+                  <% if (r.ban.length) { %>
+                    <span class="font-weight-bold"><%= r.ban.join(', ') %></span>
+                    <small class="d-block text-muted"><%= r.tong_cho %> chỗ<%= r.area_name ? ' · ' + r.area_name : '' %></small>
+                  <% } else { %>
+                    <span class="text-danger"><i class="fas fa-exclamation-triangle"></i> chưa có bàn</span>
+                  <% } %>
+                </td>
+                <td><small class="text-muted"><%= { ONLINE:'Trực tuyến', STAFF:'Nhân viên', WALK_IN:'Vãng lai', PHONE:'Điện thoại', PARTNER:'Đối tác' }[r.source] || r.source %></small></td>
+                <td>
+                  <span class="db-nhan" style="background:<%= tt.color %>1f;color:<%= tt.color %>">
+                    <i class="fas <%= tt.icon %>"></i> <%= r.nhan_trang_thai %>
+                  </span>
+                  <% if (r.qua_han_giu) { %>
+                    <small class="d-block text-danger font-weight-bold">quá hạn <%= Math.abs(r.con_giu_phut) %>′</small>
+                  <% } else if (r.status === 'SEATED' && r.con_tren_ban_phut !== null) { %>
+                    <small class="d-block text-muted">còn <%= Math.max(0, r.con_tren_ban_phut) %>′</small>
+                  <% } %>
+                </td>
+                <td class="text-right">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <% if (r.status === 'PENDING' || r.status === 'WAITLIST') { %>
+                      <button class="btn btn-primary" data-hd="confirm" data-id="<%= r.id %>" title="Xác nhận"><i class="fas fa-check"></i></button>
+                    <% } %>
+                    <% if (r.status === 'CONFIRMED') { %>
+                      <button class="btn btn-info" data-hd="check-in" data-id="<%= r.id %>" title="Khách đã đến"><i class="fas fa-walking"></i></button>
+                    <% } %>
+                    <% if (r.status === 'CONFIRMED' || r.status === 'ARRIVED') { %>
+                      <button class="btn btn-success" data-hd="seat" data-id="<%= r.id %>" title="Xếp bàn"><i class="fas fa-chair"></i></button>
+                    <% } %>
+                    <% if (r.status === 'SEATED') { %>
+                      <button class="btn btn-dark" data-hd="complete" data-id="<%= r.id %>" title="Hoàn tất"><i class="fas fa-flag-checkered"></i></button>
+                    <% } %>
+                    <% if (r.dang_hieu_luc) { %>
+                      <button class="btn btn-outline-warning" data-hd="no-show" data-id="<%= r.id %>" data-hoi="1" title="Không đến"><i class="fas fa-user-slash"></i></button>
+                      <button class="btn btn-outline-danger" data-hd="cancel" data-id="<%= r.id %>" data-hoi="1" title="Hủy"><i class="fas fa-ban"></i></button>
+                    <% } %>
+                    <button class="btn btn-outline-secondary" data-mo="<%= r.id %>" title="Chi tiết"><i class="fas fa-ellipsis"></i></button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ------------------------------------------------ TAB: SƠ ĐỒ -------- -->
+<div class="card shadow mb-4" id="tabSodo" hidden>
+  <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold text-primary">Sơ đồ bàn</h6>
+    <div class="d-flex align-items-center" style="gap:.4rem">
+      <label class="mb-0 small text-muted">Xem tại</label>
+      <input type="time" class="form-control form-control-sm" id="sdGio" style="width:120px" step="900">
+      <button class="btn btn-sm btn-outline-primary" id="sdBayGio">Bây giờ</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="sdTabs"></div>
+    <div id="sdKhung" class="sdb"></div>
+  </div>
+</div>
+
+<!-- ------------------------------------------------ TAB: TIMELINE ----- -->
+<div class="card shadow mb-4" id="tabTl" hidden>
+  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="m-0 font-weight-bold text-primary">Timeline theo bàn</h6>
+    <small class="text-muted">Vạch đỏ = bây giờ · vùng gạch chéo = thời gian dọn bàn</small>
+  </div>
+  <div class="card-body">
+    <div class="tl" id="tlKhung"><span class="text-muted">Đang tải…</span></div>
+  </div>
+</div>
+
+<!-- ==================================================== NGĂN CHI TIẾT == -->
+<div class="db-che" id="che"></div>
+<aside class="db-ngan" id="ngan" role="dialog" aria-modal="true" aria-labelledby="nganTieuDe" hidden>
+  <div class="db-ngan__dau">
+    <div>
+      <h5 id="nganTieuDe" class="mb-1">Chi tiết lượt đặt</h5>
+      <div id="nganPhu" class="small text-muted"></div>
+    </div>
+    <button class="close" id="nganDong" aria-label="Đóng">&times;</button>
+  </div>
+  <div class="db-ngan__than" id="nganThan"></div>
+</aside>
+
+<!-- ==================================================== MODAL ========== -->
+<div class="modal fade" id="mForm" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="mFormTieuDe">Đặt bàn mới</h5>
+      <button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body">
+      <div id="mFormBao"></div>
+      <div class="form-row">
+        <div class="form-group col-md-6"><label>Họ tên khách <span class="text-danger">*</span></label>
+          <input class="form-control" id="fTen"></div>
+        <div class="form-group col-md-6"><label>Số điện thoại <span class="text-danger">*</span></label>
+          <input class="form-control" id="fDienThoai" type="tel">
+          <small class="form-text text-muted" id="fHoSo"></small></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-3"><label>Số khách <span class="text-danger">*</span></label>
+          <input class="form-control" id="fSoKhach" type="number" min="1" value="2"></div>
+        <div class="form-group col-md-3 js-lich"><label>Ngày</label>
+          <input class="form-control" id="fNgay" type="date" value="<%= ngay %>"></div>
+        <div class="form-group col-md-3 js-lich"><label>Giờ</label>
+          <input class="form-control" id="fGio" type="time" value="19:00" step="900"></div>
+        <div class="form-group col-md-3"><label>Khu vực</label>
+          <select class="form-control" id="fKhuVuc">
+            <option value="">Bất kỳ</option>
+            <% khuVuc.forEach(function (k) { %><option value="<%= k.id %>"><%= k.ten %></option><% }); %>
+          </select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-4"><label>Loại khách</label>
+          <select class="form-control" id="fLoaiKhach">
+            <option value="REGULAR">Khách thường</option>
+            <option value="MEMBER">Thành viên</option>
+            <option value="VIP">VIP</option>
+            <option value="CORPORATE">Doanh nghiệp</option>
+            <option value="NEW">Khách mới</option>
+          </select></div>
+        <div class="form-group col-md-8"><label>Yêu cầu đặc biệt</label>
+          <input class="form-control" id="fYeuCau" placeholder="Sinh nhật, cần ghế trẻ em, bàn gần cửa sổ…"></div>
+      </div>
+      <div id="fKiemTra" class="small"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" id="fKiemTraNut">Kiểm tra bàn trống</button>
+      <button class="btn btn-primary" id="fLuu">Tạo lượt đặt</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="modal fade" id="mXacNhan" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="xnTieuDe">Xác nhận</h5>
+      <button type="button" class="close" data-dismiss="modal">&times;</button></div>
+    <div class="modal-body">
+      <p id="xnMoTa" class="mb-3"></p>
+      <div class="form-group"><label>Ghi chú / lý do</label>
+        <input class="form-control" id="xnLyDo" maxlength="200"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" data-dismiss="modal">Không</button>
+      <button class="btn btn-danger" id="xnDongY">Đồng ý</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var NGAY = '<%= ngay %>';
+  var KHU = <%- JSON.stringify(khuVuc) %>;
+  var TRANG_THAI = <%- JSON.stringify(danhMuc.trang_thai) %>;
+  var MAU = {};
+  TRANG_THAI.forEach(function (t) { MAU[t.code] = t.color; });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+
+  function chu(the, lop, noiDung) {
+    var n = document.createElement(the);
+    if (lop) n.className = lop;
+    if (noiDung != null) n.textContent = noiDung;
+    return n;
+  }
+
+  async function api(duong, tuyChon) {
+    var r = await fetch(duong, Object.assign({
+      headers: { 'Content-Type': 'application/json' }
+    }, tuyChon || {}));
+    return r.json();
+  }
+
+  function loi(thongDiep) {
+    // Dung alert co chu dich: mot thao tac ghi that bai PHAI chan nguoi dung lai.
+    // Mot dong chu do goc man hinh se bi bo qua giua gio cao diem, va nhan vien
+    // se tuong luot dat da duoc xu ly.
+    window.alert(thongDiep || 'Thao tác không thành công.');
+  }
+
+  // ------------------------------------------------------------ tab
+
+  document.querySelectorAll('.db-tab button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.db-tab button').forEach(function (x) {
+        x.setAttribute('aria-selected', x === b ? 'true' : 'false');
+      });
+      $('tabDs').hidden = b.dataset.tab !== 'ds';
+      $('tabSodo').hidden = b.dataset.tab !== 'sodo';
+      $('tabTl').hidden = b.dataset.tab !== 'tl';
+      if (b.dataset.tab === 'sodo') taiSoDo();
+      if (b.dataset.tab === 'tl') taiTimeline();
+    });
+  });
+
+  // ------------------------------------------------------------ lọc
+
+  function locBang() {
+    var q = $('loc').value.trim().toLowerCase();
+    var tt = $('locTrangThai').value;
+    document.querySelectorAll('#bangDs tr').forEach(function (tr) {
+      var hop = (!q || tr.dataset.tim.indexOf(q) >= 0) && (!tt || tr.dataset.trangThai === tt);
+      tr.style.display = hop ? '' : 'none';
+    });
+  }
+  $('loc').addEventListener('input', locBang);
+  $('locTrangThai').addEventListener('change', locBang);
+
+  // --------------------------------------------------------- sơ đồ
+
+  var sdKhuDangXem = '';
+
+  function gioHienTai() {
+    var d = new Date();
+    var p = Math.floor(d.getMinutes() / 15) * 15;
+    return String(d.getHours()).padStart(2, '0') + ':' + String(p).padStart(2, '0');
+  }
+
+  if (!$('sdGio').value) $('sdGio').value = gioHienTai();
+  $('sdGio').addEventListener('change', taiSoDo);
+  $('sdBayGio').addEventListener('click', function () { $('sdGio').value = gioHienTai(); taiSoDo(); });
+
+  async function taiSoDo() {
+    var khung = $('sdKhung');
+    khung.innerHTML = '<div class="sdb__khung sdb__khung--tai">Đang tải sơ đồ…</div>';
+    var q = new URLSearchParams({ ngay: NGAY, gio: $('sdGio').value || gioHienTai() });
+    if (sdKhuDangXem) q.set('khu_vuc', sdKhuDangXem);
+
+    var kq = await api('/api/tables/floor-plan?' + q);
+    if (!kq.ok) { khung.innerHTML = ''; loi(kq.thong_bao); return; }
+
+    var dem = { '*': kq.tong_ket.trong };
+    KHU.forEach(function (k) {
+      dem[String(k.id)] = kq.ban.filter(function (b) {
+        return b.kha_dung && String(b.khu_vuc_id) === String(k.id);
+      }).length;
+    });
+
+    SoDoDatBan.veTabs($('sdTabs'), KHU, sdKhuDangXem, dem, function (khu) {
+      sdKhuDangXem = khu; taiSoDo();
+    });
+
+    SoDoDatBan.ve(khung, kq, {
+      hienKhach: true,
+      onBam: function (b) {
+        if (b.reservation) moNgan(b.reservation.id);
+        else window.alert(b.ten + ' — ' + b.so_cho + ' chỗ · '
+          + (b.kha_dung ? 'đang trống' : (b.ly_do ? b.ly_do.mo_ta : 'không khả dụng')));
+      }
+    });
+  }
+
+  // ------------------------------------------------------- timeline
+
+  async function taiTimeline() {
+    var khung = $('tlKhung');
+    var kq = await api('/api/reservations/timeline?ngay=' + NGAY);
+    khung.innerHTML = '';
+    if (!kq.ok) { loi(kq.thong_bao); return; }
+
+    var trong = chu('div', 'tl__trong');
+
+    var moc = chu('div', 'tl__moc');
+    kq.moc.forEach(function (m) {
+      var s = chu('span', null, m.nhan);
+      s.style.left = m.trai + '%';
+      moc.appendChild(s);
+    });
+    trong.appendChild(moc);
+
+    kq.hang.forEach(function (h) {
+      var hang = chu('div', 'tl__hang');
+      var ten = chu('div', 'tl__ten', h.ten);
+      ten.appendChild(chu('small', null, h.so_cho + ' chỗ · ' + h.khu_vuc));
+      hang.appendChild(ten);
+
+      var rai = chu('div', 'tl__rai');
+      // Vach "bay gio" chi ve o hang dau tien de khong lap lai 40 lan; CSS keo
+      // no phu het chieu cao bang cach dat position tren khung ngoai. O day ve
+      // tren tung hang la du va don gian hon nhieu.
+      if (kq.vach_hien_tai !== null) {
+        var v = chu('div', 'tl__bay-gio');
+        v.style.left = kq.vach_hien_tai + '%';
+        rai.appendChild(v);
+      }
+
+      h.luot.forEach(function (l) {
+        if (l.rong_don > 0) {
+          var don = chu('div', 'tl__don');
+          don.style.left = (l.trai + l.rong) + '%';
+          don.style.width = l.rong_don + '%';
+          rai.appendChild(don);
+        }
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tl__luot';
+        b.style.left = l.trai + '%';
+        b.style.width = l.rong + '%';
+        b.style.background = MAU[l.trang_thai] || '#64748b';
+        b.textContent = l.tu + ' ' + l.khach + ' (' + l.so_khach + ')';
+        b.title = l.ma + ' · ' + l.khach + ' · ' + l.so_khach + ' khách · ' + l.tu + '–' + l.den;
+        b.addEventListener('click', function () { moNgan(l.id); });
+        rai.appendChild(b);
+      });
+
+      hang.appendChild(rai);
+      trong.appendChild(hang);
+    });
+
+    khung.appendChild(trong);
+  }
+
+  // ---------------------------------------------------- ngăn chi tiết
+
+  var nganDangMo = null;
+
+  function dongNgan() {
+    $('ngan').classList.remove('mo');
+    $('che').classList.remove('mo');
+    $('ngan').hidden = true;
+    nganDangMo = null;
+  }
+  $('nganDong').addEventListener('click', dongNgan);
+  $('che').addEventListener('click', dongNgan);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && nganDangMo) dongNgan(); });
+
+  async function moNgan(id) {
+    nganDangMo = id;
+    $('ngan').hidden = false;
+    $('ngan').classList.add('mo');
+    $('che').classList.add('mo');
+    $('nganThan').innerHTML = '<p class="text-muted">Đang tải…</p>';
+
+    var kq = await api('/api/reservations/' + id);
+    if (!kq.ok) { $('nganThan').textContent = kq.thong_bao || 'Không tải được'; return; }
+    veNgan(kq.r);
+  }
+
+  function veNgan(r) {
+    $('nganTieuDe').textContent = r.customer_name;
+    var phu = $('nganPhu');
+    phu.innerHTML = '';
+    phu.appendChild(chu('span', null, r.reservation_code + ' · ' + r.phone));
+
+    var than = $('nganThan');
+    than.innerHTML = '';
+
+    // Cảnh báo rủi ro đặt lên trên cùng.
+    var ho = r.ho_so_khach;
+    if (ho && ho.no_show_count >= 2) {
+      var cb = chu('div', 'db-canhbao db-canhbao--do');
+      cb.appendChild(chu('div', null,
+        'Khách này đã có ' + ho.no_show_count + ' lần không đến trên tổng '
+        + ho.total_reservations + ' lượt đặt (' + ho.ty_le_no_show + '%). Nên gọi xác nhận trước.'));
+      than.appendChild(cb);
+    }
+    if (r.qua_han_giu) {
+      var qh = chu('div', 'db-canhbao db-canhbao--do');
+      qh.appendChild(chu('div', null, 'Đã quá hạn giữ bàn ' + Math.abs(r.con_giu_phut) + ' phút.'));
+      than.appendChild(qh);
+    }
+
+    var dl = document.createElement('dl');
+    function muc(k, v) {
+      if (v === null || v === undefined || v === '') return;
+      dl.appendChild(chu('dt', null, k));
+      dl.appendChild(chu('dd', null, String(v)));
+    }
+    var tt = TRANG_THAI.filter(function (x) { return x.code === r.status; })[0] || {};
+    muc('Trạng thái', tt.label_vi || r.status);
+    muc('Thời gian', r.gio + ' – ' + r.gio_ket_thuc + ' · ' + r.reservation_date.split('-').reverse().join('/'));
+    muc('Thời lượng', r.duration_minutes + ' phút (+' + r.turnaround_minutes + '′ dọn bàn)');
+    muc('Số khách', r.guest_count);
+    muc('Bàn', r.ban.length ? r.ban.join(', ') + ' (' + r.tong_cho + ' chỗ)' : 'Chưa gán bàn');
+    muc('Khu vực', r.area_name);
+    muc('Loại khách', { REGULAR:'Khách thường', MEMBER:'Thành viên', VIP:'VIP', CORPORATE:'Doanh nghiệp', NEW:'Khách mới' }[r.customer_type]);
+    muc('Nguồn', { ONLINE:'Trực tuyến', STAFF:'Nhân viên', WALK_IN:'Vãng lai', PHONE:'Điện thoại', PARTNER:'Đối tác' }[r.source]);
+    muc('Dịp', r.occasion);
+    muc('Yêu cầu đặc biệt', (r.tags || []).join(' · '));
+    muc('Ghi chú của khách', r.special_requests);
+    muc('Ghi chú nội bộ', r.notes);
+    if (Number(r.deposit_amount) > 0) {
+      muc('Tiền cọc', tien(r.deposit_amount) + ' · ' + r.deposit_status);
+    }
+    if (Number(r.refund_amount) > 0) muc('Đã hoàn', tien(r.refund_amount));
+    if (r.cancel_reason) muc('Lý do hủy', r.cancel_reason);
+    if (ho) muc('Lịch sử khách', ho.total_reservations + ' lượt · ' + ho.completed_count
+      + ' hoàn tất · ' + ho.no_show_count + ' no-show · ' + ho.cancelled_count + ' hủy');
+    than.appendChild(dl);
+
+    // ---- nút thao tác
+    var nut = chu('div', 'db-ngan__nut');
+    function them(nhan, lop, hd, hoi) {
+      var b = document.createElement('button');
+      b.className = 'btn btn-sm ' + lop;
+      b.textContent = nhan;
+      b.addEventListener('click', function () { thaoTac(r.id, hd, nhan, hoi, r); });
+      nut.appendChild(b);
+    }
+    if (r.status === 'PENDING' || r.status === 'WAITLIST') them('Xác nhận', 'btn-primary', 'confirm');
+    if (r.status === 'CONFIRMED') them('Khách đã đến', 'btn-info', 'check-in');
+    if (r.status === 'CONFIRMED' || r.status === 'ARRIVED') them('Xếp vào bàn', 'btn-success', 'seat');
+    if (r.status === 'SEATED') them('Hoàn tất', 'btn-dark', 'complete');
+    if (r.dang_hieu_luc) {
+      them('Giữ thêm 15 phút', 'btn-outline-info', 'giu-them');
+      them('Đổi bàn', 'btn-outline-primary', 'doi-ban');
+      them('Không đến', 'btn-outline-warning', 'no-show', true);
+      them('Hủy lượt đặt', 'btn-outline-danger', 'cancel', true);
+    }
+    than.appendChild(nut);
+
+    // ---- nhật ký
+    than.appendChild(chu('h6', 'mt-4 mb-2 text-muted', 'Nhật ký'));
+    var ul = chu('ul', 'db-nk');
+    ul.style.paddingLeft = '.9rem';
+    (r.nhat_ky || []).slice().reverse().forEach(function (h) {
+      var li = document.createElement('li');
+      li.appendChild(chu('time', null,
+        new Date(h.created_at).toLocaleString('vi-VN') + (h.ten_nhan_vien ? ' · ' + h.ten_nhan_vien : ' · hệ thống')));
+      li.appendChild(document.createTextNode(h.note || (h.from_status + ' → ' + h.to_status)));
+      ul.appendChild(li);
+    });
+    if (!(r.nhat_ky || []).length) ul.appendChild(chu('li', null, 'Chưa có ghi nhận nào.'));
+    than.appendChild(ul);
+  }
+
+  // ------------------------------------------------------ thao tác
+
+  var xnCho = null;
+
+  async function thaoTac(id, hd, nhan, hoi, r) {
+    if (hd === 'giu-them') {
+      var kq0 = await api('/api/reservations/' + id + '/giu-them',
+        { method: 'POST', body: JSON.stringify({ phut: 15 }) });
+      if (!kq0.ok) return loi(kq0.thong_bao);
+      return taiLai();
+    }
+
+    if (hd === 'doi-ban') {
+      // Doi ban di qua so do chu khong qua mot o nhap id: nhan vien nghi bang
+      // vi tri ban that ("cai ban goc trong kia"), khong bang so hieu.
+      return moChonBan(id, r);
+    }
+
+    if (hoi) {
+      // Truoc khi hoi, lay truoc so tien se hoan de cau hoi mang du thong tin.
+      var moTa = 'Bạn chắc chắn muốn ' + nhan.toLowerCase() + '?';
+      if (hd === 'cancel') {
+        var xt = await api('/api/reservations/' + id + '/xem-truoc-huy');
+        if (xt.ok && xt.da_coc > 0) {
+          moTa += ' Khách đã cọc ' + tien(xt.da_coc) + '. ' + xt.moTa + '.';
+        } else {
+          moTa += ' Bàn sẽ được trả lại ngay để nhận khách khác.';
+        }
+      }
+      if (hd === 'no-show') {
+        moTa += ' Lượt đặt sẽ được đóng, bàn trả lại, và số lần no-show của khách tăng thêm 1.';
+      }
+      $('xnTieuDe').textContent = nhan;
+      $('xnMoTa').textContent = moTa;
+      $('xnLyDo').value = '';
+      xnCho = { id: id, hd: hd };
+      window.jQuery && window.jQuery('#mXacNhan').modal('show');
+      return;
+    }
+
+    await chay(id, hd, '');
+  }
+
+  async function chay(id, hd, lyDo) {
+    var kq = await api('/api/reservations/' + id + '/' + hd, {
+      method: 'POST', body: JSON.stringify({ ly_do: lyDo, ghi_chu: lyDo })
+    });
+    if (!kq.ok) return loi(kq.thong_bao);
+    if (kq.hoan_tien && kq.hoan_tien.soTien > 0) {
+      window.alert('Đã xử lý. Tiền cọc hoàn lại: ' + tien(kq.hoan_tien.soTien) + '.');
+    }
+    taiLai();
+  }
+
+  $('xnDongY').addEventListener('click', async function () {
+    if (!xnCho) return;
+    window.jQuery && window.jQuery('#mXacNhan').modal('hide');
+    var c = xnCho;
+    xnCho = null;
+    await chay(c.id, c.hd, $('xnLyDo').value.trim());
+  });
+
+  document.addEventListener('click', function (e) {
+    var n = e.target.closest('[data-hd]');
+    if (n) {
+      thaoTac(n.dataset.id, n.dataset.hd, n.title || 'thao tác này', n.dataset.hoi === '1');
+      return;
+    }
+    var m = e.target.closest('[data-mo]');
+    if (m) moNgan(m.dataset.mo);
+  });
+
+  // ------------------------------------------------ đổi bàn qua sơ đồ
+
+  async function moChonBan(id, r) {
+    var khung = $('nganThan');
+    khung.innerHTML = '';
+    khung.appendChild(chu('p', 'text-muted small',
+      'Chọn bàn cho lượt đặt ' + (r ? r.gio + ' · ' + r.customer_name : '') + '. Tổng chỗ phải đủ cho số khách.'));
+
+    var soDo = chu('div', 'sdb');
+    khung.appendChild(soDo);
+    var tomTat = chu('div', 'sdb__tomtat', 'Chưa chọn bàn nào.');
+    khung.appendChild(tomTat);
+
+    var nut = chu('div', 'db-ngan__nut');
+    var luu = document.createElement('button');
+    luu.className = 'btn btn-sm btn-primary';
+    luu.textContent = 'Lưu bàn';
+    luu.disabled = true;
+    var huy = document.createElement('button');
+    huy.className = 'btn btn-sm btn-outline-secondary';
+    huy.textContent = 'Quay lại';
+    huy.addEventListener('click', function () { moNgan(id); });
+    nut.appendChild(luu);
+    nut.appendChild(huy);
+    khung.appendChild(nut);
+
+    // `bo_qua` = chinh luot dat nay: ban no dang giu khong duoc tinh la vat can,
+    // neu khong nhan vien se thay ban khach dang ngoi bao "da co nguoi dat".
+    var q = new URLSearchParams({
+      ngay: r.reservation_date, gio: r.gio, so_khach: r.guest_count, bo_qua: id
+    });
+    var kq = await api('/api/tables/floor-plan?' + q);
+    if (!kq.ok) { soDo.textContent = kq.thong_bao; return; }
+
+    var dangChon = [];
+    SoDoDatBan.ve(soDo, kq, {
+      choChon: true,
+      soKhach: r.guest_count,
+      daChon: (r.table_ids || '').split(',').filter(Boolean).map(Number),
+      onChon: function (ds, tongCho) {
+        dangChon = ds;
+        var du = tongCho >= Number(r.guest_count);
+        tomTat.className = 'sdb__tomtat ' + (ds.length ? (du ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu') : '');
+        tomTat.textContent = ds.length
+          ? ds.length + ' bàn · ' + tongCho + ' chỗ' + (du ? ' — đủ chỗ' : ' — còn thiếu ' + (r.guest_count - tongCho) + ' chỗ')
+          : 'Chưa chọn bàn nào.';
+        luu.disabled = !ds.length || !du;
+      }
+    });
+
+    luu.addEventListener('click', async function () {
+      var kq2 = await api('/api/reservations/' + id + '/assign-table', {
+        method: 'POST', body: JSON.stringify({ table_ids: dangChon })
+      });
+      if (!kq2.ok) return loi(kq2.thong_bao);
+      taiLai();
+    });
+  }
+
+  // ------------------------------------------------------ tạo mới
+
+  var chuDoWalkIn = false;
+
+  function moForm(walkIn) {
+    chuDoWalkIn = walkIn;
+    $('mFormTieuDe').textContent = walkIn ? 'Khách vãng lai — xếp bàn ngay' : 'Đặt bàn mới';
+    $('fLuu').textContent = walkIn ? 'Xếp bàn ngay' : 'Tạo lượt đặt';
+    document.querySelectorAll('.js-lich').forEach(function (n) { n.style.display = walkIn ? 'none' : ''; });
+    $('mFormBao').innerHTML = '';
+    $('fKiemTra').innerHTML = '';
+    if (walkIn) $('fTen').value = 'Khách vãng lai';
+    window.jQuery && window.jQuery('#mForm').modal('show');
+  }
+  $('btnTaoMoi').addEventListener('click', function () { moForm(false); });
+  $('btnWalkIn').addEventListener('click', function () { moForm(true); });
+
+  // Nhan vien go xong so dien thoai thi hien ngay lich su khach - de biet phai
+  // doi xu the nao (VIP? tung no-show?) TRUOC khi nhan don.
+  var henHoSo = null;
+  $('fDienThoai').addEventListener('input', function () {
+    clearTimeout(henHoSo);
+    var so = this.value.trim();
+    $('fHoSo').textContent = '';
+    if (so.replace(/\D/g, '').length < 8) return;
+    henHoSo = setTimeout(async function () {
+      var kq = await api('/api/reservations/khach/' + encodeURIComponent(so));
+      if (!kq.ok || !kq.ho_so || kq.ho_so.la_khach_moi) { $('fHoSo').textContent = 'Khách mới.'; return; }
+      var h = kq.ho_so;
+      $('fTen').value = $('fTen').value || h.full_name || '';
+      $('fLoaiKhach').value = h.customer_type;
+      $('fHoSo').textContent = h.full_name + ' · ' + h.total_reservations + ' lượt · '
+        + h.no_show_count + ' no-show' + (h.internal_note ? ' · ' + h.internal_note : '');
+      $('fHoSo').className = 'form-text ' + (h.no_show_count >= 2 ? 'text-danger font-weight-bold' : 'text-muted');
+    }, 400);
+  });
+
+  function duLieuForm() {
+    return {
+      customer_name: $('fTen').value.trim(),
+      phone: $('fDienThoai').value.trim(),
+      guest_count: Number($('fSoKhach').value),
+      reservation_date: $('fNgay').value,
+      start_time: $('fGio').value,
+      area_id: $('fKhuVuc').value || null,
+      customer_type: $('fLoaiKhach').value,
+      special_requests: $('fYeuCau').value.trim() || null,
+      source: 'STAFF'
+    };
+  }
+
+  $('fKiemTraNut').addEventListener('click', async function () {
+    var d = duLieuForm();
+    var q = new URLSearchParams({
+      reservation_date: d.reservation_date, start_time: d.start_time, guest_count: d.guest_count
+    });
+    if (d.area_id) q.set('area_id', d.area_id);
+    var kq = await api('/api/tables/availability?' + q);
+    var o = $('fKiemTra');
+    o.innerHTML = '';
+    if (!kq.ok) { o.className = 'small text-danger'; o.textContent = kq.thong_bao; return; }
+    if (kq.con_ban) {
+      o.className = 'small text-success';
+      o.textContent = 'Còn bàn: ' + kq.goi_y.ban.map(function (b) { return b.ten; }).join(', ')
+        + ' (' + kq.goi_y.tong_cho + ' chỗ, ' + kq.goi_y.khu_vuc + ')'
+        + (kq.coc.soTien > 0 ? ' · cọc ' + tien(kq.coc.soTien) : '');
+    } else {
+      o.className = 'small text-danger';
+      o.textContent = kq.thong_diep + ' Giờ còn chỗ: '
+        + (kq.gio_thay_the || []).map(function (g) { return g.gio; }).join(', ');
+    }
+  });
+
+  $('fLuu').addEventListener('click', async function () {
+    var nut = this;
+    nut.disabled = true;
+    var duong = chuDoWalkIn ? '/api/reservations/walk-in' : '/api/reservations';
+    try {
+      var kq = await api(duong, { method: 'POST', body: JSON.stringify(duLieuForm()) });
+      if (!kq.ok) {
+        var o = $('mFormBao');
+        o.className = 'alert alert-danger';
+        o.textContent = kq.thong_bao;
+        if (kq.chi_tiet && kq.chi_tiet.gio_thay_the && kq.chi_tiet.gio_thay_the.length) {
+          o.textContent += ' Giờ còn chỗ: ' + kq.chi_tiet.gio_thay_the.map(function (g) { return g.gio; }).join(', ');
+        }
+        return;
+      }
+      window.jQuery && window.jQuery('#mForm').modal('hide');
+      taiLai();
+    } finally {
+      nut.disabled = false;
+    }
+  });
+
+  // -------------------------------------------------------- realtime
+
+  function taiLai() { window.location.reload(); }
+
+  try {
+    var socket = io();
+    var henTaiLai = null;
+    socket.on('dat-ban:doi', function (d) {
+      // Gom nhieu su kien lien tiep thanh mot lan tai lai: gio cao diem co the
+      // co nam thay doi trong hai giay, tai lai nam lan la man hinh nhay lien tuc
+      // va nhan vien mat cho dang bam.
+      clearTimeout(henTaiLai);
+      if (d && d.su_kien === 'NO_SHOW_WARNING' && d.thong_diep) {
+        var cb = chu('div', 'db-canhbao db-canhbao--do');
+        cb.appendChild(chu('div', null, d.thong_diep));
+        $('daiCanhBao').prepend(cb);
+      }
+      henTaiLai = setTimeout(taiLai, 2500);
+    });
+  } catch (e) { /* Socket.IO khong nap duoc - trang van dung duoc, chi khong tu tai lai. */ }
+})();
+</script>
+
+<%- include('partials/footer') %>

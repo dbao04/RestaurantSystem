@@ -581,12 +581,12 @@ NOI_DUNG_TINH: dict[str, tuple[str, str]] = {
     ),
     "hoi_dia_chi": (
         "chatbot.dia_chi",
-        "Nhà hàng nằm tại **số 1 Võ Văn Ngân, TP. Thủ Đức, TP.HCM**. "
+        "Nhà hàng nằm tại **12 Nguyễn Văn Bảo, Hạnh Thông, TP. Hồ Chí Minh**. "
         "Có bãi giữ xe máy và ô tô miễn phí cho khách.",
     ),
     "hoi_lien_he": (
         "chatbot.lien_he",
-        "Bạn liên hệ nhà hàng qua **hotline 0918 484 042** hoặc nhắn tin trực "
+        "Bạn liên hệ nhà hàng qua **hotline 0388 062 048** hoặc nhắn tin trực "
         "tiếp trong mục Chat của website nhé.",
     ),
     "hoi_thanh_toan": (

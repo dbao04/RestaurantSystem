@@ -20,6 +20,7 @@
  */
 const express = require('express');
 const chatbot = require('../services/chatbotService');
+const ngonNgu = require('../services/ngonNgu');
 
 const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -96,7 +97,7 @@ router.post('/chatbot/api/hoi', gioiHanTanSuat, bat(async (req, res) => {
   // Ngu canh mot buoc lay tu PHIEN, khong tu body: neu tin body thi nguoi dung
   // co the tu khai "y dinh dang cho" bat ky, lach qua buoc phan loai.
   const nguCanh = req.session.chatbotNguCanh || {};
-  const kq = await chatbot.hoi(cauHoi, req.session, nguCanh);
+  const kq = await chatbot.hoi(cauHoi, req.session, nguCanh, req.ngonNgu);
 
   // Luu / xoa ngu canh cho luot sau.
   if (kq.cho_tham_so && kq.y_dinh_cho) {
@@ -113,12 +114,13 @@ router.post('/chatbot/api/hoi', gioiHanTanSuat, bat(async (req, res) => {
 
 router.get('/chatbot/api/cau-hoi-mau', bat(async (req, res) => {
   const { quyen } = chatbot.suyRaQuyen(req.session);
+  const dich = (khoa) => ngonNgu.t(khoa, req.ngonNgu);
   const mau = {
     khach: [
-      'Quán có món gì ngon?',
-      'Có khuyến mãi nào không?',
-      'Quán mở cửa mấy giờ?',
-      'Đặt bàn cho 4 người',
+      { cau_hoi: 'Quán có món gì ngon?', nhan: dich('chatbot.mau_mon_ngon') },
+      { cau_hoi: 'Có khuyến mãi nào không?', nhan: dich('chatbot.mau_khuyen_mai') },
+      { cau_hoi: 'Quán mở cửa mấy giờ?', nhan: dich('chatbot.mau_gio_mo_cua') },
+      { cau_hoi: 'Đặt bàn cho 4 người', nhan: dich('chatbot.mau_dat_ban') },
     ],
     // Khong goi y cau nao ve doanh thu / ton kho: nhung y dinh do da duoc go
     // khoi bot, goi y ra chi de nguoi dung bam vao roi nhan "chua hieu".

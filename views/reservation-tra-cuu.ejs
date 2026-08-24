@@ -1,0 +1,403 @@
+<%- include('partials/header', { title: t('dat_ban_moi.tra_cuu') }) %>
+<%
+/*
+  TRANG KHACH TU QUAN LY LUOT DAT CUA MINH.
+
+  Khach doi gio hay huy ban khong nen phai goi dien vao gio nha hang dang dong
+  khach nhat - luc do khong ai nghe may, va cai gia cua mot cuoc goi khong thanh
+  la mot ban trong khong ai biet de ban lai.
+
+  DANH TINH O DAY LA CAP (MA + SO DIEN THOAI)
+  -------------------------------------------
+  Khong bat khach tao tai khoan. Ma dat ban mot minh khong du - no ngan va nam
+  trong email co the bi nguoi khac doc. Ghep them so dien thoai da dung khi dat
+  la du kho doan, ma van la thu khach chac chan nho.
+
+  So dien thoai duoc gui bang POST, khong phai query string: query string di vao
+  lich su trinh duyet, nhat ky may chu va header Referer gui sang ben thu ba.
+*/
+%>
+
+<section class="nh-subhero nh-subhero--sm">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_3.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-subhero__inner nh-container">
+    <span class="nh-eyebrow"><%= t('dat_ban_moi.tra_cuu_eyebrow') %></span>
+    <h1><%= t('dat_ban_moi.tra_cuu') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> ·
+      <a href="/dat-ban"><%= t('dat_ban_moi.tieu_de') %></a> ·
+      <span><%= t('dat_ban_moi.tra_cuu') %></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tc-bao { padding:.9rem 1.1rem; border-radius:12px; font-size:.9rem; margin-bottom:1.2rem;
+    display:flex; gap:.7rem; align-items:flex-start; }
+  .tc-bao i { margin-top:.18rem; flex:none; }
+  .tc-bao--loi { background:#fef2f2; border:1px solid rgba(220,38,38,.28); color:#991b1b; }
+  .tc-bao--nhac { background:#fffbeb; border:1px solid rgba(217,119,6,.28); color:#7c2d12; }
+  .tc-bao--ok { background:#f0fdf4; border:1px solid rgba(22,163,74,.28); color:#14532d; }
+
+  .tc-huy { display:grid; grid-template-columns:160px 1fr; gap:.55rem 1rem; font-size:.95rem; }
+  .tc-huy dt { color:var(--nh-muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;
+    font-weight:700; padding-top:.14rem; }
+  .tc-huy dd { margin:0; font-weight:600; color:var(--nh-espresso); }
+  @media (max-width:560px){ .tc-huy{ grid-template-columns:1fr; gap:.1rem; } .tc-huy dd{ margin-bottom:.7rem; } }
+
+  .tc-nhan { display:inline-flex; align-items:center; gap:.4rem; padding:.28rem .8rem; border-radius:999px;
+    font-size:.78rem; font-weight:700; letter-spacing:.03em; }
+
+  /* Hop xac nhan cho cac thao tac khong lui lai duoc (muc 26 cua yeu cau). */
+  .tc-lop { position:fixed; inset:0; background:rgba(24,14,9,.6); display:none; place-content:center;
+    z-index:2000; padding:1.2rem; }
+  .tc-lop.hien { display:grid; }
+  .tc-hop { background:#fff; border-radius:18px; padding:1.6rem; max-width:460px; width:100%;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.5); }
+  .tc-hop h3 { font-size:1.3rem; margin-bottom:.7rem; }
+</style>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container-narrow">
+
+    <!-- ---------------------------------------------------- ô tra cứu -->
+    <div class="nh-panel" id="tcForm">
+      <h3 class="nh-panel__title"><i class="fas fa-search"></i> <%= t('dat_ban_moi.tra_cuu_tieu_de') %></h3>
+      <p class="nh-hint" style="margin-bottom:1.1rem"><%= t('dat_ban_moi.tra_cuu_mo_ta') %></p>
+
+      <div id="tcBao"></div>
+
+      <div class="nh-fields">
+        <div class="nh-field">
+          <label for="tcMa"><%= t('dat_ban_moi.ma_dat_ban') %> <span class="req">*</span></label>
+          <input id="tcMa" class="nh-input" value="<%= ma %>" placeholder="RSV-260824-ABCD"
+                 style="text-transform:uppercase;letter-spacing:.06em" autocomplete="off">
+        </div>
+        <div class="nh-field">
+          <label for="tcDienThoai"><%= t('dat_ban_moi.dien_thoai') %> <span class="req">*</span></label>
+          <input id="tcDienThoai" class="nh-input" type="tel" inputmode="tel" autocomplete="tel">
+        </div>
+      </div>
+
+      <button type="button" class="nh-btn nh-btn--gold" id="tcTim" style="margin-top:1.2rem;width:100%;justify-content:center">
+        <i class="fas fa-search"></i> <%= t('dat_ban_moi.tim_luot_dat') %>
+      </button>
+    </div>
+
+    <!-- ---------------------------------------------------- kết quả -->
+    <div id="tcKetQua" hidden>
+      <div class="nh-panel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+          <div>
+            <h3 class="nh-panel__title" style="margin-bottom:.3rem">
+              <i class="fas fa-calendar-check"></i> <span id="tcMaHien"></span>
+            </h3>
+          </div>
+          <span class="tc-nhan" id="tcTrangThai"></span>
+        </div>
+        <dl class="tc-huy" id="tcChiTiet" style="margin-top:1.1rem"></dl>
+      </div>
+
+      <!-- Đổi lịch -->
+      <div class="nh-panel" id="tcDoiLich">
+        <h3 class="nh-panel__title"><i class="fas fa-calendar-day"></i> <%= t('dat_ban_moi.doi_lich') %></h3>
+        <p class="nh-hint" style="margin-bottom:1rem"><%= t('dat_ban_moi.doi_lich_mo_ta') %></p>
+        <div id="tcBaoDoi"></div>
+        <div class="nh-fields">
+          <div class="nh-field">
+            <label for="tcNgayMoi"><%= t('dat_ban_moi.ngay') %></label>
+            <input type="date" id="tcNgayMoi" class="nh-input" min="<%= homNay %>">
+          </div>
+          <div class="nh-field">
+            <label for="tcGioMoi"><%= t('dat_ban_moi.gio_den') %></label>
+            <select id="tcGioMoi" class="nh-select"></select>
+          </div>
+          <div class="nh-field">
+            <label for="tcKhachMoi"><%= t('dat_ban_moi.so_khach') %></label>
+            <input type="number" id="tcKhachMoi" class="nh-input" min="1" max="30">
+          </div>
+        </div>
+        <button type="button" class="nh-btn nh-btn--dark" id="tcLuuDoi" style="margin-top:1.1rem">
+          <i class="fas fa-check"></i> <%= t('dat_ban_moi.luu_thay_doi') %>
+        </button>
+      </div>
+
+      <!-- Hủy -->
+      <div class="nh-panel" id="tcKhungHuy" style="border-left:4px solid #dc2626">
+        <h3 class="nh-panel__title"><i class="fas fa-ban"></i> <%= t('dat_ban_moi.huy_dat_ban') %></h3>
+        <div id="tcHoanTien"></div>
+        <button type="button" class="nh-btn nh-btn--outline" id="tcMoHuy" style="margin-top:1rem">
+          <i class="fas fa-times"></i> <%= t('dat_ban_moi.huy_dat_ban') %>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Hộp xác nhận hủy -->
+<div class="tc-lop" id="tcLopHuy" role="dialog" aria-modal="true" aria-labelledby="tcLopTieuDe">
+  <div class="tc-hop">
+    <h3 id="tcLopTieuDe"><%= t('dat_ban_moi.xac_nhan_huy') %></h3>
+    <p style="color:var(--nh-muted);font-size:.94rem" id="tcLopMoTa"></p>
+    <div class="nh-field" style="margin-top:1rem">
+      <label for="tcLyDo"><%= t('dat_ban_moi.ly_do_huy') %></label>
+      <input id="tcLyDo" class="nh-input" maxlength="200" placeholder="<%= t('dat_ban_moi.ly_do_goi_y') %>">
+    </div>
+    <div style="display:flex;gap:.7rem;margin-top:1.3rem;flex-wrap:wrap">
+      <button type="button" class="nh-btn nh-btn--outline" id="tcDongLop" style="flex:1;justify-content:center">
+        <%= t('dat_ban_moi.khong_huy') %>
+      </button>
+      <button type="button" class="nh-btn nh-btn--gold" id="tcHuyThat"
+              style="flex:1;justify-content:center;background:#dc2626;color:#fff;box-shadow:none">
+        <%= t('dat_ban_moi.dong_y_huy') %>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /*
+    Tu dien nhan giao dien, nap mot lan duoi dang JSON.
+
+    Truoc day moi chuoi duoc nhung thang vao JavaScript bang the xuat EJS.
+    Cach do chay dung, nhung no gai mot cai bay: the xuat escape ky tu HTML, ma noi
+    dung the <script> KHONG duoc trinh duyet giai ma thuc the nguoc lai. Nen chi
+    can mot ban dich chua dau nhay don ("Let's...") la man hinh hien ra
+    "Let&#39;s" - va khong ai phat hien duoc cho den khi doi sang ngon ngu do.
+
+    JSON.stringify + doi dau '<' thanh \u003c: khong ban dich nao dong duoc som
+    the script (chi mot chuoi chua the dong la ca khoi JavaScript ben duoi chet),
+    va moi ky tu deu qua duoc nguyen ven.
+  */
+  var T = <%- JSON.stringify(nhan).replace(/</g, '\\u003c') %>;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (s) { return String(s || '').split('-').reverse().join('/'); };
+
+  var MAU = {
+    PENDING: '#f59e0b', WAITLIST: '#8b5cf6', CONFIRMED: '#2563eb', ARRIVED: '#0891b2',
+    SEATED: '#16a34a', COMPLETED: '#334155', CANCELLED: '#dc2626', NO_SHOW: '#b45309', REJECTED: '#7f1d1d'
+  };
+
+  var hienTai = null;
+
+  function chu(the, lop, noiDung) {
+    var n = document.createElement(the);
+    if (lop) n.className = lop;
+    if (noiDung != null) n.textContent = noiDung;
+    return n;
+  }
+
+  function bao(khung, kieu, thongDiep) {
+    khung.innerHTML = '';
+    if (!thongDiep) return;
+    var h = chu('div', 'tc-bao tc-bao--' + kieu);
+    var i = document.createElement('i');
+    i.className = 'fas ' + (kieu === 'loi' ? 'fa-exclamation-circle'
+      : kieu === 'ok' ? 'fa-check-circle' : 'fa-info-circle');
+    h.appendChild(i);
+    h.appendChild(chu('div', null, thongDiep));
+    khung.appendChild(h);
+  }
+
+  function thongTin() {
+    return { ma: $('tcMa').value.trim().toUpperCase(), dien_thoai: $('tcDienThoai').value.trim() };
+  }
+
+  async function goi(duong, than) {
+    var r = await fetch(duong, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(than)
+    });
+    return r.json();
+  }
+
+  // ------------------------------------------------------------- tìm
+
+  $('tcTim').addEventListener('click', async function () {
+    var tt = thongTin();
+    if (!tt.ma || !tt.dien_thoai) {
+      bao($('tcBao'), 'nhac', T['dat_ban_moi.nhap_du_ma_sdt']);
+      return;
+    }
+    var nut = this;
+    nut.disabled = true;
+    bao($('tcBao'), '', '');
+
+    try {
+      var kq = await goi('/api/dat-ban/tra-cuu', tt);
+      if (!kq.ok) { bao($('tcBao'), 'loi', kq.thong_bao); $('tcKetQua').hidden = true; return; }
+      hienTai = kq;
+      veKetQua(kq);
+    } catch (e) {
+      bao($('tcBao'), 'loi', T['dat_ban_moi.loi_mang']);
+    } finally {
+      nut.disabled = false;
+    }
+  });
+
+  function veKetQua(kq) {
+    var r = kq.r;
+    $('tcKetQua').hidden = false;
+    $('tcMaHien').textContent = r.ma;
+
+    var nhan = $('tcTrangThai');
+    nhan.textContent = r.nhan_trang_thai;
+    nhan.style.background = (MAU[r.trang_thai] || '#64748b') + '1f';
+    nhan.style.color = MAU[r.trang_thai] || '#334155';
+
+    var dl = $('tcChiTiet');
+    dl.innerHTML = '';
+    function muc(k, v) {
+      if (!v) return;
+      dl.appendChild(chu('dt', null, k));
+      dl.appendChild(chu('dd', null, v));
+    }
+    muc(T['dat_ban_moi.ho_ten'], r.ten);
+    muc(T['dat_ban_moi.thoi_gian'], r.gio + ' – ' + r.den + ' · ' + ngayVN(r.ngay));
+    muc(T['dat_ban_moi.so_khach'], r.so_khach + ' ' + T['dat_ban_moi.khach']);
+    muc(T['dat_ban_moi.khu_vuc'], r.khu_vuc);
+    muc(T['dat_ban_moi.ban'], (r.ban || []).join(', '));
+    muc(T['dat_ban_moi.ghi_chu'], r.yeu_cau);
+    if (r.coc > 0) muc(T['dat_ban_moi.tien_coc'], tien(r.coc));
+
+    // Luot dat da ket thuc: chi con xem, khong doi cung khong huy duoc nua.
+    $('tcDoiLich').hidden = !r.doi_duoc;
+    $('tcKhungHuy').hidden = !r.doi_duoc;
+
+    if (r.doi_duoc) {
+      $('tcNgayMoi').value = r.ngay;
+      $('tcKhachMoi').value = r.so_khach;
+      taiGio(r.ngay, r.so_khach, r.gio);
+
+      var h = kq.huy;
+      var khung = $('tcHoanTien');
+      khung.innerHTML = '';
+      if (h) {
+        bao(khung, h.soTien > 0 ? 'ok' : 'nhac',
+          h.moTa + (h.gio_con_lai ? ' · ' + T['dat_ban_moi.con_lai'] + ' ' + h.gio_con_lai + 'h' : ''));
+      }
+    }
+  }
+
+  // -------------------------------------------------------- đổi lịch
+
+  async function taiGio(ngay, soKhach, gioHienTai) {
+    var sel = $('tcGioMoi');
+    sel.innerHTML = '<option>' + T['dat_ban_moi.dang_tai'] + '</option>';
+    try {
+      var kq = await fetch('/api/dat-ban/khung-gio?ngay=' + encodeURIComponent(ngay)
+        + '&so_khach=' + Number(soKhach)).then(function (r) { return r.json(); });
+      sel.innerHTML = '';
+      if (!kq.ok || kq.dong_cua || !kq.khung.length) {
+        var o = document.createElement('option');
+        o.textContent = kq.ly_do || T['dat_ban_moi.het_gio_trong_ngay'];
+        o.disabled = true;
+        sel.appendChild(o);
+        return;
+      }
+      kq.khung.forEach(function (k) {
+        var o = document.createElement('option');
+        o.value = k.gio;
+        // Gio hien tai cua chinh khach luon chon duoc, du "het ban" - vi chinh
+        // ho dang giu ban do. Loai no ra se khien khach doi so nguoi ma khong
+        // doi gio bi ket.
+        var laGioMinh = k.gio === gioHienTai;
+        o.textContent = k.gio + (k.con_ban || laGioMinh ? '' : ' — ' + T['dat_ban_moi.het_ban']);
+        o.disabled = !k.con_ban && !laGioMinh;
+        if (laGioMinh) o.selected = true;
+        sel.appendChild(o);
+      });
+    } catch (e) {
+      sel.innerHTML = '<option disabled>' + T['dat_ban_moi.loi_mang'] + '</option>';
+    }
+  }
+
+  $('tcNgayMoi').addEventListener('change', function () {
+    taiGio(this.value, $('tcKhachMoi').value, null);
+  });
+  $('tcKhachMoi').addEventListener('change', function () {
+    taiGio($('tcNgayMoi').value, this.value, null);
+  });
+
+  $('tcLuuDoi').addEventListener('click', async function () {
+    var tt = thongTin();
+    var nut = this;
+    nut.disabled = true;
+    bao($('tcBaoDoi'), '', '');
+    try {
+      var kq = await goi('/api/dat-ban/tra-cuu/doi-lich', {
+        ma: tt.ma,
+        dien_thoai: tt.dien_thoai,
+        ngay: $('tcNgayMoi').value,
+        gio: $('tcGioMoi').value,
+        so_khach: $('tcKhachMoi').value
+      });
+      if (!kq.ok) { bao($('tcBaoDoi'), 'loi', kq.thong_bao); return; }
+      bao($('tcBaoDoi'), 'ok', T['dat_ban_moi.doi_thanh_cong']
+        + ' ' + kq.r.gio + ' · ' + ngayVN(kq.r.ngay)
+        + (kq.r.ban && kq.r.ban.length ? ' · ' + T['dat_ban_moi.ban'] + ' '
+          + kq.r.ban.map(function (b) { return b.ten; }).join(', ') : ''));
+      $('tcTim').click();
+    } catch (e) {
+      bao($('tcBaoDoi'), 'loi', T['dat_ban_moi.loi_mang']);
+    } finally {
+      nut.disabled = false;
+    }
+  });
+
+  // ------------------------------------------------------------- hủy
+
+  var lop = $('tcLopHuy');
+
+  $('tcMoHuy').addEventListener('click', function () {
+    var h = hienTai && hienTai.huy;
+    $('tcLopMoTa').textContent = h
+      ? h.moTa
+      : T['dat_ban_moi.huy_khong_lui'];
+    lop.classList.add('hien');
+    $('tcDongLop').focus();
+  });
+
+  function dongLop() { lop.classList.remove('hien'); }
+  $('tcDongLop').addEventListener('click', dongLop);
+  lop.addEventListener('click', function (e) { if (e.target === lop) dongLop(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && lop.classList.contains('hien')) dongLop();
+  });
+
+  $('tcHuyThat').addEventListener('click', async function () {
+    var tt = thongTin();
+    var nut = this;
+    nut.disabled = true;
+    try {
+      var kq = await goi('/api/dat-ban/tra-cuu/huy', {
+        ma: tt.ma, dien_thoai: tt.dien_thoai, ly_do: $('tcLyDo').value.trim()
+      });
+      dongLop();
+      if (!kq.ok) { bao($('tcBao'), 'loi', kq.thong_bao); return; }
+      bao($('tcBao'), 'ok', T['dat_ban_moi.huy_thanh_cong']
+        + (kq.hoan_tien && kq.hoan_tien.soTien > 0
+          ? ' ' + T['dat_ban_moi.se_hoan'] + ' ' + tien(kq.hoan_tien.soTien) + '.'
+          : ''));
+      $('tcTim').click();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      bao($('tcBao'), 'loi', T['dat_ban_moi.loi_mang']);
+    } finally {
+      nut.disabled = false;
+    }
+  });
+
+  // Vao trang tu link co san ma: dua con tro thang vao o so dien thoai.
+  if ($('tcMa').value) $('tcDienThoai').focus();
+})();
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,235 @@
+<%- include('partials/header', { title: t('chon_dat_ban.tieu_de') }) %>
+<%
+/*
+  TRANG CHON HINH THUC DAT BAN.
+
+  Hai duong, va chung khac nhau o mot diem duy nhat ma khach quan tam: co gọi món
+  trước hay không. Moi thu khac (chon ngay gio, so khach, giu ban) deu giong nhau.
+  Nen the phai noi dung SU KHAC BIET DO chu khong liet ke lai nhung diem chung.
+
+  VI SAO THE "CHI DAT BAN" DUNG TRUOC
+  -----------------------------------
+  Vi do la viec phan lon khach den day muon lam. Duong con lai dai hon (phai chon
+  mon, phai dang nhap) va chi hop voi mot so it nguoi da biet minh an gi. Dat cai
+  hiem hon len truoc la bat da so nguoi doc qua mot thu khong danh cho ho.
+
+  THE THU HAI BIET TRANG THAI GIO HANG
+  ------------------------------------
+  `soMon > 0` -> khach da chon mon roi, nut di THANG vao form (/datban/goi-mon),
+  khong bat di lai buoc chon mon. `soMon === 0` -> nut dan sang thuc don.
+  Cung mot the, hai trang thai - de khach khong bao gio bam vao mot nut roi nhan
+  duoc mot trang bao "gio hang trong".
+*/
+var daCoMon = Number(soMon) > 0;
+%>
+
+<section class="nh-subhero nh-subhero--sm">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_2.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('chon_dat_ban.eyebrow') %></span>
+    <h1><%= t('chon_dat_ban.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp;
+      <span><%= t('chung.dat_ban') %></span> &nbsp;/&nbsp;
+      <a href="/huong-dan-dat-ban"><%= t('dieu_huong.huong_dan_dat_ban') %></a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cdb { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.6rem; align-items: stretch; }
+  @media (max-width: 880px) { .cdb { grid-template-columns: 1fr; } }
+
+  .cdb__the {
+    background: #fff; border-radius: 20px; padding: clamp(1.6rem, 3vw, 2.4rem);
+    box-shadow: var(--nh-shadow-sm); border: 1.5px solid var(--nh-line);
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
+    transition: transform .3s var(--nh-ease), box-shadow .3s var(--nh-ease), border-color .3s var(--nh-ease);
+  }
+  .cdb__the:hover { transform: translateY(-6px); box-shadow: var(--nh-shadow); border-color: var(--nh-gold-soft); }
+  @media (prefers-reduced-motion: reduce) { .cdb__the, .cdb__the:hover { transition: none; transform: none; } }
+
+  /* Dai vang o dinh the: dau hieu thi giac phan biet hai duong ngay tu xa,
+     truoc khi doc chu. The nhanh hon duoc to dam hon. */
+  .cdb__the::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--nh-line); }
+  .cdb__the--chinh::before { background: linear-gradient(90deg, var(--nh-gold), var(--nh-gold-soft)); }
+
+  .cdb__nhan {
+    position: absolute; top: 1.1rem; right: 1.1rem; font-size: .64rem; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase; padding: .3rem .75rem; border-radius: 999px;
+    background: var(--nh-gold); color: var(--nh-espresso);
+  }
+  .cdb__nhan--phu { background: var(--nh-cream-2); color: var(--nh-muted); }
+
+  .cdb__icon {
+    width: 62px; height: 62px; border-radius: 18px; display: grid; place-content: center;
+    background: var(--nh-cream-2); color: var(--nh-brown); font-size: 1.6rem; margin-bottom: 1.2rem;
+  }
+  .cdb__the--chinh .cdb__icon { background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-soft)); color: var(--nh-espresso); }
+
+  .cdb__the h2 { font-size: clamp(1.3rem, 2.4vw, 1.65rem); margin-bottom: .5rem; }
+  .cdb__mota { color: var(--nh-muted); font-size: .96rem; margin-bottom: 1.3rem; }
+
+  .cdb__y { list-style: none; padding: 0; margin: 0 0 1.6rem; }
+  .cdb__y li { display: flex; gap: .65rem; align-items: flex-start; padding: .4rem 0; font-size: .93rem; }
+  .cdb__y i { color: var(--nh-gold); margin-top: .28rem; font-size: .85rem; flex: none; }
+
+  /* Nut luon dinh day the, du hai the co so dong chu khac nhau. */
+  .cdb__nut { margin-top: auto; }
+  .cdb__nut .nh-btn { width: 100%; justify-content: center; }
+  .cdb__phu { display: block; text-align: center; font-size: .8rem; color: var(--nh-muted); margin-top: .7rem; }
+
+  .cdb__gio {
+    display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; border-radius: 12px;
+    background: #f0fdf4; border: 1px solid rgba(22,163,74,.28); color: #14532d;
+    font-size: .88rem; margin-bottom: 1.2rem;
+  }
+
+  /* Bang so sanh - danh cho nguoi van con phan van sau khi doc hai the. */
+  .cdb__sosanh { width: 100%; border-collapse: collapse; margin-top: 3rem; font-size: .94rem; background: #fff;
+    border-radius: 16px; overflow: hidden; box-shadow: var(--nh-shadow-sm); }
+  .cdb__sosanh th, .cdb__sosanh td { padding: .85rem 1.1rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
+  .cdb__sosanh thead th { background: var(--nh-espresso); color: var(--nh-cream); font-size: .78rem;
+    text-transform: uppercase; letter-spacing: .08em; }
+  .cdb__sosanh tbody tr:last-child td { border-bottom: 0; }
+  .cdb__sosanh td:first-child { font-weight: 600; color: var(--nh-espresso); width: 32%; }
+  @media (max-width: 700px) {
+    .cdb__sosanh, .cdb__sosanh thead, .cdb__sosanh tbody, .cdb__sosanh tr, .cdb__sosanh td { display: block; }
+    .cdb__sosanh thead { display: none; }
+    .cdb__sosanh tr { border-bottom: 2px solid var(--nh-line); padding: .6rem 0; }
+    .cdb__sosanh td { border: 0; padding: .3rem 1.1rem; }
+    .cdb__sosanh td:first-child { width: auto; padding-top: .8rem; }
+    /* Tren dien thoai bang gap thanh tung khoi, nen moi o phai tu noi no la cot nao. */
+    .cdb__sosanh td[data-cot]::before { content: attr(data-cot) " — "; color: var(--nh-muted); font-weight: 600; }
+  }
+</style>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+
+    <div class="nh-head nh-center">
+      <p class="nh-lead"><%= t('chon_dat_ban.dan_nhap') %></p>
+      <div class="nh-divider"></div>
+    </div>
+
+    <div class="cdb">
+      <!-- ================================================ CHỈ ĐẶT BÀN -->
+      <article class="cdb__the cdb__the--chinh">
+        <span class="cdb__nhan"><%= t('chon_dat_ban.nhan_nhanh') %></span>
+        <div class="cdb__icon"><i class="fas fa-calendar-check"></i></div>
+        <h2><%= t('chon_dat_ban.a_tieu_de') %></h2>
+        <p class="cdb__mota"><%= t('chon_dat_ban.a_mo_ta') %></p>
+
+        <ul class="cdb__y">
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.a_y1') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.a_y2') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.a_y3') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.a_y4') %></span></li>
+        </ul>
+
+        <div class="cdb__nut">
+          <a href="/dat-ban" class="nh-btn nh-btn--gold">
+            <i class="fas fa-arrow-right"></i> <%= t('chon_dat_ban.a_nut') %>
+          </a>
+          <span class="cdb__phu"><%= t('chon_dat_ban.a_phu') %></span>
+        </div>
+      </article>
+
+      <!-- ============================================ ĐẶT BÀN + GỌI MÓN -->
+      <article class="cdb__the">
+        <span class="cdb__nhan cdb__nhan--phu"><%= t('chon_dat_ban.nhan_chu_dao') %></span>
+        <div class="cdb__icon"><i class="fas fa-utensils"></i></div>
+        <h2><%= t('chon_dat_ban.b_tieu_de') %></h2>
+        <p class="cdb__mota"><%= t('chon_dat_ban.b_mo_ta') %></p>
+
+        <% if (daCoMon) { %>
+          <div class="cdb__gio">
+            <i class="fas fa-shopping-basket"></i>
+            <span><%- t('chon_dat_ban.b_gio_dang_co', { n: soMon, tien: formatMoney(tongTien) }) %></span>
+          </div>
+        <% } %>
+
+        <ul class="cdb__y">
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y1') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y2') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y3') %></span></li>
+          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y4') %></span></li>
+        </ul>
+
+        <div class="cdb__nut">
+          <% if (daCoMon) { %>
+            <a href="/datban/goi-mon" class="nh-btn nh-btn--dark">
+              <i class="fas fa-arrow-right"></i> <%= t('chon_dat_ban.b_nut_tiep') %>
+            </a>
+            <span class="cdb__phu">
+              <a href="/cart"><%= t('chon_dat_ban.b_sua_gio') %></a>
+            </span>
+          <% } else { %>
+            <a href="/menu" class="nh-btn nh-btn--outline">
+              <i class="fas fa-book-open"></i> <%= t('chon_dat_ban.b_nut_chon_mon') %>
+            </a>
+            <span class="cdb__phu">
+              <%= session.username ? t('chon_dat_ban.b_phu') : t('chon_dat_ban.b_phu_dang_nhap') %>
+            </span>
+          <% } %>
+        </div>
+      </article>
+    </div>
+
+    <!-- =================================================== SO SÁNH -->
+    <table class="cdb__sosanh">
+      <thead>
+        <tr>
+          <th><%= t('chon_dat_ban.ss_tieu_chi') %></th>
+          <th><%= t('chon_dat_ban.a_tieu_de') %></th>
+          <th><%= t('chon_dat_ban.b_tieu_de') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_thoi_gian') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_thoi_gian_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_thoi_gian_b') %></td>
+        </tr>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_tai_khoan') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_tai_khoan_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_tai_khoan_b') %></td>
+        </tr>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_chon_ban') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_chon_ban_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_chon_ban_b') %></td>
+        </tr>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_mon') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_mon_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_mon_b') %></td>
+        </tr>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_doi_huy') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_doi_huy_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_doi_huy_b') %></td>
+        </tr>
+        <tr>
+          <td><%= t('chon_dat_ban.ss_hop_voi') %></td>
+          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_hop_voi_a') %></td>
+          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_hop_voi_b') %></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="nh-center" style="margin-top:2.4rem">
+      <a href="/huong-dan-dat-ban" class="nh-btn nh-btn--outline">
+        <i class="fas fa-question-circle"></i> <%= t('chon_dat_ban.xem_huong_dan') %>
+      </a>
+      <p class="nh-hint" style="margin-top:1rem">
+        <i class="fas fa-search"></i>
+        <%- t('chon_dat_ban.da_dat_roi') %>
+      </p>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,275 @@
+<%
+/*
+  PHAN TICH DAT BAN - man hinh cua quan ly.
+
+  Khac han trung tam dat ban: o day khong xu ly luot dat nao ca, chi tra loi cac
+  cau hoi dieu hanh - gio nao dong khach, ngay nao vang, khach bo ban nhieu den
+  muc nao, nen mo them ca hay cat bot.
+
+  BON CON SO DAT LEN TREN CUNG
+  ----------------------------
+  Tong luot, ty le no-show, ty le huy, quy mo trung binh. Bon con so nay quyet
+  dinh nhung hanh dong khac han nhau:
+    no-show cao   -> siet tien coc, goi xac nhan truoc
+    huy cao       -> xem lai chinh sach huy, hoac khung gio dang nhan qua som
+    quy mo tang   -> can them ban lon / cho phep ghep ban
+  Cac bieu do ben duoi la de tra loi "vi sao", sau khi bon con so nay cho biet
+  "co van de o dau".
+*/
+var activePage = 'reservations';
+var tq = pt.tong_quan;
+%>
+<%- include('partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<style>
+  .pt-chiso { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.4rem; }
+  .pt-chiso .o { background:#fff; border-radius:12px; padding:1.1rem 1.2rem; border-left:5px solid #4e73df;
+    box-shadow:0 .15rem 1.2rem rgba(58,59,69,.1); }
+  .pt-chiso .n { font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:#858796; font-weight:700; }
+  .pt-chiso .v { font-size:2rem; font-weight:800; color:#3a3b45; line-height:1.15; margin:.2rem 0 .1rem; }
+  .pt-chiso .p { font-size:.76rem; color:#858796; }
+  .pt-chiso .o.xau { border-left-color:#e74a3b; } .pt-chiso .o.tot { border-left-color:#1cc88a; }
+  .pt-chiso .o.vang { border-left-color:#f6c23e; }
+  .pt-bieu { position:relative; height:290px; }
+  .pt-bang td, .pt-bang th { font-size:.86rem; vertical-align:middle; }
+  .pt-thanh { height:6px; border-radius:3px; background:#eaecf4; overflow:hidden; }
+  .pt-thanh i { display:block; height:100%; background:#4e73df; }
+</style>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800">Phân tích đặt bàn</h1>
+    <p class="text-muted mb-0"><%= tu.split('-').reverse().join('/') %> → <%= den.split('-').reverse().join('/') %></p>
+  </div>
+  <form class="form-inline" method="GET" style="gap:.4rem">
+    <input class="form-control" type="date" name="tu" value="<%= tu %>" aria-label="Từ ngày">
+    <input class="form-control" type="date" name="den" value="<%= den %>" aria-label="Đến ngày">
+    <button class="btn btn-primary"><i class="fas fa-filter mr-1"></i>Xem</button>
+    <a class="btn btn-outline-secondary" href="/staff/dat-ban">Về trung tâm</a>
+  </form>
+</div>
+
+<div class="pt-chiso">
+  <div class="o">
+    <div class="n">Tổng lượt đặt</div>
+    <div class="v"><%= tq.tong || 0 %></div>
+    <div class="p"><%= tq.tong_khach || 0 %> khách · <%= tq.online || 0 %> online, <%= tq.walk_in || 0 %> vãng lai</div>
+  </div>
+  <div class="o <%= tq.ty_le_no_show > 10 ? 'xau' : 'tot' %>">
+    <div class="n">Tỷ lệ no-show</div>
+    <div class="v"><%= tq.ty_le_no_show %>%</div>
+    <div class="p"><%= tq.no_show || 0 %> lượt khách không đến</div>
+  </div>
+  <div class="o <%= tq.ty_le_huy > 20 ? 'xau' : 'vang' %>">
+    <div class="n">Tỷ lệ hủy</div>
+    <div class="v"><%= tq.ty_le_huy %>%</div>
+    <div class="p"><%= tq.huy || 0 %> khách hủy · <%= tq.tu_choi || 0 %> nhà hàng từ chối</div>
+  </div>
+  <div class="o tot">
+    <div class="n">Quy mô trung bình</div>
+    <div class="v"><%= tq.quy_mo_tb %></div>
+    <div class="p">khách/lượt · ngồi trung bình <%= tq.thoi_luong_tb %> phút</div>
+  </div>
+  <div class="o vang">
+    <div class="n">Tiền cọc</div>
+    <div class="v"><%= Number(tq.tien_coc || 0).toLocaleString('vi-VN') %>đ</div>
+    <div class="p"><%= tq.da_coc || 0 %> lượt đã cọc · hoàn <%= Number(tq.tien_hoan || 0).toLocaleString('vi-VN') %>đ</div>
+  </div>
+  <div class="o">
+    <div class="n">Giờ cao điểm</div>
+    <div class="v"><%= pt.gio_cao_diem !== null ? String(pt.gio_cao_diem).padStart(2,'0') + ':00' : '—' %></div>
+    <div class="p">khung giờ nhiều lượt đặt nhất</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-8 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Lượt đặt theo ngày</h6></div>
+      <div class="card-body"><div class="pt-bieu"><canvas id="bdNgay"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-xl-4 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Nguồn đặt bàn</h6></div>
+      <div class="card-body"><div class="pt-bieu"><canvas id="bdNguon"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-7 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Lượt đặt theo khung giờ</h6></div>
+      <div class="card-body"><div class="pt-bieu"><canvas id="bdGio"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-xl-5 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Lượt đặt theo thứ trong tuần</h6></div>
+      <div class="card-body"><div class="pt-bieu"><canvas id="bdThu"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Khu vực được đặt nhiều nhất</h6></div>
+      <div class="card-body">
+        <% var maxKhu = Math.max(1, ...pt.theo_khu_vuc.map(function(k){ return Number(k.so_luot); })); %>
+        <% if (!pt.theo_khu_vuc.length) { %><p class="text-muted mb-0">Chưa có dữ liệu.</p><% } %>
+        <% pt.theo_khu_vuc.forEach(function (k) { %>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="font-weight-bold"><%= k.khu_vuc %></span>
+              <span class="text-muted"><%= k.so_luot %> lượt · <%= k.so_khach || 0 %> khách</span>
+            </div>
+            <div class="pt-thanh"><i style="width:<%= (Number(k.so_luot) / maxKhu) * 100 %>%"></i></div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Khách đặt nhiều nhất</h6></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm pt-bang mb-0">
+            <thead class="thead-light"><tr><th>Khách</th><th class="text-center">Lượt</th>
+              <th class="text-center">Khách</th><th class="text-center">No-show</th></tr></thead>
+            <tbody>
+              <% if (!pt.top_khach.length) { %>
+                <tr><td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu.</td></tr>
+              <% } %>
+              <% pt.top_khach.forEach(function (k) { %>
+                <tr>
+                  <td>
+                    <span class="font-weight-bold"><%= k.ten %></span>
+                    <% if (k.loai === 'VIP') { %><span class="badge badge-warning ml-1">VIP</span><% } %>
+                    <small class="d-block text-muted"><%= k.phone %></small>
+                  </td>
+                  <td class="text-center font-weight-bold"><%= k.so_luot %></td>
+                  <td class="text-center"><%= k.so_khach %></td>
+                  <td class="text-center <%= Number(k.no_show) > 0 ? 'text-danger font-weight-bold' : 'text-muted' %>">
+                    <%= k.no_show %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Dịp đặt bàn</h6></div>
+      <div class="card-body">
+        <% if (!pt.theo_dip.length) { %><p class="text-muted mb-0">Chưa có lượt đặt nào ghi dịp.</p><% } %>
+        <% pt.theo_dip.forEach(function (d) { %>
+          <span class="badge badge-light border mr-2 mb-2 p-2">
+            <%= { BIRTHDAY:'Sinh nhật', ANNIVERSARY:'Kỷ niệm', PROPOSAL:'Cầu hôn', CORPORATE:'Tiệc công ty' }[d.dip] || d.dip %>
+            <span class="badge badge-primary ml-1"><%= d.so_luot %></span>
+          </span>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Theo loại khách</h6></div>
+      <div class="card-body"><div class="pt-bieu" style="height:230px"><canvas id="bdLoai"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var PT = <%- JSON.stringify(pt) %>;
+
+  var TEN_NGUON = { ONLINE:'Trực tuyến', STAFF:'Nhân viên', WALK_IN:'Vãng lai', PHONE:'Điện thoại', PARTNER:'Đối tác' };
+  var TEN_LOAI = { REGULAR:'Khách thường', MEMBER:'Thành viên', VIP:'VIP', CORPORATE:'Doanh nghiệp', NEW:'Khách mới' };
+  var MAU = ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc', '#858796', '#6f42c1'];
+
+  var chungGoc = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 } } } }
+  };
+
+  new Chart(document.getElementById('bdNgay'), {
+    type: 'line',
+    data: {
+      labels: PT.theo_ngay.map(function (d) { return d.ngay.slice(5).split('-').reverse().join('/'); }),
+      datasets: [
+        { label: 'Lượt đặt', data: PT.theo_ngay.map(function (d) { return Number(d.so_luot); }),
+          borderColor: '#4e73df', backgroundColor: 'rgba(78,115,223,.12)', fill: true, tension: .3 },
+        { label: 'Khách', data: PT.theo_ngay.map(function (d) { return Number(d.so_khach || 0); }),
+          borderColor: '#1cc88a', backgroundColor: 'transparent', tension: .3 },
+        { label: 'No-show', data: PT.theo_ngay.map(function (d) { return Number(d.no_show || 0); }),
+          borderColor: '#e74a3b', backgroundColor: 'transparent', borderDash: [5, 4], tension: .3 }
+      ]
+    },
+    options: Object.assign({}, chungGoc, { scales: { y: { beginAtZero: true } } })
+  });
+
+  new Chart(document.getElementById('bdNguon'), {
+    type: 'doughnut',
+    data: {
+      labels: PT.theo_nguon.map(function (n) { return TEN_NGUON[n.nguon] || n.nguon; }),
+      datasets: [{ data: PT.theo_nguon.map(function (n) { return Number(n.so_luot); }), backgroundColor: MAU }]
+    },
+    options: chungGoc
+  });
+
+  // Truc gio phai co du 24 cot ke ca gio khong ai dat: mot bieu do chi ve nhung
+  // gio CO du lieu se lam khoang trong bien mat, va khoang trong moi la thu quan
+  // ly can nhin ra ("chieu 15h khong ai dat, co nen dong bep khong?").
+  var gioDem = new Array(24).fill(0);
+  var gioKhach = new Array(24).fill(0);
+  PT.theo_gio.forEach(function (g) {
+    gioDem[Number(g.gio)] = Number(g.so_luot);
+    gioKhach[Number(g.gio)] = Number(g.so_khach || 0);
+  });
+
+  new Chart(document.getElementById('bdGio'), {
+    type: 'bar',
+    data: {
+      labels: gioDem.map(function (_, i) { return String(i).padStart(2, '0') + 'h'; }),
+      datasets: [
+        { label: 'Lượt đặt', data: gioDem, backgroundColor: '#4e73df' },
+        { label: 'Số khách', data: gioKhach, backgroundColor: 'rgba(28,200,138,.55)' }
+      ]
+    },
+    options: Object.assign({}, chungGoc, { scales: { y: { beginAtZero: true } } })
+  });
+
+  new Chart(document.getElementById('bdThu'), {
+    type: 'bar',
+    data: {
+      labels: PT.theo_thu.map(function (t) { return t.ten; }),
+      datasets: [{ label: 'Lượt đặt', data: PT.theo_thu.map(function (t) { return t.so_luot; }),
+        backgroundColor: '#f6c23e' }]
+    },
+    options: Object.assign({}, chungGoc, { indexAxis: 'y', scales: { x: { beginAtZero: true } } })
+  });
+
+  new Chart(document.getElementById('bdLoai'), {
+    type: 'pie',
+    data: {
+      labels: PT.theo_loai_khach.map(function (l) { return TEN_LOAI[l.loai] || l.loai; }),
+      datasets: [{ data: PT.theo_loai_khach.map(function (l) { return Number(l.so_luot); }), backgroundColor: MAU }]
+    },
+    options: chungGoc
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

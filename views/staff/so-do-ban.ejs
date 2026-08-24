@@ -8,7 +8,7 @@
   <style>
     :root {
       --bg:#f1f5f9; --card:#fff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
-      --trong:#22c55e; --phucvu:#ef4444; --dat:#f59e0b; --don:#64748b;
+      --trong:#16a34a; --phucvu:#dc2626; --dat:#d97706; --don:#64748b; --baotri:#1e293b;
     }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--bg); color:var(--text);
@@ -54,9 +54,9 @@
     .thanh { background:var(--card); border:1px solid var(--line); border-radius:10px;
              padding:12px 16px; margin-bottom:16px; display:flex; gap:16px;
              align-items:center; flex-wrap:wrap; }
-    .chu-thich { display:flex; gap:15px; flex-wrap:wrap; font-size:13px; }
-    .chu-thich span { display:flex; align-items:center; gap:6px; }
-    .vuong { width:14px; height:14px; border-radius:4px; display:inline-block; }
+    /* Chu thich duoc thanh phan chung ve ra (.sdb__chuthich); o day chi chinh
+       lai nen cho hop voi thanh cong cu mau trang. */
+    #chuThich .sdb__chuthich { margin:0; padding:0; background:none; border:0; gap:.35rem .1rem; }
     .tab { display:flex; gap:8px; }
     .tab button { padding:7px 15px; border:1px solid var(--line); background:#fff;
                   border-radius:7px; cursor:pointer; font-size:13.5px; font-family:inherit; }
@@ -65,32 +65,44 @@
            cursor:pointer; font-size:13.5px; font-family:inherit; }
     .btn.ghost { background:#fff; color:#0f766e; border:1px solid #0f766e; }
 
-    .san { position:relative; background:var(--card); border:1px solid var(--line);
-           border-radius:12px; min-height:520px; overflow:auto;
-           background-image:radial-gradient(#e2e8f0 1px, transparent 1px);
-           background-size:20px 20px; }
+    /* San nha: nen am co luoi mo, giong het so do dat ban o khu khach - hai
+       man hinh ve cung mot nha hang thi phai nhin ra la cung mot nha hang. */
+    .san { position:relative; border-radius:14px; min-height:520px; overflow:auto;
+           background:
+             radial-gradient(120% 90% at 50% 6%, rgba(255,255,255,.9), rgba(255,255,255,0) 60%),
+             linear-gradient(rgba(120,90,60,.05) 1px, transparent 1px) 0 0 / 100% 44px,
+             linear-gradient(90deg, rgba(120,90,60,.05) 1px, transparent 1px) 0 0 / 44px 100%,
+             linear-gradient(160deg,#fdfaf5,#f4eee3);
+           box-shadow: inset 0 0 0 1px rgba(120,90,60,.16); }
 
     /* Dai tieu de ngan cach cac khu khi xem tab "Tất cả". */
     .dai-khu { position:absolute; left:0; right:0; height:34px; display:flex;
                align-items:center; gap:10px; padding:0 18px; font-size:13px;
-               font-weight:600; color:#0f766e; background:#f0fdfa;
-               border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
-    .dai-khu .dem { font-weight:400; color:var(--muted); font-size:12px; }
+               font-weight:700; color:#6b4f2a; background:rgba(255,255,255,.72);
+               border-top:1px solid rgba(120,90,60,.16); border-bottom:1px solid rgba(120,90,60,.16); }
+    .dai-khu .dem { font-weight:500; color:var(--muted); font-size:12px; }
 
-    .ban { position:absolute; width:138px; border-radius:11px; padding:11px 12px;
-           color:#fff; cursor:pointer; user-select:none; transition:transform .12s, box-shadow .12s;
-           box-shadow:0 2px 8px rgba(0,0,0,.13); }
-    .ban:hover { transform:translateY(-2px); box-shadow:0 7px 18px rgba(0,0,0,.2); }
+    /* THE BAN.
+
+       Truoc day moi ban la mot hop chu nhat 138px to mau, chu trang ben trong.
+       Doc duoc, nhung phai DOC: muon biet ban may cho thi phai tim dong chu.
+       Bay gio ban duoc VE ra - mat ban va ghe xung quanh, dung bang so cho -
+       nen suc chua la thu nhin la thay. Dung chung ham ve voi so do dat ban o
+       khu khach (partials/so-do-dat-ban.ejs). */
+    .ban { position:absolute; cursor:pointer; user-select:none;
+           display:flex; flex-direction:column; align-items:center; gap:2px;
+           transition:transform .14s, filter .14s;
+           filter:drop-shadow(0 3px 6px rgba(60,40,20,.18)); }
+    .ban:hover { transform:translateY(-3px); filter:drop-shadow(0 9px 16px rgba(60,40,20,.32)); z-index:20; }
+    .ban svg { display:block; }
     .ban.keo { cursor:grab; }
     .ban.dang-keo { opacity:.75; cursor:grabbing; z-index:50; }
-    .ban .so { font-size:17px; font-weight:700; }
-    .ban .tt { font-size:11.5px; opacity:.92; margin-top:3px; }
-    .ban .ct { font-size:11px; opacity:.9; margin-top:7px; border-top:1px solid rgba(255,255,255,.3);
-               padding-top:6px; line-height:1.5; }
-    .ban.s0 { background:var(--trong); }
-    .ban.s1 { background:var(--phucvu); }
-    .ban.s2 { background:var(--dat); }
-    .ban.s3 { background:var(--don); }
+    /* Dong thong tin duoi ban: chi hien khi CO gi de noi (dang phuc vu, giu cho).
+       Ban trong khong can mot dong chu lap lai dieu ma mau sac da noi. */
+    .ban .ct { font-size:11px; font-weight:600; line-height:1.35; text-align:center;
+               background:#fff; border:1px solid rgba(120,90,60,.2); border-radius:7px;
+               padding:2px 7px; white-space:nowrap; color:#4a4038; margin-top:-4px; }
+    .ban .ct b { color:#7c2d12; }
 
     .lop { position:fixed; inset:0; background:rgba(15,23,42,.55); display:none;
            align-items:center; justify-content:center; z-index:100; }
@@ -135,12 +147,9 @@
 
     <div class="thanh">
       <div class="tab" id="tabViTri"></div>
-      <div class="chu-thich" style="margin-left:auto">
-        <span><i class="vuong" style="background:var(--trong)"></i> Trống</span>
-        <span><i class="vuong" style="background:var(--phucvu)"></i> Đang phục vụ</span>
-        <span><i class="vuong" style="background:var(--dat)"></i> Đã đặt trước</span>
-        <span><i class="vuong" style="background:var(--don)"></i> Đang dọn</span>
-      </div>
+      <%# Chu thich do chinh thanh phan ve ban dung ra, khong ve tay lai o day:
+          mot bang mau viet tay se lech khoi so do ngay lan dau ai do doi mot mau. %>
+      <div id="chuThich" style="margin-left:auto"></div>
       <% if (choPhepKeoTha) { %>
         <button class="btn ghost" id="btnSapXep" onclick="batSapXep()">Sắp xếp sơ đồ</button>
         <button class="btn" id="btnLuu" onclick="luuViTri()" style="display:none">Lưu vị trí</button>
@@ -170,6 +179,8 @@
       <button class="dong" onclick="dongHop()">Đóng</button>
     </div>
   </div>
+
+<%- include('../partials/so-do-dat-ban') %>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -229,19 +240,61 @@ function veTab() {
 
 function chonViTri(id) { viTriDangXem = id; veTab(); veSan(); }
 
+/*
+  Chu thich chi ve mot lan - no khong doi theo du lieu.
+
+  Truyen nhan rieng thay vi dung bo mac dinh: bo mac dinh viet cho trang KHACH
+  ("Trống — chọn được"), con o day bam vao ban la DOI TRANG THAI chu khong phai
+  chon ban. Cung mot mau, khac mot dong chu.
+*/
+SoDoDatBan.chuThich($('chuThich'), [
+  ['trong', 'Trống'],
+  ['dat', 'Đã đặt trước'],
+  ['phucvu', 'Đang phục vụ'],
+  ['don', 'Đang dọn'],
+  ['baotri', 'Bảo trì'],
+]);
+
+/** Ma trang thai ban (0..4) -> kieu ve cua SoDoDatBan. */
+const KIEU_VE = { 0: 'trong', 1: 'phucvu', 2: 'dat', 3: 'don', 4: 'baotri' };
+
+/**
+ * Dung the mot cai ban - tra ve PHAN TU DOM, khong phai chuoi HTML.
+ *
+ * Bat buoc phai la DOM: ban duoc ve bang SVG (mat ban + ghe), ma SVG tao bang
+ * innerHTML tren mot the <div> se rot vao namespace HTML chu khong phai SVG -
+ * trinh duyet dung ra mot dong the rong khong hien gi. Xem `veBan` trong
+ * partials/so-do-dat-ban.ejs.
+ */
 function theBan(b, doLech) {
-  const ct = b.trangthai === 1 && b.so_mon
-    ? `<div class="ct">${b.so_mon} món &middot; ${tien(b.tong_tien)}đ${b.so_khach ? ' &middot; ' + b.so_khach + ' khách' : ''}</div>`
-    : (b.trangthai === 2 ? '<div class="ct">Giữ chỗ</div>' : '');
-  return `
-    <div class="ban s${b.trangthai} ${dangSapXep ? 'keo' : ''}"
-         data-id="${b.Id_ban}" data-khu="${b.id_vitri}"
-         style="left:${b.toa_do_x}px; top:${Number(b.toa_do_y) + doLech}px"
-         onclick="moHop(${b.Id_ban})">
-      <div class="so">Bàn ${b.number_ban}</div>
-      <div class="tt">${b.ten_trang_thai} &middot; ${b.so_cho} chỗ</div>
-      ${ct}
-    </div>`;
+  const el = document.createElement('div');
+  el.className = 'ban' + (dangSapXep ? ' keo' : '');
+  el.dataset.id = b.Id_ban;
+  el.dataset.khu = b.id_vitri;
+  el.style.left = b.toa_do_x + 'px';
+  el.style.top = (Number(b.toa_do_y) + doLech) + 'px';
+  el.title = `Bàn ${b.number_ban} · ${b.so_cho} chỗ · ${b.ten_trang_thai}`;
+  el.onclick = () => moHop(b.Id_ban);
+
+  el.appendChild(SoDoDatBan.veBan(b.so_cho, KIEU_VE[b.trangthai] || 'trong', b.number_ban).svg);
+
+  // Dong thong tin chi hien khi co gi de noi: ban trong khong can mot dong chu
+  // lap lai dieu ma mau sac va huy hieu da noi roi.
+  let ct = '';
+  if (b.trangthai === 1 && b.so_mon) {
+    ct = `${b.so_mon} món · <b>${tien(b.tong_tien)}đ</b>` + (b.so_khach ? ` · ${b.so_khach} khách` : '');
+  } else if (b.trangthai === 2) {
+    ct = 'Giữ chỗ';
+  } else if (b.trangthai === 4) {
+    ct = 'Bảo trì';
+  }
+  if (ct) {
+    const d = document.createElement('div');
+    d.className = 'ct';
+    d.innerHTML = ct;
+    el.appendChild(d);
+  }
+  return el;
 }
 
 /**
@@ -256,7 +309,9 @@ function veSan() {
   const khuHienThi = (duLieu.vi_tri || []).filter(
     v => tatCa || String(v.id_vitri) === String(viTriDangXem));
 
-  const html = [];
+  // Dung bang DOM chu khong bang chuoi HTML: the ban chua SVG, ma SVG ghep bang
+  // innerHTML se sai namespace va khong hien ra gi. Xem chu thich cua theBan().
+  const manh = document.createDocumentFragment();
   let y = 0;
   doLechKhu = {};
 
@@ -265,20 +320,28 @@ function veSan() {
     const trong = ds.filter(b => b.trangthai === 0).length;
     doLechKhu[v.id_vitri] = y + CAO_TIEU_DE;
 
-    html.push(`
-      <div class="dai-khu" style="top:${y}px">${tenKhu(v)}
-        <span class="dem">${ds.length} bàn &middot; ${v.so_cho || 0} chỗ &middot; ${trong} bàn trống</span>
-      </div>`);
-    html.push(...ds.map(b => theBan(b, y + CAO_TIEU_DE)));
+    const dai = document.createElement('div');
+    dai.className = 'dai-khu';
+    dai.style.top = y + 'px';
+    dai.textContent = tenKhu(v);
+    const dem = document.createElement('span');
+    dem.className = 'dem';
+    dem.textContent = `${ds.length} bàn · ${v.so_cho || 0} chỗ · ${trong} bàn trống`;
+    dai.appendChild(dem);
+    manh.appendChild(dai);
+
+    ds.forEach(b => manh.appendChild(theBan(b, y + CAO_TIEU_DE)));
 
     // Chieu cao khu = day nhat cua ban trong khu, toi thieu du cho mot hang.
     const day = ds.reduce((m, b) => Math.max(m, Number(b.toa_do_y) + CAO_BAN), CAO_BAN);
     y += CAO_TIEU_DE + day + DEM_KHU;
   }
 
-  $('san').innerHTML = html.join('') ||
-    '<div style="padding:40px;color:var(--muted);text-align:center">Khu vực này chưa có bàn nào</div>';
-  $('san').style.height = Math.max(520, y + 10) + 'px';
+  const san = $('san');
+  san.innerHTML = '';
+  if (manh.childNodes.length) san.appendChild(manh);
+  else san.innerHTML = '<div style="padding:40px;color:var(--muted);text-align:center">Khu vực này chưa có bàn nào</div>';
+  san.style.height = Math.max(520, y + 10) + 'px';
 
   if (dangSapXep) ganKeoTha();
 }

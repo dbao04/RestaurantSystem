@@ -1,0 +1,535 @@
+<%- include('partials/header') %>
+<%
+/*
+  CAU HINH DAT BAN - man hinh cua quan tri / quan ly nha hang.
+
+  Sau nhom, moi nhom mot the:
+    1. Tham so van hanh   thoi luong, giu ban, ghep ban, tran dat online
+    2. Gio mo cua         theo tung thu trong tuan
+    3. Ngay nghi          nghi le, dong cua dot xuat
+    4. Chinh sach huy     huy truoc bao lau thi hoan bao nhieu
+    5. Quy tac tien coc   ai phai coc, bao nhieu
+    6. Thuoc tinh ban     ban nao gan cua so, phong rieng, ghep duoc, bao tri
+
+  VI SAO MOI THE LUU RIENG
+  ------------------------
+  Mot nut "Luu tat ca" o cuoi trang nghe gon hon, nhung no bien mot lan sua nho
+  ("dong cua thu Hai") thanh mot lan ghi de len ca sau nhom - va neu mot nhom
+  co gia tri khong hop le thi ca sau nhom deu khong luu duoc. Sau nut Luu doc
+  lap thi moi thay doi la mot viec doc lap, va thong bao loi tro thang toi dung
+  cho sai.
+
+  MOI THAY DOI O DAY DEU ANH HUONG DEN LUOT DAT SAP TOI
+  -----------------------------------------------------
+  Bat "khong cho ghep ban" luc 18h ngay cuoi tuan la doi cach he thong tra loi
+  moi khach dat ban tu giay tiep theo. Nen cac o co the gay hau qua ngay lap tuc
+  deu co mot dong giai thich ben duoi - khong de nguoi dung phai doan.
+*/
+var nhom = {
+  'Thời lượng sử dụng bàn': ['default_duration_1_2','default_duration_3_6','default_duration_7_10','default_duration_over_10','turnaround_minutes'],
+  'Giữ bàn và no-show': ['grace_period_minutes','auto_no_show_minutes','occupied_hold_minutes','reminder_lead_minutes'],
+  'Nhận đặt bàn': ['minimum_lead_minutes','max_advance_days','last_seating_minutes','slot_step_minutes','max_guests_online','allow_customer_pick_table','auto_confirm_online','auto_confirm_member','no_show_block_threshold'],
+  'Ghép bàn': ['allow_table_combination','combine_same_area_only','max_tables_per_reservation'],
+  'Tiền cọc và giờ cao điểm': ['peak_hours','large_group_threshold','deposit_due_minutes']
+};
+var theoKhoa = {};
+cauHinh.forEach(function (c) { theoKhoa[c.khoa] = c; });
+%>
+
+<style>
+  .cf-the { background:#fff; border-radius:14px; padding:1.4rem 1.5rem; margin-bottom:1.3rem;
+    box-shadow:0 2px 18px rgba(20,14,10,.06); border:1px solid rgba(0,0,0,.06); }
+  .cf-the > h2 { font-size:1.15rem; margin:0 0 .3rem; display:flex; align-items:center; gap:.55rem; }
+  .cf-the > h2 i { color:#c8a24b; }
+  .cf-the > .mo-ta { color:#6b6157; font-size:.86rem; margin:0 0 1.2rem; }
+
+  .cf-nhom { margin-bottom:1.3rem; }
+  .cf-nhom > h3 { font-size:.75rem; text-transform:uppercase; letter-spacing:.09em; color:#8a7f74;
+    font-weight:800; margin:0 0 .7rem; padding-bottom:.35rem; border-bottom:1px solid rgba(0,0,0,.07); }
+  .cf-luoi { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.9rem; }
+  .cf-o label { display:block; font-size:.8rem; font-weight:700; color:#4a4038; margin-bottom:.3rem; }
+  .cf-o input[type=text], .cf-o input[type=number], .cf-o input[type=time], .cf-o input[type=date], .cf-o select {
+    width:100%; padding:.55rem .7rem; border:1px solid #d9d2c7; border-radius:8px; font:inherit; font-size:.9rem; }
+  .cf-o input:focus, .cf-o select:focus { outline:none; border-color:#c8a24b; box-shadow:0 0 0 3px rgba(200,162,75,.18); }
+  .cf-o .hint { display:block; font-size:.74rem; color:#8a7f74; margin-top:.25rem; }
+  .cf-tich { display:flex; align-items:flex-start; gap:.55rem; padding:.55rem .7rem; border:1px solid #d9d2c7;
+    border-radius:8px; background:#fbf8f3; }
+  .cf-tich input { margin-top:.2rem; flex:none; width:16px; height:16px; }
+  .cf-tich span { font-size:.86rem; font-weight:600; color:#4a4038; }
+
+  .cf-bang { width:100%; border-collapse:collapse; font-size:.88rem; }
+  .cf-bang th { text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em;
+    color:#8a7f74; padding:.5rem .6rem; border-bottom:2px solid rgba(0,0,0,.08); }
+  .cf-bang td { padding:.5rem .6rem; border-bottom:1px solid rgba(0,0,0,.05); vertical-align:middle; }
+  .cf-bang input[type=time], .cf-bang input[type=number], .cf-bang input[type=text], .cf-bang select {
+    padding:.35rem .5rem; border:1px solid #d9d2c7; border-radius:6px; font:inherit; font-size:.86rem; }
+  .cf-bang tr.tat td { opacity:.5; }
+
+  .cf-nut { background:#2b1a12; color:#f7efe2; border:0; border-radius:999px; padding:.6rem 1.5rem;
+    font:inherit; font-weight:700; font-size:.86rem; cursor:pointer; display:inline-flex; align-items:center; gap:.5rem; }
+  .cf-nut:hover { background:#4e342e; }
+  .cf-nut--phu { background:transparent; color:#2b1a12; border:1.5px solid rgba(43,26,18,.3); }
+  .cf-nut--xoa { background:transparent; color:#b91c1c; border:1.5px solid rgba(185,28,28,.3); padding:.3rem .8rem; font-size:.78rem; }
+  .cf-nut[disabled] { opacity:.5; cursor:not-allowed; }
+
+  .cf-bao { padding:.7rem 1rem; border-radius:9px; font-size:.86rem; margin-bottom:1rem; display:none; }
+  .cf-bao.hien { display:block; }
+  .cf-bao--ok { background:#f0fdf4; border:1px solid #bbf7d0; color:#14532d; }
+  .cf-bao--loi { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .cf-bao--nhac { background:#fffbeb; border:1px solid #fde68a; color:#78350f; }
+
+  .cf-the-ban { display:inline-block; padding:.1rem .45rem; border-radius:4px; font-size:.7rem;
+    font-weight:700; background:#f3ebdd; color:#6b5a3e; margin-right:.25rem; }
+</style>
+
+<h1 class="qt-tieu-de">Cấu hình đặt bàn</h1>
+<p style="color:#6b6157;margin-top:-.6rem;margin-bottom:1.5rem">
+  Những cài đặt ở đây quyết định hệ thống trả lời khách thế nào khi họ đặt bàn.
+  Mỗi thẻ lưu độc lập — sửa xong nhóm nào thì bấm Lưu của nhóm đó.
+</p>
+
+<!-- ==================================================== 1. THAM SỐ ==== -->
+<section class="cf-the">
+  <h2><i class="fas fa-sliders"></i> Tham số vận hành</h2>
+  <p class="mo-ta">Áp dụng ngay cho mọi lượt đặt bàn tạo sau khi lưu. Lượt đã đặt giữ nguyên thông số cũ.</p>
+  <div class="cf-bao" id="baoThamSo"></div>
+
+  <form id="fThamSo">
+    <% Object.keys(nhom).forEach(function (tenNhom) { %>
+      <div class="cf-nhom">
+        <h3><%= tenNhom %></h3>
+        <div class="cf-luoi">
+          <% nhom[tenNhom].forEach(function (khoa) { var c = theoKhoa[khoa]; if (!c) return; %>
+            <div class="cf-o">
+              <% if (c.kieu === 'bool') { %>
+                <label class="cf-tich">
+                  <input type="checkbox" name="<%= c.khoa %>" value="1" <%= String(c.gia_tri) === '1' ? 'checked' : '' %>>
+                  <span><%= c.nhan %></span>
+                </label>
+              <% } else if (c.kieu === 'chon') { %>
+                <label for="cf_<%= c.khoa %>"><%= c.nhan %></label>
+                <select id="cf_<%= c.khoa %>" name="<%= c.khoa %>">
+                  <% c.chon.forEach(function (v) { %>
+                    <option value="<%= v %>" <%= Number(c.gia_tri) === v ? 'selected' : '' %>><%= v %></option>
+                  <% }); %>
+                </select>
+              <% } else if (c.kieu === 'khung_gio') { %>
+                <label for="cf_<%= c.khoa %>"><%= c.nhan %></label>
+                <input type="text" id="cf_<%= c.khoa %>" name="<%= c.khoa %>" value="<%= c.gia_tri %>"
+                       pattern="\d{2}:\d{2}-\d{2}:\d{2}" placeholder="18:00-21:00">
+                <span class="hint">Dạng HH:MM-HH:MM</span>
+              <% } else { %>
+                <label for="cf_<%= c.khoa %>"><%= c.nhan %></label>
+                <input type="number" id="cf_<%= c.khoa %>" name="<%= c.khoa %>" value="<%= c.gia_tri %>"
+                       min="<%= c.min %>" max="<%= c.max %>">
+                <span class="hint">Từ <%= c.min %> đến <%= c.max %></span>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% }); %>
+    <button type="submit" class="cf-nut"><i class="fas fa-floppy-disk"></i> Lưu tham số</button>
+  </form>
+</section>
+
+<!-- ==================================================== 2. GIỜ MỞ CỬA = -->
+<section class="cf-the">
+  <h2><i class="fas fa-clock"></i> Giờ mở cửa theo thứ</h2>
+  <p class="mo-ta">
+    Hệ thống không nhận đặt bàn ngoài khung này. Lượt đặt phải <strong>kết thúc</strong> trước giờ đóng cửa —
+    khách chọn 21:00 với 120 phút sẽ bị từ chối nếu quán đóng lúc 22:00.
+  </p>
+  <div class="cf-bao" id="baoGio"></div>
+
+  <form id="fGio">
+    <table class="cf-bang">
+      <thead><tr><th style="width:130px">Thứ</th><th style="width:130px">Mở cửa</th>
+        <th style="width:130px">Đóng cửa</th><th>Nghỉ cả ngày</th></tr></thead>
+      <tbody>
+        <% gioMoCua.forEach(function (g) { %>
+          <tr class="<%= g.is_closed ? 'tat' : '' %>" data-thu="<%= g.weekday %>">
+            <td><strong><%= g.ten %></strong></td>
+            <td><input type="time" name="open" value="<%= g.open_time %>" step="900"></td>
+            <td><input type="time" name="close" value="<%= g.close_time %>" step="900"></td>
+            <td><label style="display:flex;gap:.4rem;align-items:center;font-size:.85rem">
+              <input type="checkbox" name="closed" <%= g.is_closed ? 'checked' : '' %>> nghỉ</label></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <button type="submit" class="cf-nut" style="margin-top:1rem"><i class="fas fa-floppy-disk"></i> Lưu giờ mở cửa</button>
+  </form>
+</section>
+
+<!-- ==================================================== 3. NGÀY NGHỈ === -->
+<section class="cf-the">
+  <h2><i class="fas fa-calendar-xmark"></i> Ngày nghỉ / đóng cửa đột xuất</h2>
+  <p class="mo-ta">Khách chọn những ngày này sẽ nhận thông báo nhà hàng không nhận đặt bàn.</p>
+  <div class="cf-bao" id="baoNghi"></div>
+
+  <form id="fNghi" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.1rem">
+    <div class="cf-o" style="flex:0 0 180px"><label for="nghiNgay">Ngày</label>
+      <input type="date" id="nghiNgay" min="<%= homNay %>" required></div>
+    <div class="cf-o" style="flex:1;min-width:220px"><label for="nghiLyDo">Lý do</label>
+      <input type="text" id="nghiLyDo" maxlength="200" placeholder="Nghỉ Tết, sửa chữa bếp…"></div>
+    <button type="submit" class="cf-nut"><i class="fas fa-plus"></i> Thêm</button>
+  </form>
+
+  <table class="cf-bang">
+    <thead><tr><th style="width:130px">Ngày</th><th>Lý do</th><th style="width:100px"></th></tr></thead>
+    <tbody id="bangNghi">
+      <% if (!ngayNghi.length) { %>
+        <tr><td colspan="3" style="color:#8a7f74;padding:1.2rem .6rem">Chưa khai ngày nghỉ nào.</td></tr>
+      <% } %>
+      <% ngayNghi.forEach(function (n) { %>
+        <tr data-id="<%= n.id %>">
+          <td><strong><%= n.closed_date.split('-').reverse().join('/') %></strong></td>
+          <td><%= n.reason || '—' %></td>
+          <td><button class="cf-nut cf-nut--xoa" data-xoa-nghi="<%= n.id %>">Xóa</button></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</section>
+
+<!-- ==================================================== 4. CHÍNH SÁCH = -->
+<section class="cf-the">
+  <h2><i class="fas fa-file-contract"></i> Chính sách hủy bàn</h2>
+  <p class="mo-ta">
+    Khi khách hủy, hệ thống lấy mốc <strong>có số giờ lớn nhất mà khách vẫn còn đáp ứng</strong>.
+    Hủy trước 30 giờ thì thỏa cả ba mốc 24/6/2 và được hoàn theo mốc 24 giờ.
+    Khách không đến (no-show) luôn không được hoàn, không phụ thuộc bảng này.
+  </p>
+  <div class="cf-bao" id="baoCS"></div>
+
+  <table class="cf-bang">
+    <thead><tr><th>Tên chính sách</th><th style="width:120px">Hủy trước (giờ)</th>
+      <th style="width:110px">Hoàn (%)</th><th style="width:150px">Áp dụng cho</th>
+      <th style="width:90px">Bật</th><th style="width:150px"></th></tr></thead>
+    <tbody id="bangCS">
+      <% chinhSach.forEach(function (c) { %>
+        <tr data-id="<%= c.id %>">
+          <td><input type="text" name="name" value="<%= c.name %>" style="width:100%"></td>
+          <td><input type="number" name="hours_before" value="<%= c.hours_before %>" min="0" max="720" step="0.5" style="width:90px"></td>
+          <td><input type="number" name="refund_percent" value="<%= c.refund_percent %>" min="0" max="100" style="width:80px"></td>
+          <td><select name="applies_to">
+            <% ['ALL','VIP','LARGE_GROUP','PEAK_HOUR'].forEach(function (a) { %>
+              <option value="<%= a %>" <%= c.applies_to === a ? 'selected' : '' %>>
+                <%= { ALL:'Mọi khách', VIP:'Khách VIP', LARGE_GROUP:'Nhóm đông', PEAK_HOUR:'Giờ cao điểm' }[a] %></option>
+            <% }); %>
+          </select></td>
+          <td><input type="checkbox" name="is_active" <%= c.is_active ? 'checked' : '' %>></td>
+          <td>
+            <button class="cf-nut cf-nut--phu" style="padding:.3rem .8rem;font-size:.78rem" data-luu-cs="<%= c.id %>">Lưu</button>
+            <button class="cf-nut cf-nut--xoa" data-xoa-cs="<%= c.id %>">Tắt</button>
+          </td>
+        </tr>
+      <% }); %>
+      <tr data-id="" style="background:#fbf8f3">
+        <td><input type="text" name="name" placeholder="Chính sách mới…" style="width:100%"></td>
+        <td><input type="number" name="hours_before" value="12" min="0" max="720" step="0.5" style="width:90px"></td>
+        <td><input type="number" name="refund_percent" value="50" min="0" max="100" style="width:80px"></td>
+        <td><select name="applies_to">
+          <option value="ALL">Mọi khách</option><option value="VIP">Khách VIP</option>
+          <option value="LARGE_GROUP">Nhóm đông</option><option value="PEAK_HOUR">Giờ cao điểm</option>
+        </select></td>
+        <td><input type="checkbox" name="is_active" checked></td>
+        <td><button class="cf-nut" style="padding:.3rem .8rem;font-size:.78rem" data-luu-cs="">Thêm</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ==================================================== 5. TIỀN CỌC ==== -->
+<section class="cf-the">
+  <h2><i class="fas fa-wallet"></i> Quy tắc tiền cọc</h2>
+  <p class="mo-ta">
+    Hệ thống chỉ áp <strong>một</strong> quy tắc cho mỗi lượt đặt — quy tắc hợp lệ có
+    <em>độ ưu tiên</em> nhỏ nhất. Không cộng dồn, để khách luôn đọc được một dòng lý do rõ ràng.
+    Quy tắc "không cần cọc" nên để độ ưu tiên lớn nhất, làm điểm dừng cuối.
+  </p>
+  <div class="cf-bao" id="baoCoc"></div>
+
+  <table class="cf-bang">
+    <thead><tr><th>Tên</th><th style="width:140px">Áp dụng</th><th style="width:90px">Từ N khách</th>
+      <th style="width:110px">Khung giờ</th><th style="width:120px">Kiểu</th><th style="width:120px">Số tiền</th>
+      <th style="width:80px">Ưu tiên</th><th style="width:60px">Bật</th><th style="width:140px"></th></tr></thead>
+    <tbody id="bangCoc">
+      <% quyTacCoc.forEach(function (q) { %>
+        <tr data-id="<%= q.id %>">
+          <td><input type="text" name="name" value="<%= q.name %>" style="width:100%"></td>
+          <td><select name="applies_to">
+            <% ['ALL','MEMBER','VIP','CORPORATE','LARGE_GROUP','PEAK_HOUR'].forEach(function (a) { %>
+              <option value="<%= a %>" <%= q.applies_to === a ? 'selected' : '' %>>
+                <%= { ALL:'Mọi khách', MEMBER:'Thành viên', VIP:'VIP', CORPORATE:'Doanh nghiệp',
+                      LARGE_GROUP:'Nhóm đông', PEAK_HOUR:'Giờ cao điểm' }[a] %></option>
+            <% }); %>
+          </select></td>
+          <td><input type="number" name="min_guests" value="<%= q.min_guests %>" min="1" style="width:70px"></td>
+          <td style="white-space:nowrap">
+            <input type="time" name="from_time" value="<%= q.from_time || '' %>" style="width:78px">
+            <input type="time" name="to_time" value="<%= q.to_time || '' %>" style="width:78px">
+          </td>
+          <td><select name="amount_type">
+            <option value="NONE" <%= q.amount_type === 'NONE' ? 'selected' : '' %>>Không cọc</option>
+            <option value="FIXED" <%= q.amount_type === 'FIXED' ? 'selected' : '' %>>Cố định</option>
+            <option value="PER_GUEST" <%= q.amount_type === 'PER_GUEST' ? 'selected' : '' %>>Theo đầu khách</option>
+          </select></td>
+          <td><input type="number" name="amount" value="<%= Number(q.amount) %>" min="0" step="1000" style="width:110px"></td>
+          <td><input type="number" name="priority" value="<%= q.priority %>" style="width:70px"></td>
+          <td><input type="checkbox" name="is_active" <%= q.is_active ? 'checked' : '' %>></td>
+          <td>
+            <button class="cf-nut cf-nut--phu" style="padding:.3rem .8rem;font-size:.78rem" data-luu-coc="<%= q.id %>">Lưu</button>
+            <button class="cf-nut cf-nut--xoa" data-xoa-coc="<%= q.id %>">Tắt</button>
+          </td>
+        </tr>
+      <% }); %>
+      <tr data-id="" style="background:#fbf8f3">
+        <td><input type="text" name="name" placeholder="Quy tắc mới…" style="width:100%"></td>
+        <td><select name="applies_to">
+          <option value="ALL">Mọi khách</option><option value="MEMBER">Thành viên</option>
+          <option value="VIP">VIP</option><option value="CORPORATE">Doanh nghiệp</option>
+          <option value="LARGE_GROUP">Nhóm đông</option><option value="PEAK_HOUR">Giờ cao điểm</option>
+        </select></td>
+        <td><input type="number" name="min_guests" value="1" min="1" style="width:70px"></td>
+        <td style="white-space:nowrap">
+          <input type="time" name="from_time" style="width:78px"><input type="time" name="to_time" style="width:78px">
+        </td>
+        <td><select name="amount_type">
+          <option value="FIXED">Cố định</option><option value="PER_GUEST">Theo đầu khách</option>
+          <option value="NONE">Không cọc</option>
+        </select></td>
+        <td><input type="number" name="amount" value="0" min="0" step="1000" style="width:110px"></td>
+        <td><input type="number" name="priority" value="100" style="width:70px"></td>
+        <td><input type="checkbox" name="is_active" checked></td>
+        <td><button class="cf-nut" style="padding:.3rem .8rem;font-size:.78rem" data-luu-coc="">Thêm</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ==================================================== 6. THUỘC TÍNH = -->
+<section class="cf-the">
+  <h2><i class="fas fa-chair"></i> Thuộc tính bàn</h2>
+  <p class="mo-ta">
+    Những thuộc tính này dẫn đường cho thuật toán xếp bàn: khách tích "bàn gần cửa sổ" thì
+    hệ thống ưu tiên bàn có đánh dấu tương ứng. <strong>Số chỗ và vị trí trên sơ đồ</strong> sửa ở
+    <a href="/so-do-ban">trang sơ đồ bàn</a> — để tránh hai nơi cùng sửa một con số.
+  </p>
+  <div class="cf-bao" id="baoBan"></div>
+
+  <table class="cf-bang">
+    <thead><tr>
+      <th style="width:70px">Bàn</th><th style="width:60px">Chỗ</th><th style="width:120px">Khu vực</th>
+      <th style="width:70px">Cho đặt</th><th style="width:70px">Ghép được</th><th style="width:100px">Nhóm ghép</th>
+      <th style="width:70px">Cửa sổ</th><th style="width:70px">Yên tĩnh</th><th style="width:80px">Phòng riêng</th>
+      <th style="width:70px">Xe lăn</th><th style="width:60px">VIP</th><th style="width:70px">Bảo trì</th>
+      <th style="width:80px"></th>
+    </tr></thead>
+    <tbody id="bangBan">
+      <% dsBan.forEach(function (b) { %>
+        <tr data-id="<%= b.id %>">
+          <td><strong><%= b.ten %></strong></td>
+          <td><%= b.so_cho %></td>
+          <td><small><%= b.khu_vuc %></small></td>
+          <td><input type="checkbox" name="cho_dat_truoc" <%= b.cho_dat_truoc ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="co_the_ghep" <%= b.co_the_ghep ? 'checked' : '' %>></td>
+          <td><input type="text" name="nhom_ghep" value="<%= b.nhom_ghep || '' %>" maxlength="20" style="width:88px"></td>
+          <td><input type="checkbox" name="gan_cua_so" <%= b.gan_cua_so ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="yen_tinh" <%= b.yen_tinh ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="phong_rieng" <%= b.phong_rieng ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="xe_lan" <%= b.xe_lan ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="uu_tien_vip" <%= b.uu_tien_vip ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="bao_tri" <%= Number(b.trang_thai) === 4 ? 'checked' : '' %>></td>
+          <td><button class="cf-nut cf-nut--phu" style="padding:.28rem .7rem;font-size:.76rem" data-luu-ban="<%= b.id %>">Lưu</button></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</section>
+
+<!-- ==================================================== 7. KIỂM TRA ==== -->
+<section class="cf-the">
+  <h2><i class="fas fa-stethoscope"></i> Kiểm tra vòng quét nền</h2>
+  <p class="mo-ta">
+    Vòng quét nền chạy mỗi 60 giây: cảnh báo khách quá giờ giữ bàn, tự chuyển no-show,
+    hủy lượt quá hạn cọc, nhắc lịch và đồng bộ trạng thái bàn. Bấm nút để chạy ngay một nhịp.
+  </p>
+  <button class="cf-nut cf-nut--phu" id="btnQuet"><i class="fas fa-play"></i> Chạy một nhịp quét</button>
+  <pre id="ketQuaQuet" style="margin-top:1rem;background:#faf7f2;padding:.9rem;border-radius:8px;
+    font-size:.8rem;overflow:auto;display:none;border:1px solid rgba(0,0,0,.07)"></pre>
+</section>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function bao(id, kieu, thongDiep) {
+    var o = $(id);
+    o.className = 'cf-bao hien cf-bao--' + kieu;
+    o.textContent = thongDiep;
+    if (kieu === 'ok') setTimeout(function () { o.className = 'cf-bao'; }, 4500);
+  }
+
+  async function api(duong, tuyChon) {
+    var r = await fetch(duong, Object.assign({ headers: { 'Content-Type': 'application/json' } }, tuyChon || {}));
+    return r.json();
+  }
+
+  function tich(tr, ten) { var o = tr.querySelector('[name="' + ten + '"]'); return o && o.checked ? 1 : 0; }
+  function gt(tr, ten) { var o = tr.querySelector('[name="' + ten + '"]'); return o ? o.value : ''; }
+
+  // ---------------------------------------------------------- tham số
+
+  $('fThamSo').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var d = {};
+    // FormData bo qua checkbox khong tich, ma "khong tich" chinh la gia tri
+    // muon luu. Nen duyet tay tat ca cac o thay vi dung FormData.
+    this.querySelectorAll('input,select').forEach(function (o) {
+      if (!o.name) return;
+      d[o.name] = o.type === 'checkbox' ? (o.checked ? '1' : '0') : o.value;
+    });
+    var kq = await api('/api/reservation-config', { method: 'PUT', body: JSON.stringify(d) });
+    if (!kq.ok) return bao('baoThamSo', 'loi', kq.thong_bao);
+    bao('baoThamSo', kq.da_doi.length ? 'ok' : 'nhac', kq.da_doi.length
+      ? 'Đã lưu ' + kq.da_doi.length + ' thay đổi: '
+        + kq.da_doi.map(function (x) { return x.nhan + ' (' + x.cu + ' → ' + x.moi + ')'; }).join('; ')
+      : 'Không có gì thay đổi.');
+  });
+
+  // -------------------------------------------------------- giờ mở cửa
+
+  $('fGio').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var ngay = Array.prototype.map.call(this.querySelectorAll('tbody tr'), function (tr) {
+      return {
+        weekday: Number(tr.dataset.thu),
+        open_time: gt(tr, 'open'),
+        close_time: gt(tr, 'close'),
+        is_closed: tich(tr, 'closed')
+      };
+    });
+    var kq = await api('/api/reservation-config/gio-mo-cua', { method: 'PUT', body: JSON.stringify({ ngay: ngay }) });
+    if (!kq.ok) return bao('baoGio', 'loi', kq.thong_bao);
+    bao('baoGio', 'ok', 'Đã lưu giờ mở cửa cho cả tuần.');
+  });
+
+  // Làm mờ hàng nghỉ ngay khi tích, trước cả khi lưu.
+  document.querySelectorAll('#fGio [name="closed"]').forEach(function (o) {
+    o.addEventListener('change', function () {
+      this.closest('tr').classList.toggle('tat', this.checked);
+    });
+  });
+
+  // --------------------------------------------------------- ngày nghỉ
+
+  $('fNghi').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var kq = await api('/api/reservation-config/ngay-nghi', {
+      method: 'POST',
+      body: JSON.stringify({ ngay: $('nghiNgay').value, ly_do: $('nghiLyDo').value.trim() })
+    });
+    if (!kq.ok) return bao('baoNghi', 'loi', kq.thong_bao);
+    // Canh bao neu ngay do da co khach dat - khong chan, nhung phai noi ra.
+    if (kq.luot_dat_hien_co > 0) {
+      bao('baoNghi', 'nhac', 'Đã thêm ngày nghỉ. Lưu ý: ngày này đang có '
+        + kq.luot_dat_hien_co + ' lượt đặt còn hiệu lực — cần gọi báo khách.');
+      setTimeout(function () { window.location.reload(); }, 4000);
+    } else {
+      window.location.reload();
+    }
+  });
+
+  document.addEventListener('click', async function (e) {
+    var n;
+
+    if ((n = e.target.closest('[data-xoa-nghi]'))) {
+      if (!window.confirm('Xóa ngày nghỉ này?')) return;
+      await api('/api/reservation-config/ngay-nghi/' + n.dataset.xoaNghi, { method: 'DELETE' });
+      window.location.reload();
+      return;
+    }
+
+    if ((n = e.target.closest('[data-luu-cs]'))) {
+      var tr = n.closest('tr');
+      var kq = await api('/api/reservation-config/chinh-sach-huy', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: tr.dataset.id || null, name: gt(tr, 'name'),
+          hours_before: gt(tr, 'hours_before'), refund_percent: gt(tr, 'refund_percent'),
+          applies_to: gt(tr, 'applies_to'), is_active: tich(tr, 'is_active')
+        })
+      });
+      if (!kq.ok) return bao('baoCS', 'loi', kq.thong_bao);
+      window.location.reload();
+      return;
+    }
+
+    if ((n = e.target.closest('[data-xoa-cs]'))) {
+      if (!window.confirm('Tắt chính sách này? Chính sách cũ vẫn được giữ để tra cứu các lần hủy trước đây.')) return;
+      await api('/api/reservation-config/chinh-sach-huy/' + n.dataset.xoaCs, { method: 'DELETE' });
+      window.location.reload();
+      return;
+    }
+
+    if ((n = e.target.closest('[data-luu-coc]'))) {
+      var tr2 = n.closest('tr');
+      var kq2 = await api('/api/reservation-config/quy-tac-coc', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: tr2.dataset.id || null, name: gt(tr2, 'name'), applies_to: gt(tr2, 'applies_to'),
+          min_guests: gt(tr2, 'min_guests'), from_time: gt(tr2, 'from_time') || null,
+          to_time: gt(tr2, 'to_time') || null, amount_type: gt(tr2, 'amount_type'),
+          amount: gt(tr2, 'amount'), priority: gt(tr2, 'priority'), is_active: tich(tr2, 'is_active')
+        })
+      });
+      if (!kq2.ok) return bao('baoCoc', 'loi', kq2.thong_bao);
+      window.location.reload();
+      return;
+    }
+
+    if ((n = e.target.closest('[data-xoa-coc]'))) {
+      if (!window.confirm('Tắt quy tắc cọc này?')) return;
+      await api('/api/reservation-config/quy-tac-coc/' + n.dataset.xoaCoc, { method: 'DELETE' });
+      window.location.reload();
+      return;
+    }
+
+    if ((n = e.target.closest('[data-luu-ban]'))) {
+      var tr3 = n.closest('tr');
+      var kq3 = await api('/api/reservation-config/ban/' + tr3.dataset.id, {
+        method: 'PUT',
+        body: JSON.stringify({
+          cho_dat_truoc: tich(tr3, 'cho_dat_truoc'), co_the_ghep: tich(tr3, 'co_the_ghep'),
+          nhom_ghep: gt(tr3, 'nhom_ghep'), gan_cua_so: tich(tr3, 'gan_cua_so'),
+          yen_tinh: tich(tr3, 'yen_tinh'), phong_rieng: tich(tr3, 'phong_rieng'),
+          xe_lan: tich(tr3, 'xe_lan'), uu_tien_vip: tich(tr3, 'uu_tien_vip'),
+          bao_tri: tich(tr3, 'bao_tri')
+        })
+      });
+      bao('baoBan', kq3.ok ? 'ok' : 'loi',
+        kq3.ok ? 'Đã lưu thuộc tính bàn ' + tr3.querySelector('strong').textContent + '.' : kq3.thong_bao);
+    }
+  });
+
+  // ----------------------------------------------------------- kiểm tra
+
+  $('btnQuet').addEventListener('click', async function () {
+    this.disabled = true;
+    var o = $('ketQuaQuet');
+    o.style.display = 'block';
+    o.textContent = 'Đang chạy…';
+    try {
+      var kq = await api('/api/reservation-config/quet-ngay', { method: 'POST' });
+      o.textContent = JSON.stringify(kq.ket_qua, null, 2);
+    } finally {
+      this.disabled = false;
+    }
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

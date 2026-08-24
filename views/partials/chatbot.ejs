@@ -136,12 +136,12 @@
       <b><%= t('chatbot.tro_ly') %></b>
       <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? t('chatbot.che_do_quan_ly') : t('chung.ten_nha_hang') %></small>
     </div>
-    <button class="cb-dau__dong" id="cb-dong" aria-label="Đóng">&times;</button>
+    <button class="cb-dau__dong" id="cb-dong" aria-label="<%= t('chatbot.dong') %>">&times;</button>
   </div>
   <div class="cb-than" id="cb-than"></div>
   <form class="cb-chan" id="cb-form" autocomplete="off">
-    <input id="cb-o-nhap" placeholder="Nhập câu hỏi của bạn…" maxlength="500" aria-label="Câu hỏi">
-    <button type="submit" id="cb-gui" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
+    <input id="cb-o-nhap" placeholder="<%= t('chatbot.nhap_cau_hoi') %>" maxlength="500" aria-label="<%= t('chatbot.cau_hoi') %>">
+    <button type="submit" id="cb-gui" aria-label="<%= t('chatbot.gui') %>"><i class="fas fa-paper-plane"></i></button>
   </form>
 </div>
 
@@ -154,6 +154,13 @@
   var oNhap = document.getElementById('cb-o-nhap');
   var nutGui = document.getElementById('cb-gui');
   var quyen = '<%= cbQuyen %>';
+  var cbI18n = <%- JSON.stringify({
+    chaoKhach: t('chatbot.chao_khach'), chaoQuanLy: t('chatbot.chao_quan_ly'),
+    khongCoTraLoi: t('chatbot.khong_co_tra_loi'), loiKetNoi: t('chatbot.loi_ket_noi'),
+    huuIch: t('chatbot.huu_ich'), chuaDungY: t('chatbot.chua_dung_y'),
+    hienThiDong: t('chatbot.hien_thi_dong', { n: '{n}' }), duPhong: t('chatbot.du_phong'),
+    dangNhap: t('chatbot.dang_nhap'), dangKy: t('chatbot.dang_ky'), nhanVien: t('chatbot.nhan_vien')
+  }) %>;
   var daChao = false;
 
   /* Markdown toi gian: **dam**, _nghieng_. Tu escape HTML truoc de noi dung
@@ -197,7 +204,7 @@
       noi.appendChild(boc);
       if (kem.bang.length > 25) {
         var ghi = document.createElement('em');
-        ghi.textContent = 'Hiển thị 25/' + kem.bang.length + ' dòng.';
+        ghi.textContent = cbI18n.hienThiDong.replace('{n}', kem.bang.length);
         noi.appendChild(ghi);
       }
     }
@@ -205,7 +212,7 @@
     if (kem && kem.nguon === 'du_phong') {
       var nhan = document.createElement('span');
       nhan.className = 'cb-nhan-ml';
-      nhan.textContent = 'Chế độ dự phòng — dịch vụ AI chưa bật';
+      nhan.textContent = cbI18n.duPhong;
       noi.appendChild(nhan);
     }
 
@@ -216,7 +223,7 @@
       [['👍', true], ['👎', false]].forEach(function (c) {
         var b = document.createElement('button');
         b.textContent = c[0];
-        b.title = c[1] ? 'Hữu ích' : 'Chưa đúng ý';
+        b.title = c[1] ? cbI18n.huuIch : cbI18n.chuaDungY;
         b.onclick = function () {
           fetch('/chatbot/api/danh-gia', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -236,8 +243,12 @@
       kem.goi_y.forEach(function (cau) {
         var b = document.createElement('button');
         b.type = 'button';
-        b.textContent = cau;
-        b.onclick = function () { gui(cau); };
+        // Câu gợi ý ở giao diện có thể đã được dịch, nhưng bộ nhận diện ý
+        // định hiện chỉ học tiếng Việt. `cau_hoi` là câu chuẩn gửi cho bot;
+        // `nhan` là phần khách nhìn thấy.
+        var cauGui = (cau && typeof cau === 'object') ? cau.cau_hoi : cau;
+        b.textContent = (cau && typeof cau === 'object') ? cau.nhan : cau;
+        b.onclick = function () { gui(cauGui, b.textContent); };
         g.appendChild(b);
       });
       noi.appendChild(g);
@@ -271,10 +282,10 @@
     }
 
     if (canDangNhap) {
-      nut('Đăng nhập', '/login');
-      nut('Đăng ký', '/register', true);
+      nut(cbI18n.dangNhap, '/login');
+      nut(cbI18n.dangKy, '/register', true);
     } else {
-      nut('Nhắn với nhân viên', '/chat');
+      nut(cbI18n.nhanVien, '/chat');
     }
     noi.appendChild(hop);
     than.scrollTop = than.scrollHeight;
@@ -289,10 +300,12 @@
     return d;
   }
 
-  function gui(cauHoi) {
+  function gui(cauHoi, hienThi) {
     cauHoi = String(cauHoi || '').trim();
     if (!cauHoi) return;
-    themTin('toi', cauHoi);
+    // Với nút gợi ý đa ngôn ngữ, gửi câu chuẩn tiếng Việt cho mô hình nhưng
+    // vẫn giữ nguyên câu Nhật/Anh mà khách vừa bấm trong bong bóng của khách.
+    themTin('toi', hienThi || cauHoi);
     oNhap.value = '';
     nutGui.disabled = true;
     var nghi = themDangNghi();
@@ -305,7 +318,7 @@
       .then(function (r) { return r.json(); })
       .then(function (kq) {
         nghi.remove();
-        var bongBong = themTin('bot', kq.van_ban || 'Mình chưa trả lời được câu này.', kq);
+        var bongBong = themTin('bot', kq.van_ban || cbI18n.khongCoTraLoi, kq);
         /* Trước đây chỗ này thêm một bong bóng thứ hai chỉ để nói "bạn vào mục
            Chat" — vừa lặp lại đúng câu máy chủ vừa nói, vừa bắt người dùng tự đi
            tìm menu. Nay gắn thẳng nút bấm vào ngay câu trả lời. */
@@ -313,7 +326,7 @@
       })
       .catch(function () {
         nghi.remove();
-        themTin('bot', 'Mình không kết nối được máy chủ. Bạn thử lại sau ít phút nhé.');
+        themTin('bot', cbI18n.loiKetNoi);
       })
       .finally(function () { nutGui.disabled = false; oNhap.focus(); });
   }
@@ -325,13 +338,11 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         themTin('bot',
-          quyen === 'quan_ly'
-            ? 'Chào bạn! Mình là trợ lý ảo. Bạn đang đăng nhập quyền **quản lý** nên hỏi được cả số liệu kinh doanh.'
-            : 'Chào bạn! Mình là trợ lý ảo của nhà hàng. Mình giúp gì được cho bạn?',
+          quyen === 'quan_ly' ? cbI18n.chaoQuanLy : cbI18n.chaoKhach,
           { goi_y: d.cau_hoi });
       })
       .catch(function () {
-        themTin('bot', 'Chào bạn! Mình là trợ lý ảo của nhà hàng. Mình giúp gì được cho bạn?');
+        themTin('bot', cbI18n.chaoKhach);
       });
   }
 

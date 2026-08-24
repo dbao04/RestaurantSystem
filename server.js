@@ -237,9 +237,25 @@ app.use('/', require('./routes/xepCa'));
 // va trang khach tu tra cuu don cua minh (/theo-doi).
 app.use('/', require('./routes/vanChuyen'));
 
+// Dat ban: trang khach (/dat-ban, /dat-ban/tra-cuu), trung tam nhan vien
+// (/staff/dat-ban) va cau hinh cua quan ly (/admin/dat-ban).
+app.use('/', require('./routes/datBan'));
+
 // Gan trung tam thoi gian thuc. Phai goi SAU io.engine.use(sessionMiddleware)
 // de socket doc duoc phien dang nhap.
 realtime.khoiTao(io);
+
+/*
+  Vong quet nen cua module dat ban.
+
+  Phai bat SAU realtime.khoiTao(io): vong quet phat su kien socket khi mot luot
+  dat qua han giu ban, ma phat truoc khi Socket.IO san sang thi nhung canh bao
+  som nhat - dung luc may chu vua khoi dong lai sau su co - se roi vao hu khong.
+
+  Xem services/reservationJobs.js de biet no lam nhung gi va vi sao khong tach
+  thanh mot tien trinh cron rieng.
+*/
+require('./services/reservationJobs').batDau();
 
 // --- Frontend Routes ---
 app.get('/', async (req, res) => {
@@ -552,12 +568,53 @@ app.get('/del-cart', async (req, res) => {
   }
 });
 
-app.get('/datban', requireLogin, async (req, res) => {
+/*
+  /datban - TRANG CHON HINH THUC DAT BAN.
+
+  Truoc day duong dan nay di THANG vao form dat ban kem don mon, va bat buoc phai
+  co mon trong gio: gio rong thi khach bi da nguoc ve trang gio hang kem mot dong
+  bao loi. Nghia la nguoi chi muon giu mot cai ban - phan lon khach dat ban - buoc
+  phai chon mon truoc, hoac tu doan ra duong dan khac.
+
+  Bay gio no la mot trang chon, hai duong:
+
+    1. CHI DAT BAN          -> /dat-ban   nhanh, khong can dang nhap, chon ban tren so do
+    2. DAT BAN + GOI MON    -> /menu hoac /datban/goi-mon  (bep chuan bi truoc)
+
+  Vi sao khong bo qua trang chon khi gio da co mon: vi lua chon phai luon nhin
+  thay duoc. Nhung the thu hai co nhan biet trang thai gio hang - dang co mon thi
+  no chuyen thang vao form, khong bat khach di lai mot buoc thua.
+
+  KHONG yeu cau dang nhap. Nhanh "chi dat ban" khong can tai khoan; nhanh "goi mon
+  truoc" tu chan o /datban/goi-mon. Bat dang nhap ngay o trang chon la dung mot
+  buc tuong truoc mat nguoi con chua biet minh muon gi.
+*/
+app.get('/datban', async (req, res) => {
+  try {
+    const cartItems = await orderService.getCart(req.sessionID).catch(() => []);
+    res.render('dat-ban-chon', {
+      title: res.locals.t('chon_dat_ban.tieu_de'),
+      activeNav: 'datban',
+      soMon: cartItems.reduce((s, m) => s + (Number(m.soluong) || 1), 0),
+      tongTien: cartItems.length ? await orderService.getCartTotal(req.sessionID).catch(() => 0) : 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+/*
+  Form dat ban kem don mon - chinh la trang /datban cu, doi duong dan.
+
+  Van giu nguyen hai rang buoc cu: phai dang nhap, va phai co mon trong gio. Gio
+  rong o day khong con la loi nua ma la di nham cua: chuyen ve trang chon de khach
+  thay con duong "chi dat ban".
+*/
+app.get('/datban/goi-mon', requireLogin, async (req, res) => {
   try {
     const cartItems = await orderService.getCart(req.sessionID);
-    if (cartItems.length === 0) {
-      return res.render('cart', { title: res.locals.t('gio_hang.tieu_de'), cartItems: [], subtotal: 0, error: res.locals.t('gio_hang.trong_canh_bao') });
-    }
+    if (cartItems.length === 0) return res.redirect('/datban');
     // Trang dat ban hien tom tat don ben canh form, de khach doi chieu truoc khi
     // xac nhan ma khong phai bam qua lai giua hai trang.
     const subtotal = await orderService.getCartTotal(req.sessionID);
@@ -729,6 +786,17 @@ app.post('/datban', requireLogin, async (req, res) => {
     res.status(500).send(err.message || 'Server Error');
   }
 });
+
+/*
+  Duong dan cu cua trang dat ban.
+
+  Toan bo module dat ban da chuyen sang routes/datBan.js voi duong dan /dat-ban.
+  Giu lai mot chuyen huong 301 thay vi xoa han: dia chi /reservation da co the
+  nam trong lich su trinh duyet cua khach, trong mot email xac nhan da gui, hay
+  trong mot ma QR da in ra giay - nhung thu khong thu hoi lai duoc.
+*/
+app.get('/reservation', (req, res) => res.redirect(301, '/dat-ban'));
+app.get('/reservation/tra-cuu', (req, res) => res.redirect(301, '/dat-ban/tra-cuu'));
 
 app.get('/contract', requireLogin, async (req, res) => {
   try {
@@ -2032,7 +2100,15 @@ app.get('/staff', requireStaff, async (req, res) => {
   }
 });
 
-// --- STAFF BOOKINGS ---
+/*
+  Trung tam dat ban da chuyen sang routes/datBan.js.
+
+  Khoi route cu o day (khoang 20 route noi tiep nhau) da bi go bo. Duong dan
+  moi la /staff/dat-ban; /staff/reservations duoc chuyen huong sang do de cac
+  duong link da luu trong trinh duyet cua nhan vien van vao dung cho.
+*/
+app.get('/staff/reservations', (req, res) => res.redirect(301, '/staff/dat-ban'));
+
 app.get('/staff/bookings', requireRole(['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan']), async (req, res) => {
   try {
     const bookings = await orderService.getAllBookings();
@@ -3444,4 +3520,3 @@ function inBangDiaChi(dsLan, coHttps) {
   });
   serverHttps.listen(PORT_HTTPS, () => inBangDiaChi(cc.dia_chi, true));
 })();
-

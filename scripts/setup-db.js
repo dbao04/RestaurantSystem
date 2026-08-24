@@ -57,7 +57,25 @@ function main() {
   }
   if (loi) console.warn(loi);
 
+  capNhatThongTinNhaHang(mysql);
   kiemTra(mysql);
+}
+
+/** Thong tin lien he chinh thuc - dat lai sau khi nap file du lieu mau. */
+function capNhatThongTinNhaHang(mysql) {
+  const sql = `
+    UPDATE cau_hinh
+    SET gia_tri = CASE khoa
+      WHEN 'chatbot.dia_chi' THEN 'Nhà hàng nằm tại **12 Nguyễn Văn Bảo, Hạnh Thông, TP. Hồ Chí Minh**. Có bãi giữ xe máy và ô tô miễn phí cho khách.'
+      WHEN 'chatbot.lien_he' THEN 'Bạn liên hệ nhà hàng qua **hotline 0388 062 048** hoặc nhắn tin trực tiếp trong mục Chat của website nhé.'
+    END
+    WHERE khoa IN ('chatbot.dia_chi', 'chatbot.lien_he');`;
+  const ketQua = spawnSync(mysql, [...thamSoKetNoi(process.env), '--default-character-set=utf8mb4', '-e', sql], {
+    encoding: 'utf8',
+  });
+  if (ketQua.status !== 0) {
+    console.warn('Canh bao: chua dong bo duoc thong tin lien he nha hang.');
+  }
 }
 
 function kiemTra(mysql) {

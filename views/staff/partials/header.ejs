@@ -114,6 +114,9 @@
     <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>">
       <a class="nav-link" href="/staff/bookings"><i class="fas fa-fw fa-book"></i><span>Quản lý Đặt bàn</span></a>
     </li>
+    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='reservations' ? 'active' : '' %>">
+      <a class="nav-link" href="/staff/dat-ban"><i class="fas fa-fw fa-calendar-check"></i><span>Trung tâm đặt bàn</span></a>
+    </li>
 <%
      /* Dung `dongVaiDuoc` chu khong so sanh `session.staffRole`: staffRole la
         chucvu_legacy, ma "Quan ly nha hang" mang legacy 'Quan ly' nen se bi

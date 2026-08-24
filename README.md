@@ -14,6 +14,7 @@ từng phần:
 | `HUONG_DAN_CHAM_CONG_DIEN_THOAI.md` | Chấm công trên điện thoại: HTTPS, PWA, ràng buộc GPS |
 | `HUONG_DAN_CHATBOT.md` | Chatbot hỏi đáp tiếng Việt (phân loại ý định tự huấn luyện) |
 | `HUONG_DAN_XEP_CA.md` | Xếp ca tự động: định mức nhân sự, thuật toán, vận hành |
+| `HUONG_DAN_DAT_BAN.md` | Đặt bàn: chống đặt trùng, xếp/ghép bàn tự động, sơ đồ bàn, tiền cọc, no-show |
 | `HUONG_DAN_GIAO_HANG.md` | Giao hàng: đơn vị vận chuyển, cước phí, điều phối, theo dõi shipper bằng GPS |
 | `HUONG_DAN_NGON_NGU.md` | Đa ngôn ngữ: Tiếng Việt / English / 日本語 cho khu khách |
 | `DANH_SACH_TAI_KHOAN.md` | Danh sách tài khoản đăng nhập |

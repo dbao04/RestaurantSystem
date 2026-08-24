@@ -99,7 +99,11 @@
 .nh-nav.is-solid .nh-brand__name { font-size: 1.8rem; }
 .nh-nav__links { display: flex; align-items: center; gap: 1.9rem; margin-left: auto; list-style: none; padding: 0; margin-block: 0;
   flex-wrap: nowrap; flex-shrink: 0; }
-.nh-nav__links a { color: rgba(255, 255, 255, .95); font-weight: 500; font-size: .93rem; position: relative; padding: .3rem 0; white-space: nowrap; }
+/* Chu menu dung mau vang nhat CUNG voi ten nha hang, thay vi trang thuan.
+   Ca thanh ve mot tong am hop voi nen espresso; muc DANG XEM va muc dang tro
+   chuot van chuyen sang trang dac (quy tac ngay duoi) nen van tach ra rat ro.
+   Tuong phan tren nen #1e120c: 10:1 - vuot ca nguong AAA. */
+.nh-nav__links a { color: var(--nh-gold-soft); font-weight: 500; font-size: .93rem; position: relative; padding: .3rem 0; white-space: nowrap; }
 .nh-nav__links a::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px; background: var(--nh-gold); transition: width .3s var(--nh-ease); }
 .nh-nav__links a:hover, .nh-nav__links a.is-active { color: #fff; }
 .nh-nav__links a:hover::after, .nh-nav__links a.is-active::after { width: 100%; }
@@ -125,15 +129,16 @@
   .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.65rem; }
   .nh-brand img { height: 36px; }
 }
-@media (max-width: 1140px) {
-  /* Chu cai dai dien van con, nen khach van biet minh dang dang nhap. */
-  .nh-nav__actions .nh-user__name { display: none; }
-  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.5rem; }
-}
-@media (max-width: 1024px) {
+@media (max-width: 1180px) {
   /* Duoi muc nay hang ngang khong con du cho khi da dang nhap - chuyen menu
      vao ngan keo truot. Truoc day moc nay la 760px, nen khoang 761-1024px
-     thanh nav bi chen ep den vo. */
+     thanh nav bi chen ep den vo.
+
+     Nang tu 1024 len 1180 khi them muc "Huong dan dat ban": do la nhan dai nhat
+     trong menu (~118px o co chu .88rem), va voi khach da dang nhap thi hang
+     ngang co bay muc. Do thu o 1140px: tong be ngang cua menu + logo + hang cong
+     cu vuot khung, day nut "Dat ban" tran ra ngoai. Chuyen som hon mot nac re
+     hon la de mot dai nav vo o mot khoang do rong nao do. */
   .nh-burger { display: block; }
   .nh-nav__links { position: fixed; inset: 0 0 0 auto; width: min(300px, 82%); flex-direction: column; align-items: flex-start;
     gap: 1.4rem; background: var(--nh-espresso); padding: 6rem 2rem 2rem; transform: translateX(100%);
@@ -142,6 +147,11 @@
   .nh-nav__links a { font-size: 1.05rem; }
   .nh-burger { margin-left: 0; }
   .nh-nav__inner > .nh-nav__actions { margin-left: auto; }
+}
+@media (max-width: 1140px) {
+  /* Chu cai dai dien van con, nen khach van biet minh dang dang nhap. */
+  .nh-nav__actions .nh-user__name { display: none; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.5rem; }
 }
 
 /* =========================================================================
@@ -216,11 +226,97 @@
 .nh-dish__cta:hover { color: var(--nh-gold); gap: .8rem; }
 
 /* -------- Tab danh mục (menu) -------- */
-.nh-cats { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-bottom: 3rem; }
-.nh-cat { padding: .6rem 1.5rem; border-radius: 999px; border: 1.5px solid var(--nh-line); background: #fff;
-  font-weight: 600; font-size: .88rem; color: var(--nh-ink); cursor: pointer; transition: all .25s var(--nh-ease); }
-.nh-cat:hover { border-color: var(--nh-gold); color: var(--nh-brown); }
-.nh-cat.is-active { background: var(--nh-espresso); color: #fff; border-color: var(--nh-espresso); }
+/* =========================================================================
+   THANH DANH MUC THUC DON
+
+   Thay cho `.nh-cats` cu - mot dam 22 vien thuoc xuong dong thanh nhieu hang,
+   canh giua. Bo cuc do co ba van de:
+
+     - 22 vien thuoc canh giua khong co truc doc nao de mat bam vao, moi hang
+       lai bat dau o mot vi tri khac -> phai quet ca khoi moi tim ra mot muc.
+     - No chiem gan mot phan ba man hinh dau, day mon an xuong duoi.
+     - Cuon xuong la no bien mat: muon doi nhom phai cuon nguoc len tan dau trang.
+
+   Thanh moi la MOT HANG, cuon ngang, va DINH lai duoi thanh dieu huong khi cuon.
+   Mot hang thi mat chi phai quet theo mot chieu; dinh lai thi doi nhom luc nao
+   cung duoc, khong phai cuon nguoc.
+
+   `top` lay tu bien `--nh-nav-cao` do JavaScript do tu chinh thanh dieu huong
+   (xem views/menu.ejs) - viet cung mot con so thi moi lan doi chieu cao nav la
+   thanh nay lai lo ra mot khe ho hoac chui xuong duoi nav.
+   ========================================================================= */
+.nh-thanh-mon {
+  position: sticky; top: var(--nh-nav-cao, 60px); z-index: 40;
+  margin: 0 0 2.2rem; background: rgba(250, 246, 239, .93);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-block: 1px solid var(--nh-line);
+}
+/* Khi da dinh: them bong do de tach khoi noi dung truot ben duoi. */
+.nh-thanh-mon.is-dinh { box-shadow: 0 10px 26px -18px rgba(43, 26, 18, .6); }
+
+.nh-thanh-mon__trong { display: flex; align-items: center; gap: .4rem; }
+
+/* Nut mui ten - chi hien khi dai thuc su cuon duoc. */
+.nh-thanh-mon__mui {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; display: none;
+  place-content: center; cursor: pointer; background: #fff; color: var(--nh-espresso);
+  border: 1.5px solid var(--nh-line); font-size: .8rem; transition: all .2s var(--nh-ease);
+}
+.nh-thanh-mon__mui:hover { border-color: var(--nh-gold); color: var(--nh-brown); }
+.nh-thanh-mon__mui[disabled] { opacity: .3; cursor: default; }
+.nh-thanh-mon.co-cuon .nh-thanh-mon__mui { display: grid; }
+
+.nh-thanh-mon__dai {
+  flex: 1; display: flex; gap: .3rem; overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; padding: .55rem .2rem;
+}
+.nh-thanh-mon__dai::-webkit-scrollbar { display: none; }
+
+/* Lam mo hai mep khi dai cuon duoc: muc bi cat o bien nhat dan thay vi dut
+   ngang. Duong nhat do chinh la tin hieu "con nua, keo tiep" - manh hon mot
+   dau cham lung, va khong ton them cho. */
+.nh-thanh-mon.co-cuon .nh-thanh-mon__dai {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+}
+
+.nh-muc {
+  flex: none; display: inline-flex; align-items: baseline; gap: .4rem;
+  padding: .5rem .95rem; border-radius: 10px; white-space: nowrap;
+  font-size: .87rem; font-weight: 600; color: var(--nh-muted);
+  border: 1.5px solid transparent; transition: all .2s var(--nh-ease);
+}
+.nh-muc:hover { background: #fff; color: var(--nh-espresso); border-color: var(--nh-line); }
+.nh-muc__dem { font-size: .7rem; font-weight: 700; color: var(--nh-muted); opacity: .75; }
+
+/* Muc dang xem: nen dam + gach vang duoi chan. Hai tin hieu chu khong mot -
+   chi doi mau chu thi tren nen kem rat kho thay dau la muc dang chon. */
+.nh-muc.is-active {
+  background: var(--nh-espresso); color: var(--nh-cream); border-color: var(--nh-espresso);
+  box-shadow: 0 6px 14px -8px rgba(43, 26, 18, .9);
+}
+.nh-muc.is-active .nh-muc__dem { color: var(--nh-gold-soft); opacity: 1; }
+.nh-muc:focus-visible { outline: 2px solid var(--nh-gold); outline-offset: 2px; }
+
+/* The "ket qua tim kiem" chen dau dai khi khach vua tim - de ho biet minh dang
+   khong o trong nhom nao, va co duong thoat ve thuc don day du. */
+.nh-muc--tim { background: var(--nh-gold); color: var(--nh-espresso); border-color: var(--nh-gold); }
+.nh-muc--tim:hover { background: var(--nh-gold-soft); color: var(--nh-espresso); }
+
+@media (max-width: 640px) {
+  .nh-thanh-mon { margin-inline: -4vw; border-radius: 0; }
+  .nh-thanh-mon__trong { padding-inline: 4vw; }
+  .nh-muc { font-size: .84rem; padding: .45rem .8rem; }
+  /* Bo hai nut mui ten tren dien thoai: chung an mat ~82px trong 390px, tuc gan
+     mot muc danh muc. Vuot ngang la thao tac tu nhien tren man hinh cham, mui
+     ten o day chi lay cho ma khong them duong nao moi. */
+  .nh-thanh-mon.co-cuon .nh-thanh-mon__mui { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nh-thanh-mon__dai { scroll-behavior: auto; }
+}
 .nh-search { display: flex; max-width: 480px; margin: 0 auto 2.2rem; background: #fff; border-radius: 999px;
   box-shadow: var(--nh-shadow-sm); overflow: hidden; border: 1px solid var(--nh-line); }
 .nh-search input { flex: 1; border: 0; padding: .9rem 1.4rem; font-family: var(--nh-sans); outline: none; background: transparent; }
@@ -389,6 +485,13 @@
 .nh-hours-row { display: flex; justify-content: space-between; padding: .45rem 0; border-bottom: 1px dashed rgba(255,255,255,.12); font-size: .9rem; }
 .nh-footer__bottom { border-top: 1px solid rgba(255,255,255,.1); padding: 1.5rem 0; text-align: center; font-size: .85rem; }
 .nh-footer__bottom b { color: var(--nh-gold); }
+
+.nh-location { background: #120b07; color: rgba(255,255,255,.82); padding: 3.5rem 0 4rem; border-top: 1px solid rgba(255,255,255,.08); }
+.nh-location__header { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.5rem; }
+.nh-location__header h2 { color: #fff; font-family: var(--nh-serif); font-size: clamp(1.7rem, 3vw, 2.5rem); margin: .45rem 0 0; }
+.nh-location__header .nh-eyebrow { color: var(--nh-gold); font-family: var(--nh-sans); font-size: .78rem; font-weight: 600; letter-spacing: .12em; line-height: 1.4; text-transform: uppercase; }
+.nh-location__map { overflow: hidden; min-height: 360px; border: 1px solid rgba(197,163,88,.35); border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.25); }
+.nh-location__map iframe { display: block; width: 100%; height: 360px; border: 0; }
 
 /* =========================================================================
    HIỆN DẦN KHI CUỘN
@@ -592,6 +695,10 @@
   .nh-brand img { max-height: 34px; }
   .nh-nav__actions { flex: none; gap: .9rem; }
   .nh-footer__grid { grid-template-columns: 1fr; }
+  .nh-location { padding: 2.5rem 0 3rem; }
+  .nh-location__header { align-items: flex-start; flex-direction: column; }
+  .nh-location__header .nh-btn { width: 100%; text-align: center; }
+  .nh-location__map, .nh-location__map iframe { min-height: 280px; height: 280px; }
   .nh-hero__inner { text-align: left; }
   .nh-posts { grid-template-columns: 1fr; }
   .nh-blog-toolbar { flex-direction: column; align-items: stretch; }
@@ -1050,6 +1157,7 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
 
      .nh-subhero   439px  — hơn nửa màn hình đầu chỉ có tiêu đề + đường dẫn
      .nh-cats      592px  — 22 danh mục xuống dòng thành 11 hàng, canh giữa
+                          (đã thay bằng .nh-thanh-mon: một hàng, dính, cuộn ngang)
      .nh-dish      432px  — mỗi thẻ món chiếm nửa màn, xem 258 món không nổi
      .nh-footer   1184px  — bốn cột xếp chồng, dài hơn cả nội dung nhiều trang
      .nh-cart       33px  — vùng chạm dưới ngưỡng 44px của cả Apple lẫn Google
@@ -1098,24 +1206,6 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
   .nh-section { padding: 2.6rem 0; }
   .nh-head { margin-bottom: 1.8rem; }
 
-  /* -------- Danh mục: cuộn ngang thay vì xuống dòng --------
-     22 danh mục canh giữa xuống dòng tạo một khối 592px — khách phải lướt qua
-     gần hai màn hình mới thấy món đầu tiên. Cho cuộn ngang một hàng: khối chỉ
-     còn ~48px, và cách này quen tay với người dùng điện thoại.
-
-     Âm lề rồi bù lại bằng padding để dải chạy sát mép máy (dấu hiệu "còn nữa,
-     vuốt tiếp"), thay vì dừng lơ lửng giữa lề của .nh-container. */
-  .nh-cats {
-    flex-wrap: nowrap; justify-content: flex-start;
-    overflow-x: auto; overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-    margin: 0 -3vw 1.4rem; padding: .2rem 3vw .5rem;
-  }
-  .nh-cats::-webkit-scrollbar { display: none; }
-  .nh-cat { flex: 0 0 auto; scroll-snap-align: start; padding: .55rem 1.1rem; font-size: .84rem; }
-
   /* -------- Lưới món: 2 cột --------
      minmax(300px, 1fr) ở bề ngang 366px chỉ vừa đúng 1 cột, nên mỗi màn hình
      hiện được 1,5 món. Hai cột đưa lên 4 món/màn; ảnh vuông thay vì 4:3 để thẻ
@@ -1146,7 +1236,8 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
      nguyên cỡ thì không còn chỗ cho nút nào. */
   .nh-nav__actions { gap: .55rem; }
   .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.2rem; }
-  .nh-cats .nh-cat { min-height: 44px; display: inline-flex; align-items: center; }
+  /* Vung cham 44px cho muc danh muc - nguong cua ca Apple lan Google. */
+  .nh-muc { min-height: 44px; align-items: center; }
 
   /* Trong ngăn kéo, mục menu chỉ cao 34px và các mục cách nhau bằng gap — ngón
      tay dễ bấm nhầm sang mục bên cạnh. Cho mỗi mục chiếm trọn bề ngang ngăn kéo

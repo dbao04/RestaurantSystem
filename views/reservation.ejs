@@ -1,0 +1,863 @@
+<%- include('partials/header', { title: t('dat_ban_moi.tieu_de') }) %>
+<%
+/*
+  TRANG DAT BAN CUA KHACH - bon buoc.
+
+    1. Thoi gian   ngay, so khach, khung gio (o nao het ban thi hien mo, khong an)
+    2. Chon ban    so do mat bang that, tab theo khu vuc
+    3. Thong tin   ten, dien thoai, dip, yeu cau dac biet
+    4. Xac nhan    doi chieu lai + tien coc truoc khi gui
+
+  VI SAO CHIA BUOC CHU KHONG DE MOT FORM DAI
+  ------------------------------------------
+  Mot form dai bat khach dien het roi moi biet khung gio do da het ban - va luc
+  do ho phai sua lai tu dau. Chia buoc cho phep kiem tra bàn NGAY o buoc 1, khi
+  khach chua bo cong dien gi ca. Do cung la ly do buoc "chon ban" dung truoc
+  buoc "thong tin": biet chac co ban roi moi hoi ten khach.
+
+  BUOC 2 CO THE BI BO QUA
+  -----------------------
+  Neu quan ly tat `allow_customer_pick_table`, buoc 2 bien mat va he thong tu
+  xep ban. Trang van chay dung voi ba buoc - so buoc duoc tinh trong `BUOC`
+  luc khoi tao chu khong viet cung trong HTML.
+
+  KHONG CO TRANG NAO BI KHOA VI THIEU JAVASCRIPT
+  ----------------------------------------------
+  Neu JS hong, `<noscript>` chi khach sang so dien thoai cua nha hang. Mot form
+  dat ban gui thang khong co kiem tra bàn se nhan don cho nhung khung gio da
+  kin - hua mot dieu khong giu duoc con te hon la bao khach goi dien.
+*/
+
+/*
+  Nhan the yeu cau rieng. `label_vi` trong CSDL la ban goc; ban dich tra theo
+  `code`. The quan ly tu them chua co khoa dich se giu nguyen `label_vi` -
+  thieu ban dich thi thoi, chu khong bien mat khoi danh sach.
+*/
+var nhanThe = function (the) {
+  var nhan = t('dat_ban_moi.the_' + the.code);
+  return nhan === 'dat_ban_moi.the_' + the.code ? the.label_vi : nhan;
+};
+%>
+
+<section class="nh-subhero nh-subhero--sm">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_1.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-subhero__inner nh-container">
+    <span class="nh-eyebrow"><%= t('dat_ban_moi.eyebrow') %></span>
+    <h1><%= t('dat_ban_moi.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> ·
+      <span><%= t('dat_ban_moi.tieu_de') %></span> ·
+      <a href="/dat-ban/tra-cuu"><%= t('dat_ban_moi.tra_cuu') %></a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/so-do-dat-ban') %>
+
+<style>
+  /* ---------- Thanh buoc ---------- */
+  .db-buoc { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.2rem; }
+  .db-buoc__o { display: flex; align-items: center; gap: .55rem; padding: .5rem 1rem; border-radius: 999px;
+    background: #fff; border: 1.5px solid var(--nh-line); font-size: .84rem; font-weight: 600; color: var(--nh-muted); }
+  .db-buoc__o[data-xong="1"] { border-color: rgba(22,163,74,.4); color: #14532d; background: #f0fdf4; }
+  .db-buoc__o[aria-current="step"] { background: var(--nh-espresso); border-color: var(--nh-espresso); color: var(--nh-cream); }
+  .db-buoc__so { width: 22px; height: 22px; border-radius: 50%; display: grid; place-content: center;
+    background: rgba(0,0,0,.07); font-size: .74rem; font-weight: 800; flex: none; }
+  .db-buoc__o[aria-current="step"] .db-buoc__so { background: var(--nh-gold); color: var(--nh-espresso); }
+
+  /* ---------- Bo cuc ---------- */
+  .db-luoi { display: grid; grid-template-columns: 1fr 340px; gap: 1.8rem; align-items: start; }
+  @media (max-width: 980px) { .db-luoi { grid-template-columns: 1fr; } }
+
+  .db-man { display: none; }
+  .db-man.hien { display: block; animation: dbVao .3s var(--nh-ease); }
+  @keyframes dbVao { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .db-man.hien { animation: none; } }
+
+  /* ---------- Khung gio ---------- */
+  .db-gio { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: .55rem; }
+  .db-gio__o { position: relative; }
+  .db-gio__o input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .db-gio__o span { display: block; text-align: center; padding: .6rem .3rem; border-radius: 10px;
+    border: 1.5px solid var(--nh-line); background: var(--nh-cream); font-size: .92rem; font-weight: 600;
+    cursor: pointer; transition: all .2s var(--nh-ease); }
+  .db-gio__o span small { display: block; font-size: .62rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; opacity: .7; margin-top: .12rem; }
+  .db-gio__o span:hover { border-color: var(--nh-gold); }
+  .db-gio__o input:checked + span { background: var(--nh-espresso); border-color: var(--nh-espresso); color: var(--nh-cream); }
+  .db-gio__o input:focus-visible + span { box-shadow: 0 0 0 4px rgba(200,162,75,.3); }
+  /* Het ban: van hien (khong an di) nhung khong bam duoc, kem chu "hết bàn".
+     Xem chu thich cua /api/dat-ban/khung-gio. */
+  .db-gio__o input:disabled + span { opacity: .5; cursor: not-allowed; border-style: dashed;
+    background: #f8fafc; color: #94a3b8; text-decoration: line-through; }
+  .db-gio__o input:disabled + span small { text-decoration: none; }
+  .db-gio__caodiem { color: var(--nh-gold); }
+
+  /* ---------- Bang tom tat ben phai ---------- */
+  .db-tomtat { position: sticky; top: 96px; }
+  .db-tomtat__hang { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0;
+    border-bottom: 1px dashed var(--nh-line); font-size: .92rem; }
+  .db-tomtat__hang:last-of-type { border-bottom: 0; }
+  .db-tomtat__hang b { color: var(--nh-espresso); text-align: right; }
+  .db-coc { margin-top: 1rem; padding: .9rem 1rem; border-radius: 12px; background: #fffbeb;
+    border: 1px solid rgba(217,119,6,.3); font-size: .86rem; color: #7c2d12; }
+  .db-coc b { display: block; font-size: 1.15rem; margin-bottom: .2rem; }
+
+  /* ---------- Thong bao ---------- */
+  .db-bao { padding: .9rem 1.1rem; border-radius: 12px; font-size: .9rem; margin-bottom: 1.2rem;
+    display: flex; gap: .7rem; align-items: flex-start; }
+  .db-bao i { margin-top: .18rem; flex: none; }
+  .db-bao--loi { background: #fef2f2; border: 1px solid rgba(220,38,38,.28); color: #991b1b; }
+  .db-bao--nhac { background: #fffbeb; border: 1px solid rgba(217,119,6,.28); color: #7c2d12; }
+  .db-bao--ok { background: #f0fdf4; border: 1px solid rgba(22,163,74,.28); color: #14532d; }
+
+  /* ---------- Goi y khi het ban ---------- */
+  .db-goiy { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+  .db-goiy button { border: 1.5px solid rgba(217,119,6,.4); background: #fff; color: #7c2d12;
+    border-radius: 999px; padding: .45rem 1rem; font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer; }
+  .db-goiy button:hover { background: #fffbeb; border-color: #d97706; }
+
+  /* ---------- The yeu cau dac biet ---------- */
+  .db-the { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: .5rem; }
+  .db-the__o { position: relative; }
+  .db-the__o input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .db-the__o span { display: flex; align-items: center; gap: .5rem; padding: .6rem .85rem; border-radius: 10px;
+    border: 1.5px solid var(--nh-line); background: var(--nh-cream); font-size: .86rem; cursor: pointer;
+    transition: all .2s var(--nh-ease); }
+  .db-the__o input:checked + span { background: var(--nh-espresso); border-color: var(--nh-espresso); color: var(--nh-cream); }
+  .db-the__o input:focus-visible + span { box-shadow: 0 0 0 4px rgba(200,162,75,.3); }
+  .db-the__o span i { color: var(--nh-gold); width: 16px; text-align: center; }
+  .db-the__o input:checked + span i { color: var(--nh-gold-soft); }
+
+  /* ---------- Nut dieu huong ---------- */
+  .db-dieuhuong { display: flex; gap: .8rem; justify-content: space-between; margin-top: 1.8rem; flex-wrap: wrap; }
+  .db-dieuhuong .nh-btn { flex: 1; justify-content: center; min-width: 150px; }
+  .nh-btn[disabled] { opacity: .45; cursor: not-allowed; transform: none !important; }
+
+  .db-tai { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor;
+    border-right-color: transparent; border-radius: 50%; animation: dbQuay .7s linear infinite; }
+  @keyframes dbQuay { to { transform: rotate(360deg); } }
+
+  .db-xemlai { display: grid; grid-template-columns: 150px 1fr; gap: .5rem 1rem; font-size: .94rem; }
+  .db-xemlai dt { color: var(--nh-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em;
+    font-weight: 700; padding-top: .12rem; }
+  .db-xemlai dd { margin: 0; color: var(--nh-espresso); font-weight: 600; }
+  @media (max-width: 560px) { .db-xemlai { grid-template-columns: 1fr; gap: .1rem .5rem; }
+    .db-xemlai dd { margin-bottom: .7rem; } }
+</style>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+
+    <noscript>
+      <div class="db-bao db-bao--nhac">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div><%- t('dat_ban_moi.khong_js') %></div>
+      </div>
+    </noscript>
+
+    <ol class="db-buoc" id="dbBuoc" aria-label="<%= t('dat_ban_moi.tien_trinh') %>"></ol>
+
+    <div class="db-luoi">
+      <div>
+        <!-- ============================ BƯỚC 1: THỜI GIAN ==================== -->
+        <div class="db-man hien" id="man1" data-buoc="1">
+          <div class="nh-panel">
+            <h3 class="nh-panel__title"><i class="fas fa-calendar-day"></i> <%= t('dat_ban_moi.b1_tieu_de') %></h3>
+
+            <div class="nh-fields">
+              <div class="nh-field">
+                <label for="dbNgay"><%= t('dat_ban_moi.ngay') %> <span class="req">*</span></label>
+                <input type="date" id="dbNgay" class="nh-input" value="<%= homNay %>" min="<%= homNay %>">
+              </div>
+              <div class="nh-field">
+                <label for="dbSoKhach"><%= t('dat_ban_moi.so_khach') %> <span class="req">*</span></label>
+                <input type="number" id="dbSoKhach" class="nh-input" value="2" min="1" max="<%= cauHinh.toi_da_khach %>">
+                <span class="nh-hint"><%= t('dat_ban_moi.toi_da_online').replace('{n}', cauHinh.toi_da_khach) %></span>
+              </div>
+              <div class="nh-field nh-field--full">
+                <label><%= t('dat_ban_moi.chon_nhanh') %></label>
+                <div class="nh-chips" id="dbNhanhKhach"></div>
+              </div>
+              <div class="nh-field nh-field--full">
+                <label for="dbKhuVuc"><%= t('dat_ban_moi.khu_vuc') %></label>
+                <select id="dbKhuVuc" class="nh-select">
+                  <option value=""><%= t('dat_ban_moi.khu_bat_ky') %></option>
+                  <% khuVuc.forEach(function (k) { %>
+                    <option value="<%= k.id %>"><%= k.la_vip ? '★ ' : '' %><%= k.ten %> — <%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %><%= k.mo_ta ? ' · ' + k.mo_ta : '' %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top:1.6rem">
+              <label class="nh-field" style="margin-bottom:.6rem">
+                <span style="font-size:.78rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--nh-muted)">
+                  <%= t('dat_ban_moi.gio_den') %> <span class="req">*</span>
+                </span>
+              </label>
+              <div id="dbBaoGio"></div>
+              <div class="db-gio" id="dbGio" role="radiogroup" aria-label="<%= t('dat_ban_moi.gio_den') %>"></div>
+            </div>
+
+            <div class="db-dieuhuong">
+              <span></span>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbTiep1" disabled>
+                <%= t('dat_ban_moi.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================ BƯỚC 2: CHỌN BÀN ==================== -->
+        <div class="db-man" id="man2" data-buoc="2">
+          <div class="nh-panel">
+            <h3 class="nh-panel__title"><i class="fas fa-map-marked-alt"></i> <%= t('dat_ban_moi.b2_tieu_de') %></h3>
+            <p class="nh-hint" style="margin-bottom:1.1rem"><%= t('dat_ban_moi.b2_mo_ta') %></p>
+
+            <div id="dbTabs"></div>
+            <div id="dbSoDo" class="sdb"></div>
+            <div class="sdb__tomtat" id="dbTomTatBan"><%= t('dat_ban_moi.dang_tai') %></div>
+
+            <div class="db-dieuhuong">
+              <button type="button" class="nh-btn nh-btn--outline" data-lui="1">
+                <i class="fas fa-arrow-left"></i> <%= t('dat_ban_moi.quay_lai') %>
+              </button>
+              <button type="button" class="nh-btn nh-btn--outline" id="dbTuXep">
+                <i class="fas fa-magic"></i> <%= t('dat_ban_moi.de_nha_hang_xep') %>
+              </button>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbTiep2" disabled>
+                <%= t('dat_ban_moi.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================ BƯỚC 3: THÔNG TIN =================== -->
+        <div class="db-man" id="man3" data-buoc="3">
+          <div class="nh-panel">
+            <h3 class="nh-panel__title"><i class="fas fa-user-edit"></i> <%= t('dat_ban_moi.b3_tieu_de') %></h3>
+
+            <div class="nh-fields">
+              <div class="nh-field">
+                <label for="dbTen"><%= t('dat_ban_moi.ho_ten') %> <span class="req">*</span></label>
+                <input id="dbTen" class="nh-input" maxlength="150" autocomplete="name"
+                       value="<%= session.username || '' %>" required>
+              </div>
+              <div class="nh-field">
+                <label for="dbDienThoai"><%= t('dat_ban_moi.dien_thoai') %> <span class="req">*</span></label>
+                <input id="dbDienThoai" class="nh-input" type="tel" inputmode="tel" maxlength="30"
+                       autocomplete="tel" value="<%= session.usersdt || '' %>" required>
+                <span class="nh-hint"><%= t('dat_ban_moi.dien_thoai_hint') %></span>
+              </div>
+              <div class="nh-field nh-field--full">
+                <label for="dbEmail"><%= t('dat_ban_moi.email') %></label>
+                <input id="dbEmail" class="nh-input" type="email" maxlength="190" autocomplete="email">
+                <span class="nh-hint"><%= t('dat_ban_moi.email_hint') %></span>
+              </div>
+            </div>
+
+            <h4 style="font-size:1.05rem;margin:1.8rem 0 .8rem"><%= t('dat_ban_moi.dip_dac_biet') %></h4>
+            <div class="db-the" id="dbThe">
+              <% theYeuCau.forEach(function (the) { %>
+                <label class="db-the__o">
+                  <input type="checkbox" value="<%= the.code %>" data-kind="<%= the.kind %>">
+                  <span><i class="fas <%= the.icon %>"></i> <%= nhanThe(the) %></span>
+                </label>
+              <% }); %>
+            </div>
+
+            <div class="nh-field nh-field--full" style="margin-top:1.4rem">
+              <label for="dbYeuCau"><%= t('dat_ban_moi.yeu_cau_them') %></label>
+              <textarea id="dbYeuCau" class="nh-textarea" maxlength="800"
+                        placeholder="<%= t('dat_ban_moi.yeu_cau_goi_y') %>"></textarea>
+            </div>
+
+            <div class="db-dieuhuong">
+              <button type="button" class="nh-btn nh-btn--outline" data-lui="1">
+                <i class="fas fa-arrow-left"></i> <%= t('dat_ban_moi.quay_lai') %>
+              </button>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbTiep3">
+                <%= t('dat_ban_moi.xem_lai') %> <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================ BƯỚC 4: XÁC NHẬN ==================== -->
+        <div class="db-man" id="man4" data-buoc="4">
+          <div class="nh-panel">
+            <h3 class="nh-panel__title"><i class="fas fa-clipboard-check"></i> <%= t('dat_ban_moi.b4_tieu_de') %></h3>
+            <div id="dbBaoGui"></div>
+            <dl class="db-xemlai" id="dbXemLai"></dl>
+
+            <div class="db-bao db-bao--nhac" style="margin-top:1.4rem">
+              <i class="fas fa-info-circle"></i>
+              <div><%- t('dat_ban_moi.dieu_khoan').replace('{giu}', cauHinh.giu_ban_phut) %></div>
+            </div>
+
+            <div class="db-dieuhuong">
+              <button type="button" class="nh-btn nh-btn--outline" data-lui="1">
+                <i class="fas fa-arrow-left"></i> <%= t('dat_ban_moi.quay_lai') %>
+              </button>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbGui">
+                <i class="fas fa-paper-plane"></i> <%= t('dat_ban_moi.gui_yeu_cau') %>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================ TÓM TẮT BÊN PHẢI ==================== -->
+      <aside class="nh-panel db-tomtat" aria-live="polite">
+        <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('dat_ban_moi.tom_tat') %></h3>
+        <div id="dbTomTat"></div>
+        <div id="dbTomTatCoc"></div>
+        <p class="nh-hint" style="margin-top:1.2rem">
+          <i class="fas fa-phone"></i> <%= t('dat_ban_moi.can_ho_tro') %>
+        </p>
+        <a href="/dat-ban/tra-cuu" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:.8rem;width:100%;justify-content:center">
+          <i class="fas fa-search"></i> <%= t('dat_ban_moi.tra_cuu') %>
+        </a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  /*
+    Tu dien nhan giao dien, nap mot lan duoi dang JSON.
+
+    Truoc day moi chuoi duoc nhung thang vao JavaScript bang the xuat EJS.
+    Cach do chay dung, nhung no gai mot cai bay: the xuat escape ky tu HTML, ma noi
+    dung the <script> KHONG duoc trinh duyet giai ma thuc the nguoc lai. Nen chi
+    can mot ban dich chua dau nhay don ("Let's...") la man hinh hien ra
+    "Let&#39;s" - va khong ai phat hien duoc cho den khi doi sang ngon ngu do.
+
+    JSON.stringify + doi dau '<' thanh \u003c: khong ban dich nao dong duoc som
+    the script (chi mot chuoi chua the dong la ca khoi JavaScript ben duoi chet),
+    va moi ky tu deu qua duoc nguyen ven.
+  */
+  var T = <%- JSON.stringify(nhan).replace(/</g, '\\u003c') %>;
+
+  var CF = <%- JSON.stringify(cauHinh) %>;
+  var KHU = <%- JSON.stringify(khuVuc) %>;
+
+  /*
+    Trang thai cua ca man hinh nam trong MOT doi tuong.
+
+    Khong doc nguoc lai tu DOM khi can gia tri: DOM la noi HIEN THI trang thai,
+    khong phai noi luu no. Doc nguoc tu DOM la cach nhanh nhat de co hai nguon
+    su that - vi du so khach hien tren tom tat lech voi so khach thuc su gui len.
+  */
+  var S = {
+    buoc: 1,
+    ngay: document.getElementById('dbNgay').value,
+    soKhach: 2,
+    khuVuc: '',
+    gio: '',
+    thoiLuong: null,
+    ban: [],        // id ban khach tu chon; rong = de nha hang xep
+    tongChoDaChon: 0,
+    the: [],
+    coc: null,
+    goiY: null      // to hop ban he thong de xuat
+  };
+
+  // Buoc 2 chi ton tai khi quan ly cho phep khach tu chon ban.
+  var BUOC = CF.cho_chon_ban ? [1, 2, 3, 4] : [1, 3, 4];
+  var TEN_BUOC = {
+    1: T['dat_ban_moi.b1_ngan'],
+    2: T['dat_ban_moi.b2_ngan'],
+    3: T['dat_ban_moi.b3_ngan'],
+    4: T['dat_ban_moi.b4_ngan']
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (s) { return String(s || '').split('-').reverse().join('/'); };
+
+  /** Chen van ban an toan - khong bao gio dung innerHTML voi du lieu tu API. */
+  function chu(the, lop, noiDung) {
+    var n = document.createElement(the);
+    if (lop) n.className = lop;
+    if (noiDung != null) n.textContent = noiDung;
+    return n;
+  }
+
+  function bao(khung, kieu, thongDiep, phuThem) {
+    khung.innerHTML = '';
+    if (!thongDiep) return;
+    var hop = chu('div', 'db-bao db-bao--' + kieu);
+    var i = document.createElement('i');
+    i.className = 'fas ' + (kieu === 'loi' ? 'fa-exclamation-circle'
+      : kieu === 'ok' ? 'fa-check-circle' : 'fa-info-circle');
+    hop.appendChild(i);
+    var than = chu('div', null, thongDiep);
+    if (phuThem) than.appendChild(phuThem);
+    hop.appendChild(than);
+    khung.appendChild(hop);
+  }
+
+  // ------------------------------------------------------------- thanh buoc
+
+  function veThanhBuoc() {
+    var ol = $('dbBuoc');
+    ol.innerHTML = '';
+    BUOC.forEach(function (b, i) {
+      var li = chu('li', 'db-buoc__o');
+      if (b === S.buoc) li.setAttribute('aria-current', 'step');
+      if (BUOC.indexOf(S.buoc) > i) li.setAttribute('data-xong', '1');
+      li.appendChild(chu('span', 'db-buoc__so', String(i + 1)));
+      li.appendChild(document.createTextNode(TEN_BUOC[b]));
+      ol.appendChild(li);
+    });
+  }
+
+  function den(buoc) {
+    S.buoc = buoc;
+    [1, 2, 3, 4].forEach(function (b) {
+      var m = $('man' + b);
+      if (m) m.classList.toggle('hien', b === buoc);
+    });
+    veThanhBuoc();
+    veTomTat();
+    // Cuon len dau khung noi dung, khong phai dau trang: khach vua bam nut o
+    // cuoi man hinh truoc, keo ho ve tan dinh trang la mot buoc thua.
+    var moc = $('dbBuoc');
+    if (moc) moc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (buoc === 2) taiSoDo();
+    if (buoc === 4) veXemLai();
+  }
+
+  function tienTu(buoc) {
+    var i = BUOC.indexOf(buoc);
+    return BUOC[i + 1] || buoc;
+  }
+  function luiTu(buoc) {
+    var i = BUOC.indexOf(buoc);
+    return BUOC[i - 1] || buoc;
+  }
+
+  // -------------------------------------------------------------- bước 1
+
+  // Chon nhanh so khach: cham mot lan thay vi go so - nhanh hon han tren dien thoai.
+  (function veNhanhKhach() {
+    var khung = $('dbNhanhKhach');
+    [2, 4, 6, 8, 10, 12].forEach(function (n) {
+      if (n > CF.toi_da_khach) return;
+      var l = chu('label', 'nh-chip');
+      var o = document.createElement('input');
+      o.type = 'radio'; o.name = 'dbNhanh'; o.value = String(n);
+      if (n === 2) o.checked = true;
+      o.addEventListener('change', function () {
+        $('dbSoKhach').value = n;
+        S.soKhach = n;
+        taiKhungGio();
+      });
+      l.appendChild(o);
+      l.appendChild(chu('span', null, n + ' ' + T['dat_ban_moi.khach']));
+      khung.appendChild(l);
+    });
+  })();
+
+  var henTai = null;
+  function taiKhungGioHoan() {
+    clearTimeout(henTai);
+    henTai = setTimeout(taiKhungGio, 320);
+  }
+
+  async function taiKhungGio() {
+    var khung = $('dbGio');
+    var baoKhung = $('dbBaoGio');
+    khung.innerHTML = '';
+    S.gio = '';
+    $('dbTiep1').disabled = true;
+    baoKhung.innerHTML = '';
+
+    var tai = chu('p', 'nh-hint');
+    tai.appendChild(chu('span', 'db-tai'));
+    tai.appendChild(document.createTextNode(' ' + T['dat_ban_moi.dang_tim_gio']));
+    khung.appendChild(tai);
+
+    var q = new URLSearchParams({ ngay: S.ngay, so_khach: S.soKhach });
+    if (S.khuVuc) q.set('khu_vuc', S.khuVuc);
+
+    try {
+      var kq = await fetch('/api/dat-ban/khung-gio?' + q).then(function (r) { return r.json(); });
+      khung.innerHTML = '';
+
+      if (!kq.ok) { bao(baoKhung, 'loi', kq.thong_bao || T['dat_ban_moi.loi_chung']); return; }
+      if (kq.dong_cua) { bao(baoKhung, 'nhac', kq.ly_do); return; }
+      if (!kq.khung.length) {
+        bao(baoKhung, 'nhac', T['dat_ban_moi.het_gio_trong_ngay']);
+        return;
+      }
+
+      S.thoiLuong = kq.thoi_luong;
+      var conBan = 0;
+
+      kq.khung.forEach(function (k) {
+        if (k.con_ban) conBan += 1;
+        var l = chu('label', 'db-gio__o');
+        var o = document.createElement('input');
+        o.type = 'radio'; o.name = 'dbGioChon'; o.value = k.gio;
+        o.disabled = !k.con_ban;
+        o.addEventListener('change', function () {
+          S.gio = k.gio;
+          S.ban = [];
+          $('dbTiep1').disabled = false;
+          veTomTat();
+          taiCoc();
+        });
+        var s = document.createElement('span');
+        if (k.cao_diem) s.classList.add('db-gio__caodiem');
+        s.appendChild(document.createTextNode(k.gio));
+        s.appendChild(chu('small', null, k.con_ban
+          ? (k.cao_diem ? T['dat_ban_moi.cao_diem'] : T['dat_ban_moi.con_ban'])
+          : T['dat_ban_moi.het_ban']));
+        l.appendChild(o);
+        l.appendChild(s);
+        khung.appendChild(l);
+      });
+
+      if (!conBan) {
+        bao(baoKhung, 'nhac', T['dat_ban_moi.kin_ban_ngay']);
+      }
+    } catch (e) {
+      khung.innerHTML = '';
+      bao(baoKhung, 'loi', T['dat_ban_moi.loi_mang']);
+    }
+  }
+
+  $('dbNgay').addEventListener('change', function () {
+    S.ngay = this.value;
+    taiKhungGioHoan();
+  });
+  $('dbSoKhach').addEventListener('input', function () {
+    var n = Math.max(1, Math.min(CF.toi_da_khach, Number(this.value) || 1));
+    S.soKhach = n;
+    // Bo chon o "chon nhanh" neu khach go so khac - hai o cung sang la mau thuan.
+    document.querySelectorAll('input[name="dbNhanh"]').forEach(function (o) {
+      o.checked = Number(o.value) === n;
+    });
+    veTomTat();
+    taiKhungGioHoan();
+  });
+  $('dbKhuVuc').addEventListener('change', function () {
+    S.khuVuc = this.value;
+    S.ban = [];
+    veTomTat();
+    taiKhungGioHoan();
+  });
+
+  $('dbTiep1').addEventListener('click', function () { den(tienTu(1)); });
+
+  // -------------------------------------------------------------- bước 2
+
+  var dieuKhienSoDo = null;
+
+  async function taiSoDo() {
+    var khung = $('dbSoDo');
+    khung.innerHTML = '<div class="sdb__khung sdb__khung--tai">' + T['dat_ban_moi.dang_tai_so_do'] + '</div>';
+    $('dbTomTatBan').textContent = T['dat_ban_moi.dang_tai'];
+
+    // Dem so ban trong tung khu de ve so tren tab. Goi song song - bon khu vuc
+    // la bon request, cho lan luot se cham gap bon lan ma khong duoc gi.
+    var q = function (khu) {
+      var p = new URLSearchParams({ ngay: S.ngay, gio: S.gio, so_khach: S.soKhach });
+      if (khu) p.set('khu_vuc', khu);
+      return fetch('/api/dat-ban/so-do?' + p).then(function (r) { return r.json(); });
+    };
+
+    try {
+      var tatCa = await q(S.khuVuc);
+      if (!tatCa.ok) { bao($('dbTomTatBan'), 'loi', tatCa.thong_bao); return; }
+
+      var dem = {};
+      dem['*'] = tatCa.ban.filter(function (b) { return b.kha_dung; }).length;
+      var demTheoKhu = await Promise.all(KHU.map(function (k) { return q(k.id); }));
+      demTheoKhu.forEach(function (r, i) {
+        dem[String(KHU[i].id)] = r.ok ? r.ban.filter(function (b) { return b.kha_dung; }).length : 0;
+      });
+
+      SoDoDatBan.veTabs($('dbTabs'), KHU, S.khuVuc, dem, function (khu) {
+        S.khuVuc = khu;
+        S.ban = [];
+        $('dbKhuVuc').value = khu;
+        taiSoDo();
+      });
+
+      var khuDangXem = KHU.filter(function (k) { return String(k.id) === String(S.khuVuc); })[0];
+
+      dieuKhienSoDo = SoDoDatBan.ve(khung, tatCa, {
+        choChon: tatCa.cho_chon_ban,
+        soKhach: S.soKhach,
+        daChon: S.ban,
+        mocTren: khuDangXem && khuDangXem.ngoai_troi ? T['dat_ban_moi.moc_ngoai_troi'] : T['dat_ban_moi.moc_cua_so'],
+        mocDuoi: T['dat_ban_moi.moc_quay'],
+        onChon: function (ds, tongCho) {
+          S.ban = ds;
+          S.tongChoDaChon = tongCho;
+          capNhatTomTatBan(tongCho);
+          veTomTat();
+        }
+      });
+    } catch (e) {
+      khung.innerHTML = '';
+      bao($('dbTomTatBan'), 'loi', T['dat_ban_moi.loi_mang']);
+    }
+  }
+
+  function capNhatTomTatBan(tongCho) {
+    var o = $('dbTomTatBan');
+    o.className = 'sdb__tomtat';
+    o.innerHTML = '';
+
+    if (!S.ban.length) {
+      o.appendChild(document.createTextNode(T['dat_ban_moi.chua_chon_ban']));
+      // Khong chon ban van di tiep duoc: khach chon "de nha hang xep giup" la
+      // mot lua chon hop le, khong phai mot buoc chua hoan thanh.
+      $('dbTiep2').disabled = false;
+      return;
+    }
+
+    var du = tongCho >= S.soKhach;
+    o.classList.add(du ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu');
+    var m = chu('span');
+    m.appendChild(document.createTextNode(T['dat_ban_moi.da_chon'] + ' '));
+    var b = document.createElement('b');
+    b.textContent = S.ban.length + ' ' + T['dat_ban_moi.ban_dv'] + ' · ' + tongCho + ' ' + T['dat_ban_moi.cho'];
+    m.appendChild(b);
+    o.appendChild(m);
+    o.appendChild(chu('span', null, du
+      ? T['dat_ban_moi.du_cho']
+      : T['dat_ban_moi.thieu_cho'].replace('{n}', S.soKhach - tongCho)));
+
+    $('dbTiep2').disabled = !du;
+  }
+
+  $('dbTuXep').addEventListener('click', function () {
+    S.ban = [];
+    if (dieuKhienSoDo && dieuKhienSoDo.xoaChon) dieuKhienSoDo.xoaChon();
+    den(tienTu(2));
+  });
+  $('dbTiep2').addEventListener('click', function () { den(tienTu(2)); });
+
+  // -------------------------------------------------------------- bước 3
+
+  $('dbThe').addEventListener('change', function () {
+    S.the = Array.prototype.slice
+      .call(document.querySelectorAll('#dbThe input:checked'))
+      .map(function (o) { return o.value; });
+    veTomTat();
+  });
+
+  $('dbTiep3').addEventListener('click', function () {
+    var ten = $('dbTen').value.trim();
+    var dt = $('dbDienThoai').value.trim();
+    if (ten.length < 2) { $('dbTen').focus(); $('dbTen').reportValidity(); return; }
+    if (dt.replace(/\D/g, '').length < 8) {
+      $('dbDienThoai').setCustomValidity(T['dat_ban_moi.dien_thoai_sai']);
+      $('dbDienThoai').reportValidity();
+      $('dbDienThoai').setCustomValidity('');
+      return;
+    }
+    den(tienTu(3));
+  });
+
+  document.querySelectorAll('[data-lui]').forEach(function (n) {
+    n.addEventListener('click', function () { den(luiTu(S.buoc)); });
+  });
+
+  // -------------------------------------------------------------- tóm tắt
+
+  async function taiCoc() {
+    if (!S.gio) { S.coc = null; veTomTat(); return; }
+    var q = new URLSearchParams({
+      reservation_date: S.ngay, start_time: S.gio, guest_count: S.soKhach
+    });
+    if (S.khuVuc) q.set('area_id', S.khuVuc);
+    if (S.the.length) q.set('tags', S.the.join(','));
+    try {
+      var kq = await fetch('/api/dat-ban/kha-dung?' + q).then(function (r) { return r.json(); });
+      S.coc = kq.ok ? kq.coc : null;
+      S.goiY = kq.ok ? kq.goi_y : null;
+    } catch (e) { S.coc = null; }
+    veTomTat();
+  }
+
+  function hang(nhan, giaTri) {
+    var h = chu('div', 'db-tomtat__hang');
+    h.appendChild(chu('span', null, nhan));
+    var b = document.createElement('b');
+    b.textContent = giaTri;
+    h.appendChild(b);
+    return h;
+  }
+
+  function veTomTat() {
+    var o = $('dbTomTat');
+    o.innerHTML = '';
+    o.appendChild(hang(T['dat_ban_moi.ngay'], ngayVN(S.ngay)));
+    o.appendChild(hang(T['dat_ban_moi.gio_den'], S.gio || '—'));
+    o.appendChild(hang(T['dat_ban_moi.so_khach'], S.soKhach + ' ' + T['dat_ban_moi.khach']));
+    if (S.thoiLuong) o.appendChild(hang(T['dat_ban_moi.thoi_luong'], S.thoiLuong + ' ' + T['dat_ban_moi.phut']));
+
+    var tenKhu = T['dat_ban_moi.khu_bat_ky'];
+    KHU.forEach(function (k) { if (String(k.id) === String(S.khuVuc)) tenKhu = k.ten; });
+    o.appendChild(hang(T['dat_ban_moi.khu_vuc'], tenKhu));
+
+    if (S.ban.length) {
+      o.appendChild(hang(T['dat_ban_moi.ban_da_chon'], S.ban.length + ' ' + T['dat_ban_moi.ban_dv'] + ' · ' + S.tongChoDaChon + ' ' + T['dat_ban_moi.cho']));
+    } else if (S.goiY) {
+      o.appendChild(hang(T['dat_ban_moi.ban_de_xuat'],
+        S.goiY.ban.map(function (b) { return b.ten; }).join(', ')));
+    }
+    if (S.the.length) {
+      o.appendChild(hang(T['dat_ban_moi.yeu_cau'], S.the.length + ' ' + T['dat_ban_moi.muc']));
+    }
+
+    var c = $('dbTomTatCoc');
+    c.innerHTML = '';
+    if (S.coc && S.coc.soTien > 0) {
+      var hop = chu('div', 'db-coc');
+      var b = document.createElement('b');
+      b.textContent = tien(S.coc.soTien);
+      hop.appendChild(b);
+      hop.appendChild(chu('div', null, S.coc.lyDo));
+      hop.appendChild(chu('div', null, T['dat_ban_moi.coc_ghi_chu']));
+      c.appendChild(hop);
+    }
+  }
+
+  // -------------------------------------------------------------- bước 4
+
+  function veXemLai() {
+    var dl = $('dbXemLai');
+    dl.innerHTML = '';
+    function muc(nhan, giaTri) {
+      if (!giaTri) return;
+      dl.appendChild(chu('dt', null, nhan));
+      dl.appendChild(chu('dd', null, giaTri));
+    }
+    var tenKhu = T['dat_ban_moi.khu_bat_ky'];
+    KHU.forEach(function (k) { if (String(k.id) === String(S.khuVuc)) tenKhu = k.ten; });
+    var tenThe = Array.prototype.slice
+      .call(document.querySelectorAll('#dbThe input:checked'))
+      .map(function (o) { return o.parentNode.querySelector('span').textContent.trim(); });
+
+    muc(T['dat_ban_moi.ho_ten'], $('dbTen').value.trim());
+    muc(T['dat_ban_moi.dien_thoai'], $('dbDienThoai').value.trim());
+    muc(T['dat_ban_moi.email'], $('dbEmail').value.trim());
+    muc(T['dat_ban_moi.thoi_gian'], S.gio + ' · ' + ngayVN(S.ngay)
+      + (S.thoiLuong ? ' · ' + S.thoiLuong + ' ' + T['dat_ban_moi.phut'] : ''));
+    muc(T['dat_ban_moi.so_khach'], S.soKhach + ' ' + T['dat_ban_moi.khach']);
+    muc(T['dat_ban_moi.khu_vuc'], tenKhu);
+    muc(T['dat_ban_moi.ban'], S.ban.length
+      ? S.tongChoDaChon + ' ' + T['dat_ban_moi.cho'] + ' (' + T['dat_ban_moi.tu_chon'] + ')'
+      : (S.goiY ? S.goiY.ban.map(function (b) { return b.ten; }).join(', ') : T['dat_ban_moi.nha_hang_xep']));
+    muc(T['dat_ban_moi.yeu_cau'], tenThe.join(' · '));
+    muc(T['dat_ban_moi.ghi_chu'], $('dbYeuCau').value.trim());
+    if (S.coc && S.coc.soTien > 0) muc(T['dat_ban_moi.tien_coc'], tien(S.coc.soTien) + ' — ' + S.coc.lyDo);
+  }
+
+  var dangGui = false;
+
+  $('dbGui').addEventListener('click', async function () {
+    if (dangGui) return;
+    dangGui = true;
+    var nut = this;
+    var chuCu = nut.innerHTML;
+    nut.disabled = true;
+    nut.innerHTML = '<span class="db-tai"></span> ' + T['dat_ban_moi.dang_gui'];
+    $('dbBaoGui').innerHTML = '';
+
+    // Dip = the OCCASION dau tien khach tich. Con lai di vao `tags`.
+    var dip = '';
+    document.querySelectorAll('#dbThe input:checked').forEach(function (o) {
+      if (!dip && o.getAttribute('data-kind') === 'OCCASION') dip = o.value;
+    });
+
+    var goi = {
+      customer_name: $('dbTen').value.trim(),
+      phone: $('dbDienThoai').value.trim(),
+      email: $('dbEmail').value.trim() || null,
+      reservation_date: S.ngay,
+      start_time: S.gio,
+      guest_count: S.soKhach,
+      area_id: S.khuVuc || null,
+      table_ids: S.ban,
+      tags: S.the,
+      occasion: dip || null,
+      special_requests: $('dbYeuCau').value.trim() || null
+    };
+
+    try {
+      var r = await fetch('/api/dat-ban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goi)
+      });
+      var kq = await r.json();
+
+      if (kq.ok) {
+        // Chuyen sang trang xac nhan thay vi hien mot the bao thanh cong: khach
+        // can mot trang co dia chi rieng de luu lai / gui cho nguoi khac.
+        window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(kq.ma)
+          + '&dt=' + encodeURIComponent(goi.phone);
+        return;
+      }
+
+      // Het ban: kem nut bam thang sang khung gio / khu vuc con cho.
+      var them = null;
+      if (kq.chi_tiet && (kq.chi_tiet.gio_thay_the || kq.chi_tiet.khu_thay_the)) {
+        them = chu('div', 'db-goiy');
+        (kq.chi_tiet.gio_thay_the || []).forEach(function (g) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = g.gio + ' (' + g.khu_vuc + ')';
+          b.addEventListener('click', function () {
+            S.gio = g.gio; S.ban = [];
+            den(1);
+            taiKhungGio().then(function () {
+              var o = document.querySelector('#dbGio input[value="' + g.gio + '"]');
+              if (o && !o.disabled) { o.checked = true; o.dispatchEvent(new Event('change')); }
+            });
+          });
+          them.appendChild(b);
+        });
+        (kq.chi_tiet.khu_thay_the || []).forEach(function (k) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = k.khu_vuc + ' — ' + k.tong_cho + ' ' + T['dat_ban_moi.cho'];
+          b.addEventListener('click', function () {
+            S.khuVuc = String(k.khu_vuc_id); S.ban = [];
+            $('dbKhuVuc').value = S.khuVuc;
+            den(1); taiKhungGio();
+          });
+          them.appendChild(b);
+        });
+      }
+      bao($('dbBaoGui'), 'loi', kq.thong_bao || T['dat_ban_moi.loi_chung'], them);
+    } catch (e) {
+      bao($('dbBaoGui'), 'loi', T['dat_ban_moi.loi_mang']);
+    } finally {
+      dangGui = false;
+      nut.disabled = false;
+      nut.innerHTML = chuCu;
+    }
+  });
+
+  // -------------------------------------------------------------- khởi động
+  veThanhBuoc();
+  veTomTat();
+  taiKhungGio();
+})();
+</script>
+
+<%- include('partials/footer') %>

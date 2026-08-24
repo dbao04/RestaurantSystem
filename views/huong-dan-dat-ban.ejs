@@ -1,0 +1,443 @@
+<%- include('partials/header', { title: t('huong_dan_dat_ban.tieu_de') }) %>
+<%
+/*
+  HUONG DAN DAT BAN.
+
+  MOI CON SO TREN TRANG NAY DEN TU CAU HINH DANG CHAY, khong viet cung.
+
+  Do la ly do trang nay ton tai duoi dang mot trang dong chu khong phai mot bai
+  viet trong `bai_viet`. Mot huong dan viet tay se lech khoi thuc te ngay lan dau
+  quan ly doi mot tham so o /admin/dat-ban - va luc do no te hon la khong co huong
+  dan nao, vi khach doc no, tin no, roi bi he thong tu choi boi mot quy tac khac.
+
+  Muc luc ben trai dinh theo trang (position: sticky) vi trang nay dai va khach
+  thuong vao de tim MOT cau tra loi cu the ("huy truoc bao lau thi duoc hoan?"),
+  khong phai de doc tu dau den cuoi.
+*/
+/*
+  Nhan cua cot "Ap dung cho" den tu `applies_to` - mot ma trong CSDL, khong phai
+  chuoi hien thi. Tra qua `t()` de trang tieng Nhat khong con lan mot cot tieng
+  Viet giua bang; ma la khoa duy nhat, nen quan ly them quy tac moi voi ma la
+  chuyen cua CSDL con ban dich la chuyen cua locales.
+
+  Lui ve chinh ma khi thieu khoa: mot ma tho van doc duoc hon la mot o trong.
+*/
+var apDung = function (ma) {
+  var nhan = t('huong_dan_dat_ban.ap_' + ma);
+  return nhan === 'huong_dan_dat_ban.ap_' + ma ? ma : nhan;
+};
+/*
+  Nhan the yeu cau rieng. `label_vi` trong CSDL la ban goc; ban dich tra theo
+  `code`. The do quan ly tu them chua co khoa se giu nguyen `label_vi` - thieu
+  ban dich thi thoi, chu khong bien mat khoi danh sach.
+*/
+var nhanThe = function (the) {
+  var nhan = t('dat_ban_moi.the_' + the.code);
+  return nhan === 'dat_ban_moi.the_' + the.code ? the.label_vi : nhan;
+};
+/*
+  Ten thu. `g.ten` tu services/reservationConfig.js luon la tieng Viet - do la
+  ten dung cho khu quan tri; khu khach tra lai theo `weekday` (0 = Chu nhat).
+*/
+var tenThu = function (g) {
+  var khoa = 'chung.thu_' + g.weekday;
+  var nhan = t(khoa);
+  return nhan === khoa ? g.ten : nhan;
+};
+var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Number(q.amount) > 0; });
+%>
+
+<section class="nh-subhero nh-subhero--sm">
+  <div class="nh-subhero__bg" style="background-image:url('/bg_4.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('huong_dan_dat_ban.eyebrow') %></span>
+    <h1><%= t('huong_dan_dat_ban.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp;
+      <a href="/datban"><%= t('chung.dat_ban') %></a> &nbsp;/&nbsp;
+      <span><%= t('huong_dan_dat_ban.tieu_de') %></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hd { display: grid; grid-template-columns: 230px 1fr; gap: 2.6rem; align-items: start; }
+  @media (max-width: 900px) { .hd { grid-template-columns: 1fr; gap: 1.4rem; } }
+
+  .hd__muc { position: sticky; top: 96px; }
+  @media (max-width: 900px) { .hd__muc { position: static; } }
+  .hd__muc h3 { font-size: .74rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--nh-muted); margin-bottom: .8rem; font-family: var(--nh-sans); font-weight: 800; }
+  .hd__muc ol { list-style: none; padding: 0; margin: 0; counter-reset: hd; }
+  .hd__muc li { counter-increment: hd; }
+  .hd__muc a { display: flex; gap: .6rem; padding: .45rem .2rem; font-size: .89rem;
+    color: var(--nh-muted); border-left: 2px solid transparent; padding-left: .8rem; transition: all .2s var(--nh-ease); }
+  .hd__muc a::before { content: counter(hd) "."; color: var(--nh-gold); font-weight: 700; flex: none; }
+  .hd__muc a:hover { color: var(--nh-espresso); border-left-color: var(--nh-gold); }
+
+  .hd__khoi { background: #fff; border-radius: 18px; padding: clamp(1.4rem, 3vw, 2.2rem);
+    box-shadow: var(--nh-shadow-sm); margin-bottom: 1.4rem; scroll-margin-top: 96px; }
+  .hd__khoi > h2 { font-size: clamp(1.25rem, 2.4vw, 1.55rem); margin-bottom: .3rem;
+    display: flex; align-items: center; gap: .7rem; }
+  .hd__khoi > h2 i { color: var(--nh-gold); font-size: 1.05rem; }
+  .hd__khoi > .dan { color: var(--nh-muted); font-size: .95rem; margin: 0 0 1.3rem; }
+
+  .hd__bang { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  .hd__bang th, .hd__bang td { padding: .68rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
+  .hd__bang thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--nh-muted); font-weight: 800; }
+  .hd__bang tbody tr:last-child td { border-bottom: 0; }
+  .hd__bang td:first-child { font-weight: 600; color: var(--nh-espresso); }
+  .hd__bang .so { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .hd__buoc { list-style: none; padding: 0; margin: 0; counter-reset: b; }
+  .hd__buoc li { counter-increment: b; display: flex; gap: 1rem; padding: .8rem 0;
+    border-bottom: 1px dashed var(--nh-line); }
+  .hd__buoc li:last-child { border-bottom: 0; }
+  .hd__buoc li::before { content: counter(b); flex: none; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--nh-espresso); color: var(--nh-gold-soft); display: grid; place-content: center;
+    font-weight: 800; font-size: .84rem; }
+  .hd__buoc b { display: block; color: var(--nh-espresso); margin-bottom: .12rem; }
+  .hd__buoc span { color: var(--nh-muted); font-size: .92rem; }
+
+  .hd__nhac { display: flex; gap: .8rem; padding: .95rem 1.1rem; border-radius: 12px; font-size: .92rem;
+    background: #fffbeb; border: 1px solid rgba(217,119,6,.3); color: #7c2d12; margin-top: 1.2rem; }
+  .hd__nhac i { margin-top: .2rem; flex: none; }
+  .hd__nhac--ok { background: #f0fdf4; border-color: rgba(22,163,74,.3); color: #14532d; }
+
+  .hd__the { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .hd__the span { display: inline-flex; align-items: center; gap: .45rem; padding: .45rem .9rem;
+    border-radius: 999px; background: var(--nh-cream-2); font-size: .87rem; }
+  .hd__the i { color: var(--nh-gold); }
+
+  .hd__khu { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .8rem; }
+  .hd__khu article { padding: .95rem 1.1rem; border-radius: 12px; background: var(--nh-cream);
+    border: 1px solid var(--nh-line); }
+  .hd__khu b { display: block; color: var(--nh-espresso); margin-bottom: .15rem; }
+  .hd__khu small { color: var(--nh-muted); }
+
+  .hd__hoi { border-bottom: 1px solid var(--nh-line); }
+  .hd__hoi:last-child { border-bottom: 0; }
+  .hd__hoi summary { cursor: pointer; padding: .85rem 0; font-weight: 600; color: var(--nh-espresso);
+    list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+  .hd__hoi summary::-webkit-details-marker { display: none; }
+  .hd__hoi summary::after { content: "\f078"; font-family: "Font Awesome 5 Free"; font-weight: 900;
+    font-size: .75rem; color: var(--nh-gold); transition: transform .25s var(--nh-ease); }
+  .hd__hoi[open] summary::after { transform: rotate(180deg); }
+  .hd__hoi p { color: var(--nh-muted); font-size: .93rem; margin: 0 0 .9rem; }
+</style>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
+    <div class="hd">
+
+      <!-- ============================================= MỤC LỤC -->
+      <nav class="hd__muc" aria-label="<%= t('huong_dan_dat_ban.muc_luc') %>">
+        <h3><%= t('huong_dan_dat_ban.muc_luc') %></h3>
+        <ol>
+          <li><a href="#hai-cach"><%= t('huong_dan_dat_ban.m_hai_cach') %></a></li>
+          <li><a href="#cac-buoc"><%= t('huong_dan_dat_ban.m_cac_buoc') %></a></li>
+          <li><a href="#gio-mo-cua"><%= t('huong_dan_dat_ban.m_gio_mo_cua') %></a></li>
+          <li><a href="#thoi-luong"><%= t('huong_dan_dat_ban.m_thoi_luong') %></a></li>
+          <li><a href="#giu-ban"><%= t('huong_dan_dat_ban.m_giu_ban') %></a></li>
+          <li><a href="#khu-vuc"><%= t('huong_dan_dat_ban.m_khu_vuc') %></a></li>
+          <% if (coCoc) { %><li><a href="#tien-coc"><%= t('huong_dan_dat_ban.m_tien_coc') %></a></li><% } %>
+          <li><a href="#doi-huy"><%= t('huong_dan_dat_ban.m_doi_huy') %></a></li>
+          <li><a href="#cau-hoi"><%= t('huong_dan_dat_ban.m_cau_hoi') %></a></li>
+        </ol>
+      </nav>
+
+      <div>
+        <!-- ========================================= 1. HAI CÁCH -->
+        <section class="hd__khoi" id="hai-cach">
+          <h2><i class="fas fa-code-branch"></i> <%= t('huong_dan_dat_ban.m_hai_cach') %></h2>
+          <p class="dan"><%= t('huong_dan_dat_ban.hai_cach_dan') %></p>
+
+          <table class="hd__bang">
+            <tbody>
+              <tr>
+                <td><%= t('chon_dat_ban.a_tieu_de') %></td>
+                <td><%= t('huong_dan_dat_ban.hai_cach_a') %></td>
+              </tr>
+              <tr>
+                <td><%= t('chon_dat_ban.b_tieu_de') %></td>
+                <td><%= t('huong_dan_dat_ban.hai_cach_b') %></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.3rem">
+            <a href="/dat-ban" class="nh-btn nh-btn--gold nh-btn--sm">
+              <i class="fas fa-calendar-check"></i> <%= t('chon_dat_ban.a_nut') %>
+            </a>
+            <a href="/menu" class="nh-btn nh-btn--outline nh-btn--sm">
+              <i class="fas fa-book-open"></i> <%= t('chon_dat_ban.b_nut_chon_mon') %>
+            </a>
+          </div>
+        </section>
+
+        <!-- ========================================= 2. CÁC BƯỚC -->
+        <section class="hd__khoi" id="cac-buoc">
+          <h2><i class="fas fa-list-ol"></i> <%= t('huong_dan_dat_ban.m_cac_buoc') %></h2>
+          <p class="dan"><%= t('huong_dan_dat_ban.buoc_dan') %></p>
+
+          <ol class="hd__buoc">
+            <li><div><b><%= t('huong_dan_dat_ban.b1') %></b><span><%= t('huong_dan_dat_ban.b1_mo_ta') %></span></div></li>
+            <% if (Number(cauHinh.allow_customer_pick_table) === 1) { %>
+              <li><div><b><%= t('huong_dan_dat_ban.b2') %></b><span><%= t('huong_dan_dat_ban.b2_mo_ta') %></span></div></li>
+            <% } %>
+            <li><div><b><%= t('huong_dan_dat_ban.b3') %></b><span><%= t('huong_dan_dat_ban.b3_mo_ta') %></span></div></li>
+            <li><div><b><%= t('huong_dan_dat_ban.b4') %></b><span><%= t('huong_dan_dat_ban.b4_mo_ta') %></span></div></li>
+          </ol>
+
+          <div class="hd__nhac hd__nhac--ok">
+            <i class="fas fa-check-circle"></i>
+            <div><%- t('huong_dan_dat_ban.buoc_ma') %></div>
+          </div>
+        </section>
+
+        <!-- ========================================= 3. GIỜ MỞ CỬA -->
+        <section class="hd__khoi" id="gio-mo-cua">
+          <h2><i class="fas fa-clock"></i> <%= t('huong_dan_dat_ban.m_gio_mo_cua') %></h2>
+          <p class="dan"><%- t('huong_dan_dat_ban.gio_dan', { n: cauHinh.last_seating_minutes }) %></p>
+
+          <table class="hd__bang">
+            <tbody>
+              <% gioMoCua.forEach(function (g) { %>
+                <tr>
+                  <td><%= tenThu(g) %></td>
+                  <td class="so">
+                    <% if (g.is_closed) { %>
+                      <span style="color:#b91c1c"><%= t('huong_dan_dat_ban.gio_nghi') %></span>
+                    <% } else { %>
+                      <%= g.open_time %> – <%= g.close_time %>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ========================================= 4. THỜI LƯỢNG -->
+        <section class="hd__khoi" id="thoi-luong">
+          <h2><i class="fas fa-hourglass-half"></i> <%= t('huong_dan_dat_ban.m_thoi_luong') %></h2>
+          <p class="dan"><%= t('huong_dan_dat_ban.thoi_luong_dan') %></p>
+
+          <table class="hd__bang">
+            <thead>
+              <tr><th><%= t('dat_ban_moi.so_khach') %></th><th><%= t('huong_dan_dat_ban.tl_thoi_luong') %></th></tr>
+            </thead>
+            <tbody>
+              <% thoiLuong.forEach(function (x) { %>
+                <tr>
+                  <td><%= t('huong_dan_dat_ban.tl_' + x.nhom) %></td>
+                  <td class="so"><%= x.phut %> <%= t('dat_ban_moi.phut') %>
+                    <% if (x.phut >= 60) { %>
+                      <small style="color:var(--nh-muted)">(<%= (x.phut / 60).toFixed(x.phut % 60 ? 1 : 0) %> <%= t('huong_dan_dat_ban.tl_gio') %>)</small>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+
+          <div class="hd__nhac">
+            <i class="fas fa-info-circle"></i>
+            <div><%- t('huong_dan_dat_ban.thoi_luong_nhac') %></div>
+          </div>
+        </section>
+
+        <!-- ========================================= 5. GIỮ BÀN -->
+        <section class="hd__khoi" id="giu-ban">
+          <h2><i class="fas fa-user-clock"></i> <%= t('huong_dan_dat_ban.m_giu_ban') %></h2>
+
+          <table class="hd__bang">
+            <tbody>
+              <tr>
+                <td><%= t('huong_dan_dat_ban.gb_giu') %></td>
+                <td class="so"><%- t('huong_dan_dat_ban.gb_giu_gt', { n: cauHinh.grace_period_minutes }) %></td>
+              </tr>
+              <tr>
+                <td><%= t('huong_dan_dat_ban.gb_som_nhat') %></td>
+                <td class="so"><%- t('huong_dan_dat_ban.gb_som_nhat_gt', { n: cauHinh.minimum_lead_minutes }) %></td>
+              </tr>
+              <tr>
+                <td><%= t('huong_dan_dat_ban.gb_xa_nhat') %></td>
+                <td class="so"><%- t('huong_dan_dat_ban.gb_xa_nhat_gt', { n: cauHinh.max_advance_days }) %></td>
+              </tr>
+              <tr>
+                <td><%= t('huong_dan_dat_ban.gb_toi_da_khach') %></td>
+                <td class="so"><%- t('huong_dan_dat_ban.gb_toi_da_khach_gt', { n: cauHinh.max_guests_online }) %></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="hd__nhac">
+            <i class="fas fa-phone"></i>
+            <div><%- t('huong_dan_dat_ban.gb_den_tre', { n: cauHinh.grace_period_minutes }) %></div>
+          </div>
+        </section>
+
+        <!-- ========================================= 6. KHU VỰC -->
+        <section class="hd__khoi" id="khu-vuc">
+          <h2><i class="fas fa-map-marked-alt"></i> <%= t('huong_dan_dat_ban.m_khu_vuc') %></h2>
+          <p class="dan"><%= t('huong_dan_dat_ban.khu_dan') %></p>
+
+          <div class="hd__khu">
+            <% khuVuc.forEach(function (k) { %>
+              <article>
+                <b><%= k.la_vip ? '★ ' : '' %><%= k.ten %></b>
+                <small><%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %> · <%= k.tong_cho %> <%= t('dat_ban_moi.cho') %></small>
+                <% if (k.mo_ta) { %><br><small><%= k.mo_ta %></small><% } %>
+              </article>
+            <% }); %>
+          </div>
+
+          <h3 style="font-size:1rem;margin:1.6rem 0 .7rem"><%= t('huong_dan_dat_ban.khu_yeu_cau') %></h3>
+          <p class="dan" style="margin-bottom:.9rem"><%= t('huong_dan_dat_ban.khu_yeu_cau_dan') %></p>
+          <div class="hd__the">
+            <% theYeuCau.forEach(function (the) { %>
+              <span><i class="fas <%= the.icon %>"></i> <%= nhanThe(the) %></span>
+            <% }); %>
+          </div>
+
+          <% if (Number(cauHinh.allow_table_combination) === 1) { %>
+            <div class="hd__nhac hd__nhac--ok">
+              <i class="fas fa-users"></i>
+              <div><%- t('huong_dan_dat_ban.khu_ghep_ban', { n: cauHinh.max_tables_per_reservation }) %></div>
+            </div>
+          <% } %>
+        </section>
+
+        <!-- ========================================= 7. TIỀN CỌC -->
+        <% if (coCoc) { %>
+          <section class="hd__khoi" id="tien-coc">
+            <h2><i class="fas fa-wallet"></i> <%= t('huong_dan_dat_ban.m_tien_coc') %></h2>
+            <p class="dan"><%= t('huong_dan_dat_ban.coc_dan') %></p>
+
+            <table class="hd__bang">
+              <thead>
+                <tr>
+                  <th><%= t('huong_dan_dat_ban.coc_ap_dung') %></th>
+                  <th><%= t('huong_dan_dat_ban.coc_dieu_kien') %></th>
+                  <th><%= t('huong_dan_dat_ban.coc_muc') %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% quyTacCoc.forEach(function (q) { %>
+                  <tr>
+                    <td><%= apDung(q.applies_to) %></td>
+                    <td>
+                      <% if (Number(q.min_guests) > 1) { %><%= t('huong_dan_dat_ban.coc_tu_khach', { n: q.min_guests }) %><% } %>
+                      <% if (q.from_time && q.to_time) { %>
+                        <%= Number(q.min_guests) > 1 ? ' · ' : '' %><%= q.from_time %>–<%= q.to_time %>
+                      <% } %>
+                      <% if (Number(q.min_guests) <= 1 && !q.from_time) { %>—<% } %>
+                    </td>
+                    <td class="so">
+                      <% if (q.amount_type === 'NONE' || !Number(q.amount)) { %>
+                        <span style="color:#14532d"><%= t('huong_dan_dat_ban.coc_khong') %></span>
+                      <% } else if (q.amount_type === 'PER_GUEST') { %>
+                        <%= tien(q.amount) %> <%= t('huong_dan_dat_ban.coc_moi_khach') %>
+                      <% } else { %>
+                        <%= tien(q.amount) %>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+
+            <div class="hd__nhac">
+              <i class="fas fa-info-circle"></i>
+              <div><%- t('huong_dan_dat_ban.coc_nhac', { n: Math.round(Number(cauHinh.deposit_due_minutes) / 60) }) %></div>
+            </div>
+          </section>
+        <% } %>
+
+        <!-- ========================================= 8. ĐỔI / HỦY -->
+        <section class="hd__khoi" id="doi-huy">
+          <h2><i class="fas fa-sync-alt"></i> <%= t('huong_dan_dat_ban.m_doi_huy') %></h2>
+          <p class="dan"><%- t('huong_dan_dat_ban.huy_dan') %></p>
+
+          <% if (chinhSach.length) { %>
+            <table class="hd__bang">
+              <thead>
+                <tr>
+                  <th><%= t('huong_dan_dat_ban.huy_khi_nao') %></th>
+                  <th><%= t('huong_dan_dat_ban.huy_hoan') %></th>
+                  <th><%= t('huong_dan_dat_ban.coc_ap_dung') %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% chinhSach.forEach(function (c) { %>
+                  <tr>
+                    <td><%= t('huong_dan_dat_ban.huy_truoc', { n: c.hours_before }) %></td>
+                    <td class="so"><%= Number(c.refund_percent) %>%</td>
+                    <td><%= apDung(c.applies_to) %></td>
+                  </tr>
+                <% }); %>
+                <tr>
+                  <td><%= t('huong_dan_dat_ban.huy_no_show') %></td>
+                  <td class="so" style="color:#b91c1c">0%</td>
+                  <td><%= apDung('ALL') %></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="hd__nhac">
+              <i class="fas fa-info-circle"></i>
+              <div><%= t('huong_dan_dat_ban.huy_moc') %></div>
+            </div>
+          <% } else { %>
+            <p><%= t('huong_dan_dat_ban.huy_khong_coc') %></p>
+          <% } %>
+
+          <a href="/dat-ban/tra-cuu" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:1.2rem">
+            <i class="fas fa-search"></i> <%= t('dat_ban_moi.tra_cuu') %>
+          </a>
+        </section>
+
+        <!-- ========================================= 9. CÂU HỎI -->
+        <section class="hd__khoi" id="cau-hoi">
+          <h2><i class="fas fa-question-circle"></i> <%= t('huong_dan_dat_ban.m_cau_hoi') %></h2>
+
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h1') %></summary>
+            <p><%- t('huong_dan_dat_ban.h1_dap') %></p>
+          </details>
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h2') %></summary>
+            <p><%- t('huong_dan_dat_ban.h2_dap', { n: cauHinh.grace_period_minutes }) %></p>
+          </details>
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h3') %></summary>
+            <p><%- t('huong_dan_dat_ban.h3_dap', { n: cauHinh.max_guests_online }) %></p>
+          </details>
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h4') %></summary>
+            <p><%- t('huong_dan_dat_ban.h4_dap') %></p>
+          </details>
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h5') %></summary>
+            <p><%- t('huong_dan_dat_ban.h5_dap') %></p>
+          </details>
+          <details class="hd__hoi">
+            <summary><%= t('huong_dan_dat_ban.h6') %></summary>
+            <p><%- t('huong_dan_dat_ban.h6_dap') %></p>
+          </details>
+        </section>
+
+        <div class="nh-center" style="margin-top:2rem">
+          <a href="/datban" class="nh-btn nh-btn--gold">
+            <i class="fas fa-utensils"></i> <%= t('huong_dan_dat_ban.bat_dau_dat') %>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

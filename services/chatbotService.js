@@ -12,6 +12,7 @@
  *   khach chi can sua JSON la doc duoc doanh thu nha hang.
  */
 const db = require('../config/db');
+const daNgonNgu = require('./chatbotDaNgonNgu');
 
 const MAC_DINH_URL = 'http://127.0.0.1:8000';
 const TIMEOUT_MS = 15000;        // mot luot hoi phai nhanh; qua lau thi du phong
@@ -99,13 +100,14 @@ const chatbotService = {
    * @param {object} session  req.session - dung de suy ra quyen, KHONG tin body
    * @param {object} nguCanh  { y_dinh_cho, cho_tham_so } luu tu luot truoc
    */
-  hoi: async (cauHoi, session, nguCanh = {}) => {
+  hoi: async (cauHoi, session, nguCanh = {}, ngonNgu = 'vi') => {
     const boiCanh = suyRaQuyen(session);
+    const cauDaChuanHoa = daNgonNgu.chuanHoaCauHoi(cauHoi, ngonNgu);
     try {
       const kq = await goi('/chatbot/hoi', {
         method: 'POST',
         body: {
-          cau_hoi: String(cauHoi || '').slice(0, 500),
+          cau_hoi: String(cauDaChuanHoa || '').slice(0, 500),
           quyen: boiCanh.quyen,
           id_kh: boiCanh.id_kh,
           id_nv: boiCanh.id_nv,
@@ -113,10 +115,10 @@ const chatbotService = {
           cho_tham_so: nguCanh.cho_tham_so || null,
         },
       });
-      return { ...kq, nguon: 'ml' };
+      return { ...daNgonNgu.dichPhanHoi(kq, ngonNgu), nguon: 'ml' };
     } catch (err) {
-      const duPhong = await traLoiDuPhong(cauHoi, boiCanh);
-      return { ...duPhong, nguon: 'du_phong', loi_ml: err.message };
+      const duPhong = await traLoiDuPhong(cauDaChuanHoa, boiCanh);
+      return { ...daNgonNgu.dichPhanHoi(duPhong, ngonNgu), nguon: 'du_phong', loi_ml: err.message };
     }
   },
 

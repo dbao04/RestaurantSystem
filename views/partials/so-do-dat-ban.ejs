@@ -1,0 +1,1063 @@
+<%
+/*
+  SO DO BAN - thanh phan dung chung cho ca trang khach lan trang nhan vien.
+
+  VI SAO MOT THANH PHAN CHU KHONG PHAI HAI
+  ----------------------------------------
+  Khach nhin so do de CHON ban; nhan vien nhin so do de BIET chuyen gi dang xay
+  ra. Hai muc dich khac nhau, nhung cai duoc ve ra thi phai giong het nhau: cung
+  mot ban, cung mot vi tri, cung mot mau. Neu viet hai ban thi som muon mot ban
+  se duoc sua mau "dang don" con ban kia thi khong - va luc do nhan vien va khach
+  nhin thay hai nha hang khac nhau.
+
+  Khac biet duoc xu ly bang tuy chon (`choChon`, `hienKhach`) chu khong bang hai
+  tep. Du lieu nhay cam da bi loc tu tang API (xem services/reservationTables.js),
+  nen ke ca khi tuy chon bi dat sai thi ten khach cung khong co san o day de lo.
+
+  ---------------------------------------------------------------------------
+  VE BAN NHU MOT CAI BAN, KHONG PHAI MOT O MAU
+  ---------------------------------------------------------------------------
+  Moi ban duoc ve bang SVG: MAT BAN o giua va GHE xep quanh, dung bang so cho.
+
+  Ban dau tien ve moi ban thanh mot hinh tron hoac vuong to mau, kem dong chu
+  "6 chỗ". Cach do doc duoc, nhung phai DOC - mat phai dung lai, tim dong chu,
+  roi moi biet ban do bao nhieu cho. Voi 40 ban tren mot man hinh, do la 40 lan
+  dung lai.
+
+  Ve ghe ra thi so cho tro thanh mot thu NHIN LA THAY, giong het cach nguoi ta
+  nhin mot cai ban ngoai doi. Ban 2 cho va ban 12 cho khac nhau ngay tu cai
+  liec dau tien, khong can doc chu nao. Hinh dang cung mang thong tin: ban tron
+  cho nhom nho, ban chu nhat cho nhom dong - dung nhu mat bang that.
+
+  Chi phi: moi ban la mot khoi SVG thay vi mot the div. Voi 40 ban thi do la 40
+  khoi nho, khong dang ke - va chung duoc dung MOT LAN roi khong ve lai khi doi
+  lua chon (chi doi class), nen cuon trang van muot.
+
+  ---------------------------------------------------------------------------
+  TOA DO
+  ---------------------------------------------------------------------------
+  `ban.toa_do_x` / `toa_do_y` la toa do that do quan ly keo tha o /staff/so-do-ban.
+  Chung la so pixel trong mot mat bang khong co kich thuoc co dinh, nen o day
+  phai chuan hoa: tinh khung bao cua tat ca ban trong khu vuc dang xem, roi doi
+  sang phan tram.
+
+  Chieu ngang giu nguyen toa do that; chieu doc duoc NAN VE HANG de bo khoang
+  chet. Ban chua duoc keo tha bao gio (toa do deu bang nhau) thi khong con thong
+  tin nao de giu - luc do xep deu thanh luoi. Xem `boCuc()`.
+
+  Va vi ban bay gio co kich thuoc that (mot ban 12 cho rong gan 180px), phai TU
+  THU NHO lai khi cac ban nam qua sat nhau - neu khong chung chong len nhau va
+  so do thanh mot dong hinh. Xem `tinhTyLe()`.
+
+  ---------------------------------------------------------------------------
+  MAU KHONG PHAI LA THONG TIN DUY NHAT
+  ---------------------------------------------------------------------------
+  Khoang 8% nam gioi kho phan biet do voi xanh. Moi trang thai vi vay mang BON
+  tin hieu: mau mat ban, mau ghe, mot HUY HIEU hinh hoc o goc ban (dau tich, dong
+  ho, dau X...), va nhan chu day du trong `title` + `aria-label`. Bo ba dau tien
+  deu nhin thay duoc ma khong can phan biet mau.
+*/
+%>
+<style>
+  /* =========================================================================
+     MAT BANG
+     ========================================================================= */
+  .sdb { --sdb-cao: 480px; --sdb-ty-le: 1; }
+
+  /* Khung cuon ngang.
+
+     Tren dien thoai, mot mat bang 7 ban mot hang khong the ep vao 340px ma van
+     doc duoc ten ban - thu nho den muc do thi chu chi con vai pixel. Nen giu
+     nguyen co ban va cho CUON NGANG, dung cach moi ban do giay deu lam. `min-width`
+     ben duoi cung la thu giu cho phan tram vi tri luon quy chieu ve mot be ngang
+     on dinh, nen ty le tinh mot lan van dung sau khi xoay may. */
+  .sdb__cuon {
+    overflow-x: auto; overflow-y: hidden; border-radius: 18px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  }
+  .sdb__goiy-cuon {
+    display: none; font-size: .76rem; color: #8a7f74; margin-top: .5rem;
+    align-items: center; gap: .4rem;
+  }
+
+  .sdb__khung {
+    position: relative; width: 100%; height: var(--sdb-cao); min-width: 100%;
+    border-radius: 18px; overflow: hidden; touch-action: manipulation;
+    /* San nha: mot nen am, luoi rat nhat de mat co diem tua, va mot vung sang
+       o giua cho co chieu sau. Khong dung anh - moi thu la gradient nen khong
+       ton them mot request nao. */
+    background:
+      radial-gradient(120% 90% at 50% 8%, rgba(255,255,255,.85), rgba(255,255,255,0) 60%),
+      linear-gradient(rgba(120,90,60,.055) 1px, transparent 1px) 0 0 / 100% 44px,
+      linear-gradient(90deg, rgba(120,90,60,.055) 1px, transparent 1px) 0 0 / 44px 100%,
+      linear-gradient(160deg, #fdfaf5, #f5efe4);
+    box-shadow: inset 0 0 0 1px rgba(120,90,60,.14), inset 0 18px 40px -30px rgba(60,40,20,.5);
+  }
+  .sdb__khung--tai { display: grid; place-content: center; color: #8a7f74; font-size: .9rem; }
+
+  /* -------------------------------------------------------------------------
+     DAI KHU VUC
+
+     Khi xem nhieu khu cung luc, moi khu duoc mot dai rieng chu khong ve chung
+     mot mat bang. Bat buoc phai the: `toa_do_x/y` trong CSDL la toa do TRONG
+     TUNG KHU, nen ve chung thi ban cua Sanh chinh de len ban cua Phong VIP -
+     va so do bien thanh mot dong hinh chong nhau.
+     ------------------------------------------------------------------------- */
+  .sdb__khung--nhieu { height: auto; padding: 0 0 .5rem; }
+  .sdb__khu + .sdb__khu { border-top: 1px dashed rgba(120,90,60,.22); }
+  .sdb__khu__dai {
+    display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
+    padding: .6rem 1.1rem .1rem; font-size: .8rem; font-weight: 800;
+    color: #6b4f2a; letter-spacing: .04em;
+  }
+  .sdb__khu__dem { font-weight: 600; font-size: .72rem; color: #8a7f74; letter-spacing: 0; }
+  .sdb__khu__san { position: relative; }
+
+  /* Moc dinh huong mat bang: cua so, quay bar, loi vao. Chi la diem tua thi
+     giac - khong tuong tac duoc nen aria-hidden. */
+  .sdb__moc {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: .6rem; letter-spacing: .24em; text-transform: uppercase;
+    color: rgba(90,70,50,.42); font-weight: 800; pointer-events: none; user-select: none;
+    display: flex; align-items: center; gap: .5rem; white-space: nowrap;
+  }
+  .sdb__moc::before, .sdb__moc::after {
+    content: ""; width: clamp(28px, 8vw, 90px); height: 1px; background: currentColor; opacity: .45;
+  }
+  .sdb__moc--tren { top: 11px; }
+  .sdb__moc--duoi { bottom: 11px; }
+
+  /* =========================================================================
+     MOT CAI BAN
+     ========================================================================= */
+  .sdb__ban {
+    position: absolute; transform: translate(-50%, -50%) scale(var(--sdb-ty-le));
+    transform-origin: center;
+    padding: 0; border: 0; background: none; line-height: 0;
+    cursor: default; transition: filter .2s ease, transform .2s ease;
+    filter: drop-shadow(0 3px 5px rgba(60,40,20,.16));
+  }
+  .sdb__ban svg { display: block; overflow: visible; }
+
+  .sdb__ban--chon-duoc { cursor: pointer; }
+  .sdb__ban--chon-duoc:hover {
+    transform: translate(-50%, -50%) scale(calc(var(--sdb-ty-le) * 1.07));
+    filter: drop-shadow(0 9px 14px rgba(60,40,20,.3));
+    z-index: 3;
+  }
+  .sdb__ban:focus-visible { outline: none; }
+  .sdb__ban:focus-visible .sdb__vien { opacity: 1; stroke: #b8860b; stroke-width: 3; }
+
+  /* Ban dang duoc chon: vong vang bao quanh + huy hieu dau tich. */
+  .sdb__ban--chon { z-index: 4; filter: drop-shadow(0 8px 16px rgba(200,162,75,.55)); }
+  .sdb__ban--chon .sdb__vien { opacity: 1; }
+
+  /* Ban khong bam duoc: mo bot de mat luot qua nhanh, nhung van doc duoc. */
+  .sdb__ban--mo { opacity: .58; }
+
+  /* =========================================================================
+     CHU THICH
+     ========================================================================= */
+  .sdb__chuthich {
+    display: flex; flex-wrap: wrap; gap: .5rem .35rem; margin-top: 1rem;
+    padding: .75rem .9rem; border-radius: 12px;
+    background: rgba(255,255,255,.7); border: 1px solid rgba(120,90,60,.14);
+  }
+  .sdb__ct {
+    display: inline-flex; align-items: center; gap: .45rem; font-size: .78rem;
+    color: #5c5148; padding: .18rem .5rem; border-radius: 999px;
+  }
+  .sdb__ct svg { display: block; flex: none; }
+
+  /* =========================================================================
+     TAB KHU VUC
+     ========================================================================= */
+  .sdb__tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .9rem; }
+  .sdb__tab {
+    border: 1.5px solid rgba(120,90,60,.2); background: #fff; color: #3d2519;
+    border-radius: 999px; padding: .5rem 1.05rem; font: inherit; font-size: .84rem; font-weight: 600;
+    cursor: pointer; transition: all .2s ease; display: inline-flex; align-items: center; gap: .5rem;
+  }
+  .sdb__tab:hover { border-color: #c8a24b; transform: translateY(-1px); }
+  .sdb__tab[aria-selected="true"] { background: #2b1a12; border-color: #2b1a12; color: #f7efe2;
+    box-shadow: 0 6px 14px -8px rgba(43,26,18,.9); }
+  .sdb__tab__dem { font-size: .71rem; font-weight: 700; padding: .08rem .45rem; border-radius: 999px;
+    background: rgba(22,163,74,.16); color: #14532d; }
+  .sdb__tab[aria-selected="true"] .sdb__tab__dem { background: rgba(255,255,255,.22); color: #fff; }
+  .sdb__tab__dem--het { background: rgba(220,38,38,.14); color: #991b1b; }
+
+  /* =========================================================================
+     THANH TOM TAT LUA CHON
+     ========================================================================= */
+  .sdb__tomtat {
+    margin-top: .9rem; padding: .85rem 1.1rem; border-radius: 12px;
+    background: #f3ebdd; border: 1px solid rgba(120,90,60,.16);
+    display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.1rem; font-size: .88rem;
+  }
+  .sdb__tomtat b { color: #2b1a12; }
+  .sdb__tomtat--thieu { background: #fef2f2; border-color: rgba(220,38,38,.28); color: #991b1b; }
+  .sdb__tomtat--du { background: #f0fdf4; border-color: rgba(22,163,74,.32); color: #14532d; }
+
+  @media (max-width: 760px) {
+    .sdb__khung { min-width: 620px; }
+    .sdb__goiy-cuon { display: flex; }
+    .sdb__moc { font-size: .54rem; letter-spacing: .16em; }
+    .sdb__moc::before, .sdb__moc::after { width: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sdb__ban, .sdb__tab { transition: none; }
+    .sdb__ban--chon-duoc:hover { transform: translate(-50%, -50%) scale(var(--sdb-ty-le)); }
+  }
+
+  /* In ra giay: bo bong do va nen gradient - may in phun ra mot mang xam. */
+  @media print {
+    .sdb__ban { filter: none; }
+    .sdb__khung { background: #fff; box-shadow: inset 0 0 0 1px #ccc; }
+  }
+</style>
+
+<%
+/*
+  CHU TREN SO DO.
+
+  So do nay dung chung cho hai khu, va hai khu KHAC NHAU o cho nay:
+
+    - khu khach  (/dat-ban)   dich theo ngon ngu khach dang chon
+    - khu nhan vien (/staff)  luon tieng Viet - xem middleware/ngonNgu.js
+
+  Nen nhan khong viet cung trong JavaScript ma lay tu day: khu khach tra qua
+  `t()`, khu nhan vien lui ve chuoi goc ben duoi. Truoc khi co bang nay, mot
+  trang dat ban tieng Nhat van hien "Đã có khách đặt" tren tung o ban.
+*/
+var SD_GOC = {
+  trong: 'Trống',
+  trong_chon_duoc: 'Trống — chọn được',
+  da_dat: 'Đã có khách đặt',
+  dang_co_khach: 'Đang có khách',
+  dang_phuc_vu: 'Đang phục vụ',
+  dang_don: 'Đang dọn',
+  bao_tri: 'Bảo trì',
+  khong_nhan_dat: 'Không nhận đặt',
+  khu_chua_co_ban: 'Khu vực này chưa có bàn nào.',
+  cho: 'chỗ',
+  gan_cua_so: 'gần cửa sổ',
+  phong_rieng: 'phòng riêng',
+  yen_tinh: 'yên tĩnh',
+  tat_ca_khu: 'Tất cả khu vực',
+  vuot_ngang: 'Vuốt ngang để xem hết sơ đồ',
+  dai_khu: '{ban} bàn · {cho} chỗ · {trong} trống',
+  ban_trong: '{n} bàn trống',
+  het_ban: 'Hết bàn',
+};
+var SD_NHAN = {};
+Object.keys(SD_GOC).forEach(function (k) {
+  if (typeof laKhuKhach === 'undefined' || !laKhuKhach) { SD_NHAN[k] = SD_GOC[k]; return; }
+  var khoa = k === 'cho' ? 'dat_ban_moi.cho' : 'so_do.' + k;
+  var dich = t(khoa);
+  SD_NHAN[k] = dich === khoa ? SD_GOC[k] : dich;
+});
+%>
+
+<script>
+/*
+  SoDoDatBan - ve mat bang tu du lieu API va tra ve cac ban duoc chon.
+
+  Dung `window` co y: hai trang (khach va nhan vien) nap cung tep nay va deu
+  goi qua ten nay. Khong dung module ES vi phan con lai cua du an chay script
+  co dien, tron hai kieu se can thay doi cach nap tren moi trang.
+*/
+window.SoDoDatBan = (function () {
+  'use strict';
+
+  var SVG = 'http://www.w3.org/2000/svg';
+
+  /* Nhan chu, dich san o phia may chu. Xem khoi EJS ngay tren the <script>. */
+  var N = <%- JSON.stringify(SD_NHAN).replace(/</g, '\\u003c') %>;
+
+  /* ---------------------------------------------------------------------
+     BANG MAU THEO TRANG THAI
+
+     `mat`  mat ban        `vien` duong vien mat ban
+     `ghe`  ghe quanh ban  `chu`  ten ban in tren mat
+     `huy`  mau huy hieu   `glyph` hinh hoc trong huy hieu (xem veHuyHieu)
+
+     Mau lay tu bang `table_status_catalog` ve mat y nghia, nhung o day duoc
+     lam am va nhat hon: mot mat bang 40 ban to mau bao hoa nhin nhu mot bang
+     canh bao chu khong nhu mot nha hang.
+     --------------------------------------------------------------------- */
+  var MAU = {
+    trong:     { mat: '#e8f7ec', vien: '#16a34a', ghe: '#8fd4a5', chu: '#14532d', huy: '#16a34a', glyph: 'tich' },
+    dat:       { mat: '#fdf3dd', vien: '#d97706', ghe: '#eec98a', chu: '#7c2d12', huy: '#d97706', glyph: 'dongho' },
+    phucvu:    { mat: '#fbe6e4', vien: '#dc2626', ghe: '#eda9a3', chu: '#7f1d1d', huy: '#dc2626', glyph: 'nguoi' },
+    don:       { mat: '#eef1f5', vien: '#64748b', ghe: '#bcc6d2', chu: '#334155', huy: '#64748b', glyph: 'choi' },
+    baotri:    { mat: '#dfe3e9', vien: '#1e293b', ghe: '#9aa4b2', chu: '#1e293b', huy: '#1e293b', glyph: 'x' },
+    khongdat:  { mat: '#f4f4f5', vien: '#cbd5e1', ghe: '#e2e5ea', chu: '#94a3b8', huy: '#94a3b8', glyph: 'gach' }
+  };
+
+  /* Ly do tu API -> cach ve. LY DO quyet dinh, khong phai trang thai vat ly:
+     mot ban dang Trong nhung DA CO KHACH DAT khung gio nay thi phai ve la
+     "đã đặt", neu khong khach se bam vao roi nhan bao loi. */
+  var LY_DO = {
+    RESERVED:     { kieu: 'dat',      ten: N.da_dat },
+    OCCUPIED:     { kieu: 'phucvu',   ten: N.dang_co_khach },
+    CLEANING:     { kieu: 'don',      ten: N.dang_don },
+    MAINTENANCE:  { kieu: 'baotri',   ten: N.bao_tri },
+    NOT_BOOKABLE: { kieu: 'khongdat', ten: N.khong_nhan_dat }
+  };
+
+  /** Trang thai vat ly cua ban -> kieu ve. Khop table_status_catalog. */
+  var THEO_MA = { 0: 'trong', 1: 'phucvu', 2: 'dat', 3: 'don', 4: 'baotri' };
+
+  // ------------------------------------------------------------ tien ich
+
+  function the(ten, thuoc) {
+    var n = document.createElementNS(SVG, ten);
+    for (var k in thuoc) if (thuoc[k] !== null && thuoc[k] !== undefined) n.setAttribute(k, thuoc[k]);
+    return n;
+  }
+
+  function el(ten, lop, chu) {
+    var n = document.createElement(ten);
+    if (lop) n.className = lop;
+    if (chu != null) n.textContent = chu;
+    return n;
+  }
+
+  // -------------------------------------------------------- hinh hoc ban
+
+  var GHE_D = 15;   // ghe: chieu dai canh sat mat ban
+  var GHE_R = 10;   // ghe: chieu sau
+  var KHE   = 5;    // khe ho giua mat ban va ghe
+  var LE    = 4;    // le ngoai cung, chua bong do
+
+  /**
+   * Chia so ghe ra bon canh cua mot ban chu nhat.
+   *
+   * Duoi 8 cho: xep het theo hai canh DAI, dung nhu cach ke ban trong nha hang -
+   * hai canh ngan de trong cho nguoi phuc vu dua mon.
+   * Tu 9 cho tro len: ban da qua dai, them mot ghe moi dau cho can doi.
+   */
+  function chiaGhe(n) {
+    if (n <= 8) return { tren: Math.ceil(n / 2), duoi: Math.floor(n / 2), trai: 0, phai: 0 };
+    var conLai = n - 2;
+    return { tren: Math.ceil(conLai / 2), duoi: Math.floor(conLai / 2), trai: 1, phai: 1 };
+  }
+
+  /** Ban <= 4 cho ve hinh tron; tu 5 cho tro len ve chu nhat. Giong ngoai doi. */
+  function laTron(soCho) { return soCho <= 4; }
+
+  /** Kich thuoc tu nhien cua mot ban, tinh ca ghe va le. */
+  function kichThuoc(soCho) {
+    var n = Math.max(1, Math.min(24, Number(soCho) || 4));
+    if (laTron(n)) {
+      var r = n <= 2 ? 23 : 28;
+      var d = 2 * (r + KHE + GHE_R) + 2 * LE;
+      return { tron: true, r: r, rong: d, cao: d };
+    }
+    var c = chiaGhe(n);
+    var moiCanh = Math.max(c.tren, c.duoi);
+    var w = Math.max(58, moiCanh * (GHE_D + 6) + 11);
+    var h = 42;
+    var themNgang = (c.trai || c.phai) ? (KHE + GHE_R) * 2 : 0;
+    return {
+      tron: false, w: w, h: h, chia: c,
+      rong: w + themNgang + 2 * LE,
+      cao: h + (KHE + GHE_R) * 2 + 2 * LE
+    };
+  }
+
+  // ------------------------------------------------------------- huy hieu
+
+  /**
+   * Huy hieu goc tren-phai cua ban: kenh thong tin KHONG DUNG MAU.
+   *
+   * Ve bang duong thang chu khong bang phong chu bieu tuong: phong chu co the
+   * chua tai xong (hoac bi chan) dung luc so do hien ra, va luc do ca mot mat
+   * bang chi con mau sac de phan biet - dung cai ma huy hieu nay sinh ra de tranh.
+   */
+  function veHuyHieu(g, x, y, mau, glyph) {
+    var R = 9;
+    g.appendChild(the('circle', { cx: x, cy: y, r: R, fill: mau, stroke: '#fff', 'stroke-width': 2 }));
+    var d = {
+      tich:   'M' + (x - 4) + ' ' + y + ' l3 3 l5 -6',
+      dongho: 'M' + x + ' ' + (y - 4.5) + ' v5 h3.5',
+      nguoi:  null,
+      choi:   'M' + (x - 4) + ' ' + (y + 4) + ' l4 -8 M' + x + ' ' + (y + 4) + ' l4 -8',
+      x:      'M' + (x - 3.5) + ' ' + (y - 3.5) + ' l7 7 M' + (x + 3.5) + ' ' + (y - 3.5) + ' l-7 7',
+      gach:   'M' + (x - 4) + ' ' + y + ' h8'
+    }[glyph];
+
+    if (glyph === 'nguoi') {
+      // Nguoi ngoi: mot dau tron va mot than hinh vom.
+      g.appendChild(the('circle', { cx: x, cy: y - 2.6, r: 2.1, fill: '#fff' }));
+      g.appendChild(the('path', {
+        d: 'M' + (x - 4) + ' ' + (y + 4.2) + ' a4 4 0 0 1 8 0 z', fill: '#fff'
+      }));
+      return;
+    }
+    if (d) {
+      g.appendChild(the('path', {
+        d: d, fill: 'none', stroke: '#fff', 'stroke-width': 2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+      }));
+    }
+  }
+
+  // ------------------------------------------------------------- ve ban
+
+  /**
+   * Dung khoi SVG cua mot cai ban: ghe -> mat ban -> ten -> huy hieu.
+   *
+   * Thu tu quan trong: ghe ve TRUOC de mat ban de len tren, giong nhu nhin tu
+   * tren xuong ngoai doi - phan ghe thut vao duoi mat ban bi che di, va cai ban
+   * trong lien mach thay vi nhu mot cum hinh roi rac.
+   */
+  function veBan(soCho, kieu, ten, daChon) {
+    var m = MAU[kieu] || MAU.khongdat;
+    var kt = kichThuoc(soCho);
+    var n = Math.max(1, Math.min(24, Number(soCho) || 4));
+    var svg = the('svg', { width: kt.rong, height: kt.cao, viewBox: '0 0 ' + kt.rong + ' ' + kt.cao });
+    var g = the('g', {});
+    svg.appendChild(g);
+
+    var cx = kt.rong / 2;
+    var cy = kt.cao / 2;
+
+    // ---- ghe
+    var ghe = { fill: m.ghe, stroke: m.vien, 'stroke-width': 1, 'stroke-opacity': .38, rx: 4 };
+    if (kt.tron) {
+      var kc = kt.r + KHE + GHE_R / 2;
+      for (var i = 0; i < n; i += 1) {
+        var goc = (i / n) * 2 * Math.PI - Math.PI / 2;
+        var gx = cx + Math.cos(goc) * kc;
+        var gy = cy + Math.sin(goc) * kc;
+        var r = the('rect', Object.assign({
+          x: gx - GHE_D / 2, y: gy - GHE_R / 2, width: GHE_D, height: GHE_R
+        }, ghe));
+        r.setAttribute('transform', 'rotate(' + (goc * 180 / Math.PI + 90) + ' ' + gx + ' ' + gy + ')');
+        g.appendChild(r);
+      }
+    } else {
+      var c = kt.chia;
+      var x0 = cx - kt.w / 2;
+      var y0 = cy - kt.h / 2;
+      var hang = function (so, y) {
+        for (var j = 0; j < so; j += 1) {
+          var px = x0 + kt.w * (j + 0.5) / so;
+          g.appendChild(the('rect', Object.assign({
+            x: px - GHE_D / 2, y: y - GHE_R / 2, width: GHE_D, height: GHE_R
+          }, ghe)));
+        }
+      };
+      hang(c.tren, y0 - KHE - GHE_R / 2);
+      hang(c.duoi, y0 + kt.h + KHE + GHE_R / 2);
+      [['trai', x0 - KHE - GHE_R / 2], ['phai', x0 + kt.w + KHE + GHE_R / 2]].forEach(function (p) {
+        if (!c[p[0]]) return;
+        g.appendChild(the('rect', {
+          x: p[1] - GHE_R / 2, y: cy - GHE_D / 2, width: GHE_R, height: GHE_D,
+          fill: ghe.fill, stroke: ghe.stroke, 'stroke-width': 1, 'stroke-opacity': .38, rx: 4
+        }));
+      });
+    }
+
+    // ---- mat ban
+    if (kt.tron) {
+      g.appendChild(the('circle', { cx: cx, cy: cy, r: kt.r, fill: m.mat, stroke: m.vien, 'stroke-width': 2.2 }));
+      // Vong sang mo ben trong: cho mat ban co do cong, khong phang li.
+      g.appendChild(the('circle', {
+        cx: cx, cy: cy - kt.r * .18, r: kt.r * .62,
+        fill: '#fff', 'fill-opacity': .38
+      }));
+    } else {
+      g.appendChild(the('rect', {
+        x: cx - kt.w / 2, y: cy - kt.h / 2, width: kt.w, height: kt.h, rx: 9,
+        fill: m.mat, stroke: m.vien, 'stroke-width': 2.2
+      }));
+      g.appendChild(the('rect', {
+        x: cx - kt.w / 2 + 5, y: cy - kt.h / 2 + 4, width: kt.w - 10, height: kt.h * .42, rx: 6,
+        fill: '#fff', 'fill-opacity': .34
+      }));
+    }
+
+    // ---- ten ban
+    var chu = the('text', {
+      x: cx, y: cy + 4.5, 'text-anchor': 'middle', fill: m.chu,
+      'font-size': kt.tron && n <= 2 ? 12 : 13.5, 'font-weight': 800,
+      'font-family': 'inherit', 'letter-spacing': .3
+    });
+    chu.textContent = ten;
+    g.appendChild(chu);
+
+    // ---- huy hieu trang thai
+    var hx = kt.tron ? cx + kt.r * .72 : cx + kt.w / 2 - 3;
+    var hy = kt.tron ? cy - kt.r * .72 : cy - kt.h / 2 + 1;
+    veHuyHieu(g, hx, hy, m.huy, m.glyph);
+
+    // ---- vong chon (luon ve, chi an/hien bang opacity de doi lua chon khong
+    //      phai dung lai ca khoi SVG)
+    var vien;
+    if (kt.tron) {
+      vien = the('circle', { cx: cx, cy: cy, r: kt.r + KHE + GHE_R + 1 });
+    } else {
+      vien = the('rect', {
+        x: LE - 1, y: LE - 1, width: kt.rong - 2 * LE + 2, height: kt.cao - 2 * LE + 2, rx: 14
+      });
+    }
+    vien.setAttribute('fill', 'none');
+    vien.setAttribute('stroke', '#c8a24b');
+    vien.setAttribute('stroke-width', 3);
+    vien.setAttribute('class', 'sdb__vien');
+    vien.setAttribute('opacity', '0');
+    g.appendChild(vien);
+
+    // ---- dau tich khi da chon
+    if (daChon !== undefined) {
+      var tich = the('g', { class: 'sdb__tich', opacity: '0' });
+      var tx = kt.tron ? cx - kt.r * .72 : cx - kt.w / 2 + 3;
+      var ty = kt.tron ? cy - kt.r * .72 : cy - kt.h / 2 + 1;
+      tich.appendChild(the('circle', { cx: tx, cy: ty, r: 9.5, fill: '#2b1a12', stroke: '#c8a24b', 'stroke-width': 2 }));
+      tich.appendChild(the('path', {
+        d: 'M' + (tx - 4) + ' ' + ty + ' l3 3 l5 -6',
+        fill: 'none', stroke: '#f7efe2', 'stroke-width': 2.2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+      }));
+      g.appendChild(tich);
+    }
+
+    return { svg: svg, kt: kt };
+  }
+
+  // ------------------------------------------------------------ bo cuc
+
+  /**
+   * Tinh bo cuc cua mot khu: moi ban o dau, va khu do cao bao nhieu hang.
+   *
+   * CHIEU NGANG giu nguyen toa do that (`toa_do_x` quan ly da keo tha), vi do la
+   * thu ta ta mat bang - ban nao canh cua, ban nao gan bep.
+   *
+   * CHIEU DOC thi NAN VE HANG: gom cac gia tri y thanh cum, roi dat moi cum vao
+   * mot hang chia deu chieu cao khu.
+   *
+   * Vi sao khong giu nguyen y that: toa do y trong CSDL nam rai rac (20, 148,
+   * 341...) va khi doi sang phan tram thi hai hang ban cach nhau nua man hinh,
+   * de lai mot mang trong o giua. Ban do la bo cuc mot phong an that, nhung tren
+   * mot khung cao 300px thi no chi con la khoang chet. Nan ve hang giu duoc dieu
+   * thuc su co nghia - ban nao cung hang voi ban nao - ma bo di khoang thua.
+   *
+   * Ban chua bao gio duoc keo tha (toa do deu bang nhau) thi khong co thong tin
+   * nao de giu: chia deu thanh luoi vuong.
+   */
+  function boCuc(dsBan) {
+    var xs = dsBan.map(function (b) { return Number(b.x) || 0; });
+    var minX = Math.min.apply(null, xs);
+    var rongX = Math.max.apply(null, xs) - minX;
+    var coX = rongX >= 40;
+
+    var sap = dsBan.slice().sort(function (a, b) {
+      return (Number(a.y) || 0) - (Number(b.y) || 0) || (Number(a.x) || 0) - (Number(b.x) || 0);
+    });
+    var ys = sap.map(function (b) { return Number(b.y) || 0; });
+    var caoY = ys[ys.length - 1] - ys[0];
+
+    var hang = [];
+    if (caoY < 20) {
+      // Khong co thong tin chieu doc: chia deu thanh luoi gan vuong.
+      var moiHang = Math.ceil(Math.sqrt(sap.length)) || 1;
+      for (var k = 0; k < sap.length; k += moiHang) hang.push(sap.slice(k, k + moiHang));
+    } else {
+      var nguong = caoY * 0.18;
+      hang.push([sap[0]]);
+      for (var i = 1; i < sap.length; i += 1) {
+        if (ys[i] - ys[i - 1] > nguong) hang.push([]);
+        hang[hang.length - 1].push(sap[i]);
+      }
+    }
+
+    // Hang qua dong ban thi be doi: 9 ban tren mot hang thi moi ban chi con
+    // mot phan chin be ngang, khong con doc duoc ten.
+    var TOI_DA = 8;
+    var hang2 = [];
+    hang.forEach(function (h) {
+      if (h.length <= TOI_DA) { hang2.push(h); return; }
+      var so = Math.ceil(h.length / Math.ceil(h.length / TOI_DA));
+      for (var k = 0; k < h.length; k += so) hang2.push(h.slice(k, k + so));
+    });
+    hang = hang2;
+
+    var vt = {};
+    hang.forEach(function (h, hi) {
+      var tren = ((hi + 0.5) / hang.length) * 100;
+      h.forEach(function (b, bi) {
+        vt[b.id] = {
+          trai: coX ? 8 + ((Number(b.x) - minX) / rongX) * 84 : ((bi + 0.5) / h.length) * 100,
+          tren: tren
+        };
+      });
+    });
+
+    return { soHang: hang.length, vt: vt };
+  }
+
+  /**
+   * Ty le thu nho de cac ban khong chong len nhau.
+   *
+   * Ban ve theo kich thuoc THAT (mot ban 12 cho rong ~160px), con mot hang thi
+   * co the co 7 ban tren mot khung rong 800px. Neu khong thu nho, chung de len
+   * nhau va so do thanh mot dong hinh khong doc duoc.
+   *
+   * Chan tren 1 de so do thua cho khong bi phong to ky di; chan duoi .52 de con
+   * doc duoc ten ban.
+   */
+  function tinhTyLe(dsBan, bc, rongPx, caoPx) {
+    if (dsBan.length < 2) return 1;
+
+    var toiDaRong = 0, toiDaCao = 0;
+    dsBan.forEach(function (b) {
+      var kt = kichThuoc(b.so_cho);
+      if (kt.rong > toiDaRong) toiDaRong = kt.rong;
+      if (kt.cao > toiDaCao) toiDaCao = kt.cao;
+    });
+
+    var ganNhatX = Infinity;
+    var diem = dsBan.map(function (b) {
+      var v = bc.vt[b.id];
+      return { x: v.trai / 100 * rongPx, y: v.tren / 100 * caoPx };
+    });
+    for (var i = 0; i < diem.length; i += 1) {
+      for (var j = i + 1; j < diem.length; j += 1) {
+        if (Math.abs(diem[i].y - diem[j].y) > 1) continue; // khac hang thi khong ep nhau
+        var dx = Math.abs(diem[i].x - diem[j].x);
+        if (dx > 1) ganNhatX = Math.min(ganNhatX, dx);
+      }
+    }
+
+    // Chieu doc: khoang cach giua hai hang.
+    var caoHang = bc.soHang > 1 ? caoPx / bc.soHang : Infinity;
+
+    var tyLe = 1;
+    if (isFinite(ganNhatX)) tyLe = Math.min(tyLe, (ganNhatX * .96) / toiDaRong);
+    if (isFinite(caoHang)) tyLe = Math.min(tyLe, (caoHang * .92) / toiDaCao);
+    return Math.max(.52, Math.min(1, tyLe));
+  }
+
+  // ------------------------------------------------------------ chu thich
+
+  /** Mot o chu thich: mieng ban thu nho + huy hieu + chu. */
+  function oChuThich(kieu, nhan) {
+    var m = MAU[kieu];
+    var o = el('span', 'sdb__ct');
+    var svg = the('svg', { width: 30, height: 22, viewBox: '0 0 30 22' });
+    var g = the('g', {});
+    svg.appendChild(g);
+    g.appendChild(the('rect', { x: 2, y: 8.5, width: 9, height: 6, rx: 2, fill: m.ghe }));
+    g.appendChild(the('rect', { x: 19, y: 8.5, width: 9, height: 6, rx: 2, fill: m.ghe }));
+    g.appendChild(the('rect', { x: 9, y: 4, width: 12, height: 15, rx: 4, fill: m.mat, stroke: m.vien, 'stroke-width': 1.8 }));
+    veHuyHieu(g, 22.5, 5, m.huy, m.glyph);
+    o.appendChild(svg);
+    o.appendChild(document.createTextNode(nhan));
+    return o;
+  }
+
+  /** Bo chu thich chuan, dung o moi so do. */
+  function boChuThich() {
+    return [
+      ['trong', N.trong_chon_duoc],
+      ['dat', N.da_dat],
+      ['phucvu', N.dang_phuc_vu],
+      ['don', N.dang_don],
+      ['baotri', N.bao_tri]
+    ];
+  }
+
+  function veChuThich(khung, ds) {
+    var hop = el('div', 'sdb__chuthich');
+    (ds || boChuThich()).forEach(function (x) { hop.appendChild(oChuThich(x[0], x[1])); });
+    khung.appendChild(hop);
+    return hop;
+  }
+
+  // ---------------------------------------------------------------- ve
+
+  /**
+   * Ve so do.
+   *
+   * `tuyChon`:
+   *   choChon      cho phep bam chon ban (trang khach, va man gan ban cua NV)
+   *   soKhach      de tinh "da du cho chua"
+   *   daChon       mang id ban dang chon (giu lai khi ve lai)
+   *   onChon       goi lai moi khi tap chon doi -> (mangId, tongCho)
+   *   onBam        goi khi bam vao mot ban bat ky (trang nhan vien mo chi tiet)
+   *   hienKhach    hien ten khach tren ban (CHI man hinh nhan vien)
+   *   mocTren/Duoi nhan trang tri mat bang
+   */
+  /**
+   * Gom ban theo khu vuc, giu nguyen thu tu xuat hien.
+   *
+   * Khong dung `duLieu.khu_vuc` de gom: danh sach do co ca khu KHONG co ban nao
+   * trong ket qua (vi du khach loc theo suc chua), va mot dai khu vuc rong la
+   * mot khoang trong vo nghia giua so do.
+   */
+  function nhomTheoKhu(dsBan) {
+    var thuTu = [];
+    var theo = {};
+    dsBan.forEach(function (b) {
+      var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      theo[k].ban.push(b);
+    });
+    return thuTu;
+  }
+
+  /**
+   * Ve so do.
+   *
+   * `tuyChon`:
+   *   choChon      cho phep bam chon ban (trang khach, va man gan ban cua NV)
+   *   soKhach      de tinh "da du cho chua"
+   *   daChon       mang id ban dang chon (giu lai khi ve lai)
+   *   onChon       goi lai moi khi tap chon doi -> (mangId, tongCho)
+   *   onBam        goi khi bam vao mot ban bat ky (trang nhan vien mo chi tiet)
+   *   hienKhach    hien ten khach tren ban (CHI man hinh nhan vien)
+   *   mocTren/Duoi nhan trang tri mat bang
+   */
+  /**
+   * Gom ban theo khu vuc, giu nguyen thu tu xuat hien.
+   *
+   * Khong dung `duLieu.khu_vuc` de gom: danh sach do co ca khu KHONG co ban nao
+   * trong ket qua (vi du khach loc theo suc chua), va mot dai khu vuc rong la
+   * mot khoang trong vo nghia giua so do.
+   */
+  function nhomTheoKhu(dsBan) {
+    var thuTu = [];
+    var theo = {};
+    dsBan.forEach(function (b) {
+      var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      theo[k].ban.push(b);
+    });
+    return thuTu;
+  }
+
+  /**
+   * Ve so do.
+   *
+   * `tuyChon`:
+   *   choChon      cho phep bam chon ban (trang khach, va man gan ban cua NV)
+   *   soKhach      de tinh "da du cho chua"
+   *   daChon       mang id ban dang chon (giu lai khi ve lai)
+   *   onChon       goi lai moi khi tap chon doi -> (mangId, tongCho)
+   *   onBam        goi khi bam vao mot ban bat ky (trang nhan vien mo chi tiet)
+   *   hienKhach    hien ten khach tren ban (CHI man hinh nhan vien)
+   *   mocTren/Duoi nhan trang tri mat bang
+   */
+  /**
+   * Gom ban theo khu vuc, giu nguyen thu tu xuat hien.
+   *
+   * Khong dung `duLieu.khu_vuc` de gom: danh sach do co ca khu KHONG co ban nao
+   * trong ket qua (vi du khach loc theo suc chua), va mot dai khu vuc rong la
+   * mot khoang trong vo nghia giua so do.
+   */
+  function nhomTheoKhu(dsBan) {
+    var thuTu = [];
+    var theo = {};
+    dsBan.forEach(function (b) {
+      var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      theo[k].ban.push(b);
+    });
+    return thuTu;
+  }
+
+  /**
+   * Ve so do.
+   *
+   * `tuyChon`:
+   *   choChon      cho phep bam chon ban (trang khach, va man gan ban cua NV)
+   *   soKhach      de tinh "da du cho chua"
+   *   daChon       mang id ban dang chon (giu lai khi ve lai)
+   *   onChon       goi lai moi khi tap chon doi -> (mangId, tongCho)
+   *   onBam        goi khi bam vao mot ban bat ky (trang nhan vien mo chi tiet)
+   *   hienKhach    hien ten khach tren ban (CHI man hinh nhan vien)
+   *   mocTren/Duoi nhan trang tri mat bang
+   */
+  /**
+   * Gom ban theo khu vuc, giu nguyen thu tu xuat hien.
+   *
+   * Khong dung `duLieu.khu_vuc` de gom: danh sach do co ca khu KHONG co ban nao
+   * trong ket qua (vi du khach loc theo suc chua), va mot dai khu vuc rong la
+   * mot khoang trong vo nghia giua so do.
+   */
+  function nhomTheoKhu(dsBan) {
+    var thuTu = [];
+    var theo = {};
+    dsBan.forEach(function (b) {
+      var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      theo[k].ban.push(b);
+    });
+    return thuTu;
+  }
+
+  /**
+   * Uoc luong so HANG ban trong mot khu, de tinh chieu cao dai vua du.
+   *
+   * Gom cac gia tri y lai thanh cum: hai ban lech nhau duoi 18% chieu cao khu
+   * thi coi la cung mot hang. Dat chieu cao theo so hang chu khong theo mot con
+   * so co dinh - khu mot hang khong bi bo mot khoang trong bang nua man hinh,
+   * con khu ba hang khong bi ep den muc ban de len nhau.
+   */
+  function demHang(dsBan) {
+    var ys = dsBan.map(function (b) { return Number(b.y) || 0; }).sort(function (a, b) { return a - b; });
+    var dai = ys[ys.length - 1] - ys[0];
+    if (dai < 1) return 1;
+    var nguong = dai * 0.18;
+    var hang = 1;
+    for (var i = 1; i < ys.length; i += 1) if (ys[i] - ys[i - 1] > nguong) hang += 1;
+    return Math.max(1, Math.min(6, hang));
+  }
+
+  /**
+   * Ve so do.
+   *
+   * `tuyChon`:
+   *   choChon      cho phep bam chon ban (trang khach, va man gan ban cua NV)
+   *   soKhach      de tinh "da du cho chua"
+   *   daChon       mang id ban dang chon (giu lai khi ve lai)
+   *   onChon       goi lai moi khi tap chon doi -> (mangId, tongCho)
+   *   onBam        goi khi bam vao mot ban bat ky (trang nhan vien mo chi tiet)
+   *   hienKhach    hien ten khach tren ban (CHI man hinh nhan vien)
+   *   mocTren/Duoi nhan trang tri mat bang (chi ve khi xem MOT khu)
+   */
+  function ve(khung, duLieu, tuyChon) {
+    tuyChon = tuyChon || {};
+    var dsBan = (duLieu.ban || []).slice();
+    var daChon = (tuyChon.daChon || []).map(Number);
+
+    khung.innerHTML = '';
+    khung.classList.add('sdb');
+
+    if (!dsBan.length) {
+      khung.appendChild(el('div', 'sdb__khung sdb__khung--tai', N.khu_chua_co_ban));
+      return { chon: daChon, xoaChon: function () {} };
+    }
+
+    var nhom = nhomTheoKhu(dsBan);
+    var nhieuKhu = nhom.length > 1;
+
+    var cuon = el('div', 'sdb__cuon');
+    var mat = el('div', 'sdb__khung' + (nhieuKhu ? ' sdb__khung--nhieu' : ''));
+    cuon.appendChild(mat);
+    khung.appendChild(cuon);
+
+    var nut = {};
+
+    function tongChoDaChon() {
+      return daChon.reduce(function (s, id) {
+        var b = dsBan.filter(function (x) { return Number(x.id) === id; })[0];
+        return s + (b ? Number(b.so_cho) : 0);
+      }, 0);
+    }
+
+    function capNhatVe() {
+      dsBan.forEach(function (b) {
+        var n = nut[b.id];
+        if (!n) return;
+        var chon = daChon.indexOf(Number(b.id)) >= 0;
+        n.classList.toggle('sdb__ban--chon', chon);
+        n.setAttribute('aria-pressed', chon ? 'true' : 'false');
+        var v = n.querySelector('.sdb__vien');
+        var t = n.querySelector('.sdb__tich');
+        if (v) v.setAttribute('opacity', chon ? '1' : '0');
+        if (t) t.setAttribute('opacity', chon ? '1' : '0');
+      });
+      if (tuyChon.onChon) tuyChon.onChon(daChon.slice(), tongChoDaChon());
+    }
+
+    /** Ve mot ban vao dung mot san (khung khu vuc). */
+    function veVao(san, b, bc) {
+      var vt = bc.vt[b.id];
+      var ly = b.kha_dung
+        ? null
+        : (LY_DO[(b.ly_do && b.ly_do.ma) || ''] || { kieu: THEO_MA[Number(b.trang_thai_ban)] || 'khongdat', ten: '' });
+      var kieu = b.kha_dung ? 'trong' : ly.kieu;
+      var chonDuoc = !!(tuyChon.choChon && b.kha_dung);
+
+      var ket = veBan(b.so_cho, kieu, b.ten, chonDuoc ? false : undefined);
+
+      var n = el(chonDuoc || tuyChon.onBam ? 'button' : 'div',
+        'sdb__ban' + (chonDuoc ? ' sdb__ban--chon-duoc' : '') + (b.kha_dung ? '' : ' sdb__ban--mo'));
+      if (n.tagName === 'BUTTON') n.type = 'button';
+      n.style.left = vt.trai + '%';
+      n.style.top = vt.tren + '%';
+      n.appendChild(ket.svg);
+
+      // Ten khach CHI hien o man hinh nhan vien. API cong khai khong tra ve
+      // truong nay, nen day la lop chan thu hai chu khong phai lop duy nhat.
+      if (tuyChon.hienKhach && b.reservation) {
+        var t2 = the('text', {
+          x: ket.kt.rong / 2, y: ket.kt.cao - 1, 'text-anchor': 'middle',
+          fill: '#5c5148', 'font-size': 10, 'font-weight': 700, 'font-family': 'inherit'
+        });
+        t2.textContent = b.reservation.khach.split(' ').slice(-1)[0];
+        ket.svg.querySelector('g').appendChild(t2);
+      }
+
+      // Nhan doc duoc cho trinh doc man hinh va cho chuot di qua: mau sac mot
+      // minh khong mang du thong tin.
+      var nhan = b.ten + ' · ' + b.so_cho + ' ' + N.cho + ' · ' + (b.kha_dung ? N.trong : ly.ten);
+      if (b.khu_vuc) nhan += ' · ' + b.khu_vuc;
+      if (!b.kha_dung && b.ly_do && b.ly_do.mo_ta) nhan += ' · ' + b.ly_do.mo_ta;
+      if (b.thuoc_tinh) {
+        var tt = [];
+        if (b.thuoc_tinh.gan_cua_so) tt.push(N.gan_cua_so);
+        if (b.thuoc_tinh.phong_rieng) tt.push(N.phong_rieng);
+        if (b.thuoc_tinh.yen_tinh) tt.push(N.yen_tinh);
+        if (tt.length) nhan += ' · ' + tt.join(', ');
+      }
+      n.title = nhan;
+      n.setAttribute('aria-label', nhan);
+
+      if (chonDuoc) {
+        n.setAttribute('aria-pressed', 'false');
+        n.addEventListener('click', function () {
+          var vt2 = daChon.indexOf(Number(b.id));
+          if (vt2 >= 0) daChon.splice(vt2, 1);
+          else daChon.push(Number(b.id));
+          capNhatVe();
+        });
+      } else if (tuyChon.onBam) {
+        n.addEventListener('click', function () { tuyChon.onBam(b); });
+      } else {
+        n.setAttribute('aria-disabled', 'true');
+      }
+
+      nut[b.id] = n;
+      san.appendChild(n);
+    }
+
+    /*
+      Danh sach cac SAN da ve, de tinh lai ty le khi khung doi be ngang.
+
+      Mot khu -> mot san (chinh la mat bang). Nhieu khu -> moi khu mot san rieng.
+      Giu chung trong cung mot mang de `tinhLaiTyLe` chi phai biet mot dang du lieu.
+    */
+    var cacSan = [];
+
+    if (!nhieuKhu) {
+      // MOT khu: dung ca khung lam san, kem hai moc dinh huong mat bang.
+      [['mocTren', 'sdb__moc sdb__moc--tren'], ['mocDuoi', 'sdb__moc sdb__moc--duoi']].forEach(function (p) {
+        if (!tuyChon[p[0]]) return;
+        var x = el('span', p[1], tuyChon[p[0]]);
+        x.setAttribute('aria-hidden', 'true');
+        mat.appendChild(x);
+      });
+      var bc1 = boCuc(dsBan);
+      // Khung mot khu cao theo so hang, khong de mot khu hai hang chiem tron
+      // 480px roi bo trong nua duoi.
+      mat.style.height = Math.max(220, bc1.soHang * 118 + 46) + 'px';
+      cacSan.push({ ban: dsBan, bc: bc1, san: mat });
+      dsBan.forEach(function (b) { veVao(mat, b, bc1); });
+    } else {
+      // NHIEU khu: moi khu mot dai rieng, xep chong theo chieu doc.
+      nhom.forEach(function (k) {
+        var hop = el('div', 'sdb__khu');
+        var dai = el('div', 'sdb__khu__dai', k.ten);
+        var trong = k.ban.filter(function (b) { return b.kha_dung; }).length;
+        dai.appendChild(el('span', 'sdb__khu__dem', N.dai_khu
+          .replace('{ban}', k.ban.length)
+          .replace('{cho}', k.ban.reduce(function (s, b) { return s + Number(b.so_cho); }, 0))
+          .replace('{trong}', trong)));
+        hop.appendChild(dai);
+
+        var bc = boCuc(k.ban);
+        var san = el('div', 'sdb__khu__san');
+        san.style.height = (bc.soHang * 116 + 26) + 'px';
+        hop.appendChild(san);
+        mat.appendChild(hop);
+        cacSan.push({ ban: k.ban, bc: bc, san: san });
+      });
+      cacSan.forEach(function (x) {
+        x.ban.forEach(function (b) { veVao(x.san, b, x.bc); });
+      });
+    }
+
+    /**
+     * Tinh lai ty le thu nho cho toan bo so do.
+     *
+     * Lay ty le NHO NHAT trong cac khu, khong phai ty le rieng tung khu: cac khu
+     * phai cung mot co ban, neu khong ban 4 cho o khu nay lai to hon ban 6 cho o
+     * khu ben canh - va so do noi doi ve suc chua.
+     */
+    function tinhLaiTyLe() {
+      var nho = 1;
+      cacSan.forEach(function (x) {
+        var ty = tinhTyLe(x.ban, x.bc, x.san.offsetWidth || 900, x.san.offsetHeight || 260);
+        if (ty < nho) nho = ty;
+      });
+      khung.style.setProperty('--sdb-ty-le', nho.toFixed(3));
+    }
+    tinhLaiTyLe();
+
+    var goiY = el('div', 'sdb__goiy-cuon');
+    goiY.appendChild(el('span', null, '\u2194'));
+    goiY.appendChild(el('span', null, N.vuot_ngang));
+    khung.appendChild(goiY);
+
+    if (tuyChon.chuThich !== false) veChuThich(khung);
+    capNhatVe();
+
+    /*
+      Tinh lai ty le khi khung doi be ngang.
+
+      Ty le duoc tinh tu be ngang THUC TE cua san, nen no chi dung cho be ngang
+      luc ve. Xoay dien thoai, mo/dong thanh ben, hay chi keo cua so - deu lam no
+      sai, va ban se de len nhau. ResizeObserver bat dung viec do; trinh duyet cu
+      khong co thi lui ve su kien `resize` cua cua so.
+    */
+    if (typeof ResizeObserver === 'function') {
+      var ro = new ResizeObserver(function () { tinhLaiTyLe(); });
+      ro.observe(cuon);
+    } else if (window.addEventListener) {
+      window.addEventListener('resize', tinhLaiTyLe);
+    }
+
+    return {
+      chon: daChon,
+      /** Cho phep ben ngoai xoa lua chon (vi du: khach doi gio). */
+      xoaChon: function () { daChon.length = 0; capNhatVe(); },
+      tinhLai: tinhLaiTyLe
+    };
+  }
+
+  /** Ve hang tab khu vuc. `dem` = so ban trong tung khu o khung gio dang xem. */
+  function veTabs(khung, dsKhu, dangChon, dem, onDoi) {
+    khung.innerHTML = '';
+    khung.className = 'sdb__tabs';
+    khung.setAttribute('role', 'tablist');
+
+    var muc = [{ id: '', ten: N.tat_ca_khu }].concat(dsKhu.map(function (k) {
+      return { id: String(k.id), ten: k.ten, vip: k.la_vip };
+    }));
+
+    muc.forEach(function (m) {
+      var b = el('button', 'sdb__tab');
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(m.id) === String(dangChon || '') ? 'true' : 'false');
+      b.appendChild(document.createTextNode((m.vip ? '★ ' : '') + m.ten));
+
+      if (dem && dem[m.id || '*'] !== undefined) {
+        var d = dem[m.id || '*'];
+        b.appendChild(el('span', 'sdb__tab__dem' + (d ? '' : ' sdb__tab__dem--het'),
+          d ? N.ban_trong.replace('{n}', d) : N.het_ban));
+      }
+      b.addEventListener('click', function () { onDoi(m.id); });
+      khung.appendChild(b);
+    });
+  }
+
+  return { ve: ve, veTabs: veTabs, MAU: MAU, kichThuoc: kichThuoc, veBan: veBan,
+    chuThich: veChuThich, oChuThich: oChuThich };
+})();
+</script>

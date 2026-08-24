@@ -44,7 +44,7 @@
     <nav class="nh-nav <%= heroNav ? '' : 'is-solid' %>" id="nh-nav">
       <div class="nh-container nh-nav__inner">
         <a class="nh-brand" href="/">
-          <img src="/admin-img/new_logo.png" alt="Logo" onerror="this.style.display='none'">
+          <img src="/logo.svg" alt="Logo" class="nh-brand__logo" width="40" height="40">
           <span class="nh-brand__name"><%= t('chung.ten_nha_hang') %></span>
         </a>
 
@@ -54,6 +54,9 @@
           <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
           <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
+          <%# Dat canh nut "Dat ban" o hang cong cu ben phai: nguoi con phan van
+              doc huong dan truoc, nguoi da quyet dinh thi bam thang nut vang. %>
+          <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
           <% if (session.username) { %>
             <li><a href="/my-orders"><%= t('dieu_huong.don_cua_toi') %></a></li>
           <% } %>

@@ -8,8 +8,26 @@ const db = require('../config/db');
 
 const menuService = {
   // ============ CATEGORY OPERATIONS ============
+  /*
+    Danh muc mon, kem so mon dang ban cua tung nhom.
+
+    SAP THEO `name_loai`, KHONG theo `id_loai DESC` nhu truoc.
+
+    Ten nhom da mang san so thu tu ('01. DRINK' ... '22. SAKE - BEER') - do la
+    thu tu bep va nha hang muon khach doc thuc don. Sap theo id giam dan lam moi
+    thu nguoc lai: trang /menu mo ra o nhom cuoi cung, tuc mot nha hang Nhat chao
+    khach bang muc BIA. Sap theo ten tra lai dung thu tu do.
+
+    `so_mon` chi dem mon DANG BAN (`tinhtrang = 1`): mot nhom con 12 mon trong
+    CSDL nhung da tat het thi hien "12" la noi doi voi khach.
+  */
   getAllCategories: async () => {
-    const [rows] = await db.query('SELECT * FROM loai_mon ORDER BY id_loai DESC');
+    const [rows] = await db.query(`
+      SELECT l.*, COUNT(m.id_mon) AS so_mon
+        FROM loai_mon l
+        LEFT JOIN monan m ON m.id_loai = l.id_loai AND m.tinhtrang = 1
+       GROUP BY l.id_loai
+       ORDER BY l.name_loai`);
     return rows;
   },
 

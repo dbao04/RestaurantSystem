@@ -83,7 +83,7 @@ def _cat_duoi_chua_van_hanh(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[: hop_le[-1]].reset_index(drop=True)
 
 
-def _nap_chuoi_ngay() -> pd.DataFrame:
+def _nap_chuoi_ngay(cat_duoi: bool = True) -> pd.DataFrame:
     """Chuoi so don + luot khach theo ngay, da dien day du cac ngay trong."""
     don = doc_sql(SQL_LUOT_KHACH)
     khach = doc_sql(SQL_KHACH_THEO_NGAY)
@@ -96,7 +96,7 @@ def _nap_chuoi_ngay() -> pd.DataFrame:
     df = day_du.merge(df, on="ngay", how="left").fillna(0)
     for c in ["so_don", "so_mon", "so_khach"]:
         df[c] = df[c].astype(float)
-    return _cat_duoi_chua_van_hanh(df)
+    return _cat_duoi_chua_van_hanh(df) if cat_duoi else df
 
 
 # --------------------------------------------------------------------------
@@ -142,7 +142,12 @@ def _du_bao_de_quy(
 # --------------------------------------------------------------------------
 def du_bao_luot_khach(so_ngay: int = 14, cot_muc_tieu: str = "so_khach", luu_db: bool = True) -> dict:
     """Huan luyen, danh gia va du bao luot khach cho `so_ngay` ngay toi."""
-    tho = _nap_chuoi_ngay()
+    # Tach tap dung de huan luyen khoi tap lam moc thoi gian du bao. Du lieu
+    # chay thu le te o cuoi chuoi khong du dieu kien de cham diem mo hinh,
+    # nhung ngay moi nhat van phai duoc dung lam moc de khong tao du bao cho
+    # mot khoang thoi gian da qua.
+    tho_day_du = _nap_chuoi_ngay(cat_duoi=False)
+    tho = _cat_duoi_chua_van_hanh(tho_day_du)
     if len(tho) < 60:
         raise ValueError(f"Chi co {len(tho)} ngay du lieu, can it nhat 60 ngay.")
 
@@ -156,7 +161,7 @@ def du_bao_luot_khach(so_ngay: int = 14, cot_muc_tieu: str = "so_khach", luu_db:
 
     # Huan luyen lai tren toan bo du lieu roi moi du bao tuong lai.
     mo_hinh = md.huan_luyen_lai_toan_bo(tot_nhat.mo_hinh, df, cot_muc_tieu, cot)
-    du_bao = _du_bao_de_quy(tho, cot_muc_tieu, mo_hinh, cot, so_ngay)
+    du_bao = _du_bao_de_quy(tho_day_du, cot_muc_tieu, mo_hinh, cot, so_ngay)
 
     # Khoang tin cay xap xi tu RMSE tren tap kiem thu (+-1.96 sigma).
     bien = 1.96 * tot_nhat.rmse

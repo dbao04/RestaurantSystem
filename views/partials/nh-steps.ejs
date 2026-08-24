@@ -15,7 +15,10 @@ var _buoc = typeof buoc !== 'undefined' ? Number(buoc) : 1;
 var CAC_BUOC = [
   { ten: t('buoc.chon_mon'), duongDan: '/menu' },
   { ten: t('buoc.gio_hang'), duongDan: '/cart' },
-  { ten: t('buoc.dat_ban'), duongDan: '/datban' },
+  /* Tro toi /datban/goi-mon chu khong /datban: thanh nay chi xuat hien trong
+     luong DAT MON, va nguoi bam quay lai buoc 3 la de sua ngay gio cua chinh don
+     do - dua ho ve trang chon hinh thuc la bat chon lai mot viec da chon xong. */
+  { ten: t('buoc.dat_ban'), duongDan: '/datban/goi-mon' },
   { ten: t('buoc.xac_nhan'), duongDan: null },
 ];
 %>

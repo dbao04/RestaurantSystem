@@ -1,3 +1,25 @@
+    <section class="nh-location" aria-labelledby="nh-location-title">
+      <div class="nh-container">
+        <div class="nh-location__header">
+          <div>
+            <span class="nh-eyebrow"><i class="fas fa-map-marker-alt"></i> <%= t('chan_trang.dia_chi') %></span>
+            <h2 id="nh-location-title"><%= t('chan_trang.tim_duong') === 'chan_trang.tim_duong' ? 'Tìm đường đến nhà hàng' : t('chan_trang.tim_duong') %></h2>
+          </div>
+          <a class="nh-btn nh-btn--gold nh-btn--sm" href="https://www.google.com/maps/dir/?api=1&destination=12+Nguyen+Van+Bao%2C+Hanh+Thong%2C+Ho+Chi+Minh+City" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-directions"></i> <%= t('chan_trang.mo_ban_do') === 'chan_trang.mo_ban_do' ? 'Mở Google Maps' : t('chan_trang.mo_ban_do') %>
+          </a>
+        </div>
+        <div class="nh-location__map">
+          <iframe
+            title="<%= t('chan_trang.tim_duong') === 'chan_trang.tim_duong' ? 'Tìm đường đến nhà hàng' : t('chan_trang.tim_duong') %>"
+            src="https://www.google.com/maps?q=12+Nguyen+Van+Bao%2C+Hanh+Thong%2C+Ho+Chi+Minh+City&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+    </section>
+
     <footer class="nh-footer">
       <div class="nh-container">
         <div class="nh-footer__grid">
@@ -20,14 +42,15 @@
               <li><a href="/menu"><%= t('dieu_huong.thuc_don') %></a></li>
               <li><a href="/blog"><%= t('dieu_huong.tin_tuc') %></a></li>
               <li><a href="/datban"><%= t('chung.dat_ban') %></a></li>
+              <li><a href="/huong-dan-dat-ban"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
             </ul>
           </div>
 
           <div>
             <h4><%= t('chan_trang.lien_he') %></h4>
             <ul>
-              <li><i class="fas fa-map-marker-alt"></i><span>12 Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh</span></li>
-              <li><i class="fas fa-phone-alt"></i><a href="tel:0918453632">0918 453 632</a></li>
+              <li><i class="fas fa-map-marker-alt"></i><span><%= t('chan_trang.dia_chi') %></span></li>
+              <li><i class="fas fa-phone-alt"></i><a href="tel:0388062048">0388 062 048</a></li>
               <li><i class="fas fa-envelope"></i><a href="mailto:nhahangbd@gmail.com">nhahangbd@gmail.com</a></li>
             </ul>
           </div>

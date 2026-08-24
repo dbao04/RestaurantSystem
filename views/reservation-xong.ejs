@@ -1,0 +1,114 @@
+<%- include('partials/header', { title: t('dat_ban_moi.xong_tieu_de') }) %>
+<%
+/*
+  TRANG XAC NHAN.
+
+  Co dia chi rieng (/dat-ban/xong?ma=...&dt=...) chu khong phai mot the bao hien
+  ra tren trang dat ban. Ly do: khach can luu lai duoc, gui cho nguoi di cung
+  duoc, va mo lai duoc sau khi dong tab. Mot thong bao noi tren trang cu bien
+  mat cung voi lan tai trang ke tiep.
+
+  Ma dat ban duoc in TO va tach chu: khach se phai doc no qua dien thoai. Bang
+  chu sinh ma da bo I, O, 0, 1 (xem reservationRules.taoMa) chinh vi luc nay.
+*/
+var dangCho = r.status === 'WAITLIST';
+var canCoc = Number(r.deposit_amount) > 0 && r.deposit_status !== 'PAID';
+%>
+
+<section class="nh-section nh-section--cream" style="padding-top:calc(70px + clamp(2.5rem,6vw,5rem))">
+  <div class="nh-container-narrow">
+
+    <div class="nh-panel" style="text-align:center;padding:clamp(1.8rem,4vw,3rem)">
+      <div style="width:78px;height:78px;border-radius:50%;margin:0 auto 1.2rem;display:grid;place-content:center;
+                  background:<%= dangCho ? '#fffbeb' : '#f0fdf4' %>;
+                  border:2px solid <%= dangCho ? 'rgba(217,119,6,.4)' : 'rgba(22,163,74,.4)' %>">
+        <i class="fas <%= dangCho ? 'fa-list-ol' : 'fa-check-circle' %>"
+           style="font-size:2rem;color:<%= dangCho ? '#d97706' : '#16a34a' %>"></i>
+      </div>
+
+      <span class="nh-eyebrow nh-eyebrow--sm"><%= t('dat_ban_moi.cam_on') %></span>
+      <h1 style="font-size:clamp(1.7rem,4vw,2.4rem)">
+        <%= dangCho ? t('dat_ban_moi.xong_danh_sach_cho') : t('dat_ban_moi.xong_tieu_de') %>
+      </h1>
+      <p class="nh-lead" style="margin-top:.7rem">
+        <%= dangCho ? t('dat_ban_moi.xong_cho_mo_ta') : t('dat_ban_moi.xong_mo_ta') %>
+      </p>
+
+      <div style="margin:1.8rem auto;max-width:340px;padding:1.1rem;border-radius:14px;
+                  background:var(--nh-espresso);color:var(--nh-cream)">
+        <div style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;opacity:.7">
+          <%= t('dat_ban_moi.ma_dat_ban') %>
+        </div>
+        <div style="font-family:var(--nh-serif);font-size:clamp(1.5rem,5vw,2rem);font-weight:700;
+                    letter-spacing:.12em;color:var(--nh-gold-soft);word-break:break-all">
+          <%= r.reservation_code %>
+        </div>
+      </div>
+    </div>
+
+    <div class="nh-panel">
+      <h3 class="nh-panel__title"><i class="fas fa-info-circle"></i> <%= t('dat_ban_moi.chi_tiet') %></h3>
+      <div class="db-xemlai" style="display:grid;grid-template-columns:160px 1fr;gap:.55rem 1rem;font-size:.95rem">
+        <dt><%= t('dat_ban_moi.ho_ten') %></dt><dd><%= r.customer_name %></dd>
+        <dt><%= t('dat_ban_moi.dien_thoai') %></dt><dd><%= r.phone %></dd>
+        <dt><%= t('dat_ban_moi.thoi_gian') %></dt>
+        <dd><%= r.gio %> – <%= r.gio_ket_thuc %> · <%= r.reservation_date.split('-').reverse().join('/') %></dd>
+        <dt><%= t('dat_ban_moi.so_khach') %></dt><dd><%= r.guest_count %> <%= t('dat_ban_moi.khach') %></dd>
+        <% if (r.area_name) { %>
+          <dt><%= t('dat_ban_moi.khu_vuc') %></dt><dd><%= r.area_name %></dd>
+        <% } %>
+        <% if (r.ban && r.ban.length) { %>
+          <dt><%= t('dat_ban_moi.ban') %></dt><dd><%= r.ban.join(', ') %></dd>
+        <% } %>
+        <dt><%= t('dat_ban_moi.trang_thai') %></dt>
+        <dd><%= r.nhan_trang_thai %></dd>
+        <% if (r.special_requests) { %>
+          <dt><%= t('dat_ban_moi.ghi_chu') %></dt><dd><%= r.special_requests %></dd>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (canCoc) { %>
+      <div class="nh-panel" style="border-left:4px solid #d97706">
+        <h3 class="nh-panel__title"><i class="fas fa-wallet"></i> <%= t('dat_ban_moi.tien_coc') %></h3>
+        <p style="font-size:1.5rem;font-weight:700;color:var(--nh-espresso);margin:.3rem 0">
+          <%= Number(r.deposit_amount).toLocaleString('vi-VN') %>đ
+        </p>
+        <p class="nh-hint"><%= t('dat_ban_moi.coc_huong_dan') %></p>
+      </div>
+    <% } %>
+
+    <div class="nh-panel">
+      <h3 class="nh-panel__title"><i class="fas fa-tasks"></i> <%= t('dat_ban_moi.tiep_theo') %></h3>
+      <ul style="padding-left:1.1rem;line-height:2;color:var(--nh-muted);font-size:.95rem">
+        <li><%= t('dat_ban_moi.buoc_goi_lai') %></li>
+        <li><%- t('dat_ban_moi.buoc_giu_ban') %></li>
+        <li><%- t('dat_ban_moi.buoc_tra_cuu') %></li>
+      </ul>
+
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.4rem">
+        <a class="nh-btn nh-btn--gold" href="/dat-ban/tra-cuu?ma=<%= encodeURIComponent(r.reservation_code) %>">
+          <i class="fas fa-edit"></i> <%= t('dat_ban_moi.quan_ly_don') %>
+        </a>
+        <a class="nh-btn nh-btn--outline" href="/menu">
+          <i class="fas fa-utensils"></i> <%= t('dieu_huong.thuc_don') %>
+        </a>
+        <button type="button" class="nh-btn nh-btn--outline" onclick="window.print()">
+          <i class="fas fa-print"></i> <%= t('dat_ban_moi.in_phieu') %>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Ban in: bo dieu huong, chan trang va nut bam - chi con thong tin luot dat. */
+  @media print {
+    .nh-nav, .nh-footer, .nh-btn, .nh-chatbot, .nh-cta { display: none !important; }
+    .nh-section { padding: 0 !important; }
+    .nh-panel { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+    body { background: #fff !important; }
+  }
+</style>
+
+<%- include('partials/footer') %>
