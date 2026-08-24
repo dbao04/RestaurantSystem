@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3306\")",
+      "Bash(echo \"=== exit: $? ===\")",
+      "Bash(cmd.exe /c \"npm install\")",
+      "Bash(cmd.exe /c \"start /b mysqld.exe --defaults-file=C:\\\\\\\\xampp\\\\\\\\mysql\\\\\\\\bin\\\\\\\\my.ini --standalone\")",
+      "Read(//mnt/c/xampp/mysql/bin/**)",
+      "Read(//mnt/c/xampp/**)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
