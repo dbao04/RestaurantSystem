@@ -508,6 +508,7 @@ module.exports = function (io) {
       layout: false,
       title: 'Thanh toán',
       hoaDon,
+      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
       // Khach tai ban chi duoc chon chuyen khoan. Tien mat phai qua thu ngan
       // (khong the tu bam "toi da dua tien mat"), the thi phai co may POS.
       phuongThuc: phuongThuc.filter((p) => p.code === 'vietqr'),
@@ -538,6 +539,34 @@ module.exports = function (io) {
       soTien: Number(kq.payment.amount), tuKhach: true,
     });
     res.json({ thanhCong: true, ...kq });
+  }));
+
+  router.post('/qr/thanh-toan/:sesis/gia-lap', bat(kiemTraPhienBanMo), batJson(async (req, res) => {
+    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+      return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
+    }
+
+    const kq = await tt.taoPhien({
+      sesis: req.params.sesis,
+      soTien: req.body.so_tien,
+      maPhuongThuc: 'vietqr',
+      loai: 'thanh_toan',
+      nguon: 'khach_qr',
+      maGiamGia: req.body.ma_giam_gia || null,
+      tienTip: Number(req.body.tien_tip) || 0,
+      ghiChu: 'Khách thanh toán giả lập',
+    });
+    const daXacNhan = await tt.xacNhan(kq.payment.id, {
+      maGiaoDich: 'SIM-KHACH-' + Date.now(),
+      ghiChu: 'Xác nhận thanh toán giả lập của khách',
+    });
+    await ghiNhatKy(req, 'khach_thanh_toan_gia_lap', daXacNhan.payment.id, daXacNhan.payment);
+    phat(req.params.sesis, 'tt:da-thanh-toan', {
+      paymentId: daXacNhan.payment.id, sesis: req.params.sesis,
+      soTien: Number(daXacNhan.payment.amount), tuKhach: true,
+      donDaTraDu: !!daXacNhan.donDaTraDu,
+    });
+    res.json({ thanhCong: true, ...daXacNhan });
   }));
 
   // Dien thoai khach hoi trang thai. Khong yeu cau dang nhap nhung chi tra ve

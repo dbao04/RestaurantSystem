@@ -244,7 +244,15 @@
     <button class="nut" id="nut-tra">
       <%= t('ttqr.chuyen_khoan') %> <span id="nut-so-tien"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span>
     </button>
+    <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+      <button class="nut gia-lap" id="nut-gia-lap"><%= t('ttqr.gia_lap') %></button>
+    <% } %>
   </div>
+  <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+    <div class="boc" style="text-align:center;margin-top:6px">
+      <small style="color:var(--text-muted)"><%= t('ttqr.gia_lap_mo_ta') %></small>
+    </div>
+  <% } %>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -366,6 +374,38 @@
         nut.innerHTML = TT.chuyen_khoan + ' <span id="nut-so-tien">' + tien(soTien) + 'đ</span>';
       });
   };
+
+  var nutGiaLap = $('nut-gia-lap');
+  if (nutGiaLap) {
+    nutGiaLap.onclick = function () {
+      var nut = this;
+      var soTien = Number($('so-tien').value) || 0;
+      if (soTien <= 0 || soTien > conPhaiTra) return alert('Số tiền không hợp lệ.');
+      if (!confirm('<%= t('ttqr.xac_nhan_gia_lap') %>')) return;
+
+      nut.disabled = true;
+      fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS) + '/gia-lap', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_tien: soTien,
+          ma_giam_gia: $('ma-giam-gia').value.trim() || null,
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (j) {
+            if (!r.ok) throw new Error(j.message || j.loi || 'Lỗi');
+            return j;
+          });
+        })
+        .then(function (kq) {
+          thanhCong({
+            da_tra_du: kq.donDaTraDu,
+            con_phai_tra: kq.conPhaiTra,
+          });
+        })
+        .catch(function (e) { alert(e.message); nut.disabled = false; });
+    };
+  }
 
   function demNguoc(giay) {
     clearInterval(demHen);
