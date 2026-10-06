@@ -26,7 +26,7 @@
       <% [0, 1].forEach(function (i) { var m = monTT(i); %>
         <div class="nh-mon-khung <%= i % 2 ? 'nh-wa-shippo' : 'nh-wa-song' %>">
           <% if (m) { %>
-            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+            <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>" loading="lazy">
           <% } %>
         </div>
       <% }) %>

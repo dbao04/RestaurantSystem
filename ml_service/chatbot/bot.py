@@ -30,11 +30,42 @@ from . import thuc_the as tt
 from . import tra_loi as tl
 from . import truy_van as tv
 from . import y_dinh as yd
+from .tien_xu_ly import bo_dau, chuan_hoa
 
 # Y dinh nao bat buoc phai co tham so gi.
 THAM_SO_BAT_BUOC = {
     "hoi_gia_mon": "mon",
 }
+
+# CUU VOT BANG THUC THE
+# ---------------------
+# Bo phan loai duoc huan luyen tren thuc don Viet cu. Tu dot doi thuc don thang
+# 8/2026, ten mon la tieng Nhat (nigiri, sashimi, tempura, udon, gunkan...) -
+# nhung tu khong co trong tu vung huan luyen. Diem tin cay vi the tut xuong
+# 0.23-0.44, tuc la SAT DUOI nguong 0.45, du `hoi_gia_mon` van la ung vien dau
+# hoac nhi. Do thu ca thuc don: 71/169 ten mon ngan khong hoi gia duoc, bot tra
+# ve "chua hieu" - xem phan han che trong HUONG_DAN_CHATBOT.md.
+#
+# Cach cuu: neu tang thuc the tim thay DUNG NGUYEN VAN mot ten mon co trong
+# thuc don, do la bang chung DOC LAP voi mo hinh - manh hon vai phan tram diem
+# con thieu. Ba dieu kien de khong bien thanh doan bua:
+#   1. Chi cuu khi mo hinh KHONG chot duoc gi (ket qua la "khong_hieu"), va
+#      y dinh duoc cuu phai nam trong top ung vien, phai la y dinh co tham so
+#      BAT BUOC (bang tren) - loai nay khong the "doan lam" ra viec khac vi
+#      thieu tham so la khong chay duoc.
+#   2. Diem cua ung vien do phai tu NGUONG_CUU tro len: duoi muc do thi no
+#      khong con la ung vien nghiem tuc nua.
+#   3. Ten mon (da bo ma mon "T09-" va phan trong ngoac) phai xuat hien
+#      NGUYEN VAN trong cau, khong nhan khop mo do tuong dong - khop mo tren
+#      mot cau bat ky rat de an bua.
+# Do lai sau khi sua: ca thuc don 235 mon, con 19 mon khong hoi gia duoc (deu
+# la mon co chu "combo"/"set" trong ten, bi doc thanh y dinh hoi combo), khong
+# co mon nao tra ra NHAM mon. Khi mo hinh duoc huan luyen lai theo thuc don moi
+# thi duong cuu nay gan nhu khong con duoc dung den, va co the bo di.
+#
+# 0.15 tren bai toan 37 nhan la gap ~5.5 lan muc ngau nhien (0.027). Chon thap
+# duoc vi ganh nang bang chung o day do TEN MON chiu, khong phai mo hinh.
+NGUONG_CUU = 0.15
 
 
 def _ghi_nhat_ky(ban_ghi: dict) -> int | None:
@@ -62,6 +93,33 @@ def _ghi_nhat_ky(ban_ghi: dict) -> int | None:
         return None
 
 
+def _co_nguyen_van(cau: str, ten_mon) -> bool:
+    """Ten mon co xuat hien nguyen van trong cau khong (bo qua dau va ma mon)?
+
+    Ten trong CSDL mang tien to ma mon ("T09-GÀ CHIÊN KARAAGE") con nguoi ta go
+    "gà chiên karaage", nen phai so tren phan ten da rut gon - dung dung
+    `_diem_khop` cua tang thuc the, vi diem do con tinh ca khop mo.
+    """
+    ten = tt.rut_gon_ten(ten_mon).lower()
+    return bool(ten) and bo_dau(ten) in bo_dau(chuan_hoa(cau))
+
+
+def _cuu_bang_thuc_the(cau: str, dd: dict) -> tuple[str, bool]:
+    """Nhan lai y dinh dan dau khi cau chua nguyen van ten mot mon co that.
+
+    Xem chu thich o NGUONG_CUU. Tra ve (y_dinh, co_cuu_hay_khong).
+    """
+    for ung_vien in dd.get("top") or []:
+        doan = ung_vien.get("y_dinh") or ""
+        can = THAM_SO_BAT_BUOC.get(doan)
+        if not can or ung_vien.get("tin_cay", 0) < NGUONG_CUU:
+            continue
+        gia_tri = tt.trich_xuat(cau, doan).get(can)
+        if isinstance(gia_tri, dict) and _co_nguyen_van(cau, gia_tri.get("name_mon")):
+            return doan, True
+    return "khong_hieu", False
+
+
 def hoi(cau: str, boi_canh: dict | None = None) -> dict:
     """Xu ly mot luot hoi. Luon tra ve dict, khong bao gio nem loi ra ngoai."""
     bat_dau = time.perf_counter()
@@ -76,6 +134,9 @@ def hoi(cau: str, boi_canh: dict | None = None) -> dict:
     # --- [2] Phan loai y dinh ---
     dd = pl.du_doan(cau)
     y_dinh_ma = dd["y_dinh"]
+    cuu_bang_thuc_the = False
+    if y_dinh_ma == "khong_hieu":
+        y_dinh_ma, cuu_bang_thuc_the = _cuu_bang_thuc_the(cau, dd)
 
     # --- Ngu canh: dang cho mot tham so tu luot truoc ---
     y_dinh_cho = boi_canh.get("y_dinh_cho")
@@ -114,6 +175,7 @@ def hoi(cau: str, boi_canh: dict | None = None) -> dict:
         "tin_cay": round(dd["tin_cay"], 4),
         "top": dd["top"],
         "dung_ngu_canh": dung_ngu_canh,
+        "cuu_bang_thuc_the": cuu_bang_thuc_the,
         "thoi_gian_ms": round(ms, 1),
         "tham_so": {k: v for k, v in tham_so.items() if k != "top_n"},
     })
@@ -162,4 +224,4 @@ def trang_thai() -> dict:
 
 
 def cau_hoi_mau(quyen: str = "khach") -> list[str]:
-    return tl.GOI_Y_TIEP["quan_ly" if quyen == "quan_ly" else "khach"]
+    return tl.goi_y_theo_quyen(quyen)

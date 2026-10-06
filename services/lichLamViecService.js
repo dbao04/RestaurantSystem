@@ -349,6 +349,127 @@ const lichLamViecService = {
 
     return { tuNgay: tu, denNgay: den, cacNgay, caList, dinhMuc, nhanVien, lich, thieu, coNhap };
   },
+
+  /** Danh sach mau ca co dinh toan he thong */
+  dsMauCoDinh: async () => {
+    const [rows] = await db.query(
+      `SELECT m.*, n.ten AS ten_nhanvien, n.chucvu, c.ten_ca, c.gio_bat_dau, c.gio_ket_thuc, c.thu_tu
+       FROM mau_lich_co_dinh m
+       JOIN nhan_vien n ON n.id_nv = m.id_nv
+       JOIN ca_lam_viec c ON c.ma_ca = m.ma_ca
+       WHERE n.trangthai = 1 AND n.trang_thai_lam_viec = 'dang_lam'
+       ORDER BY n.chucvu ASC, n.id_nv ASC, m.thu ASC, c.thu_tu ASC`
+    );
+    return rows;
+  },
+
+  /** Luu mau ca co dinh cho toan bo hoac tung nhan vien */
+  luuMauCoDinh: async (danhSach) => {
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query('DELETE FROM mau_lich_co_dinh');
+      for (const item of danhSach) {
+        if (!item.id_nv || item.thu === undefined || !item.ma_ca) continue;
+        await conn.query(
+          'INSERT IGNORE INTO mau_lich_co_dinh (id_nv, thu, ma_ca) VALUES (?, ?, ?)',
+          [Number(item.id_nv), Number(item.thu), String(item.ma_ca).trim()]
+        );
+      }
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  },
+
+  /**
+   * Tu dong sinh lich lam viec ca thang dua tren mau ca co dinh.
+   *
+   * @param {string} thangNam chuoi 'YYYY-MM' (VD: '2026-10')
+   * @param {boolean} tuDongDuyet true: trangthai=1 (chot truc tiep), false: trangthai=3 (nhap)
+   */
+  apDungMauTheoThang: async (thangNam, tuDongDuyet = true) => {
+    const [nam, thang] = thangNam.split('-').map(Number);
+    if (!nam || !thang || thang < 1 || thang > 12) throw new Error('Tháng không hợp lệ.');
+
+    const soNgayTrongThang = new Date(nam, thang, 0).getDate();
+    const tuNgay = `${nam}-${String(thang).padStart(2, '0')}-01`;
+    const denNgay = `${nam}-${String(thang).padStart(2, '0')}-${String(soNgayTrongThang).padStart(2, '0')}`;
+
+    const [mauList, caList] = await Promise.all([
+      lichLamViecService.dsMauCoDinh(),
+      lichLamViecService.dsCa(),
+    ]);
+
+    if (!mauList.length) {
+      throw new Error('Chưa có cấu hình mẫu ca cố định nào. Vui lòng thiết lập mẫu ca trước.');
+    }
+
+    const mapCa = {};
+    for (const c of caList) mapCa[c.ma_ca] = c;
+
+    // Lay danh sach nghi phep da duyet trong thang de khong xep vao ngay nghi
+    const [nghiPhep] = await db.query(
+      `SELECT id_nv,
+              COALESCE(ngay_bat_dau, ngay_nghi)  AS tu_ngay,
+              COALESCE(ngay_ket_thuc, ngay_nghi) AS den_ngay
+       FROM nghi_phep
+       WHERE trang_thai = 1
+         AND COALESCE(ngay_bat_dau, ngay_nghi)  <= ?
+         AND COALESCE(ngay_ket_thuc, ngay_nghi) >= ?`,
+      [denNgay, tuNgay]
+    );
+
+    const trangThaiLich = tuDongDuyet ? TT.DA_DUYET : TT.NHAP;
+    let soLichMoi = 0;
+
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      for (let day = 1; day <= soNgayTrongThang; day++) {
+        const ngayStr = `${nam}-${String(thang).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const thu = new Date(ngayStr + 'T00:00:00').getDay();
+
+        const mauNgay = mauList.filter((m) => Number(m.thu) === thu);
+
+        for (const m of mauNgay) {
+          // Kiem tra nghi phep
+          const dangNghi = nghiPhep.some((np) => {
+            if (np.id_nv !== m.id_nv) return false;
+            const t = chuanNgay(np.tu_ngay);
+            const d = chuanNgay(np.den_ngay);
+            return ngayStr >= t && ngayStr <= d;
+          });
+          if (dangNghi) continue;
+
+          const caInfo = mapCa[m.ma_ca];
+          const gioBatDau = caInfo ? caInfo.gio_bat_dau : null;
+          const gioKetThuc = caInfo ? caInfo.gio_ket_thuc : null;
+
+          const [res] = await conn.query(
+            `INSERT IGNORE INTO lich_lam_viec
+               (id_nv, ngay, ca, gio_bat_dau, gio_ket_thuc, trangthai, ghi_chu, nguon)
+             VALUES (?, ?, ?, ?, ?, ?, 'Mẫu lịch cố định hàng tháng', 'tu_dong')`,
+            [m.id_nv, ngayStr, m.ma_ca, gioBatDau, gioKetThuc, trangThaiLich]
+          );
+
+          if (res.affectedRows > 0) soLichMoi++;
+        }
+      }
+
+      await conn.commit();
+      return { soLichMoi, tuNgay, denNgay, thang: thangNam };
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  },
 };
 
 module.exports = lichLamViecService;

@@ -17,7 +17,7 @@
     <% if (dish) { %>
       <div class="nh-detail nh-reveal">
         <div class="nh-detail__media">
-          <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>"
+          <img src="/food/<%= dish.images %>" alt="<%= tenMon(dish).chinh %>"
                onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
         </div>
 
@@ -33,6 +33,53 @@
           <p class="nh-lead" style="margin-top:1rem">
             <% var tmc = tenMon(dish); %><%= tmc.phu || t('chi_tiet.mo_ta_mac_dinh') %>
           </p>
+
+          <%
+            /* Nguyên liệu nào đã đẩy món vào một nhóm dị ứng thì đánh dấu ngay
+               trong danh sách, để khách dò tên món ăn được là thấy luôn chỗ
+               cần chú ý, không phải đối chiếu hai khối với nhau. */
+            var nlCanhBao = new Set();
+            (diUng && diUng.nhom || []).forEach(function (n) {
+              n.nguyen_lieu.forEach(function (x) { nlCanhBao.add(x); });
+            });
+          %>
+          <div class="nh-nl">
+            <% if (nguyenLieu && nguyenLieu.length) { %>
+              <% if (diUng.co_canh_bao) { %>
+                <div class="nh-diung">
+                  <p class="nh-diung__dau">
+                    <i class="fas fa-exclamation-triangle"></i> <%= t('chi_tiet.di_ung_tieu_de') %>
+                  </p>
+                  <ul class="nh-diung__nhom">
+                    <% diUng.nhom.forEach(function (n) { %>
+                      <li>
+                        <b><%= t('di_ung.' + n.khoa) %></b>
+                        <span><%= n.nguyen_lieu.map(tenNguyenLieu).join(' · ') %></span>
+                      </li>
+                    <% }); %>
+                  </ul>
+                </div>
+              <% } else { %>
+                <p class="nh-diung__trong">
+                  <i class="fas fa-check-circle"></i> <%= t('chi_tiet.di_ung_khong_thay') %>
+                </p>
+              <% } %>
+
+              <h3 class="nh-nl__ten"><%= t('chi_tiet.nguyen_lieu') %></h3>
+              <ul class="nh-nl__ds">
+                <% nguyenLieu.forEach(function (nl) { %>
+                  <li class="<%= nlCanhBao.has(nl) ? 'la-di-ung' : '' %>"><%= tenNguyenLieu(nl) %></li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p class="nh-nl__chua-co"><%= t('chi_tiet.nguyen_lieu_chua_co') %></p>
+            <% } %>
+
+            <p class="nh-note nh-nl__luu-y">
+              <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
+              <%= t('chi_tiet.di_ung_luu_y') %>
+            </p>
+          </div>
 
           <form action="/add-to-cart" method="post" class="nh-detail__buy">
             <input type="hidden" name="monid" value="<%= dish.id_mon %>">

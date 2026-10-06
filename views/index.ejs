@@ -23,21 +23,15 @@
 <header class="nh-hero">
   <div class="nh-hero__bg nh-wa-song"></div>
   <div class="nh-hero__veil"></div>
-  <% var mHero = monTT(0); %>
-  <% if (mHero) { %>
-    <%
-      /* Ba lớp chồng lên nhau, vẽ theo đúng thứ tự từ sau ra trước:
-           ensō   vòng tròn thiền, hở một khoảng — nét vẽ một hơi
-           quầng  ánh vàng toả, tách món khỏi nền tối
-           món    ảnh thật, nền trong suốt
-         Thiếu hai lớp sau thì món dán thẳng lên hoa văn, trông như bị cắt dán. */
-    %>
+  <%
+    var heroDishes = [];
+    for (var hIdx = 0; hIdx < 4; hIdx++) {
+      var dItem = monTT(hIdx);
+      if (dItem) heroDishes.push(dItem);
+    }
+  %>
+  <% if (heroDishes.length > 0) { %>
     <svg class="nh-hero__enso" viewBox="0 0 200 200" aria-hidden="true">
-      <%
-        /* r=84 → chu vi ≈ 528. Nét 455 + hở 73 = đúng một vòng, nên khoảng hở
-           chỉ xuất hiện MỘT lần thay vì lặp lại quanh vòng tròn. Ensō luôn hở —
-           đó là ý của nó, không phải nét vẽ dở dang. */
-      %>
       <circle cx="100" cy="100" r="84" fill="none"
               stroke="url(#nh-enso-mau)" stroke-width="5.5" stroke-linecap="round"
               stroke-dasharray="455 73" transform="rotate(34 100 100)"/>
@@ -50,20 +44,48 @@
       </defs>
     </svg>
     <div class="nh-hero__quang" aria-hidden="true"></div>
-    <img class="nh-hero__mon" src="/food/<%= mHero.images %>"
-         alt="<%= (mHero.name_mon || '').trim() %>" loading="eager">
+
+    <!-- Khối 4 món ăn Hero -->
+    <div class="nh-hero__showcase">
+      <div class="nh-hero__dishes">
+        <% heroDishes.forEach(function(m, idx) { %>
+          <div class="nh-hero__dish-item <%= idx === 0 ? 'is-active' : '' %>" id="heroDish_<%= idx %>">
+            <img class="nh-hero__mon" src="/food/<%= m.images %>"
+                 alt="<%= tenMon(m).chinh %>" loading="<%= idx === 0 ? 'eager' : 'lazy' %>">
+            <div class="nh-hero__dish-tag">
+              <span class="nh-hero__dish-price"><i class="fas fa-tag" style="font-size:0.8rem;margin-right:4px;"></i><%= Number(m.gia_mon || 0).toLocaleString('vi-VN') %> ₫</span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- 4 Nút thumbnail chọn nhanh món -->
+      <div class="nh-hero__thumbs">
+        <% heroDishes.forEach(function(m, idx) { %>
+          <button type="button" class="nh-hero__thumb-btn <%= idx === 0 ? 'is-active' : '' %>"
+                  data-index="<%= idx %>" title="<%= tenMon(m).chinh %>">
+            <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>">
+          </button>
+        <% }) %>
+      </div>
+    </div>
   <% } %>
-  <div class="nh-container nh-hero__inner">
-    <span class="nh-eyebrow"><%= t('trang_chu.eyebrow') %></span>
-    <h1><%= t('trang_chu.tieu_de_1') %> <span><%= t('trang_chu.tieu_de_nhan') %></span><br><%= t('trang_chu.tieu_de_2') %></h1>
-    <p><%= t('trang_chu.mo_ta') %></p>
-    <div class="nh-hero__actions">
-      <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
-      <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
+  <div class="nh-container">
+    <div class="nh-hero__inner">
+      <span class="nh-eyebrow"><%= t('trang_chu.eyebrow') %></span>
+      <h1><%= t('trang_chu.tieu_de_1') %> <span><%= t('trang_chu.tieu_de_nhan') %></span><br><%= t('trang_chu.tieu_de_2') %></h1>
+      <p><%= t('trang_chu.mo_ta') %></p>
+      <div class="nh-hero__actions">
+        <a href="/giao-hang" class="nh-btn nh-btn--gold" style="font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+        <a href="/menu" class="nh-btn nh-btn--ghost"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
+        <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
+      </div>
     </div>
   </div>
   <div class="nh-hero__scroll"><%= t('trang_chu.cuon_xuong') %><span></span></div>
 </header>
+
+
 
 <!-- ================= GIỚI THIỆU ================= -->
 <section class="nh-section nh-section--cream">
@@ -72,7 +94,7 @@
       <% [1, 2].forEach(function (i) { var m = monTT(i); %>
         <div class="nh-mon-khung <%= i % 2 ? 'nh-wa-shippo' : 'nh-wa-song' %>">
           <% if (m) { %>
-            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+            <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>" loading="lazy">
           <% } %>
         </div>
       <% }) %>
@@ -106,7 +128,7 @@
         <% ds.forEach(function(m, i){ %>
           <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
             <div class="nh-dish__media">
-              <img src="/food/<%= m.images %>" alt="<%= m.name_mon %>" loading="lazy"
+              <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>" loading="lazy"
                    onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
               <span class="nh-dish__price"><%= formatMoney(m.gia_mon) %></span>
             </div>
@@ -201,9 +223,9 @@
         %>
         <a class="<%= nen %> <%= oCao.indexOf(i) >= 0 ? 'tall' : '' %>"
            href="<%= m ? '/detail?monid=' + m.id_mon : '/menu' %>"
-           data-ten="<%= m ? (m.name_mon || '').trim() : '' %>">
+           data-ten="<%= m ? tenMon(m).chinh : '' %>">
           <% if (m) { %>
-            <img src="/food/<%= m.images %>" alt="<%= (m.name_mon || '').trim() %>" loading="lazy">
+            <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>" loading="lazy">
           <% } %>
         </a>
       <% } %>
@@ -233,6 +255,39 @@
 </section>
 
 <script>
+  // Chuyển đổi 4 món ăn ở Hero Banner
+  (function () {
+    var items = document.querySelectorAll('.nh-hero__dish-item');
+    var thumbs = document.querySelectorAll('.nh-hero__thumb-btn');
+    if (!items.length || !thumbs.length) return;
+
+    var cur = 0;
+    var timer = null;
+
+    function activeDish(idx) {
+      cur = (idx + items.length) % items.length;
+      items.forEach(function (el, i) { el.classList.toggle('is-active', i === cur); });
+      thumbs.forEach(function (el, i) { el.classList.toggle('is-active', i === cur); });
+    }
+
+    thumbs.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = Number(this.getAttribute('data-index') || 0);
+        activeDish(idx);
+        startAuto();
+      });
+    });
+
+    function startAuto() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(function () {
+        activeDish(cur + 1);
+      }, 4000);
+    }
+
+    startAuto();
+  })();
+
   // Đếm số cho phần thống kê khi cuộn tới.
   (function () {
     var stats = document.querySelectorAll('.nh-stat b[data-count]');

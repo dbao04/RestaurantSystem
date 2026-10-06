@@ -45,7 +45,7 @@ async function bangNgay(ngay) {
   const n = chuanHoaNgay(ngay);
   const [rows] = await db.query(
     `SELECT n.id_nv, n.ma_nv, TRIM(n.ten) AS ten,
-            cd.ten_cd, bp.ten_bp, bp.mau_sac,
+            cd.ten_cd, bp.id_bp, bp.ma_bp, bp.ten_bp, bp.mau_sac,
             c.id_cc, c.gio_vao, c.gio_ra, c.tong_gio, c.ghi_chu,
             c.phuong_thuc_vao, c.phuong_thuc_ra,
             c.do_tin_cay_vao, c.do_tin_cay_ra,
@@ -61,6 +61,14 @@ async function bangNgay(ngay) {
      WHERE n.trangthai = 1
      ORDER BY (c.id_cc IS NULL) DESC, cd.cap_bac, n.ten`,
     [n, n, n]
+  );
+  return rows;
+}
+
+/** Danh sách bộ phận đang hoạt động để lọc */
+async function dsBoPhan() {
+  const [rows] = await db.query(
+    `SELECT id_bp, ma_bp, ten_bp, mau_sac, icon FROM bo_phan WHERE trang_thai = 1 ORDER BY thu_tu, id_bp`
   );
   return rows;
 }
@@ -301,7 +309,7 @@ async function xoa(req, idCc, lyDo) {
 }
 
 module.exports = {
-  bangNgay, tongQuanNgay, dsNhanVien, nhatKySua,
+  bangNgay, tongQuanNgay, dsNhanVien, dsBoPhan, nhatKySua,
   banGhiHomNay, lichSuGanDay,
   sua, them, xoa,
 };

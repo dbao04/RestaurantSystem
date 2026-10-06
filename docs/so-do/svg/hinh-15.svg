@@ -1,4 +1,4 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó kiểm tra ảnh sống rồi nhận diện khuôn mặt"
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1547 638" role="img" aria-label="So do BPMN chi tiet vong doi mot luot dat ban tu tien coc, check-in, xep ban toi hoan tat, kem dai vong quet nen chay moi 60 giay"
      xmlns="http://www.w3.org/2000/svg"><style>svg{
 --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
 --mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
@@ -79,66 +79,99 @@ text{fill:currentColor;font-family:var(--sans);}
 .hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
 .qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
 .thanh-db{fill:currentColor;}</style><defs>
-    <marker id="mui-bpD" viewBox="0 0 10 10" refX="9" refY="5"
+    <marker id="mui-bpDB3" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
     </marker>
-    <marker id="mui-rong-bpD" viewBox="0 0 12 12" refX="11" refY="6"
+    <marker id="mui-rong-bpDB3" viewBox="0 0 12 12" refX="11" refY="6"
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
   </defs><g>
-    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan" x="46" y="8" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
-    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Nhân viên</text>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
   </g><g>
-    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan" x="46" y="158" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
-    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Trình duyệt</text>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Nhân viên lễ tân</text>
   </g><g>
-    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan" x="46" y="308" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
-    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Web (Node)</text>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">reservationService</text>
   </g><g>
-    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan" x="46" y="458" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
-    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Dịch vụ ML</text>
-  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Nhân viên tới ca</text></g><g class="viec ">
-    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Vòng quét nền</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Đã có mã đặt bàn</text></g><g class="cong">
+    <polygon points="268,359 292,383 268,407 244,383"/>
+    <line x1="260" y1="375" x2="276" y2="391"/>
+    <line x1="260" y1="391" x2="276" y2="375"/>
+    <text class="tx-sk" x="268" y="423">Cần đặt cọc?</text>
+  </g><g class="viec ">
+    <rect x="347" y="56" width="138" height="54" rx="7"/>
     
-    <text class="tx-viec" x="268" y="230.5">Mở trang chấm công,</text><text class="tx-viec" x="268" y="244.5">lấy GPS + webcam</text>
-  </g><g class="cong">
-    <polygon points="416,359 440,383 416,407 392,383"/>
-    <line x1="408" y1="375" x2="424" y2="391"/>
-    <line x1="408" y1="391" x2="424" y2="375"/>
-    <text class="tx-sk" x="416" y="338">Trong bán kính</text><text class="tx-sk" x="416" y="351">cho phép?</text>
+    <text class="tx-viec" x="416" y="80.5">Chuyển khoản tiền cọc</text><text class="tx-viec" x="416" y="94.5">trước deposit_due_at</text>
+  </g><g class="viec ">
+    <rect x="495" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="230.5">Ghi nhận cọc ·</text><text class="tx-viec" x="564" y="244.5">POST /:id/deposit</text>
   </g><g class="viec tu-dong">
-    <rect x="495" y="356" width="138" height="54" rx="7"/>
-    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
-       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
-       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
-    <text class="tx-viec" x="564" y="380.5">Ghi nhật ký</text><text class="tx-viec" x="564" y="394.5">sai vị trí</text>
-  </g><g class="sk sk-cuoi"><circle cx="712" cy="383" r="19"/><text class="tx-sk" x="712" y="417">Bị chặn vì sai vị trí</text></g><g class="viec ">
-    <rect x="495" y="506" width="138" height="54" rx="7"/>
-    
-    <text class="tx-viec" x="564" y="530.5">Kiểm tra ảnh sống</text><text class="tx-viec" x="564" y="544.5">(thử thách gật đầu)</text>
+    <rect x="643" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="365" x2="657.5" y2="365"/>
+       <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
+    <text class="tx-viec" x="712" y="380.5">deposit_status = PAID</text><text class="tx-viec" x="712" y="394.5">→ tự xác nhận lượt đặt</text>
   </g><g class="viec ">
+    <rect x="791" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="80.5">Khách tới nhà hàng</text><text class="tx-viec" x="860" y="94.5">đúng khung giờ</text>
+  </g><g class="viec ">
+    <rect x="939" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="230.5">Check-in → Xếp bàn</text><text class="tx-viec" x="1008" y="244.5">(ARRIVED → SEATED)</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
+       <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1156" y="380.5">hold_until = NULL ·</text><text class="tx-viec" x="1156" y="394.5">bàn → Đang phục vụ</text>
+  </g><g class="viec ">
+    <rect x="1235" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1304" y="230.5">Kết thúc bữa ăn</text><text class="tx-viec" x="1304" y="244.5">(COMPLETED)</text>
+  </g><g class="viec tu-dong">
+    <rect x="1383" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1389" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1391.5" y1="365" x2="1397.5" y2="365"/>
+       <line x1="1391.5" y1="367.5" x2="1397.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1452" y="380.5">closed_at · bàn sang</text><text class="tx-viec" x="1452" y="394.5">Đang dọn · giữ ô lưới</text>
+  </g><g class="sk sk-cuoi"><circle cx="1452" cy="83" r="19"/><text class="tx-sk" x="1452" y="53">Lượt đặt hoàn tất</text></g><g class="sk sk-hen-gio"><circle cx="564" cy="533" r="19"/><circle cx="564" cy="533" r="15"/><path class="thu" d="M564,525 a8,8 0 1,0 0.02,0 M564,528 L564,533 L568,533"/><text class="tx-sk" x="564" y="503">Mỗi 60 giây</text></g><g class="viec tu-dong">
     <rect x="643" y="506" width="138" height="54" rx="7"/>
-    
-    <text class="tx-viec" x="712" y="530.5">Nhận diện 1:N</text><text class="tx-viec" x="712" y="544.5">hoặc xác minh 1:1</text>
-  </g><g class="cong">
-    <polygon points="860,509 884,533 860,557 836,533"/>
-    <line x1="852" y1="525" x2="868" y2="541"/>
-    <line x1="852" y1="541" x2="868" y2="525"/>
-    <text class="tx-sk" x="860" y="573">Đạt ngưỡng</text><text class="tx-sk" x="860" y="586">tin cậy?</text>
-  </g><g class="viec ">
-    <rect x="791" y="206" width="138" height="54" rx="7"/>
-    
-    <text class="tx-viec" x="860" y="230.5">Báo thất bại, mời</text><text class="tx-viec" x="860" y="244.5">chấm công thủ công</text>
-  </g><g class="sk sk-cuoi"><circle cx="1008" cy="233" r="19"/><text class="tx-sk" x="1008" y="267">Chờ quản lý duyệt</text></g><g class="viec tu-dong">
-    <rect x="939" y="356" width="138" height="54" rx="7"/>
-    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
-       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
-       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
-    <text class="tx-viec" x="1008" y="380.5">Ghi bảng công,</text><text class="tx-viec" x="1008" y="394.5">lưu ảnh và toạ độ</text>
-  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đã chấm công</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="268,260 268,383 392,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="440,383 495,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="458" y="374">Không</text><polyline class="luong " points="416,407 416,533 495,533" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="430" y="449">Có</text><polyline class="luong " points="633,383 693,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="633,533 643,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="781,533 836,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="860,509 860,260" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="906" y="387">Không đạt</text><polyline class="luong " points="929,233 989,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="884,533 920,533 920,383 939,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="902" y="524">Đạt</text><polyline class="luong " points="1077,383 1112,383 1112,83 1137,83" marker-end="url(#mui-bpD)"/></svg>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="523.5">quetCocQuaHan:</text><text class="tx-viec" x="712" y="537.5">quá hạn cọc → tự</text><text class="tx-viec" x="712" y="551.5">huỷ, nhả ô lưới</text>
+  </g><g class="viec tu-dong">
+    <rect x="791" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="797" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="799.5" y1="515" x2="805.5" y2="515"/>
+       <line x1="799.5" y1="517.5" x2="805.5" y2="517.5"/></g>
+    <text class="tx-viec" x="860" y="530.5">quetNoShow · cảnh báo</text><text class="tx-viec" x="860" y="544.5">rồi tự đóng NO_SHOW</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="530.5">quetNhacLich ·</text><text class="tx-viec" x="1008" y="544.5">dongBoTrangThaiBan</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="515" x2="1101.5" y2="515"/>
+       <line x1="1095.5" y1="517.5" x2="1101.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1156" y="530.5">phatThongBao · socket</text><text class="tx-viec" x="1156" y="544.5">+ email, hỏng → FAILED</text>
+  </g><g class="sk sk-cuoi"><circle cx="1304" cy="533" r="19"/><text class="tx-sk" x="1304" y="503">Vòng quét kết thúc</text></g><polyline class="luong " points="139,83 162,83 162,383 244,383" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="268,359 268,83 347,83" marker-end="url(#mui-bpDB3)"/><text class="tx-luong" x="288" y="300">Có</text><polyline class="luong " points="292,383 324,383 324,440 830,440 830,110" marker-end="url(#mui-bpDB3)"/><text class="tx-luong" x="356" y="432">Không</text><polyline class="luong " points="485,83 564,83 564,206" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="564,260 564,383 643,383" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="712,356 712,83 791,83" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="929,83 1008,83 1008,206" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1008,260 1008,356" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1225,383 1304,383 1304,260" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1373,233 1452,233 1452,356" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1521,383 1532,383 1532,83 1471,83" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="583,533 643,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="781,533 791,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="929,533 939,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1077,533 1087,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1225,533 1285,533" marker-end="url(#mui-bpDB3)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="330" y="325">Huỷ bất cứ lúc nào: tinhHoanTien lấy mốc lớn nhất khách còn</text><text class="tx-ghi" x="330" y="338">đáp ứng và chỉ hoàn phần ĐÃ THU; CANCELLED nhả ô lưới ngay.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="478">Vòng quét chạy trong chính tiến trình web,</text><text class="tx-ghi" x="130" y="491">mỗi việc bọc try riêng. Mọi thay đổi đều đi</text><text class="tx-ghi" x="130" y="504">qua doiTrangThai() nên chạy nhiều bản sao</text><text class="tx-ghi" x="130" y="517">cũng không đóng NO_SHOW hai lần.</text>
+  </g></svg>

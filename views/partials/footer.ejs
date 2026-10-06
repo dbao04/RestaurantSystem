@@ -21,7 +21,7 @@
     </section>
 
     <footer class="nh-footer">
-      <div class="nh-container">
+      <div class="nh-footer__inner">
         <div class="nh-footer__grid">
           <div>
             <div class="nh-footer__brand"><%= t('chung.ten_nha_hang') %></div>
@@ -40,6 +40,7 @@
               <li><a href="/"><%= t('dieu_huong.trang_chu') %></a></li>
               <li><a href="/about"><%= t('dieu_huong.gioi_thieu') %></a></li>
               <li><a href="/menu"><%= t('dieu_huong.thuc_don') %></a></li>
+              <li><a href="/giao-hang"><i class="fas fa-motorcycle" style="color:var(--nh-gold); margin-right:4px;"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a></li>
               <li><a href="/blog"><%= t('dieu_huong.tin_tuc') %></a></li>
               <li><a href="/datban"><%= t('chung.dat_ban') %></a></li>
               <li><a href="/huong-dan-dat-ban"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
@@ -51,7 +52,7 @@
             <ul>
               <li><i class="fas fa-map-marker-alt"></i><span><%= t('chan_trang.dia_chi') %></span></li>
               <li><i class="fas fa-phone-alt"></i><a href="tel:0388062048">0388 062 048</a></li>
-              <li><i class="fas fa-envelope"></i><a href="mailto:nhahangbd@gmail.com">nhahangbd@gmail.com</a></li>
+              <li><i class="fas fa-headset"></i><a href="/chat" style="color:var(--nh-gold-soft); font-weight:600;"><%= t('chat.tieu_de') || 'Chat với nhân viên' %></a></li>
             </ul>
           </div>
 
@@ -178,6 +179,54 @@
   });
   document.addEventListener('click', dong);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dong(); });
+})();
+
+/*
+  Bo dieu khien Chuyen doi Che do Sang / Toi (Dark / Light Theme Switcher)
+*/
+(function () {
+  var nutToggle = document.getElementById('nh-theme-toggle');
+  var iconToggle = document.getElementById('nh-theme-icon');
+  var nutMobile = document.getElementById('nh-theme-toggle-mobile');
+  var textMobile = document.getElementById('nh-theme-mobile-text');
+
+  function capNhatIcon(theme) {
+    var isDark = (theme === 'dark');
+    if (iconToggle) {
+      iconToggle.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      if (nutToggle) {
+        nutToggle.title = isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối';
+      }
+    }
+    if (nutMobile) {
+      var mIcon = nutMobile.querySelector('i');
+      if (mIcon) mIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      if (textMobile) textMobile.textContent = isDark ? 'Chế độ sáng' : 'Chế độ tối';
+    }
+  }
+
+  function batTatTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'light';
+    var next = (current === 'dark') ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('nh_theme', next);
+    } catch (e) {}
+    capNhatIcon(next);
+  }
+
+  var currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('nh_theme') || 'light';
+  capNhatIcon(currentTheme);
+
+  if (nutToggle) {
+    nutToggle.addEventListener('click', batTatTheme);
+  }
+  if (nutMobile) {
+    nutMobile.addEventListener('click', function (e) {
+      e.preventDefault();
+      batTatTheme();
+    });
+  }
 })();
 </script>
 </body>

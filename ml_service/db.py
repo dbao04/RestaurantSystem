@@ -14,7 +14,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 GOC_DU_AN = Path(__file__).resolve().parent.parent
-load_dotenv(GOC_DU_AN / ".env")
+# override=True: bien moi truong san co cua Windows/he thong tung de len .env
+# (DB_HOST cap user) khien ket noi CSDL treo ETIMEDOUT. .env la nguon duy nhat.
+load_dotenv(GOC_DU_AN / ".env", override=True)
 
 _engine: Engine | None = None
 

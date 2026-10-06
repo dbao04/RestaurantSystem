@@ -1,40 +1,73 @@
-<%- include('partials/header') %>
-    
-    <section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
-      <div class="overlay"></div>
-      <div class="container">
-        <div class="row no-gutters slider-text align-items-end justify-content-center">
-          <div class="col-md-9 ftco-animate text-center mb-4">
-            <h1 class="mb-2 bread"><%= t('tai_khoan.dang_nhap') %></h1>
+<%- include('partials/header', { title: t('tai_khoan.dang_nhap') }) %>
+
+<section class="nh-subhero" style="min-height: 28vh;">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('dieu_huong.tai_khoan') %></span>
+    <h1><%= t('tai_khoan.dang_nhap') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('tai_khoan.dang_nhap') %>
+    </div>
+  </div>
+</section>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-auth-wrapper">
+    <div class="nh-auth-card nh-reveal">
+      <div class="nh-auth-header">
+        <div class="nh-auth-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <h2 class="nh-auth-title"><%= t('tai_khoan.dang_nhap') %></h2>
+        <p class="nh-auth-subtitle"><%= t('tai_khoan.dang_nhap_mo_ta') %></p>
+      </div>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="nh-auth-alert nh-auth-alert--danger">
+          <i class="fas fa-circle-exclamation"></i>
+          <span><%- error %></span>
+        </div>
+      <% } %>
+
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="nh-auth-alert nh-auth-alert--success">
+          <i class="fas fa-circle-check"></i>
+          <span><%- message %></span>
+        </div>
+      <% } %>
+
+      <form action="/login" method="post">
+        <div class="nh-auth-group">
+          <label class="nh-auth-label"><%= t('chung.dien_thoai') %></label>
+          <div class="nh-auth-input-wrap">
+            <i class="fas fa-phone"></i>
+            <input type="text" name="sdt" class="nh-auth-input" placeholder="Nhập số điện thoại" required autofocus>
           </div>
         </div>
-      </div>
-    </section>
-		
-		<section class="ftco-section ftco-no-pt ftco-no-pb contact-section">
-			<div class="container">
-				<div class="row d-flex align-items-stretch no-gutters">
-					<div class="col-md-6 pt-5 px-2 pb-2 p-md-5 order-md-last">
-            <h2 class="h4 mb-2 mb-md-5 font-weight-bold"><%= t('tai_khoan.dang_nhap') %></h2>
-            <% if (typeof error !== 'undefined') { %>
-              <div class="alert alert-danger"><%- error %></div>
-            <% } %>
-						<form action="/login" method="post">
-              <div class="form-group">
-                <input type="text" name="sdt" class="form-control" placeholder="<%= t('chung.dien_thoai') %>" required>
-              </div>
-              <div class="form-group">
-                <input type="password" name="pass" class="form-control" placeholder="<%= t('tai_khoan.mat_khau') %>" required>
-              </div>
-              <div class="form-group">
-                <input type="submit" value="<%= t('tai_khoan.dang_nhap') %>" class="btn btn-primary py-3 px-5">
-              </div>
-              <p><a href="/forgot-password"><%= t('tai_khoan.quen_mat_khau') %></a></p>
-              <p><%= t('tai_khoan.chua_co_tai_khoan') %> <a href="/register"><%= t('tai_khoan.dang_ky_tai_day') %></a></p>
-            </form>
-					</div>
-				</div>
-			</div>
-		</section>
-	
+
+        <div class="nh-auth-group">
+          <label class="nh-auth-label"><%= t('tai_khoan.mat_khau') %></label>
+          <div class="nh-auth-input-wrap">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="pass" class="nh-auth-input" placeholder="Nhập mật khẩu" required>
+          </div>
+        </div>
+
+        <button type="submit" class="nh-auth-btn">
+          <i class="fas fa-right-to-bracket"></i> <%= t('tai_khoan.dang_nhap') %>
+        </button>
+
+        <div class="nh-auth-footer">
+          <a href="/forgot-password" class="nh-auth-link"><%= t('tai_khoan.quen_mat_khau') %></a>
+          <div>
+            <span><%= t('tai_khoan.chua_co_tai_khoan') %></span>
+            <a href="/register" class="nh-auth-link" style="color: var(--nh-gold);"><%= t('tai_khoan.dang_ky_tai_day') %></a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
 <%- include('partials/footer') %>

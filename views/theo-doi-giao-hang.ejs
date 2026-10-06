@@ -26,7 +26,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><%= t('theo_doi.don_ma', { ma: don.ma_giao }) %></title>
   <meta name="theme-color" content="#2c1810">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <% if (don.dang_chay) { %>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <% } %>
@@ -148,7 +148,7 @@
     <h2><%= t('theo_doi.don_hang') %></h2>
     <% (mon || []).forEach(function (m) { %>
       <div class="hang">
-        <span><%= (m.name_mon || '').trim() %> <span style="opacity:.6">×<%= m.soluong %></span></span>
+        <span><%= tenMon(m).chinh %> <span style="opacity:.6">×<%= m.soluong %></span></span>
         <span><%= formatMoney(m.thanhtien) %>đ</span>
       </div>
     <% }) %>
@@ -204,7 +204,7 @@
 
   if (DIEM && document.getElementById('ban-do') && typeof L !== 'undefined') {
     ban_do = L.map('ban-do', { zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(ban_do);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(ban_do);
 
     function cham(mau, hinh) {
       return L.divIcon({

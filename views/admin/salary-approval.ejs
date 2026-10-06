@@ -1,5 +1,9 @@
-<%- include('partials/header') %>
-<%- include('partials/sidebar') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/header', { activePage: 'salary-approval', staffName: session.staffName || 'Quản lý' }) %>
+<% } else { %>
+  <%- include('partials/header') %>
+  <%- include('partials/sidebar') %>
+<% } %>
 
 <div class="qt-card">
     <div class="qt-card__head">
@@ -67,4 +71,8 @@
     $(document).ready(function () { $('.datatable').dataTable(); });
 </script>
 
-<%- include('partials/footer') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

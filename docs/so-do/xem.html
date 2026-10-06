@@ -218,6 +218,16 @@ tbody tr:last-child th,tbody tr:last-child td{border-bottom:0;}
 .vai-chinh{background:var(--nhan-nen); color:var(--nhan);}
 .vai-phu{background:var(--canh-nen); color:var(--canh);}
 
+.bang-buoc{min-width:960px;}
+.bang-buoc td:first-child,.bang-buoc th:first-child{width:46px; text-align:right;
+  font-family:var(--mono); font-size:12px; color:var(--muc-mo); white-space:nowrap;}
+.bang-buoc td:nth-child(2){font-size:12.5px; color:var(--muc-mo); white-space:nowrap;}
+.bang-buoc td:last-child{font-size:12.5px;}
+.bang-ma{min-width:760px;}
+.bang-ma td:first-child,.bang-ma th:first-child{width:96px; font-family:var(--mono);
+  font-size:12px; font-weight:700; color:var(--nhan); white-space:nowrap;}
+.bang-tt td:first-child{font-family:var(--mono); font-size:12px; font-weight:700; white-space:nowrap;}
+
 .dac-ta{min-width:560px;}
 .dac-ta caption{padding:16px 18px 10px; border-bottom:1px solid var(--vien);
   font-family:var(--serif); font-size:16.5px;}
@@ -254,10 +264,10 @@ footer{border-top:1px solid var(--vien); padding-top:24px; color:var(--muc-mo);
   <div class="mo-ta-du-an">
     <span>Tác nhân: <b>8 người dùng + 2 hệ thống ngoài</b></span>
     <span>Ca sử dụng: <b>68</b></span>
-    <span>Quy trình: <b>5</b></span>
+    <span>Quy trình: <b>10</b></span>
     <span>Quy mô: <b>40 bàn / 4 khu</b></span>
   </div>
-</header><nav class="muc-luc"><h2>Nội dung</h2><ol><li><a href="#pham-vi">Phạm vi và cách lập sơ đồ</a></li><li><a href="#tac-nhan">Tác nhân của hệ thống</a></li><li><a href="#uc-tong-quat">Sơ đồ use case tổng quát</a></li><li><a href="#uc-phan-ra">Sơ đồ use case phân rã theo phân hệ</a></li><li><a href="#dac-ta">Đặc tả ba use case tiêu biểu</a></li><li><a href="#bpmn">Sơ đồ quy trình nghiệp vụ (BPMN)</a></li><li><a href="#lop">Sơ đồ lớp</a></li><li><a href="#erd">Lược đồ quan hệ thực thể (ERD)</a></li><li><a href="#tuan-tu">Sơ đồ tuần tự</a></li><li><a href="#hoat-dong">Sơ đồ hoạt động</a></li><li><a href="#anh-xa">Ánh xạ sơ đồ sang mã nguồn</a></li></ol></nav><section id="pham-vi"><h2 class="muc"><span class="so">01</span>Phạm vi và cách lập sơ đồ</h2>
+</header><nav class="muc-luc"><h2>Nội dung</h2><ol><li><a href="#pham-vi">Phạm vi và cách lập sơ đồ</a></li><li><a href="#tac-nhan">Tác nhân của hệ thống</a></li><li><a href="#uc-tong-quat">Sơ đồ use case tổng quát</a></li><li><a href="#uc-phan-ra">Sơ đồ use case phân rã theo phân hệ</a></li><li><a href="#dac-ta">Đặc tả ba use case tiêu biểu</a></li><li><a href="#bpmn">Sơ đồ quy trình nghiệp vụ (BPMN)</a></li><li><a href="#dac-ta-quy-trinh">Đặc tả hai quy trình trọng yếu</a></li><li><a href="#lop">Sơ đồ lớp</a></li><li><a href="#erd">Lược đồ quan hệ thực thể (ERD)</a></li><li><a href="#tuan-tu">Sơ đồ tuần tự</a></li><li><a href="#hoat-dong">Sơ đồ hoạt động</a></li><li><a href="#anh-xa">Ánh xạ sơ đồ sang mã nguồn</a></li></ol></nav><section id="pham-vi"><h2 class="muc"><span class="so">01</span>Phạm vi và cách lập sơ đồ</h2>
 <div class="van">
 <p>Tài liệu này mô tả hệ thống ở hai mức khác nhau và cố ý không trộn chúng vào nhau.
 <b>Sơ đồ use case</b> trả lời câu hỏi <i>ai làm được gì</i> — nó liệt kê chức năng theo
@@ -1382,12 +1392,19 @@ một ca liên quan tới dữ liệu sinh trắc học.</p></div>
     <tr><th>Hậu điều kiện</th><td>Có bản ghi chấm công kèm bằng chứng ảnh và toạ độ; hoặc có bản ghi nhật ký giải thích vì sao bị từ chối.</td></tr>
   </tbody>
 </table></div></section><section id="bpmn"><h2 class="muc"><span class="so">06</span>Sơ đồ quy trình nghiệp vụ (BPMN)</h2>
-<div class="van"><p>Năm quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
+<div class="van"><p>Mười quy trình dưới đây là những luồng đi qua nhiều vai trò nhất, nên
 cũng là nơi dễ đứt gãy nhất khi vận hành. Mỗi sơ đồ là một pool chia thành bốn lằn;
-lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ việc người làm với việc máy làm.</p></div>
+lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ việc người làm với việc máy làm.</p>
+
+<p><b>Hai mức chi tiết.</b> Hình 11–12, 16 và 19–20 vẽ <i>một quy trình trên một hình</i>:
+đủ để nhìn ra điểm bàn giao giữa các vai, hợp khi trình bày cho người không đọc mã.
+Riêng hai quy trình nhiều tiền và nhiều rủi ro nhất — <b>đặt bàn</b> và <b>thanh toán</b> —
+được tách tiếp thành năm hình chi tiết (13–15 và 17–18), mỗi bước ứng với một lệnh thật
+trong mã nguồn. Tách ra chứ không nhồi vào một hình là có lý do: một sơ đồ mười tám bước
+kéo dài ba mét giấy thì không ai đọc, và cũng không in vào báo cáo được.</p></div>
 <figure class="khoi-hinh">
   <figcaption class="cap"><span class="cap-so">Hình 10</span>Chú giải ký hiệu BPMN</figcaption>
-  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1160 100" role="img" aria-label="Chú giải ký hiệu sơ đồ BPMN"
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1320 100" role="img" aria-label="Chu giai ky hieu so do BPMN"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-cg2" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -1397,22 +1414,22 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
             markerWidth="10" markerHeight="10" orient="auto-start-reverse">
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
-  </defs><g class="sk sk-dau"><circle cx="60" cy="46" r="19"/><text class="tx-sk" x="60" y="80">Bắt đầu</text></g><g class="sk sk-giua"><circle cx="220" cy="46" r="19"/><circle cx="220" cy="46" r="15"/><path class="thu" d="M212,41 h16 v10 h-16 z M212,41 l8,6 l8,-6"/><text class="tx-sk" x="220" y="80">Trung gian</text></g><g class="sk sk-cuoi"><circle cx="380" cy="46" r="19"/><text class="tx-sk" x="380" y="80">Kết thúc</text></g><g class="viec ">
-    <rect x="491" y="19" width="138" height="54" rx="7"/>
+  </defs><g class="sk sk-dau"><circle cx="60" cy="46" r="19"/><text class="tx-sk" x="60" y="80">Bắt đầu</text></g><g class="sk sk-giua"><circle cx="214" cy="46" r="19"/><circle cx="214" cy="46" r="15"/><path class="thu" d="M206,41 h16 v10 h-16 z M206,41 l8,6 l8,-6"/><text class="tx-sk" x="214" y="80">Trung gian · nhận tin</text></g><g class="sk sk-hen-gio"><circle cx="400" cy="46" r="19"/><circle cx="400" cy="46" r="15"/><path class="thu" d="M400,38 a8,8 0 1,0 0.02,0 M400,41 L400,46 L404,46"/><text class="tx-sk" x="400" y="80">Trung gian · hẹn giờ</text></g><g class="sk sk-cuoi"><circle cx="560" cy="46" r="19"/><text class="tx-sk" x="560" y="80">Kết thúc</text></g><g class="viec ">
+    <rect x="661" y="19" width="138" height="54" rx="7"/>
     
-    <text class="tx-viec" x="560" y="50.5">Công việc của người</text>
+    <text class="tx-viec" x="730" y="50.5">Công việc của người</text>
   </g><g class="viec tu-dong">
-    <rect x="691" y="19" width="138" height="54" rx="7"/>
-    <g class="bt"><rect x="697" y="25" width="11" height="11" rx="1.5"/>
-       <line x1="699.5" y1="28" x2="705.5" y2="28"/>
-       <line x1="699.5" y1="30.5" x2="705.5" y2="30.5"/></g>
-    <text class="tx-viec" x="760" y="50.5">Bước hệ thống tự chạy</text>
+    <rect x="851" y="19" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="857" y="25" width="11" height="11" rx="1.5"/>
+       <line x1="859.5" y1="28" x2="865.5" y2="28"/>
+       <line x1="859.5" y1="30.5" x2="865.5" y2="30.5"/></g>
+    <text class="tx-viec" x="920" y="50.5">Bước hệ thống tự chạy</text>
   </g><g class="cong">
-    <polygon points="940,22 964,46 940,70 916,46"/>
-    <line x1="932" y1="38" x2="948" y2="54"/>
-    <line x1="932" y1="54" x2="948" y2="38"/>
-    <text class="tx-sk" x="940" y="14">Rẽ nhánh loại trừ</text>
-  </g><polyline class="luong " points="1010,46 1120,46" marker-end="url(#mui-cg2)"/><text class="tx-sk" x="1065" y="72">luồng trình tự</text></svg></div>
+    <polygon points="1090,22 1114,46 1090,70 1066,46"/>
+    <line x1="1082" y1="38" x2="1098" y2="54"/>
+    <line x1="1082" y1="54" x2="1098" y2="38"/>
+    <text class="tx-sk" x="1090" y="14">Rẽ nhánh loại trừ</text>
+  </g><polyline class="luong " points="1160,46 1270,46" marker-end="url(#mui-cg2)"/><text class="tx-sk" x="1215" y="72">luồng trình tự</text></svg></div>
   
 </figure>
 <figure class="khoi-hinh">
@@ -1488,8 +1505,8 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
   <p class="cap-duoi">Vòng lặp gọi thêm món trong cùng một bữa lặp lại từ bước quét mã QR và không vẽ lại để giữ sơ đồ đọc được. Bước trừ tồn kho nằm trong cùng giao dịch với bước hoàn thành chế biến: hoặc cả hai cùng thành công, hoặc cả hai cùng quay lui.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 12</span>Quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
-  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình đặt bàn trực tuyến với kiểm tra bàn trống, giữ bàn tạm thời và nhánh đặt cọc qua VietQR"
+  <figcaption class="cap"><span class="cap-so">Hình 12</span>Quy trình đặt bàn trực tuyến — mức tổng quan</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1547 638" role="img" aria-label="So do BPMN tong quan quy trinh dat ban truc tuyen: kiem tra ban trong, giu o luoi thoi gian, nhanh duyet luot dat va nhanh dat coc qua VietQR duoc doi soat tu dong"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpDatBan" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -1500,19 +1517,19 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
   </defs><g>
-    <rect class="lan" x="46" y="8" width="1203" height="150"/>
+    <rect class="lan" x="46" y="8" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
     <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
   </g><g>
-    <rect class="lan" x="46" y="158" width="1203" height="150"/>
+    <rect class="lan" x="46" y="158" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
     <text class="tx-lan" transform="translate(23,233) rotate(-90)">Lễ tân</text>
   </g><g>
-    <rect class="lan" x="46" y="308" width="1203" height="150"/>
+    <rect class="lan" x="46" y="308" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
     <text class="tx-lan" transform="translate(23,383) rotate(-90)">Hệ thống</text>
   </g><g>
-    <rect class="lan" x="46" y="458" width="1203" height="150"/>
+    <rect class="lan" x="46" y="458" width="1501" height="150"/>
     <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
     <text class="tx-lan" transform="translate(23,533) rotate(-90)">Ngân hàng</text>
   </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Muốn đặt bàn</text></g><g class="viec ">
@@ -1529,28 +1546,26 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
     <polygon points="564,359 588,383 564,407 540,383"/>
     <line x1="556" y1="375" x2="572" y2="391"/>
     <line x1="556" y1="391" x2="572" y2="375"/>
-    <text class="tx-sk" x="564" y="351">Có bàn phù hợp?</text>
+    <text class="tx-sk" x="564" y="423">Có bàn phù hợp?</text>
   </g><g class="viec ">
     <rect x="643" y="56" width="138" height="54" rx="7"/>
     
-    <text class="tx-viec" x="712" y="80.5">Chọn khung giờ</text><text class="tx-viec" x="712" y="94.5">khác</text>
-  </g><g class="sk sk-cuoi"><circle cx="860" cy="83" r="19"/><text class="tx-sk" x="860" y="117">Không đặt được</text></g><g class="viec tu-dong">
+    <text class="tx-viec" x="712" y="80.5">Chọn khung giờ</text><text class="tx-viec" x="712" y="94.5">hoặc khu vực khác</text>
+  </g><g class="sk sk-cuoi"><circle cx="860" cy="83" r="19"/><text class="tx-sk" x="860" y="53">Không đặt được</text></g><g class="viec tu-dong">
     <rect x="643" y="356" width="138" height="54" rx="7"/>
     <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
        <line x1="651.5" y1="365" x2="657.5" y2="365"/>
        <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
-    <text class="tx-viec" x="712" y="380.5">Giữ bàn tạm thời,</text><text class="tx-viec" x="712" y="394.5">tạo mã đặt chỗ</text>
+    <text class="tx-viec" x="712" y="380.5">Giữ ô lưới thời gian,</text><text class="tx-viec" x="712" y="394.5">tạo mã đặt bàn</text>
   </g><g class="cong">
     <polygon points="860,359 884,383 860,407 836,383"/>
     <line x1="852" y1="375" x2="868" y2="391"/>
     <line x1="852" y1="391" x2="868" y2="375"/>
-    <text class="tx-sk" x="860" y="351">Có cần đặt cọc?</text>
-  </g><g class="viec tu-dong">
-    <rect x="939" y="356" width="138" height="54" rx="7"/>
-    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
-       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
-       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
-    <text class="tx-viec" x="1008" y="380.5">Xác nhận đặt bàn,</text><text class="tx-viec" x="1008" y="394.5">gửi thông tin cho khách</text>
+    <text class="tx-sk" x="860" y="423">Cần đặt cọc?</text>
+  </g><g class="viec ">
+    <rect x="939" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="230.5">Duyệt lượt đặt,</text><text class="tx-viec" x="1008" y="244.5">gọi xác nhận nếu cần</text>
   </g><g class="viec tu-dong">
     <rect x="939" y="356" width="138" height="54" rx="7"/>
     <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
@@ -1558,20 +1573,299 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
        <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
     <text class="tx-viec" x="1008" y="380.5">Sinh mã VietQR</text><text class="tx-viec" x="1008" y="394.5">tiền đặt cọc</text>
   </g><g class="viec ">
-    <rect x="1087" y="56" width="138" height="54" rx="7"/>
+    <rect x="1235" y="56" width="138" height="54" rx="7"/>
     
-    <text class="tx-viec" x="1156" y="87.5">Chuyển khoản đặt cọc</text>
-  </g><g class="sk sk-giua"><circle cx="1156" cy="533" r="19"/><circle cx="1156" cy="533" r="15"/><path class="thu" d="M1148,528 h16 v10 h-16 z M1148,528 l8,6 l8,-6"/><text class="tx-sk" x="1156" y="567">Ngân hàng báo có</text></g><g class="viec tu-dong">
+    <text class="tx-viec" x="1304" y="80.5">Chuyển khoản</text><text class="tx-viec" x="1304" y="94.5">tiền đặt cọc</text>
+  </g><g class="sk sk-giua"><circle cx="1304" cy="533" r="19"/><circle cx="1304" cy="533" r="15"/><path class="thu" d="M1296,528 h16 v10 h-16 z M1296,528 l8,6 l8,-6"/><text class="tx-sk" x="1304" y="567">Ngân hàng báo có</text></g><g class="viec tu-dong">
+    <rect x="1383" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1389" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1391.5" y1="365" x2="1397.5" y2="365"/>
+       <line x1="1391.5" y1="367.5" x2="1397.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1452" y="380.5">Đối soát tiền cọc,</text><text class="tx-viec" x="1452" y="394.5">xác nhận giữ bàn</text>
+  </g><g class="sk sk-cuoi"><circle cx="1452" cy="83" r="19"/><text class="tx-sk" x="1452" y="53">Đặt bàn thành công</text></g><polyline class="luong " points="139,83 199,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="268,110 268,383 347,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="485,383 540,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="564,359 564,83 643,83" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="596" y="300">Không</text><polyline class="luong " points="781,83 841,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="588,383 643,383" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="616" y="374">Có</text><polyline class="luong " points="781,383 836,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="860,359 860,233 939,233" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="892" y="300">Không</text><polyline class="luong " points="884,383 939,383" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="912" y="374">Có</text><polyline class="luong " points="1077,233 1400,233 1400,83 1433,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1077,383 1156,383 1156,83 1235,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1304,110 1304,514" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1323,533 1452,533 1452,410" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1452,356 1452,102" marker-end="url(#mui-bpDatBan)"/></svg></div>
+  <p class="cap-duoi">Hệ thống kiểm tra bàn trống rồi giữ ô lưới thời gian trước khi trả mã đặt bàn cho khách. Nếu nhà hàng yêu cầu đặt cọc, mã VietQR được sinh theo đúng số tiền và chỉ khi ngân hàng báo có thì bàn mới được xác nhận chắc chắn. Ba hình sau phân rã chính quy trình này.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 13</span>Đặt bàn (chi tiết 1/3) — chọn giờ, chọn bàn và gợi ý thay thế</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1399 638" role="img" aria-label="So do BPMN chi tiet giai doan chon gio va chon ban cua quy trinh dat ban, gom nhanh het ban tra ve khung gio va khu vuc thay the"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpDB1" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpDB1" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Trợ lý đặt bàn</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Web · routes/datBan.js</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">reservationRules · Tables</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Khách muốn đặt bàn</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">B1 · Chọn ngày, giờ,</text><text class="tx-viec" x="268" y="244.5">số khách, khu vực</text>
+  </g><g class="viec tu-dong">
+    <rect x="347" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="353" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="355.5" y1="365" x2="361.5" y2="365"/>
+       <line x1="355.5" y1="367.5" x2="361.5" y2="367.5"/></g>
+    <text class="tx-viec" x="416" y="380.5">GET /api/dat-ban/</text><text class="tx-viec" x="416" y="394.5">khung-gio · /kha-dung</text>
+  </g><g class="viec tu-dong">
+    <rect x="495" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="515" x2="509.5" y2="515"/>
+       <line x1="503.5" y1="517.5" x2="509.5" y2="517.5"/></g>
+    <text class="tx-viec" x="564" y="523.5">Kiểm giờ mở cửa,</text><text class="tx-viec" x="564" y="537.5">mốc 90 ngày, ngừng</text><text class="tx-viec" x="564" y="551.5">nhận 60 phút cuối</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="523.5">goiYXepBan:</text><text class="tx-viec" x="712" y="537.5">duyệt tổ hợp bàn,</text><text class="tx-viec" x="712" y="551.5">chấm điểm và chọn</text>
+  </g><g class="cong">
+    <polygon points="860,509 884,533 860,557 836,533"/>
+    <line x1="852" y1="525" x2="868" y2="541"/>
+    <line x1="852" y1="541" x2="868" y2="525"/>
+    <text class="tx-sk" x="860" y="573">Còn bàn phù hợp?</text>
+  </g><g class="viec tu-dong">
+    <rect x="791" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="797" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="799.5" y1="365" x2="805.5" y2="365"/>
+       <line x1="799.5" y1="367.5" x2="805.5" y2="367.5"/></g>
+    <text class="tx-viec" x="860" y="373.5">Trả ma = FULL,</text><text class="tx-viec" x="860" y="387.5">gio_thay_the và</text><text class="tx-viec" x="860" y="401.5">khu_thay_the</text>
+  </g><g class="viec ">
+    <rect x="791" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="230.5">Hiện nút giờ và</text><text class="tx-viec" x="860" y="244.5">khu vực gợi ý</text>
+  </g><g class="viec ">
+    <rect x="939" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="230.5">B2 · Chọn bàn trên</text><text class="tx-viec" x="1008" y="244.5">sơ đồ mặt bằng</text>
+  </g><g class="viec ">
+    <rect x="1087" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="230.5">B3 · Tên, điện thoại,</text><text class="tx-viec" x="1156" y="244.5">dịp, yêu cầu đặc biệt</text>
+  </g><g class="viec ">
+    <rect x="1235" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1304" y="230.5">B4 · Đối chiếu lại,</text><text class="tx-viec" x="1304" y="244.5">xem tiền cọc</text>
+  </g><g class="sk sk-cuoi"><circle cx="1304" cy="83" r="19"/><text class="tx-sk" x="1304" y="53">Gửi yêu cầu đặt bàn</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="268,260 268,383 347,383" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="416,410 416,533 495,533" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="633,533 643,533" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="781,533 836,533" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="860,509 860,410" marker-end="url(#mui-bpDB1)"/><text class="tx-luong" x="892" y="470">Không</text><polyline class="luong " points="884,533 1008,533 1008,260" marker-end="url(#mui-bpDB1)"/><text class="tx-luong" x="946" y="524">Có</text><polyline class="luong " points="860,356 860,260" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="791,233 337,233" marker-end="url(#mui-bpDB1)"/><text class="tx-luong" x="560" y="224">Chọn lại giờ hoặc khu vực</text><polyline class="luong " points="1077,233 1087,233" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="1225,233 1235,233" marker-end="url(#mui-bpDB1)"/><polyline class="luong " points="1304,206 1304,102" marker-end="url(#mui-bpDB1)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="500" y="360">Hết bàn không kết thúc bằng</text><text class="tx-ghi" x="500" y="373">một câu báo lỗi — API trả kèm</text><text class="tx-ghi" x="500" y="386">giờ và khu vực đặt được thật.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="495" y="597">Điểm thấp = tốt: 60 × số bàn + 1 × ghế thừa + 40 nếu ghép khác khu − 25 mỗi sở thích.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Toàn bộ giai đoạn này chỉ ĐỌC, không ghi gì xuống cơ sở dữ liệu. Vì vậy trợ lý kiểm tra được bàn trống ngay ở bước 1, khi khách chưa bỏ công điền tên. Nhánh hết bàn không dừng ở một câu báo lỗi: hàm khungGioThayThe và khuVucThayThe trả về các khung giờ và khu vực THẬT SỰ đặt được — đã qua cả kiểm tra giờ mở cửa lẫn kiểm tra bàn trống — nên trang vẽ chúng thành nút bấm quay về bước 1 với giờ mới chọn sẵn.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 14</span>Đặt bàn (chi tiết 2/3) — ghi lượt đặt và hàng rào chống đặt trùng</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1399 638" role="img" aria-label="So do BPMN chi tiet giai doan ghi luot dat ban: kiem tra quyen dat online, tinh tien coc, ghi ban ghi va chiem o luoi thoi gian trong mot giao dich, thu lai khi mat ban do dua"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpDB2" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpDB2" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Web · routes/datBan.js</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">reservationService · Rules</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">MySQL — một giao dịch</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Yêu cầu đặt bàn</text></g><g class="viec tu-dong">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="205" y="212" width="11" height="11" rx="1.5"/>
+       <line x1="207.5" y1="215" x2="213.5" y2="215"/>
+       <line x1="207.5" y1="217.5" x2="213.5" y2="217.5"/></g>
+    <text class="tx-viec" x="268" y="230.5">POST /api/dat-ban</text><text class="tx-viec" x="268" y="244.5">(bắt LoiDatBan → JSON)</text>
+  </g><g class="cong">
+    <polygon points="416,359 440,383 416,407 392,383"/>
+    <line x1="408" y1="375" x2="424" y2="391"/>
+    <line x1="408" y1="391" x2="424" y2="375"/>
+    <text class="tx-sk" x="416" y="423">Được đặt online?</text>
+  </g><g class="sk sk-cuoi"><circle cx="416" cy="83" r="19"/><text class="tx-sk" x="416" y="40">Từ chối · mời gọi</text><text class="tx-sk" x="416" y="53">trực tiếp nhà hàng</text></g><g class="viec tu-dong">
+    <rect x="495" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
+       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
+    <text class="tx-viec" x="564" y="380.5">tinhTienCoc: quy</text><text class="tx-viec" x="564" y="394.5">tắc priority nhỏ nhất</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="365" x2="657.5" y2="365"/>
+       <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
+    <text class="tx-viec" x="712" y="380.5">goiYXepBan: chọn</text><text class="tx-viec" x="712" y="394.5">tổ hợp bàn cho lượt này</text>
+  </g><g class="viec tu-dong">
+    <rect x="791" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="797" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="799.5" y1="515" x2="805.5" y2="515"/>
+       <line x1="799.5" y1="517.5" x2="805.5" y2="517.5"/></g>
+    <text class="tx-viec" x="860" y="523.5">BEGIN · sinh mã</text><text class="tx-viec" x="860" y="537.5">lượt đặt · INSERT</text><text class="tx-viec" x="860" y="551.5">reservations</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="523.5">chiemO · INSERT</text><text class="tx-viec" x="1008" y="537.5">reservation_slot_locks</text><text class="tx-viec" x="1008" y="551.5">mỗi ô 15 phút</text>
+  </g><g class="cong">
+    <polygon points="1156,509 1180,533 1156,557 1132,533"/>
+    <line x1="1148" y1="525" x2="1164" y2="541"/>
+    <line x1="1148" y1="541" x2="1164" y2="525"/>
+    <text class="tx-sk" x="1156" y="573">Trùng ô lưới?</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="380.5">ROLLBACK và thử</text><text class="tx-viec" x="1008" y="394.5">lại tối đa 3 lần</text>
+  </g><g class="viec tu-dong">
+    <rect x="1235" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1241" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1243.5" y1="515" x2="1249.5" y2="515"/>
+       <line x1="1243.5" y1="517.5" x2="1249.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1304" y="523.5">ghiBan, nhật ký,</text><text class="tx-viec" x="1304" y="537.5">xếp thông báo,</text><text class="tx-viec" x="1304" y="551.5">COMMIT</text>
+  </g><g class="viec tu-dong">
+    <rect x="1235" y="206" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1241" y="212" width="11" height="11" rx="1.5"/>
+       <line x1="1243.5" y1="215" x2="1249.5" y2="215"/>
+       <line x1="1243.5" y1="217.5" x2="1249.5" y2="217.5"/></g>
+    <text class="tx-viec" x="1304" y="230.5">Trả mã đặt bàn, bàn,</text><text class="tx-viec" x="1304" y="244.5">tiền cọc, hạn cọc</text>
+  </g><g class="sk sk-cuoi"><circle cx="1304" cy="83" r="19"/><text class="tx-sk" x="1304" y="53">Đặt bàn thành công</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="268,260 268,383 392,383" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="416,359 416,102" marker-end="url(#mui-bpDB2)"/><text class="tx-luong" x="450" y="272">Không</text><polyline class="luong " points="440,383 495,383" marker-end="url(#mui-bpDB2)"/><text class="tx-luong" x="468" y="374">Có</text><polyline class="luong " points="633,383 643,383" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="712,410 712,533 791,533" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="929,533 939,533" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="1077,533 1132,533" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="1156,509 1156,383 1077,383" marker-end="url(#mui-bpDB2)"/><text class="tx-luong" x="1182" y="462">Có</text><polyline class="luong " points="939,383 781,383" marker-end="url(#mui-bpDB2)"/><text class="tx-luong" x="860" y="374">thử lại</text><polyline class="luong " points="1180,533 1235,533" marker-end="url(#mui-bpDB2)"/><text class="tx-luong" x="1208" y="524">Không</text><polyline class="luong " points="1304,506 1304,260" marker-end="url(#mui-bpDB2)"/><polyline class="luong " points="1304,206 1304,102" marker-end="url(#mui-bpDB2)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="450" y="196">Chỉ thử lại khi BÀN DO HỆ THỐNG chọn. Khách tự chọn bàn trên</text><text class="tx-ghi" x="450" y="209">sơ đồ thì báo để khách chọn lại — đổi bàn của họ sang bàn khác</text><text class="tx-ghi" x="450" y="222">mà không hỏi là làm sai ý khách.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="545">Lưới ô 15 phút là hàng rào chống đặt trùng: khoá chính</text><text class="tx-ghi" x="130" y="558">(table_id, slot_start). Một lượt 19:00–21:00 kèm 15 phút dọn</text><text class="tx-ghi" x="130" y="571">bàn chiếm 9 dòng; lượt thứ hai đâm vào khoá chính và bị</text><text class="tx-ghi" x="130" y="584">MySQL từ chối ngay trong giao dịch — không còn khe hở.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Đây là hình quan trọng nhất của phân hệ đặt bàn. Hai bước INSERT nằm trong CÙNG một giao dịch: bản ghi reservations là thứ người đọc, còn các dòng reservation_slot_locks mới là thứ giữ chỗ thật. Khoá chính (table_id, slot_start) khiến lượt thứ hai đâm vào ô đã có chủ bị MySQL từ chối ngay trong giao dịch, nên không còn khe hở giữa "đọc thấy còn bàn" và "ghi bàn". Vòng thử lại chỉ chạy khi bàn do hệ thống tự chọn: khách đã tự chọn bàn trên sơ đồ thì đổi sang bàn khác mà không hỏi là làm sai ý họ.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 15</span>Đặt bàn (chi tiết 3/3) — vòng đời lượt đặt và vòng quét nền</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1547 638" role="img" aria-label="So do BPMN chi tiet vong doi mot luot dat ban tu tien coc, check-in, xep ban toi hoan tat, kem dai vong quet nen chay moi 60 giay"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpDB3" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpDB3" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Nhân viên lễ tân</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">reservationService</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Vòng quét nền</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Đã có mã đặt bàn</text></g><g class="cong">
+    <polygon points="268,359 292,383 268,407 244,383"/>
+    <line x1="260" y1="375" x2="276" y2="391"/>
+    <line x1="260" y1="391" x2="276" y2="375"/>
+    <text class="tx-sk" x="268" y="423">Cần đặt cọc?</text>
+  </g><g class="viec ">
+    <rect x="347" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="416" y="80.5">Chuyển khoản tiền cọc</text><text class="tx-viec" x="416" y="94.5">trước deposit_due_at</text>
+  </g><g class="viec ">
+    <rect x="495" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="564" y="230.5">Ghi nhận cọc ·</text><text class="tx-viec" x="564" y="244.5">POST /:id/deposit</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="365" x2="657.5" y2="365"/>
+       <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
+    <text class="tx-viec" x="712" y="380.5">deposit_status = PAID</text><text class="tx-viec" x="712" y="394.5">→ tự xác nhận lượt đặt</text>
+  </g><g class="viec ">
+    <rect x="791" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="860" y="80.5">Khách tới nhà hàng</text><text class="tx-viec" x="860" y="94.5">đúng khung giờ</text>
+  </g><g class="viec ">
+    <rect x="939" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1008" y="230.5">Check-in → Xếp bàn</text><text class="tx-viec" x="1008" y="244.5">(ARRIVED → SEATED)</text>
+  </g><g class="viec tu-dong">
     <rect x="1087" y="356" width="138" height="54" rx="7"/>
     <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
        <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
        <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
-    <text class="tx-viec" x="1156" y="380.5">Đối soát tiền cọc,</text><text class="tx-viec" x="1156" y="394.5">xác nhận giữ bàn</text>
-  </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đặt bàn thành công</text></g><polyline class="luong " points="139,83 199,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="337,83 374,83 374,383 347,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="485,383 540,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="588,383 643,383" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="606" y="374">Có</text><polyline class="luong " points="564,407 564,83 643,83" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="580" y="449">Không</text><polyline class="luong " points="781,83 841,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="781,383 818,383 818,359" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="860,407 860,233 966,233 939,233" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="878" y="224">Không</text><polyline class="luong " points="1077,233 1085,233 1085,83 1137,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="860,407 860,533 1050,533 939,533" marker-end="url(#mui-bpDatBan)"/><text class="tx-luong" x="876" y="449">Có</text><polyline class="luong " points="1077,533 1114,533 1114,83 1087,83" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1156,110 1156,514" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1175,533 1176,533 1176,383 1225,383" marker-end="url(#mui-bpDatBan)"/><polyline class="luong " points="1225,383 1237,383 1237,83 1175,83" marker-end="url(#mui-bpDatBan)"/></svg></div>
-  <p class="cap-duoi">Hệ thống kiểm tra bàn trống trước khi giữ chỗ. Nếu nhà hàng yêu cầu đặt cọc, mã VietQR được sinh theo đúng số tiền và chỉ khi ngân hàng báo có thì bàn mới được xác nhận chắc chắn.</p>
+    <text class="tx-viec" x="1156" y="380.5">hold_until = NULL ·</text><text class="tx-viec" x="1156" y="394.5">bàn → Đang phục vụ</text>
+  </g><g class="viec ">
+    <rect x="1235" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1304" y="230.5">Kết thúc bữa ăn</text><text class="tx-viec" x="1304" y="244.5">(COMPLETED)</text>
+  </g><g class="viec tu-dong">
+    <rect x="1383" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1389" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1391.5" y1="365" x2="1397.5" y2="365"/>
+       <line x1="1391.5" y1="367.5" x2="1397.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1452" y="380.5">closed_at · bàn sang</text><text class="tx-viec" x="1452" y="394.5">Đang dọn · giữ ô lưới</text>
+  </g><g class="sk sk-cuoi"><circle cx="1452" cy="83" r="19"/><text class="tx-sk" x="1452" y="53">Lượt đặt hoàn tất</text></g><g class="sk sk-hen-gio"><circle cx="564" cy="533" r="19"/><circle cx="564" cy="533" r="15"/><path class="thu" d="M564,525 a8,8 0 1,0 0.02,0 M564,528 L564,533 L568,533"/><text class="tx-sk" x="564" y="503">Mỗi 60 giây</text></g><g class="viec tu-dong">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="515" x2="657.5" y2="515"/>
+       <line x1="651.5" y1="517.5" x2="657.5" y2="517.5"/></g>
+    <text class="tx-viec" x="712" y="523.5">quetCocQuaHan:</text><text class="tx-viec" x="712" y="537.5">quá hạn cọc → tự</text><text class="tx-viec" x="712" y="551.5">huỷ, nhả ô lưới</text>
+  </g><g class="viec tu-dong">
+    <rect x="791" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="797" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="799.5" y1="515" x2="805.5" y2="515"/>
+       <line x1="799.5" y1="517.5" x2="805.5" y2="517.5"/></g>
+    <text class="tx-viec" x="860" y="530.5">quetNoShow · cảnh báo</text><text class="tx-viec" x="860" y="544.5">rồi tự đóng NO_SHOW</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="530.5">quetNhacLich ·</text><text class="tx-viec" x="1008" y="544.5">dongBoTrangThaiBan</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="515" x2="1101.5" y2="515"/>
+       <line x1="1095.5" y1="517.5" x2="1101.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1156" y="530.5">phatThongBao · socket</text><text class="tx-viec" x="1156" y="544.5">+ email, hỏng → FAILED</text>
+  </g><g class="sk sk-cuoi"><circle cx="1304" cy="533" r="19"/><text class="tx-sk" x="1304" y="503">Vòng quét kết thúc</text></g><polyline class="luong " points="139,83 162,83 162,383 244,383" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="268,359 268,83 347,83" marker-end="url(#mui-bpDB3)"/><text class="tx-luong" x="288" y="300">Có</text><polyline class="luong " points="292,383 324,383 324,440 830,440 830,110" marker-end="url(#mui-bpDB3)"/><text class="tx-luong" x="356" y="432">Không</text><polyline class="luong " points="485,83 564,83 564,206" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="564,260 564,383 643,383" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="712,356 712,83 791,83" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="929,83 1008,83 1008,206" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1008,260 1008,356" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1225,383 1304,383 1304,260" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1373,233 1452,233 1452,356" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1521,383 1532,383 1532,83 1471,83" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="583,533 643,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="781,533 791,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="929,533 939,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1077,533 1087,533" marker-end="url(#mui-bpDB3)"/><polyline class="luong " points="1225,533 1285,533" marker-end="url(#mui-bpDB3)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="330" y="325">Huỷ bất cứ lúc nào: tinhHoanTien lấy mốc lớn nhất khách còn</text><text class="tx-ghi" x="330" y="338">đáp ứng và chỉ hoàn phần ĐÃ THU; CANCELLED nhả ô lưới ngay.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="478">Vòng quét chạy trong chính tiến trình web,</text><text class="tx-ghi" x="130" y="491">mỗi việc bọc try riêng. Mọi thay đổi đều đi</text><text class="tx-ghi" x="130" y="504">qua doiTrangThai() nên chạy nhiều bản sao</text><text class="tx-ghi" x="130" y="517">cũng không đóng NO_SHOW hai lần.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Dải dưới cùng là một tiến trình chạy song song chứ không nối tiếp vào luồng khách: vòng quét 60 giây trong chính tiến trình web. Nó chốt hai loại hạn mà không ai ngồi canh được — hạn trả tiền cọc và hạn giữ bàn. No-show có hai mốc chứ không phải một: quá hold_until thì cảnh báo, quá thêm auto_no_show_minutes mới tự đóng, vì khách kẹt xe mười phút không phải khách bỏ bữa. Lưu ý bước COMPLETED GIỮ NGUYÊN ô lưới: nhả ra sẽ cho phép đặt đè lên đúng khung giờ vừa phục vụ, bỏ qua cả thời gian dọn bàn.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 13</span>Quy trình thanh toán và đối soát ngân hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 16</span>Quy trình thanh toán và đối soát ngân hàng — mức tổng quan</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình thanh toán với nhánh tiền mặt và nhánh chuyển khoản VietQR được đối soát tự động từ thông báo của ngân hàng"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1634,10 +1928,184 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
        <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
     <text class="tx-viec" x="1156" y="380.5">Đóng đơn, bàn trống,</text><text class="tx-viec" x="1156" y="394.5">cộng điểm tích luỹ</text>
   </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đã thanh toán</text></g><polyline class="luong " points="139,233 199,233" marker-end="url(#mui-bpB)"/><polyline class="luong " points="337,233 392,233" marker-end="url(#mui-bpB)"/><polyline class="luong " points="440,233 495,233" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="458" y="224">Tiền mặt</text><polyline class="luong " points="416,257 416,383 495,383" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="462" y="299">Chuyển khoản</text><polyline class="luong " points="633,383 712,383 712,83 791,83" marker-end="url(#mui-bpB)"/><polyline class="luong " points="860,110 860,514" marker-end="url(#mui-bpB)"/><polyline class="luong " points="879,533 920,533 920,383 939,383" marker-end="url(#mui-bpB)"/><polyline class="luong " points="633,233 1116,233 1116,356" marker-end="url(#mui-bpB)"/><text class="tx-luong" x="1060" y="224">đã thu đủ</text><polyline class="luong " points="1077,383 1087,383" marker-end="url(#mui-bpB)"/><polyline class="luong " points="1156,356 1156,102" marker-end="url(#mui-bpB)"/></svg></div>
-  <p class="cap-duoi">Điểm đáng chú ý là sự kiện trung gian ở lằn ngân hàng: hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào, nên phiên thanh toán chuyển trạng thái ngay trên cả điện thoại khách lẫn màn hình thu ngân trong cùng một khoảnh khắc.</p>
+  <p class="cap-duoi">Điểm đáng chú ý là sự kiện trung gian ở lằn ngân hàng: hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào, nên phiên thanh toán chuyển trạng thái ngay trên cả điện thoại khách lẫn màn hình thu ngân trong cùng một khoảnh khắc. Hai hình sau phân rã chính quy trình này.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 14</span>Quy trình dự báo bằng học máy</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 17</span>Thanh toán (chi tiết 1/2) — lập hoá đơn và mở phiên thu tiền</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1399 638" role="img" aria-label="So do BPMN chi tiet giai doan lap hoa don va mo phien thu tien, tach nhanh tien mat xong ngay va nhanh VietQR cho doi soat"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpTT1" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpTT1" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Thu ngân (POS)</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">thanhToanService</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1353" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">CSDL · dịch vụ VietQR</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Khách quét QR tự trả</text></g><g class="sk sk-dau"><circle cx="120" cy="233" r="19"/><text class="tx-sk" x="120" y="267">Khách xin tính tiền</text></g><g class="viec ">
+    <rect x="199" y="206" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="230.5">Chọn bàn cần tính tiền</text><text class="tx-viec" x="268" y="244.5">trên màn hình POS</text>
+  </g><g class="viec tu-dong">
+    <rect x="347" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="353" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="355.5" y1="365" x2="361.5" y2="365"/>
+       <line x1="355.5" y1="367.5" x2="361.5" y2="367.5"/></g>
+    <text class="tx-viec" x="416" y="380.5">layHoaDon · cộng các</text><text class="tx-viec" x="416" y="394.5">dòng món (id_mon &gt; 0)</text>
+  </g><g class="viec tu-dong">
+    <rect x="495" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
+       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
+    <text class="tx-viec" x="564" y="373.5">Áp mã giảm giá</text><text class="tx-viec" x="564" y="387.5">và điểm · kiểm tra</text><text class="tx-viec" x="564" y="401.5">lại ở máy chủ</text>
+  </g><g class="viec tu-dong">
+    <rect x="643" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="649" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="651.5" y1="365" x2="657.5" y2="365"/>
+       <line x1="651.5" y1="367.5" x2="657.5" y2="367.5"/></g>
+    <text class="tx-viec" x="712" y="373.5">Phí phục vụ,</text><text class="tx-viec" x="712" y="387.5">VAT, làm tròn → tổng</text><text class="tx-viec" x="712" y="401.5">cộng và còn phải trả</text>
+  </g><g class="cong">
+    <polygon points="860,209 884,233 860,257 836,233"/>
+    <line x1="852" y1="225" x2="868" y2="241"/>
+    <line x1="852" y1="241" x2="868" y2="225"/>
+    <text class="tx-sk" x="860" y="201">Hình thức trả?</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="373.5">taoPhien(cash) ·</text><text class="tx-viec" x="1008" y="387.5">chặn trả vượt,</text><text class="tx-viec" x="1008" y="401.5">tính tiền thối</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
+       <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1156" y="380.5">hauKyThanhToan · điểm,</text><text class="tx-viec" x="1156" y="394.5">đóng đơn, trả bàn</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="515" x2="953.5" y2="515"/>
+       <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1008" y="523.5">INSERT payments</text><text class="tx-viec" x="1008" y="537.5">status = pending ·</text><text class="tx-viec" x="1008" y="551.5">mã đối soát BD…</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="515" x2="1101.5" y2="515"/>
+       <line x1="1095.5" y1="517.5" x2="1101.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1156" y="530.5">taoQRChuyenKhoan ·</text><text class="tx-viec" x="1156" y="544.5">payload EMVCo VietQR</text>
+  </g><g class="sk sk-cuoi"><circle cx="1304" cy="83" r="19"/><text class="tx-sk" x="1304" y="53">Đã thu tiền mặt</text></g><g class="sk sk-cuoi"><circle cx="1304" cy="533" r="19"/><text class="tx-sk" x="1304" y="503">Mã VietQR sẵn sàng</text></g><polyline class="luong " points="139,233 199,233" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="139,83 416,83 416,356" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="268,260 268,383 347,383" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="485,383 495,383" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="633,383 643,383" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="712,356 712,233 836,233" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="884,233 912,233 912,383 939,383" marker-end="url(#mui-bpTT1)"/><text class="tx-luong" x="905" y="224">Tiền mặt</text><polyline class="luong " points="860,257 860,533 939,533" marker-end="url(#mui-bpTT1)"/><text class="tx-luong" x="907" y="330">Chuyển khoản</text><polyline class="luong " points="1077,383 1087,383" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="1077,533 1087,533" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="1156,356 1156,83 1285,83" marker-end="url(#mui-bpTT1)"/><polyline class="luong " points="1225,533 1285,533" marker-end="url(#mui-bpTT1)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="330">Số tiền, mã giảm giá và số điểm ghi vào payments là</text><text class="tx-ghi" x="130" y="343">giá trị ĐÃ KIỂM TRA LẠI trên máy chủ, không phải số</text><text class="tx-ghi" x="130" y="356">client gửi lên.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="500">Một đơn ăn có thể trả NHIỀU LẦN — chia bill, cọc trước rồi trả nốt.</text><text class="tx-ghi" x="130" y="513">Vì vậy hopdong không có cột "đã thanh toán": trạng thái tiền suy ra</text><text class="tx-ghi" x="130" y="526">bằng tổng các dòng payments có status = success của cùng một sesis.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Hoá đơn được dựng lại từ đầu ở mỗi lần gọi chứ không lưu sẵn: cộng các dòng món có id_mon > 0, áp mã giảm giá và điểm tích luỹ, cộng phí phục vụ và VAT, làm tròn, rồi trừ đi phần đã trả để ra con số còn phải trả. Nhờ vậy một đơn ăn trả làm nhiều lần — chia bill, cọc trước rồi trả nốt — vẫn ra đúng số. Hai nhánh tách nhau ở chỗ tiền mặt coi như xong ngay (status = success) còn VietQR để phiên ở trạng thái pending kèm một mã đối soát duy nhất.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 18</span>Thanh toán (chi tiết 2/2) — đối soát VietQR, ngoại lệ và chốt ca</figcaption>
+  <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1547 638" role="img" aria-label="So do BPMN chi tiet quy trinh doi soat tu dong mot khoan chuyen khoan VietQR, nhanh khong khop chuyen sang doi soat thu cong, va dai chot ca thu ngan cuoi ca"
+     xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="mui-bpTT2" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-bpTT2" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g>
+    <rect class="lan" x="46" y="8" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="8" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,83) rotate(-90)">Khách hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="158" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="158" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,233) rotate(-90)">Ngân hàng</text>
+  </g><g>
+    <rect class="lan" x="46" y="308" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="308" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,383) rotate(-90)">Web · thanhToanService</text>
+  </g><g>
+    <rect class="lan" x="46" y="458" width="1501" height="150"/>
+    <rect class="lan-nhan" x="0" y="458" width="46" height="150"/>
+    <text class="tx-lan" transform="translate(23,533) rotate(-90)">Thu ngân</text>
+  </g><g class="sk sk-dau"><circle cx="120" cy="83" r="19"/><text class="tx-sk" x="120" y="53">Khách quét mã VietQR</text></g><g class="viec ">
+    <rect x="199" y="56" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="268" y="80.5">Chuyển khoản, nội dung</text><text class="tx-viec" x="268" y="94.5">là mã đối soát BD…</text>
+  </g><g class="sk sk-giua"><circle cx="416" cy="233" r="19"/><circle cx="416" cy="233" r="15"/><path class="thu" d="M408,228 h16 v10 h-16 z M408,228 l8,6 l8,-6"/><text class="tx-sk" x="416" y="190">Ngân hàng báo có</text><text class="tx-sk" x="416" y="203">(webhook kiểu SePay)</text></g><g class="viec tu-dong">
+    <rect x="495" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="501" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="503.5" y1="365" x2="509.5" y2="365"/>
+       <line x1="503.5" y1="367.5" x2="509.5" y2="367.5"/></g>
+    <text class="tx-viec" x="564" y="380.5">Xác thực Apikey · ghi</text><text class="tx-viec" x="564" y="394.5">giao_dich_ngan_hang</text>
+  </g><g class="cong">
+    <polygon points="712,359 736,383 712,407 688,383"/>
+    <line x1="704" y1="375" x2="720" y2="391"/>
+    <line x1="704" y1="391" x2="720" y2="375"/>
+    <text class="tx-sk" x="712" y="338">Khớp phiên chờ</text><text class="tx-sk" x="712" y="351">và đủ tiền?</text>
+  </g><g class="viec ">
+    <rect x="643" y="506" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="712" y="530.5">Đối soát tay hoặc xác</text><text class="tx-viec" x="712" y="544.5">nhận thủ công tại POS</text>
+  </g><g class="viec tu-dong">
+    <rect x="791" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="797" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="799.5" y1="365" x2="805.5" y2="365"/>
+       <line x1="799.5" y1="367.5" x2="805.5" y2="367.5"/></g>
+    <text class="tx-viec" x="860" y="380.5">xacNhan · UPDATE khi</text><text class="tx-viec" x="860" y="394.5">status vẫn là pending</text>
+  </g><g class="viec tu-dong">
+    <rect x="939" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="945" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="947.5" y1="365" x2="953.5" y2="365"/>
+       <line x1="947.5" y1="367.5" x2="953.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1008" y="373.5">hauKyThanhToan:</text><text class="tx-viec" x="1008" y="387.5">mã giảm giá, trừ</text><text class="tx-viec" x="1008" y="401.5">điểm, cộng điểm</text>
+  </g><g class="viec tu-dong">
+    <rect x="1087" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1093" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1095.5" y1="365" x2="1101.5" y2="365"/>
+       <line x1="1095.5" y1="367.5" x2="1101.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1156" y="373.5">Thu đủ tiền →</text><text class="tx-viec" x="1156" y="387.5">tinhtrang = 3, bàn</text><text class="tx-viec" x="1156" y="401.5">chuyển sang Đang dọn</text>
+  </g><g class="viec tu-dong">
+    <rect x="1235" y="356" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1241" y="362" width="11" height="11" rx="1.5"/>
+       <line x1="1243.5" y1="365" x2="1249.5" y2="365"/>
+       <line x1="1243.5" y1="367.5" x2="1249.5" y2="367.5"/></g>
+    <text class="tx-viec" x="1304" y="380.5">Phát tt:da-thanh-toan</text><text class="tx-viec" x="1304" y="394.5">tới phòng tt:&lt;sesis&gt;</text>
+  </g><g class="sk sk-cuoi"><circle cx="1452" cy="83" r="19"/><text class="tx-sk" x="1452" y="40">Khách và POS cùng</text><text class="tx-sk" x="1452" y="53">báo Đã thanh toán</text></g><g class="sk sk-hen-gio"><circle cx="1008" cy="533" r="19"/><circle cx="1008" cy="533" r="15"/><path class="thu" d="M1008,525 a8,8 0 1,0 0.02,0 M1008,528 L1008,533 L1012,533"/><text class="tx-sk" x="1008" y="503">Hết ca thu ngân</text></g><g class="viec ">
+    <rect x="1087" y="506" width="138" height="54" rx="7"/>
+    
+    <text class="tx-viec" x="1156" y="530.5">Đếm két theo mệnh giá,</text><text class="tx-viec" x="1156" y="544.5">nhập số thực đếm</text>
+  </g><g class="viec tu-dong">
+    <rect x="1235" y="506" width="138" height="54" rx="7"/>
+    <g class="bt"><rect x="1241" y="512" width="11" height="11" rx="1.5"/>
+       <line x1="1243.5" y1="515" x2="1249.5" y2="515"/>
+       <line x1="1243.5" y1="517.5" x2="1249.5" y2="517.5"/></g>
+    <text class="tx-viec" x="1304" y="530.5">Chênh lệch = thực đếm</text><text class="tx-viec" x="1304" y="544.5">− tiền mặt hệ thống</text>
+  </g><g class="sk sk-cuoi"><circle cx="1452" cy="533" r="19"/><text class="tx-sk" x="1452" y="503">Biên bản chờ duyệt</text></g><polyline class="luong " points="139,83 199,83" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="268,110 268,233 397,233" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="435,233 470,233 470,383 495,383" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="633,383 688,383" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="712,407 712,506" marker-end="url(#mui-bpTT2)"/><text class="tx-luong" x="764" y="452">Không khớp</text><polyline class="luong " points="736,383 791,383" marker-end="url(#mui-bpTT2)"/><text class="tx-luong" x="764" y="374">Khớp</text><polyline class="luong " points="781,533 860,533 860,410" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="929,383 939,383" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1077,383 1087,383" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1225,383 1235,383" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1373,383 1420,383 1420,83 1433,83" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1027,533 1087,533" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1225,533 1235,533" marker-end="url(#mui-bpTT2)"/><polyline class="luong " points="1373,533 1433,533" marker-end="url(#mui-bpTT2)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="330">UPDATE … WHERE status = pending là chốt chống cộng điểm</text><text class="tx-ghi" x="130" y="343">hai lần khi webhook ngân hàng và thu ngân cùng xác nhận</text><text class="tx-ghi" x="130" y="356">một phiên trong cùng một khoảnh khắc.</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="130" y="470">Bốn lý do KHÔNG khớp, cả bốn đều trả HTTP 200 để ngân hàng</text><text class="tx-ghi" x="130" y="483">không bắn lại: nội dung không chứa mã BD · không có phiên chờ</text><text class="tx-ghi" x="130" y="496">mang mã đó · khách chuyển thiếu · đã tắt tự động đối soát.</text>
+  </g></svg></div>
+  <p class="cap-duoi">Mã đối soát được dò bằng biểu thức chính quy chứ không so sánh bằng, vì ngân hàng chèn thêm chữ vào nội dung chuyển khoản. Cổng rẽ nhánh gom bốn tình huống không khớp về một chỗ và cả bốn đều trả HTTP 200 — trả mã khác thì bên gửi bắn lại liên tục trong khi giao dịch đó ta đã lưu vào hộp thư rồi. Dải dưới cùng là chốt ca: mốc thời gian lấy từ LẦN CHỐT CA GẦN NHẤT CỦA CHÍNH NGƯỜI ĐÓ, không phải từ 00:00, để không đồng nào bị đếm hai lần và không đồng nào lọt ra ngoài.</p>
+</figure>
+<figure class="khoi-hinh">
+  <figcaption class="cap"><span class="cap-so">Hình 19</span>Quy trình dự báo bằng học máy</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1279 638" role="img" aria-label="Sơ đồ BPMN quy trình dự báo bằng học máy: web gọi dịch vụ Python, dịch vụ đọc lịch sử, huấn luyện bốn mô hình rồi chọn mô hình có sai số thấp nhất"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1709,7 +2177,7 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
   <p class="cap-duoi">Rẽ nhánh đầu tiên là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python không được phép làm sập web. Khi nó không trả lời, trang vẫn hiển thị dự báo đã lưu lần chạy trước. Bốn mô hình được chấm điểm gồm SeasonalNaive (baseline), Ridge, RandomForest và GradientBoosting; mô hình có MAE thấp nhất trên 60 ngày cuối được chọn rồi huấn luyện lại trên toàn bộ dữ liệu.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 15</span>Quy trình chấm công bằng khuôn mặt và GPS</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 20</span>Quy trình chấm công bằng khuôn mặt và GPS</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1249 638" role="img" aria-label="Sơ đồ BPMN quy trình chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó kiểm tra ảnh sống rồi nhận diện khuôn mặt"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-bpD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1776,14 +2244,103 @@ lằn cuối luôn là phần hệ thống tự chạy, để phân biệt rõ v
     <text class="tx-viec" x="1008" y="380.5">Ghi bảng công,</text><text class="tx-viec" x="1008" y="394.5">lưu ảnh và toạ độ</text>
   </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Đã chấm công</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="268,260 268,383 392,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="440,383 495,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="458" y="374">Không</text><polyline class="luong " points="416,407 416,533 495,533" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="430" y="449">Có</text><polyline class="luong " points="633,383 693,383" marker-end="url(#mui-bpD)"/><polyline class="luong " points="633,533 643,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="781,533 836,533" marker-end="url(#mui-bpD)"/><polyline class="luong " points="860,509 860,260" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="906" y="387">Không đạt</text><polyline class="luong " points="929,233 989,233" marker-end="url(#mui-bpD)"/><polyline class="luong " points="884,533 920,533 920,383 939,383" marker-end="url(#mui-bpD)"/><text class="tx-luong" x="902" y="524">Đạt</text><polyline class="luong " points="1077,383 1112,383 1112,83 1137,83" marker-end="url(#mui-bpD)"/></svg></div>
   <p class="cap-duoi">Thứ tự hai kiểm tra là có chủ đích: kiểm tra vị trí đặt trước kiểm tra khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây thay vì phải đợi hết lượt nhận diện, và câu trả lời "bạn đang ở cách nhà hàng 4 km" không cần biết người đó là ai.</p>
-</figure></section><section id="lop"><h2 class="muc"><span class="so">07</span>Sơ đồ lớp</h2>
+</figure></section><section id="dac-ta-quy-trinh"><h2 class="muc"><span class="so">07</span>Đặc tả hai quy trình trọng yếu</h2>
+<div class="van">
+<p>Sơ đồ cho biết công việc chạy qua những ai theo thứ tự nào, nhưng không nói được
+<i>con số nào, bảng nào, vì sao lại làm thế</i>. Phần này bù đúng chỗ đó cho hai quy
+trình đã vẽ chi tiết ở trên. Mỗi quy trình gồm năm bảng: thẻ tóm tắt, bảng các bước
+ánh xạ sang mã nguồn, bảng quy tắc nghiệp vụ kèm lý do, bảng ngoại lệ, và bảng trạng thái.</p>
+
+<p>Hai quy trình này được chọn vì chúng là nơi <b>sai một lần là mất tiền thật</b>:
+đặt bàn có thể bán một cái bàn cho hai người, thanh toán có thể cộng điểm hai lần hoặc
+đóng đơn khi chưa thu đủ. Phần lớn quy tắc dưới đây tồn tại vì một tình huống cụ thể,
+nên cột lý do được viết ra chứ không để người đọc tự đoán.</p>
+</div>
+
+<h3>QT-01 &middot; Đặt bàn trực tuyến</h3>
+<div class="bang-hop">
+<table class="dac-ta">
+  <caption><b>QT-01</b> &middot; Đặt bàn trực tuyến</caption>
+  <tbody><tr><th>Mục tiêu</th><td>Nhận yêu cầu giữ bàn theo ngày giờ và số khách, bảo đảm một bàn trong một khung giờ chỉ thuộc về một lượt đặt, rồi giữ lượt đó tới khi khách đến hoặc tới khi hết hạn.</td></tr><tr><th>Chủ quy trình</th><td>Quản lý nhà hàng (đặt cấu hình) &middot; Lễ tân (vận hành hằng ngày)</td></tr><tr><th>Tác nhân</th><td>Khách hàng &middot; Lễ tân &middot; Thu ngân (ghi nhận cọc) &middot; Quản lý (duyệt, từ chối, gán VIP) &middot; Ngân hàng (báo có tiền cọc)</td></tr><tr><th>Kích hoạt</th><td>Khách mở <code>/dat-ban</code>; hoặc nhân viên tạo hộ; hoặc khách vãng lai tới quầy</td></tr><tr><th>Đầu vào</th><td>Ngày, giờ, số khách, khu vực, thẻ yêu cầu đặc biệt, tên và số điện thoại</td></tr><tr><th>Đầu ra</th><td>Một bản ghi <code>reservations</code> kèm mã <code>RSV-YYMMDD-XXXX</code>, các dòng <code>reservation_slot_locks</code> giữ chỗ, và một hàng đợi thông báo</td></tr><tr><th>Sự kiện kết thúc</th><td>COMPLETED (đã dùng bữa) &middot; CANCELLED &middot; REJECTED &middot; NO_SHOW</td></tr><tr><th>Sơ đồ liên quan</th><td>Hình 12 (tổng quan) &middot; Hình 13–15 (chi tiết) &middot; Hình 32 (sơ đồ hoạt động)</td></tr><tr><th>Mã nguồn</th><td><code>routes/datBan.js</code> &middot; <code>services/reservationRules.js</code> &middot; <code>reservationTables.js</code> &middot; <code>reservationService.js</code> &middot; <code>reservationJobs.js</code> &middot; <code>reservationConfig.js</code></td></tr><tr><th>Kiểm thử</th><td><code>npm run datban:check</code> — 33 phép thử logic thuần chạy được cả khi MySQL tắt, cộng phần cần cơ sở dữ liệu, trong đó ba lớp chống đặt trùng được thử riêng</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-buoc">
+  <caption>Các bước của QT-01, đánh số theo Hình 13 → 14 → 15</caption>
+  <thead><tr><th>Bước</th><th>Lằn</th><th>Hoạt động</th><th>Quy tắc và dữ liệu</th><th>Mã nguồn</th></tr></thead>
+  <tbody><tr><td>1</td><td>Khách hàng</td><td>Chọn ngày, số khách, khung giờ và khu vực ở bước 1 của trợ lý.</td><td>Khung giờ đã kín vẫn hiện, chỉ làm mờ — im lặng bỏ đi sẽ khiến khách tưởng nhà hàng không mở cửa giờ đó.</td><td><code>views/reservation.ejs</code></td></tr><tr><td>2</td><td>Web</td><td>Gọi <code>GET /api/dat-ban/khung-gio</code> rồi <code>GET /api/dat-ban/kha-dung</code>.</td><td>Toàn bộ giai đoạn này chỉ đọc, chưa ghi gì.</td><td><code>routes/datBan.js</code></td></tr><tr><td>3</td><td>Luật đặt bàn</td><td>Chuẩn hoá khung giờ rồi kiểm tra bốn ràng buộc thời gian.</td><td>BR-01 → BR-04. Giờ được làm tròn xuống đầu ô 15 phút.</td><td><code>reservationRules.phanTichKhungGio</code>, <code>kiemTraGioMoCua</code>, <code>kiemTraDatQuaXa</code>, <code>kiemTraDatSatGio</code></td></tr><tr><td>4</td><td>Xếp bàn</td><td>Duyệt sâu các tổ hợp bàn, chấm điểm rồi chọn phương án tốt nhất.</td><td>BR-05, BR-06. Trần 40.000 nút làm chặn cuối; đo thật 40 bàn hết 18 ms cho bốn lần tìm.</td><td><code>reservationTables.goiYXepBan</code>, <code>timToHop</code></td></tr><tr><td>5</td><td>Web</td><td>Hết bàn: trả <code>ma = FULL</code> kèm <code>gio_thay_the</code> và <code>khu_thay_the</code>.</td><td>Các gợi ý đã qua cả kiểm tra giờ mở cửa lẫn kiểm tra bàn trống, nên bấm vào là đặt được thật.</td><td><code>reservationTables.khungGioThayThe</code>, <code>khuVucThayThe</code></td></tr><tr><td>6</td><td>Khách hàng</td><td>Bước 2: chọn bàn trên sơ đồ mặt bằng.</td><td>Bước này biến mất khi tắt <code>allow_customer_pick_table</code>; số bước tính lúc khởi tạo chứ không viết cứng trong HTML.</td><td><code>views/partials/so-do-dat-ban.ejs</code></td></tr><tr><td>7</td><td>Khách hàng</td><td>Bước 3: tên, điện thoại, dịp, thẻ yêu cầu đặc biệt.</td><td>Số điện thoại được chuẩn hoá trước khi dùng làm danh tính khách.</td><td><code>reservationRules.kiemTraThongTinKhach</code></td></tr><tr><td>8</td><td>Khách hàng</td><td>Bước 4: đối chiếu lại và xem tiền cọc rồi gửi.</td><td>Số tiền cọc báo trước dùng CHUNG một hàm với lúc tạo, nên không lệch với số thu thật.</td><td><code>reservationRules.tinhTienCoc</code></td></tr><tr><td>9</td><td>Web</td><td><code>POST /api/dat-ban</code>.</td><td>Mọi thao tác ghi đều là POST/PUT/DELETE, kể cả huỷ — để một con bot quét link không huỷ được bàn của khách.</td><td><code>routes/datBan.js</code></td></tr><tr><td>10</td><td>Dịch vụ</td><td>Chặn số điện thoại bị khoá và khách vượt ngưỡng no-show.</td><td>BR-07, BR-08. Chặn ở đầu vào chứ không tạo rồi huỷ, và chỉ chặn kênh online.</td><td><code>reservationService.taoLuotDat</code>, <code>hoSoKhach</code></td></tr><tr><td>11</td><td>Dịch vụ</td><td>Tính tiền cọc: lấy quy tắc có <code>priority</code> nhỏ nhất.</td><td>BR-09. Khách đọc được một dòng lý do rõ ràng thay vì một con số từ trên trời rơi xuống.</td><td><code>reservationRules.tinhTienCoc</code>, bảng <code>reservation_deposit_rules</code></td></tr><tr><td>12</td><td>Dịch vụ</td><td>Gọi lại <code>goiYXepBan</code> để chốt tổ hợp bàn.</td><td>Kết quả có thể khác lần kiểm tra ở bước 4 vì thời gian đã trôi qua.</td><td><code>reservationTables.goiYXepBan</code></td></tr><tr><td>13</td><td>MySQL</td><td>Mở giao dịch, sinh <code>reservation_code</code>, ghi bản ghi <code>reservations</code>.</td><td>Mã dạng <code>RSV-YYMMDD-XXXX</code>, bảng chữ đã bỏ I, O, 0, 1 — bốn ký tự hay bị đọc nhầm nhất qua điện thoại. Trùng mã thì sinh lại, tối đa 5 lần.</td><td><code>reservationService.taoLuotDat</code>, <code>qt.taoMa</code></td></tr><tr><td>14</td><td>MySQL</td><td>Chiếm ô lưới: ghi <code>reservation_slot_locks</code> cho từng ô 15 phút.</td><td>BR-10. Cùng giao dịch với bước 13; đây mới là thứ giữ chỗ thật, bản ghi <code>reservations</code> chỉ là thứ để đọc.</td><td><code>reservationTables.chiemO</code></td></tr><tr><td>15</td><td>Dịch vụ</td><td>Trùng ô (<code>ER_DUP_ENTRY</code>): quay lui rồi thử lại.</td><td>BR-11. Ba lần khi bàn do hệ thống chọn, một lần khi khách tự chọn bàn.</td><td><code>reservationService.taoLuotDat</code> — vòng lặp thử lại</td></tr><tr><td>16</td><td>MySQL</td><td>Ghi bàn, ghi nhật ký, xếp thông báo vào hàng đợi rồi commit.</td><td>Thông báo XẾP HÀNG chứ không gửi trong giao dịch: gửi mail trong giao dịch thì chậm, dễ lỗi, và nếu quay lui thì khách đã nhận mail cho một lượt đặt không tồn tại.</td><td><code>ghiNhatKy</code>, <code>xepThongBao</code>, bảng <code>reservation_notifications</code></td></tr><tr><td>17</td><td>Web</td><td>Trả mã đặt bàn, danh sách bàn, tiền cọc và hạn cọc.</td><td>Lỗi nghiệp vụ trả <code>{ ok, ma, thong_bao, chi_tiet }</code>; hết phiên trên nhánh nội bộ trả 401 JSON chứ không chuyển hướng.</td><td><code>routes/datBan.js</code>, lớp <code>LoiDatBan</code></td></tr><tr><td>18</td><td>Khách · Thu ngân</td><td>Khách chuyển khoản cọc, nhân viên ghi nhận qua <code>POST /api/reservations/:id/deposit</code>.</td><td>Trạng thái cọc chuyển PAID thì lượt đặt đang PENDING tự chuyển CONFIRMED — đã trả tiền rồi mà còn bắt chờ duyệt là vô nghĩa.</td><td><code>reservationService.luuCoc</code>, bảng <code>reservation_deposits</code></td></tr><tr><td>19</td><td>Vòng quét nền</td><td>Quá <code>deposit_due_at</code> mà chưa trả cọc: tự huỷ và nhả bàn.</td><td>BR-12.</td><td><code>reservationJobs.quetCocQuaHan</code></td></tr><tr><td>20</td><td>Lễ tân</td><td>Check-in rồi xếp bàn: ARRIVED → SEATED.</td><td>Xoá <code>hold_until</code> vì khách đã ở đây; bàn chuyển sang Đang phục vụ. Giờ bắt đầu KHÔNG đổi — lịch sử phải giữ nguyên cái đã hứa.</td><td><code>reservationService.doiTrangThai</code></td></tr><tr><td>21</td><td>Lễ tân</td><td>Kết thúc bữa: COMPLETED.</td><td>BR-14. Ghi <code>completed_at</code>, bàn chuyển Đang dọn, và GIỮ NGUYÊN ô lưới.</td><td><code>reservationService.doiTrangThai</code></td></tr><tr><td>22</td><td>Vòng quét nền</td><td>Quét no-show theo hai mốc.</td><td>BR-13. Quá <code>hold_until</code> thì cảnh báo một lần; quá thêm <code>auto_no_show_minutes</code> mới tự đóng. Đặt về 0 để tắt hẳn phần tự động.</td><td><code>reservationJobs.quetNoShow</code></td></tr><tr><td>23</td><td>Vòng quét nền</td><td>Nhắc lịch, đồng bộ trạng thái bàn, phát thông báo.</td><td>Chỉ trả về Trống những bàn đã từng có lượt đặt trong ngày — tức những bàn chắc chắn do chính nó đặt nhãn, không xoá nhãn nhân viên đánh tay.</td><td><code>quetNhacLich</code>, <code>dongBoTrangThaiBan</code>, <code>phatThongBao</code></td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-ma">
+  <caption>Quy tắc nghiệp vụ của QT-01</caption>
+  <thead><tr><th>Mã</th><th>Quy tắc</th><th>Vì sao</th></tr></thead>
+  <tbody><tr><td>BR-01</td><td>Chỉ nhận đặt trong giờ mở cửa của chi nhánh; ngày nghỉ thì chặn.</td><td>Thêm ngày nghỉ vào ngày ĐÃ có khách đặt thì chỉ cảnh báo, không chặn — quản lý phải biết còn bao nhiêu lượt cần gọi điện báo khách.</td></tr><tr><td>BR-02</td><td>Không đặt xa quá <code>max_advance_days</code> (mặc định 90 ngày).</td><td>Lịch xa hơn thế không quản được: thực đơn đổi, nhân sự đổi, và tỷ lệ no-show tăng theo khoảng cách thời gian.</td></tr><tr><td>BR-03</td><td>Ngừng nhận đặt trong <code>last_seating_minutes</code> (60 phút) cuối trước giờ đóng.</td><td>Nhà hàng đóng 22:00 mà nhận bàn 21:50 thì khách chỉ được ngồi 10 phút.</td></tr><tr><td>BR-04</td><td>Kênh online tối đa <code>max_guests_online</code> (30) khách một lượt; nhân viên tạo hộ không bị trần.</td><td>Nhóm 60 người không phải việc một form web tự quyết được — phải có người gọi điện thoả thuận.</td></tr><tr><td>BR-05</td><td>Tổng chỗ của tổ hợp bàn phải lớn hơn hoặc bằng số khách, và không quá <code>max_tables_per_reservation</code> (4) bàn. Bàn <code>co_the_ghep = 0</code> chỉ dùng một mình; chỉ ghép các bàn cùng <code>nhom_ghep</code>.</td><td>Mặc định <code>nhom_ghep = KV&lt;id khu vực&gt;</code>, tức chỉ ghép trong cùng khu. Đặt nhóm riêng cho hai bàn kề nhau về số hiệu nhưng bị lối đi chia cắt — ghép được trên giấy mà không ghép được ngoài đời.</td></tr><tr><td>BR-06</td><td>Điểm xếp bàn = 60 × số bàn + 1 × ghế thừa + 40 (ghép khác khu vực) − 25 × mỗi sở thích đáp ứng được − 35 (khách VIP vào bàn VIP) + 30 (khách thường chiếm bàn VIP). Điểm THẤP thắng.</td><td>Trọng số số bàn lớn hơn nhiều so với ghế thừa là có chủ đích: một bàn 6 chỗ cho 4 khách (62 điểm) luôn thắng hai bàn 2 chỗ vừa khít (120 điểm). Người thật thích ngồi một bàn hơn ngồi ghép.</td></tr><tr><td>BR-07</td><td>Số điện thoại có <code>is_blocked = 1</code> không đặt online được.</td><td>Chặn ngay ở đầu vào để nhân viên không phải dọn và khách nhận câu trả lời tức thì.</td></tr><tr><td>BR-08</td><td><code>no_show_count</code> đạt <code>no_show_block_threshold</code> thì chặn kênh online, KHÔNG chặn nhân viên.</td><td>Người thật vẫn có thể nhận đơn sau khi nói chuyện với khách hoặc yêu cầu đặt cọc. Chặn máy móc một khách hàng thật là cái giá đắt hơn một bàn trống.</td></tr><tr><td>BR-09</td><td>Tiền cọc lấy MỘT quy tắc có <code>priority</code> nhỏ nhất, không cộng dồn. Quy tắc "không cần cọc" giữ ưu tiên lớn nhất làm điểm dừng cuối.</td><td>Cộng dồn thì một khách VIP đi nhóm đông vào giờ cao điểm sẽ phải cọc ba lần.</td></tr><tr><td>BR-10</td><td>Khoá chính <code>(table_id, slot_start)</code> của <code>reservation_slot_locks</code> là hàng rào chống đặt trùng. Thời gian dọn bàn <code>turnaround_minutes</code> cũng chiếm ô.</td><td>MySQL không có ràng buộc EXCLUDE trên khoảng thời gian như PostgreSQL, nên khoảng thời gian được băm thành lưới ô 15 phút và khoá chính đặt lên đó. Kích thước ô khai ở hai nơi và PHẢI khớp nhau: <code>RESERVATION_SLOT_MINUTES</code> và <code>SLOT_MINUTES</code> trong migration 030.</td></tr><tr><td>BR-11</td><td>Mất bàn do đua: thử lại tối đa 3 lần nếu bàn do hệ thống chọn, 1 lần nếu khách tự chọn bàn.</td><td>Báo khách "bàn vừa có người đặt mất" trong khi nhà hàng còn 30 bàn trống là một câu trả lời tệ. Nhưng đổi bàn khách đã chọn sang bàn khác mà không hỏi cũng là làm sai ý họ.</td></tr><tr><td>BR-12</td><td>Lượt PENDING chưa trả cọc mà quá <code>deposit_due_at</code> thì tự huỷ và trả bàn.</td><td>Không có mốc này thì một lượt đặt không ai trả tiền vẫn giữ bàn tới hết ngày.</td></tr><tr><td>BR-13</td><td>No-show có HAI mốc: quá <code>hold_until</code> thì cảnh báo, quá thêm <code>auto_no_show_minutes</code> mới tự đóng.</td><td>Tự đóng ngay tại mốc đầu là sai — khách kẹt xe 10 phút không phải khách bỏ bữa. Nhưng không bao giờ tự đóng cũng sai — 22h đêm không còn ai ngồi dọn mà bàn thì vẫn bị giữ.</td></tr><tr><td>BR-14</td><td>CANCELLED / REJECTED / NO_SHOW nhả ô lưới NGAY. COMPLETED giữ nguyên ô lưới.</td><td>Một bàn bị giữ bởi lượt đã huỷ là lỗi tốn tiền nhất module này có thể gây ra. Ngược lại, nhả ô của lượt vừa phục vụ xong sẽ cho phép đặt đè lên chính khung giờ đó, bỏ qua cả thời gian dọn bàn.</td></tr><tr><td>BR-15</td><td>Hoàn tiền lấy mốc LỚN NHẤT mà khách vẫn còn đáp ứng, và chỉ hoàn phần <code>deposit_status = PAID</code>. No-show luôn hoàn 0%.</td><td><code>deposit_amount</code> là số PHẢI cọc theo quy tắc, tồn tại ngay cả khi khách chưa trả đồng nào. Lấy thẳng cột đó mà hoàn sẽ hứa trả khách một khoản nhà hàng chưa bao giờ nhận. Số tiền hoàn tính MỘT LẦN lúc huỷ và lưu lại.</td></tr><tr><td>BR-16</td><td><code>DELETE /api/reservations/:id</code> ánh xạ sang CANCELLED, không xoá bản ghi.</td><td>Một lượt đặt đã tồn tại là một sự thật lịch sử: nó ảnh hưởng bộ đếm no-show của khách, báo cáo tháng, và đôi khi cả một khoản tiền cọc.</td></tr><tr><td>BR-17</td><td><code>doiTrangThai()</code> là cửa DUY NHẤT để đổi cột <code>status</code>; không route nào được UPDATE thẳng.</td><td>Mỗi bước chuyển kéo theo những việc không được phép quên: ghi mốc thời gian, nhả ô lưới, đồng bộ <code>ban.trangthai</code>, tính hoàn tiền, cập nhật bộ đếm no-show, ghi nhật ký. Rải các việc đó ra từng route thì sớm muộn có một lối ra quên nhả ô, và bàn đó bị khoá vĩnh viễn.</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-ma">
+  <caption>Ngoại lệ và luồng thay thế của QT-01</caption>
+  <thead><tr><th>Mã lỗi</th><th>Tình huống</th><th>Xử lý</th></tr></thead>
+  <tbody><tr><td>FULL</td><td>Không còn tổ hợp bàn nào phù hợp trong khung giờ.</td><td>Trả kèm <code>gio_thay_the</code> và <code>khu_thay_the</code>; khách có thể chọn vào danh sách chờ WAITLIST.</td></tr><tr><td>RACE_LOST</td><td>Ô lưới vừa bị lượt khác chiếm mất giữa lúc ghi.</td><td>Quay lui giao dịch rồi thử lại theo BR-11; hết lượt thử thì báo khách chọn lại.</td></tr><tr><td>BLOCKED</td><td>Số điện thoại bị quản lý khoá.</td><td>Từ chối ngay ở đầu vào, mời khách liên hệ trực tiếp nhà hàng.</td></tr><tr><td>NO_SHOW_RISK</td><td>Khách có số lần không đến đạt ngưỡng.</td><td>Chặn kênh online kèm câu giải thích; nhân viên vẫn nhận đơn hộ được.</td></tr><tr><td>PICK_DISABLED</td><td>Khách tự chọn bàn trong khi nhà hàng đang tự sắp xếp.</td><td>Từ chối và để hệ thống xếp bàn.</td></tr><tr><td>NOT_FOUND</td><td>Không tìm thấy lượt đặt.</td><td>Trả 404 kèm thông điệp viết cho người đọc.</td></tr><tr><td>HET_PHIEN</td><td>Ca làm việc hết giờ, phiên đăng nhập nhân viên hết hạn.</td><td>Trả 401 JSON chứ không chuyển hướng: <code>fetch()</code> đi theo chuyển hướng sẽ nhận HTML rồi vỡ ở <code>r.json()</code>, và giao diện hiện "Mất kết nối tới nhà hàng" trong khi sự thật chỉ là hết ca.</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-tt">
+  <caption>Máy trạng thái của một lượt đặt bàn</caption>
+  <thead><tr><th>Trạng thái</th><th>Ý nghĩa</th><th>Chuyển được sang</th></tr></thead>
+  <tbody><tr><td>PENDING</td><td>Khách đặt online, chờ nhân viên duyệt.</td><td>CONFIRMED · CANCELLED · REJECTED · WAITLIST</td></tr><tr><td>WAITLIST</td><td>Hết bàn nhưng khách vẫn muốn chờ.</td><td>CONFIRMED · CANCELLED · REJECTED</td></tr><tr><td>CONFIRMED</td><td>Đã chắc chắn có bàn. Nhân viên tạo hộ thì vào thẳng đây.</td><td>ARRIVED · CANCELLED · NO_SHOW</td></tr><tr><td>ARRIVED</td><td>Khách đã tới quầy. Khách vãng lai vào thẳng đây.</td><td>SEATED · CANCELLED · NO_SHOW</td></tr><tr><td>SEATED</td><td>Đã ngồi vào bàn. KHÔNG chuyển được sang NO_SHOW — khách đang ngồi ngay đó.</td><td>COMPLETED · CANCELLED</td></tr><tr><td>COMPLETED</td><td>Đã dùng bữa xong. Một chiều, muốn mở lại thì tạo lượt mới.</td><td>(kết thúc)</td></tr><tr><td>CANCELLED</td><td>Khách hoặc nhân viên huỷ. Tính hoàn tiền và nhả ô lưới ngay.</td><td>(kết thúc)</td></tr><tr><td>REJECTED</td><td>Quản lý từ chối lượt đặt.</td><td>(kết thúc)</td></tr><tr><td>NO_SHOW</td><td>Quá hạn giữ bàn mà khách không tới. Hoàn 0%.</td><td>(kết thúc)</td></tr></tbody>
+</table></div>
+
+<div class="luu-y">
+<p><b>Một cửa duy nhất để đổi trạng thái.</b> Cột <code>status</code> chỉ được đổi qua
+<code>doiTrangThai()</code> (BR-17). Hàm này mở giao dịch, khoá dòng bằng
+<code>SELECT … FOR UPDATE</code>, kiểm tra bước chuyển có hợp lệ theo bảng trên không,
+rồi mới làm các việc kèm theo. Đó cũng là lý do chạy nhiều bản sao web cùng lúc vẫn an
+toàn: bản thứ hai chỉ nhận lỗi "không thể chuyển NO_SHOW sang NO_SHOW" và bỏ qua.</p>
+</div>
+
+<h3>QT-02 &middot; Thanh toán và đối soát</h3>
+<div class="bang-hop">
+<table class="dac-ta">
+  <caption><b>QT-02</b> &middot; Thanh toán và đối soát ngân hàng</caption>
+  <tbody><tr><th>Mục tiêu</th><td>Thu đúng số tiền của một đơn ăn qua tiền mặt hoặc chuyển khoản, ghi nhận đủ một lần và chỉ một lần, rồi đóng đơn và trả bàn.</td></tr><tr><th>Chủ quy trình</th><td>Thu ngân &middot; Kế toán (đối soát cuối kỳ)</td></tr><tr><th>Tác nhân</th><td>Khách hàng &middot; Thu ngân &middot; Quản lý (duyệt chốt ca) &middot; Quản trị (cấu hình tài khoản nhận, khoá webhook) &middot; Ngân hàng (hệ thống ngoài)</td></tr><tr><th>Kích hoạt</th><td>Khách xin tính tiền tại quầy; hoặc khách tự quét mã QR trên bàn; hoặc khách trả trước tiền cọc trên web</td></tr><tr><th>Đầu vào</th><td><code>sesis</code> của đơn ăn, hình thức trả, mã giảm giá và số điểm muốn dùng, số tiền khách đưa</td></tr><tr><th>Đầu ra</th><td>Một hoặc nhiều dòng <code>payments</code> có <code>status = success</code>; đơn <code>hopdong.tinhtrang = 3</code>; bàn chuyển Đang dọn; điểm tích luỹ được cập nhật</td></tr><tr><th>Sự kiện kết thúc</th><td>Đã thu đủ tiền (đóng đơn) &middot; Hoàn tiền &middot; Phiên quá hạn</td></tr><tr><th>Sơ đồ liên quan</th><td>Hình 16 (tổng quan) &middot; Hình 17–18 (chi tiết) &middot; Hình 29 (sơ đồ tuần tự VietQR)</td></tr><tr><th>Mã nguồn</th><td><code>routes/thanhToan.js</code> &middot; <code>services/thanhToanService.js</code> &middot; <code>services/vietQR.js</code> &middot; <code>services/chotCaService.js</code> &middot; <code>services/loyaltyService.js</code> &middot; <code>services/discountService.js</code></td></tr><tr><th>Hệ thống ngoài</th><td>Ngân hàng gọi vào <code>POST /api/webhook/ngan-hang</code> theo định dạng SePay; hệ thống không hỏi ngược lại ngân hàng</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-buoc">
+  <caption>Các bước của QT-02, đánh số theo Hình 17 → 18</caption>
+  <thead><tr><th>Bước</th><th>Lằn</th><th>Hoạt động</th><th>Quy tắc và dữ liệu</th><th>Mã nguồn</th></tr></thead>
+  <tbody><tr><td>1a</td><td>Thu ngân</td><td>Mở <code>/staff/thanh-toan</code>, chọn bàn cần tính tiền.</td><td>Danh sách sắp đơn CẦN THU TIỀN lên trước — màn hình POS mở ra là phải thấy ngay bàn nào đòi tính tiền, không phải danh sách đặt bàn theo ngày.</td><td><code>thanhToanService.danhSachCanThanhToan</code></td></tr><tr><td>1b</td><td>Khách hàng</td><td>Hoặc khách tự trả tại bàn: <code>/qr/thanh-toan/:sesis</code>, không cần đăng nhập.</td><td>Danh tính là chính chuỗi <code>sesis</code> — ngẫu nhiên, không đoán được, và hết hiệu lực ngay khi đơn thanh toán xong. Khách chỉ TRẢ TIỀN chứ không sửa được gì.</td><td><code>routes/thanhToan.js</code> — <code>kiemTraPhienBanMo</code></td></tr><tr><td>2</td><td>Dịch vụ</td><td>Dựng hoá đơn: cộng các dòng <code>hopdong</code> có <code>id_mon &gt; 0</code>.</td><td>Dòng <code>id_mon = 0</code> là dòng khung của đơn đặt bàn hoặc đơn QR, không phải món ăn — cộng vào là sai tiền.</td><td><code>thanhToanService.layHoaDon</code></td></tr><tr><td>3</td><td>Dịch vụ</td><td>Áp mã giảm giá và điểm tích luỹ.</td><td>BR-24, BR-25. Ngữ cảnh chấm điều kiện có cả danh sách món và id khách, nên mã giới hạn theo loại món và mã "mỗi khách N lượt" mới tính đúng.</td><td><code>discountService</code>, bảng <code>loyalty_points</code></td></tr><tr><td>4</td><td>Dịch vụ</td><td>Cộng phí phục vụ, VAT, làm tròn rồi trừ phần đã trả.</td><td>Không có cột "đã thanh toán" trên <code>hopdong</code>: <code>con_phai_tra</code> luôn suy ra từ tổng các dòng <code>payments</code> có <code>status = success</code> của cùng <code>sesis</code>.</td><td><code>layHoaDon</code>, bảng <code>cau_hinh_thanh_toan</code></td></tr><tr><td>5</td><td>Thu ngân</td><td>Chọn hình thức trả: tiền mặt hay VietQR.</td><td>Chỉ các phương thức có <code>is_active = 1</code> mới hiện.</td><td><code>thanhToanService.layPhuongThuc</code></td></tr><tr><td>6</td><td>Dịch vụ</td><td>Mở phiên thanh toán.</td><td>BR-21, BR-22. Huỷ các phiên pending cũ của CÙNG <code>sesis</code> và CÙNG phương thức trước khi tạo mới — nếu không, bàn sẽ có hai mã QR còn hiệu lực cho một đơn.</td><td><code>thanhToanService.taoPhien</code></td></tr><tr><td>7a</td><td>CSDL</td><td>Tiền mặt: ghi <code>payments</code> với <code>status = success</code>, tính tiền thối, chạy hậu kỳ ngay.</td><td>Không có gì phải chờ nên coi như xong tại chỗ.</td><td><code>taoPhien</code> → <code>hauKyThanhToan</code></td></tr><tr><td>7b</td><td>CSDL</td><td>VietQR: ghi <code>payments</code> với <code>status = pending</code>, sinh mã đối soát duy nhất, đặt hạn <code>han_qr_giay</code> (mặc định 900 giây).</td><td>Mã đối soát dạng <code>BD</code> + 9 ký tự, dùng luôn làm nội dung chuyển khoản.</td><td><code>sinhMaDoiSoat</code></td></tr><tr><td>8</td><td>VietQR</td><td>Sinh payload EMVCo cho mã QR chuyển khoản.</td><td>Chưa cấu hình tài khoản nhận thì phiên vừa tạo bị chuyển <code>failed</code> ngay — để không còn lại rác pending không bao giờ trả được.</td><td><code>services/vietQR.js</code> — <code>taoQRChuyenKhoan</code></td></tr><tr><td>9</td><td>Khách hàng</td><td>Quét mã và chuyển khoản trên ứng dụng ngân hàng.</td><td>Nội dung chuyển khoản đã điền sẵn mã đối soát.</td><td>—</td></tr><tr><td>10</td><td>Ngân hàng</td><td>Bắn biến động số dư về <code>POST /api/webhook/ngan-hang</code>.</td><td>BR-29. Xác thực bằng header <code>Authorization: Apikey &lt;khoá&gt;</code>; khoá nằm trong <code>cau_hinh_thanh_toan</code>, sinh lại được ở <code>/admin/thanh-toan</code>. Thân request theo chuẩn SePay để sau này đấu thật không phải sửa mã.</td><td><code>routes/thanhToan.js</code></td></tr><tr><td>11</td><td>Web</td><td>Ghi giao dịch vào <code>giao_dich_ngan_hang</code>.</td><td>Khoá duy nhất trên <code>ma_tham_chieu</code> chống ghi trùng: webhook có thể bắn lại nhiều lần cho cùng một giao dịch khi không nhận được HTTP 200.</td><td><code>ghiNhanGiaoDichNganHang</code></td></tr><tr><td>12</td><td>Web</td><td>Rút mã đối soát khỏi nội dung chuyển khoản.</td><td>Dò bằng biểu thức chính quy chứ không so sánh bằng: ngân hàng chèn thêm chữ, ví dụ <code>MBVCB.123456.BD2F1A9KX7Q.CT tu 0011...</code>.</td><td><code>rutMaDoiSoat</code></td></tr><tr><td>13</td><td>Web</td><td>Tìm phiên <code>pending</code> mang đúng mã đó và đối chiếu số tiền.</td><td>BR-28. Chuyển thiếu thì đánh dấu <code>khong_khop</code> kèm số nhận được và số cần, để thu ngân xử lý tay. Chuyển dư thì vẫn xác nhận và ghi rõ phần dư vào ghi chú.</td><td><code>ghiNhanGiaoDichNganHang</code></td></tr><tr><td>14</td><td>Dịch vụ</td><td>Xác nhận phiên: <code>UPDATE payments SET status = success WHERE id = ? AND status = pending</code>.</td><td>BR-23. Đây là điểm hợp lưu của CẢ BA đường: webhook ngân hàng, thu ngân bấm xác nhận thủ công, và thanh toán tiền mặt.</td><td><code>thanhToanService.xacNhan</code></td></tr><tr><td>15</td><td>Dịch vụ</td><td>Chạy hậu kỳ: ghi nhật ký mã giảm giá, TRỪ điểm khách dùng, rồi mới CỘNG điểm mới.</td><td>BR-26. Thứ tự bắt buộc: cộng trước thì khách dùng điểm xong lại được cộng điểm trên phần tiền đã trả bằng điểm.</td><td><code>hauKyThanhToan</code>, <code>loyaltyService</code></td></tr><tr><td>16</td><td>Dịch vụ</td><td>Đã thu đủ thì đóng đơn: <code>hopdong.tinhtrang = 3</code>, nhả <code>qr_tables.active_sesis</code>, bàn chuyển sang Đang dọn.</td><td>BR-27. Phiên <code>loai = dat_coc</code> KHÔNG đóng đơn — khách mới trả trước một phần, vẫn còn phải đến ăn.</td><td><code>hauKyThanhToan</code></td></tr><tr><td>17</td><td>Web</td><td>Phát <code>tt:da-thanh-toan</code> tới phòng <code>tt:&lt;sesis&gt;</code>.</td><td>Cả điện thoại khách lẫn màn hình thu ngân cùng vào phòng này, nên khách quét xong thì hai bên cùng sang "đã thanh toán" trong một khoảnh khắc.</td><td><code>routes/thanhToan.js</code>, <code>services/realtime.js</code></td></tr><tr><td>18</td><td>Thu ngân</td><td>Không khớp: vào <code>/staff/thanh-toan/doi-soat</code> ghép tay giao dịch vào phiên.</td><td>Vẫn gọi cùng hàm <code>xacNhan</code>, chỉ khác ở chỗ ghi lại ai là người bấm để còn truy trách nhiệm.</td><td><code>doiSoatThuCong</code></td></tr><tr><td>19</td><td>Thu ngân</td><td>Hết ca: đếm két theo mệnh giá và nhập số thực đếm.</td><td>BR-30. Mốc bắt đầu ca là LẦN CHỐT CA GẦN NHẤT CỦA CHÍNH NGƯỜI ĐÓ, không phải 00:00 — nếu không, thu ngân ca chiều sẽ nhận cả doanh thu ca sáng.</td><td><code>services/chotCaService.js</code></td></tr><tr><td>20</td><td>Thu ngân</td><td>Chênh lệch = thực đếm − tiền mặt hệ thống.</td><td>Âm là thiếu tiền, phải ghi lý do; dương thường là quên trả lại tiền thừa cho khách.</td><td><code>chotCaService</code></td></tr><tr><td>21</td><td>Quản lý</td><td>Duyệt biên bản chốt ca.</td><td>Quyền duyệt tách khỏi quyền chốt: người đếm két không tự duyệt được biên bản của mình.</td><td><code>POST /staff/chot-ca/:id/duyet</code></td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-ma">
+  <caption>Quy tắc nghiệp vụ của QT-02</caption>
+  <thead><tr><th>Mã</th><th>Quy tắc</th><th>Vì sao</th></tr></thead>
+  <tbody><tr><td>BR-21</td><td>Không cho trả vượt <code>con_phai_tra</code> (cho phép sai lệch nhỏ do làm tròn). Phiên <code>dat_coc</code> không bị chặn.</td><td>Phải truyền mã giảm giá và số điểm vào lúc kiểm tra, nếu không <code>con_phai_tra</code> sẽ là số CHƯA giảm, và phiên trả đúng số tiền đã giảm lại bị coi là trả thiếu.</td></tr><tr><td>BR-22</td><td>Mỗi cặp (<code>sesis</code>, phương thức) chỉ có MỘT phiên pending. Tạo phiên mới thì phiên cũ chuyển <code>failed</code>.</td><td>Hai mã QR còn hiệu lực cho cùng một đơn thì khách quét nhầm mã cũ, số tiền không khớp, và đối soát tự động thất bại.</td></tr><tr><td>BR-23</td><td>Điều kiện <code>status = pending</code> đặt NGAY TRONG câu UPDATE, không đọc-rồi-ghi.</td><td>Webhook ngân hàng có thể báo có đúng khoảnh khắc thu ngân sốt ruột bấm "Xác nhận thủ công". Đọc rồi ghi không khoá thì cả hai đều thấy pending, cả hai cùng chạy hậu kỳ: khách được cộng điểm gấp đôi, mã giảm giá bị trừ hai lượt. Đặt điều kiện trong câu UPDATE thì MySQL tự khoá dòng đó — không cần transaction, không cần bảng khoá riêng.</td></tr><tr><td>BR-24</td><td>Số tiền, mã giảm giá và số điểm ghi vào <code>payments</code> là giá trị ĐÃ KIỂM TRA LẠI ở máy chủ.</td><td>Khách có thể sửa số điểm trong DevTools để trừ nhiều hơn số điểm đang có, hoặc gửi lên một mã giảm giá đã hết hạn.</td></tr><tr><td>BR-25</td><td>Khách vãng lai (số điện thoại bắt đầu bằng <code>QR_</code>) không dùng và không tích điểm.</td><td>Họ không có tài khoản thật; không chặn thì mọi bàn sẽ chung một ví điểm.</td></tr><tr><td>BR-26</td><td>Trừ điểm trước, cộng điểm sau. Điểm cộng tính trên <code>amount</code> — số tiền mặt hoặc chuyển khoản THẬT SỰ thu được.</td><td>Không tính trên phần đã trừ bằng điểm, nếu không điểm sẽ tự sinh ra điểm.</td></tr><tr><td>BR-27</td><td>Phiên <code>loai = dat_coc</code> không đóng đơn và không cộng điểm.</td><td>Bản chất là trả trước một phần, bữa ăn còn chưa diễn ra.</td></tr><tr><td>BR-28</td><td>Chuyển thiếu tiền thì KHÔNG tự động xác nhận.</td><td>Để thu ngân nhìn thấy và xử lý tay, kèm số nhận được và số cần.</td></tr><tr><td>BR-29</td><td>Webhook sai khoá trả 401. Đã ghi nhận được thì LUÔN trả HTTP 200, kể cả khi không khớp phiên nào.</td><td>Bên gửi sẽ bắn lại liên tục nếu nhận mã khác 200, mà giao dịch đó ta đã lưu vào hộp thư rồi và vẫn đối soát tay được.</td></tr><tr><td>BR-30</td><td>Chốt ca chỉ đối soát những khoản ĐI QUA TAY người đó (<code>payments.processed_by</code>).</td><td>Tiền khách tự quét QR chuyển thẳng vào tài khoản ngân hàng vẫn hiện trong biên bản để thấy tổng doanh thu ca, nhưng không tính vào trách nhiệm của ai — nó không nằm trong két của ai cả.</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-ma">
+  <caption>Ngoại lệ và luồng thay thế của QT-02</caption>
+  <thead><tr><th>Trường hợp</th><th>Tình huống</th><th>Xử lý</th></tr></thead>
+  <tbody><tr><td>khong_co_ma</td><td>Nội dung chuyển khoản không chứa mã <code>BD…</code>.</td><td>Đánh dấu <code>khong_khop</code>, chờ thu ngân ghép tay ở trang đối soát.</td></tr><tr><td>khong_co_phien</td><td>Không có phiên <code>pending</code> nào mang mã đó.</td><td>Ghi lý do vào giao dịch; thường là khách quét lại mã QR đã hết hạn.</td></tr><tr><td>thieu_tien</td><td>Số tiền nhận được nhỏ hơn số tiền của phiên.</td><td>Ghi rõ nhận bao nhiêu, cần bao nhiêu; không tự xác nhận.</td></tr><tr><td>tat_tu_dong</td><td>Quản trị đã tắt <code>tu_dong_doi_soat</code>.</td><td>Chuyển sang <code>cho_doi_soat</code> để người thật duyệt từng khoản.</td></tr><tr><td>trùng lặp</td><td>Webhook bắn lại một giao dịch đã ghi.</td><td>Khoá duy nhất trên <code>ma_tham_chieu</code> chặn lại, trả <code>duplicated: true</code> và không chạy hậu kỳ lần hai.</td></tr><tr><td>giao dịch ra</td><td>Tiền đi RA khỏi tài khoản.</td><td>Đánh dấu <code>bo_qua</code> — không liên quan tới việc thu tiền khách.</td></tr><tr><td>QR quá hạn</td><td>Phiên pending quá <code>het_han_luc</code>.</td><td>Dọn tự động khi mở màn hình POS, chuyển phiên sang <code>failed</code>.</td></tr><tr><td>hoàn tiền</td><td>Trả lại tiền cho khách sau khi đã thu.</td><td>Phiên chuyển <code>refunded</code>; phiên đã hoàn không xác nhận lại được.</td></tr><tr><td>giả lập</td><td>Môi trường demo không có đầu nối ngân hàng thật.</td><td>Đường dẫn <code>/gia-lap</code> tạo phiên rồi xác nhận luôn, vẫn chạy đủ hậu kỳ. Tự tắt khi <code>NODE_ENV = production</code> hoặc <code>PAYMENT_SIMULATION = 0</code>.</td></tr></tbody>
+</table></div>
+<div class="bang-hop">
+<table class="bang-tt">
+  <caption>Trạng thái của phiên thanh toán và của biến động số dư</caption>
+  <thead><tr><th>Trạng thái</th><th>Thuộc bảng &middot; ý nghĩa</th><th>Chuyển được sang</th></tr></thead>
+  <tbody><tr><td>pending</td><td><code>payments</code> — đã sinh mã QR, đang chờ tiền về.</td><td>success · failed</td></tr><tr><td>success</td><td><code>payments</code> — đã thu được tiền, hậu kỳ đã chạy.</td><td>refunded</td></tr><tr><td>failed</td><td><code>payments</code> — huỷ, quá hạn, hoặc bị thay bằng phiên mới.</td><td>(kết thúc)</td></tr><tr><td>refunded</td><td><code>payments</code> — đã hoàn tiền cho khách.</td><td>(kết thúc)</td></tr><tr><td>cho_doi_soat</td><td><code>giao_dich_ngan_hang</code> — chờ người thật duyệt.</td><td>da_khop · khong_khop</td></tr><tr><td>da_khop</td><td><code>giao_dich_ngan_hang</code> — đã gắn vào một phiên thanh toán.</td><td>(kết thúc)</td></tr><tr><td>khong_khop</td><td><code>giao_dich_ngan_hang</code> — chưa tìm được phiên tương ứng.</td><td>da_khop (ghép tay)</td></tr><tr><td>bo_qua</td><td><code>giao_dich_ngan_hang</code> — giao dịch chuyển ra, không xét.</td><td>(kết thúc)</td></tr></tbody>
+</table></div>
+
+<div class="luu-y">
+<p><b>Ba đường vào một cửa.</b> Webhook ngân hàng, nút "Xác nhận thủ công" của thu ngân
+và thanh toán tiền mặt đều đi qua đúng một hàm <code>xacNhan()</code>, và mọi hiệu ứng
+phụ — ghi nhật ký mã giảm giá, trừ điểm, cộng điểm, đóng đơn, trả bàn — đều nằm trong
+<code>hauKyThanhToan()</code>. Nhờ vậy ba đường cho ra cùng một kết quả, và khi cần sửa
+cách tính điểm thì chỉ có một chỗ để sửa.</p>
+</div></section><section id="lop"><h2 class="muc"><span class="so">08</span>Sơ đồ lớp</h2>
 <div class="van"><p>Hệ thống viết bằng JavaScript theo kiểu mô-đun: mỗi tệp trong
 <code>services/</code> xuất ra một đối tượng hàm chứ không khai báo <code>class</code>. Hai sơ đồ
 dưới đây vì vậy dùng khuôn mẫu <code>«module»</code> — tên hộp là tên tệp, ngăn giữa là dữ liệu
 cấp mô-đun, ngăn dưới là các hàm được xuất ra. Vẽ như vậy giữ đúng cấu trúc mã nguồn thật
 thay vì dựng lên một mô hình hướng đối tượng không tồn tại trong dự án.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 16</span>Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 21</span>Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1010 390" role="img" aria-label="Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-cg3" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1826,7 +2383,7 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
   
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 17</span>Sơ đồ lớp tầng dịch vụ nghiệp vụ</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 22</span>Sơ đồ lớp tầng dịch vụ nghiệp vụ</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1260 800" role="img" aria-label="Sơ đồ lớp tầng dịch vụ nghiệp vụ: quan hệ giữa tầng định tuyến, tầng dịch vụ và pool cơ sở dữ liệu"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-lopA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1843,7 +2400,7 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
   <p class="cap-duoi">Ranh giới quan trọng nhất trên sơ đồ là giữa tầng định tuyến và tầng dịch vụ: toàn bộ câu lệnh SQL nằm ở tầng dịch vụ, tầng định tuyến chỉ nhận tham số và kiểm tra quyền. Nhờ vậy đổi một câu truy vấn hay đổi cả lược đồ bảng chỉ phải sửa trong <code>services/</code>.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 18</span>Sơ đồ lớp phân hệ học máy</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 23</span>Sơ đồ lớp phân hệ học máy</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1260 760" role="img" aria-label="Sơ đồ lớp phân hệ học máy: mô-đun phía Node gọi sang tiến trình Python và các mô-đun dự báo, khai phá luật, nhận diện khuôn mặt, trợ lý ảo"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-lopB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1864,13 +2421,13 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
     <text class="tx-ghi" x="30" y="690">Hai tiến trình chỉ nói chuyện với nhau qua HTTP JSON, không dùng chung bộ nhớ. mlService luôn đặt hạn 30 giây và bắt lỗi:</text><text class="tx-ghi" x="30" y="703">khi tiến trình Python tắt, tầng web vẫn chạy bình thường và hiển thị kết quả đã lưu trong cơ sở dữ liệu của lần chạy trước.</text>
   </g></svg></div>
   <p class="cap-duoi">Bốn mô-đun nghiệp vụ của tiến trình Python đều được <code>main.py</code> gọi trực tiếp và không gọi lẫn nhau. Hai tiến trình chỉ nói chuyện qua HTTP JSON, không dùng chung bộ nhớ, nên tắt tiến trình Python thì tầng web vẫn chạy.</p>
-</figure></section><section id="erd"><h2 class="muc"><span class="so">08</span>Lược đồ quan hệ thực thể (ERD)</h2>
+</figure></section><section id="erd"><h2 class="muc"><span class="so">09</span>Lược đồ quan hệ thực thể (ERD)</h2>
 <div class="van"><p>Cơ sở dữ liệu có hơn 60 bảng; vẽ hết vào một hình thì không còn đọc được
 trên giấy A4. Ba lược đồ dưới đây tách theo phân hệ và chỉ giữ những bảng có quan hệ khoá
 ngoại với nhau. Ký pháp chân quạ: đầu đơn là <b>một</b> bản ghi, đầu chia ba là <b>nhiều</b>
 bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> là khoá ngoại.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 19</span>Lược đồ quan hệ thực thể phân hệ bán hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 24</span>Lược đồ quan hệ thực thể phân hệ bán hàng</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1250 790" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ bán hàng: thực đơn, đơn hàng, bàn và thanh toán"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1920,7 +2477,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Điểm cần chú ý nhất: mỗi dòng <code>hopdong</code> là một MÓN chứ không phải một hoá đơn. Các dòng của cùng một lần đặt gộp lại bằng mã phiên <code>sesis</code> — nhờ vậy mỗi món giữ được trạng thái bếp riêng trong khi cả đơn vẫn có một trạng thái chung.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 20</span>Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 25</span>Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1290 745" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ kho: nhập theo lô, định lượng công thức, nhật ký tiêu hao và các bảng kết quả học máy"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1967,7 +2524,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Chuỗi <code>cong_thuc</code> → <code>xuat_kho</code> → <code>du_bao_nguyen_lieu</code> là chuỗi dữ liệu quan trọng nhất của phần AI: nếu thiếu bảng công thức định lượng thì mỗi món bán ra không để lại dấu vết tiêu hao, và bài toán dự báo nguyên liệu sẽ không có gì để học.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 21</span>Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 26</span>Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1290 770" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ nhân sự: cơ cấu tổ chức, phân quyền, chấm công và dữ liệu sinh trắc học"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2023,7 +2580,7 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
   <p class="cap-duoi">Ba bảng bên phải lưu dữ liệu sinh trắc học và bằng chứng chấm công. Quan hệ tự tham chiếu <code>chuc_danh.id_cd_cha</code> chính là cây cơ cấu tổ chức sáu cấp bậc.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 22</span>Lược đồ quan hệ thực thể phân hệ giao hàng</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 27</span>Lược đồ quan hệ thực thể phân hệ giao hàng</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1400 790" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ giao hàng: đơn vị vận chuyển, hồ sơ người giao, đơn giao kèm nhật ký chuyển trạng thái và hai bảng vị trí"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-erdD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2062,13 +2619,13 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
     <text class="tx-ghi" x="30" y="730">Hai bảng vị trí cố ý không gộp: vi_tri_shipper thêm một dòng mỗi nhịp để trả lời "đã đi đường nào"; vi_tri_shipper_moi_nhat ghi đè,</text><text class="tx-ghi" x="30" y="743">mỗi người giao đúng một dòng, để bản đồ trả lời "đang ở đâu" mà không phải quét cả vết đường.</text>
   </g></svg></div>
   <p class="cap-duoi">Hai bảng vị trí cố ý không gộp vì trả lời hai câu hỏi có yêu cầu trái ngược nhau: <code>vi_tri_shipper_moi_nhat</code> ghi đè nên đọc rất nhanh cho bản đồ, còn <code>vi_tri_shipper</code> thêm một dòng mỗi nhịp nên giữ được vết đường để đối chiếu khi khách khiếu nại.</p>
-</figure></section><section id="tuan-tu"><h2 class="muc"><span class="so">09</span>Sơ đồ tuần tự</h2>
+</figure></section><section id="tuan-tu"><h2 class="muc"><span class="so">10</span>Sơ đồ tuần tự</h2>
 <div class="van"><p>Sơ đồ use case trả lời <i>ai làm được gì</i>, BPMN trả lời <i>công việc chạy
 qua những ai</i>, còn bốn sơ đồ tuần tự dưới đây trả lời <i>phần mềm chạy như thế nào</i>: mô-đun
 nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. Tên thông điệp là tên hàm và
 đường dẫn thật trong mã nguồn, đối chiếu được khi bảo vệ.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 23</span>Sơ đồ tuần tự luồng khách quét mã QR gọi món</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 28</span>Sơ đồ tuần tự luồng khách quét mã QR gọi món</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1280 770" role="img" aria-label="Sơ đồ tuần tự luồng khách quét mã QR gọi món tại bàn cho tới khi món hiện trên màn hình bếp"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2155,7 +2712,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Mã phiên <code>sesis</code> không nhận từ điện thoại khách mà luôn do máy chủ tra lại theo mã bàn. Nếu nhận từ client, người biết mã phiên của bàn khác có thể gọi món vào hoá đơn của bàn đó.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 24</span>Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 29</span>Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1338 812" role="img" aria-label="Sơ đồ tuần tự luồng thanh toán chuyển khoản VietQR và đối soát tự động khi ngân hàng gọi webhook"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2242,7 +2799,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Hệ thống không hỏi ngân hàng mà chờ ngân hàng gọi vào. Webhook luôn được trả HTTP 200 khi giao dịch đã ghi được vào hộp thư, kể cả lúc không khớp phiên nào — trả mã khác 200 thì bên gửi sẽ bắn lại liên tục.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 25</span>Sơ đồ tuần tự luồng chạy dự báo lượt khách</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 30</span>Sơ đồ tuần tự luồng chạy dự báo lượt khách</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1323 728" role="img" aria-label="Sơ đồ tuần tự luồng chạy dự báo lượt khách, gồm cả nhánh dự phòng khi dịch vụ học máy không phản hồi"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2322,7 +2879,7 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
   <p class="cap-duoi">Nhánh thứ hai của khối <code>alt</code> là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt, nhưng trang web vẫn phải mở được và hiển thị kết quả dự báo đã lưu lần trước.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 26</span>Sơ đồ tuần tự luồng chấm công bằng khuôn mặt</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 31</span>Sơ đồ tuần tự luồng chấm công bằng khuôn mặt</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1365 728" role="img" aria-label="Sơ đồ tuần tự luồng chấm công bằng khuôn mặt: kiểm tra vị trí GPS trước, sau đó mới nhận diện"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-sqD" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2400,13 +2957,13 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
     <text class="tx-ghi" x="26" y="696">Thứ tự hai kiểm tra là có chủ đích: vị trí kiểm trước, khuôn mặt kiểm sau. Người chấm công từ xa bị chặn</text><text class="tx-ghi" x="26" y="709">trong một phần giây mà hệ thống không cần biết người đó là ai, và không tốn một lượt gọi dịch vụ nhận diện.</text>
   </g></svg></div>
   <p class="cap-duoi">Vị trí được kiểm tra trước khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây mà hệ thống chưa cần biết người đó là ai, và không tốn một lượt gọi dịch vụ nhận diện.</p>
-</figure></section><section id="hoat-dong"><h2 class="muc"><span class="so">10</span>Sơ đồ hoạt động</h2>
+</figure></section><section id="hoat-dong"><h2 class="muc"><span class="so">11</span>Sơ đồ hoạt động</h2>
 <div class="van"><p>Ba quy trình dưới đây không trùng với bốn sơ đồ BPMN ở &sect;6. Sơ đồ hoạt
 động đi sâu hơn một mức so với BPMN: nó vẽ cả nhánh lỗi, nhánh quay lui giao dịch và điểm
 tách luồng song song <i>bên trong</i> một chức năng — những thứ mà sơ đồ quy trình mức tổng
 quan cố ý không thể hiện.</p></div>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 27</span>Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 32</span>Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 930" role="img" aria-label="Sơ đồ hoạt động quy trình đặt bàn trực tuyến kèm nhánh đặt cọc giữ bàn bằng VietQR"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdA" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2462,7 +3019,7 @@ quan cố ý không thể hiện.</p></div>
   <p class="cap-duoi">Nhánh “ngày ở quá khứ” được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính <code>min</code> của ô ngày chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn bỏ qua được.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 28</span>Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 33</span>Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 940" role="img" aria-label="Sơ đồ hoạt động quy trình nhập kho theo lô và cơ chế trừ tồn kho tự động khi bếp hoàn thành món"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdB" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2518,7 +3075,7 @@ quan cố ý không thể hiện.</p></div>
   <p class="cap-duoi">Thời điểm trừ kho đặt ở bước bếp <i>hoàn thành</i> món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.</p>
 </figure>
 <figure class="khoi-hinh">
-  <figcaption class="cap"><span class="cap-so">Hình 29</span>Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo</figcaption>
+  <figcaption class="cap"><span class="cap-so">Hình 34</span>Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo</figcaption>
   <div class="hinh-hop"><svg class="hinh" viewBox="0 0 1240 950" role="img" aria-label="Sơ đồ hoạt động đường đi của một câu hỏi qua năm tầng xử lý của trợ lý ảo tiếng Việt"
      xmlns="http://www.w3.org/2000/svg"><defs>
     <marker id="mui-hdC" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2578,7 +3135,7 @@ quan cố ý không thể hiện.</p></div>
     <text class="tx-ghi" x="20" y="916">Tầng ④ là lớp bảo vệ quan trọng nhất: mô hình chỉ chọn MẪU câu truy vấn và điền tham số đã kiểm tra kiểu, chứ không</text><text class="tx-ghi" x="20" y="929">sinh chuỗi SQL tự do. Nhờ vậy một câu hỏi bịa đặt cũng không thể trở thành lệnh xoá dữ liệu.</text>
   </g></svg></div>
   <p class="cap-duoi">Tầng ④ là lớp bảo vệ quan trọng nhất: mô hình chỉ chọn <i>mẫu</i> câu truy vấn rồi điền tham số đã kiểm tra kiểu, chứ không sinh chuỗi SQL tự do.</p>
-</figure></section><section id="anh-xa"><h2 class="muc"><span class="so">11</span>Ánh xạ sơ đồ sang mã nguồn</h2>
+</figure></section><section id="anh-xa"><h2 class="muc"><span class="so">12</span>Ánh xạ sơ đồ sang mã nguồn</h2>
 <div class="van"><p>Bảng đối chiếu để tìm nhanh phần mã tương ứng với từng nhóm chức
 năng trên sơ đồ.</p></div>
 <div class="bang-hop"><table>

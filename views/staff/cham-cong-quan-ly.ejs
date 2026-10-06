@@ -1,4 +1,12 @@
-<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+<%
+  var xemBangStaff = (typeof isStaff !== 'undefined' && isStaff) || 
+                     (typeof currentPath !== 'undefined' && currentPath.startsWith('/staff'));
+%>
+<% if (xemBangStaff) { %>
+  <%- include('partials/header', { activePage: activePage, staffName: session.staffName || session.adminname }) %>
+<% } else { %>
+  <%- include('../admin/partials/header', { title: 'Quản lý chấm công', activePage: 'cham-cong' }) %>
+<% } %>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 mb-0 text-gray-800">
@@ -7,10 +15,7 @@
   <form method="GET" class="form-inline">
     <label class="small font-weight-bold mr-2 mb-0">Ngày</label>
     <input type="date" name="ngay" value="<%= ngay %>" class="form-control form-control-sm mr-2">
-    <button class="btn btn-sm btn-primary mr-2"><i class="fas fa-search"></i> Xem</button>
-    <a href="/to-chuc/khuon-mat" class="btn btn-sm btn-outline-secondary">
-      <i class="fas fa-users-cog"></i> Khuôn mặt
-    </a>
+    <button class="btn btn-sm btn-primary"><i class="fas fa-search"></i> Xem</button>
   </form>
 </div>
 
@@ -56,16 +61,24 @@
 <div class="row">
   <div class="col-lg-<%= coTheSua ? 8 : 12 %>">
     <div class="card shadow mb-4">
-      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center" style="gap:0.5rem">
         <h6 class="m-0 font-weight-bold text-primary">
           Bảng công ngày <%= new Date(ngay + 'T00:00:00').toLocaleDateString('vi-VN') %>
         </h6>
-        <div class="d-flex">
-          <input type="text" class="form-control form-control-sm mr-2" id="tim"
-                 placeholder="Tìm tên..." style="width:170px">
+        <div class="d-flex align-items-center flex-wrap" style="gap:0.5rem">
+          <select class="form-control form-control-sm" id="loc-bo-phan" style="width:160px; font-weight:600;">
+            <option value="">— Tất cả bộ phận —</option>
+            <% if (typeof boPhan !== 'undefined' && boPhan) { %>
+              <% boPhan.forEach(function (bp) { %>
+                <option value="<%= bp.id_bp %>"><%= bp.ten_bp %></option>
+              <% }) %>
+            <% } %>
+          </select>
+          <input type="text" class="form-control form-control-sm" id="tim"
+                 placeholder="Tìm tên / mã NV..." style="width:160px">
           <div class="custom-control custom-switch d-flex align-items-center">
             <input type="checkbox" class="custom-control-input" id="chi-chua-cham">
-            <label class="custom-control-label small" for="chi-chua-cham">Chỉ người chưa chấm</label>
+            <label class="custom-control-label small mb-0 text-nowrap" for="chi-chua-cham">Chưa chấm</label>
           </div>
         </div>
       </div>
@@ -214,8 +227,10 @@
   function ve() {
     var tu = (document.getElementById('tim').value || '').toLowerCase().trim();
     var chiChua = document.getElementById('chi-chua-cham').checked;
+    var boPhanChon = (document.getElementById('loc-bo-phan').value || '').trim();
     var ds = bang.filter(function (r) {
       if (chiChua && r.id_cc) return false;
+      if (boPhanChon && String(r.id_bp) !== boPhanChon) return false;
       return !tu || String(r.ten).toLowerCase().indexOf(tu) >= 0 ||
              String(r.ma_nv || '').toLowerCase().indexOf(tu) >= 0;
     });
@@ -298,6 +313,7 @@
 
   document.getElementById('tim').oninput = ve;
   document.getElementById('chi-chua-cham').onchange = ve;
+  document.getElementById('loc-bo-phan').onchange = ve;
 
   // Tự tải lại khi có người chấm công (sự kiện realtime từ faceService).
   var taiLai = RT.dongBo('/api/cham-cong/ngay?ngay=' + encodeURIComponent(NGAY), function (d) {
@@ -374,4 +390,8 @@
 })();
 </script>
 
-<%- include('partials/footer') %>
+<% if (xemBangStaff) { %>
+  <%- include('partials/footer') %>
+<% } else { %>
+  <%- include('../admin/partials/footer') %>
+<% } %>

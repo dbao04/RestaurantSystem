@@ -3,226 +3,774 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard phân tích - Nhà Hàng Bảo Đoàn</title>
+  <title>Dashboard phân tích &amp; Hỗ trợ ra quyết định — Nhà Hàng Bảo Đoàn</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js -->
   <script src="/chart.umd.js"></script>
+
   <style>
     :root {
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --line: #e2e8f0;
-      --text: #0f172a;
-      --muted: #64748b;
-      --brand: #0f766e;
-      --brand-2: #14b8a6;
-      --warn: #d97706;
-      --danger: #dc2626;
-      --ok: #16a34a;
+      --nh-espresso: #221711;
+      --nh-espresso-2: #2d1f17;
+      --nh-espresso-3: #3b2a20;
+      --nh-gold: #c8a24b;
+      --nh-gold-light: #e5c87f;
+      --nh-gold-soft: #f4ebd0;
+      --nh-gold-dark: #9e7d30;
+      --nh-cream: #fbf8f4;
+      --nh-cream-2: #f2ece1;
+      --nh-surface: #ffffff;
+      --nh-ink: #1f1a16;
+      --nh-muted: #786a5d;
+      --nh-line: #e8ded1;
+      --nh-line-soft: #f3ede4;
+
+      --nh-ok: #15803d;
+      --nh-ok-bg: #ecfdf5;
+      --nh-ok-border: #a7f3d0;
+      --nh-warn: #b45309;
+      --nh-warn-bg: #fffbeb;
+      --nh-warn-border: #fde68a;
+      --nh-danger: #b91c1c;
+      --nh-danger-bg: #fef2f2;
+      --nh-danger-border: #fecaca;
+      --nh-info: #1d4ed8;
+      --nh-info-bg: #eff6ff;
+      --nh-info-border: #bfdbfe;
+
+      --nh-serif: 'Playfair Display', Georgia, serif;
+      --nh-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --nh-radius-sm: 8px;
+      --nh-radius: 14px;
+      --nh-radius-lg: 18px;
+      --nh-shadow-sm: 0 4px 12px rgba(34, 23, 17, 0.04);
+      --nh-shadow: 0 10px 30px -8px rgba(34, 23, 17, 0.08);
+      --nh-shadow-lg: 0 20px 40px -12px rgba(34, 23, 17, 0.12);
     }
+
     * { box-sizing: border-box; }
     body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: var(--nh-cream);
+      color: var(--nh-ink);
+      font-family: var(--nh-sans);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
     }
-    header {
-      background: linear-gradient(135deg, #0f766e, #115e59);
-      color: #fff; padding: 18px 28px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 12px;
+
+    /* ------------------------------------------------------------- HEADER */
+    header.nh-topbar {
+      background: linear-gradient(135deg, var(--nh-espresso) 0%, var(--nh-espresso-2) 60%, var(--nh-espresso-3) 100%);
+      color: #fff;
+      padding: 16px 32px;
+      border-bottom: 2px solid var(--nh-gold);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
     }
-    header h1 { margin: 0; font-size: 20px; font-weight: 700; }
-    header .sub { font-size: 13px; opacity: .85; margin-top: 2px; }
-    header nav a {
-      color: #fff; text-decoration: none; font-size: 13px;
-      padding: 7px 13px; border: 1px solid rgba(255,255,255,.35);
-      border-radius: 7px; margin-left: 8px; display: inline-block;
+    .nh-topbar__inner {
+      max-width: 1560px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
-    header nav a:hover { background: rgba(255,255,255,.16); }
-
-    .wrap { padding: 20px 28px 60px; max-width: 1520px; margin: 0 auto; }
-
-    .filter {
-      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-      padding: 14px 18px; margin-bottom: 18px;
-      display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+    .nh-topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
     }
-    .filter label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-    .filter input, .filter select {
-      padding: 8px 11px; border: 1px solid var(--line); border-radius: 7px;
-      font-size: 14px; font-family: inherit;
+    .nh-topbar__logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(200, 162, 75, 0.15);
+      border: 1px solid rgba(200, 162, 75, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      box-shadow: inset 0 0 12px rgba(200, 162, 75, 0.2);
     }
-    .btn {
-      background: var(--brand); color: #fff; border: 0; padding: 9px 18px;
-      border-radius: 7px; cursor: pointer; font-size: 14px; font-family: inherit;
+    .nh-topbar__logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(5deg);
     }
-    .btn:hover { background: #115e59; }
-    .btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
-    .btn.ghost:hover { background: #f0fdfa; }
-    .btn.ghost.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-    .btn.ghost.active:hover { background: #115e59; }
-    .btn:focus { outline: none; }
-    .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
-    .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
-    .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
-    .kpi .value { font-size: 25px; font-weight: 700; margin-top: 7px; }
-    .kpi .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .kpi.accent { border-left: 4px solid var(--brand); }
-    .kpi.warn   { border-left: 4px solid var(--warn); }
-    .kpi.good   { border-left: 4px solid var(--ok); }
-
-    .grid { display: grid; gap: 16px; margin-bottom: 16px; }
-    .g2 { grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); }
-    .g3 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
-
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
-    .card h2 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
-    .card .desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-    .chart-box { position: relative; height: 300px; }
-    .chart-box.tall { height: 400px; }
-
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .3px; }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-    tbody tr:hover { background: #f8fafc; }
-
-    .tag { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .tag.sap_het  { background: #fee2e2; color: #991b1b; }
-    .tag.canh_bao { background: #ffedd5; color: #9a3412; }
-    .tag.theo_doi { background: #fef9c3; color: #854d0e; }
-    .tag.du       { background: #dcfce7; color: #166534; }
-
-    .insight {
-      background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 4px solid var(--brand-2);
-      border-radius: 8px; padding: 12px 15px; font-size: 13.5px; margin-top: 12px; line-height: 1.6;
+    .nh-topbar__titles h1 {
+      margin: 0;
+      font-family: var(--nh-serif);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .insight b { color: #065f46; }
-    .scroll { max-height: 380px; overflow-y: auto; }
-    .loading { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+    .nh-badge-layer {
+      background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-dark));
+      color: #1f160e;
+      font-family: var(--nh-sans);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nh-topbar__sub {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 3px;
+    }
+    .nh-topbar__sub b {
+      color: var(--nh-gold-light);
+      font-weight: 600;
+    }
+
+    .nh-topbar__nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .nh-topbar__nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--nh-radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+    .nh-topbar__nav a i {
+      color: var(--nh-gold);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+    .nh-topbar__nav a:hover {
+      background: rgba(200, 162, 75, 0.22);
+      border-color: var(--nh-gold);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .nh-topbar__nav a:hover i {
+      transform: scale(1.15);
+    }
+
+    /* ------------------------------------------------------------- WRAPPER */
+    .nh-wrap {
+      max-width: 1560px;
+      margin: 0 auto;
+      padding: 26px 32px 80px;
+    }
+
+    /* ------------------------------------------------------------- FILTER BAR */
+    .nh-filter {
+      background: var(--nh-surface);
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius);
+      padding: 16px 22px;
+      margin-bottom: 22px;
+      box-shadow: var(--nh-shadow-sm);
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .nh-filter::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 24px; right: 24px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--nh-gold), transparent);
+    }
+    .nh-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .nh-field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--nh-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .nh-field label i {
+      color: var(--nh-gold);
+    }
+    .nh-input {
+      padding: 9px 13px;
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--nh-cream);
+      color: var(--nh-ink);
+      font-weight: 600;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .nh-input:focus {
+      border-color: var(--nh-gold);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(200, 162, 75, 0.18);
+    }
+
+    .nh-btn-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .nh-btn {
+      background: linear-gradient(135deg, var(--nh-espresso) 0%, var(--nh-espresso-2) 100%);
+      color: #fff;
+      border: 1px solid var(--nh-gold);
+      padding: 9px 18px;
+      border-radius: var(--nh-radius-sm);
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 4px 14px rgba(34, 23, 17, 0.15);
+      transition: all 0.2s ease;
+    }
+    .nh-btn i { color: var(--nh-gold); }
+    .nh-btn:hover {
+      background: linear-gradient(135deg, var(--nh-gold) 0%, var(--nh-gold-dark) 100%);
+      color: #1f160e;
+      border-color: var(--nh-gold-dark);
+      box-shadow: 0 6px 18px rgba(200, 162, 75, 0.35);
+      transform: translateY(-1px);
+    }
+    .nh-btn:hover i { color: #1f160e; }
+
+    .nh-btn.nh-pill {
+      background: var(--nh-cream-2);
+      color: var(--nh-ink);
+      border: 1px solid var(--nh-line);
+      box-shadow: none;
+      font-weight: 600;
+    }
+    .nh-btn.nh-pill:hover {
+      background: var(--nh-gold-soft);
+      border-color: var(--nh-gold);
+      color: var(--nh-espresso);
+      transform: translateY(-1px);
+    }
+    .nh-btn.nh-pill.active {
+      background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-dark));
+      color: #1f160e;
+      border-color: var(--nh-gold-dark);
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(200, 162, 75, 0.3);
+    }
+
+    /* ------------------------------------------------------------- KPI CARDS */
+    .nh-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .nh-kpi {
+      background: var(--nh-surface);
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius);
+      padding: 18px 22px;
+      box-shadow: var(--nh-shadow-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+    }
+    .nh-kpi:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--nh-shadow);
+      border-color: var(--nh-gold-light);
+    }
+    .nh-kpi__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .nh-kpi__label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--nh-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .nh-kpi__icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .nh-kpi.c-gold .nh-kpi__icon   { background: var(--nh-gold-soft); color: var(--nh-gold-dark); border: 1px solid rgba(200, 162, 75, 0.3); }
+    .nh-kpi.c-green .nh-kpi__icon  { background: var(--nh-ok-bg); color: var(--nh-ok); border: 1px solid var(--nh-ok-border); }
+    .nh-kpi.c-amber .nh-kpi__icon  { background: var(--nh-warn-bg); color: var(--nh-warn); border: 1px solid var(--nh-warn-border); }
+    .nh-kpi.c-blue .nh-kpi__icon   { background: var(--nh-info-bg); color: var(--nh-info); border: 1px solid var(--nh-info-border); }
+    .nh-kpi.c-red .nh-kpi__icon    { background: var(--nh-danger-bg); color: var(--nh-danger); border: 1px solid var(--nh-danger-border); }
+
+    .nh-kpi__value {
+      font-size: 27px;
+      font-weight: 800;
+      color: var(--nh-espresso);
+      font-family: var(--nh-sans);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .nh-kpi__note {
+      font-size: 12.5px;
+      color: var(--nh-muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ------------------------------------------------------------- CARDS & GRIDS */
+    .nh-grid {
+      display: grid;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .nh-grid--2 { grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); }
+    .nh-grid--3 { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+
+    @media (max-width: 768px) {
+      .nh-grid--2, .nh-grid--3 { grid-template-columns: 1fr; }
+      .nh-wrap { padding: 16px; }
+      header.nh-topbar { padding: 14px 16px; }
+    }
+
+    .nh-card {
+      background: var(--nh-surface);
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius);
+      padding: 22px 24px;
+      box-shadow: var(--nh-shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease;
+    }
+    .nh-card:hover {
+      border-color: #dcd0bf;
+    }
+    .nh-card__header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--nh-line-soft);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .nh-card__title {
+      margin: 0;
+      font-family: var(--nh-serif);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--nh-espresso);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .nh-card__title i {
+      color: var(--nh-gold);
+      font-size: 15px;
+    }
+    .nh-card__desc {
+      font-size: 12.5px;
+      color: var(--nh-muted);
+      margin-top: 3px;
+    }
+
+    .nh-chart-box {
+      position: relative;
+      height: 310px;
+      width: 100%;
+    }
+    .nh-chart-box--tall {
+      height: 390px;
+    }
+
+    /* ------------------------------------------------------------- INSIGHT BOX */
+    .nh-insight {
+      background: linear-gradient(135deg, #fdfaf3 0%, var(--nh-gold-soft) 100%);
+      border: 1px solid #ebd9b0;
+      border-left: 4px solid var(--nh-gold);
+      border-radius: var(--nh-radius-sm);
+      padding: 13px 16px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      margin-top: 14px;
+      color: var(--nh-espresso);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .nh-insight i.fa-lightbulb {
+      color: var(--nh-gold-dark);
+      font-size: 16px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .nh-insight b {
+      color: var(--nh-espresso);
+      font-weight: 700;
+    }
+
+    /* ------------------------------------------------------------- TABLES */
+    .nh-table-scroll {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--nh-line-soft);
+      border-radius: var(--nh-radius-sm);
+    }
+    table.nh-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+    table.nh-table th {
+      background: var(--nh-cream-2);
+      color: var(--nh-muted);
+      font-weight: 700;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--nh-line);
+    }
+    table.nh-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--nh-line-soft);
+      color: var(--nh-ink);
+    }
+    table.nh-table tbody tr:hover {
+      background: #faf6ef;
+    }
+    table.nh-table td.num, table.nh-table th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    /* Tags / Badges */
+    .nh-tag {
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .nh-tag.sap_het  { background: var(--nh-danger-bg); color: var(--nh-danger); border: 1px solid var(--nh-danger-border); }
+    .nh-tag.canh_bao { background: var(--nh-warn-bg); color: var(--nh-warn); border: 1px solid var(--nh-warn-border); }
+    .nh-tag.theo_doi { background: var(--nh-info-bg); color: var(--nh-info); border: 1px solid var(--nh-info-border); }
+    .nh-tag.du       { background: var(--nh-ok-bg); color: var(--nh-ok); border: 1px solid var(--nh-ok-border); }
+
+    .nh-progress-bar {
+      background: var(--nh-line-soft);
+      border-radius: 6px;
+      height: 7px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .nh-progress-val {
+      background: linear-gradient(90deg, var(--nh-gold), var(--nh-gold-dark));
+      height: 100%;
+      border-radius: 6px;
+    }
+
+    .loading-state {
+      padding: 30px;
+      text-align: center;
+      color: var(--nh-muted);
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .loading-state i {
+      color: var(--nh-gold);
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>Dashboard phân tích &amp; hỗ trợ ra quyết định</h1>
-      <div class="sub">Tầng 2 &mdash; Phân tích dữ liệu vận hành | Xin chào <%= tenNguoiDung %></div>
+
+  <!-- ========================================================= TOPBAR -->
+  <header class="nh-topbar">
+    <div class="nh-topbar__inner">
+      <a class="nh-topbar__brand" href="/admin">
+        <div class="nh-topbar__logo">
+          <img src="/logo.svg" alt="Logo">
+        </div>
+        <div class="nh-topbar__titles">
+          <h1>
+            Nhà Hàng Bảo Đoàn
+            <span class="nh-badge-layer">Tầng 2 &bull; Phân tích dữ liệu</span>
+          </h1>
+          <div class="nh-topbar__sub">
+            Dashboard Phân Tích Vận Hành &amp; Hỗ Trợ Ra Quyết Định &bull; Xin chào <b><%= tenNguoiDung %></b>
+          </div>
+        </div>
+      </a>
+
+      <nav class="nh-topbar__nav">
+        <a href="/admin"><i class="fas fa-gauge-high"></i> Trang quản trị</a>
+        <a href="/du-bao"><i class="fas fa-brain"></i> Dự báo AI</a>
+        <a href="/so-do-ban"><i class="fas fa-chair"></i> Sơ đồ bàn</a>
+        <a href="/kds"><i class="fas fa-fire-burner"></i> Bếp KDS</a>
+        <a href="/staff"><i class="fas fa-users-gear"></i> Nhân viên</a>
+        <a href="/" target="_blank"><i class="fas fa-store"></i> Trang chủ</a>
+      </nav>
     </div>
-    <nav>
-      <a href="/admin">Trang quản trị</a>
-      <a href="/du-bao">Dự báo AI</a>
-      <a href="/so-do-ban">Sơ đồ bàn</a>
-      <a href="/staff">Trang nhân viên</a>
-      <a href="/">Trang chủ</a>
-    </nav>
   </header>
 
-  <div class="wrap">
-    <div class="filter">
-      <div>
-        <label for="tu">Từ ngày</label>
-        <input type="date" id="tu" value="<%= khoang.tu %>">
+  <!-- ========================================================= MAIN CONTAINER -->
+  <div class="nh-wrap">
+    
+    <!-- Filter Toolbar -->
+    <div class="nh-filter">
+      <div class="nh-field">
+        <label for="tu"><i class="fas fa-calendar-day"></i> Từ ngày</label>
+        <input type="date" id="tu" class="nh-input" value="<%= khoang.tu %>">
       </div>
-      <div>
-        <label for="den">Đến ngày</label>
-        <input type="date" id="den" value="<%= khoang.den %>">
+      <div class="nh-field">
+        <label for="den"><i class="fas fa-calendar-check"></i> Đến ngày</label>
+        <input type="date" id="den" class="nh-input" value="<%= khoang.den %>">
       </div>
-      <button class="btn" onclick="taiLai()">Áp dụng</button>
-      <button class="btn ghost" data-ngay="7" onclick="datNhanh(7)">7 ngày</button>
-      <button class="btn ghost" data-ngay="30" onclick="datNhanh(30)">30 ngày</button>
-      <button class="btn ghost" data-ngay="90" onclick="datNhanh(90)">90 ngày</button>
-      <button class="btn ghost" data-ngay="365" onclick="datNhanh(365)">1 năm</button>
-    </div>
 
-    <div class="kpis" id="kpis">
-      <div class="loading">Đang tải số liệu...</div>
-    </div>
-
-    <div class="grid g2">
-      <div class="card">
-        <h2>Doanh thu theo ngày</h2>
-        <div class="desc">Xu hướng doanh thu và số đơn trong khoảng đã chọn</div>
-        <div class="chart-box"><canvas id="cDoanhThuNgay"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Doanh thu theo khung giờ</h2>
-        <div class="desc">Xác định giờ cao điểm để bố trí nhân sự và chuẩn bị nguyên liệu</div>
-        <div class="chart-box"><canvas id="cGio"></canvas></div>
-        <div class="insight" id="insightGio">Đang phân tích...</div>
+      <div class="nh-btn-group">
+        <button class="nh-btn" onclick="taiLai()"><i class="fas fa-filter"></i> Áp dụng</button>
+        <button class="nh-btn nh-pill" data-ngay="7" onclick="datNhanh(7)">7 ngày</button>
+        <button class="nh-btn nh-pill" data-ngay="30" onclick="datNhanh(30)">30 ngày</button>
+        <button class="nh-btn nh-pill" data-ngay="90" onclick="datNhanh(90)">90 ngày</button>
+        <button class="nh-btn nh-pill" data-ngay="365" onclick="datNhanh(365)">1 năm</button>
       </div>
     </div>
 
-    <div class="grid g3">
-      <div class="card">
-        <h2>Doanh thu theo thứ trong tuần</h2>
-        <div class="desc">Cơ sở xếp lịch làm việc</div>
-        <div class="chart-box"><canvas id="cThu"></canvas></div>
+    <!-- 5 KPI Cards -->
+    <div class="nh-kpis" id="kpis">
+      <div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Đang tải số liệu tổng quan...</div>
+    </div>
+
+    <!-- Hàng 1: Doanh thu theo ngày + Doanh thu theo khung giờ -->
+    <div class="nh-grid nh-grid--2">
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-chart-line"></i> Doanh thu theo ngày</h2>
+            <div class="nh-card__desc">Xu hướng biến động doanh thu &amp; số lượng đơn hàng theo chuỗi thời gian</div>
+          </div>
+        </div>
+        <div class="nh-chart-box"><canvas id="cDoanhThuNgay"></canvas></div>
       </div>
-      <div class="card">
-        <h2>Cơ cấu theo danh mục món</h2>
-        <div class="desc">Nhóm món nào đóng góp doanh thu chính</div>
-        <div class="chart-box"><canvas id="cDanhMuc"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Cơ cấu theo hình thức phục vụ</h2>
-        <div class="desc">Tại chỗ / mang về / giao hàng</div>
-        <div class="chart-box"><canvas id="cLoaiDon"></canvas></div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-clock"></i> Doanh thu theo khung giờ</h2>
+            <div class="nh-card__desc">Xác định khung giờ cao điểm để điều phối nhân sự &amp; dự phòng bếp</div>
+          </div>
+        </div>
+        <div class="nh-chart-box"><canvas id="cGio"></canvas></div>
+        <div class="nh-insight" id="insightGio"><i class="fas fa-lightbulb"></i> <span>Đang phân tích dữ liệu khung giờ...</span></div>
       </div>
     </div>
 
-    <div class="grid g2">
-      <div class="card">
-        <h2>Top 15 món bán chạy</h2>
-        <div class="desc">Xếp theo số lượng bán ra</div>
-        <div class="chart-box tall"><canvas id="cTopMon"></canvas></div>
+    <!-- Hàng 2: Thứ trong tuần + Cơ cấu danh mục + Cơ cấu phục vụ -->
+    <div class="nh-grid nh-grid--3">
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-calendar-week"></i> Theo thứ trong tuần</h2>
+            <div class="nh-card__desc">Cơ sở khoa học để xếp ca làm việc</div>
+          </div>
+        </div>
+        <div class="nh-chart-box"><canvas id="cThu"></canvas></div>
       </div>
-      <div class="card">
-        <h2>Phân tích Pareto (quy luật 20/80)</h2>
-        <div class="desc">Bao nhiêu phần trăm số món tạo ra 80% doanh thu?</div>
-        <div class="chart-box tall"><canvas id="cPareto"></canvas></div>
-        <div class="insight" id="insightPareto">Đang phân tích...</div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-chart-pie"></i> Cơ cấu danh mục món</h2>
+            <div class="nh-card__desc">Tỷ trọng đóng góp doanh thu từng nhóm</div>
+          </div>
+        </div>
+        <div class="nh-chart-box"><canvas id="cDanhMuc"></canvas></div>
+      </div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-utensils"></i> Hình thức phục vụ</h2>
+            <div class="nh-card__desc">Tại chỗ &bull; Mang về &bull; Giao tận nơi</div>
+          </div>
+        </div>
+        <div class="nh-chart-box"><canvas id="cLoaiDon"></canvas></div>
       </div>
     </div>
 
-    <div class="grid g2">
-      <div class="card">
-        <h2>Hiệu suất nhân viên phục vụ</h2>
-        <div class="desc">Số đơn phục vụ và doanh thu mang lại</div>
-        <div class="scroll"><table id="tNhanVien"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+    <!-- Hàng 3: Top 15 món + Phân tích Pareto -->
+    <div class="nh-grid nh-grid--2">
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-trophy"></i> Top 15 món bán chạy nhất</h2>
+            <div class="nh-card__desc">Xếp hạng theo sản lượng bán ra &amp; lợi nhuận biên</div>
+          </div>
+        </div>
+        <div class="nh-chart-box nh-chart-box--tall"><canvas id="cTopMon"></canvas></div>
       </div>
-      <div class="card">
-        <h2>Hiệu suất bếp</h2>
-        <div class="desc">Thời gian chế biến trung bình từng món</div>
-        <div class="insight" id="insightBep" style="margin-top:0;margin-bottom:12px">Đang phân tích...</div>
-        <div class="scroll"><table id="tBep"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-balance-scale"></i> Phân tích Pareto (Quy luật 80/20)</h2>
+            <div class="nh-card__desc">Xác định nhóm món chủ lực đóng góp 80% tổng doanh thu</div>
+          </div>
+        </div>
+        <div class="nh-chart-box nh-chart-box--tall"><canvas id="cPareto"></canvas></div>
+        <div class="nh-insight" id="insightPareto"><i class="fas fa-lightbulb"></i> <span>Đang phân tích Pareto...</span></div>
       </div>
     </div>
 
-    <div class="grid g2">
-      <div class="card">
-        <h2>Tình trạng tồn kho</h2>
-        <div class="desc">Số ngày sử dụng còn lại = tồn hiện tại / tiêu hao trung bình 30 ngày</div>
-        <div class="scroll"><table id="tTonKho"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+    <!-- Hàng 4: Hiệu suất nhân viên + Hiệu suất bếp -->
+    <div class="nh-grid nh-grid--2">
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-user-check"></i> Hiệu suất nhân viên phục vụ</h2>
+            <div class="nh-card__desc">Số lượng đơn phụ trách &amp; tổng doanh thu đóng góp</div>
+          </div>
+        </div>
+        <div class="nh-table-scroll">
+          <table class="nh-table" id="tNhanVien">
+            <tbody><tr><td class="loading-state"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr></tbody>
+          </table>
+        </div>
       </div>
-      <div class="card">
-        <h2>Lô hàng sắp hết hạn (14 ngày tới)</h2>
-        <div class="desc">Cảnh báo sớm để giảm lãng phí nguyên liệu</div>
-        <div class="scroll"><table id="tHetHan"><tbody><tr><td class="loading">Đang tải...</td></tr></tbody></table></div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-stopwatch"></i> Hiệu suất chế biến bếp</h2>
+            <div class="nh-card__desc">Thời gian chế biến trung bình (phút) từng món ăn</div>
+          </div>
+        </div>
+        <div class="nh-insight" id="insightBep" style="margin-top:0; margin-bottom:12px;">
+          <i class="fas fa-lightbulb"></i> <span>Đang phân tích hiệu suất bếp...</span>
+        </div>
+        <div class="nh-table-scroll">
+          <table class="nh-table" id="tBep">
+            <tbody><tr><td class="loading-state"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!-- Hàng 5: Tồn kho FIFO + Cảnh báo hạn dùng -->
+    <div class="nh-grid nh-grid--2">
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-boxes-stacked"></i> Tình trạng tồn kho thực tế</h2>
+            <div class="nh-card__desc">Số ngày sử dụng = Tồn hiện tại / Tiêu hao TB 30 ngày</div>
+          </div>
+        </div>
+        <div class="nh-table-scroll">
+          <table class="nh-table" id="tTonKho">
+            <tbody><tr><td class="loading-state"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="nh-card">
+        <div class="nh-card__header">
+          <div>
+            <h2 class="nh-card__title"><i class="fas fa-triangle-exclamation"></i> Lô hàng sắp hết hạn (14 ngày tới)</h2>
+            <div class="nh-card__desc">Cảnh báo sớm theo hạn dùng FIFO để hạn chế hao hụt nguyên liệu</div>
+          </div>
+        </div>
+        <div class="nh-table-scroll">
+          <table class="nh-table" id="tHetHan">
+            <tbody><tr><td class="loading-state"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 <script>
 // ---------------------------------------------------------------------------
-// Tien ich
+// Bảng màu sang trọng đồng bộ thương hiệu Nhà Hàng Bảo Đoàn
 // ---------------------------------------------------------------------------
-const MAU = ['#0f766e','#14b8a6','#f59e0b','#ef4444','#6366f1','#ec4899',
-             '#84cc16','#06b6d4','#8b5cf6','#f97316','#10b981','#3b82f6'];
+const MAU = [
+  '#c8a24b', // Gold hoàng gia
+  '#2d1f17', // Espresso đậm
+  '#d97706', // Amber / Đồng
+  '#b91c1c', // Ruby / Rượu vang
+  '#047857', // Emerald / Xanh ngọc sẫm
+  '#1d4ed8', // Sapphire / Xanh dương
+  '#c2410c', // Terracotta / Gạch nung
+  '#854d0e', // Bronze / Đồng sẫm
+  '#4338ca', // Indigo
+  '#be185d', // Rose
+  '#475569', // Slate
+  '#a16207'  // Dark Gold
+];
 
 const dinhDangTien = (v) => Number(v || 0).toLocaleString('vi-VN');
 const trieu = (v) => (Number(v || 0) / 1e6).toFixed(1);
 
-/** Rut gon so tien cho nhan truc: 1.2 tr / 3.4 tỷ */
 function gonTien(v) {
   v = Number(v) || 0;
   if (v >= 1e9) return (v / 1e9).toFixed(1) + ' tỷ';
@@ -232,9 +780,12 @@ function gonTien(v) {
 }
 
 const bieuDo = {};
-/** Ve lai bieu do: huy instance cu de tranh ro ri bo nho khi doi bo loc. */
 function ve(id, config) {
   if (bieuDo[id]) bieuDo[id].destroy();
+  // Cấu hình font chữ mặc định cho Chart.js
+  if (config.options) {
+    config.options.font = { family: "'Plus Jakarta Sans', 'Inter', sans-serif" };
+  }
   bieuDo[id] = new Chart(document.getElementById(id), config);
 }
 
@@ -250,7 +801,6 @@ async function layJSON(duongDan, themThamSo = '') {
   return r.json();
 }
 
-// Danh dau nut khoang thoi gian dang duoc chon (nut xanh nhay theo lua chon)
 function dongBoNutNhanh() {
   const tu = document.getElementById('tu').value;
   const den = document.getElementById('den').value;
@@ -259,12 +809,11 @@ function dongBoNutNhanh() {
     const a = new Date(tu + 'T00:00:00'), b = new Date(den + 'T00:00:00');
     soNgay = Math.round((b - a) / 86400000) + 1;
   }
-  document.querySelectorAll('.filter .btn.ghost[data-ngay]').forEach(nut => {
+  document.querySelectorAll('.nh-filter .nh-btn.nh-pill[data-ngay]').forEach(nut => {
     nut.classList.toggle('active', Number(nut.dataset.ngay) === soNgay);
   });
 }
 
-// Dinh dang YYYY-MM-DD theo gio dia phuong (toISOString bi lui 1 ngay o mui gio +7)
 function dinhDangNgay(d) {
   const p = n => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
@@ -284,38 +833,60 @@ document.getElementById('tu').addEventListener('change', dongBoNutNhanh);
 document.getElementById('den').addEventListener('change', dongBoNutNhanh);
 
 // ---------------------------------------------------------------------------
-// Cac khoi noi dung
+// Vẽ KPI Cards
 // ---------------------------------------------------------------------------
 async function veKpi() {
   const d = await layJSON('tong-quan');
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi accent">
-      <div class="label">Doanh thu</div>
-      <div class="value">${trieu(d.doanh_thu)} tr</div>
-      <div class="note">${d.so_don.toLocaleString('vi-VN')} đơn hoàn tất</div>
+    <div class="nh-kpi c-gold">
+      <div class="nh-kpi__top">
+        <span class="nh-kpi__label">Tổng doanh thu</span>
+        <div class="nh-kpi__icon"><i class="fas fa-coins"></i></div>
+      </div>
+      <div class="nh-kpi__value">${trieu(d.doanh_thu)} tr</div>
+      <div class="nh-kpi__note"><i class="fas fa-circle-check" style="color:var(--nh-gold)"></i> ${d.so_don.toLocaleString('vi-VN')} đơn hoàn tất</div>
     </div>
-    <div class="kpi good">
-      <div class="label">Lợi nhuận gộp</div>
-      <div class="value">${trieu(d.loi_nhuan_gop)} tr</div>
-      <div class="note">Biên ${d.bien_loi_nhuan.toFixed(1)}%</div>
+
+    <div class="nh-kpi c-green">
+      <div class="nh-kpi__top">
+        <span class="nh-kpi__label">Lợi nhuận gộp</span>
+        <div class="nh-kpi__icon"><i class="fas fa-chart-pie"></i></div>
+      </div>
+      <div class="nh-kpi__value">${trieu(d.loi_nhuan_gop)} tr</div>
+      <div class="nh-kpi__note"><i class="fas fa-arrow-trend-up" style="color:var(--nh-ok)"></i> Biên lợi nhuận ${d.bien_loi_nhuan.toFixed(1)}%</div>
     </div>
-    <div class="kpi">
-      <div class="label">Chi phí nguyên liệu</div>
-      <div class="value">${trieu(d.chi_phi_nguyen_lieu)} tr</div>
-      <div class="note">${(100 - d.bien_loi_nhuan).toFixed(1)}% doanh thu</div>
+
+    <div class="nh-kpi c-amber">
+      <div class="nh-kpi__top">
+        <span class="nh-kpi__label">Chi phí nguyên liệu</span>
+        <div class="nh-kpi__icon"><i class="fas fa-boxes-packing"></i></div>
+      </div>
+      <div class="nh-kpi__value">${trieu(d.chi_phi_nguyen_lieu)} tr</div>
+      <div class="nh-kpi__note"><i class="fas fa-scale-balanced" style="color:var(--nh-warn)"></i> ${(100 - d.bien_loi_nhuan).toFixed(1)}% doanh thu</div>
     </div>
-    <div class="kpi">
-      <div class="label">Giá trị đơn TB</div>
-      <div class="value">${dinhDangTien(Math.round(d.gia_tri_don_tb))}đ</div>
-      <div class="note">${dinhDangTien(d.so_mon_ban)} món bán ra</div>
+
+    <div class="nh-kpi c-blue">
+      <div class="nh-kpi__top">
+        <span class="nh-kpi__label">Giá trị đơn TB</span>
+        <div class="nh-kpi__icon"><i class="fas fa-receipt"></i></div>
+      </div>
+      <div class="nh-kpi__value">${dinhDangTien(Math.round(d.gia_tri_don_tb))}đ</div>
+      <div class="nh-kpi__note"><i class="fas fa-bowl-food" style="color:var(--nh-info)"></i> ${dinhDangTien(d.so_mon_ban)} món bán ra</div>
     </div>
-    <div class="kpi warn">
-      <div class="label">Tỷ lệ hủy đơn</div>
-      <div class="value">${d.ty_le_huy.toFixed(2)}%</div>
-      <div class="note">${d.don_huy} đơn bị hủy</div>
+
+    <div class="nh-kpi c-red">
+      <div class="nh-kpi__top">
+        <span class="nh-kpi__label">Tỷ lệ hủy đơn</span>
+        <div class="nh-kpi__icon"><i class="fas fa-ban"></i></div>
+      </div>
+      <div class="nh-kpi__value">${d.ty_le_huy.toFixed(2)}%</div>
+      <div class="nh-kpi__note"><i class="fas fa-circle-exclamation" style="color:var(--nh-danger)"></i> ${d.don_huy} đơn đã hủy</div>
     </div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Vẽ Doanh thu theo ngày
+// ---------------------------------------------------------------------------
 async function veDoanhThuNgay() {
   const d = await layJSON('doanh-thu-ngay');
   ve('cDoanhThuNgay', {
@@ -323,93 +894,180 @@ async function veDoanhThuNgay() {
     data: {
       labels: d.map(r => r.ngay.slice(5)),
       datasets: [
-        { label: 'Doanh thu', data: d.map(r => r.doanh_thu), borderColor: MAU[0],
-          backgroundColor: 'rgba(15,118,110,.12)', fill: true, tension: .3,
-          pointRadius: d.length > 90 ? 0 : 2, yAxisID: 'y' },
-        { label: 'Số đơn', data: d.map(r => r.so_don), borderColor: MAU[2],
-          borderDash: [5, 4], fill: false, tension: .3,
-          pointRadius: 0, yAxisID: 'y1' },
+        { 
+          label: 'Doanh thu (VNĐ)', 
+          data: d.map(r => r.doanh_thu), 
+          borderColor: '#c8a24b',
+          backgroundColor: 'rgba(200, 162, 75, 0.12)', 
+          fill: true, 
+          tension: .3,
+          borderWidth: 2.5,
+          pointRadius: d.length > 90 ? 0 : 2.5,
+          pointBackgroundColor: '#c8a24b',
+          yAxisID: 'y' 
+        },
+        { 
+          label: 'Số đơn hàng', 
+          data: d.map(r => r.so_don), 
+          borderColor: '#2d1f17',
+          borderDash: [5, 4], 
+          fill: false, 
+          tension: .3,
+          borderWidth: 2,
+          pointRadius: 0, 
+          yAxisID: 'y1' 
+        },
       ],
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, 
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        tooltip: { callbacks: { label: (c) => c.datasetIndex === 0
-          ? 'Doanh thu: ' + dinhDangTien(c.parsed.y) + 'đ'
-          : 'Số đơn: ' + c.parsed.y } },
+        legend: { labels: { font: { family: "'Plus Jakarta Sans'", weight: 600 } } },
+        tooltip: { 
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: { 
+            label: (c) => c.datasetIndex === 0
+              ? 'Doanh thu: ' + dinhDangTien(c.parsed.y) + 'đ'
+              : 'Số đơn: ' + c.parsed.y 
+          } 
+        },
       },
       scales: {
-        y:  { position: 'left',  ticks: { callback: gonTien }, title: { display: true, text: 'Doanh thu' } },
+        x: { grid: { color: '#f3ede4' } },
+        y:  { position: 'left', grid: { color: '#f3ede4' }, ticks: { callback: gonTien }, title: { display: true, text: 'Doanh thu' } },
         y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Số đơn' } },
       },
     },
   });
 }
 
+// ---------------------------------------------------------------------------
+// Vẽ Doanh thu theo giờ
+// ---------------------------------------------------------------------------
 async function veGio() {
   const d = await layJSON('doanh-thu-gio');
   ve('cGio', {
     type: 'bar',
     data: {
       labels: d.map(r => r.gio + 'h'),
-      datasets: [{ label: 'Doanh thu', data: d.map(r => r.doanh_thu),
-        backgroundColor: d.map(r => (r.gio >= 11 && r.gio <= 13) || (r.gio >= 18 && r.gio <= 20) ? MAU[0] : '#94a3b8') }],
+      datasets: [{ 
+        label: 'Doanh thu', 
+        data: d.map(r => r.doanh_thu),
+        borderRadius: 6,
+        backgroundColor: d.map(r => (r.gio >= 11 && r.gio <= 13) || (r.gio >= 18 && r.gio <= 20) ? '#c8a24b' : '#d8cbbe') 
+      }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: (c) => dinhDangTien(c.parsed.y) + 'đ' } } },
-      scales: { y: { ticks: { callback: gonTien } } },
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: { 
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: { label: (c) => 'Doanh thu: ' + dinhDangTien(c.parsed.y) + 'đ' } 
+        } 
+      },
+      scales: { 
+        x: { grid: { display: false } },
+        y: { grid: { color: '#f3ede4' }, ticks: { callback: gonTien } } 
+      },
     },
   });
 
-  // Rut ra ket luan quan tri thay vi de nguoi dung tu doc bieu do.
   const tong = d.reduce((s, r) => s + Number(r.doanh_thu), 0);
   const sap = [...d].sort((a, b) => b.doanh_thu - a.doanh_thu);
   const top3 = sap.slice(0, 3);
   const pct = tong > 0 ? (top3.reduce((s, r) => s + Number(r.doanh_thu), 0) / tong * 100) : 0;
   document.getElementById('insightGio').innerHTML =
-    `Ba khung giờ <b>${top3.map(r => r.gio + 'h').join(', ')}</b> chiếm <b>${pct.toFixed(1)}%</b> tổng doanh thu. ` +
-    `Đây là các khung giờ cần bố trí đủ nhân sự phục vụ và chuẩn bị sẵn nguyên liệu.`;
+    `<i class="fas fa-lightbulb"></i> <span>Ba khung giờ <b>${top3.map(r => r.gio + 'h').join(', ')}</b> đóng góp <b>${pct.toFixed(1)}%</b> tổng doanh thu. Cần bố trí tăng cường nhân sự và sơ chế nguyên liệu trước các khung giờ này.</span>`;
 }
 
+// ---------------------------------------------------------------------------
+// Vẽ Thứ trong tuần
+// ---------------------------------------------------------------------------
 async function veThu() {
   const d = await layJSON('doanh-thu-thu');
   ve('cThu', {
     type: 'bar',
     data: {
       labels: d.map(r => r.ten_thu),
-      datasets: [{ label: 'Doanh thu', data: d.map(r => r.doanh_thu),
-        backgroundColor: d.map(r => r.thu_so === 1 || r.thu_so === 7 ? MAU[1] : MAU[0]) }],
+      datasets: [{ 
+        label: 'Doanh thu', 
+        data: d.map(r => r.doanh_thu),
+        borderRadius: 6,
+        backgroundColor: d.map(r => r.thu_so === 1 || r.thu_so === 7 ? '#c8a24b' : '#2d1f17') 
+      }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: (c) => dinhDangTien(c.parsed.y) + 'đ' } } },
-      scales: { y: { ticks: { callback: gonTien } } },
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: { 
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: { label: (c) => 'Doanh thu: ' + dinhDangTien(c.parsed.y) + 'đ' } 
+        } 
+      },
+      scales: { 
+        x: { grid: { display: false } },
+        y: { grid: { color: '#f3ede4' }, ticks: { callback: gonTien } } 
+      },
     },
   });
 }
 
+// ---------------------------------------------------------------------------
+// Biểu đồ tròn (Doughnut)
+// ---------------------------------------------------------------------------
 async function veTron(id, duongDan, nhan, gia_tri) {
   const d = await layJSON(duongDan);
   ve(id, {
     type: 'doughnut',
     data: {
       labels: d.map(nhan),
-      datasets: [{ data: d.map(gia_tri), backgroundColor: MAU, borderWidth: 2, borderColor: '#fff' }],
+      datasets: [{ 
+        data: d.map(gia_tri), 
+        backgroundColor: MAU, 
+        borderWidth: 2, 
+        borderColor: '#fff',
+        hoverOffset: 6
+      }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, 
+      maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: (c) => c.label + ': ' + dinhDangTien(c.parsed) + 'đ' } },
+        legend: { 
+          position: 'bottom', 
+          labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans'", size: 11.5 } } 
+        },
+        tooltip: { 
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: { label: (c) => ' ' + c.label + ': ' + dinhDangTien(c.parsed) + 'đ' } 
+        },
       },
+      cutout: '60%'
     },
   });
 }
 
+// ---------------------------------------------------------------------------
+// Top món bán chạy
+// ---------------------------------------------------------------------------
 async function veTopMon() {
   const d = (await layJSON('top-mon', '&limit=15')).slice(0, 15);
   ve('cTopMon', {
@@ -417,20 +1075,44 @@ async function veTopMon() {
     data: {
       labels: d.map(r => r.name_mon.trim()),
       datasets: [
-        { label: 'Số lượng bán', data: d.map(r => r.so_luong), backgroundColor: MAU[0] },
+        { 
+          label: 'Số lượng bán', 
+          data: d.map(r => r.so_luong), 
+          backgroundColor: '#c8a24b',
+          borderRadius: 4
+        },
       ],
     },
     options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { afterLabel: (c) => {
-          const r = d[c.dataIndex];
-          return 'Doanh thu: ' + dinhDangTien(r.doanh_thu) + 'đ\nLợi nhuận: ' + dinhDangTien(Math.round(r.loi_nhuan)) + 'đ';
-        } } } },
+      indexAxis: 'y', 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: { 
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: { 
+            afterLabel: (c) => {
+              const r = d[c.dataIndex];
+              return 'Doanh thu: ' + dinhDangTien(r.doanh_thu) + 'đ\nLợi nhuận: ' + dinhDangTien(Math.round(r.loi_nhuan)) + 'đ';
+            } 
+          } 
+        } 
+      },
+      scales: {
+        x: { grid: { color: '#f3ede4' } },
+        y: { grid: { display: false }, ticks: { font: { size: 11, weight: 600 } } }
+      }
     },
   });
 }
 
+// ---------------------------------------------------------------------------
+// Phân tích Pareto
+// ---------------------------------------------------------------------------
 async function vePareto() {
   const d = await layJSON('pareto');
   const top = d.duLieu.slice(0, 20);
@@ -438,31 +1120,62 @@ async function vePareto() {
     data: {
       labels: top.map(r => r.name_mon.trim()),
       datasets: [
-        { type: 'bar', label: 'Doanh thu', data: top.map(r => r.doanh_thu),
-          backgroundColor: MAU[0], yAxisID: 'y', order: 2 },
-        { type: 'line', label: '% lũy kế', data: top.map(r => r.luy_ke_pct),
-          borderColor: MAU[3], backgroundColor: MAU[3], yAxisID: 'y1',
-          tension: .2, pointRadius: 3, order: 1 },
+        { 
+          type: 'bar', 
+          label: 'Doanh thu', 
+          data: top.map(r => r.doanh_thu),
+          backgroundColor: '#c8a24b', 
+          borderRadius: 4,
+          yAxisID: 'y', 
+          order: 2 
+        },
+        { 
+          type: 'line', 
+          label: '% lũy kế', 
+          data: top.map(r => r.luy_ke_pct),
+          borderColor: '#b91c1c', 
+          backgroundColor: '#b91c1c', 
+          borderWidth: 2.5,
+          yAxisID: 'y1',
+          tension: .2, 
+          pointRadius: 4, 
+          order: 1 
+        },
       ],
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } },
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { position: 'bottom', labels: { font: { family: "'Plus Jakarta Sans'", weight: 600 } } },
+        tooltip: {
+          backgroundColor: '#221711',
+          titleColor: '#c8a24b',
+          padding: 10,
+          cornerRadius: 8
+        }
+      },
       scales: {
-        x:  { ticks: { maxRotation: 70, minRotation: 45, font: { size: 10 } } },
-        y:  { position: 'left', ticks: { callback: gonTien } },
-        y1: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => v + '%' } },
+        x:  { grid: { display: false }, ticks: { maxRotation: 60, minRotation: 40, font: { size: 10 } } },
+        y:  { position: 'left', grid: { color: '#f3ede4' }, ticks: { callback: gonTien } },
+        y1: { 
+          position: 'right', 
+          min: 0, 
+          max: 100, 
+          grid: { drawOnChartArea: false },
+          ticks: { callback: (v) => v + '%' } 
+        },
       },
     },
   });
 
   document.getElementById('insightPareto').innerHTML =
-    `<b>${d.so_mon_dat_80}/${d.tong_so_mon} món</b> (chiếm <b>${d.ty_le_mon_dat_80.toFixed(1)}%</b> thực đơn) ` +
-    `tạo ra 80% doanh thu. Nhóm món này cần được ưu tiên đảm bảo nguyên liệu, ` +
-    `còn nhóm đuôi dài nên cân nhắc rút gọn hoặc thay thế để giảm chi phí tồn kho.`;
+    `<i class="fas fa-lightbulb"></i> <span><b>${d.so_mon_dat_80}/${d.tong_so_mon} món</b> (chiếm <b>${d.ty_le_mon_dat_80.toFixed(1)}%</b> thực đơn) tạo ra 80% tổng doanh thu. Nhóm món này là nguồn sống chính, cần ưu tiên giữ trọn vẹn chất lượng và nguồn nguyên liệu ổn định.</span>`;
 }
 
+// ---------------------------------------------------------------------------
+// Bảng Hiệu suất nhân viên
+// ---------------------------------------------------------------------------
 async function veNhanVien() {
   const d = await layJSON('hieu-suat-nhan-vien');
   const max = Math.max(...d.map(r => Number(r.so_don)), 1);
@@ -471,38 +1184,46 @@ async function veNhanVien() {
     <th class="num">Doanh thu</th><th style="width:110px">Tỷ trọng</th></tr></thead>
     <tbody>${d.map(r => `
       <tr>
-        <td>${r.ten}</td>
-        <td style="color:var(--muted)">${r.chucvu || '—'}</td>
+        <td><b>${r.ten}</b></td>
+        <td style="color:var(--nh-muted)">${r.chucvu || '—'}</td>
         <td class="num">${Number(r.so_don).toLocaleString('vi-VN')}</td>
-        <td class="num">${trieu(r.doanh_thu)} tr</td>
-        <td><div style="background:#e2e8f0;border-radius:4px;height:8px">
-          <div style="background:var(--brand);height:8px;border-radius:4px;width:${(r.so_don / max * 100).toFixed(0)}%"></div>
-        </div></td>
-      </tr>`).join('') || '<tr><td colspan="5" class="loading">Chưa có dữ liệu</td></tr>'}
+        <td class="num" style="color:var(--nh-gold-dark)">${trieu(r.doanh_thu)} tr</td>
+        <td>
+          <div class="nh-progress-bar">
+            <div class="nh-progress-val" style="width:${(r.so_don / max * 100).toFixed(0)}%"></div>
+          </div>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="5" class="loading-state">Chưa có dữ liệu</td></tr>'}
     </tbody>`;
 }
 
+// ---------------------------------------------------------------------------
+// Bảng Hiệu suất bếp
+// ---------------------------------------------------------------------------
 async function veBep() {
   const d = await layJSON('hieu-suat-bep');
   document.getElementById('insightBep').innerHTML =
-    `Thời gian chế biến trung bình toàn bếp: <b>${d.phut_tb_toan_bep} phút/món</b>. ` +
+    `<i class="fas fa-lightbulb"></i> <span>Thời gian chế biến trung bình toàn bếp: <b>${d.phut_tb_toan_bep} phút/món</b>. ` +
     (d.cham_nhat.length
-      ? `Món chậm nhất là <b>${d.cham_nhat[0].name_mon.trim()}</b> (${d.cham_nhat[0].phut_tb} phút) — nên báo trước thời gian chờ cho khách.`
-      : '');
+      ? `Món chế biến lâu nhất là <b>${d.cham_nhat[0].name_mon.trim()}</b> (${d.cham_nhat[0].phut_tb} phút) — nhân viên phục vụ nên lưu ý thông báo thời gian chờ cho khách.`
+      : '') + `</span>`;
 
   document.getElementById('tBep').innerHTML = `
-    <thead><tr><th>Món</th><th class="num">Số lần</th>
+    <thead><tr><th>Món ăn</th><th class="num">Số lần</th>
     <th class="num">TB (phút)</th><th class="num">Lâu nhất</th></tr></thead>
     <tbody>${d.chi_tiet.map(r => `
       <tr>
-        <td>${r.name_mon.trim()}</td>
+        <td><b>${r.name_mon.trim()}</b></td>
         <td class="num">${Number(r.so_lan).toLocaleString('vi-VN')}</td>
-        <td class="num" style="font-weight:600;color:${r.phut_tb > 25 ? 'var(--danger)' : r.phut_tb > 15 ? 'var(--warn)' : 'var(--ok)'}">${r.phut_tb}</td>
-        <td class="num" style="color:var(--muted)">${r.phut_max}</td>
-      </tr>`).join('') || '<tr><td colspan="4" class="loading">Chưa có dữ liệu</td></tr>'}
+        <td class="num" style="font-weight:700; color:${r.phut_tb > 25 ? 'var(--nh-danger)' : r.phut_tb > 15 ? 'var(--nh-warn)' : 'var(--nh-ok)'}">${r.phut_tb}</td>
+        <td class="num" style="color:var(--nh-muted)">${r.phut_max}</td>
+      </tr>`).join('') || '<tr><td colspan="4" class="loading-state">Chưa có dữ liệu</td></tr>'}
     </tbody>`;
 }
 
+// ---------------------------------------------------------------------------
+// Bảng Tồn kho
+// ---------------------------------------------------------------------------
 async function veTonKho() {
   const r = await fetch('/analytics/api/ton-kho');
   const d = await r.json();
@@ -510,36 +1231,41 @@ async function veTonKho() {
   const uuTien = { sap_het: 0, canh_bao: 1, theo_doi: 2, du: 3 };
   d.sort((a, b) => uuTien[a.muc] - uuTien[b.muc]);
   document.getElementById('tTonKho').innerHTML = `
-    <thead><tr><th>Nguyên liệu</th><th class="num">Tồn</th>
+    <thead><tr><th>Nguyên liệu</th><th class="num">Tồn hiện tại</th>
     <th class="num">Dùng/ngày</th><th class="num">Còn (ngày)</th><th>Trạng thái</th></tr></thead>
     <tbody>${d.map(x => `
       <tr>
-        <td>${x.ten_nl}</td>
+        <td><b>${x.ten_nl}</b></td>
         <td class="num">${x.ton.toFixed(1)} ${x.ten_dvt || ''}</td>
-        <td class="num" style="color:var(--muted)">${x.tieu_hao_ngay.toFixed(2)}</td>
-        <td class="num" style="font-weight:600">${x.so_ngay_con === null ? '—' : x.so_ngay_con.toFixed(1)}</td>
-        <td><span class="tag ${x.muc}">${nhan[x.muc]}</span></td>
+        <td class="num" style="color:var(--nh-muted)">${x.tieu_hao_ngay.toFixed(2)}</td>
+        <td class="num" style="font-weight:700">${x.so_ngay_con === null ? '—' : x.so_ngay_con.toFixed(1)}</td>
+        <td><span class="nh-tag ${x.muc}">${nhan[x.muc]}</span></td>
       </tr>`).join('')}
     </tbody>`;
 }
 
+// ---------------------------------------------------------------------------
+// Bảng Lô hết hạn
+// ---------------------------------------------------------------------------
 async function veHetHan() {
   const r = await fetch('/analytics/api/lo-het-han?ngay=14');
   const d = await r.json();
   document.getElementById('tHetHan').innerHTML = `
-    <thead><tr><th>Nguyên liệu</th><th>Số lô</th><th class="num">SL</th>
-    <th>Hạn dùng</th><th class="num">Còn</th></tr></thead>
+    <thead><tr><th>Nguyên liệu</th><th>Số lô</th><th class="num">SL tồn</th>
+    <th>Hạn sử dụng</th><th class="num">Còn lại</th></tr></thead>
     <tbody>${d.map(x => `
       <tr>
-        <td>${x.ten_nl}</td>
-        <td style="color:var(--muted)">${x.so_lo || '—'}</td>
+        <td><b>${x.ten_nl}</b></td>
+        <td style="color:var(--nh-muted)">${x.so_lo || '—'}</td>
         <td class="num">${Number(x.so_luong).toFixed(1)}</td>
         <td>${String(x.han_su_dung).slice(0, 10)}</td>
-        <td class="num"><span class="tag ${x.con_lai < 0 ? 'sap_het' : x.con_lai < 5 ? 'canh_bao' : 'theo_doi'}">${x.con_lai < 0 ? 'Quá hạn' : x.con_lai + ' ngày'}</span></td>
-      </tr>`).join('') || '<tr><td colspan="5" class="loading">Không có lô nào sắp hết hạn</td></tr>'}
+        <td class="num"><span class="nh-tag ${x.con_lai < 0 ? 'sap_het' : x.con_lai < 5 ? 'canh_bao' : 'theo_doi'}">${x.con_lai < 0 ? 'Quá hạn' : x.con_lai + ' ngày'}</span></td>
+      </tr>`).join('') || '<tr><td colspan="5" class="loading-state">Không có lô hàng nào sắp hết hạn</td></tr>'}
     </tbody>`;
 }
 
+// ---------------------------------------------------------------------------
+// Tải lại toàn bộ Dashboard
 // ---------------------------------------------------------------------------
 async function taiLai() {
   const viec = [

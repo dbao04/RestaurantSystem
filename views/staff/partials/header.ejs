@@ -4,53 +4,382 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nhân viên - Nhà Hàng Bảo Đoàn</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/admin/quantri.css">
   <style>
-    body { font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8f9fc; }
-    .sidebar { background: linear-gradient(180deg,#4e342e 0%,#2c1810 100%) !important; min-height:100vh; }
-    .sidebar .nav-item .nav-link { color: rgba(255,255,255,.8); }
-    .sidebar .nav-item.active .nav-link, .sidebar .nav-item .nav-link:hover { color:#fff; }
-    /* sb-admin-2 in hoa ten thuong hieu o sidebar; tat di de hien dung hoa/thuong nhu thiet ke */
-    .sidebar-brand { color:#fff !important; font-weight:800; text-transform: none !important; }
-    .badge-unread { background:#e74a3b; color:#fff; border-radius:50%; padding:2px 6px; font-size:11px; }
-    .staff-avatar { width:40px; height:40px; border-radius:50%; background:#c8a951; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:18px; }
-    .card { border:none; box-shadow:0 .15rem 1.75rem 0 rgba(58,59,69,.15); }
+    /* Đồng bộ tuyệt đối Staff Sidebar với Admin Sidebar */
+    .sidebar,
+    .sidebar.toggled,
+    #accordionSidebar {
+      background: linear-gradient(180deg, #241a14 0%, #1c130e 100%) !important;
+      min-height: 100vh;
+      width: 262px !important;
+      min-width: 262px !important;
+      max-width: 262px !important;
+      flex: 0 0 262px !important;
+      box-sizing: border-box !important;
+      border-right: 1px solid rgba(200, 162, 75, .16) !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #wrapper {
+      display: flex;
+      width: 100%;
+      align-items: stretch;
+    }
+    #content-wrapper {
+      flex: 1 1 auto;
+      width: calc(100% - 262px);
+      min-width: 0;
+      background: var(--qt-cream) !important;
+      min-height: 100vh;
+    }
+    @media (min-width: 768px) {
+      .sidebar {
+        width: 262px !important;
+        min-width: 262px !important;
+        max-width: 262px !important;
+        flex: 0 0 262px !important;
+      }
+    }
+    .qt-side__scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem .75rem 2rem !important;
+    }
+    .sidebar .qt-side__group {
+      margin-bottom: 1.35rem !important;
+      list-style: none !important;
+      padding: 0 !important;
+    }
+    .sidebar .qt-side__label {
+      font-size: .64rem !important;
+      letter-spacing: 1.8px !important;
+      text-transform: uppercase !important;
+      color: rgba(233, 224, 211, .45) !important;
+      padding: 0 .85rem !important;
+      margin-bottom: .5rem !important;
+      font-family: var(--qt-sans) !important;
+      font-weight: 700 !important;
+    }
+    .sidebar .qt-nav__item {
+      display: flex !important;
+      align-items: center !important;
+      gap: .75rem !important;
+      padding: .6rem .85rem !important;
+      border-radius: 10px !important;
+      color: #d8cdbe !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      text-decoration: none !important;
+      transition: background .2s cubic-bezier(.22, .61, .36, 1), color .2s cubic-bezier(.22, .61, .36, 1) !important;
+      position: relative !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .sidebar .qt-nav__item i {
+      width: 18px !important;
+      text-align: center !important;
+      font-size: .95rem !important;
+      color: rgba(200, 162, 75, .7) !important;
+      transition: color .2s !important;
+      flex: none !important;
+    }
+    .sidebar .qt-nav__item span {
+      font-family: var(--qt-sans) !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      color: inherit !important;
+      display: inline !important;
+    }
+    .sidebar .qt-nav__item:hover {
+      background: rgba(255, 255, 255, .06) !important;
+      color: #fff !important;
+    }
+    .sidebar .qt-nav__item:hover i {
+      color: #c8a24b !important;
+    }
+    .sidebar .qt-nav__item.active,
+    .sidebar .qt-nav__item.is-active {
+      background: linear-gradient(90deg, rgba(200, 162, 75, .22), rgba(200, 162, 75, .04)) !important;
+      color: #fff !important;
+      font-weight: 600 !important;
+    }
+    .sidebar .qt-nav__item.active span,
+    .sidebar .qt-nav__item.is-active span {
+      font-weight: 600 !important;
+      color: #fff !important;
+    }
+    .sidebar .qt-nav__item.active i,
+    .sidebar .qt-nav__item.is-active i {
+      color: #c8a24b !important;
+    }
+    .sidebar .qt-nav__item.active::before,
+    .sidebar .qt-nav__item.is-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20%;
+      bottom: 20%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: #c8a24b !important;
+    }
+    .sidebar-divider { display: none !important; }
+    .sidebar .sidebar-heading {
+      font-family: var(--qt-sans) !important;
+      font-size: .64rem !important;
+      letter-spacing: 1.8px !important;
+      text-transform: uppercase !important;
+      color: rgba(233, 224, 211, .45) !important;
+      padding: 0 .85rem !important;
+      margin-top: 1.35rem !important;
+      margin-bottom: .5rem !important;
+      font-weight: 700 !important;
+      line-height: 1.4 !important;
+    }
+    .sidebar .nav-item {
+      margin: 0 !important;
+      padding: 0 .75rem !important;
+      width: 100% !important;
+      list-style: none !important;
+    }
+    .sidebar .nav-item .nav-link { 
+      color: #d8cdbe !important; 
+      font-family: var(--qt-sans) !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      padding: .6rem .85rem !important;
+      border-radius: 10px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: .75rem !important;
+      width: 100% !important;
+      transition: background .2s cubic-bezier(.22, .61, .36, 1), color .2s cubic-bezier(.22, .61, .36, 1) !important;
+    }
+    .sidebar .nav-item .nav-link span {
+      font-family: var(--qt-sans) !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      color: inherit !important;
+      display: inline !important;
+      line-height: 1.5 !important;
+    }
+    .sidebar .nav-item .nav-link i {
+      width: 18px !important;
+      text-align: center !important;
+      font-size: .95rem !important;
+      color: rgba(200, 162, 75, .7) !important;
+      transition: color .2s !important;
+      margin-right: 0 !important;
+      flex: none !important;
+    }
+    .sidebar .nav-item .nav-link:hover { 
+      background: rgba(255, 255, 255, .06) !important; 
+      color: #ffffff !important; 
+    }
+    .sidebar .nav-item .nav-link:hover i {
+      color: #c8a24b !important;
+    }
+    .sidebar .nav-item.active .nav-link { 
+      background: linear-gradient(90deg, rgba(200, 162, 75, .22), rgba(200, 162, 75, .04)) !important; 
+      color: #ffffff !important; 
+      font-weight: 600 !important;
+      position: relative !important;
+    }
+    .sidebar .nav-item.active .nav-link span {
+      font-weight: 600 !important;
+      color: #ffffff !important;
+    }
+    .sidebar .nav-item.active .nav-link i {
+      color: #c8a24b !important;
+    }
+    .sidebar .nav-item.active .nav-link::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: #c8a24b !important;
+    }
+    .sidebar-divider {
+      display: none !important;
+    }
+    .badge-unread { background:#b3352c; color:#fff; border-radius:50%; padding:2px 6px; font-size:11px; }
+    .staff-avatar { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, #c8a24b, #a8822f); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:16px; box-shadow: 0 4px 10px rgba(200, 162, 75, .3); }
+    .card { border:1px solid #e7ded0; border-radius: 14px; box-shadow: 0 6px 18px -12px rgba(36, 26, 20, .45); }
 
-    /* Man che ngan keo. Khai bao NGOAI diem ngat de tren may tinh no cung la
-       display:none tuong minh - JS them the nay vao moi trang, de mac dinh thi
-       no la mot <div> tro khong kieu nam lo lung cuoi <body>. */
+    /* Đồng bộ giao diện tổng thể theo Admin Theme */
+    #content-wrapper {
+      background: var(--qt-cream) !important;
+      min-height: 100vh;
+    }
+    #content {
+      background: var(--qt-cream) !important;
+    }
+    .container-fluid {
+      padding: 1.75rem !important;
+      max-width: 1560px;
+    }
+    h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+      font-family: var(--qt-serif) !important;
+      font-weight: 700 !important;
+      color: #241d18 !important;
+    }
+
+    /* Topbar styling chuẩn Admin */
+    .topbar {
+      height: 68px !important;
+      background: rgba(247, 243, 236, .88) !important;
+      backdrop-filter: blur(10px) !important;
+      border-bottom: 1px solid #e7ded0 !important;
+      padding: 0 1.75rem !important;
+    }
+    .topbar .navbar-nav {
+      gap: .6rem;
+    }
+
+    /* Khối thẻ card chuẩn Admin */
+    .card {
+      background: #ffffff !important;
+      border: 1px solid #e7ded0 !important;
+      border-radius: 14px !important;
+      box-shadow: 0 18px 40px -24px rgba(36, 26, 20, .5) !important;
+      overflow: hidden;
+      margin-bottom: 1.5rem !important;
+    }
+    .card-header {
+      background: linear-gradient(180deg, #fffdf9, #fbf7f0) !important;
+      border-bottom: 1px solid #f0e9dd !important;
+      padding: 1.1rem 1.4rem !important;
+    }
+    .card-header h6, .card-header .h6 {
+      font-family: var(--qt-serif) !important;
+      font-size: 1.12rem !important;
+      font-weight: 700 !important;
+      color: #241d18 !important;
+      margin: 0 !important;
+    }
+    .card-body {
+      padding: 1.4rem !important;
+    }
+
+    /* Form inputs & buttons chuẩn Admin */
+    .form-control {
+      height: auto !important;
+      min-height: 40px;
+      border: 1px solid #e7ded0 !important;
+      border-radius: 9px !important;
+      padding: .5rem .85rem !important;
+      font-size: .88rem !important;
+      line-height: 1.5 !important;
+      color: #241d18 !important;
+      background-color: #ffffff !important;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-control-sm {
+      min-height: 36px !important;
+      padding: .35rem .75rem !important;
+      font-size: .84rem !important;
+      border-radius: 8px !important;
+    }
+    select.form-control,
+    select.form-control-sm {
+      height: auto !important;
+      padding-top: .4rem !important;
+      padding-bottom: .4rem !important;
+      line-height: 1.5 !important;
+    }
+    .form-control:focus {
+      border-color: #c8a24b !important;
+      box-shadow: 0 0 0 3px rgba(200, 162, 75, .18) !important;
+    }
+    .btn-primary {
+      background: #241a14 !important;
+      border-color: #241a14 !important;
+      color: #c8a24b !important;
+      border-radius: 9px !important;
+      font-weight: 600 !important;
+      padding: .55rem 1.25rem !important;
+      transition: all .2s !important;
+    }
+    .btn-primary:hover {
+      background: #3d2b21 !important;
+      border-color: #3d2b21 !important;
+      color: #e0c684 !important;
+      box-shadow: 0 6px 16px -6px rgba(36, 26, 20, .6) !important;
+    }
+    .btn-warning {
+      background: #c8a24b !important;
+      border-color: #c8a24b !important;
+      color: #241a14 !important;
+      border-radius: 9px !important;
+      font-weight: 700 !important;
+    }
+    .btn-warning:hover {
+      background: #a8822f !important;
+      border-color: #a8822f !important;
+      color: #fff !important;
+    }
+    .btn-success {
+      background: #2e7d4f !important;
+      border-color: #2e7d4f !important;
+      border-radius: 9px !important;
+    }
+    .btn-danger {
+      background: #b3352c !important;
+      border-color: #b3352c !important;
+      border-radius: 9px !important;
+    }
+    .btn-outline-primary {
+      color: #241a14 !important;
+      border-color: #e7ded0 !important;
+      background: #fff !important;
+      border-radius: 9px !important;
+      font-weight: 500 !important;
+    }
+    .btn-outline-primary:hover {
+      background: #fbf7f0 !important;
+      border-color: #c8a24b !important;
+      color: #a8822f !important;
+    }
+
+    /* Profile Chip ở Topbar */
+    .qt-chip {
+      display: inline-flex; align-items: center; gap: .6rem;
+      padding: .4rem .85rem .4rem .4rem;
+      background: #fff;
+      border: 1px solid #e7ded0;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px -12px rgba(36, 26, 20, .45);
+    }
+    .qt-chip__ava {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, #3d2b21, #241a14);
+      color: #c8a24b;
+      font-weight: 600; font-size: .8rem;
+    }
+    .qt-chip__name { font-weight: 600; font-size: .82rem; color: #241d18; }
+    .qt-chip__sub { font-size: .68rem; color: #6b5f54; }
+
+    .qt-icon-btn {
+      width: 38px; height: 38px;
+      display: grid; place-items: center;
+      border: 1px solid #e7ded0;
+      border-radius: 10px;
+      background: #fff;
+      color: #6b5f54;
+      transition: all .2s;
+    }
+    .qt-icon-btn:hover { color: #b3352c; border-color: rgba(179, 53, 44, .35); }
+
     .sb-che { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1040; display: none; }
 
-    /* ===================================================================
-       DIEN THOAI - thanh ben thanh ngan keo truot
-       ===================================================================
-
-       Do tren Chrome kho 390x844 (iPhone 14), trang /staff:
-
-         thanh ben   104px  (6.5rem - dai bieu tuong hep cua sb-admin-2)
-         noi dung    286px  (73% man hinh, phan con lai)
-         .nav-link span  hien, rong 72px trong dai 104px
-         .sidebar-brand  104x70px chua chu 20px "Nha Hang Bao Doan"
-
-       sb-admin-2 co hai trang thai: mo rong (14rem, co chu) va thu gon
-       (6.5rem, CHI bieu tuong - lop .toggled an the <span> di). Duoi 768px no
-       ep be ngang xuong 6.5rem NHUNG khong tu them .toggled, nen chu van hien
-       trong dai rong 104px: nhan menu xuong 2-3 dong, con ten nha hang xuong 3
-       dong tran khoi o cao 70px va DE LEN muc "Tong quan" ngay duoi.
-
-       JS cua sb-admin-2 chi them .toggled trong su kien `resize`, khong chay
-       luc nap trang - nen mo tren dien thoai la dinh ngay trang thai hong nay.
-
-       Chon ngan keo truot chu khong phai dai bieu tuong: tren 390px thi 104px
-       la hon mot phan tu man hinh, ma man hinh nhan vien toan bang bieu va
-       danh sach - can tung pixel be ngang. Ngan keo tra lai het 390px cho noi
-       dung, va nut ba gach (#sidebarToggleTop) thi da co san.
-       =================================================================== */
     @media (max-width: 767.98px) {
-      /* Ghi de ca .toggled: duoi day ngan keo chi co dong/mo, khong con khai
-         niem "thu gon" cua sb-admin-2 nua. */
       .sidebar, .sidebar.toggled {
         position: fixed; top: 0; left: 0; bottom: 0; z-index: 1045;
         width: 15rem !important; min-height: 100vh;
@@ -58,25 +387,18 @@
         overflow-y: auto; -webkit-overflow-scrolling: touch;
       }
       body.sb-mo .sidebar, body.sb-mo .sidebar.toggled { transform: none; }
-
-      /* Tra lai nhan chu - .toggled cua sb-admin-2 an chung di */
       .sidebar .nav-item .nav-link span,
-      .sidebar.toggled .nav-item .nav-link span { display: inline !important; font-size: 15px; }
+      .sidebar.toggled .nav-item .nav-link span { display: inline !important; font-size: 14px; }
       .sidebar .nav-item .nav-link,
       .sidebar.toggled .nav-item .nav-link {
         display: flex; align-items: center; gap: .7rem;
-        padding: .8rem 1.1rem; min-height: 48px; text-align: left; width: 100%;
+        padding: .7rem 1rem !important; min-height: 44px; text-align: left; width: 100%;
       }
       .sidebar .nav-item .nav-link i { width: 20px; text-align: center; }
       .sidebar .sidebar-heading, .sidebar.toggled .sidebar-heading {
         display: block !important; text-align: left !important; }
       .sidebar-brand { height: auto !important; padding: 1rem !important; }
-      .sidebar-brand span { font-size: 17px !important; }
-
       #content-wrapper { width: 100%; margin-left: 0 !important; }
-
-      /* Man che: bam ra ngoai la dong ngan keo - cu chi quen thuoc, va no cung
-         ngan viec bam nham vao noi dung dang bi ngan keo phu len. */
       body.sb-mo .sb-che { display: block; }
       body.sb-mo { overflow: hidden; }
     }
@@ -100,262 +422,124 @@
 
 <div id="wrapper">
   <!-- Sidebar -->
-  <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
-    <a class="sidebar-brand d-flex align-items-center justify-content-center py-3" href="/staff">
-      <%- include('../../partials/logo-bd', { cao: 26, mau: '#c8a951' }) %>
-      <span style="font-size:20px; margin-left:8px;">Nhà Hàng Bảo Đoàn</span>
-    </a>
-    <hr class="sidebar-divider my-0">
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff"><i class="fas fa-fw fa-tachometer-alt"></i><span>Tổng quan</span></a>
-    </li>
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Nghiệp vụ</div>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/bookings"><i class="fas fa-fw fa-book"></i><span>Quản lý Đặt bàn</span></a>
-    </li>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='reservations' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/dat-ban"><i class="fas fa-fw fa-calendar-check"></i><span>Trung tâm đặt bàn</span></a>
-    </li>
-<%
-     /* Dung `dongVaiDuoc` chu khong so sanh `session.staffRole`: staffRole la
-        chucvu_legacy, ma "Quan ly nha hang" mang legacy 'Quan ly' nen se bi
-        an mat menu Thu ngan du ho vao duoc trang. */
-  %>
-    <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Thu ngan', 'Quay', 'Ke toan', 'Phuc vu'])) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='thanh-toan' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/thanh-toan">
-          <i class="fas fa-fw fa-cash-register"></i><span>Thu ngân</span>
-        </a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chot-ca' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/chot-ca">
-          <i class="fas fa-fw fa-calculator"></i><span>Chốt ca thu ngân</span>
-        </a>
-      </li>
-    <% } %>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/kitchen">
-        <i class="fas fa-fw fa-utensils"></i>
-        <span><%= session.staffRole === 'Phuc vu' ? 'Món đã xong' : 'Quản lý Đơn bàn' %></span>
-      </a>
-    </li>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>">
-      <a class="nav-link" href="/kds"><i class="fas fa-fw fa-fire"></i><span>Màn hình bếp (KDS)</span></a>
-    </li>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>">
-      <a class="nav-link" href="/so-do-ban"><i class="fas fa-fw fa-th"></i><span>Sơ đồ bàn</span></a>
-    </li>
-    <%
-      /* Dieu phoi giao hang: chan bang dung QUYEN ma route dang doi
-         (`giao_hang.xem` trong routes/vanChuyen.js). Menu rong hon route thi
-         nguoi dung thay muc roi bam vao nhan 403; hep hon thi ho khong bao gio
-         tim thay chuc nang minh duoc phep dung. */
-    %>
-    <% if (typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/giao-hang">
-          <i class="fas fa-fw fa-motorcycle"></i><span>Điều phối giao hàng</span>
-        </a>
-      </li>
-    <% } %>
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Tổ chức</div>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='to-chuc' ? 'active' : '' %>">
-      <a class="nav-link" href="/to-chuc"><i class="fas fa-fw fa-sitemap"></i><span>Sơ đồ tổ chức</span></a>
-    </li>
-    <% if (typeof coQuyen === 'function' && coQuyen('dieu_hanh.bang_dieu_khien')) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='dieu-hanh' ? 'active' : '' %>">
-        <a class="nav-link" href="/dieu-hanh">
-          <i class="fas fa-fw fa-satellite-dish"></i><span>Bảng điều hành</span>
-          <span class="badge badge-danger badge-unread ml-1 d-none" id="sl-viec-cho">0</span>
-        </a>
-      </li>
-    <% } %>
-    <%
-      /* Quản lý chấm công: chỉ cấp 1 (Quản lý nhà hàng).
-         Điều kiện phải trùng khớp với canCapBac(1) ở routes/chamCong.js —
-         nếu ở đây rộng hơn route thì người dùng thấy mục menu rồi bấm vào
-         nhận 403, tệ hơn là không thấy gì. */
-    %>
-    <% if (typeof tuCapBac === 'function' && tuCapBac(1)) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='cham-cong-quan-ly' ? 'active' : '' %>">
-        <a class="nav-link" href="/to-chuc/cham-cong">
-          <i class="fas fa-fw fa-user-clock"></i><span>Quản lý chấm công</span>
-        </a>
-      </li>
-    <% } %>
-    <% if (typeof coQuyen === 'function' && coQuyen(['to_chuc.chuc_danh','to_chuc.bo_nhiem','to_chuc.phan_quyen'])) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='to-chuc-quan-ly' ? 'active' : '' %>">
-        <a class="nav-link" href="/to-chuc/quan-ly"><i class="fas fa-fw fa-user-cog"></i><span>Quản lý tổ chức</span></a>
-      </li>
-    <% } %>
+  <aside class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="padding:0; box-shadow:none; position:relative !important;">
+    <div class="qt-side__brand">
+      <span class="qt-side__mark">
+        <img src="/logo.svg" alt="Logo" width="32" height="32" style="filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(10deg);">
+      </span>
+      <span>
+        <span class="qt-side__name">Nhà Hàng Bảo Đoàn</span>
+        <span class="qt-side__role">Khu vực nhân sự</span>
+      </span>
+    </div>
 
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Phân tích &amp; AI</div>
-    <li class="nav-item">
-      <a class="nav-link" href="/analytics"><i class="fas fa-fw fa-chart-bar"></i><span>Dashboard phân tích</span></a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="/du-bao"><i class="fas fa-fw fa-brain"></i><span>Dự báo AI</span></a>
-    </li>
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Làm việc</div>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='schedule' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/schedule"><i class="fas fa-fw fa-calendar-alt"></i><span>Lịch làm việc</span></a>
-    </li>
-    <%
-      /* MỘT mục cho chấm công, không phải hai.
+    <nav class="qt-side__scroll" id="qtNav" style="width:100%;">
+      <div class="qt-side__group">
+        <div class="qt-side__label">Chung</div>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>" href="/staff" data-match="/staff"><i class="fas fa-gauge-high"></i><span>Tổng quan</span></a>
+      </div>
 
-         Trước đây ở đây có thêm mục "Khuôn mặt của tôi" trỏ tới /staff/khuon-mat.
-         Hai mục cạnh nhau nhưng cùng dẫn tới một việc — cả hai trang đều có máy
-         tự chấm công 1:1 — nên nhân viên phải đoán. Nay đăng ký khuôn mặt nằm
-         ngay trong trang chấm công, và /staff/khuon-mat chuyển hướng về đó. */
-    %>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && (activePage==='attendance' || activePage==='khuon-mat') ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/attendance"><i class="fas fa-fw fa-clock"></i><span>Chấm công (khuôn mặt)</span></a>
-    </li>
-    <% if (typeof coQuyen === 'function' && coQuyen(['nhansu.cham_cong.sua','nhansu.cham_cong.xem'])) { %>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='khuon-mat-quan-ly' ? 'active' : '' %>">
-        <a class="nav-link" href="/to-chuc/khuon-mat"><i class="fas fa-fw fa-users-cog"></i><span>QL chấm công khuôn mặt</span></a>
-      </li>
-    <% } %>
-
-    <% if (['Ke toan', 'Quay', 'Thu ngan'].includes(session.staffRole)) { %>
-      <hr class="sidebar-divider">
-      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Quản trị Tài chính & Khách hàng</div>
-      
-      <% if (session.staffRole === 'Ke toan') { %>
-        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>">
-          <a class="nav-link" href="/staff/accountant/salary"><i class="fas fa-fw fa-money-check-alt"></i><span>Quản lý Lương</span></a>
-        </li>
-        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>">
-          <a class="nav-link" href="/staff/accountant/reports"><i class="fas fa-fw fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
-        </li>
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Bep', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Khu vực Bếp</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>" href="/kds" data-match="/kds"><i class="fas fa-fire-burner"></i><span>Màn hình Bếp (KDS)</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>" href="/staff/kitchen/recipes" data-match="/staff/kitchen/recipes"><i class="fas fa-scroll"></i><span>Công thức món ăn</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='inventory' ? 'active' : '' %>" href="/staff/kitchen/inventory" data-match="/staff/kitchen/inventory"><i class="fas fa-boxes-stacked"></i><span>Tồn kho nguyên liệu</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kitchen-shift' ? 'active' : '' %>" href="/staff/kitchen/shift" data-match="/staff/kitchen/shift"><i class="fas fa-stopwatch"></i><span>Chốt ca Bếp</span></a>
+        </div>
       <% } %>
 
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='customers' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/customers"><i class="fas fa-fw fa-users"></i><span>Khách hàng</span></a>
-      </li>
-
-      <% if (session.staffRole === 'Ke toan') { %>
-        <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='staff-manage' ? 'active' : '' %>">
-          <a class="nav-link" href="/staff/accountant/staff"><i class="fas fa-fw fa-users-cog"></i><span>Danh sách Nhân viên</span></a>
-        </li>
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Phuc vu', 'letan', 'Quay', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Phục vụ &amp; Sảnh</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn &amp; Gọi món</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reservations' ? 'active' : '' %>" href="/staff/dat-ban" data-match="/staff/dat-ban"><i class="fas fa-calendar-check"></i><span>Quản lý Đặt bàn</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds') ? 'active' : '' %>" href="/kds" data-match="/kds,/staff/kitchen"><i class="fas fa-bell-concierge"></i><span>Theo dõi món ra (KDS)</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>" href="/staff/qr-codes" data-match="/staff/qr-codes"><i class="fas fa-qrcode"></i><span>Mã QR bàn</span></a>
+        </div>
       <% } %>
 
-      <hr class="sidebar-divider">
-      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp</div>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/chat"><i class="fas fa-fw fa-comments"></i><span>Chat khách hàng</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='emails' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/emails"><i class="fas fa-fw fa-envelope"></i><span>Gửi Email</span></a>
-      </li>
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Thu ngan', 'Ke toan', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Thu ngân &amp; Kế toán</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='thanh-toan' ? 'active' : '' %>" href="/staff/thanh-toan" data-match="/staff/thanh-toan"><i class="fas fa-cash-register"></i><span>Thu ngân POS</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='chot-ca' ? 'active' : '' %>" href="/staff/chot-ca" data-match="/staff/chot-ca"><i class="fas fa-vault"></i><span>Chốt ca thu ngân</span></a>
+          <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Ke toan', 'Quan ly'])) { %>
+            <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>" href="/staff/accountant/salary" data-match="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i><span>Bảng lương</span></a>
+            <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
+          <% } %>
+        </div>
+      <% } %>
 
-    <% } else if (session.staffRole === 'Bep') { %>
-      <hr class="sidebar-divider">
-      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Quản lý kho & Sản xuất</div>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='inventory' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/kitchen/inventory"><i class="fas fa-fw fa-boxes"></i><span>Nguyên liệu & Kho</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/kitchen/recipes"><i class="fas fa-fw fa-scroll"></i><span>Công thức nấu ăn</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen-menu' ? 'active' : '' %>">
-          <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseMenu" aria-expanded="true" aria-controls="collapseMenu">
-              <i class="fas fa-fw fa-list"></i><span>Thực đơn & Combo</span>
-          </a>
-          <div id="collapseMenu" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-              <div class="bg-white py-2 collapse-inner rounded">
-                  <a class="collapse-item" href="/staff/kitchen/categories">Loại món</a>
-                  <a class="collapse-item" href="/staff/kitchen/dishes">Món ăn</a>
-                  <a class="collapse-item" href="/staff/kitchen/combos">Combo</a>
-              </div>
-          </div>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='equipment' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/kitchen/equipment"><i class="fas fa-fw fa-tools"></i><span>Trang thiết bị</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='kitchen-shift' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/kitchen/shift"><i class="fas fa-fw fa-stopwatch"></i><span>Chốt ca Bếp</span></a>
-      </li>
+      <% if (typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Giao hàng</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>" href="/staff/giao-hang" data-match="/staff/giao-hang"><i class="fas fa-truck-fast"></i><span>Điều phối giao hàng</span></a>
+          <a class="qt-nav__item" href="/staff/giao-hang/ban-do" data-match="/staff/giao-hang/ban-do"><i class="fas fa-map-location-dot"></i><span>Bản đồ Shipper</span></a>
+        </div>
+      <% } %>
 
-    <% } else if (session.staffRole === 'Phuc vu') { %>
-      <hr class="sidebar-divider">
-      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp & Dịch vụ</div>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/qr-codes"><i class="fas fa-fw fa-qrcode"></i><span>Mã QR Đặt Món</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/chat"><i class="fas fa-fw fa-comments"></i><span>Chat khách hàng</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='emails' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/emails"><i class="fas fa-fw fa-envelope"></i><span>Gửi Email</span></a>
-      </li>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='notifications' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/notifications"><i class="fas fa-fw fa-bell"></i><span>Thông báo</span></a>
-      </li>
+      <% if (typeof tuCapBac === 'function' && tuCapBac(2)) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Điều hành &amp; Quản lý</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dieu-hanh' ? 'active' : '' %>" href="/staff/dieu-hanh" data-match="/staff/dieu-hanh,/dieu-hanh"><i class="fas fa-satellite-dish"></i><span>Bảng điều hành</span></a>
+          <a class="qt-nav__item" href="/staff/analytics" data-match="/staff/analytics,/analytics"><i class="fas fa-chart-pie"></i><span>Dashboard Phân tích</span></a>
+          <a class="qt-nav__item" href="/staff/du-bao" data-match="/staff/du-bao,/du-bao"><i class="fas fa-wand-magic-sparkles"></i><span>Dự báo AI</span></a>
+          <a class="qt-nav__item" href="/staff/xep-ca" data-match="/staff/xep-ca,/admin/xep-ca"><i class="fas fa-calendar-check"></i><span>Xếp ca tự động</span></a>
+          <a class="qt-nav__item" href="/staff/schedule/approval" data-match="/staff/schedule/approval,/admin/schedule"><i class="fas fa-calendar-days"></i><span>Duyệt lịch làm việc</span></a>
+          <a class="qt-nav__item" href="/staff/khuyen-mai" data-match="/staff/khuyen-mai,/admin/khuyen-mai"><i class="fas fa-ticket"></i><span>Chương trình Khuyến mãi</span></a>
+          <a class="qt-nav__item" href="/staff/thanh-vien" data-match="/staff/thanh-vien,/admin/thanh-vien"><i class="fas fa-medal"></i><span>Khách hàng &amp; Hạng</span></a>
+          <a class="qt-nav__item" href="/staff/to-chuc" data-match="/staff/to-chuc,/to-chuc"><i class="fas fa-sitemap"></i><span>Sơ đồ tổ chức</span></a>
+          <a class="qt-nav__item" href="/staff/to-chuc/cham-cong" data-match="/staff/to-chuc/cham-cong,/to-chuc/cham-cong"><i class="fas fa-user-clock"></i><span>Quản lý chấm công</span></a>
+        </div>
+      <% } %>
 
-    <% } else { %>
-      <hr class="sidebar-divider">
-      <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Giao tiếp</div>
-      <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='notifications' ? 'active' : '' %>">
-        <a class="nav-link" href="/staff/notifications"><i class="fas fa-fw fa-bell"></i><span>Thông báo</span></a>
-      </li>
-    <% } %>
-
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading text-uppercase px-3 mb-1" style="color:rgba(255,255,255,.4); font-size:11px;">Tài khoản</div>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='leave' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/leave"><i class="fas fa-fw fa-calendar-minus"></i><span>Xin nghỉ phép</span></a>
-    </li>
-    <li class="nav-item <%= typeof activePage !== 'undefined' && activePage==='profile' ? 'active' : '' %>">
-      <a class="nav-link" href="/staff/profile"><i class="fas fa-fw fa-user"></i><span>Thông tin cá nhân</span></a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="/staff/logout"><i class="fas fa-fw fa-sign-out-alt"></i><span>Đăng xuất</span></a>
-    </li>
-    <hr class="sidebar-divider d-none d-md-block">
-  </ul>
+      <div class="qt-side__group">
+        <div class="qt-side__label">Cá nhân</div>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='schedule' ? 'active' : '' %>" href="/staff/schedule" data-match="/staff/schedule"><i class="fas fa-calendar-day"></i><span>Lịch làm việc của tôi</span></a>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='attendance' || activePage==='khuon-mat') ? 'active' : '' %>" href="/staff/attendance" data-match="/staff/attendance"><i class="fas fa-camera"></i><span>Chấm công khuôn mặt</span></a>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='leave' ? 'active' : '' %>" href="/staff/leave" data-match="/staff/leave"><i class="fas fa-plane-departure"></i><span>Xin nghỉ phép</span></a>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='profile' ? 'active' : '' %>" href="/staff/profile" data-match="/staff/profile"><i class="fas fa-user"></i><span>Hồ sơ cá nhân</span></a>
+        <a class="qt-nav__item" href="/staff/logout"><i class="fas fa-right-from-bracket"></i><span>Đăng xuất</span></a>
+      </div>
+    </nav>
+  </aside>
   <!-- End Sidebar -->
 
   <!-- Content Wrapper -->
   <div id="content-wrapper" class="d-flex flex-column">
     <div id="content">
       <!-- Topbar -->
-      <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+      <nav class="navbar navbar-expand topbar mb-4 static-top">
+        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" style="color:#241d18;">
           <i class="fa fa-bars"></i>
         </button>
-        <ul class="navbar-nav ml-auto align-items-center">
-          <li class="nav-item mr-3 d-none d-md-block">
+        <div class="d-none d-sm-block">
+          <span style="font-family:var(--qt-sans); font-size:.75rem; letter-spacing:1.4px; text-transform:uppercase; color:#6b5f54;">
+            <%= (locals.hoSo && locals.hoSo.ten_cd) ? locals.hoSo.ten_cd : 'Khu vực nhân sự' %>
+          </span>
+        </div>
+        <div class="ml-auto d-flex align-items-center" style="gap:.8rem;">
+          <div class="mr-2 d-none d-md-block">
             <span id="rt-den" title="Kết nối thời gian thực"
-                  style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b7b9cc"></span>
-            <span class="small text-gray-500 ml-1">thời gian thực</span>
-          </li>
-          <li class="nav-item d-flex align-items-center">
-            <div class="staff-avatar mr-2"
-                 style="<%= locals.hoSo && locals.hoSo.mau_bp ? 'background:' + locals.hoSo.mau_bp : '' %>">
-              <%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %>
-            </div>
-            <div class="d-none d-lg-block mr-2" style="line-height:1.25">
-              <div class="text-gray-700 small font-weight-bold">
-                <%= typeof staffName !== 'undefined' ? staffName : 'Nhân viên' %>
-              </div>
-              <div class="text-gray-500" style="font-size:11px">
+                  style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d4f"></span>
+            <span class="small" style="color:#6b5f54; font-size:12px;">thời gian thực</span>
+          </div>
+          <div class="qt-chip">
+            <span class="qt-chip__ava"><%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %></span>
+            <span class="qt-chip__meta">
+              <span class="qt-chip__name"><%= typeof staffName !== 'undefined' ? staffName : 'Nhân viên' %></span><br>
+              <span class="qt-chip__sub">
                 <% if (locals.hoSo && locals.hoSo.ten_cd) { %>
                   <%= locals.hoSo.ten_cd %><% if (locals.hoSo.ten_bp) { %> · <%= locals.hoSo.ten_bp %><% } %>
-                  <% if (locals.hoSo.uy_quyen && locals.hoSo.uy_quyen.length) { %>
-                    <i class="fas fa-user-shield text-warning" title="Đang giữ ủy quyền tạm thời"></i>
-                  <% } %>
                 <% } else { %>
-                  <span class="text-warning">chưa có chức danh</span>
+                  <%= session.staffRole || 'Nhân viên' %>
                 <% } %>
-              </div>
-            </div>
-          </li>
-        </ul>
+              </span>
+            </span>
+          </div>
+          <a class="qt-icon-btn" href="/staff/logout" title="Đăng xuất"><i class="fas fa-right-from-bracket"></i></a>
+        </div>
       </nav>
       <!-- End of Topbar -->
       <!--

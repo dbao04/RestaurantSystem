@@ -87,6 +87,7 @@ module.exports = function napNgonNgu() {
     res.locals.t = (khoa, bien) => ngonNgu.t(khoa, nn, bien);
     res.locals.tenMon = (mon) => ngonNgu.tenMon(mon, nn);
     res.locals.tenNhom = (loai) => ngonNgu.tenNhom(loai, nn);
+    res.locals.tenNguyenLieu = (ten) => ngonNgu.tenNguyenLieu(ten, nn);
     res.locals.nhanDip = (gt) => ngonNgu.nhanDip(gt, nn);
     res.locals.nhanSoKhach = (so) => ngonNgu.nhanSoKhach(so, nn);
 

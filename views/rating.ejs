@@ -1,77 +1,97 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: t('danh_gia.tieu_de') }) %>
 
-<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread"><%= t('danh_gia.tieu_de') %></h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span><%= t('danh_gia.tieu_de_ngan') %> <i class="ion-ios-arrow-forward"></i></span></p>
-      </div>
+<section class="nh-subhero" style="min-height: 32vh;">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('danh_gia.tieu_de_ngan') %></span>
+    <h1><%= t('danh_gia.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('danh_gia.tieu_de_ngan') %>
     </div>
   </div>
 </section>
 
-<section class="ftco-section">
-  <div class="container">
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
     <% if (msg) { %>
-      <div class="alert alert-<%= msgType || 'success' %> text-center"><%= msg %></div>
+      <div class="nh-panel nh-reveal" style="border-left: 4px solid <%= (typeof msgType !== 'undefined' && msgType === 'danger') ? '#c0392b' : 'var(--nh-gold)' %>; margin-bottom: 2rem;">
+        <div style="display: flex; gap: .9rem; align-items: center;">
+          <i class="fas <%= (typeof msgType !== 'undefined' && msgType === 'danger') ? 'fa-circle-exclamation' : 'fa-circle-check' %>"
+             style="color: <%= (typeof msgType !== 'undefined' && msgType === 'danger') ? '#c0392b' : 'var(--nh-gold)' %>; font-size: 1.3rem;"></i>
+          <span><%= msg %></span>
+        </div>
+      </div>
     <% } %>
+
     <div class="row justify-content-center">
       <!-- Form đánh giá -->
-      <div class="col-md-6 mb-4">
+      <div class="col-lg-6 mb-4">
         <% if (canRate) { %>
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="ion-ios-star mr-2"></i><%= t('danh_gia.gui_cua_ban') %></div>
-          <div class="card-body">
+        <div class="nh-card nh-reveal">
+          <div class="nh-card__head">
+            <i class="fas fa-star"></i>
+            <h3><%= t('danh_gia.gui_cua_ban') %></h3>
+          </div>
+          <div class="nh-card__body">
             <form action="/rating" method="POST">
-              <div class="form-group text-center">
-                <label class="d-block mb-2"><%= t('danh_gia.chat_luong') %></label>
+              <div class="nh-field text-center">
+                <label class="d-block mb-2" style="font-weight:600;"><%= t('danh_gia.chat_luong') %></label>
                 <div id="star-rating" class="mb-2">
-                  <% for(let i = 1; i <= 5; i++) { %>
+                  <% for(let i = 5; i >= 1; i--) { %>
                     <input type="radio" id="star<%= i %>" name="sao" value="<%= i %>" <%= i === 5 ? 'checked' : '' %> style="display:none;">
                     <label for="star<%= i %>" style="font-size:32px; color:#ddd; cursor:pointer;" class="star-label">&#9733;</label>
                   <% } %>
                 </div>
               </div>
-              <div class="form-group">
-                <label><%= t('danh_gia.nhan_xet') %></label>
+
+              <div class="nh-field">
+                <label><i class="fas fa-comment-dots mr-1 text-muted"></i> <%= t('danh_gia.nhan_xet') %></label>
                 <textarea class="form-control" name="noi_dung" rows="4" placeholder="<%= t('danh_gia.goi_y') %>"></textarea>
               </div>
-              <button type="submit" class="btn btn-primary btn-block"><%= t('danh_gia.gui') %></button>
+
+              <div style="margin-top: 1.5rem;">
+                <button type="submit" class="nh-btn nh-btn--gold" style="width: 100%; justify-content: center;">
+                  <i class="fas fa-paper-plane"></i> <%= t('danh_gia.gui') %>
+                </button>
+              </div>
             </form>
           </div>
         </div>
         <% } else { %>
-          <div class="alert alert-info text-center mt-3" style="padding: 2em; border-radius: 8px;">
-            <i class="ion-ios-information-circle-outline" style="font-size: 40px; color: #17a2b8; display: block; margin-bottom: 10px;"></i>
-            <h5><%= t('danh_gia.rat_tiec') %></h5>
-            <p class="mb-0">Bạn cần trải nghiệm cấu trúc dịch vụ của chúng tôi bằng cách hoàn thành ít nhất một đơn đặt bàn mới có thể gửi đánh giá dịch vụ.</p>
+          <div class="nh-card nh-reveal">
+            <div class="nh-card__body text-center" style="padding: 2.5rem 1.5rem;">
+              <i class="fas fa-circle-info" style="font-size: 40px; color: var(--nh-gold); display: block; margin-bottom: 12px;"></i>
+              <h4 style="margin-bottom: 8px;"><%= t('danh_gia.rat_tiec') %></h4>
+              <p class="text-muted mb-0">Bạn cần trải nghiệm cấu trúc dịch vụ của chúng tôi bằng cách hoàn thành ít nhất một đơn đặt bàn mới có thể gửi đánh giá dịch vụ.</p>
+            </div>
           </div>
         <% } %>
       </div>
 
       <!-- Danh sách đánh giá -->
-      <div class="col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="ion-ios-list mr-2"></i><%= t('danh_gia.gan_day') %></div>
-          <div class="card-body" style="max-height:400px; overflow-y:auto;">
+      <div class="col-lg-6">
+        <div class="nh-card nh-reveal">
+          <div class="nh-card__head">
+            <i class="fas fa-comments"></i>
+            <h3><%= t('danh_gia.gan_day') %></h3>
+          </div>
+          <div class="nh-card__body" style="max-height: 480px; overflow-y: auto;">
             <% if (ratings && ratings.length > 0) { %>
               <% ratings.forEach(r => { %>
-                <div class="media mb-3 pb-3 border-bottom">
-                  <div class="media-body">
-                    <h6 class="mb-1"><strong><%= r.ten %></strong>
-                      <span class="ml-2" style="color:#c8a951;">
-                        <% for(let i=1; i<=5; i++) { %><% if(i<=r.sao) { %>&#9733;<% } else { %>&#9734;<% } %><% } %>
-                      </span>
-                    </h6>
-                    <p class="mb-1 text-muted"><%- r.noi_dung ? r.noi_dung : '<em>' + t('danh_gia.khong_nhan_xet') + '</em>' %></p>
-                    <small class="text-muted"><%= new Date(r.thoigian).toLocaleDateString('vi-VN') %></small>
+                <div style="padding-bottom: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--nh-line);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong><%= r.ten %></strong>
+                    <span style="color: var(--nh-gold); font-size: 1.1rem; letter-spacing: 2px;">
+                      <% for(let i=1; i<=5; i++) { %><% if(i<=r.sao) { %>★<% } else { %>☆<% } %><% } %>
+                    </span>
                   </div>
+                  <p style="margin-bottom: 4px; color: var(--nh-ink);"><%- r.noi_dung ? r.noi_dung : '<em class="text-muted">' + t('danh_gia.khong_nhan_xet') + '</em>' %></p>
+                  <small class="text-muted"><%= new Date(r.thoigian).toLocaleDateString('vi-VN') %></small>
                 </div>
               <% }) %>
             <% } else { %>
-              <p class="text-center text-muted"><%= t('danh_gia.chua_co') %></p>
+              <p class="text-center text-muted my-4"><%= t('danh_gia.chua_co') %></p>
             <% } %>
           </div>
         </div>
@@ -81,11 +101,11 @@
 </section>
 
 <style>
-  #star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
-  #star-rating label { color: #ddd; }
+  #star-rating { display: flex; flex-direction: row-reverse; justify-content: center; gap: 4px; }
+  #star-rating label { color: #d0c8b8; transition: color 0.2s; }
   #star-rating input:checked ~ label,
   #star-rating label:hover,
-  #star-rating label:hover ~ label { color: #c8a951 !important; }
+  #star-rating label:hover ~ label { color: var(--nh-gold) !important; }
 </style>
 
 <%- include('partials/footer') %>

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chấm công khuôn mặt</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     /* Kich thuoc duoc dieu khien boi bien CSS thay vi viet cung, de khoi @media
        o cuoi tep chi phai doi vai con so thay vi chep lai ca bo quy tac. */
@@ -151,7 +151,7 @@
           <% } else if (!trangThai.co_mo_hinh) { %>
             Chưa có mô hình. Chạy <code>python -m ml_service.tai_mo_hinh</code>.
           <% } else { %>
-            Chưa có ai đăng ký khuôn mặt. Vào <a href="/to-chuc/khuon-mat" style="color:#c8a951">trang quản lý</a> để đăng ký.
+            Chưa có ai đăng ký khuôn mặt. Vào <a href="/admin/khuon-mat" style="color:#c8a951">trang quản lý</a> để đăng ký.
           <% } %>
         </div>
       <% } %>
@@ -351,16 +351,9 @@
         manKq.className = 'ket-qua thanh-cong hien';
         icon.innerHTML = '<i class="fas fa-check-circle"></i>';
         ten.textContent = kq.nhan_vien ? kq.nhan_vien.ten : 'Thành công';
-        ct.textContent = (kq.chieu === 'vao' ? '✓ Đã chấm công VÀO' : '✓ Đã chấm công RA') +
+        ct.textContent = (kq.chieu === 'vao' ? '✓ Chấm công VÀO thành công' : '✓ Chấm công RA thành công') +
           ' lúc ' + (kq.gio || '');
-        // Phần trăm lấy thẳng từ máy chủ (đã quy đổi sẵn) để mọi màn hình và
-        // nhật ký cùng nói một con số.
-        phu.textContent = (kq.nhan_vien && kq.nhan_vien.ten_cd ? kq.nhan_vien.ten_cd + ' · ' : '') +
-          (kq.phan_tram != null
-            ? 'độ khớp ' + kq.phan_tram + '%' +
-              (kq.nguong_phan_tram != null ? ' (cần ' + kq.nguong_phan_tram + '%)' : '')
-            : '') +
-          (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : '');
+        phu.textContent = (kq.nhan_vien && kq.nhan_vien.ten_cd ? kq.nhan_vien.ten_cd : '');
         keu(880);
       } else {
         manKq.className = 'ket-qua that-bai hien';

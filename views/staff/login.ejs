@@ -1,55 +1,48 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng nhập - Nhân viên Nhà Hàng Bảo Đoàn</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <style>
-    body { background: linear-gradient(135deg, #4e342e 0%, #2c1810 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; }
-    .login-card { max-width:420px; width:100%; border-radius:12px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.4); }
-    .login-header { background: rgba(255,255,255,.08); padding:30px; text-align:center; color:#fff; border-bottom:1px solid rgba(255,255,255,.1); }
-    .login-header h2 { font-weight:800; margin:0; letter-spacing:1px; }
-    .login-body { background:#fff; padding:30px; }
-    .btn-login { background:#c8a951; border:none; color:#fff; width:100%; padding:12px; font-weight:700; font-size:15px; border-radius:6px; }
-    .btn-login:hover { background:#b8943b; }
-    .form-control:focus { border-color:#c8a951; box-shadow:0 0 0 .2rem rgba(200,169,81,.25); }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đăng nhập nhân viên · Nhà Hàng Bảo Đoàn</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/admin/quantri.css" />
 </head>
-<body>
-  <div class="login-card">
-    <div class="login-header">
-      <div style="margin-bottom:8px;"><%- include('../partials/logo-bd', { cao: 44, mau: '#c8a951' }) %></div>
-      <h2>Nhà Hàng Bảo Đoàn</h2>
-      <p style="opacity:.7; margin:4px 0 0; font-size:14px;">Cổng nhân viên</p>
-    </div>
-    <div class="login-body">
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="alert alert-danger"><%= error %></div>
-      <% } %>
-      <form action="/staff/login" method="POST">
-        <%
-          /* Nơi cần quay lại sau khi đăng nhập — do máy chủ truyền xuống, đã
-             lọc chỉ còn đường dẫn nội bộ (xem duongDanTiep trong server.js).
-             Nhân viên quét mã QR chấm công bằng điện thoại rơi vào đây trước;
-             không giữ lại thì đăng nhập xong họ bị đá về trang tổng quan và
-             phải tự mò lại menu trên màn hình nhỏ. */
-        %>
-        <% if (typeof tiep !== 'undefined' && tiep) { %>
-          <input type="hidden" name="tiep" value="<%= tiep %>">
+<body class="qt-login">
+    <div class="qt-login__card">
+        <div class="qt-login__mark"><i class="fas fa-id-badge"></i></div>
+        <h1>Nhà Hàng Bảo Đoàn</h1>
+        <p class="qt-login__sub">Khu vực nhân sự &amp; Vận hành</p>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="qt-alert qt-alert--danger">
+                <i class="fas fa-circle-exclamation"></i>
+                <span><%= error %></span>
+            </div>
         <% } %>
-        <div class="form-group">
-          <label style="font-weight:600;">Tên đăng nhập</label>
-          <input type="text" class="form-control" name="username" placeholder="Nhập tên đăng nhập" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label style="font-weight:600;">Mật khẩu</label>
-          <input type="password" class="form-control" name="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn btn-login mt-2">Đăng nhập</button>
-      </form>
+
+        <form action="/staff/login" method="post">
+            <% if (typeof tiep !== 'undefined' && tiep) { %>
+                <input type="hidden" name="tiep" value="<%= tiep %>">
+            <% } %>
+
+            <div class="qt-login__field">
+                <i class="fas fa-user"></i>
+                <input type="text" name="username" placeholder="Tên đăng nhập" required autofocus autocomplete="username" />
+            </div>
+            <div class="qt-login__field">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="Mật khẩu" required autocomplete="current-password" />
+            </div>
+            <button type="submit" class="qt-login__btn">
+                <i class="fas fa-right-to-bracket"></i>&nbsp; Đăng nhập
+            </button>
+        </form>
+
+        <a class="qt-login__back" href="/"><i class="fas fa-arrow-left"></i>&nbsp; Quay lại website</a>
     </div>
-  </div>
 </body>
 </html>

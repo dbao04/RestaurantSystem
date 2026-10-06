@@ -11,7 +11,7 @@
  * Dung mysql2 (thu vien san co) nen khong phu thuoc chuong trinh dong lenh mysql.
  */
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const TEN_DB = process.env.DB_NAME || 'gs_restaurant';
 const SO_BANG_CAN = 90;

@@ -31,6 +31,60 @@ const menuService = {
     return rows;
   },
 
+  classifyCategory: (name) => {
+    const n = (name || '').toUpperCase();
+    if (n.includes('DRINK') || n.includes('SAKE') || n.includes('BEER') || n.includes('DESSERT') || n.includes('NƯỚC') || n.includes('UỐNG') || n.includes('RƯỢU') || n.includes('BIA') || n.includes('TRÁNG MIỆNG')) return 'do-uong';
+    if (n.includes('APPERTIZER') || n.includes('APPETIZER') || n.includes('SALAD') || n.includes('SOUP') || n.includes('KHAI VỊ') || n.includes('GỎI') || n.includes('SÚP')) return 'khai-vi';
+    return 'mon-chinh';
+  },
+
+  getMainGroups: async () => {
+    const [rows] = await db.query(`
+      SELECT l.*, COUNT(m.id_mon) AS so_mon
+        FROM loai_mon l
+        LEFT JOIN monan m ON m.id_loai = l.id_loai AND m.tinhtrang = 1
+       GROUP BY l.id_loai
+       ORDER BY l.name_loai`);
+
+    const groups = [
+      { key: 'khai-vi', name: 'Khai vị', icon: 'fa-bowl-food', categories: [], so_mon: 0 },
+      { key: 'mon-chinh', name: 'Món chính', icon: 'fa-utensils', categories: [], so_mon: 0 },
+      { key: 'do-uong', name: 'Đồ uống', icon: 'fa-wine-glass', categories: [], so_mon: 0 }
+    ];
+
+    const groupMap = {
+      'khai-vi': groups[0],
+      'mon-chinh': groups[1],
+      'do-uong': groups[2]
+    };
+
+    for (const r of rows) {
+      const gKey = menuService.classifyCategory(r.name_loai);
+      if (groupMap[gKey]) {
+        groupMap[gKey].categories.push(r);
+        groupMap[gKey].so_mon += Number(r.so_mon || 0);
+      }
+    }
+
+    return groups;
+  },
+
+  getDishesByGroup: async (groupKey) => {
+    const groups = await menuService.getMainGroups();
+    const g = groups.find(x => x.key === groupKey) || groups[0];
+    const catIds = g.categories.map(c => c.id_loai);
+    if (!catIds.length) return [];
+    const [rows] = await db.query(
+      `SELECT m.*, l.name_loai 
+       FROM monan m 
+       LEFT JOIN loai_mon l ON m.id_loai = l.id_loai 
+       WHERE m.id_loai IN (?) AND m.tinhtrang = 1
+       ORDER BY l.name_loai, m.name_mon`,
+      [catIds]
+    );
+    return rows;
+  },
+
   getCategoryById: async (id) => {
     const [rows] = await db.query('SELECT * FROM loai_mon WHERE id_loai = ?', [id]);
     return rows[0] || null;
@@ -67,6 +121,51 @@ const menuService = {
       WHERE m.id_mon = ?
     `, [id]);
     return rows[0] || null;
+  },
+
+  /*
+    Nguyen lieu cua mot mon, lay tu cong thuc bep.
+
+    CHI LAY TEN, KHONG LAY DINH LUONG. `so_luong_tieu_hao` la dinh muc bep
+    (0.27 kg thit ga cho mot phan) - do la so lieu gia von, khong phai thu dem
+    khoe cho khach; khach chi can biet mon co gi de doi chieu di ung.
+
+    Sap theo `id_ct` de giu dung thu tu bep nhap cong thuc: nguyen lieu chinh
+    duoc nhap truoc. Sap theo dinh luong thi sai, vi don vi khong dong nhat
+    (kg, lit, cai) nen so lon chua chac la nguyen lieu chinh.
+  */
+  getDishIngredients: async (idMon) => {
+    const [rows] = await db.query(
+      `SELECT nl.ten_nl
+         FROM cong_thuc ct
+         JOIN nguyen_lieu nl ON nl.id_nl = ct.id_nl
+        WHERE ct.id_mon = ?
+        ORDER BY ct.id_ct`,
+      [idMon]
+    );
+    return rows.map((r) => r.ten_nl);
+  },
+
+  /*
+    Nguyen lieu cua TAT CA mon, tra ve { id_mon: [ten nguyen lieu] }.
+
+    Trang menu QR nap ca thuc don mot lan roi mo chi tiet mon bang sheet, khong
+    tai lai trang. Neu moi lan khach mo mot mon lai goi mot request thi tren 4G
+    o ban an se co do tre thay ro; ca bang cong thuc chi ~1.000 dong nen lay
+    het mot lan la re hon nhieu.
+  */
+  getAllDishIngredients: async () => {
+    const [rows] = await db.query(
+      `SELECT ct.id_mon, nl.ten_nl
+         FROM cong_thuc ct
+         JOIN nguyen_lieu nl ON nl.id_nl = ct.id_nl
+        ORDER BY ct.id_mon, ct.id_ct`
+    );
+    const theoMon = {};
+    for (const r of rows) {
+      (theoMon[r.id_mon] || (theoMon[r.id_mon] = [])).push(r.ten_nl);
+    }
+    return theoMon;
   },
 
   getDishesByCategory: async (categoryId) => {

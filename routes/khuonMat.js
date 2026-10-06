@@ -83,8 +83,13 @@ router.get('/staff/khuon-mat', canDangNhap, (req, res) => {
   res.redirect('/staff/attendance');
 });
 
-/** Trang quan ly. */
-router.get('/to-chuc/khuon-mat', canDangNhap, canQuyen([QUYEN_QL, QUYEN_XEM]), bat(async (req, res) => {
+/** Chuyen huong duong dan cu ve /admin/khuon-mat */
+router.get('/to-chuc/khuon-mat', (req, res) => {
+  res.redirect('/admin/khuon-mat');
+});
+
+/** Trang quan tri du lieu khuon mat va cau hinh cham cong */
+router.get('/admin/khuon-mat', canDangNhap, canQuyen([QUYEN_QL, QUYEN_XEM]), bat(async (req, res) => {
   const [tt, dsDangKy, nhatKy, tongQuan, viTri, nhanDien] = await Promise.all([
     face.trangThaiDichVu(),
     face.danhSachDangKy(),
@@ -94,9 +99,9 @@ router.get('/to-chuc/khuon-mat', canDangNhap, canQuyen([QUYEN_QL, QUYEN_XEM]), b
     face.cauHinhNhanDien(),
   ]);
   const phanQuyen = require('../services/phanQuyenService');
-  res.render('staff/khuon-mat-quan-ly', {
-    title: 'Quản lý chấm công khuôn mặt',
-    activePage: 'khuon-mat-quan-ly',
+  res.render('admin/khuon-mat', {
+    title: 'Dữ liệu khuôn mặt & Cấu hình chấm công',
+    activePage: 'khuon-mat',
     trangThai: tt, dsDangKy, nhatKy, tongQuan, viTri, nhanDien,
     // Dang ky / xoa mau khuon mat: theo quyen nghiep vu nhu cu.
     coTheSua: !!(req.hoSo && phanQuyen.coQuyen(req.hoSo, QUYEN_QL)) || !!req.session.adminlogin,

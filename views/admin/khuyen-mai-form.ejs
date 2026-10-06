@@ -1,5 +1,9 @@
-<%- include('partials/header') %>
-<%- include('partials/sidebar') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/header', { activePage: 'khuyen-mai', staffName: session.staffName || 'Quản lý' }) %>
+<% } else { %>
+  <%- include('partials/header') %>
+  <%- include('partials/sidebar') %>
+<% } %>
 
 <%
   var laSua = !!(km && km.id);
@@ -462,4 +466,8 @@
 })();
 </script>
 
-<%- include('partials/footer') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

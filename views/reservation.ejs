@@ -37,6 +37,8 @@ var nhanThe = function (the) {
   var nhan = t('dat_ban_moi.the_' + the.code);
   return nhan === 'dat_ban_moi.the_' + the.code ? the.label_vi : nhan;
 };
+var dsMonAn = typeof dsMonAn !== 'undefined' && Array.isArray(dsMonAn) ? dsMonAn : [];
+var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) ? danhMucMon : [];
 %>
 
 <section class="nh-subhero nh-subhero--sm">
@@ -47,8 +49,7 @@ var nhanThe = function (the) {
     <h1><%= t('dat_ban_moi.tieu_de') %></h1>
     <div class="nh-crumbs">
       <a href="/"><%= t('dieu_huong.trang_chu') %></a> ·
-      <span><%= t('dat_ban_moi.tieu_de') %></span> ·
-      <a href="/dat-ban/tra-cuu"><%= t('dat_ban_moi.tra_cuu') %></a>
+      <span><%= t('dat_ban_moi.tieu_de') %></span>
     </div>
   </div>
 </section>
@@ -91,8 +92,10 @@ var nhanThe = function (the) {
      Xem chu thich cua /api/dat-ban/khung-gio. */
   .db-gio__o input:disabled + span { opacity: .5; cursor: not-allowed; border-style: dashed;
     background: #f8fafc; color: #94a3b8; text-decoration: line-through; }
-  .db-gio__o input:disabled + span small { text-decoration: none; }
-  .db-gio__caodiem { color: var(--nh-gold); }
+  .db-gio__caodiem { color: #b45309; font-weight: 700; border-color: rgba(217, 119, 6, 0.45); }
+  .db-gio__caodiem small { opacity: 1 !important; font-weight: 700; color: #b45309; }
+  .db-gio__o input:checked + span.db-gio__caodiem,
+  .db-gio__o input:checked + span.db-gio__caodiem small { color: var(--nh-cream) !important; }
 
   /* ---------- Bang tom tat ben phai ---------- */
   .db-tomtat { position: sticky; top: 96px; }
@@ -130,6 +133,62 @@ var nhanThe = function (the) {
   .db-the__o span i { color: var(--nh-gold); width: 16px; text-align: center; }
   .db-the__o input:checked + span i { color: var(--nh-gold-soft); }
 
+  /* ---------- Mon goi truoc (Buoc Goi Mon) ---------- */
+  .db-combo-section { margin-bottom: 1.2rem; background: linear-gradient(135deg, #fffdfa 0%, #fcf6ea 100%); border: 1.5px solid rgba(200,162,75,0.35); border-radius: 14px; padding: 1rem 1.1rem; box-shadow: 0 4px 14px rgba(200,162,75,0.08); }
+  .db-combo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.4rem; }
+  .db-combo-title { font-size: 0.95rem; font-weight: 700; color: var(--nh-espresso); display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+  .db-combo-title i { color: var(--nh-gold); }
+  .db-combo-badge { font-size: 0.75rem; background: var(--nh-gold); color: var(--nh-espresso); font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; }
+  
+  .db-combo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem; }
+  .db-combo-card { background: #fff; border: 1.5px solid rgba(200,162,75,0.25); border-radius: 12px; padding: 0.85rem 0.95rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; transition: all 0.25s var(--nh-ease); box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+  .db-combo-card:hover { border-color: var(--nh-gold); box-shadow: 0 6px 18px rgba(200,162,75,0.2); transform: translateY(-2px); }
+  .db-combo-card.is-recommended { border-color: var(--nh-gold); background: #fffdf7; }
+  .db-combo-tag { position: absolute; top: 0; right: 0; background: linear-gradient(135deg, var(--nh-gold), #e5c378); color: var(--nh-espresso); font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.6rem; border-bottom-left-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  
+  .db-combo-top { display: flex; flex-direction: column; gap: 0.3rem; }
+  .db-combo-name { font-size: 0.92rem; font-weight: 700; color: var(--nh-espresso); line-height: 1.3; }
+  .db-combo-for { font-size: 0.78rem; color: #b45309; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .db-combo-desc { font-size: 0.8rem; color: var(--nh-muted); line-height: 1.4; margin: 0.2rem 0 0 0; }
+  .db-combo-price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-top: 0.3rem; }
+  .db-combo-price { font-size: 1.02rem; font-weight: 700; color: var(--nh-gold); }
+  .db-combo-btn { width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; border: 1.5px solid var(--nh-gold); background: #fff; color: var(--nh-espresso); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+  .db-combo-btn:hover { background: var(--nh-gold); color: var(--nh-espresso); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(200,162,75,0.3); }
+
+  .db-mon-layout { display: grid; grid-template-columns: 210px 1fr; gap: 1.2rem; margin-top: 1rem; align-items: start; }
+  @media (max-width: 768px) { .db-mon-layout { grid-template-columns: 1fr; } }
+  .db-loai-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 540px; overflow-y: auto; padding-right: 0.3rem; }
+  @media (max-width: 768px) {
+    .db-loai-list { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 0.5rem; }
+  }
+  .db-loai-btn { background: #fff; border: 1.5px solid var(--nh-line); border-radius: 8px; padding: 0.55rem 0.8rem;
+    font-size: 0.84rem; font-weight: 600; text-align: left; color: var(--nh-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .db-loai-btn:hover { border-color: var(--nh-gold); color: var(--nh-espresso); }
+  .db-loai-btn.active { background: var(--nh-espresso); color: var(--nh-cream); border-color: var(--nh-espresso); }
+  
+  .db-mon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; max-height: 540px; overflow-y: auto; padding: 0.4rem; min-height: 200px; }
+  .db-dish-card { background: #fff; border: 1.5px solid rgba(200,162,75,0.25); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: auto; min-height: 230px; }
+  .db-dish-card.is-hidden { display: none !important; }
+  .db-dish-card:hover { border-color: var(--nh-gold); box-shadow: 0 6px 16px rgba(0,0,0,0.08); transform: translateY(-2px); }
+  .db-dish-card .db-dish-thumb { width: 100%; height: 125px; min-height: 125px; overflow: hidden; position: relative; background: #f8fafc; flex-shrink: 0; }
+  .db-dish-card .db-dish-thumb img { width: 100%; height: 100%; max-height: 125px; object-fit: cover; display: block; }
+  .db-dish-body { padding: 0.75rem; display: flex; flex-direction: column; flex: 1 1 auto; justify-content: space-between; gap: 0.4rem; background: #fff; }
+  .db-dish-name { font-size: 0.88rem; font-weight: 700; color: var(--nh-espresso); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; }
+  .db-dish-price { font-size: 0.88rem; font-weight: 700; color: var(--nh-gold); }
+  
+  .db-dish-qty { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; background: var(--nh-cream); border-radius: 8px; padding: 4px 8px; border: 1px solid rgba(200,162,75,0.3); }
+  .db-dish-qty button { width: 28px; height: 28px; border-radius: 6px; border: none; background: #fff;
+    font-weight: 700; font-size: 0.95rem; cursor: pointer; display: grid; place-content: center; color: var(--nh-espresso); box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.15s; }
+  .db-dish-qty button:hover { background: var(--nh-gold); color: #fff; }
+  .db-dish-qty span { font-weight: 700; font-size: 0.9rem; min-width: 24px; text-align: center; color: var(--nh-espresso); }
+
+  .db-selected-tray { background: #fffdf7; border: 1.5px dashed rgba(200,162,75,0.4); border-radius: 12px; padding: 0.9rem; margin-top: 1.2rem; }
+  .db-selected-title { font-size: 0.9rem; font-weight: 700; color: var(--nh-espresso); display: flex; justify-content: space-between; margin-bottom: 0.6rem; }
+  .db-selected-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .db-selected-item { background: #fff; border: 1px solid rgba(200,162,75,0.3); border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .db-selected-item b { color: var(--nh-gold); }
+  .db-selected-item button { border: none; background: transparent; color: #dc2626; cursor: pointer; font-size: 0.75rem; padding: 0; }
+
   /* ---------- Nut dieu huong ---------- */
   .db-dieuhuong { display: flex; gap: .8rem; justify-content: space-between; margin-top: 1.8rem; flex-wrap: wrap; }
   .db-dieuhuong .nh-btn { flex: 1; justify-content: center; min-width: 150px; }
@@ -156,6 +215,8 @@ var nhanThe = function (the) {
         <div><%- t('dat_ban_moi.khong_js') %></div>
       </div>
     </noscript>
+
+
 
     <ol class="db-buoc" id="dbBuoc" aria-label="<%= t('dat_ban_moi.tien_trinh') %>"></ol>
 
@@ -229,6 +290,85 @@ var nhanThe = function (the) {
               </button>
               <button type="button" class="nh-btn nh-btn--gold" id="dbTiep2" disabled>
                 <%= t('dat_ban_moi.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================ BƯỚC: GỌI MÓN TRƯỚC (TÙY CHỌN) ===== -->
+        <div class="db-man" id="manMon" data-buoc="mon">
+          <div class="nh-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+              <h3 class="nh-panel__title" style="margin:0"><i class="fas fa-utensils"></i> Gọi món trước (Tùy chọn)</h3>
+              <span class="nh-hint" style="margin:0">Bếp chuẩn bị trước — hoặc bấm Bỏ qua để đến quán gọi món</span>
+            </div>
+            <p class="nh-hint" style="margin-bottom:1rem">
+              Bạn có thể chọn trước các món yêu thích để nhà hàng chuẩn bị chu đáo khi bạn tới, hoặc bỏ qua bước này nếu muốn chọn món tại bàn.
+            </p>
+
+            <!-- COMBO GỢI Ý THEO SỐ LƯỢNG KHÁCH -->
+            <div class="db-combo-section" id="dbComboSection">
+              <div class="db-combo-header">
+                <h4 class="db-combo-title">
+                  <i class="fas fa-crown"></i> Gợi ý Set Combo phù hợp cho <span id="dbComboGuestText">2 khách</span>
+                </h4>
+                <span class="db-combo-badge"><i class="fas fa-sparkles"></i> Tiết kiệm & Đủ vị</span>
+              </div>
+              <div class="db-combo-grid" id="dbComboGrid"></div>
+            </div>
+
+            <div style="margin-bottom: 0.8rem;">
+              <input type="text" id="dbTimMon" class="nh-input" placeholder="🔍 Hoặc tìm kiếm món ăn riêng lẻ theo tên..." style="max-width: 360px;">
+            </div>
+
+            <div class="db-mon-layout">
+              <!-- Danh mục món bên trái -->
+              <div class="db-loai-list" id="dbLoaiList">
+                <button type="button" class="db-loai-btn active" data-loai="ALL">Tất cả món (<%= (dsMonAn||[]).length %>)</button>
+                <% (danhMucMon||[]).forEach(function(l) { %>
+                  <button type="button" class="db-loai-btn" data-loai="<%= l.id_loai %>"><%= l.name_loai %> (<%= l.so_mon || 0 %>)</button>
+                <% }) %>
+              </div>
+
+              <!-- Lưới món ăn bên phải -->
+              <div class="db-mon-grid" id="dbMonGrid">
+                <% (dsMonAn||[]).forEach(function(m) { %>
+                  <div class="db-dish-card" data-loai="<%= m.id_loai %>" data-ten="<%= (m.name_mon||'').toLowerCase() %>">
+                    <div class="db-dish-thumb">
+                      <img src="/food/<%= m.images || '' %>" alt="<%= m.name_mon %>" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+                    </div>
+                    <div class="db-dish-body">
+                      <div class="db-dish-name" title="<%= m.name_mon %>"><%= m.name_mon %></div>
+                      <div class="db-dish-price"><%= Number(m.gia_mon||0).toLocaleString('vi-VN') %> ₫</div>
+                      <div class="db-dish-qty">
+                        <button type="button" class="btn-giam-mon" data-id="<%= m.id_mon %>" title="Bớt 1"><i class="fas fa-minus"></i></button>
+                        <span id="qty_<%= m.id_mon %>">0</span>
+                        <button type="button" class="btn-tang-mon" data-id="<%= m.id_mon %>" data-ten="<%= m.name_mon %>" data-gia="<%= m.gia_mon %>" title="Thêm 1"><i class="fas fa-plus"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+
+            <!-- Khay món đã chọn -->
+            <div class="db-selected-tray" id="dbSelectedTray" style="display:none">
+              <div class="db-selected-title">
+                <span><i class="fas fa-shopping-basket" style="color:var(--nh-gold)"></i> Các món đã chọn gọi trước:</span>
+                <span id="dbSelectedTongTien" style="color:var(--nh-gold)">0 ₫</span>
+              </div>
+              <div class="db-selected-list" id="dbSelectedList"></div>
+            </div>
+
+            <div class="db-dieuhuong">
+              <button type="button" class="nh-btn nh-btn--outline" data-lui="1">
+                <i class="fas fa-arrow-left"></i> <%= t('dat_ban_moi.quay_lai') %>
+              </button>
+              <button type="button" class="nh-btn nh-btn--outline" id="dbBoQuaMon">
+                <i class="fas fa-forward"></i> Bỏ qua bước này
+              </button>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbTiepMon">
+                Tiếp tục <i class="fas fa-arrow-right"></i>
               </button>
             </div>
           </div>
@@ -317,8 +457,8 @@ var nhanThe = function (the) {
         <p class="nh-hint" style="margin-top:1.2rem">
           <i class="fas fa-phone"></i> <%= t('dat_ban_moi.can_ho_tro') %>
         </p>
-        <a href="/dat-ban/tra-cuu" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:.8rem;width:100%;justify-content:center">
-          <i class="fas fa-search"></i> <%= t('dat_ban_moi.tra_cuu') %>
+        <a href="/my-orders" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:.8rem;width:100%;justify-content:center">
+          <i class="fas fa-history"></i> <%= t('dieu_huong.don_cua_toi') %>
         </a>
       </aside>
     </div>
@@ -365,16 +505,18 @@ var nhanThe = function (the) {
     tongChoDaChon: 0,
     the: [],
     coc: null,
-    goiY: null      // to hop ban he thong de xuat
+    goiY: null,     // to hop ban he thong de xuat
+    mon: {}         // { id_mon: { id_mon, name_mon, gia_mon, soluong } }
   };
 
   // Buoc 2 chi ton tai khi quan ly cho phep khach tu chon ban.
-  var BUOC = CF.cho_chon_ban ? [1, 2, 3, 4] : [1, 3, 4];
+  var BUOC = CF.cho_chon_ban ? [1, 2, 'mon', 3, 4] : [1, 'mon', 3, 4];
   var TEN_BUOC = {
-    1: T['dat_ban_moi.b1_ngan'],
-    2: T['dat_ban_moi.b2_ngan'],
-    3: T['dat_ban_moi.b3_ngan'],
-    4: T['dat_ban_moi.b4_ngan']
+    1: T['dat_ban_moi.b1_ngan'] || 'Thời gian',
+    2: T['dat_ban_moi.b2_ngan'] || 'Chọn bàn',
+    'mon': 'Gọi món',
+    3: T['dat_ban_moi.b3_ngan'] || 'Thông tin',
+    4: T['dat_ban_moi.b4_ngan'] || 'Xác nhận'
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -420,17 +562,16 @@ var nhanThe = function (the) {
 
   function den(buoc) {
     S.buoc = buoc;
-    [1, 2, 3, 4].forEach(function (b) {
+    [1, 2, 'Mon', 3, 4].forEach(function (b) {
       var m = $('man' + b);
-      if (m) m.classList.toggle('hien', b === buoc);
+      if (m) m.classList.toggle('hien', String(b).toLowerCase() === String(buoc).toLowerCase());
     });
     veThanhBuoc();
     veTomTat();
-    // Cuon len dau khung noi dung, khong phai dau trang: khach vua bam nut o
-    // cuoi man hinh truoc, keo ho ve tan dinh trang la mot buoc thua.
     var moc = $('dbBuoc');
     if (moc) moc.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (buoc === 2) taiSoDo();
+    if (String(buoc).toLowerCase() === 'mon') veGoiYCombo();
     if (buoc === 4) veXemLai();
   }
 
@@ -541,7 +682,6 @@ var nhanThe = function (the) {
   $('dbSoKhach').addEventListener('input', function () {
     var n = Math.max(1, Math.min(CF.toi_da_khach, Number(this.value) || 1));
     S.soKhach = n;
-    // Bo chon o "chon nhanh" neu khach go so khac - hai o cung sang la mau thuan.
     document.querySelectorAll('input[name="dbNhanh"]').forEach(function (o) {
       o.checked = Number(o.value) === n;
     });
@@ -566,8 +706,6 @@ var nhanThe = function (the) {
     khung.innerHTML = '<div class="sdb__khung sdb__khung--tai">' + T['dat_ban_moi.dang_tai_so_do'] + '</div>';
     $('dbTomTatBan').textContent = T['dat_ban_moi.dang_tai'];
 
-    // Dem so ban trong tung khu de ve so tren tab. Goi song song - bon khu vuc
-    // la bon request, cho lan luot se cham gap bon lan ma khong duoc gi.
     var q = function (khu) {
       var p = new URLSearchParams({ ngay: S.ngay, gio: S.gio, so_khach: S.soKhach });
       if (khu) p.set('khu_vuc', khu);
@@ -620,8 +758,6 @@ var nhanThe = function (the) {
 
     if (!S.ban.length) {
       o.appendChild(document.createTextNode(T['dat_ban_moi.chua_chon_ban']));
-      // Khong chon ban van di tiep duoc: khach chon "de nha hang xep giup" la
-      // mot lua chon hop le, khong phai mot buoc chua hoan thanh.
       $('dbTiep2').disabled = false;
       return;
     }
@@ -648,7 +784,268 @@ var nhanThe = function (the) {
   });
   $('dbTiep2').addEventListener('click', function () { den(tienTu(2)); });
 
-  // -------------------------------------------------------------- bước 3
+  // -------------------------------------------------------------- bước GỌI MÓN
+
+  // Định nghĩa các gói Combo gợi ý theo số lượng người (chuẩn thực đơn nhà hàng)
+  var DANH_SACH_COMBOS = [
+    {
+      id: 'combo_2k_henho',
+      ten: 'Combo Hẹn Hò Lãng Mạn (2 người)',
+      minKhach: 1,
+      maxKhach: 3,
+      nguoiText: 'Dành cho 2 người',
+      moTa: '1 Salad bơ + 1 Sashimi Set A (259k) + 1 Combo Sushi Set 1 (139k) + 2 Trà xanh Nhật.',
+      monList: [
+        { id_mon: 126, name_mon: 'SA07-SALAD BƠ', gia_mon: 99000, soluong: 1 },
+        { id_mon: 161, name_mon: 'SETA-SASHIMI SET A', gia_mon: 259000, soluong: 1 },
+        { id_mon: 205, name_mon: 'SET1-COMBO SUSHI SET 1', gia_mon: 139000, soluong: 1 },
+        { id_mon: 85, name_mon: '05-TRÀ XANH NHẬT', gia_mon: 18000, soluong: 2 }
+      ]
+    },
+    {
+      id: 'combo_2k_sashimi',
+      ten: 'Combo Tinh Hoa Sashimi (2 người)',
+      minKhach: 1,
+      maxKhach: 3,
+      nguoiText: 'Dành cho 2 người',
+      moTa: '1 Salad rong nho + 1 Sashimi Set B (249k) + 1 Cuộn cá hồi nướng + 1 Lẩu Nấm Cá Hồi.',
+      monList: [
+        { id_mon: 109, name_mon: 'A06-RONG NHO', gia_mon: 32000, soluong: 1 },
+        { id_mon: 162, name_mon: 'SETB-SASHIMI SET B', gia_mon: 249000, soluong: 1 },
+        { id_mon: 229, name_mon: 'R09-CUỘN CÁ HỒI NƯỚNG', gia_mon: 139000, soluong: 1 },
+        { id_mon: 293, name_mon: 'H01-LẨU NẤM CÁ HỒI', gia_mon: 245000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_4k_giadinh',
+      ten: 'Combo Sum Họp Gia Đình (3 - 4 người)',
+      minKhach: 3,
+      maxKhach: 5,
+      nguoiText: 'Dành cho 3 - 4 người',
+      moTa: '1 Salad hải sản + 1 Sashimi Set D (489k) + 1 Combo Sushi Set 2 (199k) + 1 Lẩu Sukiyaki (259k).',
+      monList: [
+        { id_mon: 124, name_mon: 'SA05-SALAD HẢI SẢN', gia_mon: 159000, soluong: 1 },
+        { id_mon: 164, name_mon: 'SETD-SASHIMI SET D', gia_mon: 489000, soluong: 1 },
+        { id_mon: 206, name_mon: 'SET2-COMBO SUSHI SET 2', gia_mon: 199000, soluong: 1 },
+        { id_mon: 297, name_mon: 'H05-LẨU SUKIYAKI', gia_mon: 259000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_4k_bbq',
+      ten: 'Combo Thưởng Thức Nướng & Sushi (4 người)',
+      minKhach: 3,
+      maxKhach: 5,
+      nguoiText: 'Dành cho 4 người',
+      moTa: '1 Bò Aukobe Steak + 1 Combo Hàu Hyogo + 1 Combo Sushi Set 3 + 1 Lẩu Nabe Hải Sản.',
+      monList: [
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 1 },
+        { id_mon: 127, name_mon: 'SH01-COMBO HÀU HYOGO', gia_mon: 199000, soluong: 1 },
+        { id_mon: 207, name_mon: 'SET3-COMBO SUSHI SET 3', gia_mon: 299000, soluong: 1 },
+        { id_mon: 298, name_mon: 'H06-LẨU NABE HẢI SẢN', gia_mon: 249000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_6k_tiec',
+      ten: 'Combo Tiệc Bạn Bè & Đồng Nghiệp (5 - 6 người)',
+      minKhach: 5,
+      maxKhach: 8,
+      nguoiText: 'Dành cho 5 - 6 người',
+      moTa: '1 Salad bò Mỹ + 1 Sashimi Set G Đại Tiệc (799k) + 1 Combo Sushi Set 4 (399k) + 1 Lẩu Kim Chi Hải Sản + 1 Bò Áp Chảo.',
+      monList: [
+        { id_mon: 125, name_mon: 'SA06-SALAD BÒ MỸ XÀO VÀ TRỨNG ONSEN', gia_mon: 119000, soluong: 1 },
+        { id_mon: 167, name_mon: 'SETG-SASHIMI SET G', gia_mon: 799000, soluong: 1 },
+        { id_mon: 208, name_mon: 'SET4-COMBO SUSHI SET 4', gia_mon: 399000, soluong: 1 },
+        { id_mon: 296, name_mon: 'H04-LẨU KIM CHI HẢI SẢN', gia_mon: 199000, soluong: 1 },
+        { id_mon: 263, name_mon: 'E01-BÒ AUKOBE ÁP CHẢO', gia_mon: 159000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_8k_hoangia',
+      ten: 'Combo Đại Tiệc Hoàng Gia (7 - 10+ người)',
+      minKhach: 7,
+      maxKhach: 99,
+      nguoiText: 'Dành cho 7 - 10+ người',
+      moTa: '1 Sashimi Set H Premium (899k) + 2 Combo Sushi Set 3 + 1 Lẩu Nấm Cá Hồi + 1 Lẩu Sukiyaki + 2 Bò Aukobe Steak + Khai vị.',
+      monList: [
+        { id_mon: 168, name_mon: 'SETH-SASHIMI SET H PREMIUM', gia_mon: 899000, soluong: 1 },
+        { id_mon: 207, name_mon: 'SET3-COMBO SUSHI SET 3', gia_mon: 299000, soluong: 2 },
+        { id_mon: 293, name_mon: 'H01-LẨU NẤM CÁ HỒI', gia_mon: 245000, soluong: 1 },
+        { id_mon: 297, name_mon: 'H05-LẨU SUKIYAKI', gia_mon: 259000, soluong: 1 },
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 2 },
+        { id_mon: 120, name_mon: 'SA01-SALAD CUA LỘT', gia_mon: 189000, soluong: 1 }
+      ]
+    }
+  ];
+
+  function veGoiYCombo() {
+    var grid = $('dbComboGrid');
+    var textKhach = $('dbComboGuestText');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var soK = Number(S.soKhach || 2);
+    if (textKhach) textKhach.textContent = soK + ' khách';
+
+    // Sắp xếp combo ưu tiên combo khớp với số lượng khách của phiên đặt hiện tại
+    var combosHienThi = DANH_SACH_COMBOS.slice().sort(function (a, b) {
+      var aKhop = (soK >= a.minKhach && soK <= a.maxKhach);
+      var bKhop = (soK >= b.minKhach && soK <= b.maxKhach);
+      if (aKhop && !bKhop) return -1;
+      if (!aKhop && bKhop) return 1;
+      return 0;
+    });
+
+    combosHienThi.forEach(function (cb) {
+      var laGoiYChinh = (soK >= cb.minKhach && soK <= cb.maxKhach);
+      var tongTienCombo = cb.monList.reduce(function (sum, item) {
+        return sum + (item.gia_mon * item.soluong);
+      }, 0);
+
+      var card = document.createElement('div');
+      card.className = 'db-combo-card' + (laGoiYChinh ? ' is-recommended' : '');
+      
+      var tagHtml = laGoiYChinh ? '<div class="db-combo-tag"><i class="fas fa-thumbs-up"></i> Khuyên dùng</div>' : '';
+
+      card.innerHTML = tagHtml +
+        '<div class="db-combo-top">' +
+          '<div class="db-combo-for"><i class="fas fa-user-friends"></i> ' + cb.nguoiText + '</div>' +
+          '<div class="db-combo-name">' + cb.ten + '</div>' +
+          '<p class="db-combo-desc">' + cb.moTa + '</p>' +
+        '</div>' +
+        '<div>' +
+          '<div class="db-combo-price-row">' +
+            '<span style="font-size:0.78rem; color:var(--nh-muted);">Trọn gói combo:</span>' +
+            '<span class="db-combo-price">' + tien(tongTienCombo) + '</span>' +
+          '</div>' +
+          '<button type="button" class="db-combo-btn mt-2" data-comboid="' + cb.id + '">' +
+            '<i class="fas fa-cart-plus"></i> Chọn Combo này' +
+          '</button>' +
+        '</div>';
+
+      var btn = card.querySelector('button');
+      btn.addEventListener('click', function () {
+        themNhanhCombo(cb);
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  function themNhanhCombo(combo) {
+    combo.monList.forEach(function (m) {
+      if (!S.mon[m.id_mon]) {
+        S.mon[m.id_mon] = { id_mon: m.id_mon, name_mon: m.name_mon, gia_mon: m.gia_mon, soluong: 0 };
+      }
+      S.mon[m.id_mon].soluong += m.soluong;
+    });
+    capNhatGiaoDienMon();
+    
+    // Cuộn nhẹ xuống khay món đã chọn để khách thấy
+    var tray = $('dbSelectedTray');
+    if (tray) {
+      tray.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  window.tangMon = function (id, ten, gia) {
+    if (!S.mon[id]) {
+      S.mon[id] = { id_mon: id, name_mon: ten, gia_mon: gia, soluong: 0 };
+    }
+    S.mon[id].soluong += 1;
+    capNhatGiaoDienMon();
+  };
+
+  window.giamMon = function (id) {
+    if (!S.mon[id]) return;
+    S.mon[id].soluong -= 1;
+    if (S.mon[id].soluong <= 0) {
+      delete S.mon[id];
+    }
+    capNhatGiaoDienMon();
+  };
+
+  document.querySelectorAll('.btn-tang-mon').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = this.getAttribute('data-id');
+      var ten = this.getAttribute('data-ten');
+      var gia = Number(this.getAttribute('data-gia') || 0);
+      tangMon(id, ten, gia);
+    });
+  });
+
+  document.querySelectorAll('.btn-giam-mon').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = this.getAttribute('data-id');
+      giamMon(id);
+    });
+  });
+
+  function capNhatGiaoDienMon() {
+    document.querySelectorAll('[id^="qty_"]').forEach(function (el) {
+      var id = el.id.replace('qty_', '');
+      el.textContent = (S.mon[id] && S.mon[id].soluong) ? S.mon[id].soluong : '0';
+    });
+
+    var tray = $('dbSelectedTray');
+    var list = $('dbSelectedList');
+    var tongTienEl = $('dbSelectedTongTien');
+    list.innerHTML = '';
+
+    var ds = Object.values(S.mon);
+    if (ds.length === 0) {
+      tray.style.display = 'none';
+    } else {
+      tray.style.display = 'block';
+      var tongTien = 0;
+      ds.forEach(function (item) {
+        tongTien += item.soluong * item.gia_mon;
+        var tag = chu('div', 'db-selected-item');
+        tag.innerHTML = '<span>' + item.name_mon + ' <b>x' + item.soluong + '</b> (' + tien(item.soluong * item.gia_mon) + ')</span>'
+          + ' <button type="button" onclick="giamMon(' + item.id_mon + ')" title="Giảm / Bỏ"><i class="fas fa-times-circle"></i></button>';
+        list.appendChild(tag);
+      });
+      tongTienEl.textContent = tien(tongTien);
+    }
+    veTomTat();
+  }
+
+  // Loc loai mon
+  document.querySelectorAll('.db-loai-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.db-loai-btn').forEach(function (b) { b.classList.remove('active'); });
+      this.classList.add('active');
+      var loai = this.getAttribute('data-loai');
+      locMon(loai, ($('dbTimMon').value || '').trim().toLowerCase());
+    });
+  });
+
+  $('dbTimMon').addEventListener('input', function () {
+    var activeBtn = document.querySelector('.db-loai-btn.active');
+    var loai = activeBtn ? activeBtn.getAttribute('data-loai') : 'ALL';
+    locMon(loai, this.value.trim().toLowerCase());
+  });
+
+  function locMon(loai, tuKhoa) {
+    document.querySelectorAll('.db-dish-card').forEach(function (card) {
+      var cardLoai = card.getAttribute('data-loai');
+      var cardTen = card.getAttribute('data-ten') || '';
+      var matchLoai = (loai === 'ALL' || String(cardLoai) === String(loai));
+      var matchTen = (!tuKhoa || cardTen.indexOf(tuKhoa) >= 0);
+      var hien = matchLoai && matchTen;
+      card.classList.toggle('is-hidden', !hien);
+      card.style.display = hien ? 'flex' : 'none';
+    });
+  }
+
+  $('dbBoQuaMon').addEventListener('click', function () {
+    S.mon = {};
+    capNhatGiaoDienMon();
+    den(tienTu('mon'));
+  });
+  $('dbTiepMon').addEventListener('click', function () {
+    den(tienTu('mon'));
+  });
+
+  // -------------------------------------------------------------- bước 3: THÔNG TIN
 
   $('dbThe').addEventListener('change', function () {
     S.the = Array.prototype.slice
@@ -662,7 +1059,7 @@ var nhanThe = function (the) {
     var dt = $('dbDienThoai').value.trim();
     if (ten.length < 2) { $('dbTen').focus(); $('dbTen').reportValidity(); return; }
     if (dt.replace(/\D/g, '').length < 8) {
-      $('dbDienThoai').setCustomValidity(T['dat_ban_moi.dien_thoai_sai']);
+      $('dbDienThoai').setCustomValidity(T['dat_ban_moi.dien_thoai_sai'] || 'Số điện thoại không hợp lệ');
       $('dbDienThoai').reportValidity();
       $('dbDienThoai').setCustomValidity('');
       return;
@@ -718,6 +1115,14 @@ var nhanThe = function (the) {
       o.appendChild(hang(T['dat_ban_moi.ban_de_xuat'],
         S.goiY.ban.map(function (b) { return b.ten; }).join(', ')));
     }
+
+    var dsMon = Object.values(S.mon);
+    if (dsMon.length > 0) {
+      var tongMon = dsMon.reduce(function (s, m) { return s + m.soluong; }, 0);
+      var tongTienMon = dsMon.reduce(function (s, m) { return s + (m.soluong * m.gia_mon); }, 0);
+      o.appendChild(hang('Món gọi trước', tongMon + ' phần (' + tien(tongTienMon) + ')'));
+    }
+
     if (S.the.length) {
       o.appendChild(hang(T['dat_ban_moi.yeu_cau'], S.the.length + ' ' + T['dat_ban_moi.muc']));
     }
@@ -735,7 +1140,7 @@ var nhanThe = function (the) {
     }
   }
 
-  // -------------------------------------------------------------- bước 4
+  // -------------------------------------------------------------- bước 4: XÁC NHẬN
 
   function veXemLai() {
     var dl = $('dbXemLai');
@@ -761,6 +1166,14 @@ var nhanThe = function (the) {
     muc(T['dat_ban_moi.ban'], S.ban.length
       ? S.tongChoDaChon + ' ' + T['dat_ban_moi.cho'] + ' (' + T['dat_ban_moi.tu_chon'] + ')'
       : (S.goiY ? S.goiY.ban.map(function (b) { return b.ten; }).join(', ') : T['dat_ban_moi.nha_hang_xep']));
+
+    var dsMon = Object.values(S.mon);
+    if (dsMon.length > 0) {
+      var dsMonChuoi = dsMon.map(function (m) { return m.name_mon + ' x' + m.soluong; }).join(', ');
+      var tongTienMon = dsMon.reduce(function (s, m) { return s + (m.soluong * m.gia_mon); }, 0);
+      muc('Món gọi trước', dsMonChuoi + ' (' + tien(tongTienMon) + ')');
+    }
+
     muc(T['dat_ban_moi.yeu_cau'], tenThe.join(' · '));
     muc(T['dat_ban_moi.ghi_chu'], $('dbYeuCau').value.trim());
     if (S.coc && S.coc.soTien > 0) muc(T['dat_ban_moi.tien_coc'], tien(S.coc.soTien) + ' — ' + S.coc.lyDo);
@@ -783,6 +1196,10 @@ var nhanThe = function (the) {
       if (!dip && o.getAttribute('data-kind') === 'OCCASION') dip = o.value;
     });
 
+    var itemsList = Object.values(S.mon).map(function (m) {
+      return { dish_id: m.id_mon, dish_name: m.name_mon, price: m.gia_mon, quantity: m.soluong };
+    });
+
     var goi = {
       customer_name: $('dbTen').value.trim(),
       phone: $('dbDienThoai').value.trim(),
@@ -794,7 +1211,8 @@ var nhanThe = function (the) {
       table_ids: S.ban,
       tags: S.the,
       occasion: dip || null,
-      special_requests: $('dbYeuCau').value.trim() || null
+      special_requests: $('dbYeuCau').value.trim() || null,
+      items: itemsList
     };
 
     try {
@@ -806,14 +1224,11 @@ var nhanThe = function (the) {
       var kq = await r.json();
 
       if (kq.ok) {
-        // Chuyen sang trang xac nhan thay vi hien mot the bao thanh cong: khach
-        // can mot trang co dia chi rieng de luu lai / gui cho nguoi khac.
         window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(kq.ma)
           + '&dt=' + encodeURIComponent(goi.phone);
         return;
       }
 
-      // Het ban: kem nut bam thang sang khung gio / khu vuc con cho.
       var them = null;
       if (kq.chi_tiet && (kq.chi_tiet.gio_thay_the || kq.chi_tiet.khu_thay_the)) {
         them = chu('div', 'db-goiy');

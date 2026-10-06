@@ -60,7 +60,7 @@ const CAU_TRA_LOI = {
     hoi_combo: 'Here are the combos currently available:',
     hoi_giao_hang: 'The restaurant offers takeaway and delivery. Please order from the menu and select delivery at checkout.',
     hoi_thanh_toan: 'We accept cash, bank transfer and VietQR payment.',
-    hoi_gia_mon: 'Which dish would you like to know the price of? Please enter the exact dish name, for example: _How much is grilled chicken?_',
+    hoi_gia_mon: 'Which dish would you like to know the price of? Please type the dish name as it appears on our menu.',
     hoi_gio_mo_cua: 'We are open **10:00–22:00** every day (last seating at 21:30).',
     hoi_dia_chi: 'The restaurant is at **12 Nguyễn Văn Bảo Street, Hạnh Thông, Ho Chi Minh City**. Free motorcycle and car parking is available for guests.',
     hoi_lien_he: 'Please contact us via **hotline 0388 062 048** or message us directly in the Chat section of this website.',
@@ -80,7 +80,7 @@ const CAU_TRA_LOI = {
     hoi_combo: '現在ご利用いただけるセットメニューはこちらです。',
     hoi_giao_hang: 'テイクアウトとデリバリーをご利用いただけます。メニューからご注文後、お会計時にデリバリーを選択してください。',
     hoi_thanh_toan: '現金、銀行振込、VietQRでのお支払いをご利用いただけます。',
-    hoi_gia_mon: 'どの料理の価格をお知りになりたいですか？料理名を入力してください。例：_焼き鶏はいくらですか？_',
+    hoi_gia_mon: 'どの料理の価格をお知りになりたいですか？メニューに記載されている料理名をご入力ください。',
     hoi_gio_mo_cua: '毎日 **10:00～22:00** に営業しています（最終入店は21:30です）。',
     hoi_dia_chi: '店舗は **ホーチミン市ハイン・トン、グエン・ヴァン・バオ通り12番地** にあります。バイクと車の無料駐車場をご利用いただけます。',
     hoi_lien_he: '**ホットライン 0388 062 048**、または本サイトのチャットからお問い合わせください。',
@@ -105,25 +105,67 @@ const GOI_Y = {
   'Quán có món gì ngon?': { en: 'What dishes do you recommend?', ja: 'おすすめの料理は何ですか？' },
   'Có khuyến mãi nào không?': { en: 'Are there any promotions?', ja: 'キャンペーンはありますか？' },
   'Đặt bàn cho 4 người': { en: 'Book a table for 4 people', ja: '4名でテーブルを予約したいです' },
-  'Giá gà nướng bao nhiêu?': { en: 'How much is grilled chicken?', ja: '焼き鶏はいくらですか？' },
   'Có nhận giao hàng không?': { en: 'Do you offer delivery?', ja: 'デリバリーはありますか？' },
   'Quán mở cửa mấy giờ?': { en: 'What are your opening hours?', ja: '営業時間を教えてください。' },
 };
+
+// Câu gợi ý hỏi giá mang tên một món CÓ THẬT, do phía Python lấy từ thực đơn
+// đang bán (xem `ten_mon_vi_du` trong ml_service/chatbot/tra_loi.py). Vì tên
+// món đổi theo thực đơn nên không tra bảng cố định được — dịch theo mẫu câu và
+// giữ nguyên tên món.
+const MAU_GOI_Y_GIA = /^Giá\s+(.+?)\s+bao nhiêu\?$/i;
+const DICH_GOI_Y_GIA = {
+  en: (mon) => `How much is ${mon}?`,
+  ja: (mon) => `${mon}はいくらですか？`,
+};
+
+function dichGoiY(cau, nn) {
+  const san = (GOI_Y[cau] || {})[nn];
+  if (san) return san;
+  const khop = String(cau || '').match(MAU_GOI_Y_GIA);
+  if (khop && DICH_GOI_Y_GIA[nn]) return DICH_GOI_Y_GIA[nn](khop[1]);
+  return cau;
+}
+
+// Câu trả lời giá món: dữ liệu (tên món, giá) phải đi nguyên vẹn, chỉ dịch phần
+// chữ bao quanh. Mẫu câu bên Python đổi thì regex không khớp và ta giữ nguyên
+// câu tiếng Việt — hiện tiếng Việt còn hơn hiện sai giá.
+const MAU_TRA_LOI_GIA = /^\*\*(.+?)\*\*\s*\((.+?)\)\s*có giá\s*\*\*(.+?)\*\*([\s\S]*)$/;
+const DICH_TRA_LOI_GIA = {
+  en: (ten, loai, gia, con) => `**${ten}** (${loai}) costs **${gia}**${con}`,
+  ja: (ten, loai, gia, con) => `**${ten}**（${loai}）は **${gia}** です${con}`,
+};
+
+/*
+ * `hoi_gia_mon` co hai ket cuc khac han nhau: HOI LAI ten mon (khi khach chua
+ * neu mon nao), hoac TRA VE gia that. Ban dich san chi hop voi ket cuc dau.
+ * Truoc day no de len ca ket cuc sau, nen khach EN/JA bam vao goi y hoi gia se
+ * nhan lai cau hoi nguoc thay vi con so. Bot bao dang cho tham so bang
+ * `cho_tham_so`; khong co co do nghia la no da tra loi that.
+ */
+function dangTraSoLieu(kq) {
+  return kq.y_dinh === 'hoi_gia_mon' && !kq.cho_tham_so;
+}
+
+function dichCauGiaMon(vanBan, nn) {
+  const khop = String(vanBan || '').match(MAU_TRA_LOI_GIA);
+  const mau = DICH_TRA_LOI_GIA[nn];
+  if (!khop || !mau) return vanBan;
+  return mau(khop[1], khop[2], khop[3], khop[4]);
+}
 
 function dichPhanHoi(phanHoi, ngonNgu) {
   const nn = maHopLe(ngonNgu);
   if (nn === 'vi' || !phanHoi) return phanHoi;
   const banDich = CAU_TRA_LOI[nn] || {};
   const kq = { ...phanHoi };
-  if (banDich[kq.y_dinh]) kq.van_ban = banDich[kq.y_dinh];
+  if (banDich[kq.y_dinh] && !dangTraSoLieu(kq)) kq.van_ban = banDich[kq.y_dinh];
+  else if (kq.y_dinh === 'hoi_gia_mon') kq.van_ban = dichCauGiaMon(kq.van_ban, nn);
   if (Array.isArray(kq.cot)) {
     kq.cot = kq.cot.map((cot) => ({ ...cot, nhan: (NHAN_COT[nn] || {})[cot.khoa] || cot.nhan }));
   }
   if (Array.isArray(kq.goi_y)) {
-    kq.goi_y = kq.goi_y.map((cau) => ({
-      cau_hoi: cau,
-      nhan: (GOI_Y[cau] || {})[nn] || cau,
-    }));
+    kq.goi_y = kq.goi_y.map((cau) => ({ cau_hoi: cau, nhan: dichGoiY(cau, nn) }));
   }
   return kq;
 }

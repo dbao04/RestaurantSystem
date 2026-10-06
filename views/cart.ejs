@@ -1,32 +1,51 @@
 <%- include('partials/header', { title: t('gio_hang.tieu_de') }) %>
 
+<%
+  var coMon = cartItems && cartItems.length > 0;
+  var tt = (typeof thongTinGiao !== 'undefined' && thongTinGiao) ? thongTinGiao : null;
+  var bg = (typeof baoGia !== 'undefined' && baoGia) ? baoGia : null;
+  var phiShip = (bg && bg.giao_duoc) ? bg.phi : (tt && tt.phi_co_ban ? tt.phi_co_ban : 0);
+  var tongTien = Number(subtotal || 0) + (tt ? Number(phiShip || 0) : 0);
+%>
+
 <section class="nh-subhero nh-subhero--sm">
   <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow"><%= t('gio_hang.eyebrow') %></span>
-    <h1><%= t('gio_hang.tieu_de') %></h1>
-    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('gio_hang.tieu_de') %></div>
+    <% if (coMon && tt) { %>
+      <span class="nh-eyebrow"><%= t('gio_hang.buoc_3_tieu_de') %></span>
+      <h1><%= t('gio_hang.gio_hang_va_dat_mon') %></h1>
+      <div class="nh-crumbs">
+        <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
+        <a href="/giao-hang"><%= t('gio_hang.thong_tin_giao_hang') %></a> &nbsp;/&nbsp; 
+        <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; 
+        <span><%= t('gio_hang.gio_hang_va_dat_mon') %></span>
+      </div>
+    <% } else { %>
+      <span class="nh-eyebrow"><%= t('gio_hang.eyebrow') %></span>
+      <h1><%= t('gio_hang.tieu_de') %></h1>
+      <div class="nh-crumbs">
+        <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
+        <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; 
+        <span><%= t('gio_hang.tieu_de') %></span>
+      </div>
+    <% } %>
   </div>
 </section>
 
 <section class="nh-section nh-section--cream">
   <div class="nh-container">
-    <%- include('partials/nh-steps', { buoc: 2 }) %>
+    <%# Chỉ hiện thanh tiến trình bước khi giỏ hàng ĐANG CÓ MÓN %>
+    <% if (coMon && tt) { %>
+      <%- include('partials/nh-steps', { buoc: 3 }) %>
+    <% } %>
 
-    <%
-      /* `error` xuất hiện khi khách bấm "Đặt bàn" lúc giỏ còn trống — server
-         đưa về đây kèm lời nhắc. Trình bày như một lời hướng dẫn ngay trên đầu
-         chứ không phải một khối báo lỗi đỏ, vì khách không làm gì sai cả. */
-      var coMon = cartItems && cartItems.length > 0;
-    %>
     <% if (typeof error !== 'undefined' && error) { %>
       <div class="nh-panel nh-reveal" style="border-left:4px solid var(--nh-gold); margin-bottom:1.4rem">
         <div style="display:flex; gap:.9rem; align-items:flex-start">
           <i class="fas fa-circle-info" style="color:var(--nh-gold); font-size:1.3rem; margin-top:.2rem"></i>
           <div>
-            <strong style="color:var(--nh-espresso)"><%= t('gio_hang.chon_mon_truoc') %></strong>
-            <p class="nh-note" style="margin-top:.3rem"><%= error %></p>
+            <strong style="color:var(--nh-espresso)"><%= error %></strong>
           </div>
         </div>
       </div>
@@ -34,34 +53,34 @@
 
     <% if (coMon) { %>
       <div class="nh-checkout">
-        <!-- Danh sách món -->
+        <!-- Danh sách món trong giỏ -->
         <div>
           <div class="nh-panel nh-reveal">
             <h3 class="nh-panel__title">
               <i class="fas fa-utensils"></i>
               <%= t('gio_hang.mon_da_chon') %>
-              <span class="nh-locked" style="margin-left:auto"><%= cartItems.length %> <%= t('chung.mon') %></span>
+              <span class="nh-locked" style="margin-left:auto"><%= t('gio_hang.so_mon_count', { n: cartItems.length }) %></span>
             </h3>
 
             <% cartItems.forEach(function (item) { %>
               <div class="nh-line">
-                <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= item.name_mon %>"
+                <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= tenMon(item).chinh %>"
                      onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
 
                 <div class="nh-line__info">
                   <h4 class="nh-line__name"><%= tenMon(item).chinh %></h4>
-                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ <%= t('gio_hang.moi_phan') %></div>
+                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ / <%= t('chung.phan') %></div>
                 </div>
 
-                <!-- Đổi số lượng: gửi ngay khi bấm +/- nên không cần nút "Cập nhật" riêng. -->
+                <!-- Đổi số lượng -->
                 <form action="/update-cart" method="post" class="nh-line__qty js-qty">
                   <input type="hidden" name="cartid" value="<%= item.cart_id %>">
                   <div class="nh-qty">
-                    <button type="button" data-buoc="-1" aria-label="<%= t('chi_tiet.bot_mot_phan') %>"
+                    <button type="button" data-buoc="-1" aria-label="-"
                       <%= item.soluong <= 1 ? 'disabled' : '' %>><i class="fas fa-minus"></i></button>
                     <input type="number" name="soluong" value="<%= item.soluong %>" min="1" max="50"
-                           aria-label="<%= t('chung.so_luong') %> <%= item.name_mon %>">
-                    <button type="button" data-buoc="1" aria-label="<%= t('chi_tiet.them_mot_phan') %>"><i class="fas fa-plus"></i></button>
+                           aria-label="<%= tenMon(item).chinh %>">
+                    <button type="button" data-buoc="1" aria-label="+"><i class="fas fa-plus"></i></button>
                   </div>
                   <noscript><button type="submit" class="nh-btn nh-btn--sm nh-btn--dark"><%= t('gio_hang.cap_nhat') %></button></noscript>
                 </form>
@@ -69,47 +88,97 @@
                 <div class="nh-line__sum"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
 
                 <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>"
-                   title="<%= t('gio_hang.bo_mon_nay') %>"
-                   onclick="return confirm('<%= t('gio_hang.xac_nhan_bo', { ten: (item.name_mon||'').trim() }) %>')">
+                   title="<%= t('gio_hang.xoa') %>"
+                   onclick="return confirm('<%= t('gio_hang.xac_nhan_xoa_mon', { mon: tenMon(item).chinh }) %>')">
                   <i class="fas fa-times"></i>
                 </a>
               </div>
             <% }) %>
           </div>
 
-          <div style="margin-top:1.2rem">
+          <div style="margin-top:1.2rem; display:flex; gap:12px; flex-wrap:wrap;">
             <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
               <i class="fas fa-plus"></i> <%= t('gio_hang.chon_them_mon') %>
             </a>
+            <% if (!tt) { %>
+              <a href="/giao-hang" class="nh-btn nh-btn--gold nh-btn--sm">
+                <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_giao') %>
+              </a>
+            <% } %>
           </div>
         </div>
 
-        <!-- Tóm tắt -->
+        <!-- Tóm tắt đơn hàng & Địa chỉ nhận -->
         <aside class="nh-summary nh-reveal">
           <div class="nh-panel">
-            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('gio_hang.tam_tinh') %></h3>
+            <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> <%= t('gio_hang.thong_tin_giao_hang') %></h3>
+
+            <% if (tt) { %>
+              <div style="background:#fffdf7; border:1px solid #eee3d0; border-radius:10px; padding:12px; margin-bottom:14px; font-size:0.92rem; line-height:1.6;">
+                <div><strong style="color:var(--nh-espresso);"><i class="fas fa-map-marker-alt" style="color:var(--nh-gold); margin-right:4px;"></i> <%= tt.dia_chi_giao %></strong></div>
+                <div style="color:#666; margin-top:3px;"><i class="fas fa-user" style="margin-right:4px;"></i> <%= tt.ten_nguoi_nhan %> · <%= tt.sdt_nguoi_nhan %></div>
+                <div style="color:#666;"><i class="fas fa-clock" style="margin-right:4px;"></i> <%= t('gio_hang.giao_luc', { gio: tt.timebook, ngay: tt.datebook }) %></div>
+                <% if (tt.ghi_chu_giao) { %>
+                  <div style="color:#888; font-style:italic; font-size:0.86rem; margin-top:2px;"><%= t('gio_hang.ghi_chu') %>: <%= tt.ghi_chu_giao %></div>
+                <% } %>
+                <div style="margin-top:6px;">
+                  <a href="/giao-hang" style="color:var(--nh-gold); font-weight:600; text-decoration:underline; font-size:0.86rem;"><i class="fas fa-edit"></i> <%= t('gio_hang.thay_doi_dia_chi') %></a>
+                </div>
+              </div>
+            <% } else { %>
+              <div style="background:#fdf0ee; border:1px solid #f0c8c0; border-radius:10px; padding:12px; margin-bottom:14px; color:#b03a2e; font-size:0.92rem;">
+                <i class="fas fa-exclamation-triangle"></i> <%= t('gio_hang.chua_co_dia_chi') %>
+                <div style="margin-top:8px;">
+                  <a href="/giao-hang" class="nh-btn nh-btn--sm nh-btn--dark" style="width:100%; justify-content:center;">
+                    <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_ngay') %>
+                  </a>
+                </div>
+              </div>
+            <% } %>
+
+            <h3 class="nh-panel__title" style="margin-top:1rem;"><i class="fas fa-receipt"></i> <%= t('gio_hang.tam_tinh') %></h3>
 
             <div class="nh-summary__row">
-              <span><%= t('gio_hang.so_mon') %></span><span><%= cartItems.length %></span>
+              <span><%= t('gio_hang.so_mon') %></span><span><%= t('gio_hang.so_mon_count', { n: cartItems.length }) %></span>
             </div>
             <div class="nh-summary__row">
-              <span><%= t('gio_hang.tong_so_phan') %></span>
-              <span><%= cartItems.reduce(function (s, i) { return s + Number(i.soluong); }, 0) %></span>
+              <span><%= t('gio_hang.tien_mon_an') %></span>
+              <span><%= formatMoney(subtotal) %> ₫</span>
+            </div>
+            <div class="nh-summary__row">
+              <span><%= t('gio_hang.phi_giao_hang') %></span>
+              <span><%= tt ? (phiShip > 0 ? formatMoney(phiShip) + ' ₫' : t('chung.mien_phi')) : '—' %></span>
             </div>
 
-            <div class="nh-summary__total">
-              <span><%= t('chung.tong_cong') %></span>
-              <b><%= formatMoney(subtotal) %> ₫</b>
+            <div class="nh-summary__total" style="border-top:1.5px dashed #eee3d0; padding-top:10px; margin-top:8px;">
+              <span><%= t('gio_hang.tong_thanh_toan') %></span>
+              <b><%= formatMoney(tongTien) %> ₫</b>
             </div>
 
-            <%# Gio da co mon nen di thang vao form dat ban kem don, bo qua trang chon. %>
-            <a href="/datban/goi-mon" class="nh-btn nh-btn--gold">
-              <%= t('gio_hang.thanh_toan') %> <i class="fas fa-arrow-right"></i>
-            </a>
+            <% if (tt) { %>
+              <form action="/datban" method="post" id="form-xacnhan">
+                <input type="hidden" name="hinh_thuc" value="giao_hang">
+                <input type="hidden" name="dia_chi_giao" value="<%= tt.dia_chi_giao %>">
+                <input type="hidden" name="ten_nguoi_nhan" value="<%= tt.ten_nguoi_nhan %>">
+                <input type="hidden" name="sdt_nguoi_nhan" value="<%= tt.sdt_nguoi_nhan %>">
+                <input type="hidden" name="ghi_chu_giao" value="<%= tt.ghi_chu_giao %>">
+                <input type="hidden" name="vi_do" value="<%= tt.vi_do %>">
+                <input type="hidden" name="kinh_do" value="<%= tt.kinh_do %>">
+                <input type="hidden" name="datebook" value="<%= tt.datebook %>">
+                <input type="hidden" name="timebook" value="<%= tt.timebook %>">
 
-            <p class="nh-note">
-              Bước sau bạn chọn ngày, giờ và số khách. Nhà hàng gọi lại xác nhận trước khi giữ bàn —
-              chưa thanh toán gì ở bước này.
+                <button type="submit" class="nh-btn nh-btn--gold" id="nut-xac-nhan">
+                  <i class="fas fa-check-circle"></i> <%= t('gio_hang.xac_nhan_dat_ngay') %>
+                </button>
+              </form>
+            <% } else { %>
+              <a href="/giao-hang" class="nh-btn nh-btn--gold">
+                <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_giao') %> <i class="fas fa-arrow-right"></i>
+              </a>
+            <% } %>
+
+            <p class="nh-note" style="margin-top:1rem">
+              <%- t('gio_hang.ghi_chu_thanh_toan_shipper') %>
             </p>
           </div>
         </aside>
@@ -117,20 +186,20 @@
     <% } else { %>
       <div class="nh-empty nh-reveal">
         <i class="fas fa-shopping-bag"></i>
-        <h3><%= t('gio_hang.dang_trong') %></h3>
+        <h3><%= t('gio_hang.gio_hang_trong') %></h3>
         <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
-          Hãy chọn vài món trong thực đơn. Bạn có thể đổi số lượng hoặc bỏ bớt bất cứ lúc nào
-          trước khi đặt bàn.
+          <%= t('gio_hang.gio_hang_trong_mo_ta') %>
         </p>
-        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('gio_hang.xem_thuc_don_va_chon') %></a>
+          <a href="/giao-hang" class="nh-btn nh-btn--dark"><i class="fas fa-location-dot"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+        </div>
       </div>
     <% } %>
   </div>
 </section>
 
 <script>
-  // Bấm +/- là gửi form luôn, khỏi phải bấm thêm nút "Cập nhật" như trước.
-  // Chờ 500ms để người bấm nhanh nhiều lần chỉ tốn một lần tải lại trang.
   document.querySelectorAll('.js-qty').forEach(function (form) {
     var o = form.querySelector('input[name="soluong"]');
     var hen = null;
@@ -144,7 +213,17 @@
     });
     o.onchange = guiSau;
   });
+
+  var formXacNhan = document.getElementById('form-xacnhan');
+  if (formXacNhan) {
+    formXacNhan.onsubmit = function () {
+      var nut = document.getElementById('nut-xac-nhan');
+      if (nut) {
+        nut.disabled = true;
+        nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + <%= JSON.stringify(t('gio_hang.dang_tao_don')) %>;
+      }
+    };
+  }
 </script>
 
-<%- include('partials/goi-y-mon') %>
 <%- include('partials/footer') %>

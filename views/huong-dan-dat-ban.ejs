@@ -68,39 +68,40 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
 
   .hd__muc { position: sticky; top: 96px; }
   @media (max-width: 900px) { .hd__muc { position: static; } }
-  .hd__muc h3 { font-size: .74rem; text-transform: uppercase; letter-spacing: .1em;
-    color: var(--nh-muted); margin-bottom: .8rem; font-family: var(--nh-sans); font-weight: 800; }
+  .hd__muc h3 { font-size: .76rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--nh-muted, #5c5148); margin-bottom: .8rem; font-family: var(--nh-sans); font-weight: 800; }
   .hd__muc ol { list-style: none; padding: 0; margin: 0; counter-reset: hd; }
   .hd__muc li { counter-increment: hd; }
   .hd__muc a { display: flex; gap: .6rem; padding: .45rem .2rem; font-size: .89rem;
-    color: var(--nh-muted); border-left: 2px solid transparent; padding-left: .8rem; transition: all .2s var(--nh-ease); }
+    color: var(--nh-muted, #5c5148); border-left: 2px solid transparent; padding-left: .8rem; transition: all .2s var(--nh-ease); font-weight: 500; }
   .hd__muc a::before { content: counter(hd) "."; color: var(--nh-gold); font-weight: 700; flex: none; }
-  .hd__muc a:hover { color: var(--nh-espresso); border-left-color: var(--nh-gold); }
+  .hd__muc a:hover { color: var(--nh-espresso, #2b1a12); border-left-color: var(--nh-gold); font-weight: 600; }
 
-  .hd__khoi { background: #fff; border-radius: 18px; padding: clamp(1.4rem, 3vw, 2.2rem);
-    box-shadow: var(--nh-shadow-sm); margin-bottom: 1.4rem; scroll-margin-top: 96px; }
-  .hd__khoi > h2 { font-size: clamp(1.25rem, 2.4vw, 1.55rem); margin-bottom: .3rem;
-    display: flex; align-items: center; gap: .7rem; }
+  .hd__khoi { background: var(--nh-surface, #ffffff); border-radius: 18px; padding: clamp(1.4rem, 3vw, 2.2rem);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 1.4rem; scroll-margin-top: 96px; border: 1.5px solid var(--nh-border, #eee3d0); }
+  .hd__khoi > h2 { font-size: clamp(1.25rem, 2.4vw, 1.55rem); margin-bottom: .4rem;
+    display: flex; align-items: center; gap: .7rem; color: var(--nh-espresso, #2b1a12); }
   .hd__khoi > h2 i { color: var(--nh-gold); font-size: 1.05rem; }
-  .hd__khoi > .dan { color: var(--nh-muted); font-size: .95rem; margin: 0 0 1.3rem; }
+  .hd__khoi > .dan { color: var(--nh-muted, #5c5148); font-size: .95rem; margin: 0 0 1.3rem; line-height: 1.6; }
 
   .hd__bang { width: 100%; border-collapse: collapse; font-size: .93rem; }
-  .hd__bang th, .hd__bang td { padding: .68rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
-  .hd__bang thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
-    color: var(--nh-muted); font-weight: 800; }
+  .hd__bang th, .hd__bang td { padding: .75rem .9rem; text-align: left; border-bottom: 1px solid var(--nh-line, rgba(0,0,0,0.08)); color: var(--nh-ink, #241d18); }
+  .hd__bang thead th { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--nh-muted, #5c5148); font-weight: 800; background: rgba(0,0,0,0.02); }
   .hd__bang tbody tr:last-child td { border-bottom: 0; }
-  .hd__bang td:first-child { font-weight: 600; color: var(--nh-espresso); }
+  .hd__bang td:first-child { font-weight: 650; color: var(--nh-espresso, #2b1a12); }
   .hd__bang .so { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-  .hd__buoc { list-style: none; padding: 0; margin: 0; counter-reset: b; }
-  .hd__buoc li { counter-increment: b; display: flex; gap: 1rem; padding: .8rem 0;
-    border-bottom: 1px dashed var(--nh-line); }
-  .hd__buoc li:last-child { border-bottom: 0; }
-  .hd__buoc li::before { content: counter(b); flex: none; width: 30px; height: 30px; border-radius: 50%;
-    background: var(--nh-espresso); color: var(--nh-gold-soft); display: grid; place-content: center;
-    font-weight: 800; font-size: .84rem; }
-  .hd__buoc b { display: block; color: var(--nh-espresso); margin-bottom: .12rem; }
-  .hd__buoc span { color: var(--nh-muted); font-size: .92rem; }
+  .hd__buoc { list-style: none; padding: 0; margin: 0; counter-reset: b; display: flex; flex-direction: column; gap: 0.9rem; }
+  .hd__buoc li { counter-increment: b; display: flex; gap: 1.1rem; padding: 1.1rem 1.2rem;
+    background: var(--nh-card-bg, #fffdf7); border: 1.5px solid var(--nh-border, #eee3d0); border-radius: 14px;
+    transition: all .2s var(--nh-ease); align-items: flex-start; }
+  .hd__buoc li:hover { border-color: var(--nh-gold); transform: translateX(3px); }
+  .hd__buoc li::before { content: counter(b); flex: none; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--nh-espresso, #2b1a12); color: var(--nh-gold-soft, #d9bd7e); display: grid; place-content: center;
+    font-weight: 800; font-size: .92rem; box-shadow: 0 2px 8px rgba(0,0,0,0.12); margin-top: 2px; }
+  .hd__buoc b { display: block; color: var(--nh-espresso, #2b1a12); font-size: 1.02rem; margin-bottom: .3rem; font-weight: 700; }
+  .hd__buoc span { color: var(--nh-muted, #5c5148); font-size: .92rem; line-height: 1.55; }
 
   .hd__nhac { display: flex; gap: .8rem; padding: .95rem 1.1rem; border-radius: 12px; font-size: .92rem;
     background: #fffbeb; border: 1px solid rgba(217,119,6,.3); color: #7c2d12; margin-top: 1.2rem; }
@@ -109,24 +110,110 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
 
   .hd__the { display: flex; flex-wrap: wrap; gap: .5rem; }
   .hd__the span { display: inline-flex; align-items: center; gap: .45rem; padding: .45rem .9rem;
-    border-radius: 999px; background: var(--nh-cream-2); font-size: .87rem; }
+    border-radius: 999px; background: var(--nh-card-bg, #f5efe6); border: 1px solid var(--nh-border, #e3d9cc); font-size: .87rem; color: var(--nh-espresso, #2b1a12); font-weight: 600; }
   .hd__the i { color: var(--nh-gold); }
 
   .hd__khu { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .8rem; }
-  .hd__khu article { padding: .95rem 1.1rem; border-radius: 12px; background: var(--nh-cream);
-    border: 1px solid var(--nh-line); }
-  .hd__khu b { display: block; color: var(--nh-espresso); margin-bottom: .15rem; }
-  .hd__khu small { color: var(--nh-muted); }
+  .hd__khu article { padding: .95rem 1.1rem; border-radius: 12px; background: var(--nh-card-bg, #fffdf7);
+    border: 1px solid var(--nh-border, #eee3d0); }
+  .hd__khu b { display: block; color: var(--nh-espresso, #2b1a12); margin-bottom: .15rem; font-weight: 700; }
+  .hd__khu small { color: var(--nh-muted, #5c5148); font-size: .84rem; }
 
-  .hd__hoi { border-bottom: 1px solid var(--nh-line); }
+  .hd__hoi { border-bottom: 1px solid var(--nh-line, rgba(0,0,0,0.08)); }
   .hd__hoi:last-child { border-bottom: 0; }
-  .hd__hoi summary { cursor: pointer; padding: .85rem 0; font-weight: 600; color: var(--nh-espresso);
-    list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+  .hd__hoi summary { cursor: pointer; padding: .95rem 0; font-weight: 650; color: var(--nh-espresso, #2b1a12);
+    list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center; font-size: .98rem; }
   .hd__hoi summary::-webkit-details-marker { display: none; }
   .hd__hoi summary::after { content: "\f078"; font-family: "Font Awesome 5 Free"; font-weight: 900;
     font-size: .75rem; color: var(--nh-gold); transition: transform .25s var(--nh-ease); }
   .hd__hoi[open] summary::after { transform: rotate(180deg); }
-  .hd__hoi p { color: var(--nh-muted); font-size: .93rem; margin: 0 0 .9rem; }
+  .hd__hoi p { color: var(--nh-muted, #5c5148); font-size: .93rem; margin: 0 0 1rem; line-height: 1.65; }
+
+  .hd-lichsu-box {
+    margin-top: 1.4rem; padding: 1.2rem 1.4rem; background: var(--nh-card-bg, #fffdf7);
+    border-radius: 12px; border: 1.5px solid var(--nh-border, #eee3d0);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+  .hd-lichsu-title { color: var(--nh-espresso, #2b1a12); font-size: .96rem; display: block; margin-bottom: .2rem; font-weight: 700; }
+  .hd-lichsu-desc { color: var(--nh-muted, #5c5148); font-size: .88rem; }
+
+  /* =========================================================================
+     DARK THEME (CHẾ ĐỘ TỐI - RÕ RÀNG, ÊM MẮT, KHÔNG CHÓI, KHÔNG MẤT CHỮ)
+     ========================================================================= */
+  [data-theme="dark"] .hd__muc h3 { color: #a6988c !important; }
+  [data-theme="dark"] .hd__muc a { color: #c5b8ab !important; }
+  [data-theme="dark"] .hd__muc a:hover { color: #ffffff !important; border-left-color: var(--nh-gold) !important; }
+
+  [data-theme="dark"] .hd__khoi {
+    background: #1c1510 !important;
+    border: 1px solid rgba(200, 162, 75, 0.25) !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7) !important;
+  }
+  [data-theme="dark"] .hd__khoi > h2 { color: #f8f4ee !important; }
+  [data-theme="dark"] .hd__khoi > .dan { color: #c5b8ab !important; }
+
+  [data-theme="dark"] .hd__bang thead th {
+    background: #241a13 !important;
+    color: #e2d7cb !important;
+    border-bottom: 1.5px solid rgba(200, 162, 75, 0.25) !important;
+  }
+  [data-theme="dark"] .hd__bang td {
+    color: #d8cec3 !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  [data-theme="dark"] .hd__bang td:first-child { color: #f8f4ee !important; }
+
+  [data-theme="dark"] .hd__buoc li {
+    background: #241a13 !important;
+    border-color: rgba(200, 162, 75, 0.25) !important;
+  }
+  [data-theme="dark"] .hd__buoc li:hover {
+    background: #2b1e16 !important;
+    border-color: var(--nh-gold) !important;
+  }
+  [data-theme="dark"] .hd__buoc li::before {
+    background: var(--nh-gold) !important;
+    color: #120e0b !important;
+  }
+  [data-theme="dark"] .hd__buoc b { color: #f8f4ee !important; }
+  [data-theme="dark"] .hd__buoc span { color: #c5b8ab !important; }
+
+  [data-theme="dark"] .hd__the span {
+    background: #241a13 !important;
+    border-color: rgba(200, 162, 75, 0.25) !important;
+    color: #f5efe6 !important;
+  }
+  [data-theme="dark"] .hd__the span i { color: var(--nh-gold-soft) !important; }
+
+  [data-theme="dark"] .hd__khu article {
+    background: #241a13 !important;
+    border-color: rgba(200, 162, 75, 0.25) !important;
+  }
+  [data-theme="dark"] .hd__khu b { color: #f8f4ee !important; }
+  [data-theme="dark"] .hd__khu small { color: #a6988c !important; }
+
+  [data-theme="dark"] .hd__hoi { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
+  [data-theme="dark"] .hd__hoi summary { color: #f8f4ee !important; }
+  [data-theme="dark"] .hd__hoi summary:hover { color: var(--nh-gold-soft) !important; }
+  [data-theme="dark"] .hd__hoi p { color: #c5b8ab !important; }
+
+  [data-theme="dark"] .hd__nhac {
+    background: #2c1e12 !important;
+    border-color: #784816 !important;
+    color: #fed7aa !important;
+  }
+  [data-theme="dark"] .hd__nhac--ok {
+    background: #142a1c !important;
+    border-color: #1b5e34 !important;
+    color: #86efac !important;
+  }
+
+  [data-theme="dark"] .hd-lichsu-box {
+    background: #241a13 !important;
+    border-color: rgba(200, 162, 75, 0.25) !important;
+  }
+  [data-theme="dark"] .hd-lichsu-title { color: #f8f4ee !important; }
+  [data-theme="dark"] .hd-lichsu-desc { color: #c5b8ab !important; }
 </style>
 
 <section class="nh-section nh-section--cream">
@@ -158,12 +245,12 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
           <table class="hd__bang">
             <tbody>
               <tr>
-                <td><%= t('chon_dat_ban.a_tieu_de') %></td>
-                <td><%= t('huong_dan_dat_ban.hai_cach_a') %></td>
+                <td>Đặt bàn dùng bữa tại chỗ</td>
+                <td>Giữ chỗ trước, tự chọn bàn trên sơ đồ và có thể gọi món trước (tùy chọn) để nhà hàng chuẩn bị chu đáo.</td>
               </tr>
               <tr>
-                <td><%= t('chon_dat_ban.b_tieu_de') %></td>
-                <td><%= t('huong_dan_dat_ban.hai_cach_b') %></td>
+                <td>Đặt món giao tận nơi</td>
+                <td>Chọn món ngon từ thực đơn, shipper giao món nóng sốt tận địa chỉ và theo dõi vị trí trên bản đồ.</td>
               </tr>
             </tbody>
           </table>
@@ -175,6 +262,9 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
             <a href="/menu" class="nh-btn nh-btn--outline nh-btn--sm">
               <i class="fas fa-book-open"></i> <%= t('chon_dat_ban.b_nut_chon_mon') %>
             </a>
+            <a href="/my-orders" class="nh-btn nh-btn--dark nh-btn--sm">
+              <i class="fas fa-history"></i> <%= t('dieu_huong.don_cua_toi') %>
+            </a>
           </div>
         </section>
 
@@ -184,12 +274,38 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
           <p class="dan"><%= t('huong_dan_dat_ban.buoc_dan') %></p>
 
           <ol class="hd__buoc">
-            <li><div><b><%= t('huong_dan_dat_ban.b1') %></b><span><%= t('huong_dan_dat_ban.b1_mo_ta') %></span></div></li>
+            <li>
+              <div>
+                <b><%= t('huong_dan_dat_ban.b1') %></b>
+                <span><%= t('huong_dan_dat_ban.b1_mo_ta') %></span>
+              </div>
+            </li>
             <% if (Number(cauHinh.allow_customer_pick_table) === 1) { %>
-              <li><div><b><%= t('huong_dan_dat_ban.b2') %></b><span><%= t('huong_dan_dat_ban.b2_mo_ta') %></span></div></li>
+              <li>
+                <div>
+                  <b><%= t('huong_dan_dat_ban.b2') %></b>
+                  <span><%= t('huong_dan_dat_ban.b2_mo_ta') %></span>
+                </div>
+              </li>
             <% } %>
-            <li><div><b><%= t('huong_dan_dat_ban.b3') %></b><span><%= t('huong_dan_dat_ban.b3_mo_ta') %></span></div></li>
-            <li><div><b><%= t('huong_dan_dat_ban.b4') %></b><span><%= t('huong_dan_dat_ban.b4_mo_ta') %></span></div></li>
+            <li>
+              <div>
+                <b><%= t('huong_dan_dat_ban.b_mon') %></b>
+                <span><%= t('huong_dan_dat_ban.b_mon_mo_ta') %></span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b><%= t('huong_dan_dat_ban.b3') %></b>
+                <span><%= t('huong_dan_dat_ban.b3_mo_ta') %></span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b><%= t('huong_dan_dat_ban.b4') %></b>
+                <span><%= t('huong_dan_dat_ban.b4_mo_ta') %></span>
+              </div>
+            </li>
           </ol>
 
           <div class="hd__nhac hd__nhac--ok">
@@ -395,9 +511,17 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
             <p><%= t('huong_dan_dat_ban.huy_khong_coc') %></p>
           <% } %>
 
-          <a href="/dat-ban/tra-cuu" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:1.2rem">
-            <i class="fas fa-search"></i> <%= t('dat_ban_moi.tra_cuu') %>
-          </a>
+          <div class="hd-lichsu-box">
+            <div>
+              <b class="hd-lichsu-title">
+                <i class="fas fa-calendar-check" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('dieu_huong.don_cua_toi') %>
+              </b>
+              <span class="hd-lichsu-desc">Xem toàn bộ lịch sử các đơn đặt bàn, trạng thái và xem chi tiết lượt đặt.</span>
+            </div>
+            <a href="/my-orders" class="nh-btn nh-btn--gold nh-btn--sm">
+              <i class="fas fa-arrow-right"></i> Xem lịch sử đặt bàn
+            </a>
+          </div>
         </section>
 
         <!-- ========================================= 9. CÂU HỎI -->

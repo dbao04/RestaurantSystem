@@ -1,5 +1,9 @@
-<%- include('partials/header') %>
-<%- include('partials/sidebar') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/header', { activePage: 'thanh-vien', staffName: session.staffName || 'Quản lý' }) %>
+<% } else { %>
+  <%- include('partials/header') %>
+  <%- include('partials/sidebar') %>
+<% } %>
 
 <%
   var HANG = ['bronze', 'silver', 'gold', 'platinum'];
@@ -140,4 +144,8 @@
   }
 </style>
 
-<%- include('partials/footer') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

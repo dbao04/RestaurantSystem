@@ -1,25 +1,15 @@
 <%
 /**
- * Thanh bon buoc cua luong dat mon + dat ban.
- *
- * Dung chung o ca bon trang de khach luon biet minh dang o dau va con may buoc
- * nua. Truoc day khong trang nao noi ra dieu do: xem gio hang xong bam "dat ban"
- * ma khong ro se toi dau, den luc dien form moi biet con phai xac nhan.
- *
- * Goi: include('partials/nh-steps', { buoc: 2 })   // 1..4
- *
- * Buoc DA QUA thi bam duoc de quay lai sua; buoc CHUA toi thi khong, vi quay
- * toi khi chua xong buoc truoc chi dan den trang bao loi.
+ * Thanh ba buoc cua luong dat mon giao tan noi.
+ * 1. Thong tin giao hang (/giao-hang)
+ * 2. Chon mon ngon (/menu)
+ * 3. Gio hang & Dat hang (/cart)
  */
 var _buoc = typeof buoc !== 'undefined' ? Number(buoc) : 1;
 var CAC_BUOC = [
-  { ten: t('buoc.chon_mon'), duongDan: '/menu' },
-  { ten: t('buoc.gio_hang'), duongDan: '/cart' },
-  /* Tro toi /datban/goi-mon chu khong /datban: thanh nay chi xuat hien trong
-     luong DAT MON, va nguoi bam quay lai buoc 3 la de sua ngay gio cua chinh don
-     do - dua ho ve trang chon hinh thuc la bat chon lai mot viec da chon xong. */
-  { ten: t('buoc.dat_ban'), duongDan: '/datban/goi-mon' },
-  { ten: t('buoc.xac_nhan'), duongDan: null },
+  { ten: t('buoc.b1_giao_hang'), duongDan: '/giao-hang' },
+  { ten: t('buoc.b2_chon_mon'), duongDan: '/menu' },
+  { ten: t('buoc.b3_dat_hang'), duongDan: '/cart' },
 ];
 %>
 <div class="nh-steps">

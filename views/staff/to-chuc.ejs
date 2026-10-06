@@ -1,4 +1,13 @@
-<%- include('partials/header', { activePage: activePage, staffName: session.staffName }) %>
+<%
+  var xemBangStaff = (typeof isStaff !== 'undefined' && isStaff) || 
+                     (typeof currentPath !== 'undefined' && currentPath.startsWith('/staff'));
+%>
+<% if (xemBangStaff) { %>
+  <%- include('partials/header', { activePage: activePage, staffName: session.staffName || session.adminname }) %>
+<% } else { %>
+  <%- include('../admin/partials/header', { title: 'Sơ đồ tổ chức', activePage: 'to-chuc' }) %>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
+<% } %>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 mb-0 text-gray-800">
@@ -353,4 +362,9 @@
 })();
 </script>
 
-<%- include('partials/footer') %>
+<% if (xemBangStaff) { %>
+  <%- include('partials/footer') %>
+<% } else { %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+  <%- include('../admin/partials/footer') %>
+<% } %>

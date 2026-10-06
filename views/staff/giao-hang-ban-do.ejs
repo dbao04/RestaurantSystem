@@ -114,9 +114,9 @@
   var ban_do = L.map('ban-do', { zoomControl: true })
     .setView(BAN_DAU.nha_hang ? [BAN_DAU.nha_hang.vi_do, BAN_DAU.nha_hang.kinh_do] : TAM_MAC_DINH, 14);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    attribution: '&copy; Google Maps',
   }).addTo(ban_do);
 
   // --- Nhà hàng ------------------------------------------------------------

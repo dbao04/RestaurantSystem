@@ -39,10 +39,14 @@ const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
 const { ngayCucBo } = require('../utils/thoiGian');
 
+const menuService = require('../services/menuService');
+
 const router = express.Router();
 
 /** Bao mot handler async - loi khong bi nuot thanh request treo. */
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+// ... (helpers)
 
 /**
  * Chan `:id` khong phai so.
@@ -136,11 +140,14 @@ function bao(suKien, duLieu) {
  * phai san sang ngay - khong phai sau ba vong quay.
  */
 router.get('/dat-ban', bat(async (req, res) => {
-  const [khuVuc, danhMuc, cauHinh] = await Promise.all([
+  const [khuVuc, danhMuc, cauHinh, danhMucMon, dsMonAn] = await Promise.all([
     xb.docKhuVuc(),
     ch.docDanhMuc(),
     qt.docCauHinh(),
+    menuService.getAllCategories().catch(() => []),
+    menuService.getAllDishes().catch(() => []),
   ]);
+  const dsMon = (dsMonAn || []).filter((m) => Number(m.tinhtrang) === 1);
   res.render('reservation', {
     title: 'Đặt bàn',
     activeNav: 'datban',
@@ -148,6 +155,8 @@ router.get('/dat-ban', bat(async (req, res) => {
     homNay: ngayCucBo(),
     khuVuc,
     theYeuCau: danhMuc.the_yeu_cau,
+    danhMucMon: danhMucMon || [],
+    dsMonAn: dsMon || [],
     cauHinh: {
       buoc_gio: Number(cauHinh.slot_step_minutes) || 15,
       toi_da_khach: Number(cauHinh.max_guests_online) || 30,
@@ -216,15 +225,9 @@ router.get('/huong-dan-dat-ban', bat(async (req, res) => {
   });
 }));
 
-/** Trang tra cuu / quan ly luot dat cua chinh khach. */
+/** Trang tra cuu / quan ly luot dat: chuyen huong truc tiep ve lich su / don cua toi */
 router.get('/dat-ban/tra-cuu', (req, res) => {
-  res.render('reservation-tra-cuu', {
-    title: res.locals.t('dat_ban_moi.tra_cuu'),
-    activeNav: 'datban',
-    nhan: nhanGiaoDien(res.locals.t),
-    ma: req.query.ma || '',
-    homNay: ngayCucBo(),
-  });
+  res.redirect('/my-orders');
 });
 
 // ------------------------------------------------------- API cong khai

@@ -1,13 +1,13 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: t('chat.tieu_de'), activeNav: 'chat' }) %>
 
-<section class="hero-wrap hero-wrap-2 nh-wa-koshi" data-stellar-background-ratio="0.5">
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="row no-gutters slider-text align-items-end justify-content-center">
-      <div class="col-md-9 ftco-animate text-center mb-4">
-        <h1 class="mb-2 bread"><%= t('chat.tieu_de') %></h1>
-        <p class="breadcrumbs"><span class="mr-2"><a href="/"><%= t('dieu_huong.trang_chu') %> <i class="ion-ios-arrow-forward"></i></a></span> <span>Chat <i class="ion-ios-arrow-forward"></i></span></p>
-      </div>
+<section class="nh-subhero" style="min-height: 32vh;">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('chat.ho_tro') %></span>
+    <h1><%= t('chat.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <span>Chat</span>
     </div>
   </div>
 </section>
@@ -183,8 +183,8 @@
   }
 </style>
 
-<section class="ftco-section">
-  <div class="container">
+<section class="nh-section nh-section--cream">
+  <div class="nh-container">
     <div class="ct-vo">
 
       <div class="ct-dau">

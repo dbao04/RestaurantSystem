@@ -9,7 +9,7 @@
  * Chay:  npm run mail:test                  (chi kiem tra dang nhap)
  *        npm run mail:test -- ai@gmail.com  (gui that mot thu toi dia chi do)
  */
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const nodemailer = require('nodemailer');
 const mailer = require('../utils/mailer');
 

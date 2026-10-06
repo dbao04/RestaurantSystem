@@ -55,11 +55,14 @@ function requireQuanLy(req, res, next) {
 // --------------------------------------------------------------------------
 // Trang du bao (quan ly)
 // --------------------------------------------------------------------------
-router.get('/du-bao', requireQuanLy, bat(async (req, res) => {
+router.get(['/du-bao', '/admin/du-bao', '/staff/du-bao', '/staff/ai-forecast'], requireQuanLy, bat(async (req, res) => {
   const trangThai = await ml.kiemTra();
   res.render('admin/du-bao', {
+    title: 'Dự báo Nhu cầu & AI Machine Learning',
+    isStaff: req.originalUrl.startsWith('/staff') || (req.baseUrl && req.baseUrl.startsWith('/staff')),
+    activePage: 'du-bao',
     trangThaiML: trangThai,
-    tenNguoiDung: req.session.adminname || req.session.staffname || 'Quản lý',
+    tenNguoiDung: req.session.adminname || req.session.staffName || req.session.staffname || 'Quản lý',
   });
 }));
 

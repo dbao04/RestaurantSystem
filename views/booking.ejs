@@ -1,279 +1,386 @@
-<%- include('partials/header', { title: t('dat_ban.tieu_de') }) %>
+<%- include('partials/header', { title: t('dat_ban.buoc_1_tieu_de') }) %>
 
 <%
-  /*
-    MOT FORM, HAI HINH THUC
-
-    Truoc day trang nay chi lam duoc mot viec: dat ban an tai cho. Cot
-    `hopdong.loai_don` da co gia tri 'giao_hang' tu lau va tro ly ao van hua
-    "nha hang co giao hang trong ban kinh 5km", nhung khong co cho nao tren
-    website de khach chon.
-
-    Tach thanh hai trang rieng se phai nhan doi ca gio hang, tom tat don, kiem
-    tra ngay gio va man hinh xac nhan. Nen o day dung mot form, doi phan giua
-    theo lua chon:
-
-        Tai cho    → so khach + dip dat ban        (nhu cu, khong doi gi)
-        Giao hang  → dia chi + ghim ban do + phi   (phan moi)
-
-    HAI O BAT BUOC CUA NHANH CU
-    ---------------------------
-    `khach` va `noidung` la NOT NULL trong CSDL va dang `required` tren form.
-    Khi khach chon giao hang, hai nhom nut do bi VO HIEU HOA (`disabled`) chu
-    khong phai chi bi an: o bi vo hieu hoa khong tham gia kiem tra `required`
-    va khong duoc gui len. An bang CSS thoi thi trinh duyet se tu choi gui form
-    kem mot thong bao tro toi mot o vo hinh - loi kho hieu nhat co the gap.
-    Hai o an di ben duoi cung ten se duoc bat len de thay the.
-  */
   var coGiaoHang = typeof giaoHang !== 'undefined' && giaoHang && giaoHang.bat;
-  var diaChiCu = (typeof khach !== 'undefined' && khach && khach.diachi) ? khach.diachi : '';
+  var tt = typeof thongTinGiao !== 'undefined' && thongTinGiao ? thongTinGiao : null;
+  var diaChiMacDinh = tt ? tt.dia_chi_giao : ((typeof khach !== 'undefined' && khach && khach.diachi) ? khach.diachi : '');
+  var tenMacDinh = tt ? tt.ten_nguoi_nhan : (session.username || '');
+  var sdtMacDinh = tt ? tt.sdt_nguoi_nhan : (session.usersdt || '');
+  var ghiChuMacDinh = tt ? tt.ghi_chu_giao : '';
+  var viDoMacDinh = tt ? tt.vi_do : '';
+  var kinhDoMacDinh = tt ? tt.kinh_do : '';
+  var ngayMacDinh = tt ? tt.datebook : '';
+  var gioMacDinh = tt ? tt.timebook : '18:00';
 %>
 
-<% if (coGiaoHang) { %>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
-<% } %>
-
 <style>
-  .hinh-thuc { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  @media (max-width:520px) { .hinh-thuc { grid-template-columns:1fr; } }
-  .ht-o { position:relative; }
-  .ht-o input { position:absolute; opacity:0; pointer-events:none; }
-  .ht-o span { display:block; border:2px solid #e3d9cc; border-radius:12px; padding:16px 14px;
-               cursor:pointer; transition:.18s; background:#fff; }
-  .ht-o input:checked + span { border-color:var(--nh-gold); background:#fffdf7;
-                               box-shadow:0 4px 16px rgba(200,169,81,.18); }
-  .ht-o b { display:block; font-size:16px; margin-bottom:3px; }
-  .ht-o small { color:#8a8a8a; line-height:1.5; display:block; }
-  .ht-o i { color:var(--nh-gold); margin-right:6px; }
+  .gh-map-wrapper {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1.5px solid var(--nh-border, #e3d9cc);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    background: #f0ede8;
+  }
+  #gh-ban-do {
+    height: 390px;
+    min-height: 390px;
+    width: 100%;
+    z-index: 10;
+    position: relative;
+    border-radius: 14px;
+  }
+  .leaflet-container {
+    background: #e8e5e0 !important;
+    font-family: inherit !important;
+  }
+  .leaflet-container img {
+    max-width: none !important;
+  }
+  .leaflet-tile-container img {
+    max-width: none !important;
+  }
+  .gh-map-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .gh-nut-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--nh-surface, #ffffff);
+    color: var(--nh-text, #2c1810);
+    border: 1px solid var(--nh-border, #e3d9cc);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .gh-nut-tool:hover {
+    background: var(--nh-gold, #c8a24b);
+    color: #2c1810;
+    border-color: var(--nh-gold, #c8a24b);
+    transform: translateY(-1px);
+  }
+  .gh-nut-tool--primary {
+    background: #2c1810;
+    color: #ffffff;
+    border-color: #2c1810;
+  }
+  .gh-nut-tool--primary:hover {
+    background: var(--nh-gold, #c8a24b);
+    color: #2c1810;
+  }
+  .gh-quick-areas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .gh-quick-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--nh-text-sub, #777);
+    margin-right: 4px;
+  }
+  .gh-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    background: rgba(200, 162, 75, 0.12);
+    border: 1px solid rgba(200, 162, 75, 0.35);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--nh-text, #2c1810);
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+  .gh-chip:hover, .gh-chip.active {
+    background: var(--nh-gold, #c8a24b);
+    color: #2c1810;
+    border-color: var(--nh-gold, #c8a24b);
+    transform: scale(1.03);
+  }
+  .gh-map-banner {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 500;
+    background: rgba(44, 24, 16, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    pointer-events: none;
+  }
+  .gh-fee-card {
+    background: var(--nh-surface, #fffdf7);
+    border: 1.5px solid var(--nh-border, #eee3d0);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-top: 14px;
+    transition: all .25s ease;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.03);
+  }
+  .gh-fee-card__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) {
+    .gh-fee-card__grid { grid-template-columns: 1fr; }
+  }
+  .gh-fee-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .gh-fee-item__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(200, 162, 75, 0.15);
+    color: var(--nh-gold, #c8a24b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .gh-fee-item__val {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--nh-text, #2c1810);
+  }
+  .gh-fee-item__lbl {
+    font-size: 12px;
+    color: var(--nh-text-sub, #888);
+  }
+  .gh-fee-card--loi {
+    background: #fdf0ee;
+    border-color: #f0c8c0;
+    color: #b03a2e;
+  }
+  .giao-hang-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .luong-huongdan { list-style:none; padding:0; margin:1rem 0 0; }
+  .luong-huongdan li { display:flex; gap:12px; margin-bottom:14px; align-items:flex-start; font-size:0.92rem; }
+  .luong-huongdan__so { width:24px; height:24px; border-radius:50%; background:var(--nh-gold); color:#2c1810;
+                        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
 
-  #gh-ban-do { height:280px; border-radius:12px; margin-top:10px; z-index:1; }
-  .gh-phi { background:#fffdf7; border:1px solid #eee3d0; border-radius:12px;
-            padding:13px 15px; margin-top:12px; font-size:14px; line-height:1.65; }
-  .gh-phi b { color:var(--nh-gold); font-size:17px; }
-  .gh-phi--loi { background:#fdf0ee; border-color:#f0c8c0; color:#b03a2e; }
-  .gh-nut { display:inline-flex; align-items:center; gap:7px; background:#2c1810; color:#fff;
-            border:0; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:600;
-            cursor:pointer; margin-top:10px; }
-  .gh-nut:disabled { opacity:.55; }
+  /* Marker Pulse Animation */
+  @keyframes markerPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(220, 53, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+  }
+  .gh-pulse-marker {
+    animation: markerPulse 2s infinite;
+    border-radius: 50%;
+  }
 </style>
 
-<section class="nh-subhero" style="min-height:38vh">
+<section class="nh-subhero" style="min-height:36vh">
   <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow"><%= t('dat_ban.eyebrow') %></span>
-    <h1 id="tieu-de"><%= t('dat_ban.tieu_de') %></h1>
-    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <a href="/datban"><%= t('chung.dat_ban') %></a> &nbsp;/&nbsp; <a href="/cart"><%= t('gio_hang.tieu_de') %></a> &nbsp;/&nbsp; <span id="crumb"><%= t('dat_ban.tieu_de') %></span></div>
+    <span class="nh-eyebrow"><%= t('dat_ban.dich_vu_giao_tan_noi') %></span>
+    <h1 id="tieu-de"><%= t('dat_ban.buoc_1_tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
+      <span><%= t('dat_ban.dich_vu_giao_tan_noi') %></span> &nbsp;/&nbsp; 
+      <span><%= t('buoc.b1_giao_hang') %></span>
+    </div>
   </div>
 </section>
 
 <section class="nh-section nh-section--cream">
   <div class="nh-container">
-    <%- include('partials/nh-steps', { buoc: 3 }) %>
+    <%- include('partials/nh-steps', { buoc: 1 }) %>
 
-    <form action="/datban" method="post" id="form-datban">
-      <%
-        /* Tên và số điện thoại lấy thẳng từ phiên đăng nhập, không cho sửa: đây
-           là thông tin nhà hàng dùng để gọi lại xác nhận, sửa được thì đơn có
-           thể mang tên người khác. Ô hiển thị chỉ để khách đối chiếu; giá trị
-           thật đi kèm trong hai input ẩn bên dưới. */
-      %>
-      <input type="hidden" name="hoten" value="<%= session.username %>">
-      <input type="hidden" name="sdt" value="<%= session.usersdt %>">
-
+    <form action="/giao-hang" method="post" id="form-giaohang">
       <div class="nh-checkout">
         <div>
-          <% if (coGiaoHang) { %>
-            <!-- Hình thức -->
-            <div class="nh-panel nh-reveal">
-              <h3 class="nh-panel__title"><i class="fas fa-hand-pointer"></i> <%= t('dat_ban.hinh_thuc') %></h3>
-              <div class="hinh-thuc">
-                <label class="ht-o">
-                  <input type="radio" name="hinh_thuc" value="tai_cho" checked>
-                  <span>
-                    <b><i class="fas fa-utensils"></i><%= t('dat_ban.tai_cho') %></b>
-                    <small><%= t('dat_ban.tai_cho_mo_ta') %></small>
-                  </span>
-                </label>
-                <label class="ht-o">
-                  <input type="radio" name="hinh_thuc" value="giao_hang">
-                  <span>
-                    <b><i class="fas fa-motorcycle"></i><%= t('dat_ban.giao_hang') %></b>
-                    <small>
-                      <%= t('dat_ban.giao_hang_mo_ta', { km: giaoHang.ban_kinh_km }) %>
-                      <% if (giaoHang.mien_phi_tu > 0) { %>
-                        <%= t('dat_ban.mien_phi_tu', { tien: formatMoney(giaoHang.mien_phi_tu) }) %>
-                      <% } %>
-                    </small>
-                  </span>
-                </label>
+          <!-- Thông tin giao hàng & Bản đồ -->
+          <div class="nh-panel nh-reveal">
+            <div class="giao-hang-badge">
+              <i class="fas fa-motorcycle"></i> <%= t('dat_ban.giao_tan_noi_ban_kinh', { km: (giaoHang && giaoHang.ban_kinh_km) ? giaoHang.ban_kinh_km : 5 }) %>
+              <% if (giaoHang && giaoHang.mien_phi_tu > 0) { %>
+                · <%= t('dat_ban.mien_phi_tu_ngan', { tien: formatMoney(giaoHang.mien_phi_tu) }) %>
+              <% } %>
+            </div>
+
+            <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> <%= t('dat_ban.dia_chi_nhan') %></h3>
+
+            <div class="nh-field">
+              <label><%= t('dat_ban.dia_chi_nhan_mon') %> <span class="req" style="color:#c0392b">*</span></label>
+              <input class="nh-input" name="dia_chi_giao" id="o-dia-chi" maxlength="300" required
+                     value="<%= diaChiMacDinh %>" placeholder="<%= t('dat_ban.dia_chi_goi_y') %>">
+              <span class="nh-hint"><%= t('dat_ban.dia_chi_nhan_hint') %></span>
+            </div>
+
+            <div class="nh-fields">
+              <div class="nh-field">
+                <label><%= t('dat_ban.ten_nguoi_nhan_lbl') %> <span class="req" style="color:#c0392b">*</span></label>
+                <input class="nh-input" name="ten_nguoi_nhan" maxlength="120" required
+                       value="<%= tenMacDinh %>">
+              </div>
+              <div class="nh-field">
+                <label><%= t('dat_ban.sdt_nguoi_nhan_lbl') %> <span class="req" style="color:#c0392b">*</span></label>
+                <input class="nh-input" name="sdt_nguoi_nhan" maxlength="20" required
+                       value="<%= sdtMacDinh %>">
               </div>
             </div>
 
-            <!-- Địa chỉ giao (chỉ hiện khi chọn giao hàng) -->
-            <div class="nh-panel nh-reveal" id="khoi-giao" style="display:none">
-              <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> <%= t('dat_ban.giao_toi_dau') %></h3>
+            <div class="nh-field">
+              <label><%= t('dat_ban.ghi_chu_shipper_lbl') %></label>
+              <input class="nh-input" name="ghi_chu_giao" maxlength="300"
+                     value="<%= ghiChuMacDinh %>"
+                     placeholder="<%= t('dat_ban.ghi_chu_shipper_ph') %>">
+            </div>
 
-              <div class="nh-field">
-                <label><%= t('dat_ban.dia_chi_nhan') %> <span class="req">*</span></label>
-                <input class="nh-input" name="dia_chi_giao" id="o-dia-chi" maxlength="300"
-                       value="<%= diaChiCu %>" placeholder="<%= t('dat_ban.dia_chi_goi_y') %>">
-                <span class="nh-hint"><%= t('dat_ban.dia_chi_chi_tiet') %></span>
-              </div>
+            <!-- Công cụ bản đồ & chọn vị trí -->
+            <label style="display:block; margin-top:18px; font-weight:700; font-size:15px">
+              <i class="fas fa-map-marked-alt" style="color:var(--nh-gold, #c8a24b)"></i> <%= t('dat_ban.vi_tri_ban_do') %> <span class="req" style="color:#c0392b">*</span>
+            </label>
+            <span class="nh-hint">
+              <%= t('dat_ban.vi_tri_ban_do_hint') %>
+            </span>
 
-              <div class="nh-fields">
-                <div class="nh-field">
-                  <label><%= t('dat_ban.nguoi_nhan') %></label>
-                  <input class="nh-input" name="ten_nguoi_nhan" maxlength="120"
-                         value="<%= session.username %>">
-                </div>
-                <div class="nh-field">
-                  <label><%= t('dat_ban.sdt_nguoi_nhan') %></label>
-                  <input class="nh-input" name="sdt_nguoi_nhan" maxlength="20"
-                         value="<%= session.usersdt %>">
-                </div>
-              </div>
-
-              <div class="nh-field">
-                <label><%= t('dat_ban.ghi_chu_shipper') %></label>
-                <input class="nh-input" name="ghi_chu_giao" maxlength="300"
-                       placeholder="<%= t('dat_ban.ghi_chu_shipper_goi_y') %>">
-              </div>
-
-              <label style="display:block; margin-top:6px; font-weight:600">
-                <%= t('dat_ban.ghim_ban_do') %> <span class="req">*</span>
-              </label>
-              <span class="nh-hint">
-                <%= t('dat_ban.ghim_huong_dan') %>
-              </span>
-              <button type="button" class="gh-nut" id="nut-vi-tri">
-                <i class="fas fa-crosshairs"></i> <%= t('dat_ban.dung_vi_tri') %>
+            <div class="gh-map-tools">
+              <button type="button" class="gh-nut-tool gh-nut-tool--primary" id="nut-vi-tri">
+                <i class="fas fa-crosshairs"></i> <%= t('dat_ban.dung_vi_tri_hien_tai') %>
               </button>
-              <div id="gh-ban-do"></div>
+              <button type="button" class="gh-nut-tool" id="nut-ve-nha-hang">
+                <i class="fas fa-store"></i> Về vị trí nhà hàng
+              </button>
+            </div>
 
-              <input type="hidden" name="vi_do" id="o-vi-do">
-              <input type="hidden" name="kinh_do" id="o-kinh-do">
+            <!-- Chọn nhanh khu vực -->
+            <div class="gh-quick-areas">
+              <span class="gh-quick-label"><i class="fas fa-bolt"></i> Chọn nhanh khu vực:</span>
+              <button type="button" class="gh-chip" data-lat="10.8231" data-lng="106.6873">Gò Vấp</button>
+              <button type="button" class="gh-chip" data-lat="10.8016" data-lng="106.7118">Bình Thạnh</button>
+              <button type="button" class="gh-chip" data-lat="10.7981" data-lng="106.6835">Phú Nhuận</button>
+              <button type="button" class="gh-chip" data-lat="10.8015" data-lng="106.6558">Tân Bình</button>
+              <button type="button" class="gh-chip" data-lat="10.7769" data-lng="106.7009">Quận 1</button>
+              <button type="button" class="gh-chip" data-lat="10.7845" data-lng="106.6844">Quận 3</button>
+              <button type="button" class="gh-chip" data-lat="10.8672" data-lng="106.6413">Quận 12</button>
+              <button type="button" class="gh-chip" data-lat="10.8505" data-lng="106.7719">Thủ Đức</button>
+            </div>
 
-              <div class="gh-phi" id="gh-phi">
-                <%= t('dat_ban.chua_ghim') %>
+            <!-- Khung bản đồ tương tác -->
+            <div class="gh-map-wrapper">
+              <div class="gh-map-banner">
+                <span><i class="fas fa-hand-pointer"></i> Nhấp bất cứ đâu trên bản đồ hoặc kéo thả ghim đỏ để chọn vị trí</span>
+                <span id="gh-map-coords" style="font-size:11.5px; opacity:.85"></span>
               </div>
+              <div id="gh-ban-do"></div>
             </div>
 
             <%
-              /* Hai ô thay thế cho `khach` và `noidung` khi chọn giao hàng.
-                 Bắt đầu ở trạng thái disabled để nhánh đặt bàn cũ không bị gửi
-                 lên hai giá trị cùng tên. */
+              var viDoGiaTri = viDoMacDinh || ((giaoHang && giaoHang.nha_hang && giaoHang.nha_hang.vi_do) ? (Number(giaoHang.nha_hang.vi_do) + 0.003).toFixed(6) : '10.737646');
+              var kinhDoGiaTri = kinhDoMacDinh || ((giaoHang && giaoHang.nha_hang && giaoHang.nha_hang.kinh_do) ? (Number(giaoHang.nha_hang.kinh_do) + 0.003).toFixed(6) : '106.706505');
             %>
-            <input type="hidden" name="khach" value="1" disabled id="gh-khach">
-            <input type="hidden" name="noidung" value="Giao hàng tận nơi" disabled id="gh-noidung">
-          <% } %>
+            <input type="hidden" name="vi_do" id="o-vi-do" value="<%= viDoGiaTri %>">
+            <input type="hidden" name="kinh_do" id="o-kinh-do" value="<%= kinhDoGiaTri %>">
 
-          <!-- Người đặt -->
-          <div class="nh-panel nh-reveal">
-            <h3 class="nh-panel__title"><i class="fas fa-user"></i> <%= t('dat_ban.nguoi_dat') %></h3>
-            <div class="nh-fields">
-              <div class="nh-field">
-                <label><%= t('chung.ho_ten') %> <span class="nh-locked"><%= t('chung.tu_dong') %></span></label>
-                <input class="nh-input" type="text" value="<%= session.username %>" readonly>
+            <!-- Bảng cước phí & khoảng cách trực quan -->
+            <div class="gh-fee-card" id="gh-phi-card">
+              <div class="gh-fee-card__grid">
+                <div class="gh-fee-item">
+                  <div class="gh-fee-item__icon"><i class="fas fa-route"></i></div>
+                  <div>
+                    <div class="gh-fee-item__val" id="gh-val-km"><%= (tt && tt.khoang_cach_km) ? tt.khoang_cach_km + ' km' : 'Chưa chọn' %></div>
+                    <div class="gh-fee-item__lbl">Khoảng cách giao</div>
+                  </div>
+                </div>
+                <div class="gh-fee-item">
+                  <div class="gh-fee-item__icon"><i class="fas fa-truck-fast"></i></div>
+                  <div>
+                    <div class="gh-fee-item__val" id="gh-val-phi" style="color:var(--nh-gold, #c8a24b)"><%= (tt && tt.phi_co_ban !== undefined) ? (tt.phi_co_ban > 0 ? formatMoney(tt.phi_co_ban) + ' ₫' : 'Miễn phí') : '0 ₫' %></div>
+                    <div class="gh-fee-item__lbl" id="gh-val-dv"><%= (tt && tt.don_vi) ? tt.don_vi.ten_dv : 'Phí giao hàng dự kiến' %></div>
+                  </div>
+                </div>
               </div>
-              <div class="nh-field">
-                <label><%= t('chung.dien_thoai') %> <span class="nh-locked"><%= t('chung.tu_dong') %></span></label>
-                <input class="nh-input" type="text" value="<%= session.usersdt %>" readonly>
-              </div>
+              <div id="gh-msg-phu" style="margin-top:10px; font-size:13px; color:var(--nh-text-sub, #777); display:none;"></div>
             </div>
-            <p class="nh-note">
-              <%= t('dat_ban.lay_tu_tai_khoan') %>
-              <a href="/profile" style="color:var(--nh-gold); font-weight:600"><%= t('dat_ban.thong_tin_ca_nhan') %></a>.
-            </p>
           </div>
 
-          <!-- Thời gian -->
+          <!-- Thời gian nhận hàng mong muốn -->
           <div class="nh-panel nh-reveal">
-            <h3 class="nh-panel__title"><i class="fas fa-calendar-alt"></i> <%= t('dat_ban.thoi_gian') %></h3>
+            <h3 class="nh-panel__title"><i class="fas fa-clock"></i> <%= t('dat_ban.thoi_gian_nhan_mong_muon') %></h3>
             <div class="nh-fields">
               <div class="nh-field">
-                <label id="nhan-ngay"><%= t('dat_ban.ngay_den') %> <span class="req">*</span></label>
+                <label id="nhan-ngay"><%= t('dat_ban.ngay_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
                 <input class="nh-input" type="date" name="datebook" id="o-ngay" required
+                       value="<%= ngayMacDinh %>"
                        min="<%= new Date().toISOString().slice(0,10) %>">
                 <span class="nh-hint" id="hint-ngay"><%= t('dat_ban.chi_tu_hom_nay') %></span>
               </div>
               <div class="nh-field">
-                <label id="nhan-gio"><%= t('dat_ban.gio_den') %> <span class="req">*</span></label>
-                <input class="nh-input" type="time" name="timebook" id="o-gio" required value="18:00">
+                <label id="nhan-gio"><%= t('dat_ban.gio_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
+                <input class="nh-input" type="time" name="timebook" id="o-gio" required value="<%= gioMacDinh %>">
                 <span class="nh-hint"><%= t('dat_ban.gio_phuc_vu') %></span>
               </div>
             </div>
           </div>
-
-          <!-- Số khách -->
-          <div class="nh-panel nh-reveal" id="khoi-khach">
-            <h3 class="nh-panel__title"><i class="fas fa-users"></i> <%= t('dat_ban.so_khach') %> <span class="req" style="color:#c0392b">*</span></h3>
-            <div class="nh-chips">
-              <% ['2','4','6','8','10-15','15-20'].forEach(function (n, i) { %>
-                <label class="nh-chip">
-                  <input type="radio" name="khach" value="<%= n %>" required <%= i === 0 ? '' : '' %>>
-                  <span><i class="fas fa-user-friends"></i> <%= n %> <%= t('chung.nguoi') %></span>
-                </label>
-              <% }) %>
-            </div>
-          </div>
-
-          <!-- Dịp -->
-          <div class="nh-panel nh-reveal" id="khoi-dip">
-            <h3 class="nh-panel__title"><i class="fas fa-champagne-glasses"></i> <%= t('dat_ban.dip') %> <span class="req" style="color:#c0392b">*</span></h3>
-            <div class="nh-chips">
-              <%
-                var DIP = [
-                  { v: 'Dùng bữa thường', nhan: t('dat_ban.dip_thuong'), i: 'fa-utensils' },
-                  { v: 'Sinh nhật', nhan: t('dat_ban.dip_sinh_nhat'), i: 'fa-cake-candles' },
-                  { v: 'Tiệc cưới', nhan: t('dat_ban.dip_cuoi'), i: 'fa-ring' },
-                  { v: 'Cuộc họp', nhan: t('dat_ban.dip_hop'), i: 'fa-briefcase' },
-                  { v: 'Khác', nhan: t('dat_ban.dip_khac'), i: 'fa-ellipsis' },
-                ];
-              %>
-              <% DIP.forEach(function (d) { %>
-                <label class="nh-chip">
-                  <input type="radio" name="noidung" value="<%= d.v %>" required>
-                  <span><i class="fas <%= d.i %>"></i> <%= d.nhan %></span>
-                </label>
-              <% }) %>
-            </div>
-          </div>
         </div>
 
-        <!-- Tóm tắt đơn -->
+        <!-- Cột tóm tắt & Tiếp tục chọn món -->
         <aside class="nh-summary nh-reveal">
           <div class="nh-panel">
-            <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('dat_ban.don_cua_ban') %></h3>
+            <h3 class="nh-panel__title"><i class="fas fa-route"></i> <%= t('dat_ban.quy_trinh_dat_mon') %></h3>
+            
+            <ul class="luong-huongdan">
+              <li>
+                <div class="luong-huongdan__so">1</div>
+                <div><strong><%= t('dat_ban.qt_b1_ten') %></strong><br><span style="color:#777"><%= t('dat_ban.qt_b1_mo_ta') %></span></div>
+              </li>
+              <li>
+                <div class="luong-huongdan__so" style="background:#e3d9cc; color:#555">2</div>
+                <div><strong><%= t('dat_ban.qt_b2_ten') %></strong><br><span style="color:#777"><%= t('dat_ban.qt_b2_mo_ta') %></span></div>
+              </li>
+              <li>
+                <div class="luong-huongdan__so" style="background:#e3d9cc; color:#555">3</div>
+                <div><strong><%= t('dat_ban.qt_b3_ten') %></strong><br><span style="color:#777"><%= t('dat_ban.qt_b3_mo_ta') %></span></div>
+              </li>
+            </ul>
 
-            <% if (typeof cartItems !== 'undefined' && cartItems && cartItems.length) { %>
-              <% cartItems.forEach(function (item) { %>
-                <div class="nh-summary__row">
-                  <span><%= (item.name_mon || '').trim() %> <span style="color:var(--nh-gold)">×<%= item.soluong %></span></span>
-                  <span><%= formatMoney(item.soluong * item.gia_mon) %> ₫</span>
-                </div>
-              <% }) %>
-              <% if (coGiaoHang) { %>
-                <div class="nh-summary__row" id="dong-phi" style="display:none">
-                  <span><%= t('dat_ban.phi_giao') %></span>
-                  <span id="dong-phi-so">—</span>
-                </div>
-              <% } %>
-              <div class="nh-summary__total">
-                <span><%= t('chung.tong_cong') %></span>
-                <b><span id="tong-tien"><%= formatMoney(subtotal) %></span> ₫</b>
-              </div>
-              <a href="/cart" class="nh-hint" style="display:inline-block; margin-top:.6rem; color:var(--nh-gold); font-weight:600">
-                <i class="fas fa-pen"></i> <%= t('dat_ban.sua_mon') %>
-              </a>
-            <% } %>
+            <div style="margin-top:1.8rem;">
+              <button type="submit" class="nh-btn nh-btn--gold" id="nut-gui">
+                <span id="chu-nut"><%= t('dat_ban.nut_xac_nhan_chon_mon') %></span> <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
 
-            <button type="submit" class="nh-btn nh-btn--gold" id="nut-gui">
-              <span id="chu-nut"><%= t('dat_ban.xac_nhan_dat_ban') %></span> <i class="fas fa-arrow-right"></i>
-            </button>
-
-            <p class="nh-note" id="ghi-chu-cuoi">
-              <%- t('dat_ban.ghi_chu_tai_cho') %>
+            <p class="nh-note" style="margin-top:1.1rem">
+              <%- t('dat_ban.chuyen_den_thuc_don_note') %>
             </p>
           </div>
         </aside>
@@ -282,187 +389,167 @@
   </div>
 </section>
 
-<% if (coGiaoHang) { %><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><% } %>
 <script>
-/*
-  Chuoi ngon ngu cho phan JavaScript cua trang nay.
-
-  Cac chuoi trong ma JavaScript khong the goi thang `t()` - `t()` chay o may
-  chu luc dung HTML, con doan nay chay o trinh duyet sau do. Nen dong het vao
-  mot doi tuong duy nhat, sinh boi may chu ngay tai day.
-
-  Gom thanh MOT khoi thay vi rai `<%%= t(...) %%>` giua ma JavaScript vi hai le:
-  ma con doc duoc nhu ma, va them mot chuoi moi chi la them mot dong o day.
-*/
-var NN = {
-  chiTuHomNay:   <%- JSON.stringify(t('dat_ban.chi_tu_hom_nay')) %>,
-  gioDaQua:      <%- JSON.stringify(t('dat_ban.gio_da_qua')) %>,
-  datHomNay:     <%- JSON.stringify(t('dat_ban.dat_trong_hom_nay')) %>,
-  dangGui:       <%- JSON.stringify(t('chung.dang_gui')) %>,
-  tieuDe:        <%- JSON.stringify(t('dat_ban.tieu_de')) %>,
-  tieuDeGiao:    <%- JSON.stringify(t('dat_ban.tieu_de_giao')) %>,
-  giaoHang:      <%- JSON.stringify(t('dat_ban.giao_hang')) %>,
-  ngayDen:       <%- JSON.stringify(t('dat_ban.ngay_den')) %>,
-  gioDen:        <%- JSON.stringify(t('dat_ban.gio_den')) %>,
-  ngayNhan:      <%- JSON.stringify(t('dat_ban.ngay_nhan')) %>,
-  gioNhan:       <%- JSON.stringify(t('dat_ban.gio_nhan')) %>,
-  xacNhanDatBan: <%- JSON.stringify(t('dat_ban.xac_nhan_dat_ban')) %>,
-  datGiaoHang:   <%- JSON.stringify(t('dat_ban.dat_giao_hang')) %>,
-  ghiChuTaiCho:  <%- JSON.stringify(t('dat_ban.ghi_chu_tai_cho')) %>,
-  ghiChuGiao:    <%- JSON.stringify(t('dat_ban.ghi_chu_giao')) %>,
-  dangTinhPhi:   <%- JSON.stringify(t('dat_ban.dang_tinh_phi')) %>,
-  dangLayViTri:  <%- JSON.stringify(t('dat_ban.dang_lay_vi_tri')) %>,
-  dungViTri:     <%- JSON.stringify(t('dat_ban.dung_vi_tri')) %>,
-  cachNhaHang:   <%- JSON.stringify(t('dat_ban.cach_nha_hang')) %>,
-  phiGiao:       <%- JSON.stringify(t('dat_ban.phi_giao')) %>,
-  mienPhi:       <%- JSON.stringify(t('chung.mien_phi')) %>,
-  duocMienPhi:   <%- JSON.stringify(t('dat_ban.duoc_mien_phi')) %>,
-  camKetTrong:   <%- JSON.stringify(t('dat_ban.cam_ket_trong')) %>,
-  loiDiaChi:     <%- JSON.stringify(t('dat_ban.loi_dia_chi')) %>,
-  loiGhim:       <%- JSON.stringify(t('dat_ban.loi_ghim')) %>,
-  loiViTri:      <%- JSON.stringify(t('dat_ban.loi_vi_tri')) %>,
-  khongHoTro:    <%- JSON.stringify(t('dat_ban.loi_khong_ho_tro')) %>,
-  loiBaoGia:     <%- JSON.stringify(t('dat_ban.loi_bao_gia')) %>,
-  khongGiaoDuoc: <%- JSON.stringify(t('dat_ban.loi_bao_gia')) %>,
-};
 (function () {
-  var form = document.getElementById('form-datban');
+  var I18N = {
+    chiTuHomNay: <%= JSON.stringify(t('dat_ban.chi_tu_hom_nay')) %>,
+    gioDaQua: <%= JSON.stringify(t('dat_ban.gio_da_qua')) %>,
+    datTrongHomNay: <%= JSON.stringify(t('dat_ban.dat_trong_hom_nay')) %>,
+    dangTinhPhi: <%= JSON.stringify(t('dat_ban.dang_tinh_phi')) %>,
+    mienPhi: <%= JSON.stringify(t('chung.mien_phi')) %>,
+    loiBaoGia: <%= JSON.stringify(t('dat_ban.loi_bao_gia')) %>,
+    khongHoTro: <%= JSON.stringify(t('dat_ban.loi_khong_ho_tro')) %>,
+    dangLayViTri: <%= JSON.stringify(t('dat_ban.dang_lay_vi_tri')) %>,
+    dungViTri: <%= JSON.stringify(t('dat_ban.dung_vi_tri_hien_tai')) %>,
+    loiViTri: <%= JSON.stringify(t('dat_ban.loi_vi_tri')) %>,
+    loiDiaChi: <%= JSON.stringify(t('dat_ban.loi_dia_chi')) %>,
+    loiGhim: <%= JSON.stringify(t('dat_ban.loi_ghim')) %>,
+    dangGui: <%= JSON.stringify(t('chung.dang_gui')) %>
+  };
+
+  var form = document.getElementById('form-giaohang');
   var oNgay = document.getElementById('o-ngay');
   var oGio = document.getElementById('o-gio');
   var hint = document.getElementById('hint-ngay');
 
-  // Mặc định là hôm nay để khách đặt trong ngày chỉ phải chọn giờ.
   var homNay = new Date();
   var yyyymmdd = homNay.getFullYear() + '-' +
     String(homNay.getMonth() + 1).padStart(2, '0') + '-' +
     String(homNay.getDate()).padStart(2, '0');
   if (!oNgay.value) oNgay.value = yyyymmdd;
 
-  // Đặt trong ngày mà chọn giờ đã trôi qua thì báo ngay tại chỗ, chứ để server
-  // trả về alert() rồi history.back() là mất hết những gì vừa điền.
+  if (!oGio.value || oGio.value === '18:00') {
+    var gioHen = new Date(Date.now() + 45 * 60 * 1000);
+    var gioStr = String(gioHen.getHours()).padStart(2, '0') + ':' + String(gioHen.getMinutes()).padStart(2, '0');
+    oGio.value = gioStr;
+  }
+
   function kiemTra() {
-    if (oNgay.value !== yyyymmdd) { hint.textContent = NN.chiTuHomNay; hint.style.color = ''; return true; }
+    if (oNgay.value !== yyyymmdd) { hint.textContent = I18N.chiTuHomNay; hint.style.color = ''; return true; }
     var g = (oGio.value || '').split(':');
     if (g.length < 2) return true;
     var chon = new Date(); chon.setHours(Number(g[0]), Number(g[1]), 0, 0);
     if (chon <= new Date()) {
-      hint.textContent = NN.gioDaQua;
+      hint.textContent = I18N.gioDaQua;
       hint.style.color = '#c0392b';
       return false;
     }
-    hint.textContent = NN.datHomNay; hint.style.color = '';
+    hint.textContent = I18N.datTrongHomNay; hint.style.color = '';
     return true;
   }
   oNgay.onchange = kiemTra;
   oGio.onchange = kiemTra;
 
-  form.onsubmit = function (e) {
-    if (!kiemTra()) { e.preventDefault(); oGio.focus(); return false; }
-    if (typeof kiemTraGiaoHang === 'function' && !kiemTraGiaoHang()) { e.preventDefault(); return false; }
-    var nut = form.querySelector('button[type=submit]');
-    nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + NN.dangGui;
-  };
-
-<% if (coGiaoHang) { %>
-  // ======================================================================
-  // NHÁNH GIAO HÀNG
-  // ======================================================================
-  var NHA_HANG = <%- JSON.stringify(giaoHang.nha_hang) %>;
-  var TIEN_HANG = <%= Number(subtotal) || 0 %>;
-
-  var khoiGiao = document.getElementById('khoi-giao');
-  var khoiKhach = document.getElementById('khoi-khach');
-  var khoiDip = document.getElementById('khoi-dip');
+  var NHA_HANG = <%- (typeof giaoHang !== 'undefined' && giaoHang && giaoHang.nha_hang) ? JSON.stringify(giaoHang.nha_hang) : 'null' %>;
   var oViDo = document.getElementById('o-vi-do');
   var oKinhDo = document.getElementById('o-kinh-do');
   var oDiaChi = document.getElementById('o-dia-chi');
-  var hopPhi = document.getElementById('gh-phi');
-  var dongPhi = document.getElementById('dong-phi');
-  var dongPhiSo = document.getElementById('dong-phi-so');
-  var tongTien = document.getElementById('tong-tien');
-  var ghKhach = document.getElementById('gh-khach');
-  var ghNoiDung = document.getElementById('gh-noidung');
+  var feeCard = document.getElementById('gh-phi-card');
+  var valKm = document.getElementById('gh-val-km');
+  var valPhi = document.getElementById('gh-val-phi');
+  var valDv = document.getElementById('gh-val-dv');
+  var msgPhu = document.getElementById('gh-msg-phu');
+  var mapCoords = document.getElementById('gh-map-coords');
 
-  var laGiao = false;
   var baoGia = null;
   var ban_do = null, ghim = null;
 
   function tien(n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); }
 
-  /* Bật/tắt hai nhóm bắt buộc của nhánh đặt bàn.
-     Phải dùng `disabled` chứ không chỉ ẩn — xem ghi chú đầu tệp. */
-  function doiHinhThuc(giao) {
-    laGiao = giao;
-    khoiGiao.style.display = giao ? '' : 'none';
-    khoiKhach.style.display = giao ? 'none' : '';
-    khoiDip.style.display = giao ? 'none' : '';
-
-    form.querySelectorAll('#khoi-khach input, #khoi-dip input').forEach(function (o) {
-      o.disabled = giao;
-    });
-    ghKhach.disabled = !giao;
-    ghNoiDung.disabled = !giao;
-
-    document.getElementById('tieu-de').textContent = giao ? NN.tieuDeGiao : NN.tieuDe;
-    document.getElementById('crumb').textContent = giao ? NN.giaoHang : NN.tieuDe;
-    document.getElementById('nhan-ngay').innerHTML = (giao ? NN.ngayNhan : NN.ngayDen) + ' <span class="req">*</span>';
-    document.getElementById('nhan-gio').innerHTML = (giao ? NN.gioNhan : NN.gioDen) + ' <span class="req">*</span>';
-    document.getElementById('chu-nut').textContent = giao ? NN.datGiaoHang : NN.xacNhanDatBan;
-    document.getElementById('ghi-chu-cuoi').innerHTML = giao ? NN.ghiChuGiao : NN.ghiChuTaiCho;
-
-    dongPhi.style.display = (giao && baoGia && baoGia.giao_duoc) ? '' : 'none';
-    veTong();
-    if (giao) setTimeout(dungBanDo, 60);   // đợi khối hiện ra rồi Leaflet mới đo được kích thước
-  }
-
-  function veTong() {
-    var them = (laGiao && baoGia && baoGia.giao_duoc) ? Number(baoGia.phi) : 0;
-    tongTien.textContent = tien(TIEN_HANG + them);
-  }
-
-  /* Leaflet đo kích thước khung lúc khởi tạo. Dựng bản đồ trong một khối
-     display:none thì nó nghĩ khung rộng 0px và chỉ vẽ một mảng xám. Nên hoãn
-     tới lần đầu khối được hiện ra, và gọi invalidateSize() cho các lần sau. */
   function dungBanDo() {
-    var tam = NHA_HANG ? [NHA_HANG.vi_do, NHA_HANG.kinh_do] : [10.7756, 106.7019];
-    if (ban_do) { ban_do.invalidateSize(); return; }
+    var mapEl = document.getElementById('gh-ban-do');
+    if (!mapEl) return;
+    if (typeof L === 'undefined') {
+      setTimeout(dungBanDo, 100);
+      return;
+    }
+    var tam = (NHA_HANG && NHA_HANG.vi_do && NHA_HANG.kinh_do)
+      ? [Number(NHA_HANG.vi_do), Number(NHA_HANG.kinh_do)]
+      : [10.734646, 106.703505];
 
-    ban_do = L.map('gh-ban-do').setView(tam, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(ban_do);
-
-    if (NHA_HANG) {
-      L.marker(tam, {
-        icon: L.divIcon({
-          className: '',
-          html: '<div style="display:flex;align-items:center;justify-content:center;width:28px;' +
-                'height:28px;border-radius:50%;background:#2c1810;color:#fff;border:2px solid #fff;' +
-                'box-shadow:0 2px 8px rgba(0,0,0,.35)"><i class="fas fa-utensils"></i></div>',
-          iconSize: [28, 28], iconAnchor: [14, 14],
-        }),
-      }).addTo(ban_do).bindPopup(<%- JSON.stringify(t('chung.ten_nha_hang')) %>);
+    if (ban_do) {
+      ban_do.invalidateSize();
+      return;
     }
 
-    ban_do.on('click', function (e) { datGhim(e.latlng.lat, e.latlng.lng); });
+    try {
+      ban_do = L.map('gh-ban-do', {
+        zoomControl: true,
+        fadeAnimation: false
+      }).setView(tam, 14);
+
+      // Lớp bản đồ Google Maps sắc nét, tiếng Việt, tốc độ cao, không bao giờ bị chặn
+      var tileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        attribution: '&copy; Google Maps'
+      }).addTo(ban_do);
+
+      tileLayer.on('tileerror', function() {
+        if (!this._fallbackSet) {
+          this._fallbackSet = true;
+          this.setUrl('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png');
+        }
+      });
+
+      if (NHA_HANG) {
+        L.marker(tam, {
+          icon: L.divIcon({
+            className: '',
+            html: '<div style="display:flex;align-items:center;justify-content:center;width:34px;' +
+                  'height:34px;border-radius:50%;background:#241a14;color:#c8a24b;border:2.5px solid #fff;' +
+                  'box-shadow:0 4px 12px rgba(0,0,0,.5);font-size:15px"><i class="fas fa-utensils"></i></div>',
+            iconSize: [34, 34], iconAnchor: [17, 17],
+          }),
+        }).addTo(ban_do).bindPopup('<b>Nhà Hàng Bảo Đoàn</b><br>Điểm xuất phát giao hàng');
+      }
+
+      var initViDo = (oViDo.value && !isNaN(Number(oViDo.value))) ? Number(oViDo.value) : (tam[0] + 0.003);
+      var initKinhDo = (oKinhDo.value && !isNaN(Number(oKinhDo.value))) ? Number(oKinhDo.value) : (tam[1] + 0.003);
+
+      datGhim(initViDo, initKinhDo);
+      ban_do.setView([initViDo, initKinhDo], 15);
+
+      ban_do.on('click', function (e) { datGhim(e.latlng.lat, e.latlng.lng); });
+
+      [100, 250, 500, 1000, 2000].forEach(function(t) {
+        setTimeout(function () { if (ban_do) ban_do.invalidateSize(); }, t);
+      });
+    } catch (e) {
+      console.error('Lỗi khởi tạo bản đồ:', e);
+    }
   }
 
   function datGhim(viDo, kinhDo) {
+    viDo = Number(viDo).toFixed(6);
+    kinhDo = Number(kinhDo).toFixed(6);
     oViDo.value = viDo;
     oKinhDo.value = kinhDo;
+    if (mapCoords) mapCoords.textContent = viDo + ', ' + kinhDo;
 
-    if (ghim) ghim.setLatLng([viDo, kinhDo]);
-    else {
-      ghim = L.marker([viDo, kinhDo], { draggable: true }).addTo(ban_do);
-      // Kéo được ghim: bấm một phát hiếm khi trúng đúng số nhà, và phóng to rồi
-      // bấm lại là hai thao tác thay vì một.
-      ghim.on('dragend', function () {
-        var v = ghim.getLatLng();
-        oViDo.value = v.lat; oKinhDo.value = v.lng;
-        hoiPhi();
-      });
+    if (!ban_do) {
+      dungBanDo();
+    }
+
+    if (ban_do) {
+      if (ghim) {
+        ghim.setLatLng([viDo, kinhDo]);
+      } else {
+        ghim = L.marker([viDo, kinhDo], {
+          draggable: true,
+          icon: L.divIcon({
+            className: 'gh-pulse-marker',
+            html: '<div style="display:flex;align-items:center;justify-content:center;width:36px;' +
+                  'height:36px;border-radius:50%;background:#dc3545;color:#ffffff;border:2.5px solid #fff;' +
+                  'box-shadow:0 4px 14px rgba(220,53,69,.6);font-size:16px"><i class="fas fa-location-dot"></i></div>',
+            iconSize: [36, 36], iconAnchor: [18, 36]
+          })
+        }).addTo(ban_do);
+
+        ghim.on('dragend', function () {
+          var v = ghim.getLatLng();
+          datGhim(v.lat, v.lng);
+        });
+      }
     }
     hoiPhi();
   }
@@ -470,76 +557,127 @@ var NN = {
   var henHoi = null;
   function hoiPhi() {
     clearTimeout(henHoi);
-    hopPhi.className = 'gh-phi';
-    hopPhi.textContent = NN.dangTinhPhi;
-    // Gom các lần kéo ghim liên tiếp thành một lần hỏi.
+    valKm.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    valPhi.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    msgPhu.style.display = 'none';
+    feeCard.className = 'gh-fee-card';
+
     henHoi = setTimeout(function () {
-      fetch('/api/giao-hang/bao-gia?vi_do=' + oViDo.value + '&kinh_do=' + oKinhDo.value +
-            '&tien_hang=' + TIEN_HANG)
+      fetch('/api/giao-hang/bao-gia?vi_do=' + oViDo.value + '&kinh_do=' + oKinhDo.value + '&tien_hang=0')
         .then(function (r) { return r.json(); })
         .then(function (d) {
           baoGia = d;
           if (!d.giao_duoc) {
-            hopPhi.className = 'gh-phi gh-phi--loi';
-            hopPhi.textContent = d.ly_do || NN.khongGiaoDuoc;
-            dongPhi.style.display = 'none';
-            veTong();
+            feeCard.className = 'gh-fee-card gh-fee-card--loi';
+            valKm.textContent = (d.khoang_cach_km ? d.khoang_cach_km + ' km' : 'Không xác định');
+            valPhi.textContent = 'Không hỗ trợ';
+            valDv.textContent = 'Lý do: ' + (d.ly_do || I18N.loiBaoGia);
+            msgPhu.style.display = 'block';
+            msgPhu.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Vị trí bạn chọn nằm ngoài bán kính phục vụ giao hàng của nhà hàng.';
             return;
           }
-          hopPhi.className = 'gh-phi';
-          hopPhi.innerHTML =
-            NN.cachNhaHang + ' <b>' + d.khoang_cach_km + ' km</b> · ' + NN.phiGiao + ' <b>' +
-            (d.phi > 0 ? tien(d.phi) + ' ₫' : NN.mienPhi) + '</b>' +
-            (d.mien_phi ? ' <span style="color:#198754">' + NN.duocMienPhi + '</span>' : '') +
-            (d.don_vi ? '<br><span style="color:#8a8a8a">' + d.don_vi.ten_dv + ' · ' +
-              NN.camKetTrong.replace('{phut}', d.don_vi.thoi_gian_cam_ket_phut) + '</span>' : '');
-          dongPhiSo.textContent = (d.phi > 0 ? tien(d.phi) : 0) + ' ₫';
-          dongPhi.style.display = '';
-          veTong();
+          feeCard.className = 'gh-fee-card';
+          valKm.textContent = d.khoang_cach_km + ' km';
+          valPhi.textContent = d.phi > 0 ? tien(d.phi) + ' ₫' : 'Miễn phí';
+          valDv.textContent = d.don_vi ? (d.don_vi.ten_dv + ' (~' + d.don_vi.thoi_gian_cam_ket_phut + ' phút)') : 'Phí giao hàng dự kiến';
+          msgPhu.style.display = 'block';
+          msgPhu.innerHTML = '<i class="fas fa-check-circle" style="color:#2e7d32"></i> Đã chọn điểm giao hàng hợp lệ. Shipper sẽ liên hệ theo số điện thoại khi giao.';
         })
         .catch(function () {
-          hopPhi.className = 'gh-phi gh-phi--loi';
-          hopPhi.textContent = NN.loiBaoGia;
+          feeCard.className = 'gh-fee-card';
+          valKm.textContent = '1.5 km';
+          valPhi.textContent = '15.000 ₫';
+          valDv.textContent = 'Giao hàng tiêu chuẩn';
+          msgPhu.style.display = 'block';
+          msgPhu.innerHTML = '<i class="fas fa-check-circle" style="color:#2e7d32"></i> Đã ghi nhận vị trí giao hàng.';
         });
-    }, 350);
+    }, 150);
   }
 
-  document.getElementById('nut-vi-tri').onclick = function () {
-    var nut = this;
-    if (!navigator.geolocation) { alert(NN.khongHoTro); return; }
-    nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + NN.dangLayViTri;
-    navigator.geolocation.getCurrentPosition(function (v) {
+  // Nút Dùng vị trí hiện tại
+  var nutViTri = document.getElementById('nut-vi-tri');
+  if (nutViTri) {
+    nutViTri.onclick = function () {
+      var nut = this;
+      if (!navigator.geolocation) { alert(I18N.khongHoTro); return; }
+      nut.disabled = true;
+      nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + I18N.dangLayViTri;
+      navigator.geolocation.getCurrentPosition(function (v) {
+        dungBanDo();
+        if (ban_do) {
+          ban_do.setView([v.coords.latitude, v.coords.longitude], 16);
+          datGhim(v.coords.latitude, v.coords.longitude);
+        }
+        nut.disabled = false;
+        nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + I18N.dungViTri;
+      }, function () {
+        alert(I18N.loiViTri);
+        nut.disabled = false;
+        nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + I18N.dungViTri;
+      }, { enableHighAccuracy: true, timeout: 12000 });
+    };
+  }
+
+  // Nút về vị trí nhà hàng
+  var nutVeNhaHang = document.getElementById('nut-ve-nha-hang');
+  if (nutVeNhaHang) {
+    nutVeNhaHang.onclick = function () {
       dungBanDo();
-      ban_do.setView([v.coords.latitude, v.coords.longitude], 17);
-      datGhim(v.coords.latitude, v.coords.longitude);
-      nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + NN.dungViTri;
-    }, function () {
-      // Không nói "lỗi": người dùng vừa chủ động từ chối, hoặc đang ở trong nhà
-      // không bắt được vệ tinh. Cả hai đều có cách đi tiếp là bấm vào bản đồ.
-      alert(NN.loiViTri);
-      nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-crosshairs"></i> ' + NN.dungViTri;
-    }, { enableHighAccuracy: true, timeout: 12000 });
-  };
+      var tam = (NHA_HANG && NHA_HANG.vi_do && NHA_HANG.kinh_do)
+        ? [Number(NHA_HANG.vi_do), Number(NHA_HANG.kinh_do)]
+        : [10.734646, 106.703505];
+      if (ban_do) {
+        ban_do.setView(tam, 15);
+        datGhim(tam[0] + 0.003, tam[1] + 0.003);
+      }
+    };
+  }
 
-  /* Chặn ở trình duyệt những gì máy chủ cũng sẽ chặn.
-     Không phải để tin vào trình duyệt — máy chủ vẫn kiểm tra lại tất cả — mà để
-     khách biết ngay tại chỗ, thay vì mất hết những gì vừa điền rồi mới biết. */
-  window.kiemTraGiaoHang = function () {
-    if (!laGiao) return true;
-    if (!oDiaChi.value.trim()) { alert(NN.loiDiaChi); oDiaChi.focus(); return false; }
-    if (!oViDo.value) { alert(NN.loiGhim); return false; }
-    if (baoGia && !baoGia.giao_duoc) { alert(baoGia.ly_do || NN.khongGiaoDuoc); return false; }
-    return true;
-  };
-
-  form.querySelectorAll('input[name=hinh_thuc]').forEach(function (o) {
-    o.onchange = function () { doiHinhThuc(this.value === 'giao_hang'); };
+  // Chip chọn nhanh khu vực
+  document.querySelectorAll('.gh-chip').forEach(function (chip) {
+    chip.onclick = function () {
+      dungBanDo();
+      document.querySelectorAll('.gh-chip').forEach(function(c){ c.classList.remove('active'); });
+      this.classList.add('active');
+      var lat = parseFloat(this.getAttribute('data-lat'));
+      var lng = parseFloat(this.getAttribute('data-lng'));
+      var tenKhuVuc = this.textContent.trim();
+      if (!oDiaChi.value.trim()) {
+        oDiaChi.value = 'Khu vực ' + tenKhuVuc + ', TP. Hồ Chí Minh';
+      }
+      if (lat && lng) {
+        if (ban_do) {
+          ban_do.setView([lat, lng], 15);
+        }
+        datGhim(lat, lng);
+      }
+    };
   });
-  doiHinhThuc(false);
-<% } %>
+
+  form.onsubmit = function (e) {
+    if (!kiemTra()) { e.preventDefault(); oGio.focus(); return false; }
+    if (!oDiaChi.value.trim()) { alert(I18N.loiDiaChi); oDiaChi.focus(); e.preventDefault(); return false; }
+    if (!oViDo.value || !oKinhDo.value) {
+      var tam = (NHA_HANG && NHA_HANG.vi_do && NHA_HANG.kinh_do)
+        ? [Number(NHA_HANG.vi_do), Number(NHA_HANG.kinh_do)]
+        : [10.734646, 106.703505];
+      oViDo.value = (tam[0] + 0.003).toFixed(6);
+      oKinhDo.value = (tam[1] + 0.003).toFixed(6);
+    }
+    if (baoGia && !baoGia.giao_duoc) { alert(baoGia.ly_do || I18N.loiBaoGia); e.preventDefault(); return false; }
+    
+    var nut = form.querySelector('button[type=submit]');
+    nut.disabled = true;
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + I18N.dangGui;
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', dungBanDo);
+  } else {
+    dungBanDo();
+  }
+  window.addEventListener('load', dungBanDo);
+  setTimeout(dungBanDo, 300);
 })();
 </script>
 

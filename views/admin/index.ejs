@@ -33,7 +33,7 @@
         <div class="qt-card__head">
             <div>
                 <h2>Chào mừng trở lại, <%= session.adminname || 'Quản trị viên' %></h2>
-                <p>Chọn một tác vụ để bắt đầu quản lý nhà hàng.</p>
+                <p>Chọn một tác vụ quản trị hệ thống để bắt đầu.</p>
             </div>
         </div>
         <div class="qt-card__body">
@@ -46,27 +46,27 @@
                     </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
-                <a class="qt-link" href="/admin/hopdongmoi">
-                    <span class="qt-link__ico"><i class="fas fa-bell-concierge"></i></span>
-                    <span>
-                        <span class="qt-link__t">Hợp đồng mới</span>
-                        <span class="qt-link__d">Xác nhận đơn đặt tiệc và chuyển xuống bếp</span>
-                    </span>
-                    <i class="fas fa-chevron-right qt-link__go"></i>
-                </a>
                 <a class="qt-link" href="/admin/stafflist">
                     <span class="qt-link__ico"><i class="fas fa-user-group"></i></span>
                     <span>
                         <span class="qt-link__t">Quản lý nhân sự</span>
-                        <span class="qt-link__d">Hồ sơ nhân viên, lịch làm việc, lương và nghỉ phép</span>
+                        <span class="qt-link__d">Tài khoản nhân viên, phân quyền và chức danh</span>
+                    </span>
+                    <i class="fas fa-chevron-right qt-link__go"></i>
+                </a>
+                <a class="qt-link" href="/admin/to-chuc-quan-ly">
+                    <span class="qt-link__ico"><i class="fas fa-sitemap"></i></span>
+                    <span>
+                        <span class="qt-link__t">Cơ cấu &amp; Phân quyền (RBAC)</span>
+                        <span class="qt-link__d">Quản lý sơ đồ bộ phận, chức danh và quyền hạn</span>
                     </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
                 <a class="qt-link" href="/admin/stats">
                     <span class="qt-link__ico"><i class="fas fa-chart-pie"></i></span>
                     <span>
-                        <span class="qt-link__t">Báo cáo thống kê</span>
-                        <span class="qt-link__d">Doanh thu theo tháng và món ăn bán chạy</span>
+                        <span class="qt-link__t">Báo cáo hệ thống</span>
+                        <span class="qt-link__d">Doanh thu theo tháng và thống kê bán hàng</span>
                     </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
@@ -77,30 +77,42 @@
     <div class="qt-card" style="margin:0">
         <div class="qt-card__head">
             <div>
-                <h2>Công cụ nâng cao</h2>
-                <p>Phân tích và vận hành thời gian thực.</p>
+                <h2>Công cụ Quản trị &amp; AI</h2>
+                <p>Phân tích dữ liệu &amp; trí tuệ nhân tạo.</p>
             </div>
         </div>
         <div class="qt-card__body">
             <div class="qt-links">
                 <a class="qt-link" href="/analytics">
                     <span class="qt-link__ico"><i class="fas fa-chart-line"></i></span>
-                    <span><span class="qt-link__t">Dashboard phân tích</span></span>
+                    <span>
+                        <span class="qt-link__t">Dashboard phân tích</span>
+                        <span class="qt-link__d">Chỉ số KPI, Pareto &amp; hiệu suất</span>
+                    </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
-                <a class="qt-link" href="/du-bao">
-                    <span class="qt-link__ico"><i class="fas fa-wand-magic-sparkles"></i></span>
-                    <span><span class="qt-link__t">Dự báo AI</span></span>
+                <a class="qt-link" href="/admin/du-bao">
+                    <span class="qt-link__ico"><i class="fas fa-brain"></i></span>
+                    <span>
+                        <span class="qt-link__t">Dự báo AI (Machine Learning)</span>
+                        <span class="qt-link__d">Dự báo lượng khách &amp; nguyên liệu</span>
+                    </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
-                <a class="qt-link" href="/so-do-ban">
-                    <span class="qt-link__ico"><i class="fas fa-chair"></i></span>
-                    <span><span class="qt-link__t">Sơ đồ bàn</span></span>
+                <a class="qt-link" href="/admin/chatbot">
+                    <span class="qt-link__ico"><i class="fas fa-robot"></i></span>
+                    <span>
+                        <span class="qt-link__t">Cấu hình Trợ lý AI</span>
+                        <span class="qt-link__d">Theo dõi câu hỏi &amp; huấn luyện bot</span>
+                    </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
-                <a class="qt-link" href="/kds">
-                    <span class="qt-link__ico"><i class="fas fa-fire-burner"></i></span>
-                    <span><span class="qt-link__t">Màn hình bếp</span></span>
+                <a class="qt-link" href="/admin/thanh-toan">
+                    <span class="qt-link__ico"><i class="fas fa-credit-card"></i></span>
+                    <span>
+                        <span class="qt-link__t">Cấu hình thanh toán</span>
+                        <span class="qt-link__d">Tài khoản VietQR &amp; đối soát</span>
+                    </span>
                     <i class="fas fa-chevron-right qt-link__go"></i>
                 </a>
             </div>

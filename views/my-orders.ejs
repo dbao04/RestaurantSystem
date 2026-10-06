@@ -1,12 +1,133 @@
-<%- include('partials/header', { title: t('tai_khoan.don_cua_toi') }) %>
+<%- include('partials/header', { title: t('dieu_huong.don_cua_toi'), activeNav: 'myorders' }) %>
+
+<style>
+  .nh-order-tabs {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid rgba(200, 162, 75, 0.2);
+    padding-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .nh-order-tab-btn {
+    background: transparent;
+    border: none;
+    font-family: var(--nh-font-display, inherit);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--nh-muted);
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .nh-order-tab-btn:hover {
+    color: var(--nh-espresso);
+    background: rgba(200, 162, 75, 0.08);
+  }
+  .nh-order-tab-btn.active {
+    color: var(--nh-espresso);
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    border: 1px solid rgba(200, 162, 75, 0.3);
+  }
+  .nh-order-tab-btn .badge-count {
+    background: var(--nh-gold);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+  .nh-order-tab-btn.active .badge-count {
+    background: var(--nh-espresso);
+  }
+  .nh-tab-content {
+    display: none;
+  }
+  .nh-tab-content.active {
+    display: block;
+  }
+  .nh-reservation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .badge--PENDING { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .badge--WAITLIST { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+  .badge--CONFIRMED { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .badge--ARRIVED { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+  .badge--SEATED { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .badge--COMPLETED { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .badge--CANCELLED { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .badge--NO_SHOW { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+  .badge--REJECTED { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+  /* Modal chi tiết */
+  .nh-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 14, 9, 0.65);
+    display: none;
+    place-content: center;
+    z-index: 9999;
+    padding: 1.2rem;
+    backdrop-filter: blur(4px);
+  }
+  .nh-modal-overlay.active {
+    display: grid;
+  }
+  .nh-modal-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 540px;
+    width: 100%;
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.5);
+    border: 1px solid rgba(200, 162, 75, 0.25);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .nh-modal-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.6rem 1rem;
+    font-size: 0.94rem;
+    margin: 1.2rem 0;
+  }
+  .nh-modal-grid dt {
+    color: var(--nh-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+  .nh-modal-grid dd {
+    margin: 0;
+    color: var(--nh-espresso);
+    font-weight: 600;
+  }
+  @media (max-width: 520px) {
+    .nh-modal-grid { grid-template-columns: 1fr; gap: 0.2rem; }
+    .nh-modal-grid dd { margin-bottom: 0.6rem; }
+  }
+</style>
 
 <section class="nh-subhero" style="min-height:38vh">
   <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
     <span class="nh-eyebrow"><%= t('don.theo_doi_dat_ban') %></span>
-    <h1><%= t('tai_khoan.don_cua_toi') %></h1>
-    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('tai_khoan.don_cua_toi') %></div>
+    <h1><%= t('dieu_huong.don_cua_toi') %></h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.don_cua_toi') %></div>
   </div>
 </section>
 
@@ -14,21 +135,10 @@
   <div class="nh-container">
 
     <%
-      /* Trang huy don chuyen ve day kem ?msg=... nhung ban cu khong he hien ra,
-         nen khach bam Huy xong khong biet da gui duoc yeu cau chua. */
       var thongBao = typeof msg !== 'undefined' ? msg : null;
       var loaiTB = (typeof msgType !== 'undefined' && msgType) ? msgType : 'success';
 
-      /* tinhtrang la so trong CSDL. Gom vao mot cho de nhan, mau va loi giai
-         thich luon di cung nhau - truoc day rai rac trong nam nhanh if. */
-      var TRANG_THAI = {
-        0: { lop: 'cho',     ten: t('don.tt_cho'), y: t('don.y_cho') },
-        1: { lop: 'xacnhan', ten: t('don.tt_xac_nhan'), y: t('don.y_xac_nhan') },
-        2: { lop: 'huy',     ten: t('don.tt_yeu_cau_huy'), y: t('don.y_yeu_cau_huy') },
-        3: { lop: 'xong',    ten: t('don.tt_huy'), y: t('don.y_huy') },
-        5: { lop: 'den',     ten: t('don.tt_den'), y: t('don.y_den') },
-        6: { lop: 'dungmon', ten: t('don.tt_dung_mon'), y: t('don.y_dung_mon') },
-      };
+      var listDatBan = (typeof reservations !== 'undefined' && reservations) ? reservations : [];
     %>
 
     <% if (thongBao) { %>
@@ -41,89 +151,161 @@
       </div>
     <% } %>
 
-    <% if (orders && orders.length > 0) { %>
-      <% if (typeof phanTrang !== 'undefined' && phanTrang.tong > phanTrang.soMoiTrang) { %>
-        <p class="nh-hint" style="margin-bottom:1rem">
-          <%- t('don.hien_thi_tu', {
-                tu: '<strong>' + ((phanTrang.trang - 1) * phanTrang.soMoiTrang + 1) + '</strong>',
-                den: '<strong>' + ((phanTrang.trang - 1) * phanTrang.soMoiTrang + orders.length) + '</strong>',
-                tong: '<strong>' + phanTrang.tong + '</strong>' }) %>
-        </p>
-      <% } %>
-
-      <div class="nh-orders">
-        <% orders.forEach(function (order, i) {
-             var tt = TRANG_THAI[order.tinhtrang] || { lop: 'xong', ten: t('don.khong_ro'), y: '' };
-        %>
-          <article class="nh-order nh-reveal" data-delay="<%= (i % 3) + 1 %>">
-            <div class="nh-order__head">
-              <div>
-                <div class="nh-order__when">
-                  <i class="fas fa-calendar-day" style="color:var(--nh-gold); font-size:.9rem"></i>
-                  <%= ngayVN(order.dates) %> &nbsp;·&nbsp; <%= gioVN(order.tg) %>
+    <!-- DANH SÁCH THÔNG TIN ĐẶT BÀN -->
+    <div>
+      <% if (listDatBan.length > 0) { %>
+        <div class="nh-orders">
+          <% listDatBan.forEach(function (r, i) { %>
+            <article class="nh-order nh-reveal" data-delay="<%= (i % 3) + 1 %>">
+              <div class="nh-order__head">
+                <div>
+                  <div class="nh-order__when">
+                    <i class="fas fa-calendar-day" style="color:var(--nh-gold); font-size:.9rem"></i>
+                    <%= r.reservation_date %> &nbsp;·&nbsp; <%= r.gio %><%= r.gio_ket_thuc ? ' – ' + r.gio_ket_thuc : '' %>
+                  </div>
+                  <div class="nh-order__code"><%= t('dat_ban_moi.ma_dat_ban') %>: <strong style="color:var(--nh-espresso)"><%= r.reservation_code %></strong></div>
                 </div>
-                <div class="nh-order__code"><%= t('don.ma_don').toUpperCase() %> <%= String(order.sesis).slice(0, 10).toUpperCase() %></div>
+                <span class="nh-reservation-badge badge--<%= r.status %>" style="margin-left:auto">
+                  <%= r.nhan_trang_thai || r.status %>
+                </span>
               </div>
-              <span class="nh-status nh-status--<%= tt.lop %>" style="margin-left:auto"><%= tt.ten %></span>
-            </div>
 
-            <div class="nh-order__body">
-              <div class="nh-order__fact"><%= t('don.so_khach') %> <b><%= nhanSoKhach(order.so_user) %></b></div>
-              <div class="nh-order__fact"><%= t('don.dip') %> <b><%= nhanDip(order.noidung) %></b></div>
-              <div class="nh-order__fact"><%= t('don.gia_tri_mon') %> <b><%= formatMoney(order.tong_tien) %> ₫</b></div>
-
-              <div class="nh-order__actions">
-                <a href="/contract?sesis=<%= order.sesis %>" class="nh-btn nh-btn--dark nh-btn--sm">
-                  <i class="fas fa-receipt"></i> <%= t('don.xem_phieu') %>
-                </a>
-                <% if (order.tinhtrang == 0) { %>
-                  <form action="/cancel-order" method="POST" style="display:inline"
-                        onsubmit="return confirm('<%= t('don.xac_nhan_huy', { ngay: ngayVN(order.dates) }) %>')">
-                    <input type="hidden" name="sesis" value="<%= order.sesis %>">
-                    <button type="submit" class="nh-btn nh-btn--sm"
-                            style="background:transparent; border-color:#c0392b; color:#c0392b">
-                      <i class="fas fa-xmark"></i> <%= t('don.huy_don') %>
-                    </button>
-                  </form>
+              <div class="nh-order__body">
+                <div class="nh-order__fact"><%= t('don.so_khach') %> <b><%= r.guest_count %> khách</b></div>
+                <div class="nh-order__fact">Khu vực: <b><%= r.area_name || 'Tiêu chuẩn' %></b></div>
+                <% if (r.ban && r.ban.length > 0) { %>
+                  <div class="nh-order__fact">Bàn: <b style="color:var(--nh-gold)"><%= r.ban.join(', ') %></b></div>
                 <% } %>
-              </div>
-            </div>
+                <% if (r.occasion && r.occasion !== 'NORMAL') { %>
+                  <div class="nh-order__fact"><%= t('don.dip') %> <b><%= nhanDip(r.occasion) %></b></div>
+                <% } %>
+                <% if (Number(r.deposit_amount) > 0) { %>
+                  <div class="nh-order__fact">Tiền cọc: <b><%= formatMoney(r.deposit_amount) %> ₫</b> (<%= r.deposit_status %>)</div>
+                <% } %>
+                <% if (r.special_requests) { %>
+                  <div class="nh-order__fact" style="grid-column:1/-1; color:var(--nh-muted); font-size:0.85rem">
+                    <i class="fas fa-comment-dots"></i> Yêu cầu: <em><%= r.special_requests %></em>
+                  </div>
+                <% } %>
 
-            <% if (tt.y) { %>
-              <div style="padding:.7rem clamp(1.1rem,3vw,1.6rem); background:var(--nh-cream); font-size:.85rem; color:var(--nh-muted)">
-                <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i> <%= tt.y %>
+                <!-- Nút xem chi tiết ở cuối -->
+                <div class="nh-order__actions" style="margin-top:0.9rem">
+                  <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick='moChiTiet(<%= JSON.stringify(r) %>)'>
+                    <i class="fas fa-eye"></i> Xem chi tiết
+                  </button>
+                </div>
               </div>
-            <% } %>
-          </article>
-        <% }) %>
-      </div>
-
-      <% if (typeof phanTrang !== 'undefined' && phanTrang.soTrang > 1) { %>
-        <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:2.2rem">
-          <% if (phanTrang.trang > 1) { %>
-            <a href="/my-orders?trang=<%= phanTrang.trang - 1 %>" class="nh-btn nh-btn--dark nh-btn--sm">
-              <i class="fas fa-arrow-left"></i> <%= t('don.moi_hon') %>
-            </a>
-          <% } %>
-          <span class="nh-hint">Trang <%= phanTrang.trang %> / <%= phanTrang.soTrang %></span>
-          <% if (phanTrang.trang < phanTrang.soTrang) { %>
-            <a href="/my-orders?trang=<%= phanTrang.trang + 1 %>" class="nh-btn nh-btn--dark nh-btn--sm">
-              <%= t('don.cu_hon') %> <i class="fas fa-arrow-right"></i>
-            </a>
-          <% } %>
+            </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="nh-empty nh-reveal">
+          <i class="fas fa-calendar-plus" style="font-size:3rem; color:var(--nh-gold); margin-bottom:1rem"></i>
+          <h3>Bạn chưa có lịch đặt bàn nào</h3>
+          <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:480px">
+            Trải nghiệm ẩm thực Nhật Bản tinh tế cùng không gian sang trọng tại nhà hàng Bảo Đoàn.
+          </p>
+          <a href="/dat-ban" class="nh-btn nh-btn--gold"><i class="fas fa-chair"></i> <%= t('chung.dat_ban_ngay') %></a>
         </div>
       <% } %>
-    <% } else { %>
-      <div class="nh-empty nh-reveal">
-        <i class="fas fa-calendar-check"></i>
-        <h3><%= t('don.chua_dat_lan_nao') %></h3>
-        <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:480px">
-          <%= t('don.chua_co_mo_ta') %>
-        </p>
-        <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
-      </div>
-    <% } %>
+    </div>
+
   </div>
 </section>
+
+<!-- MODAL XEM CHI TIẾT ĐƠN ĐẶT BÀN -->
+<div class="nh-modal-overlay" id="modalChiTietDatBan" onclick="if(event.target===this) dongChiTiet()">
+  <div class="nh-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chung.ten_nha_hang') %></span>
+        <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
+          <i class="fas fa-calendar-check" style="color:var(--nh-gold); margin-right:.4rem;"></i> Chi tiết đặt bàn
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          Mã: <strong id="mMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <span id="mTrangThaiBadge" class="nh-reservation-badge"></span>
+    </div>
+
+    <dl class="nh-modal-grid">
+      <dt>Người đặt</dt>
+      <dd id="mTenKhach"></dd>
+
+      <dt>Điện thoại</dt>
+      <dd id="mSdt"></dd>
+
+      <dt>Thời gian</dt>
+      <dd id="mThoiGian"></dd>
+
+      <dt>Số khách</dt>
+      <dd id="mSoKhach"></dd>
+
+      <dt>Khu vực</dt>
+      <dd id="mKhuVuc"></dd>
+
+      <dt>Bàn phục vụ</dt>
+      <dd id="mBan"></dd>
+
+      <dt>Dịp đặc biệt</dt>
+      <dd id="mDip"></dd>
+
+      <dt>Tiền đặt cọc</dt>
+      <dd id="mTienCoc"></dd>
+
+      <dt>Yêu cầu</dt>
+      <dd id="mYeuCau" style="font-style:italic; color:var(--nh-muted);"></dd>
+    </dl>
+
+    <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.5rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+      <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="dongChiTiet()">
+        <i class="fas fa-times"></i> <%= t('chung.dong') %>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.nh-tab-content').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  document.querySelectorAll('.nh-order-tab-btn').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  var target = document.getElementById(tabId);
+  if (target) {
+    target.classList.add('active');
+  }
+  if (btn) {
+    btn.classList.add('active');
+  }
+}
+
+function moChiTiet(r) {
+  if (!r) return;
+  document.getElementById('mMa').textContent = r.reservation_code || '';
+  document.getElementById('mTenKhach').textContent = r.customer_name || 'Khách hàng';
+  document.getElementById('mSdt').textContent = r.phone || '-';
+  document.getElementById('mThoiGian').textContent = (r.gio || '') + (r.gio_ket_thuc ? ' – ' + r.gio_ket_thuc : '') + ' · ' + (r.reservation_date || '');
+  document.getElementById('mSoKhach').textContent = (r.guest_count || 1) + ' khách';
+  document.getElementById('mKhuVuc').textContent = r.area_name || 'Tiêu chuẩn';
+  document.getElementById('mBan').textContent = (r.ban && r.ban.length > 0) ? r.ban.join(', ') : 'Xếp bàn khi đến';
+  document.getElementById('mDip').textContent = r.occasion || 'Thông thường';
+  document.getElementById('mTienCoc').textContent = Number(r.deposit_amount) > 0 ? (Number(r.deposit_amount).toLocaleString('vi-VN') + ' ₫ (' + r.deposit_status + ')') : 'Không yêu cầu cọc';
+  document.getElementById('mYeuCau').textContent = r.special_requests || 'Không có';
+
+  var badge = document.getElementById('mTrangThaiBadge');
+  badge.textContent = r.nhan_trang_thai || r.status || '';
+  badge.className = 'nh-reservation-badge badge--' + (r.status || 'PENDING');
+
+  document.getElementById('modalChiTietDatBan').classList.add('active');
+}
+
+function dongChiTiet() {
+  document.getElementById('modalChiTietDatBan').classList.remove('active');
+}
+</script>
 
 <%- include('partials/footer') %>

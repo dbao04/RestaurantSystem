@@ -1,5 +1,9 @@
-<%- include('partials/header') %>
-<%- include('partials/sidebar') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/header', { activePage: 'xep-ca', staffName: session.staffName || 'Quản lý' }) %>
+<% } else { %>
+  <%- include('partials/header') %>
+  <%- include('partials/sidebar') %>
+<% } %>
 
 <%
   // Ngay luon la chuoi 'YYYY-MM-DD'. Phai them 'T00:00:00' khi dung new Date():
@@ -244,4 +248,8 @@
   </div>
 </div>
 
-<%- include('partials/footer') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

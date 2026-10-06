@@ -1,22 +1,30 @@
 /**
- * ROUTES: Quan tri THANH VIEN (/admin/thanh-vien)
- *
- * Hang thanh vien la mot dieu kien cua khuyen mai ("chi khach Vang tro len")
- * nhung truoc day khong co man hinh nao xem duoc ai dang o hang nao - dat
- * dieu kien xong thi khong biet no loc ra bao nhieu nguoi.
- *
- * Trang nay chi DOC: hang va diem do luong thanh toan tu tinh, sua tay se
- * lam lech voi lich su giao dich.
+ * ROUTES: Quan tri THANH VIEN (/admin/thanh-vien va /staff/thanh-vien)
  */
 
 const express = require('express');
 const router = express.Router();
-const { requireAdminLogin } = require('../middleware/auth');
 const loyaltyService = require('../services/loyaltyService');
+
+const canQuanLyOrAdmin = (req, res, next) => {
+  if (req.session && req.session.adminlogin) return next();
+  if (req.session && req.session.stafflogin) {
+    const vaiTro = (req.session.staffRole || '').toLowerCase();
+    if (/quan ly|quanly|manager|ke toan|ketoan/.test(vaiTro) || (req.hoSo && req.hoSo.cap_bac <= 2)) return next();
+  }
+  return res.redirect(req.originalUrl.startsWith('/staff') ? '/staff/login' : '/admin/login');
+};
+
+const isStaffRoute = (req) => {
+  const p = req.originalUrl || req.path || '';
+  if (p.startsWith('/staff')) return true;
+  if (req.session && req.session.stafflogin && !req.session.adminlogin) return true;
+  return false;
+};
 
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-router.get('/admin/thanh-vien', requireAdminLogin, bat(async (req, res) => {
+router.get(['/admin/thanh-vien', '/staff/thanh-vien'], canQuanLyOrAdmin, bat(async (req, res) => {
   const loc = {
     tuKhoa: (req.query.q || '').trim(),
     hang: ['bronze', 'silver', 'gold', 'platinum'].includes(req.query.hang) ? req.query.hang : '',
@@ -30,6 +38,7 @@ router.get('/admin/thanh-vien', requireAdminLogin, bat(async (req, res) => {
 
   res.render('admin/thanh-vien', {
     title: 'Thành viên & Hạng',
+    isStaff: isStaffRoute(req),
     danhSach,
     thongKe,
     loc,
@@ -38,14 +47,16 @@ router.get('/admin/thanh-vien', requireAdminLogin, bat(async (req, res) => {
   });
 }));
 
-router.get('/admin/thanh-vien/:id', requireAdminLogin, bat(async (req, res) => {
-  if (!/^\d+$/.test(req.params.id)) return res.redirect('/admin/thanh-vien');
+router.get(['/admin/thanh-vien/:id', '/staff/thanh-vien/:id'], canQuanLyOrAdmin, bat(async (req, res) => {
+  const goc = isStaffRoute(req) ? '/staff/thanh-vien' : '/admin/thanh-vien';
+  if (!/^\d+$/.test(req.params.id)) return res.redirect(goc);
 
   const ho_so = await loyaltyService.chiTietThanhVien(req.params.id);
-  if (!ho_so) return res.redirect('/admin/thanh-vien');
+  if (!ho_so) return res.redirect(goc);
 
   res.render('admin/thanh-vien-chi-tiet', {
     title: 'Thành viên · ' + (ho_so.kh.ten || '#' + ho_so.kh.id),
+    isStaff: isStaffRoute(req),
     ...ho_so,
     TEN_HANG: loyaltyService.TEN_HANG,
     NGUONG_HANG: loyaltyService.NGUONG_HANG,

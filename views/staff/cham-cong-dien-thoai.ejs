@@ -46,7 +46,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Chấm công">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root { --vang:#c8a951; --xanh:#1cc88a; --do:#e74a3b; }
     * { box-sizing:border-box; }
@@ -706,10 +706,9 @@
     if (kq.ok) {
       keu(880); rung([40, 60, 40]);
       hienKq('thanh-cong', 'fa-check-circle',
-        kq.chieu === 'vao' ? 'Đã chấm công VÀO' : 'Đã chấm công RA',
+        kq.chieu === 'vao' ? 'Chấm công VÀO thành công' : 'Chấm công RA thành công',
         'lúc ' + (kq.gio || '') + (kq.tong_gio ? ' · tổng ' + kq.tong_gio + ' giờ' : ''),
-        (kq.phan_tram != null ? 'độ khớp ' + kq.phan_tram + '%' : '') +
-        (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : ''),
+        '',
         0);
       // Tải lại để mốc giờ và lịch sử hiện đúng bản ghi vừa tạo. Không tự vẽ lại
       // bằng JavaScript: giờ trên màn hình phải là giờ máy chủ đã ghi, không phải

@@ -1,5 +1,9 @@
-<%- include('partials/header') %>
-<%- include('partials/sidebar') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/header', { activePage: 'schedule-approval', staffName: session.staffName || 'Quản lý' }) %>
+<% } else { %>
+  <%- include('partials/header') %>
+  <%- include('partials/sidebar') %>
+<% } %>
 
 <%
   var choDuyet = (schedules || []).filter(function (s) { return s.trangthai == 0; }).length;
@@ -94,4 +98,8 @@
     $(document).ready(function () { $('.datatable').dataTable(); });
 </script>
 
-<%- include('partials/footer') %>
+<% if (locals.isStaff) { %>
+  <%- include('../staff/partials/footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

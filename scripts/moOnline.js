@@ -32,7 +32,7 @@
  *
  * Chay:  npm run qr:online     (hoac nhap dup _mo_qr_online.bat)
  */
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const fs = require('fs');
 const path = require('path');
 const https = require('https');

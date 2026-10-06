@@ -10,7 +10,8 @@ const md5 = require('md5');
 const personnelService = {
   // ============ ADMIN LOGIN & PROFILE ============
   adminLogin: async (adminuser, adminpass) => {
-    const hashedPass = md5(adminpass);
+    if (!adminuser || !adminpass) return null;
+    const hashedPass = md5(String(adminpass));
     const [rows] = await db.query(
       'SELECT * FROM tb_admin WHERE adminuser = ? AND adminpass = ? LIMIT 1',
       [adminuser, hashedPass]
@@ -32,19 +33,21 @@ const personnelService = {
   },
 
   changeAdminPassword: async (id, oldPass, newPass) => {
-    const hashedOld = md5(oldPass);
+    if (!oldPass || !newPass) throw new Error('Vui lòng nhập đầy đủ mật khẩu!');
+    const hashedOld = md5(String(oldPass));
     const [rows] = await db.query(
       'SELECT * FROM tb_admin WHERE id_admin = ? AND adminpass = ?',
       [id, hashedOld]
     );
     if (!rows[0]) throw new Error('Mật khẩu cũ không đúng!');
-    const hashedNew = md5(newPass);
+    const hashedNew = md5(String(newPass));
     await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [hashedNew, id]);
   },
 
   // ============ STAFF LOGIN & MANAGEMENT ============
   staffLogin: async (username, password) => {
-    const hashedPassword = md5(password);
+    if (!username || !password) return null;
+    const hashedPassword = md5(String(password));
     const [rows] = await db.query(
       'SELECT * FROM nhan_vien WHERE username = ? AND passwords = ? AND trangthai = 1 LIMIT 1',
       [username, hashedPassword]
@@ -492,64 +495,65 @@ const personnelService = {
     return rows;
   },
 
-  // [BẢO VỆ]: Truy xuất bảng lương nhân viên
+  // [LƯƠNG NHÂN VIÊN]: Sử dụng logic tối ưu từ accountantService
   getSalaryList: async (month, year) => {
-    const [rows] = await db.query(`
-      SELECT l.*, n.ten, n.chucvu, 
-      (SELECT COUNT(DISTINCT ngay) FROM cham_cong WHERE id_nv = l.id_nv AND MONTH(ngay) = ? AND YEAR(ngay) = ?) as songaycong
-      FROM luong l 
-      JOIN nhan_vien n ON l.id_nv = n.id_nv 
-      WHERE l.thang = ? AND l.nam = ? 
-      ORDER BY l.id_luong DESC
-    `, [month, year, month, year]);
-    return rows;
+    const accountantService = require('./accountantService');
+    return accountantService.getSalaryList(month, year);
   },
 
-  // [BẢO VỆ]: Tính toán và lưu bảng lương (Cộng lương cứng, thưởng, phụ cấp)
+  autoCalculateSalary: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.autoCalculateSalary(month, year);
+  },
+
+  getMonthlySalarySummary: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.getMonthlySalarySummary(month, year);
+  },
+
   upsertSalary: async (data) => {
-    const { id_nv, luong_cung, thuong, phu_cap, thang, nam } = data;
-    const thanhtien = Number(luong_cung) + Number(thuong) + Number(phu_cap);
-    
-    const [existing] = await db.query(
-      'SELECT * FROM luong WHERE id_nv = ? AND thang = ? AND nam = ?',
-      [id_nv, thang, nam]
-    );
-    
-    if (existing.length > 0) {
-      await db.query(
-        'UPDATE luong SET luong_cung = ?, thuong = ?, phu_cap = ?, tong_luong = ? WHERE id_nv = ? AND thang = ? AND nam = ?',
-        [luong_cung, thuong, phu_cap, thanhtien, id_nv, thang, nam]
-      );
-    } else {
-      await db.query(
-        'INSERT INTO luong (id_nv, luong_cung, thuong, phu_cap, tong_luong, thang, nam, trang_thai) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
-        [id_nv, luong_cung, thuong, phu_cap, thanhtien, thang, nam]
-      );
-    }
+    const accountantService = require('./accountantService');
+    return accountantService.upsertSalary(data);
   },
 
-  getPendingSalaries: async () => {
-    const [rows] = await db.query(`
-      SELECT l.*, n.ten, n.chucvu 
-      FROM luong l 
-      JOIN nhan_vien n ON l.id_nv = n.id_nv 
-      WHERE l.trang_thai = 1 
-      ORDER BY l.nam DESC, l.thang DESC
-    `);
-    return rows;
+  getPendingSalaries: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.getPendingSalaries(month, year);
+  },
+
+  submitAllSalaries: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.submitAllSalaries(month, year);
+  },
+
+  approveAllSalaries: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.approveAllSalaries(month, year);
+  },
+
+  rejectAllSalaries: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.rejectAllSalaries(month, year);
+  },
+
+  payAllSalaries: async (month, year) => {
+    const accountantService = require('./accountantService');
+    return accountantService.payAllSalaries(month, year);
   },
 
   updateSalaryStatus: async (id, status) => {
-    await db.query('UPDATE luong SET trang_thai = ? WHERE id_luong = ?', [status, id]);
+    const accountantService = require('./accountantService');
+    return accountantService.updateSalaryStatus(id, status);
   },
 
   submitSalaryForApproval: async (id) => {
-    await db.query('UPDATE luong SET trang_thai = 1 WHERE id_luong = ?', [id]);
+    const accountantService = require('./accountantService');
+    return accountantService.submitSalaryForApproval(id);
   },
 
-  // [BẢO VỆ]: Duyệt chi trả lương
   paySalary: async (id) => {
-    await db.query('UPDATE luong SET trang_thai = 3 WHERE id_luong = ?', [id]);
+    const accountantService = require('./accountantService');
+    return accountantService.paySalary(id);
   },
 
   // ============ FINANCIAL REPORTS ============

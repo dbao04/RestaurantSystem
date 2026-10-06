@@ -62,7 +62,7 @@
           <% orderDetails.forEach(function (item) { %>
             <div class="nh-line" style="grid-template-columns:1fr auto auto">
               <div class="nh-line__info">
-                <h4 class="nh-line__name"><%= (item.name_mon || '').trim() %></h4>
+                <h4 class="nh-line__name"><%= tenMon(item).chinh %></h4>
                 <div class="nh-line__unit"><%= formatMoney(item.gia) %> ₫ × <%= item.soluong %></div>
               </div>
               <div></div>
@@ -77,8 +77,7 @@
 
           <p class="nh-note">
             <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
-            Số tiền trên là giá trị các món đã đặt trước, thanh toán tại nhà hàng sau khi dùng bữa.
-            Muốn đổi món hay đổi giờ, hãy gọi cho nhà hàng trước giờ đến.
+            <%= t('phieu.ghi_chu_thanh_toan') %>
           </p>
         </div>
       </div>

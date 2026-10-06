@@ -1,0 +1,155 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1323 728" role="img" aria-label="Sơ đồ tuần tự luồng chạy dự báo lượt khách, gồm cả nhánh dự phòng khi dịch vụ học máy không phản hồi"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-sqC" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-sqC" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><line class="duong-doi" x1="82" y1="56" x2="82" y2="670"/><line class="duong-doi" x1="270.8649999999999" y1="56" x2="270.8649999999999" y2="670"/><line class="duong-doi" x1="547.7199999999997" y1="56" x2="547.7199999999997" y2="670"/><line class="duong-doi" x1="758.4249999999995" y1="56" x2="758.4249999999995" y2="670"/><line class="duong-doi" x1="981.6249999999993" y1="56" x2="981.6249999999993" y2="670"/><line class="duong-doi" x1="1240.2099999999991" y1="56" x2="1240.2099999999991" y2="670"/><g class="khoi">
+    <rect class="khung-tt" x="680.4249999999995" y="180" width="637.7849999999996" height="432"/>
+    <path class="the" d="M680.4249999999995,180 h38 l10,14 v6 h-48 z"/>
+    <text class="tx-khoi" style="text-anchor:start" x="687.4249999999995" y="194">alt</text>
+    <text class="tx-dk" style="text-anchor:start" x="740.4249999999995" y="195">[dịch vụ ML trả lời trong 30 giây]</text>
+    <line class="chia" x1="680.4249999999995" y1="520" x2="1318.2099999999991" y2="520"/>
+      <text class="tx-dk" style="text-anchor:start" x="688.4249999999995" y="533">[dịch vụ ML không chạy hoặc quá hạn]</text>
+  </g><rect class="kich-hoat" x="1234.2099999999991" y="251" width="12" height="57"/><rect class="kich-hoat" x="975.6249999999993" y="209" width="12" height="267"/><rect class="kich-hoat" x="752.4249999999995" y="167" width="12" height="351"/><rect class="kich-hoat" x="541.7199999999997" y="125" width="12" height="519"/><rect class="kich-hoat" x="264.8649999999999" y="83" width="12" height="561"/><rect class="kich-hoat" x="1234.2099999999991" y="419" width="12" height="225"/><rect class="kich-hoat" x="1234.2099999999991" y="545" width="12" height="99"/><g class="td">
+    <line class="tin" x1="88" y1="90" x2="263.8649999999999" y2="90" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="175.93249999999995" y="84">chọn số ngày, bấm “Chạy dự báo”</text>
+  </g><g class="td">
+    <line class="tin" x1="276.8649999999999" y1="132" x2="540.7199999999997" y2="132" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="408.7924999999998" y="126">POST /du-bao/api/chay-du-bao-khach {so_ngay}</text>
+  </g><g class="td">
+    <line class="tin" x1="553.7199999999997" y1="174" x2="751.4249999999995" y2="174" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="652.5724999999995" y="168">duBaoLuotKhach(soNgay)</text>
+  </g><g class="td">
+    <line class="tin" x1="764.4249999999995" y1="216" x2="974.6249999999993" y2="216" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="869.5249999999994" y="210">POST /du-bao/luot-khach?so_ngay=14</text>
+  </g><g class="td">
+    <line class="tin" x1="987.6249999999993" y1="258" x2="1233.2099999999991" y2="258" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="1110.417499999999" y="252">_nap_chuoi_ngay(): SELECT lịch sử theo ngày</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="1234.2099999999991" y1="300" x2="988.6249999999993" y2="300" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="1111.417499999999" y="294">368 ngày dữ liệu</text>
+  </g><g class="td"><polyline class="tin" points="987.6249999999993,333 1015.6249999999993,333 1015.6249999999993,351 989.6249999999993,351"
+      marker-end="url(#mui-sqC)"/><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="346">features.chuan_bi(): lịch, lễ Tết,</text><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="358">trung bình trượt 7/14/28 ngày</text></g><g class="td"><polyline class="tin" points="987.6249999999993,375 1015.6249999999993,375 1015.6249999999993,393 989.6249999999993,393"
+      marker-end="url(#mui-sqC)"/><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="388">huan_luyen_va_danh_gia(): 4 mô hình,</text><text class="tx-tin" style="text-anchor:start" x="1023.6249999999993" y="400">chọn mô hình có MAE thấp nhất</text></g><g class="td">
+    <line class="tin" x1="987.6249999999993" y1="426" x2="1233.2099999999991" y2="426" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="1110.417499999999" y="420">INSERT du_bao_luot_khach, danh_gia_mo_hinh</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="975.6249999999993" y1="468" x2="765.4249999999995" y2="468" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="870.5249999999994" y="462">{ du_bao[], danh_gia[], mo_hinh }</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="752.4249999999995" y1="510" x2="554.7199999999997" y2="510" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="653.5724999999995" y="504">kết quả dự báo</text>
+  </g><g class="td">
+    <line class="tin" x1="764.4249999999995" y1="552" x2="1233.2099999999991" y2="552" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="998.8174999999993" y="546">duBaoKhachDaLuu(): SELECT du_bao_luot_khach</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="752.4249999999995" y1="594" x2="554.7199999999997" y2="594" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="653.5724999999995" y="588">dự báo của lần chạy trước + cảnh báo</text>
+  </g><g class="td">
+    <line class="tin-tra" x1="541.7199999999997" y1="636" x2="277.8649999999999" y2="636" marker-end="url(#mui-sqC)"/>
+    <text class="tx-tin" x="409.7924999999998" y="630">JSON vẽ biểu đồ</text>
+  </g><g class="doi-tuong ngoai">
+      <rect x="26" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="82" y="30">Quản lý</text><text class="tx-dt" x="82" y="45">(trình duyệt)</text>
+    </g><g class="doi-tuong ">
+      <rect x="214.3649999999999" y="10" width="113" height="46" rx="4"/>
+      <text class="tx-dt" x="270.8649999999999" y="30">Trang Dự báo AI</text><text class="tx-dt" x="270.8649999999999" y="45">du-bao.ejs</text>
+    </g><g class="doi-tuong ">
+      <rect x="481.2199999999997" y="10" width="133" height="46" rx="4"/>
+      <text class="tx-dt" x="547.7199999999997" y="30">Web (Node)</text><text class="tx-dt" x="547.7199999999997" y="45">routes/forecast.js</text>
+    </g><g class="doi-tuong ">
+      <rect x="702.4249999999995" y="10" width="112" height="40" rx="4"/>
+      <text class="tx-dt" x="758.4249999999995" y="34.5">mlService</text>
+    </g><g class="doi-tuong ngoai">
+      <rect x="925.6249999999993" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="981.6249999999993" y="30">Dịch vụ ML</text><text class="tx-dt" x="981.6249999999993" y="45">FastAPI :8000</text>
+    </g><g class="doi-tuong ngoai">
+      <rect x="1184.2099999999991" y="10" width="112" height="46" rx="4"/>
+      <text class="tx-dt" x="1240.2099999999991" y="30">MySQL</text><text class="tx-dt" x="1240.2099999999991" y="45">gs_restaurant</text>
+    </g><g class="ghi-chu">
+    <text class="tx-ghi" x="26" y="696">Nhánh thứ hai của khối alt là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt,</text><text class="tx-ghi" x="26" y="709">nhưng trang web vẫn phải mở được. Khi đó hệ thống hiển thị kết quả dự báo đã lưu lần chạy gần nhất.</text>
+  </g></svg>

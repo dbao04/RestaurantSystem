@@ -313,7 +313,13 @@ async function traCuuChoKhach(ma, dienThoai) {
       WHERE r.reservation_code = ? AND r.phone = ?
       GROUP BY r.id LIMIT 1`, [String(ma || '').trim().toUpperCase(), so]);
   if (!rows.length) return null;
-  return lamGiau(rows[0]);
+  const resObj = lamGiau(rows[0]);
+  const [preorders] = await db.query(
+    `SELECT dish_id, dish_name, price, quantity, note FROM reservation_preorders WHERE reservation_id = ?`,
+    [resObj.id]
+  ).catch(() => [[]]);
+  resObj.mon_dat_truoc = preorders;
+  return resObj;
 }
 
 /** Lich su cua mot so dien thoai - dung o man hinh nhan vien va trang tra cuu. */
@@ -336,6 +342,52 @@ async function lichSuKhach(dienThoai, { gioiHan = 50 } = {}) {
     reservation_date: qt.ngayChuoi(r.reservation_date),
     gio: qt.gioNgan(String(r.start_time)),
     nhan_trang_thai: qt.NHAN_TRANG_THAI[r.status] || r.status,
+  }));
+}
+
+/** Lich su dat ban cua tai khoan khach hang (tim theo customer_id hoac phone) */
+async function lichSuKhachTheoTaiKhoan(userId, phone, { gioiHan = 50 } = {}) {
+  const so = phone ? qt.chuanHoaDienThoai(phone) : '';
+  const [rows] = await db.query(
+    `SELECT r.id, r.reservation_code, r.reservation_date, r.start_time, r.expected_end_time, r.duration_minutes,
+            r.guest_count, r.customer_name, r.phone, r.email, r.customer_type, r.source, r.status,
+            r.deposit_status, r.deposit_amount, r.occasion, r.special_requests, r.cancel_reason,
+            v.Name_vitri AS area_name,
+            GROUP_CONCAT(b.number_ban ORDER BY b.number_ban SEPARATOR ', ') AS table_names
+       FROM reservations r
+       LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
+       LEFT JOIN ban b ON b.Id_ban = rt.table_id
+       LEFT JOIN vitri v ON v.id_vitri = r.area_id
+      WHERE (r.customer_id = ? OR (r.phone = ? AND ? != ''))
+      GROUP BY r.id
+      ORDER BY r.reservation_date DESC, r.start_time DESC, r.id DESC
+      LIMIT ${Math.min(200, Number(gioiHan) || 50)}`,
+    [userId || 0, so, so]
+  );
+
+  const rsvIds = rows.map((r) => r.id);
+  let preordersByRsv = {};
+  if (rsvIds.length > 0) {
+    const [preorderRows] = await db.query(
+      `SELECT reservation_id, dish_id, dish_name, price, quantity, note
+         FROM reservation_preorders
+        WHERE reservation_id IN (?)`,
+      [rsvIds]
+    ).catch(() => [[]]);
+    preorderRows.forEach((p) => {
+      if (!preordersByRsv[p.reservation_id]) preordersByRsv[p.reservation_id] = [];
+      preordersByRsv[p.reservation_id].push(p);
+    });
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    reservation_date: qt.ngayChuoi(r.reservation_date),
+    gio: qt.gioNgan(String(r.start_time)),
+    gio_ket_thuc: qt.gioNgan(String(r.expected_end_time)),
+    ban: r.table_names ? String(r.table_names).split(', ') : [],
+    nhan_trang_thai: qt.NHAN_TRANG_THAI[r.status] || r.status,
+    mon_dat_truoc: preordersByRsv[r.id] || [],
   }));
 }
 
@@ -599,8 +651,27 @@ async function taoLuotDat(input, ctx = {}) {
           await xb.ghiBan(conn, id, goi.chon.ban);
         }
 
+        // Luu danh sach mon goi truoc (neu co)
+        const dsMon = Array.isArray(input.items) ? input.items : [];
+        if (dsMon.length > 0) {
+          for (const item of dsMon) {
+            const dishId = Number(item.dish_id || item.id_mon) || 0;
+            const dishName = String(item.dish_name || item.name_mon || '').trim();
+            const price = Number(item.price || item.gia_mon) || 0;
+            const qty = Math.max(1, Number(item.quantity || item.soluong) || 1);
+            const note = String(item.note || item.ghichu || '').trim() || null;
+            if (dishId > 0 && dishName) {
+              await conn.query(
+                `INSERT INTO reservation_preorders (reservation_id, dish_id, dish_name, price, quantity, note)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [id, dishId, dishName, price, qty, note]
+              );
+            }
+          }
+        }
+
         await ghiNhatKy(conn, id, null, trangThai,
-          vaoWaitlist ? 'Vào danh sách chờ (hết bàn)' : `Tạo lượt đặt · ${goi.chon.ban.map((b) => b.ten).join(', ')}`,
+          vaoWaitlist ? 'Vào danh sách chờ (hết bàn)' : `Tạo lượt đặt · ${goi.chon.ban.map((b) => b.ten).join(', ')}` + (dsMon.length > 0 ? ` (Gồm ${dsMon.length} món gọi trước)` : ''),
           ctx.nhanVienId);
 
         await capNhatHoSoKhach(conn, khach.dienThoai);
@@ -1468,6 +1539,7 @@ module.exports = {
   chiTiet,
   traCuuChoKhach,
   lichSuKhach,
+  lichSuKhachTheoTaiKhoan,
   hoSoKhach,
   luuHoSoKhach,
   kiemTraKhaDung,

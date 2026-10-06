@@ -3,224 +3,674 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trợ lý ảo (Chatbot) - Nhà Hàng Bảo Đoàn</title>
+  <title>Trợ lý ảo AI (Chatbot) — Nhà Hàng Bảo Đoàn</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js -->
   <script src="/chart.umd.js"></script>
+
   <style>
     :root {
-      --bg:#f1f5f9; --card:#fff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
-      --brand:#4338ca; --brand2:#6366f1; --warn:#d97706; --danger:#dc2626; --ok:#16a34a;
+      --nh-espresso: #221711;
+      --nh-espresso-2: #2d1f17;
+      --nh-espresso-3: #3b2a20;
+      --nh-gold: #c8a24b;
+      --nh-gold-light: #e5c87f;
+      --nh-gold-soft: #f4ebd0;
+      --nh-gold-dark: #9e7d30;
+      --nh-cream: #fbf8f4;
+      --nh-cream-2: #f2ece1;
+      --nh-surface: #ffffff;
+      --nh-ink: #1f1a16;
+      --nh-muted: #786a5d;
+      --nh-line: #e8ded1;
+      --nh-line-soft: #f3ede4;
+
+      --nh-ok: #15803d;
+      --nh-ok-bg: #ecfdf5;
+      --nh-ok-border: #a7f3d0;
+      --nh-warn: #b45309;
+      --nh-warn-bg: #fffbeb;
+      --nh-warn-border: #fde68a;
+      --nh-danger: #b91c1c;
+      --nh-danger-bg: #fef2f2;
+      --nh-danger-border: #fecaca;
+      --nh-info: #1d4ed8;
+      --nh-info-bg: #eff6ff;
+      --nh-info-border: #bfdbfe;
+
+      --nh-serif: 'Playfair Display', Georgia, serif;
+      --nh-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+
+      --nh-radius: 14px;
+      --nh-radius-sm: 8px;
+      --nh-shadow: 0 16px 36px -18px rgba(34, 23, 17, 0.35);
+      --nh-shadow-sm: 0 4px 14px -6px rgba(34, 23, 17, 0.18);
     }
-    * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--text);
-           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
-    header { background:linear-gradient(135deg,#4338ca,#3730a3); color:#fff;
-             padding:18px 28px; display:flex; align-items:center;
-             justify-content:space-between; flex-wrap:wrap; gap:12px; }
-    header h1 { margin:0; font-size:20px; }
-    header .sub { font-size:13px; opacity:.85; margin-top:2px; }
-    header nav a { color:#fff; text-decoration:none; font-size:13px; padding:7px 13px;
-                   border:1px solid rgba(255,255,255,.35); border-radius:7px;
-                   margin-left:8px; display:inline-block; }
-    header nav a:hover { background:rgba(255,255,255,.16); }
 
-    .wrap { padding:20px 28px 60px; max-width:1520px; margin:0 auto; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--nh-cream);
+      color: var(--nh-ink);
+      font-family: var(--nh-sans);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    .banner { padding:12px 16px; border-radius:9px; margin-bottom:18px; font-size:14px;
-              display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .banner.ok  { background:#dcfce7; border:1px solid #86efac; color:#166534; }
-    .banner.tat { background:#fef3c7; border:1px solid #fcd34d; color:#92400e; }
-    .banner code { background:rgba(0,0,0,.07); padding:2px 7px; border-radius:4px; font-size:12.5px; }
+    /* ------------------------------------------------------------- TOPBAR */
+    header.nh-topbar {
+      background: linear-gradient(135deg, var(--nh-espresso) 0%, var(--nh-espresso-2) 60%, var(--nh-espresso-3) 100%);
+      color: #fff;
+      padding: 18px 32px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border-bottom: 2px solid var(--nh-gold);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nh-topbar__inner {
+      max-width: 1560px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .nh-topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .nh-topbar__logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--nh-gold), #9e7d30);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 12px rgba(200, 162, 75, 0.45);
+      flex-shrink: 0;
+    }
+    .nh-topbar__logo img {
+      width: 26px;
+      height: 26px;
+      filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+    }
+    .nh-topbar__titles h1 {
+      margin: 0;
+      font-family: var(--nh-serif);
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+    .nh-badge-layer {
+      font-family: var(--nh-sans);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: rgba(200, 162, 75, 0.25);
+      color: var(--nh-gold-light);
+      border: 1px solid rgba(200, 162, 75, 0.45);
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+    .nh-topbar__sub {
+      font-size: 12.5px;
+      color: #d8cdbe;
+      margin-top: 3px;
+    }
+    .nh-topbar__sub b {
+      color: var(--nh-gold-light);
+      font-weight: 600;
+    }
 
-    .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
-            padding:16px 18px; margin-bottom:16px; }
-    .card h2 { margin:0 0 4px; font-size:16px; }
-    .card .desc { font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
-    .grid { display:grid; gap:16px; margin-bottom:16px; }
-    .g2 { grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); }
-    .g4 { grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
-    .chart-box { position:relative; height:300px; }
+    .nh-topbar__nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .nh-topbar__nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--nh-radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+    .nh-topbar__nav a i {
+      color: var(--nh-gold);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+    .nh-topbar__nav a:hover {
+      background: rgba(200, 162, 75, 0.22);
+      border-color: var(--nh-gold);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .nh-topbar__nav a:hover i {
+      transform: scale(1.15);
+    }
 
-    .the { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:15px 17px; }
-    .the .nhan { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
-    .the .so { font-size:26px; font-weight:650; margin-top:5px; }
-    .the .phu { font-size:12px; color:var(--muted); margin-top:3px; }
+    /* ------------------------------------------------------------- WRAPPER */
+    .nh-wrap {
+      max-width: 1560px;
+      margin: 0 auto;
+      padding: 24px 32px 80px;
+    }
 
-    table { width:100%; border-collapse:collapse; font-size:13.5px; }
-    th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; }
-    th { background:#f8fafc; font-weight:600; font-size:12.5px; color:var(--muted);
-         text-transform:uppercase; letter-spacing:.03em; }
-    td.so { text-align:right; font-variant-numeric:tabular-nums; }
-    tr.chon { background:#eef2ff; font-weight:600; }
-    .cuon { max-height:340px; overflow:auto; }
+    /* ------------------------------------------------------------- BANNER */
+    .nh-banner {
+      padding: 13px 18px;
+      border-radius: var(--nh-radius);
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: var(--nh-shadow-sm);
+    }
+    .nh-banner.ok {
+      background: var(--nh-ok-bg);
+      border: 1px solid var(--nh-ok-border);
+      color: #14532d;
+    }
+    .nh-banner.ok i { color: var(--nh-ok); font-size: 16px; }
+    .nh-banner.tat {
+      background: var(--nh-warn-bg);
+      border: 1px solid var(--nh-warn-border);
+      color: #78350f;
+    }
+    .nh-banner.tat i { color: var(--nh-warn); font-size: 16px; }
+    .nh-banner code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
 
-    .btn { background:var(--brand); color:#fff; border:0; padding:9px 17px;
-           border-radius:7px; cursor:pointer; font-size:14px; font-family:inherit; }
-    .btn:hover { background:#3730a3; }
-    .btn:disabled { opacity:.55; cursor:default; }
-    .btn.phu { background:#fff; color:var(--text); border:1px solid var(--line); }
+    /* ------------------------------------------------------------- KPIS */
+    .nh-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .nh-kpi {
+      background: var(--nh-surface);
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius);
+      padding: 18px 20px;
+      box-shadow: var(--nh-shadow-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-left: 4px solid var(--nh-gold);
+      transition: all 0.2s ease;
+    }
+    .nh-kpi:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--nh-shadow);
+      border-color: #dcd0bf;
+    }
+    .nh-kpi.accent { border-left-color: var(--nh-gold); }
+    .nh-kpi.good   { border-left-color: var(--nh-ok); }
+    .nh-kpi.info   { border-left-color: var(--nh-info); }
+    .nh-kpi.warn   { border-left-color: var(--nh-warn); }
 
-    .thu { display:flex; gap:8px; margin-bottom:12px; }
-    .thu input { flex:1; padding:9px 13px; border:1px solid var(--line); border-radius:7px;
-                 font-size:14px; font-family:inherit; }
-    .ket-qua-thu { background:#f8fafc; border:1px solid var(--line); border-radius:8px;
-                   padding:13px 15px; font-size:13.5px; white-space:pre-wrap; line-height:1.6;
-                   min-height:56px; }
-    .nhan-yd { display:inline-block; background:#eef2ff; color:#4338ca; border-radius:5px;
-               padding:2px 8px; font-size:12px; font-family:ui-monospace,monospace; }
-    .canh-bao { color:var(--danger); }
+    .nh-kpi__label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--nh-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nh-kpi__label i {
+      font-size: 16px;
+      color: var(--nh-gold);
+    }
+    .nh-kpi__val {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--nh-espresso);
+      margin: 8px 0 4px;
+      letter-spacing: -0.3px;
+    }
+    .nh-kpi__note {
+      font-size: 12px;
+      color: var(--nh-muted);
+      font-weight: 500;
+    }
+
+    /* ------------------------------------------------------------- CARDS & GRIDS */
+    .nh-grid {
+      display: grid;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .nh-g2 {
+      grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    }
+
+    .nh-card {
+      background: var(--nh-surface);
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius);
+      padding: 22px 24px;
+      box-shadow: var(--nh-shadow-sm);
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+      transition: border-color 0.2s ease;
+    }
+    .nh-card:hover {
+      border-color: #dcd0bf;
+    }
+    .nh-card__header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--nh-line-soft);
+    }
+    .nh-card__title {
+      font-family: var(--nh-serif);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--nh-espresso);
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .nh-card__title i {
+      color: var(--nh-gold);
+      font-size: 15px;
+    }
+    .nh-card__desc {
+      font-size: 12.5px;
+      color: var(--nh-muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* ------------------------------------------------------------- TABLES */
+    .nh-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--nh-radius-sm);
+      border: 1px solid var(--nh-line-soft);
+    }
+    table.nh-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    table.nh-table th {
+      background: #faf6f0;
+      color: var(--nh-espresso);
+      font-weight: 700;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--nh-line);
+      text-align: left;
+    }
+    table.nh-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--nh-line-soft);
+      vertical-align: middle;
+    }
+    table.nh-table tbody tr {
+      transition: background 0.15s ease;
+    }
+    table.nh-table tbody tr:hover {
+      background: #fdfbf7;
+    }
+    table.nh-table tbody tr.chon {
+      background: #f9f2e3;
+      font-weight: 700;
+      color: var(--nh-espresso);
+    }
+    table.nh-table tbody tr.chon td {
+      border-color: #ebdcb9;
+    }
+    td.so, th.so {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ------------------------------------------------------------- BUTTONS & FORMS */
+    .nh-btn {
+      background: linear-gradient(135deg, var(--nh-espresso) 0%, var(--nh-espresso-2) 100%);
+      color: #fff;
+      border: 1px solid var(--nh-gold);
+      padding: 9px 18px;
+      border-radius: var(--nh-radius-sm);
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .nh-btn i {
+      color: var(--nh-gold);
+      font-size: 13px;
+    }
+    .nh-btn:hover {
+      background: var(--nh-espresso-3);
+      box-shadow: 0 4px 12px rgba(34, 23, 17, 0.25);
+      transform: translateY(-1px);
+    }
+    .nh-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .nh-btn.ghost {
+      background: #fff;
+      color: var(--nh-espresso);
+      border: 1px solid var(--nh-line);
+    }
+    .nh-btn.ghost:hover {
+      background: var(--nh-cream);
+      border-color: var(--nh-gold);
+    }
+
+    .nh-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .nh-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--nh-ink);
+      transition: all 0.2s ease;
+    }
+    .nh-input:focus {
+      outline: none;
+      border-color: var(--nh-gold);
+      box-shadow: 0 0 0 3px rgba(200, 162, 75, 0.2);
+    }
+
+    .nh-result-box {
+      background: #faf6f0;
+      border: 1px solid var(--nh-line);
+      border-radius: var(--nh-radius-sm);
+      padding: 16px 18px;
+      font-size: 13.5px;
+      white-space: pre-wrap;
+      line-height: 1.65;
+      min-height: 60px;
+    }
+    .nh-badge-intent {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f2ece1;
+      color: var(--nh-espresso);
+      border: 1px solid #dfd3c0;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: ui-monospace, monospace;
+    }
+    .nh-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .chart-box {
+      position: relative;
+      height: 300px;
+    }
+    .canh-bao {
+      color: var(--nh-danger);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Trợ lý ảo — Chatbot hỏi đáp tiếng Việt</h1>
-    <div class="sub">Phân loại ý định tự huấn luyện · Chạy offline, không gọi API bên ngoài</div>
+
+<!-- TOPBAR CHUẨN NHÀ HÀNG BẢO ĐOÀN -->
+<header class="nh-topbar">
+  <div class="nh-topbar__inner">
+    <a href="/admin" class="nh-topbar__brand">
+      <div class="nh-topbar__logo">
+        <img src="/logo.svg" alt="Logo">
+      </div>
+      <div class="nh-topbar__titles">
+        <h1>
+          Trợ lý ảo AI (Chatbot)
+          <span class="nh-badge-layer"><i class="fas fa-microchip"></i> NLP &amp; NLU</span>
+        </h1>
+        <div class="nh-topbar__sub">
+          Mô hình phân loại ý định tiếng Việt tự huấn luyện · Chạy offline nội bộ | Quản trị viên: <b><%= tenNguoiDung %></b>
+        </div>
+      </div>
+    </a>
+    
+    <nav class="nh-topbar__nav">
+      <a href="/admin"><i class="fas fa-gauge-high"></i> Trang quản trị</a>
+      <a href="/admin/to-chuc-quan-ly"><i class="fas fa-sitemap"></i> Cơ cấu &amp; Phân quyền</a>
+      <a href="/admin/du-bao"><i class="fas fa-brain"></i> Dự báo AI (ML)</a>
+      <a href="/analytics"><i class="fas fa-chart-line"></i> Dashboard phân tích</a>
+    </nav>
   </div>
-  <nav>
-    <a href="/admin">Trang quản trị</a>
-    <a href="/analytics">Phân tích</a>
-    <a href="/du-bao">Dự báo AI/ML</a>
-  </nav>
 </header>
 
-<div class="wrap">
+<div class="nh-wrap">
 
+  <!-- BANNER TRẠNG THÁI -->
   <% if (trangThai && trangThai.san_sang) { %>
-    <div class="banner ok">
-      <b>✔ Chatbot đang hoạt động.</b>
+    <div class="nh-banner ok">
+      <i class="fas fa-circle-check"></i>
+      <b>Trợ lý AI đang sẵn sàng phục vụ.</b>
       <span>
-        Mô hình: <b><%= (trangThai.mo_hinh && trangThai.mo_hinh.ten_mo_hinh) || 'chưa rõ' %></b>
+        Mô hình đang chạy: <b><%= (trangThai.mo_hinh && trangThai.mo_hinh.ten_mo_hinh) || 'Hồi quy Logistic' %></b>
         · Ngưỡng tin cậy: <code><%= trangThai.nguong_tin_cay %></code>
-        · <%= trangThai.bo_du_lieu ? trangThai.bo_du_lieu.so_y_dinh : 0 %> ý định
+        · Đã học <b><%= trangThai.bo_du_lieu ? trangThai.bo_du_lieu.so_y_dinh : 0 %></b> nhóm ý định
       </span>
     </div>
   <% } else { %>
-    <div class="banner tat">
-      <b>⚠ ML service chưa bật</b>
+    <div class="nh-banner tat">
+      <i class="fas fa-triangle-exclamation"></i>
+      <b>ML service chưa được bật.</b>
       <span>
-        Chatbot đang chạy ở <b>chế độ dự phòng</b> (chỉ trả lời được vài câu hỏi cơ bản bằng từ khóa).
-        Bật bằng: <code>python -m uvicorn ml_service.main:app --port 8000</code>
+        Chatbot đang chạy ở <b>chế độ dự phòng từ khóa</b>. Khởi động dịch vụ AI bằng lệnh: <code>python -m uvicorn ml_service.main:app --port 8000</code>
       </span>
     </div>
   <% } %>
 
-  <!-- ===================== SỐ LIỆU VẬN HÀNH ===================== -->
-  <div class="grid g4">
-    <div class="the">
-      <div class="nhan">Lượt hỏi (<%= thongKe.so_ngay %> ngày)</div>
-      <div class="so"><%= Number(thongKe.so_luot).toLocaleString('vi-VN') %></div>
-      <div class="phu">Ghi từ nhật ký hội thoại thật</div>
+  <!-- SỐ LIỆU VẬN HÀNH (KPIS) -->
+  <div class="nh-kpis">
+    <div class="nh-kpi accent">
+      <div class="nh-kpi__label">
+        <span>Lượt hỏi (<%= thongKe.so_ngay %> ngày)</span>
+        <i class="fas fa-comments"></i>
+      </div>
+      <div class="nh-kpi__val"><%= Number(thongKe.so_luot).toLocaleString('vi-VN') %></div>
+      <div class="nh-kpi__note">Ghi nhận từ nhật ký thực tế</div>
     </div>
-    <div class="the">
-      <div class="nhan">Tỷ lệ hiểu được</div>
-      <div class="so"><%= thongKe.ty_le_hieu.toFixed(1) %>%</div>
-      <div class="phu"><%= thongKe.so_khong_hieu %> câu bị từ chối</div>
+
+    <div class="nh-kpi good">
+      <div class="nh-kpi__label">
+        <span>Tỷ lệ hiểu câu hỏi</span>
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div class="nh-kpi__val"><%= thongKe.ty_le_hieu.toFixed(1) %>%</div>
+      <div class="nh-kpi__note"><%= thongKe.so_khong_hieu %> câu không nhận diện được</div>
     </div>
-    <div class="the">
-      <div class="nhan">Độ tin cậy trung bình</div>
-      <div class="so"><%= (thongKe.tin_cay_tb * 100).toFixed(1) %>%</div>
-      <div class="phu">Ngưỡng chấp nhận: <%= trangThai.nguong_tin_cay || '0.45' %></div>
+
+    <div class="nh-kpi info">
+      <div class="nh-kpi__label">
+        <span>Độ tin cậy trung bình</span>
+        <i class="fas fa-bullseye"></i>
+      </div>
+      <div class="nh-kpi__val"><%= (thongKe.tin_cay_tb * 100).toFixed(1) %>%</div>
+      <div class="nh-kpi__note">Ngưỡng chấp nhận: <%= trangThai.nguong_tin_cay || '0.45' %></div>
     </div>
-    <div class="the">
-      <div class="nhan">Thời gian trả lời TB</div>
-      <div class="so"><%= Math.round(thongKe.ms_tb) %> ms</div>
-      <div class="phu">Toàn bộ pipeline 5 tầng</div>
+
+    <div class="nh-kpi">
+      <div class="nh-kpi__label">
+        <span>Thời gian phản hồi TB</span>
+        <i class="fas fa-stopwatch"></i>
+      </div>
+      <div class="nh-kpi__val"><%= Math.round(thongKe.ms_tb) %> <span style="font-size:16px; font-weight:600;">ms</span></div>
+      <div class="nh-kpi__note">Toàn bộ pipeline xử lý 5 tầng</div>
     </div>
   </div>
 
-  <!-- ===================== THỬ NHANH ===================== -->
-  <div class="card">
-    <h2>Thử nhanh</h2>
-    <p class="desc">
-      Gõ một câu bất kỳ để xem bot nhận ra ý định nào và độ tin cậy bao nhiêu.
-      Câu hỏi ở đây chạy với <b>quyền quản lý</b> nên xem được cả số liệu kinh doanh.
-    </p>
-    <div class="thu">
-      <input id="o-thu" placeholder="Ví dụ: doanh thu tuần trước bao nhiêu" maxlength="500">
-      <button class="btn" id="nut-thu">Hỏi</button>
+  <!-- THỬ NGHIỆM TRỰC TIẾP -->
+  <div class="nh-card">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-flask"></i> Thử nghiệm phân loại ý định</h2>
+      <p class="nh-card__desc">
+        Gõ câu hỏi bất kỳ để kiểm tra khả năng bóc tách thực thể và phân loại ý định của trợ lý AI. (Đang kiểm thử với <b>quyền quản lý</b> để tra cứu số liệu).
+      </p>
     </div>
-    <div class="ket-qua-thu" id="kq-thu">Kết quả sẽ hiện ở đây…</div>
+    <div class="nh-input-group">
+      <input id="o-thu" class="nh-input" placeholder="Ví dụ: doanh thu tuần trước bao nhiêu, cho xem bàn trống tối nay..." maxlength="500">
+      <button class="nh-btn" id="nut-thu"><i class="fas fa-paper-plane"></i> Gửi câu hỏi</button>
+    </div>
+    <div class="nh-result-box" id="kq-thu">Kết quả phân tích và câu trả lời sẽ xuất hiện tại đây…</div>
   </div>
 
-  <!-- ===================== SO SÁNH MÔ HÌNH ===================== -->
-  <div class="card">
-    <h2>Kết quả thực nghiệm — so sánh mô hình phân loại ý định</h2>
-    <p class="desc">
-      Tập kiểm thử được chia <b>theo nhóm mẫu câu</b> (GroupShuffleSplit): toàn bộ câu sinh từ
-      một mẫu chỉ nằm ở một bên, tránh rò rỉ dữ liệu làm độ chính xác cao giả tạo.
-      Cột <b>“tay”</b> đo trên tập câu hỏi do người viết tự do, không theo mẫu nào —
-      đây mới là con số phản ánh năng lực thật và cũng là tiêu chí chọn mô hình.
-    </p>
+  <!-- BẢNG SO SÁNH MÔ HÌNH -->
+  <div class="nh-card">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-chart-simple"></i> Kết quả thực nghiệm — So sánh mô hình máy học</h2>
+      <p class="nh-card__desc">
+        Tập kiểm thử được chia <b>theo nhóm mẫu câu</b> (GroupShuffleSplit) tránh rò rỉ dữ liệu. Cột <b>“tay”</b> đo lường trên tập câu hỏi viết tự do do con người soạn thảo thực tế.
+      </p>
+    </div>
 
     <% if (danhGia && danhGia.length) { %>
-      <table>
-        <thead>
-          <tr>
-            <th>Mô hình</th>
-            <th style="text-align:right">Độ chính xác (sinh)</th>
-            <th style="text-align:right">F1-macro (sinh)</th>
-            <th style="text-align:right">Độ chính xác (tay)</th>
-            <th style="text-align:right">F1-macro (tay)</th>
-            <th style="text-align:right">Huấn luyện (s)</th>
-            <th style="text-align:right">ms/câu</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% danhGia.forEach(function (r) { %>
-            <tr class="<%= r.la_mo_hinh_chon ? 'chon' : '' %>">
-              <td><%= r.mo_hinh %><%= r.la_mo_hinh_chon ? ' ★' : '' %></td>
-              <td class="so"><%= Number(r.do_chinh_xac).toFixed(2) %>%</td>
-              <td class="so"><%= Number(r.f1_macro).toFixed(2) %>%</td>
-              <td class="so"><%= Number(r.do_chinh_xac_tay).toFixed(2) %>%</td>
-              <td class="so"><%= Number(r.f1_macro_tay).toFixed(2) %>%</td>
-              <td class="so"><%= Number(r.giay_huan_luyen).toFixed(2) %></td>
-              <td class="so"><%= Number(r.ms_moi_cau).toFixed(2) %></td>
+      <div class="nh-table-wrap">
+        <table class="nh-table">
+          <thead>
+            <tr>
+              <th>Thuật toán / Mô hình</th>
+              <th class="so">Độ chính xác (Sinh)</th>
+              <th class="so">F1-Macro (Sinh)</th>
+              <th class="so">Độ chính xác (Tay)</th>
+              <th class="so">F1-Macro (Tay)</th>
+              <th class="so">Huấn luyện (s)</th>
+              <th class="so">Độ trễ (ms/câu)</th>
             </tr>
-          <% }); %>
-        </tbody>
-      </table>
-      <p class="desc" style="margin-top:12px">★ = mô hình đang được dùng để trả lời.</p>
+          </thead>
+          <tbody>
+            <% danhGia.forEach(function (r) { %>
+              <tr class="<%= r.la_mo_hinh_chon ? 'chon' : '' %>">
+                <td>
+                  <strong><%= r.mo_hinh %></strong>
+                  <% if (r.la_mo_hinh_chon) { %>
+                    <span style="display:inline-block; margin-left:6px; background:var(--nh-gold); color:#241a14; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:700;"><i class="fas fa-star"></i> Đang dùng</span>
+                  <% } %>
+                </td>
+                <td class="so"><%= Number(r.do_chinh_xac).toFixed(2) %>%</td>
+                <td class="so"><%= Number(r.f1_macro).toFixed(2) %>%</td>
+                <td class="so"><strong><%= Number(r.do_chinh_xac_tay).toFixed(2) %>%</strong></td>
+                <td class="so"><strong><%= Number(r.f1_macro_tay).toFixed(2) %>%</strong></td>
+                <td class="so"><%= Number(r.giay_huan_luyen).toFixed(2) %>s</td>
+                <td class="so"><%= Number(r.ms_moi_cau).toFixed(2) %> ms</td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
     <% } else { %>
-      <p class="desc canh-bao">
-        Chưa có kết quả huấn luyện nào. Chạy <code>train_chatbot.bat</code>
-        hoặc bấm nút bên dưới.
-      </p>
+      <p class="canh-bao"><i class="fas fa-circle-exclamation"></i> Chưa có dữ liệu đánh giá mô hình. Vui lòng bấm nút huấn luyện bên dưới.</p>
     <% } %>
 
-    <div style="margin-top:14px; display:flex; gap:9px; flex-wrap:wrap; align-items:center">
-      <button class="btn" id="nut-train">Huấn luyện lại mô hình</button>
-      <span class="desc" style="margin:0">Mất khoảng 10–60 giây tùy cấu hình máy.</span>
+    <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <button class="nh-btn" id="nut-train"><i class="fas fa-rotate"></i> Huấn luyện lại toàn bộ mô hình</button>
+      <span class="nh-card__desc">Thời gian huấn luyện khoảng 10–30 giây tùy theo CPU.</span>
     </div>
-    <div id="kq-train" class="desc" style="margin-top:10px"></div>
+    <div id="kq-train" class="nh-card__desc" style="margin-top:10px; font-weight:600;"></div>
   </div>
 
-  <!-- ===================== PHÂN BỐ Ý ĐỊNH + CÂU CHƯA HIỂU ===================== -->
-  <div class="grid g2">
-    <div class="card">
-      <h2>Ý định được hỏi nhiều nhất</h2>
-      <p class="desc">Thống kê trên nhật ký <%= thongKe.so_ngay %> ngày gần nhất.</p>
+  <!-- PHÂN BỐ Ý ĐỊNH & CÂU CHƯA HIỂU -->
+  <div class="nh-grid nh-g2">
+    <div class="nh-card" style="margin-bottom:0;">
+      <div class="nh-card__header">
+        <h2 class="nh-card__title"><i class="fas fa-chart-pie"></i> Phân bố nhóm ý định phổ biến</h2>
+        <p class="nh-card__desc">Thống kê số lượng lượt hỏi theo nhóm nhu cầu trong <%= thongKe.so_ngay %> ngày qua.</p>
+      </div>
       <div class="chart-box"><canvas id="bd-y-dinh"></canvas></div>
     </div>
 
-    <div class="card">
-      <h2>Câu bot chưa hiểu — việc cần làm</h2>
-      <p class="desc">
-        Đây là danh sách quý nhất để cải thiện bot: mỗi câu ở đây là một cách hỏi
-        chưa có trong bộ mẫu. Thêm chúng vào <code>ml_service/chatbot/y_dinh.py</code>
-        rồi huấn luyện lại, độ phủ sẽ tăng ngay.
-      </p>
-      <div class="cuon">
+    <div class="nh-card" style="margin-bottom:0;">
+      <div class="nh-card__header">
+        <h2 class="nh-card__title"><i class="fas fa-circle-question"></i> Câu hỏi chưa nhận diện được</h2>
+        <p class="nh-card__desc">
+          Các câu hỏi thực tế khách hàng hoặc nhân viên hỏi mà bot chưa hiểu. Thêm vào bộ huấn luyện để tăng độ bao phủ.
+        </p>
+      </div>
+      <div class="nh-scroll">
         <% if (thongKe.khong_hieu && thongKe.khong_hieu.length) { %>
-          <table>
-            <thead><tr><th>Câu hỏi</th><th style="text-align:right">Số lần</th></tr></thead>
-            <tbody>
-              <% thongKe.khong_hieu.forEach(function (r) { %>
-                <tr><td><%= r.cau_hoi %></td><td class="so"><%= r.so_lan %></td></tr>
-              <% }); %>
-            </tbody>
-          </table>
+          <div class="nh-table-wrap">
+            <table class="nh-table">
+              <thead>
+                <tr>
+                  <th>Nội dung câu hỏi</th>
+                  <th class="so" style="width:100px;">Tần suất</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% thongKe.khong_hieu.forEach(function (r) { %>
+                  <tr>
+                    <td><%= r.cau_hoi %></td>
+                    <td class="so"><span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px;"><%= r.so_lan %> lần</span></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
         <% } else { %>
-          <p class="desc">Chưa có câu nào bị từ chối. Rất tốt!</p>
+          <div style="text-align:center; padding:30px; color:var(--nh-muted);">
+            <i class="fas fa-face-smile" style="font-size:32px; color:var(--nh-ok); margin-bottom:8px; display:block;"></i>
+            Chưa có câu hỏi nào bị từ chối. Bot hoạt động rất tốt!
+          </div>
         <% } %>
       </div>
     </div>
@@ -229,7 +679,7 @@
 </div>
 
 <script>
-  /* ---- Biểu đồ phân bố ý định ---- */
+  /* ---- Biểu đồ phân bố ý định (Theme Espresso Gold) ---- */
   (function () {
     var duLieu = <%- JSON.stringify(thongKe.theo_y_dinh || []) %>;
     var el = document.getElementById('bd-y-dinh');
@@ -238,18 +688,35 @@
       type: 'bar',
       data: {
         labels: duLieu.map(function (r) { return r.y_dinh; }),
-        datasets: [{ label: 'Số lượt', data: duLieu.map(function (r) { return Number(r.so_luot); }),
-                     backgroundColor: '#6366f1' }]
+        datasets: [{
+          label: 'Số lượt hỏi',
+          data: duLieu.map(function (r) { return Number(r.so_luot); }),
+          backgroundColor: '#c8a24b',
+          hoverBackgroundColor: '#9e7d30',
+          borderRadius: 6
+        }]
       },
       options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true } }
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#f3ede4' }
+          },
+          y: {
+            grid: { display: false }
+          }
+        }
       }
     });
   })();
 
-  /* ---- Thử nhanh ---- */
+  /* ---- Thử nhanh NLP ---- */
   (function () {
     var o = document.getElementById('o-thu');
     var nut = document.getElementById('nut-thu');
@@ -263,7 +730,7 @@
       var cau = o.value.trim();
       if (!cau) return;
       nut.disabled = true;
-      kq.textContent = 'Đang xử lý…';
+      kq.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang phân tích câu hỏi…';
       fetch('/chatbot/api/hoi', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cau_hoi: cau })
@@ -272,25 +739,25 @@
         .then(function (d) {
           var html = '';
           if (d.y_dinh) {
-            html += '<span class="nhan-yd">' + thoat(d.y_dinh) + '</span> ';
-            if (d.tin_cay != null) html += 'tin cậy <b>' + (d.tin_cay * 100).toFixed(1) + '%</b> ';
-            if (d.thoi_gian_ms != null) html += '· ' + d.thoi_gian_ms + ' ms';
-            if (d.nguon === 'du_phong') html += ' · <b>chế độ dự phòng</b>';
-            html += '<br><br>';
+            html += '<span class="nh-badge-intent"><i class="fas fa-tag"></i> ' + thoat(d.y_dinh) + '</span> ';
+            if (d.tin_cay != null) html += '· Độ tin cậy: <strong style="color:var(--nh-ok);">' + (d.tin_cay * 100).toFixed(1) + '%</strong> ';
+            if (d.thoi_gian_ms != null) html += '· Xử lý: <strong>' + d.thoi_gian_ms + ' ms</strong>';
+            if (d.nguon === 'du_phong') html += ' · <span style="color:var(--nh-warn); font-weight:bold;"><i class="fas fa-shield"></i> Chế độ dự phòng</span>';
+            html += '<div style="margin-top:10px;"></div>';
           }
           html += thoat(d.van_ban || '')
             .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
             .replace(/_([^_]+)_/g, '<i>$1</i>');
           if (d.tham_so && Object.keys(d.tham_so).length) {
-            html += '<br><br><small>Tham số nhận ra: <code>'
-                  + thoat(JSON.stringify(d.tham_so)) + '</code></small>';
+            html += '<div style="margin-top:8px;"><small style="color:var(--nh-muted);">Tham số bóc tách: <code>'
+                  + thoat(JSON.stringify(d.tham_so)) + '</code></small></div>';
           }
           if (d.bang && d.bang.length) {
-            html += '<br><small>Kèm bảng ' + d.bang.length + ' dòng.</small>';
+            html += '<div style="margin-top:8px;"><small style="color:var(--nh-muted);"><i class="fas fa-table"></i> Trả về dữ liệu bảng ' + d.bang.length + ' dòng.</small></div>';
           }
           kq.innerHTML = html;
         })
-        .catch(function () { kq.textContent = 'Không gọi được máy chủ.'; })
+        .catch(function () { kq.innerHTML = '<span class="canh-bao"><i class="fas fa-circle-xmark"></i> Không thể kết nối tới máy chủ.</span>'; })
         .finally(function () { nut.disabled = false; });
     }
 
@@ -298,22 +765,22 @@
     o.addEventListener('keydown', function (e) { if (e.key === 'Enter') hoi(); });
   })();
 
-  /* ---- Huấn luyện lại ---- */
+  /* ---- Huấn luyện lại mô hình ---- */
   (function () {
     var nut = document.getElementById('nut-train');
     var kq = document.getElementById('kq-train');
     nut.onclick = function () {
-      if (!confirm('Huấn luyện lại bộ phân loại ý định? Quá trình mất 10–60 giây.')) return;
+      if (!confirm('Khởi chạy huấn luyện lại bộ phân loại ý định tiếng Việt?')) return;
       nut.disabled = true;
-      kq.textContent = 'Đang huấn luyện… (không tắt trang)';
+      kq.innerHTML = '<span style="color:var(--nh-gold-dark);"><i class="fas fa-spinner fa-spin"></i> Đang huấn luyện toàn bộ mô hình (vui lòng giữ nguyên trang)…</span>';
       fetch('/admin/chatbot/huan-luyen', { method: 'POST' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (!d.ok) { kq.innerHTML = '<span class="canh-bao">Lỗi: ' + (d.loi || '') + '</span>'; return; }
-          kq.innerHTML = 'Xong. Mô hình được chọn: <b>' + d.ten_mo_hinh_chon + '</b>. Đang tải lại trang…';
+          if (!d.ok) { kq.innerHTML = '<span class="canh-bao"><i class="fas fa-circle-xmark"></i> Lỗi: ' + (d.loi || '') + '</span>'; return; }
+          kq.innerHTML = '<span style="color:var(--nh-ok);"><i class="fas fa-circle-check"></i> Huấn luyện thành công! Mô hình tối ưu: <b>' + d.ten_mo_hinh_chon + '</b>. Đang làm mới dữ liệu…</span>';
           setTimeout(function () { location.reload(); }, 1400);
         })
-        .catch(function (e) { kq.innerHTML = '<span class="canh-bao">Lỗi: ' + e.message + '</span>'; })
+        .catch(function (e) { kq.innerHTML = '<span class="canh-bao"><i class="fas fa-circle-xmark"></i> Lỗi: ' + e.message + '</span>'; })
         .finally(function () { nut.disabled = false; });
     };
   })();

@@ -144,20 +144,31 @@ function viec(cx, cy, dong, lop = '') {
 }
 
 /**
- * Su kien: loai = 'dau' | 'giua' | 'cuoi'.
+ * Su kien: loai = 'dau' | 'giua' | 'hen-gio' | 'cuoi'.
+ *
+ * 'giua'     su kien trung gian bat thong diep (co bieu tuong phong thu)
+ * 'hen-gio'  su kien trung gian hen gio (co bieu tuong dong ho) - dung cho cac
+ *            buoc chay theo moc thoi gian: vong quet nen 60 giay, han giu ban,
+ *            han tra tien coc, ma QR het han, chot ca cuoi ngay.
+ *
  * `nhanTren` dat ten len tren vong tron - dung khi luong di vao / di ra theo
  * chieu doc, vi luc do cho ben duoi da co duong ve di qua.
  */
 function suKien(cx, cy, nhan, loai = 'dau', nhanTren = false) {
   const l = ds(nhan);
-  const vong =
-    loai === 'giua'
-      ? `<circle cx="${cx}" cy="${cy}" r="19"/><circle cx="${cx}" cy="${cy}" r="15"/>`
-      : `<circle cx="${cx}" cy="${cy}" r="19"/>`;
+  const kep = loai === 'giua' || loai === 'hen-gio';
+  const vong = kep
+    ? `<circle cx="${cx}" cy="${cy}" r="19"/><circle cx="${cx}" cy="${cy}" r="15"/>`
+    : `<circle cx="${cx}" cy="${cy}" r="19"/>`;
   const thu =
     loai === 'giua'
       ? `<path class="thu" d="M${cx - 8},${cy - 5} h16 v10 h-16 z M${cx - 8},${cy - 5} l8,6 l8,-6"/>`
-      : '';
+      : loai === 'hen-gio'
+        // Mat dong ho ve bang MOT cung tron gan kin (a8,8 0 1,0 0.02,0) chu khong
+        // dung <circle>: quy tac `.sk circle` to nen giay dac cho vong su kien,
+        // to no de len ca hai kim. Path thi an theo `.thu` (fill:none).
+        ? `<path class="thu" d="M${cx},${cy - 8} a8,8 0 1,0 0.02,0 M${cx},${cy - 5} L${cx},${cy} L${cx + 4},${cy}"/>`
+        : '';
   const chu = l
     .map((t, i) => {
       const yy = nhanTren ? cy - 30 - (l.length - 1 - i) * 13 : cy + 34 + i * 13;

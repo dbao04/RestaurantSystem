@@ -528,15 +528,8 @@
     nut.disabled = !camSanSang;
 
     if (kq.ok) {
-      // Phần trăm do máy chủ gửi xuống (đã quy đổi sẵn) — không tự nhân 100 ở
-      // đây nữa để màn hình và nhật ký luôn nói cùng một con số.
-      bao('<strong>' + (kq.chieu === 'vao' ? 'Đã chấm công VÀO' : 'Đã chấm công RA') + '</strong> lúc ' +
+      bao('<strong>' + (kq.chieu === 'vao' ? 'Chấm công VÀO thành công' : 'Chấm công RA thành công') + '</strong> lúc ' +
           RT.escapeHtml(kq.gio || '') +
-          (kq.phan_tram != null
-            ? ' · khớp ' + kq.phan_tram + '%' +
-              (kq.nguong_phan_tram != null ? ' (cần ' + kq.nguong_phan_tram + '%)' : '')
-            : '') +
-          (kq.khoang_cach_m != null ? ' · cách nhà hàng ' + kq.khoang_cach_m + ' m' : '') +
           '<div class="small mt-1">Đang cập nhật lại trang...</div>', 'success', 'fa-check-circle');
       RT.thongBao('Chấm công thành công.', 'thanh-cong');
       // Tải lại để bảng lịch sử và giờ vào/ra hiển thị đúng bản ghi vừa tạo.

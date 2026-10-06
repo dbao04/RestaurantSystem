@@ -1,52 +1,110 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: t('tai_khoan.dang_ky') }) %>
 
-  <section class="hero-wrap hero-wrap-2 nh-wa-koshi"
-    data-stellar-background-ratio="0.5">
-    <div class="overlay"></div>
-    <div class="container">
-      <div class="row no-gutters slider-text align-items-end justify-content-center">
-        <div class="col-md-9 ftco-animate text-center mb-4">
-          <h1 class="mb-2 bread"><%= t('tai_khoan.dang_ky') %></h1>
-        </div>
-      </div>
+<section class="nh-subhero" style="min-height: 28vh;">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('dieu_huong.tai_khoan') %></span>
+    <h1><%= t('tai_khoan.dang_ky') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('tai_khoan.dang_ky') %>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="ftco-section ftco-no-pt ftco-no-pb contact-section">
-    <div class="container">
-      <div class="row d-flex align-items-stretch no-gutters">
-        <div class="col-md-6 pt-5 px-2 pb-2 p-md-5 order-md-last">
-          <h2 class="h4 mb-2 mb-md-5 font-weight-bold"><%= t('tai_khoan.dang_ky_tai_khoan') %></h2>
-          <% if (typeof message !=='undefined' ) { %>
-            <div class="alert alert-info"><%- message %></div>
-            <% } %>
-              <form action="/register" method="post">
-                <div class="form-group">
-                  <input type="text" class="form-control" placeholder="<%= t('chung.ho_ten') %>" required name="ten">
-                </div>
-                <div class="form-group">
-                  <input name="sodienthoai" type="text" class="form-control" placeholder="<%= t('chung.dien_thoai') %>" required>
-                </div>
-                <div class="form-group">
-                  <input name="email" type="email" class="form-control" placeholder="<%= t('tai_khoan.email_khoi_phuc') %>" required>
-                </div>
-                <div class="form-group">
-                  <input name="diachi" type="text" class="form-control" placeholder="<%= t('chung.dia_chi') %>" required>
-                </div>
-
-                <div class="form-group">
-                  <input type="password" name="passwords" class="form-control" placeholder="<%= t('tai_khoan.mat_khau') %>" required>
-                </div>
-                <div class="form-group">
-                  <input type="password" name="repass" class="form-control" placeholder="<%= t('tai_khoan.xac_nhan_mat_khau') %>" required>
-                </div>
-                <div class="form-group">
-                  <input type="submit" value="<%= t('tai_khoan.dang_ky') %>" class="btn btn-primary py-3 px-5">
-                </div>
-              </form>
+<section class="nh-section nh-section--cream">
+  <div class="nh-auth-wrapper">
+    <div class="nh-auth-card nh-auth-card--wide nh-reveal">
+      <div class="nh-auth-header">
+        <div class="nh-auth-icon">
+          <i class="fas fa-user-plus"></i>
         </div>
+        <h2 class="nh-auth-title"><%= t('tai_khoan.dang_ky_tai_khoan') %></h2>
+        <p class="nh-auth-subtitle"><%= t('tai_khoan.dang_ky_mo_ta') %></p>
       </div>
-    </div>
-  </section>
 
-  <%- include('partials/footer') %>
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="nh-auth-alert nh-auth-alert--danger">
+          <i class="fas fa-circle-exclamation"></i>
+          <span><%- message %></span>
+        </div>
+      <% } %>
+
+      <form action="/register" method="post">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="nh-auth-group">
+            <label class="nh-auth-label"><%= t('chung.ho_ten') %></label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-user"></i>
+              <input type="text" name="ten" class="nh-auth-input" placeholder="Họ và tên" required autofocus>
+            </div>
+          </div>
+
+          <div class="nh-auth-group">
+            <label class="nh-auth-label"><%= t('chung.dien_thoai') %></label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-phone"></i>
+              <input type="text" name="sodienthoai" class="nh-auth-input" placeholder="Số điện thoại" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="nh-auth-group">
+          <label class="nh-auth-label"><%= t('tai_khoan.email_khoi_phuc') %></label>
+          <div class="nh-auth-input-wrap">
+            <i class="fas fa-envelope"></i>
+            <input type="email" name="email" class="nh-auth-input" placeholder="Địa chỉ email" required>
+          </div>
+        </div>
+
+        <div class="nh-auth-group">
+          <label class="nh-auth-label"><%= t('chung.dia_chi') %></label>
+          <div class="nh-auth-input-wrap">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" name="diachi" class="nh-auth-input" placeholder="Địa chỉ giao hàng / cư trú" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="nh-auth-group">
+            <label class="nh-auth-label"><%= t('tai_khoan.mat_khau') %></label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" name="passwords" class="nh-auth-input" placeholder="Mật khẩu" required>
+            </div>
+          </div>
+
+          <div class="nh-auth-group">
+            <label class="nh-auth-label"><%= t('tai_khoan.xac_nhan_mat_khau') %></label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-shield-alt"></i>
+              <input type="password" name="repass" class="nh-auth-input" placeholder="Nhập lại mật khẩu" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="nh-auth-btn">
+          <i class="fas fa-user-plus"></i> <%= t('tai_khoan.dang_ky') %>
+        </button>
+
+        <div class="nh-auth-footer">
+          <div>
+            <span><%= t('tai_khoan.da_co_tai_khoan') %></span>
+            <a href="/login" class="nh-auth-link" style="color: var(--nh-gold);"><%= t('tai_khoan.dang_nhap') %></a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  @media (max-width: 600px) {
+    .nh-auth-card--wide form > div[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+    }
+  }
+</style>
+
+<%- include('partials/footer') %>

@@ -226,6 +226,20 @@ def tach_thoi_gian(cau: str) -> dict | None:
 # --------------------------------------------------------------------------
 # Thuc the tu dien
 # --------------------------------------------------------------------------
+# Ten trong CSDL mang tien to ma muc do thuc don nha hang danh so: mon la
+# "T09-GÀ CHIÊN KARAAGE", loai mon la "20. TEMPURA". Khach thi go "gà chiên
+# karaage". Neu chi so tren ten day du thi buoc khop truc tiep gan nhu khong
+# bao gio an, moi thu do het len khop mo - kem chinh xac han.
+_MA_MUC = re.compile(r"^[A-Za-z]{0,3}\d{1,3}\s*[-.]\s*")
+_DUOI_NGOAC = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def rut_gon_ten(ten) -> str:
+    """Bo ma muc va phan trong ngoac, con lai phan nguoi ta thuc su goi ten."""
+    ten = _DUOI_NGOAC.sub("", _MA_MUC.sub("", str(ten or "").strip()))
+    return " ".join(ten.split())
+
+
 def _tim_theo_tu_dien(cau: str, danh_sach: list[dict], cot_ten: str,
                       nguong: float = 0.62) -> dict | None:
     """Tim muc trong tu dien khop tot nhat voi cau hoi.
@@ -245,11 +259,12 @@ def _tim_theo_tu_dien(cau: str, danh_sach: list[dict], cot_ten: str,
         ten = str(muc.get(cot_ten) or "").strip()
         if not ten:
             continue
-        ten_kd = bo_dau(ten.lower()).strip()
-        if not ten_kd:
-            continue
-        # Buoc 1 - khop truc tiep. Ten dai duoc uu tien (nhieu thong tin hon).
-        if ten_kd in s:
+        # Buoc 1 - khop truc tiep, thu ca ten day du lan ten da bo ma muc.
+        # Ten dai duoc uu tien (nhieu thong tin hon).
+        for bien_the in (ten, rut_gon_ten(ten)):
+            ten_kd = bo_dau(bien_the.lower()).strip()
+            if not ten_kd or ten_kd not in s:
+                continue
             diem = 0.9 + min(len(ten_kd), 40) / 400.0
             if diem > diem_tot:
                 tot_nhat, diem_tot = muc, diem
@@ -263,11 +278,12 @@ def _tim_theo_tu_dien(cau: str, danh_sach: list[dict], cot_ten: str,
         ten = str(muc.get(cot_ten) or "").strip()
         if not ten:
             continue
-        so_tu_ten = max(1, len(bo_dau(ten).split()))
+        ten_gon = rut_gon_ten(ten) or ten
+        so_tu_ten = max(1, len(bo_dau(ten_gon).split()))
         for kich_thuoc in {so_tu_ten, so_tu_ten + 1, max(1, so_tu_ten - 1)}:
             for i in range(0, max(1, len(tu) - kich_thuoc + 1)):
                 cua_so = " ".join(tu[i:i + kich_thuoc])
-                diem = gan_giong(cua_so, ten)
+                diem = gan_giong(cua_so, ten_gon)
                 if diem > diem_tot:
                     tot_nhat, diem_tot = muc, diem
 

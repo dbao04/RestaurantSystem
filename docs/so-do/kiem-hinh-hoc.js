@@ -23,7 +23,11 @@ const soCua = (s, ten) => {
 };
 
 /** Lay tat ca hop chu nhat "co vien" trong mot chuoi SVG. */
-function layHop(svg) {
+function layHop(svgGoc) {
+  // Bo bieu tuong "buoc he thong tu chay" trong hop cong viec BPMN: no la mot
+  // <rect> 11x11 khong co class, nam LONG trong hop - giu lai thi phep kiem tra
+  // "hai hop de nhau" bao loi cho moi hop tu dong.
+  const svg = svgGoc.replace(/<g class="bt">[\s\S]*?<\/g>/g, '');
   const hop = [];
   const re = /<rect[^>]*>/g;
   let m;
@@ -46,6 +50,30 @@ function layHop(svg) {
     if (!c) continue;
     const cx = soCua(c[0], 'cx'), cy = soCua(c[0], 'cy'), r = soCua(c[0], 'r') || 12;
     hop.push({ x: cx - r, y: cy - r, w: r * 2, h: r * 2, ten: 'nút ' + g[1] });
+  }
+
+  // Su kien BPMN: vong tron ban kinh 19, quy ve hop vuong ngoai tiep.
+  const reSuKien = /<g class="sk sk-[a-z-]+">\s*<circle[^>]*>/g;
+  while ((g = reSuKien.exec(svg))) {
+    const c = /<circle[^>]*>/.exec(g[0]);
+    const cx = soCua(c[0], 'cx'), cy = soCua(c[0], 'cy'), r = soCua(c[0], 'r') || 19;
+    hop.push({ x: cx - r, y: cy - r, w: r * 2, h: r * 2, ten: 'sự kiện' });
+  }
+
+  /*
+   * Cong re nhanh BPMN: hinh thoi, ban truc 24.
+   *
+   * Lay hop NOI TIEP (nua canh 17) chu khong phai hop ngoai tiep: bon goc cua
+   * hop ngoai tiep la vung TRONG cua hinh thoi, duong luong di sat goc van hop
+   * le. Lay hop ngoai tiep se bao loi gia moi lan co duong chay ngang qua cot
+   * cua mot cong.
+   */
+  const reCong = /<g class="cong">\s*<polygon points="([^"]+)"/g;
+  while ((g = reCong.exec(svg))) {
+    const d = g[1].trim().split(/\s+/).map((q) => q.split(',').map(Number));
+    const cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
+    const n = 17;
+    hop.push({ x: cx - n, y: cy - n, w: n * 2, h: n * 2, ten: 'cổng' });
   }
   return hop;
 }
@@ -77,6 +105,8 @@ function layChu(svg) {
     const thuoc = m[1];
     const noi = m[2].replace(/&#\d+;/g, 'x').replace(/&[a-z]+;/g, 'x');
     if (!noi.trim()) continue;
+    // Ten lan BPMN ve doc bang transform/rotate - khong co x, y de do.
+    if (/transform=/.test(thuoc)) continue;
     const co = /tx-(lop-ten|bang-ten|dt)/.test(thuoc) ? 12
       : /tx-(cot|lop|tin|khoa|boi|dk|khoi|ghi)/.test(thuoc) ? 10.5 : 11;
     const neo = /text-anchor:start/.test(thuoc) ? 'start'
@@ -159,6 +189,7 @@ if (require.main === module) {
     'tuan-tu': require('./tuan-tu'),
     'hoat-dong': require('./hoat-dong'),
     lop: require('./lop'),
+    bpmn: require('./bpmn'),
   };
   let tongLoi = 0;
   // `veTuanTu` la ham dung chung de cac so do goi lai, khong phai mot hinh.

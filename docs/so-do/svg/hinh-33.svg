@@ -1,0 +1,131 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1240 940" role="img" aria-label="Sơ đồ hoạt động quy trình nhập kho theo lô và cơ chế trừ tồn kho tự động khi bếp hoàn thành món"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-hdB" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-hdB" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="lan-doc">
+    <rect class="lan" x="0" y="28" width="400" height="912"/>
+    <rect class="lan-nhan" x="0" y="0" width="400" height="28"/>
+    <text class="tx-lan" x="200" y="18">Thủ kho</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="400" y="28" width="450" height="912"/>
+    <rect class="lan-nhan" x="400" y="0" width="450" height="28"/>
+    <text class="tx-lan" x="625" y="18">Hệ thống</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="850" y="28" width="390" height="912"/>
+    <rect class="lan-nhan" x="850" y="0" width="390" height="28"/>
+    <text class="tx-lan" x="1045" y="18">Bếp (màn hình KDS)</text>
+  </g><g class="nut-dau"><circle cx="200" cy="90" r="10"/></g><g class="hd ">
+      <rect x="137" y="138" width="126" height="44" rx="13"/>
+      <text class="tx-viec" x="200" y="157.5">Tạo phiếu nhập,</text><text class="tx-viec" x="200" y="171.5">chọn nhà cung cấp</text>
+    </g><g class="hd ">
+      <rect x="117.5" y="228" width="165" height="44" rx="13"/>
+      <text class="tx-viec" x="200" y="247.5">Nhập từng lô: số lượng, giá,</text><text class="tx-viec" x="200" y="261.5">số lô và hạn sử dụng</text>
+    </g><g class="hd ">
+      <rect x="103" y="678" width="194" height="44" rx="13"/>
+      <text class="tx-viec" x="200" y="697.5">Nhận cảnh báo thiếu nguyên liệu,</text><text class="tx-viec" x="200" y="711.5">nhập bù hoặc báo hết món</text>
+    </g><g class="hd tu-dong">
+      <rect x="513" y="228" width="224" height="44" rx="13"/>
+      <text class="tx-viec" x="625" y="247.5">Ghi phieu_nhap + chi_tiet_phieu_nhap,</text><text class="tx-viec" x="625" y="261.5">cộng tồn cho nguyen_lieu</text>
+    </g><g class="hd tu-dong">
+      <rect x="550.5" y="408" width="149" height="44" rx="13"/>
+      <text class="tx-viec" x="625" y="427.5">Cảnh báo lô sắp hết hạn</text><text class="tx-viec" x="625" y="441.5">trên dashboard tồn kho</text>
+    </g><g class="hd tu-dong">
+      <rect x="537.5" y="581" width="175" height="58" rx="13"/>
+      <text class="tx-viec" x="625" y="600.5">Mở giao dịch: đọc cong_thuc,</text><text class="tx-viec" x="625" y="614.5">trừ tồn theo lô FIFO,</text><text class="tx-viec" x="625" y="628.5">ghi nhật ký xuat_kho</text>
+    </g><g class="hd tu-dong">
+      <rect x="529.5" y="778" width="191" height="44" rx="13"/>
+      <text class="tx-viec" x="625" y="797.5">Xác nhận giao dịch, phát sự kiện</text><text class="tx-viec" x="625" y="811.5">cho KDS và sơ đồ bàn</text>
+    </g><g class="hd ">
+      <rect x="978" y="498" width="134" height="44" rx="13"/>
+      <text class="tx-viec" x="1045" y="517.5">Bấm “Hoàn thành”</text><text class="tx-viec" x="1045" y="531.5">cho một món đang nấu</text>
+    </g><rect class="thanh-db" x="465" y="337" width="320" height="6" rx="2"/><g class="qd">
+    <polygon points="625,674 657,700 625,726 593,700"/>
+    <text class="tx-sk" x="625" y="664">Đủ nguyên liệu?</text>
+  </g><g class="nut-cuoi"><circle class="ngoai" cx="625" cy="870" r="12"/><circle class="trong" cx="625" cy="870" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="815" cy="430" r="12"/><circle class="trong" cx="815" cy="430" r="7"/></g><polyline class="luong " points="200,100 200,138" marker-end="url(#mui-hdB)"/><polyline class="luong " points="200,182 200,228" marker-end="url(#mui-hdB)"/><polyline class="luong " points="282.5,250 513,250" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,272 625,337" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,343 625,408" marker-end="url(#mui-hdB)"/><polyline class="luong " points="699.5,430 803,430" marker-end="url(#mui-hdB)"/><polyline class="luong " points="765,343 1045,343 1045,498" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="1127" y="420">chờ bếp bán món</text><polyline class="luong " points="978,520 625,520 625,581" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,639 625,674" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,726 625,778" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="651" y="754">đủ</text><polyline class="luong " points="595,700 297,700" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="535" y="694">thiếu</text><polyline class="luong " points="200,678 200,290 242.5,290 242.5,272" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,822 625,858" marker-end="url(#mui-hdB)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="20" y="906">Thời điểm trừ kho đặt ở bước bếp HOÀN THÀNH món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ</text><text class="tx-ghi" x="20" y="919">sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.</text>
+  </g></svg>

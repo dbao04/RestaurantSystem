@@ -4,97 +4,231 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Màn hình bếp (KDS) - Nhà Hàng Bảo Đoàn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="/socket.io/socket.io.js"></script>
   <style>
+    /* =========================================================================
+       KDS - Màn hình Bếp Nhà Hàng Bảo Đoàn
+       Phong cách: Fine-dining Luxury Espresso + Vàng Gold Ánh Kim
+       ========================================================================= */
     :root {
-      --bg:#0f172a; --cot:#1e293b; --the:#334155; --vien:#475569;
-      --chu:#f1f5f9; --mo:#94a3b8;
-      --cho:#f59e0b; --lam:#3b82f6; --xong:#22c55e; --phucvu:#64748b; --tre:#ef4444;
+      --bg: #120b07;
+      --bg-gradient: linear-gradient(180deg, #170f0a 0%, #0d0704 100%);
+      --cot: #1c120c;
+      --the: #261a12;
+      --vien: rgba(200, 162, 75, 0.22);
+      --vien-dam: rgba(200, 162, 75, 0.45);
+      --gold: #c8a24b;
+      --gold-light: #dfb962;
+      --chu: #fff9f2;
+      --mo: #a89a8c;
+      --cho: #f59e0b;
+      --lam: #38bdf8;
+      --xong: #10b981;
+      --phucvu: #78716c;
+      --tre: #ef4444;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
-    * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--chu);
-           font-family:"Segoe UI",system-ui,-apple-system,sans-serif; }
-    header { background:#020617; padding:14px 24px; display:flex;
-             justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
-             border-bottom:2px solid var(--vien); }
-    header h1 { margin:0; font-size:20px; }
-    header .sub { font-size:12.5px; color:var(--mo); margin-top:2px; }
-    header nav a { color:var(--chu); text-decoration:none; font-size:13px; padding:7px 13px;
-                   border:1px solid var(--vien); border-radius:7px; margin-left:8px; }
-    header nav a:hover { background:var(--the); }
-    .cham { display:inline-block; width:9px; height:9px; border-radius:50%;
-            background:var(--xong); margin-right:6px; }
-    .cham.tat { background:var(--tre); }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); background-image: var(--bg-gradient); color: var(--chu);
+      font-family: var(--font-sans); min-height: 100vh;
+    }
 
-    .chiso { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-             gap:12px; padding:16px 24px 4px; }
-    .chiso .o { background:var(--cot); border-radius:9px; padding:12px 15px;
-                border-left:4px solid var(--vien); }
-    .chiso .o .n { font-size:11px; color:var(--mo); text-transform:uppercase; letter-spacing:.4px; }
-    .chiso .o .v { font-size:26px; font-weight:700; margin-top:4px; }
-    .chiso .o.c { border-left-color:var(--cho); }
-    .chiso .o.l { border-left-color:var(--lam); }
-    .chiso .o.x { border-left-color:var(--xong); }
+    header {
+      background: linear-gradient(135deg, #1f140d 0%, #150c07 100%);
+      padding: 14px 28px; display: flex;
+      justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+      border-bottom: 1.5px solid var(--vien-dam);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+    header h1 {
+      margin: 0; font-size: 21px; font-family: var(--font-serif);
+      font-weight: 700; letter-spacing: .4px;
+      background: linear-gradient(135deg, #fff7ea 0%, #dfb962 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      display: flex; align-items: center; gap: 10px;
+    }
+    header h1 i {
+      -webkit-text-fill-color: #dfb962; font-size: 19px;
+    }
+    header .sub { font-size: 12.5px; color: var(--mo); margin-top: 3px; display: flex; align-items: center; gap: 8px; }
+    header nav { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+    header nav a {
+      color: var(--chu); text-decoration: none; font-size: 13px; font-weight: 600; padding: 7px 14px;
+      border: 1px solid var(--vien); border-radius: 999px; display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(255, 255, 255, 0.04); transition: all .25s ease;
+    }
+    header nav a:hover {
+      background: rgba(200, 162, 75, 0.18); border-color: var(--gold); color: #fff;
+      transform: translateY(-1.5px);
+    }
+    header nav a.btn-staff-back {
+      background: linear-gradient(135deg, #dfb962 0%, #c8a24b 100%);
+      border-color: transparent;
+      color: #1a0f08;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(200, 162, 75, 0.35);
+    }
+    header nav a.btn-staff-back:hover {
+      background: linear-gradient(135deg, #f0cf7e 0%, #dfb962 100%);
+      color: #000;
+      box-shadow: 0 6px 18px rgba(200, 162, 75, 0.5);
+    }
+    header nav a.btn-logout {
+      color: #fca5a5; border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08);
+    }
+    header nav a.btn-logout:hover {
+      background: #ef4444; color: #fff; border-color: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    }
 
-    .bang { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:16px 24px 40px; }
-    @media (max-width:1200px) { .bang { grid-template-columns:repeat(2,1fr); } }
-    .cot { background:var(--cot); border-radius:11px; padding:13px; min-height:70vh; }
-    .cot h2 { margin:0 0 12px; font-size:14px; text-transform:uppercase;
-              letter-spacing:.7px; display:flex; justify-content:space-between;
-              align-items:center; padding-bottom:10px; border-bottom:2px solid var(--vien); }
-    .cot h2 .dem { background:var(--the); padding:2px 10px; border-radius:20px; font-size:13px; }
-    .cot.cho  h2 { color:var(--cho); }  .cot.cho  h2 .dem { background:rgba(245,158,11,.2); }
-    .cot.lam  h2 { color:var(--lam); }  .cot.lam  h2 .dem { background:rgba(59,130,246,.2); }
-    .cot.xong h2 { color:var(--xong); } .cot.xong h2 .dem { background:rgba(34,197,94,.2); }
-    .cot.pv   h2 { color:var(--phucvu); }
+    .cham {
+      display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+      background: var(--xong); margin-right: 4px; box-shadow: 0 0 8px var(--xong);
+    }
+    .cham.tat { background: var(--tre); box-shadow: 0 0 8px var(--tre); }
 
-    .the { background:var(--the); border-radius:9px; padding:13px 14px; margin-bottom:11px;
-           border-left:4px solid var(--vien); }
-    .the.cho  { border-left-color:var(--cho); }
-    .the.lam  { border-left-color:var(--lam); }
-    .the.xong { border-left-color:var(--xong); }
-    .the.tre  { border-left-color:var(--tre); background:#4c1d24; }
-    .the .dong1 { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-    .the .ten { font-size:16px; font-weight:600; line-height:1.3; }
-    .the .sl { background:#0f172a; padding:3px 11px; border-radius:7px;
-               font-weight:700; font-size:15px; white-space:nowrap; }
-    .the .meta { font-size:12px; color:var(--mo); margin-top:7px; line-height:1.6; }
-    /* Ghi chu cua khach - phai noi bat, dau bep bo sot la lam sai mon. */
+    /* --- Chỉ số tổng quan trên đỉnh màn hình --- */
+    .chiso {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px; padding: 18px 28px 4px;
+    }
+    .chiso .o {
+      background: linear-gradient(135deg, #221710 0%, #1a100a 100%);
+      border-radius: 14px; padding: 14px 18px;
+      border: 1px solid var(--vien);
+      border-left: 4px solid var(--vien-dam);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      transition: transform .2s ease;
+    }
+    .chiso .o:hover { transform: translateY(-2px); }
+    .chiso .o .n { font-size: 11px; font-weight: 700; color: var(--mo); text-transform: uppercase; letter-spacing: .6px; }
+    .chiso .o .v { font-size: 28px; font-weight: 700; margin-top: 4px; color: #fff; font-variant-numeric: tabular-nums; }
+    .chiso .o.c { border-left-color: var(--cho); }
+    .chiso .o.c .v { color: #fde68a; }
+    .chiso .o.l { border-left-color: var(--lam); }
+    .chiso .o.l .v { color: #bae6fd; }
+    .chiso .o.x { border-left-color: var(--xong); }
+    .chiso .o.x .v { color: #a7f3d0; }
+
+    /* --- 4 Cột hiển thị đơn bếp --- */
+    .bang { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px 28px 40px; }
+    @media (max-width: 1280px) { .bang { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 720px) { .bang { grid-template-columns: 1fr; } }
+
+    .cot {
+      background: linear-gradient(180deg, #1c120c 0%, #150c07 100%);
+      border-radius: 16px; padding: 16px; min-height: 72vh;
+      border: 1px solid var(--vien);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .cot h2 {
+      margin: 0 0 14px; font-size: 14px; text-transform: uppercase; font-family: var(--font-sans);
+      font-weight: 700; letter-spacing: .8px; display: flex; justify-content: space-between;
+      align-items: center; padding-bottom: 12px; border-bottom: 1.5px solid var(--vien);
+    }
+    .cot h2 .dem {
+      padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    }
+    .cot.cho  h2 { color: #fde68a; }  .cot.cho  h2 .dem { background: rgba(245, 158, 11, 0.22); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .cot.lam  h2 { color: #bae6fd; }  .cot.lam  h2 .dem { background: rgba(56, 189, 248, 0.22); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .cot.xong h2 { color: #a7f3d0; }  .cot.xong h2 .dem { background: rgba(16, 185, 129, 0.22); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .cot.pv   h2 { color: #d6d3d1; }  .cot.pv   h2 .dem { background: rgba(120, 113, 108, 0.22); color: #a8a29e; border: 1px solid rgba(120, 113, 108, 0.3); }
+
+    /* --- Thẻ món ăn --- */
+    .the {
+      background: linear-gradient(135deg, #281b12 0%, #1e130c 100%);
+      border-radius: 12px; padding: 14px 15px; margin-bottom: 12px;
+      border: 1px solid var(--vien);
+      border-left: 4.5px solid var(--vien-dam);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: all .2s ease;
+    }
+    .the:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
+    .the.cho  { border-left-color: var(--cho); }
+    .the.lam  { border-left-color: var(--lam); }
+    .the.xong { border-left-color: var(--xong); }
+    .the.tre  {
+      border-left-color: var(--tre);
+      background: linear-gradient(135deg, #3d1418 0%, #290d10 100%);
+      border-color: rgba(239, 68, 68, 0.45);
+      animation: cb-tre-glow 2.5s infinite alternate;
+    }
+    @keyframes cb-tre-glow {
+      from { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+      to { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45); }
+    }
+
+    .the .dong1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .the .ten { font-size: 16px; font-weight: 700; line-height: 1.35; color: #fff9f2; }
+    .the .sl {
+      background: #120b07; color: var(--gold-light); padding: 3px 10px; border-radius: 8px;
+      font-weight: 800; font-size: 15px; white-space: nowrap; border: 1px solid var(--vien);
+    }
+    .the .meta { font-size: 12px; color: var(--mo); margin-top: 8px; line-height: 1.6; }
+    .the .meta b { color: #fdfaf5; font-weight: 700; }
+    .the .cho-lau { color: #fca5a5; font-weight: 700; background: rgba(239, 68, 68, 0.18); padding: 1px 6px; border-radius: 4px; }
+
+    /* Ghi chú của khách */
     .the .ghi-chu {
-      margin-top:8px; padding:7px 10px; border-radius:7px;
-      background:rgba(234,179,8,0.13); border-left:3px solid #eab308;
-      color:#fde68a; font-size:13.5px; font-weight:600; line-height:1.4;
+      margin-top: 8px; padding: 8px 12px; border-radius: 8px;
+      background: rgba(200, 162, 75, 0.14); border-left: 3px solid var(--gold);
+      color: #fef08a; font-size: 13px; font-weight: 600; line-height: 1.45;
     }
-    .the .meta b { color:var(--chu); }
-    .the .cho-lau { color:var(--tre); font-weight:600; }
-    .the button { width:100%; margin-top:10px; padding:9px; border:0; border-radius:7px;
-                  font-size:13.5px; font-weight:600; cursor:pointer; color:#fff;
-                  font-family:inherit; }
-    .the button.b-lam  { background:var(--lam); }
-    .the button.b-xong { background:var(--xong); }
-    .the button.b-pv   { background:var(--phucvu); }
-    .the button:hover { filter:brightness(1.15); }
-    .the button:disabled { opacity:.5; cursor:not-allowed; }
 
-    .rong { color:var(--mo); font-size:13px; text-align:center; padding:34px 10px; }
-    .toast { position:fixed; right:22px; bottom:22px; background:var(--xong); color:#03260f;
-             padding:13px 18px; border-radius:9px; font-weight:600; font-size:14px;
-             box-shadow:0 8px 26px rgba(0,0,0,.4); display:none; z-index:99; }
+    /* Nút đổi trạng thái đơn */
+    .the button {
+      width: 100%; margin-top: 12px; padding: 10px 14px; border: 0; border-radius: 8px;
+      font-size: 13.5px; font-weight: 700; cursor: pointer; color: #fff;
+      font-family: inherit; letter-spacing: .3px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); transition: all .2s cubic-bezier(.22, .61, .36, 1);
+    }
+    .the button.b-lam  {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    }
+    .the button.b-xong {
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    }
+    .the button.b-pv   {
+      background: linear-gradient(135deg, #78716c 0%, #57534e 100%);
+    }
+    .the button:hover {
+      transform: translateY(-1.5px); filter: brightness(1.15); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    }
+    .the button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .rong {
+      color: var(--mo); font-size: 13px; text-align: center; padding: 40px 12px;
+      background: rgba(0, 0, 0, 0.12); border-radius: 10px; border: 1px dashed var(--vien);
+      margin-top: 8px;
+    }
+    .toast {
+      position: fixed; right: 24px; bottom: 24px;
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: #ffffff;
+      padding: 14px 22px; border-radius: 12px; font-weight: 700; font-size: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
+      display: none; z-index: 99; animation: cb-fade-in .25s ease;
+    }
   </style>
 </head>
 <body>
   <header>
     <div>
-      <h1>Màn hình bếp &mdash; Kitchen Display System</h1>
+      <h1><i class="fas fa-fire-burner"></i> Màn hình bếp &mdash; Kitchen Display System</h1>
       <div class="sub">
         <span class="cham" id="chamKN"></span><span id="ttKetNoi">Đang kết nối...</span>
         &nbsp;|&nbsp; <%= tenNguoiDung %><%= vaiTro ? ' (' + vaiTro + ')' : '' %>
       </div>
     </div>
     <nav>
-      <a href="/so-do-ban">Sơ đồ bàn</a>
-      <a href="/staff">Trang nhân viên</a>
-      <a href="/analytics">Dashboard</a>
+      <a href="/staff" class="btn-staff-back"><i class="fas fa-arrow-left"></i> Khu vực Nhân sự</a>
+      <a href="/staff/kitchen/recipes"><i class="fas fa-scroll"></i> Công thức món</a>
+      <a href="/staff/kitchen/inventory"><i class="fas fa-boxes-stacked"></i> Tồn kho</a>
+      <a href="/staff/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
     </nav>
   </header>
 

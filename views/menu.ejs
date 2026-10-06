@@ -1,26 +1,46 @@
 <%- include('partials/header', { title: t('dieu_huong.thuc_don'), activeNav: 'menu' }) %>
 <%
 /*
-  TRANG THUC DON.
-
-  Truoc day 22 danh muc duoc do ra thanh mot dam vien thuoc canh giua, xuong dong
-  nhieu hang. Ba van de:
-
-    - Canh giua nen moi hang bat dau o mot vi tri khac; khong co truc doc nao de
-      mat bam vao, phai quet ca khoi moi tim ra mot muc.
-    - Khoi do chiem gan mot phan ba man hinh dau, day mon an xuong duoi.
-    - Cuon xuong la no bien mat: muon doi nhom phai cuon nguoc len tan dau trang.
-
-  Bay gio la mot THANH DANH MUC dinh duoi thanh dieu huong: mot hang, cuon ngang,
-  luon o do. Xem `.nh-thanh-mon` trong css/nhahang.css.
-
-  SO THU TU TRONG TEN NHOM
-  ------------------------
-  `name_loai` mang san so thu tu ('01. DRINK' ... '22. SAKE - BEER'). So do la
-  THU TU, khong phai TEN - no dung de sap xep chu khong de doc. Bo di khi hien
-  thi; giu lai de sap (xem menuService.getAllCategories).
+  TRANG THỰC ĐƠN: 3 DANH MỤC CHÍNH (Khai vị, Món chính, Đồ uống).
 */
 var boSo = function (s) { return String(s || '').replace(/^\d+\s*[.)-]\s*/, '').trim(); };
+var dsLoai = (typeof categories !== 'undefined' && categories) ? categories : [];
+var dsMon = (typeof dishes !== 'undefined' && dishes) ? dishes : [];
+var tuKhoa = (typeof key !== 'undefined') ? key : '';
+var curNhom = (typeof currentGroup !== 'undefined') ? currentGroup : null;
+var curCat = (typeof currentCategory !== 'undefined') ? currentCategory : null;
+
+function phanLoaiNhom(name) {
+  var n = (name || '').toUpperCase();
+  if (n.includes('DRINK') || n.includes('SAKE') || n.includes('BEER') || n.includes('DESSERT') || n.includes('NƯỚC') || n.includes('UỐNG') || n.includes('RƯỢU') || n.includes('BIA') || n.includes('TRÁNG MIỆNG')) return 'do-uong';
+  if (n.includes('APPERTIZER') || n.includes('APPETIZER') || n.includes('SALAD') || n.includes('SOUP') || n.includes('KHAI VỊ') || n.includes('GỎI') || n.includes('SÚP')) return 'khai-vi';
+  return 'mon-chinh';
+}
+
+var dsNhomChinh = (typeof mainGroups !== 'undefined' && mainGroups && mainGroups.length) ? mainGroups : [
+  { key: 'khai-vi', name: 'Khai vị', icon: 'fa-bowl-food', categories: [], so_mon: 0 },
+  { key: 'mon-chinh', name: 'Món chính', icon: 'fa-utensils', categories: [], so_mon: 0 },
+  { key: 'do-uong', name: 'Đồ uống', icon: 'fa-wine-glass', categories: [], so_mon: 0 }
+];
+
+if (typeof mainGroups === 'undefined' || !mainGroups || !mainGroups.length) {
+  var gMap = { 'khai-vi': dsNhomChinh[0], 'mon-chinh': dsNhomChinh[1], 'do-uong': dsNhomChinh[2] };
+  dsLoai.forEach(function(c) {
+    var k = phanLoaiNhom(c.name_loai);
+    if (gMap[k]) {
+      gMap[k].categories.push(c);
+      gMap[k].so_mon += Number(c.so_mon || 0);
+    }
+  });
+  if (!curNhom) {
+    if (curCat) {
+      var timCat = dsLoai.find(function(c) { return String(c.id_loai) === String(curCat); });
+      if (timCat) curNhom = phanLoaiNhom(timCat.name_loai);
+    } else {
+      curNhom = dsNhomChinh[0].key;
+    }
+  }
+}
 %>
 
 <!-- ================= HERO NHỎ ================= -->
@@ -34,77 +54,144 @@ var boSo = function (s) { return String(s || '').replace(/^\d+\s*[.)-]\s*/, '').
   </div>
 </section>
 
-<!-- ================= THANH DANH MỤC (dính) ================= -->
+<!-- ================= THANH 3 DANH MỤC CHÍNH ================= -->
 <nav class="nh-thanh-mon" id="thanhMon" aria-label="<%= t('thuc_don.danh_muc') %>">
-  <div class="nh-container nh-thanh-mon__trong">
-    <button type="button" class="nh-thanh-mon__mui" data-huong="-1"
-            aria-label="<%= t('thuc_don.muc_truoc') %>"><i class="fas fa-chevron-left"></i></button>
-
-    <div class="nh-thanh-mon__dai" id="daiMon">
-      <% if (key) { %>
-        <%# Khach vua tim: bao ho dang khong o trong nhom nao, kem duong thoat. %>
-        <a class="nh-muc nh-muc--tim" href="/menu">
+  <div class="nh-container">
+    <!-- 3 Danh mục chính -->
+    <div class="nh-nhom-chinh">
+      <% if (tuKhoa) { %>
+        <a class="nh-nhom-item nh-nhom-item--tim" href="/menu">
           <i class="fas fa-times"></i>
-          <span class="nh-muc__ten"><%= t('thuc_don.ket_qua_tim') %></span>
-          <span class="nh-muc__dem"><%= dishes.length %></span>
+          <span><%= t('thuc_don.ket_qua_tim') %></span>
         </a>
       <% } %>
-      <% categories.forEach(function (c) { %>
-        <a class="nh-muc <%= String(currentCategory) === String(c.id_loai) ? 'is-active' : '' %>"
-           href="/menu?id_loai=<%= c.id_loai %>"
-           <%= String(currentCategory) === String(c.id_loai) ? 'aria-current="page"' : '' %>>
-          <span class="nh-muc__ten"><%= boSo(tenNhom(c)) %></span>
-          <span class="nh-muc__dem"><%= c.so_mon %></span>
+      <% dsNhomChinh.forEach(function (g) { %>
+        <%
+          var firstId = (g.categories && g.categories.length) ? g.categories[0].id_loai : '';
+        %>
+        <a class="nh-nhom-item <%= (!tuKhoa && curNhom === g.key) ? 'is-active' : '' %>"
+           href="/menu?nhom=<%= g.key %>">
+          <i class="fas <%= g.icon %>"></i>
+          <span class="nh-nhom-item__ten"><%= g.name %></span>
         </a>
       <% }) %>
     </div>
 
-    <button type="button" class="nh-thanh-mon__mui" data-huong="1"
-            aria-label="<%= t('thuc_don.muc_sau') %>"><i class="fas fa-chevron-right"></i></button>
+    <!-- Phân loại chi tiết thuộc nhóm đang chọn -->
+    <% 
+      var activeGroupObj = dsNhomChinh.find(function(g) { return g.key === curNhom; });
+    %>
+    <% if (!tuKhoa && activeGroupObj && activeGroupObj.categories && activeGroupObj.categories.length > 0) { %>
+      <div class="nh-thanh-mon__trong" style="margin-top: 0.5rem; border-top: 1px dashed rgba(0,0,0,0.08); padding-top: 0.4rem;">
+        <button type="button" class="nh-thanh-mon__mui" data-huong="-1"
+                aria-label="<%= t('thuc_don.muc_truoc') %>"><i class="fas fa-chevron-left"></i></button>
+
+        <div class="nh-thanh-mon__dai" id="daiMon">
+          <a class="nh-muc <%= (!curCat) ? 'is-active' : '' %>"
+             href="/menu?nhom=<%= activeGroupObj.key %>">
+            <span class="nh-muc__ten"><%= t('thuc_don.tat_ca_nhom', { ten: activeGroupObj.name.toLowerCase() }) %></span>
+          </a>
+          <% activeGroupObj.categories.forEach(function (c) { %>
+            <a class="nh-muc <%= (String(curCat) === String(c.id_loai)) ? 'is-active' : '' %>"
+               href="/menu?nhom=<%= activeGroupObj.key %>&id_loai=<%= c.id_loai %>">
+              <span class="nh-muc__ten"><%= boSo(tenNhom(c)) %></span>
+            </a>
+          <% }) %>
+        </div>
+
+        <button type="button" class="nh-thanh-mon__mui" data-huong="1"
+                aria-label="<%= t('thuc_don.muc_sau') %>"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    <% } %>
   </div>
 </nav>
 
 <!-- ================= MÓN ================= -->
 <section class="nh-section nh-section--cream" style="padding-top:1.4rem">
   <div class="nh-container">
+    <!-- Banner Trạng thái Giao hàng -->
+    <% var ttGiao = (typeof thongTinGiao !== 'undefined' && thongTinGiao) ? thongTinGiao : null; %>
+    <% if (ttGiao) { %>
+      <%- include('partials/nh-steps', { buoc: 2 }) %>
+      <div style="background: #fffdf7; border: 1.5px solid var(--nh-gold); border-radius: 14px; padding: 12px 18px; margin-bottom: 1.4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 15px rgba(200,169,81,0.1);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--nh-gold); color: #2c1810; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+            <i class="fas fa-location-dot"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; font-weight: 700;"><%= t('thuc_don.giao_hang_den') %></div>
+            <strong style="color: var(--nh-espresso); font-size: 0.98rem;"><%= ttGiao.dia_chi_giao %></strong>
+            <span style="color: #666; font-size: 0.85rem;">(<%= ttGiao.khoang_cach_km %> km · <%= t('gio_hang.phi_giao_hang') %>: <%= ttGiao.phi_co_ban > 0 ? Number(ttGiao.phi_co_ban).toLocaleString('vi-VN') + ' ₫' : t('chung.mien_phi') %>)</span>
+            &nbsp;·&nbsp; <a href="/giao-hang" style="color: var(--nh-gold); font-weight: 600; text-decoration: underline; font-size: 0.88rem;"><i class="fas fa-edit"></i> <%= t('thuc_don.doi_dia_chi') %></a>
+          </div>
+        </div>
+        <a href="/cart" class="nh-btn nh-btn--gold nh-btn--sm" style="white-space: nowrap;">
+          <i class="fas fa-shopping-bag"></i> <%= t('thuc_don.xem_gio_hang', { n: session.sum || 0 }) %> <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    <% } else { %>
+      <div style="background: linear-gradient(135deg, #fffdf8 0%, #fff9ec 100%); border: 1.5px solid rgba(200,169,81,0.35); border-radius: 14px; padding: 12px 18px; margin-bottom: 1.4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--nh-gold); color: #2c1810; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+            <i class="fas fa-motorcycle"></i>
+          </div>
+          <div>
+            <strong style="color: var(--nh-espresso); font-size: 0.98rem;"><%= t('dat_ban.dich_vu_giao_tan_noi') %></strong>
+            <p style="margin: 0; font-size: 0.85rem; color: #777;"><%- t('thuc_don.dich_vu_giao_mo_ta') %></p>
+          </div>
+        </div>
+        <a href="/cart" class="nh-btn nh-btn--dark nh-btn--sm" style="white-space: nowrap;">
+          <i class="fas fa-shopping-bag"></i> <%= t('thuc_don.gio_hang_dem', { n: session.sum || 0 }) %>
+        </a>
+      </div>
+    <% } %>
 
     <form class="nh-search" action="/menu" method="post">
-      <input name="key" type="search" placeholder="<%= t('thuc_don.tim_goi_y') %>" value="<%= key %>">
+      <input name="key" type="search" placeholder="<%= t('thuc_don.tim_goi_y') %>" value="<%= tuKhoa %>">
       <button type="submit"><i class="fas fa-search"></i></button>
     </form>
 
     <%
-      /* Tieu de nhom dang xem. Truoc day khong co: bo dai vien thuoc di roi thi
-         khach khong con biet minh dang doc nhom nao neu thanh danh muc da cuon
-         ra khoi tam mat. */
       var nhomHienTai = null;
-      if (!key) {
-        categories.forEach(function (c) {
-          if (String(currentCategory) === String(c.id_loai)) nhomHienTai = c;
+      var tieuDeHienThi = '';
+      var soMonHienThi = dsMon ? dsMon.length : 0;
+
+      if (tuKhoa) {
+        tieuDeHienThi = t('thuc_don.ket_qua_cho') + ' “' + tuKhoa + '”';
+      } else if (curCat) {
+        dsLoai.forEach(function (c) {
+          if (String(curCat) === String(c.id_loai)) nhomHienTai = c;
         });
+        if (nhomHienTai) {
+          tieuDeHienThi = boSo(tenNhom(nhomHienTai));
+          soMonHienThi = nhomHienTai.so_mon;
+        }
+      } else if (activeGroupObj) {
+        tieuDeHienThi = activeGroupObj.name;
+        soMonHienThi = activeGroupObj.so_mon;
       }
     %>
     <div class="nh-head nh-center" style="margin-bottom:2rem">
-      <% if (key) { %>
+      <% if (tuKhoa) { %>
         <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3vw,2.1rem)">
-          <%= t('thuc_don.ket_qua_cho') %> “<%= key %>”
+          <%= tieuDeHienThi %>
         </h2>
-        <p class="nh-lead"><%= t('thuc_don.tim_thay').replace('{n}', dishes.length) %></p>
-      <% } else if (nhomHienTai) { %>
+        <p class="nh-lead"><%= t('thuc_don.tim_thay').replace('{n}', soMonHienThi) %></p>
+      <% } else if (tieuDeHienThi) { %>
         <h2 class="nh-section-title" style="font-size:clamp(1.5rem,3vw,2.1rem)">
-          <%= boSo(tenNhom(nhomHienTai)) %>
+          <%= tieuDeHienThi %>
         </h2>
-        <p class="nh-lead"><%= t('thuc_don.so_mon').replace('{n}', nhomHienTai.so_mon) %></p>
+        <p class="nh-lead"><%= t('thuc_don.so_mon').replace('{n}', soMonHienThi) %></p>
       <% } %>
       <div class="nh-divider"></div>
     </div>
 
-    <% if (dishes && dishes.length > 0) { %>
+    <% if (dsMon && dsMon.length > 0) { %>
       <div class="nh-grid">
-        <% dishes.forEach(function(dish, i){ %>
+        <% dsMon.forEach(function(dish, i){ %>
           <article class="nh-dish nh-reveal" data-delay="<%= (i % 3) + 1 %>">
             <div class="nh-dish__media">
-              <img src="/food/<%= dish.images %>" alt="<%= dish.name_mon %>" loading="lazy"
+              <img src="/food/<%= dish.images %>" alt="<%= tenMon(dish).chinh %>" loading="lazy"
                    onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
               <span class="nh-dish__price"><%= formatMoney(dish.gia_mon) %></span>
             </div>
@@ -120,7 +207,7 @@ var boSo = function (s) { return String(s || '').replace(/^\d+\s*[.)-]\s*/, '').
       <div class="nh-center" style="padding:3rem 0">
         <i class="fas fa-utensils" style="font-size:2.4rem;color:var(--nh-gold)"></i>
         <p class="nh-lead" style="margin-top:1rem"><%= t('thuc_don.khong_thay') %></p>
-        <% if (key) { %>
+        <% if (tuKhoa) { %>
           <a href="/menu" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:1.2rem">
             <i class="fas fa-rotate-left"></i> <%= t('thuc_don.xem_toan_bo') %>
           </a>

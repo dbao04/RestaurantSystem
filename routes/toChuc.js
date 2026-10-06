@@ -35,21 +35,23 @@ function boi(req) {
 // ===========================================================================
 
 /** So do to chuc - moi nhan vien deu xem duoc de biet minh bao cao cho ai. */
-router.get('/to-chuc', canDangNhap, bat(async (req, res) => {
+router.get(['/to-chuc', '/staff/to-chuc', '/admin/to-chuc'], canDangNhap, bat(async (req, res) => {
   const [cay, boPhan, tongQuan] = await Promise.all([
     toChuc.soDoToChuc(),
     toChuc.danhSachBoPhan(),
     toChuc.tongQuanVanHanh(),
   ]);
+  const isStaff = req.originalUrl.startsWith('/staff') || (!req.originalUrl.startsWith('/admin') && req.session && req.session.stafflogin && !req.session.adminlogin);
   res.render('staff/to-chuc', {
     title: 'Sơ đồ tổ chức',
     activePage: 'to-chuc',
+    isStaff,
     cay, boPhan, tongQuan,
   });
 }));
 
 /** Bang dieu hanh - danh cho cap quan ly. */
-router.get('/dieu-hanh', canDangNhap, canQuyen('dieu_hanh.bang_dieu_khien'), bat(async (req, res) => {
+router.get(['/dieu-hanh', '/staff/dieu-hanh', '/admin/dieu-hanh'], canDangNhap, canQuyen('dieu_hanh.bang_dieu_khien'), bat(async (req, res) => {
   const [tongQuan, nhanSu, viec, to] = await Promise.all([
     toChuc.tongQuanVanHanh(),
     toChuc.danhSachNhanSu({}),
@@ -59,15 +61,17 @@ router.get('/dieu-hanh', canDangNhap, canQuyen('dieu_hanh.bang_dieu_khien'), bat
     }),
     toChuc.danhSachTo(),
   ]);
+  const isStaff = req.originalUrl.startsWith('/staff') || (!req.originalUrl.startsWith('/admin') && req.session && req.session.stafflogin && !req.session.adminlogin);
   res.render('staff/dieu-hanh', {
     title: 'Bảng điều hành',
     activePage: 'dieu-hanh',
+    isStaff,
     tongQuan, nhanSu, viec, to,
   });
 }));
 
 /** Quan tri to chuc: chuc danh, phan quyen, bo nhiem, to, uy quyen. */
-router.get('/to-chuc/quan-ly', canDangNhap, canQuyen(['to_chuc.chuc_danh', 'to_chuc.bo_nhiem', 'to_chuc.phan_quyen']),
+router.get(['/to-chuc/quan-ly', '/staff/to-chuc/quan-ly', '/admin/to-chuc/quan-ly', '/admin/to-chuc-quan-ly'], canDangNhap, canQuyen(['to_chuc.chuc_danh', 'to_chuc.bo_nhiem', 'to_chuc.phan_quyen']),
   bat(async (req, res) => {
     const [boPhan, chucDanh, nhanSu, to, uyQuyen, nhatKy] = await Promise.all([
       toChuc.danhSachBoPhan(),
@@ -77,9 +81,11 @@ router.get('/to-chuc/quan-ly', canDangNhap, canQuyen(['to_chuc.chuc_danh', 'to_c
       toChuc.danhSachUyQuyen(),
       toChuc.nhatKy(60),
     ]);
+    const isStaff = req.originalUrl.startsWith('/staff') || (!req.originalUrl.startsWith('/admin') && req.session && req.session.stafflogin && !req.session.adminlogin);
     res.render('staff/to-chuc-quan-ly', {
       title: 'Quản lý cơ cấu tổ chức',
       activePage: 'to-chuc-quan-ly',
+      isStaff,
       boPhan, chucDanh, nhanSu, to, uyQuyen, nhatKy,
     });
   }));

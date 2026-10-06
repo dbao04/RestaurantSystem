@@ -4,8 +4,8 @@
     <title><%= typeof title !== 'undefined' && title ? title + ' — ' + t('chung.ten_nha_hang') : t('chung.ten_nha_hang') %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Great+Vibes&family=Dancing+Script:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Great+Vibes&family=Dancing+Script:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Montserrat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Template cũ (giữ để các trang chưa thiết kế lại vẫn chạy) -->
     <link rel="stylesheet" href="/open-iconic-bootstrap.min.css">
@@ -19,9 +19,20 @@
     <link rel="stylesheet" href="/jquery.timepicker.css">
     <link rel="stylesheet" href="/flaticon.css">
     <link rel="stylesheet" href="/icomoon.css">
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <!-- Hệ thống giao diện mới (nạp sau cùng để ưu tiên) -->
     <link rel="stylesheet" href="/nhahang.css">
+    <script>
+      (function () {
+        var t = localStorage.getItem('nh_theme');
+        if (t === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
     <style>
       @media (max-width: 760px) { .d-none-mobile { display: none !important; } }
 
@@ -54,16 +65,22 @@
           <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
           <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
-          <%# Dat canh nut "Dat ban" o hang cong cu ben phai: nguoi con phan van
-              doc huong dan truoc, nguoi da quyet dinh thi bam thang nut vang. %>
           <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
-          <% if (session.username) { %>
-            <li><a href="/my-orders"><%= t('dieu_huong.don_cua_toi') %></a></li>
-          <% } %>
+          <li><a href="/my-orders" class="<%= (typeof activeNav !== 'undefined' && activeNav==='myorders') ? 'is-active' : '' %>"><%= t('dieu_huong.don_cua_toi') %></a></li>
+          <li><a href="/chat" class="<%= (typeof activeNav !== 'undefined' && activeNav==='chat') ? 'is-active' : '' %>"><i class="fas fa-headset" style="font-size:0.85rem; margin-right:4px;"></i><%= t('chat.tieu_de') || 'Chat Nhân Viên' %></a></li>
 
           <%# Chi hien trong ngan keo tren dien thoai - xem chu thich .nh-menu-mobile o tren %>
           <li class="nh-menu-mobile nh-menu-mobile--vach">
+            <a href="javascript:void(0)" class="nh-theme-toggle-mobile" id="nh-theme-toggle-mobile"><i class="fas fa-moon"></i> <span id="nh-theme-mobile-text">Chế độ tối</span></a>
+          </li>
+          <li class="nh-menu-mobile">
+            <a href="/giao-hang" style="color:var(--nh-gold); font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+          </li>
+          <li class="nh-menu-mobile">
             <a href="/datban"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
+          </li>
+          <li class="nh-menu-mobile">
+            <a href="/chat" style="color:var(--nh-gold-soft); font-weight:700;"><i class="fas fa-headset"></i> <%= t('chat.tieu_de') || 'Chat Với Nhân Viên' %></a>
           </li>
           <% if (session.username) { %>
             <li class="nh-menu-mobile">
@@ -80,6 +97,21 @@
         </ul>
 
         <div class="nh-nav__actions">
+          <!-- Nut Dat mon Giao hang & Dat ban -->
+          <a href="/giao-hang" class="nh-nav-action-btn nh-nav-action-btn--delivery d-none-mobile" title="<%= t('gio_hang.dat_mon_giao_tan_noi') %>">
+            <i class="fas fa-motorcycle"></i>
+            <span><%= t('dat_ban.giao_hang') %></span>
+          </a>
+          <a href="/datban" class="nh-nav-action-btn nh-nav-action-btn--booking d-none-mobile" title="<%= t('chung.dat_ban') %>">
+            <i class="fas fa-utensils"></i>
+            <span><%= t('chung.dat_ban') %></span>
+          </a>
+
+          <!-- Nut chuyen doi che do Sang / Toi -->
+          <button type="button" class="nh-theme-btn" id="nh-theme-toggle" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Đổi màu sáng tối">
+            <i class="fas fa-moon" id="nh-theme-icon"></i>
+          </button>
+
           <a href="/cart" class="nh-cart" title="<%= t('dieu_huong.gio_hang') %>">
             <i class="fas fa-shopping-bag"></i>
             <% if (session.sum) { %><span class="nh-cart__badge">•</span><% } %>
@@ -124,11 +156,10 @@
               <% }) %>
             </ul>
           </div>
-          <a href="/datban" class="nh-btn nh-btn--gold nh-btn--sm d-none-mobile"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
           <% if (!session.username) { %>
-            <a href="/login" class="nh-user d-none-mobile" title="<%= t('dieu_huong.dang_nhap') %>"><i class="fas fa-user"></i></a>
+            <a href="/login" class="nh-icon-btn d-none-mobile" title="<%= t('dieu_huong.dang_nhap') %>"><i class="fas fa-user"></i></a>
           <% } else { %>
-            <a href="/logout" class="nh-user d-none-mobile" title="<%= t('dieu_huong.dang_xuat') %>"><i class="fas fa-sign-out-alt"></i></a>
+            <a href="/logout" class="nh-icon-btn d-none-mobile" title="<%= t('dieu_huong.dang_xuat') %>"><i class="fas fa-sign-out-alt"></i></a>
           <% } %>
         </div>
 

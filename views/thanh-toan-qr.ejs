@@ -156,7 +156,7 @@
       <h2><%= t('ttqr.ban_da_goi') %></h2>
       <% hoaDon.mon.forEach(function (m) { %>
         <div class="mon">
-          <div><%= m.name_mon %> <span class="sl">× <%= m.soluong %></span></div>
+          <div><%= tenMon(m).chinh %> <span class="sl">× <%= m.soluong %></span></div>
           <div class="tien"><%= formatMoney(m.thanhtien) %>đ</div>
         </div>
       <% }); %>

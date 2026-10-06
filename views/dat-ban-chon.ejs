@@ -109,7 +109,7 @@ var daCoMon = Number(soMon) > 0;
   <div class="nh-container">
 
     <div class="nh-head nh-center">
-      <p class="nh-lead"><%= t('chon_dat_ban.dan_nhap') %></p>
+      <p class="nh-lead">Chọn dịch vụ bạn muốn trải nghiệm: Đến dùng bữa trực tiếp tại nhà hàng hoặc nhận món giao tận nơi.</p>
       <div class="nh-divider"></div>
     </div>
 
@@ -136,12 +136,12 @@ var daCoMon = Number(soMon) > 0;
         </div>
       </article>
 
-      <!-- ============================================ ĐẶT BÀN + GỌI MÓN -->
+      <!-- ============================================ ĐẶT MÓN GIAO TẬN NƠI -->
       <article class="cdb__the">
-        <span class="cdb__nhan cdb__nhan--phu"><%= t('chon_dat_ban.nhan_chu_dao') %></span>
-        <div class="cdb__icon"><i class="fas fa-utensils"></i></div>
-        <h2><%= t('chon_dat_ban.b_tieu_de') %></h2>
-        <p class="cdb__mota"><%= t('chon_dat_ban.b_mo_ta') %></p>
+        <span class="cdb__nhan cdb__nhan--phu">Giao tận nơi</span>
+        <div class="cdb__icon"><i class="fas fa-motorcycle"></i></div>
+        <h2>Đặt món giao tận nơi</h2>
+        <p class="cdb__mota">Chọn món ngon từ thực đơn và nhận hàng nóng hổi tại nhà hoặc nơi làm việc.</p>
 
         <% if (daCoMon) { %>
           <div class="cdb__gio">
@@ -151,28 +151,19 @@ var daCoMon = Number(soMon) > 0;
         <% } %>
 
         <ul class="cdb__y">
-          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y1') %></span></li>
-          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y2') %></span></li>
-          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y3') %></span></li>
-          <li><i class="fas fa-check"></i><span><%= t('chon_dat_ban.b_y4') %></span></li>
+          <li><i class="fas fa-check"></i><span>Giao nhanh chóng, món ăn luôn giữ được độ nóng sốt</span></li>
+          <li><i class="fas fa-check"></i><span>Theo dõi vị trí shipper trực tiếp trên bản đồ</span></li>
+          <li><i class="fas fa-check"></i><span>Thanh toán tiền mặt khi nhận hàng hoặc chuyển khoản</span></li>
+          <li><i class="fas fa-check"></i><span>Cần đăng nhập để lưu địa chỉ và theo dõi đơn hàng</span></li>
         </ul>
 
         <div class="cdb__nut">
-          <% if (daCoMon) { %>
-            <a href="/datban/goi-mon" class="nh-btn nh-btn--dark">
-              <i class="fas fa-arrow-right"></i> <%= t('chon_dat_ban.b_nut_tiep') %>
-            </a>
-            <span class="cdb__phu">
-              <a href="/cart"><%= t('chon_dat_ban.b_sua_gio') %></a>
-            </span>
-          <% } else { %>
-            <a href="/menu" class="nh-btn nh-btn--outline">
-              <i class="fas fa-book-open"></i> <%= t('chon_dat_ban.b_nut_chon_mon') %>
-            </a>
-            <span class="cdb__phu">
-              <%= session.username ? t('chon_dat_ban.b_phu') : t('chon_dat_ban.b_phu_dang_nhap') %>
-            </span>
-          <% } %>
+          <a href="/giao-hang" class="nh-btn nh-btn--dark">
+            <i class="fas fa-location-dot"></i> Nhập địa chỉ & Chọn món
+          </a>
+          <span class="cdb__phu">
+            Nhập vị trí giao hàng để tính phí ship chính xác
+          </span>
         </div>
       </article>
     </div>
@@ -181,53 +172,52 @@ var daCoMon = Number(soMon) > 0;
     <table class="cdb__sosanh">
       <thead>
         <tr>
-          <th><%= t('chon_dat_ban.ss_tieu_chi') %></th>
-          <th><%= t('chon_dat_ban.a_tieu_de') %></th>
-          <th><%= t('chon_dat_ban.b_tieu_de') %></th>
+          <th>Tiêu chí</th>
+          <th>Đặt bàn ăn tại chỗ</th>
+          <th>Đặt món giao tận nơi</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><%= t('chon_dat_ban.ss_thoi_gian') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_thoi_gian_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_thoi_gian_b') %></td>
+          <td>Hình thức phục vụ</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Phục vụ tại bàn ở nhà hàng</td>
+          <td data-cot="Đặt món giao tận nơi">Shipper giao tận địa chỉ của bạn</td>
         </tr>
         <tr>
-          <td><%= t('chon_dat_ban.ss_tai_khoan') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_tai_khoan_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_tai_khoan_b') %></td>
+          <td>Tài khoản</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Không bắt buộc (có thể đặt nhanh)</td>
+          <td data-cot="Đặt món giao tận nơi">Cần đăng nhập</td>
         </tr>
         <tr>
-          <td><%= t('chon_dat_ban.ss_chon_ban') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_chon_ban_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_chon_ban_b') %></td>
+          <td>Chọn bàn & Sơ đồ</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Tự chọn vị trí bàn trên sơ đồ</td>
+          <td data-cot="Đặt món giao tận nơi">Không áp dụng (giao hàng)</td>
         </tr>
         <tr>
-          <td><%= t('chon_dat_ban.ss_mon') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_mon_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_mon_b') %></td>
+          <td>Gọi món</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Gọi trước (tùy chọn) hoặc gọi khi đến</td>
+          <td data-cot="Đặt món giao tận nơi">Chọn món từ thực đơn trên web</td>
         </tr>
         <tr>
-          <td><%= t('chon_dat_ban.ss_doi_huy') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_doi_huy_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_doi_huy_b') %></td>
+          <td>Theo dõi</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Xem lịch sử đặt bàn & đổi giờ / hủy</td>
+          <td data-cot="Đặt món giao tận nơi">Theo dõi vị trí shipper trực tiếp trên bản đồ</td>
         </tr>
         <tr>
-          <td><%= t('chon_dat_ban.ss_hop_voi') %></td>
-          <td data-cot="<%= t('chon_dat_ban.a_tieu_de') %>"><%= t('chon_dat_ban.ss_hop_voi_a') %></td>
-          <td data-cot="<%= t('chon_dat_ban.b_tieu_de') %>"><%= t('chon_dat_ban.ss_hop_voi_b') %></td>
+          <td>Phù hợp với</td>
+          <td data-cot="Đặt bàn ăn tại chỗ">Ăn uống tại quán, họp mặt, tiệc, hẹn hò</td>
+          <td data-cot="Đặt món giao tận nơi">Ăn tại gia đình, văn phòng, hội họp tại nhà</td>
         </tr>
       </tbody>
     </table>
 
-    <div class="nh-center" style="margin-top:2.4rem">
+    <div class="nh-center" style="margin-top:2.4rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; align-items:center;">
       <a href="/huong-dan-dat-ban" class="nh-btn nh-btn--outline">
         <i class="fas fa-question-circle"></i> <%= t('chon_dat_ban.xem_huong_dan') %>
       </a>
-      <p class="nh-hint" style="margin-top:1rem">
-        <i class="fas fa-search"></i>
-        <%- t('chon_dat_ban.da_dat_roi') %>
-      </p>
+      <a href="/my-orders" class="nh-btn nh-btn--gold">
+        <i class="fas fa-calendar-check"></i> <%= t('dieu_huong.don_cua_toi') %>
+      </a>
     </div>
   </div>
 </section>

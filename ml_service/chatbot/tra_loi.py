@@ -15,6 +15,7 @@ cho moi loai cau tra loi va chon ngau nhien, de hoi thoai do lap lai.
 from __future__ import annotations
 
 import random
+import time
 
 from . import y_dinh as yd
 
@@ -194,7 +195,7 @@ def _tl_thuc_don(kq, tham_so, boi_canh):
 def _tl_gia_mon(kq, tham_so, boi_canh):
     if kq.get("thieu_tham_so"):
         return ("Bạn muốn hỏi giá món nào ạ? Bạn nhắn tên món giúp mình, "
-                "ví dụ: _giá gà nướng bao nhiêu_.")
+                f"ví dụ: _giá {ten_mon_vi_du()} bao nhiêu_.")
     m = kq.get("mon")
     if not m:
         return "Mình chưa tìm thấy món đó trong thực đơn. Bạn kiểm tra lại tên món nhé."
@@ -323,10 +324,89 @@ BO_SINH = {
 # --------------------------------------------------------------------------
 # Cau goi y tiep theo - giup nguoi dung kham pha nang luc cua bot
 # --------------------------------------------------------------------------
+# Ten mon dung lam VI DU. KHONG viet cung ten mon vao day.
+#
+# Thuc don thay theo dot (dot thang 8/2026 doi toan bo mon Viet sang mon Nhat).
+# Ten mon viet cung se thanh mon quan khong ban, va cau goi y bien thanh cai
+# bay: khach bam vao roi nhan lai "khong tim thay mon do trong thuc don". Vi
+# vay ten mon vi du duoc lay tu chinh thuc don DANG BAN (tu dien mon trong
+# thuc_the.py, doc tu CSDL, lam moi moi 5 phut).
+
+# Cho `{mon}` duoc dien bang ten mon that ngay truoc khi hien ra.
+MAU_GOI_Y_GIA = "Giá {mon} bao nhiêu?"
+
+# Mon du phong khi CSDL chua san sang. Phai la mon CO THAT trong thuc don.
+MON_VI_DU_DU_PHONG = "gà chiên karaage"
+
+_HAN_CACHE_GIAY = 300      # trung voi cache tu dien mon ben thuc_the.py
+_SO_LAN_THU = 12           # tran so lan goi bo phan loai moi lan chon lai
+
+_VI_DU: str | None = None
+_VI_DU_LUC = 0.0
+
+
+def _rut_gon_ten_mon(ten) -> str:
+    """Ten mon nhu nguoi ta goi: bo ma mon, bo phan trong ngoac, thuong hoa."""
+    from .thuc_the import rut_gon_ten
+
+    return rut_gon_ten(ten).lower()
+
+
+def _bot_tra_loi_duoc(ten: str) -> bool:
+    """Bot co that su tra loi duoc cau hoi gia cua mon nay khong?
+
+    Bo phan loai y dinh duoc huan luyen tren thuc don CU. Voi ten mon Nhat
+    (nigiri, sashimi, tempura...) diem tin cay tut xuong sat duoi nguong nen
+    bot tra ve "chua hieu" - xem phan han che trong HUONG_DAN_CHATBOT.md. Goi
+    y mot cau ma chinh bot khong tra loi duoc con te hon la khong goi y, nen o
+    day hoi truoc chinh bo phan loai ma bot se dung. Khi nao mo hinh duoc huan
+    luyen lai theo thuc don moi thi bo loc nay tu noi long ra.
+    """
+    try:
+        from . import phan_loai as pl
+
+        return pl.du_doan(MAU_GOI_Y_GIA.format(mon=ten))["y_dinh"] == "hoi_gia_mon"
+    except Exception:
+        return False
+
+
+def _chon_ten_mon_vi_du() -> str:
+    try:
+        from .thuc_the import nap_tu_dien
+
+        ung_vien = []
+        for mon in nap_tu_dien().get("mon") or []:
+            ten = _rut_gon_ten_mon(mon.get("name_mon"))
+            if ten and 2 <= len(ten.split()) <= 4 and len(ten) <= 24:
+                ung_vien.append(ten)
+        random.shuffle(ung_vien)
+        for ten in ung_vien[:_SO_LAN_THU]:
+            if _bot_tra_loi_duoc(ten):
+                return ten
+    except Exception:
+        # CSDL chua san sang: van phai tra ve mot cai ten, khong duoc lam sap bot.
+        pass
+    return MON_VI_DU_DU_PHONG
+
+
+def ten_mon_vi_du() -> str:
+    """Mot ten mon CO THAT trong thuc don, du ngan de nguoi ta go lai duoc.
+
+    Giu nguyen ket qua trong 5 phut: do la mot cuoc hoi thoai, doi mon vi du
+    sau moi cau tra loi chi lam nguoi doc roi tri, va cung do phai goi bo phan
+    loai lai tu dau.
+    """
+    global _VI_DU, _VI_DU_LUC
+    if _VI_DU is not None and (time.time() - _VI_DU_LUC) < _HAN_CACHE_GIAY:
+        return _VI_DU
+    _VI_DU, _VI_DU_LUC = _chon_ten_mon_vi_du(), time.time()
+    return _VI_DU
+
+
 GOI_Y_TIEP = {
     "khach": [
         "Quán có món gì ngon?", "Có khuyến mãi nào không?",
-        "Đặt bàn cho 4 người", "Giá gà nướng bao nhiêu?",
+        "Đặt bàn cho 4 người", MAU_GOI_Y_GIA,
         "Có nhận giao hàng không?", "Quán mở cửa mấy giờ?",
     ],
     # Khong con cau nao ve doanh thu, loi nhuan hay ton kho: cac y dinh do da
@@ -341,8 +421,14 @@ GOI_Y_TIEP = {
 }
 
 
+def goi_y_theo_quyen(quyen: str | None) -> list[str]:
+    """Danh sach goi y da dien ten mon that vao cho `{mon}`."""
+    nguon = GOI_Y_TIEP["quan_ly" if quyen == "quan_ly" else "khach"]
+    return [c.format(mon=ten_mon_vi_du()) if "{mon}" in c else c for c in nguon]
+
+
 def _goi_y(boi_canh: dict, so_luong: int = 3) -> list[str]:
-    nguon = GOI_Y_TIEP["quan_ly" if boi_canh.get("quyen") == "quan_ly" else "khach"]
+    nguon = goi_y_theo_quyen(boi_canh.get("quyen"))
     return random.sample(nguon, min(so_luong, len(nguon)))
 
 

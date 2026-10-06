@@ -50,15 +50,16 @@ function homNay() {
 // TRANG
 // ===========================================================================
 
-router.get('/to-chuc/cham-cong', canDangNhap, canCapBac(CAP_QUAN_LY_CHAM_CONG), bat(async (req, res) => {
+router.get(['/to-chuc/cham-cong', '/staff/to-chuc/cham-cong', '/staff/cham-cong'], canDangNhap, canCapBac(CAP_QUAN_LY_CHAM_CONG), bat(async (req, res) => {
   const ngay = /^\d{4}-\d{2}-\d{2}$/.test(req.query.ngay || '') ? req.query.ngay : homNay();
   const phanQuyen = require('../services/phanQuyenService');
   const coTheSua = !!(req.hoSo && phanQuyen.coQuyen(req.hoSo, QUYEN_SUA)) || !!req.session.adminlogin;
 
-  const [bang, tongQuan, nhanVien, nhatKy, trangThai] = await Promise.all([
+  const [bang, tongQuan, nhanVien, boPhan, nhatKy, trangThai] = await Promise.all([
     cc.bangNgay(ngay),
     cc.tongQuanNgay(ngay),
     cc.dsNhanVien(),
+    cc.dsBoPhan(),
     coTheSua ? cc.nhatKySua(60) : Promise.resolve([]),
     face.trangThaiDichVu(),
   ]);
@@ -66,7 +67,7 @@ router.get('/to-chuc/cham-cong', canDangNhap, canCapBac(CAP_QUAN_LY_CHAM_CONG), 
   res.render('staff/cham-cong-quan-ly', {
     title: 'Quản lý chấm công',
     activePage: 'cham-cong-quan-ly',
-    ngay, bang, tongQuan, nhanVien, nhatKy, coTheSua, trangThai,
+    ngay, bang, tongQuan, nhanVien, boPhan, nhatKy, coTheSua, trangThai,
   });
 }));
 
@@ -76,8 +77,8 @@ router.get('/to-chuc/cham-cong', canDangNhap, canCapBac(CAP_QUAN_LY_CHAM_CONG), 
 
 router.get('/api/cham-cong/ngay', canDangNhap, canCapBac(CAP_QUAN_LY_CHAM_CONG), bat(async (req, res) => {
   const ngay = /^\d{4}-\d{2}-\d{2}$/.test(req.query.ngay || '') ? req.query.ngay : homNay();
-  const [bang, tongQuan] = await Promise.all([cc.bangNgay(ngay), cc.tongQuanNgay(ngay)]);
-  res.json({ ngay, bang, tong_quan: tongQuan });
+  const [bang, tongQuan, boPhan] = await Promise.all([cc.bangNgay(ngay), cc.tongQuanNgay(ngay), cc.dsBoPhan()]);
+  res.json({ ngay, bang, tong_quan: tongQuan, bo_phan: boPhan });
 }));
 
 /**

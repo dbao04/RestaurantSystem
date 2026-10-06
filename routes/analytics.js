@@ -30,8 +30,11 @@ router.get('/', bat(async (req, res) => {
   const { tu, den } = req.query;
   const khoang = await analytics.khoangNgay(tu, den);
   res.render('admin/dashboard', {
+    title: 'Dashboard Phân tích & Hỗ trợ ra quyết định',
+    isStaff: req.originalUrl.startsWith('/staff') || (req.baseUrl && req.baseUrl.startsWith('/staff')),
+    activePage: 'analytics',
     khoang,
-    tenNguoiDung: req.session.adminname || req.session.staffname || 'Quản lý',
+    tenNguoiDung: req.session.adminname || req.session.staffName || req.session.staffname || 'Quản lý',
   });
 }));
 

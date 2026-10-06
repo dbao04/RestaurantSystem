@@ -28,21 +28,8 @@ function napHoSo() {
     const phien = req.session || {};
 
     res.locals.hoSo = null;
-    res.locals.coQuyen = () => false;
-
-    /*
-     * Ban cho VIEW cua `canVaiTroCu` - va phai KHOP TUNG LOP MOT voi no.
-     *
-     * Khong co ham nay thi menu buoc phai viet
-     * `['Thu ngan',...].includes(session.staffRole)` - dung cai bay da khien
-     * quan ly nha hang bi an mat muc menu cua chinh chuc nang ho vao duoc.
-     * Menu va middleware phai tra loi giong het nhau, neu khong nguoi dung se
-     * thay mot he thong luc cho vao luc khong.
-     *
-     * Ban mac dinh nay chi co lop 1 (khop `staffRole` chinh xac) va lop quan
-     * tri; ben duoi se nang cap len ban day du khi nap duoc ho so chuc danh.
-     * Nguoi chua duoc bo nhiem chuc danh van thay dung menu cua vai tro cu.
-     */
+    res.locals.coQuyen = (ma) => !!phien.adminlogin;
+    res.locals.tuCapBac = (n) => !!phien.adminlogin;
     res.locals.dongVaiDuoc = (ds) =>
       !!phien.adminlogin ||
       (Array.isArray(ds) ? ds : [ds]).includes(phien.staffRole);

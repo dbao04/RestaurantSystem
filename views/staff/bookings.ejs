@@ -5,14 +5,29 @@
 %>
 <%- include('partials/header') %>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-  <h1 class="h3 mb-0 text-gray-800">Quản lý Đặt bàn</h1>
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800">Quản lý Đặt bàn (Hệ thống cũ)</h1>
   <div class="d-flex gap-2" style="gap:8px;">
+    <a href="/staff/dat-ban" class="btn btn-sm btn-success shadow-sm font-weight-bold">
+      <i class="fas fa-calendar-check fa-sm"></i> Đến Trung tâm Đặt bàn mới
+    </a>
     <a href="/staff/qr-codes" class="d-none d-sm-inline-block btn btn-sm btn-outline-info shadow-sm">
       <i class="fas fa-qrcode fa-sm"></i> Quản lý QR Đặt Món
     </a>
     <a href="/staff/bookings/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
       <i class="fas fa-plus fa-sm text-white-50"></i> Tạo Đặt bàn nhanh
+    </a>
+  </div>
+</div>
+
+<div class="alert alert-warning border-left-warning shadow-sm mb-4" role="alert">
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <i class="fas fa-info-circle mr-2"></i>
+      <strong>Lưu ý:</strong> Khách đặt bàn trên website hiện tại đều được ghi nhận trực tiếp vào <strong>Trung tâm Đặt bàn mới</strong> với đầy đủ tính năng: sơ đồ bàn 2D, chọn giờ cao điểm, tính tiền cọc và timeline.
+    </div>
+    <a href="/staff/dat-ban" class="btn btn-sm btn-warning text-dark font-weight-bold text-nowrap ml-3">
+      Mở Trung tâm Đặt bàn <i class="fas fa-arrow-right ml-1"></i>
     </a>
   </div>
 </div>

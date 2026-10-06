@@ -61,6 +61,27 @@
       var href = a.getAttribute('href') || '';
       if (href && href !== '#') dong();
     });
+
+    // --- Danh dau muc dang xem tren thanh ben theo data-match ---
+    var duongDan = window.location.pathname.replace(/\/+$/, '') || '/';
+    var muc = document.querySelectorAll('#qtNav .qt-nav__item');
+    var totNhat = null, doDaiTotNhat = -1;
+
+    for (var i = 0; i < muc.length; i++) {
+      var mau = muc[i].getAttribute('data-match');
+      if (!mau) continue;
+      var cacMau = mau.split(',');
+      for (var j = 0; j < cacMau.length; j++) {
+        var m = cacMau[j].trim();
+        if (!m) continue;
+        var khop = (duongDan === m) || (m !== '/staff' && duongDan.indexOf(m + '/') === 0);
+        if (khop && m.length > doDaiTotNhat) { doDaiTotNhat = m.length; totNhat = muc[i]; }
+      }
+    }
+    if (totNhat) {
+      for (var k = 0; k < muc.length; k++) muc[k].classList.remove('active', 'is-active');
+      totNhat.classList.add('active', 'is-active');
+    }
   })();
 </script>
 
@@ -300,6 +321,13 @@
       { mau: /^\/staff\/accountant\/staff/,      che_do: 'trao', sk: ['nhan-su:doi'] },
       { mau: /^\/staff\/accountant\/reports/,    che_do: 'nhac',
         sk: ['chi-phi:doi', 'luong:doi', 'don-hang:doi'] },
+
+      // --- Điều hành & Quản lý ---
+      { mau: /^\/staff\/xep-ca/,                 che_do: 'trao', sk: ['lich-lam:doi'] },
+      { mau: /^\/staff\/schedule\/approval/,     che_do: 'trao', sk: ['lich-lam:doi'] },
+      { mau: /^\/staff\/salary-approval/,        che_do: 'trao', sk: ['luong:doi'] },
+      { mau: /^\/staff\/khuyen-mai/,             che_do: 'trao', sk: ['thuc-don:doi'] },
+      { mau: /^\/staff\/thanh-vien/,             che_do: 'trao', sk: ['khach-hang:doi'] },
 
       // --- Trang tổng quan ---
       { mau: /^\/staff$/, che_do: 'trao',

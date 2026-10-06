@@ -8,25 +8,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/admin/quantri.css" />
 
     <script src="/admin-js/jquery-1.6.4.min.js"></script>
     <script src="/admin-js/table/jquery.dataTables.min.js"></script>
     <script>
-      /*
-        Mặc định của DataTables chỉ cho chọn 10/25/50/100 dòng một trang, không có
-        lựa chọn xem hết. Thực đơn đã 258 món nên quản trị viên bị chặn ở 100 —
-        muốn tìm món thứ 200 phải lật trang. Đặt lại mặc định ở đây (trước khi các
-        trang gọi .dataTable()) để mọi bảng .datatable trong khu quản trị đều có
-        thêm mục "Tất cả", và mở sẵn 25 dòng thay vì 10 cho đỡ phải lật.
-      */
       (function () {
         if (!window.jQuery || !jQuery.fn.dataTable) return;
-        // Bản dùng ở đây là DataTables 1.8.2 — chưa có đối tượng defaults dùng
-        // chung, mà cũng chỉ nhận tên tuỳ chọn kiểu cũ (aLengthMenu /
-        // iDisplayLength). Nên bọc chính hàm .dataTable() lại: mỗi trang vẫn gọi
-        // .dataTable() tay không như cũ, còn tuỳ chọn thì trộn vào ở đây.
         var goc = jQuery.fn.dataTable;
         jQuery.fn.dataTable = function (tuyChon) {
           return goc.call(this, jQuery.extend({
@@ -34,23 +23,12 @@
             iDisplayLength: 25
           }, tuyChon || {}));
         };
-        jQuery.extend(jQuery.fn.dataTable, goc); // giữ fnVersionCheck, oApi...
+        jQuery.extend(jQuery.fn.dataTable, goc);
       })();
     </script>
 </head>
 <body class="qt-body">
 
-<!--
-  Socket.io + thư viện RT.
-
-  Trước đây cả khu quản trị không nạp hai tệp này, nên /admin là vùng duy nhất
-  của hệ thống hoàn toàn không có thời gian thực: bếp sửa thực đơn, kế toán
-  duyệt lương, nhân viên xin nghỉ — quản trị viên đang mở đúng trang đó vẫn
-  nhìn số liệu cũ cho tới khi tự bấm F5.
-
-  Nạp ngay sau <body> chứ không trong <head>: thư viện có dùng document.body,
-  và các trang bên dưới gọi RT ngay đầu khối script của chúng.
--->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/realtime-to-chuc.js"></script>
 
@@ -70,60 +48,37 @@
 
         <nav class="qt-side__scroll" id="qtNav">
             <div class="qt-side__group">
-                <div class="qt-side__label">Tổng quan</div>
+                <div class="qt-side__label">Hệ thống &amp; Dự báo</div>
                 <a class="qt-nav__item" href="/admin" data-match="/admin"><i class="fas fa-gauge-high"></i><span>Bảng điều khiển</span></a>
-                <a class="qt-nav__item" href="/admin/stats" data-match="/admin/stats"><i class="fas fa-chart-pie"></i><span>Báo cáo thống kê</span></a>
+                <a class="qt-nav__item" href="/admin/to-chuc-quan-ly" data-match="/admin/to-chuc-quan-ly,/to-chuc/quan-ly"><i class="fas fa-sitemap"></i><span>Cơ cấu &amp; Phân quyền</span></a>
+                <a class="qt-nav__item" href="/admin/du-bao" data-match="/admin/du-bao,/du-bao"><i class="fas fa-brain"></i><span>Dự báo AI (ML)</span></a>
+                <a class="qt-nav__item" href="/admin/chatbot" data-match="/admin/chatbot"><i class="fas fa-robot"></i><span>Cấu hình Trợ lý AI</span></a>
+                <a class="qt-nav__item" href="/admin/stats" data-match="/admin/stats"><i class="fas fa-chart-pie"></i><span>Báo cáo hệ thống</span></a>
                 <a class="qt-nav__item" href="/analytics" data-match="/analytics"><i class="fas fa-chart-line"></i><span>Dashboard phân tích</span></a>
-                <a class="qt-nav__item" href="/du-bao" data-match="/du-bao"><i class="fas fa-wand-magic-sparkles"></i><span>Dự báo AI</span></a>
             </div>
 
             <div class="qt-side__group">
-                <div class="qt-side__label">Thực đơn</div>
-                <a class="qt-nav__item" href="/admin/productlist" data-match="/admin/productlist,/admin/productedit,/admin/productdel"><i class="fas fa-bowl-food"></i><span>Danh sách món ăn</span></a>
-                <a class="qt-nav__item" href="/admin/productadd" data-match="/admin/productadd"><i class="fas fa-plus"></i><span>Thêm món ăn</span></a>
+                <div class="qt-side__label">Tài khoản &amp; Nhân sự</div>
+                <a class="qt-nav__item" href="/admin/stafflist" data-match="/admin/stafflist,/admin/staffedit,/admin/staffdel"><i class="fas fa-user-group"></i><span>Tài khoản nhân sự</span></a>
+                <a class="qt-nav__item" href="/admin/staffadd" data-match="/admin/staffadd"><i class="fas fa-user-plus"></i><span>Thêm tài khoản</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Cấu hình Vận hành</div>
+                <a class="qt-nav__item" href="/admin/thanh-toan" data-match="/admin/thanh-toan"><i class="fas fa-credit-card"></i><span>Cấu hình thanh toán</span></a>
+                <a class="qt-nav__item" href="/admin/dat-ban" data-match="/admin/dat-ban"><i class="fas fa-calendar-check"></i><span>Chính sách đặt bàn</span></a>
+            </div>
+
+            <div class="qt-side__group">
+                <div class="qt-side__label">Dữ liệu Danh mục</div>
+                <a class="qt-nav__item" href="/admin/productlist" data-match="/admin/productlist,/admin/productedit,/admin/productdel"><i class="fas fa-bowl-food"></i><span>Danh mục món ăn</span></a>
                 <a class="qt-nav__item" href="/admin/catlist" data-match="/admin/catlist,/admin/catedit,/admin/catdel"><i class="fas fa-layer-group"></i><span>Loại món</span></a>
-                <a class="qt-nav__item" href="/admin/catadd" data-match="/admin/catadd"><i class="fas fa-plus"></i><span>Thêm loại món</span></a>
             </div>
 
             <div class="qt-side__group">
-                <div class="qt-side__label">Kinh doanh</div>
-                <a class="qt-nav__item" href="/admin/hopdongmoi" data-match="/admin/hopdongmoi"><i class="fas fa-bell-concierge"></i><span>Hợp đồng mới</span></a>
-                <a class="qt-nav__item" href="/admin/hopdonglist" data-match="/admin/hopdonglist,/admin/hopdongconfirm,/admin/hopdongdel"><i class="fas fa-file-signature"></i><span>Danh sách hợp đồng</span></a>
-                <a class="qt-nav__item" href="/admin/khuyen-mai" data-match="/admin/khuyen-mai"><i class="fas fa-ticket"></i><span>Khuyến mãi</span></a>
-                <a class="qt-nav__item" href="/admin/thanh-vien" data-match="/admin/thanh-vien"><i class="fas fa-medal"></i><span>Thành viên &amp; Hạng</span></a>
-            </div>
-
-            <div class="qt-side__group">
-                <div class="qt-side__label">Nhân sự</div>
-                <a class="qt-nav__item" href="/admin/stafflist" data-match="/admin/stafflist,/admin/staffedit,/admin/staffdel"><i class="fas fa-user-group"></i><span>Danh sách nhân viên</span></a>
-                <a class="qt-nav__item" href="/admin/staffadd" data-match="/admin/staffadd"><i class="fas fa-user-plus"></i><span>Thêm nhân viên</span></a>
-                <a class="qt-nav__item" href="/admin/xep-ca" data-match="/admin/xep-ca"><i class="fas fa-wand-magic-sparkles"></i><span>Xếp ca tự động</span></a>
-                <a class="qt-nav__item" href="/admin/schedule" data-match="/admin/schedule"><i class="fas fa-calendar-days"></i><span>Duyệt lịch làm việc</span></a>
-                <a class="qt-nav__item" href="/admin/salary-approval" data-match="/admin/salary-approval,/admin/salary"><i class="fas fa-money-check-dollar"></i><span>Phê duyệt lương</span></a>
-                <a class="qt-nav__item" href="/admin/leavelist" data-match="/admin/leavelist,/admin/leaveapprove,/admin/leavereject"><i class="fas fa-plane-departure"></i><span>Đơn xin nghỉ phép</span></a>
-            </div>
-
-            <div class="qt-side__group">
-                <div class="qt-side__label">Nội dung</div>
+                <div class="qt-side__label">Nội dung Website</div>
                 <a class="qt-nav__item" href="/admin/bloglist" data-match="/admin/bloglist,/admin/blogedit,/admin/blogdel"><i class="fas fa-newspaper"></i><span>Danh sách bài viết</span></a>
                 <a class="qt-nav__item" href="/admin/blogadd" data-match="/admin/blogadd"><i class="fas fa-pen-nib"></i><span>Thêm bài viết</span></a>
-            </div>
-
-            <div class="qt-side__group">
-                <div class="qt-side__label">Vận hành</div>
-                <a class="qt-nav__item" href="/admin/thanh-toan" data-match="/admin/thanh-toan"><i class="fas fa-credit-card"></i><span>Cấu hình thanh toán</span></a>
-                <a class="qt-nav__item" href="/staff/thanh-toan/lich-su" data-match="/staff/thanh-toan/lich-su"><i class="fas fa-receipt"></i><span>Lịch sử thanh toán</span></a>
-                <a class="qt-nav__item" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn</span></a>
-                <a class="qt-nav__item" href="/admin/dat-ban" data-match="/admin/dat-ban"><i class="fas fa-calendar-check"></i><span>Cấu hình đặt bàn</span></a>
-                <a class="qt-nav__item" href="/kds" data-match="/kds"><i class="fas fa-fire-burner"></i><span>Màn hình bếp</span></a>
-            </div>
-
-            <div class="qt-side__group">
-                <div class="qt-side__label">Giao hàng</div>
-                <a class="qt-nav__item" href="/admin/van-chuyen" data-match="/admin/van-chuyen"><i class="fas fa-truck"></i><span>Đơn vị vận chuyển</span></a>
-                <a class="qt-nav__item" href="/admin/van-chuyen/shipper" data-match="/admin/van-chuyen/shipper"><i class="fas fa-id-card-clip"></i><span>Quản lý shipper</span></a>
-                <a class="qt-nav__item" href="/staff/giao-hang" data-match="/staff/giao-hang"><i class="fas fa-route"></i><span>Điều phối đơn giao</span></a>
-                <a class="qt-nav__item" href="/staff/giao-hang/ban-do" data-match="/staff/giao-hang/ban-do"><i class="fas fa-map-location-dot"></i><span>Bản đồ theo dõi</span></a>
             </div>
 
             <div class="qt-side__group">
@@ -159,5 +114,4 @@
             </div>
         </header>
 
-        <!-- id="rt-noi-dung": vùng được RT.dongBoTrang() tráo khi dữ liệu đổi. -->
-        <main class="qt-content" id="rt-noi-dung">
+        <main class="qt-content">

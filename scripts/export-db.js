@@ -9,7 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const { timChuongTrinh, thamSoKetNoi } = require('./lib-mysql');
 

@@ -87,8 +87,8 @@ var canCoc = Number(r.deposit_amount) > 0 && r.deposit_status !== 'PAID';
       </ul>
 
       <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.4rem">
-        <a class="nh-btn nh-btn--gold" href="/dat-ban/tra-cuu?ma=<%= encodeURIComponent(r.reservation_code) %>">
-          <i class="fas fa-edit"></i> <%= t('dat_ban_moi.quan_ly_don') %>
+        <a class="nh-btn nh-btn--gold" href="/my-orders">
+          <i class="fas fa-calendar-check"></i> <%= t('dieu_huong.don_cua_toi') %>
         </a>
         <a class="nh-btn nh-btn--outline" href="/menu">
           <i class="fas fa-utensils"></i> <%= t('dieu_huong.thuc_don') %>

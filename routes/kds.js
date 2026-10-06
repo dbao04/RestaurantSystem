@@ -18,23 +18,23 @@ module.exports = function (io) {
     return res.redirect('/staff/login');
   }
 
-  /** Chi bep moi duoc doi trang thai che bien. */
-  function requireBep(req, res, next) {
+  /** Bep va Phuc vu / Quan ly deu thao tac duoc theo phan quyen tung buoc. */
+  function requireBepHoacPhucVu(req, res, next) {
     if (req.session.adminlogin) return next();
     const vaiTro = (req.session.staffRole || '').toLowerCase();
-    if (req.session.stafflogin && /bep|quan ly|quanly/.test(vaiTro)) return next();
-    return res.status(403).json({ loi: 'Chỉ nhân viên bếp mới thao tác được.' });
+    if (req.session.stafflogin && /bep|phuc vu|phucvu|quay|quan ly|quanly/.test(vaiTro)) return next();
+    return res.status(403).json({ loi: 'Bạn không có quyền thực hiện thao tác này.' });
   }
 
   // ---------------------------------------------------------------- KDS
-  router.get('/kds', requireNhanSu, bat(async (req, res) => {
+  router.get(['/kds', '/staff/kds', '/staff/kitchen'], requireNhanSu, bat(async (req, res) => {
     res.render('staff/kds', {
       tenNguoiDung: req.session.adminname || req.session.staffname || 'Nhân viên',
       vaiTro: req.session.staffRole || (req.session.adminlogin ? 'Admin' : ''),
     });
   }));
 
-  router.get('/kds/api/don', requireNhanSu, bat(async (req, res) => {
+  router.get(['/kds/api/don', '/staff/kitchen/api/don'], requireNhanSu, bat(async (req, res) => {
     const [nhom, daPhucVu, thongKe] = await Promise.all([
       kds.layDonBep(),
       kds.layDaPhucVu(20),
@@ -50,7 +50,7 @@ module.exports = function (io) {
     'da-phuc-vu': kds.danhDauDaPhucVu,
   };
 
-  router.post('/kds/api/:buoc/:id', requireBep, bat(async (req, res) => {
+  router.post(['/kds/api/:buoc/:id', '/staff/kitchen/api/:buoc/:id'], requireBepHoacPhucVu, bat(async (req, res) => {
     const ham = BUOC[req.params.buoc];
     if (!ham) return res.status(404).json({ loi: 'Bước không hợp lệ.' });
     try {
@@ -70,8 +70,10 @@ module.exports = function (io) {
   }));
 
   // ------------------------------------------------------------ So do ban
-  router.get('/so-do-ban', requireNhanSu, bat(async (req, res) => {
+  router.get(['/so-do-ban', '/staff/so-do-ban'], requireNhanSu, bat(async (req, res) => {
     res.render('staff/so-do-ban', {
+      title: 'Sơ đồ bàn thời gian thực',
+      activePage: 'sodoban',
       tenNguoiDung: req.session.adminname || req.session.staffname || 'Nhân viên',
       choPhepKeoTha: Boolean(req.session.adminlogin) ||
         /quan ly|quanly/.test((req.session.staffRole || '').toLowerCase()),
