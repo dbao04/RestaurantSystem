@@ -326,7 +326,7 @@ async function traCuuChoKhach(ma, dienThoai) {
 async function lichSuKhach(dienThoai, { gioiHan = 50 } = {}) {
   const so = qt.chuanHoaDienThoai(dienThoai);
   const [rows] = await db.query(
-    `SELECT r.reservation_code, r.reservation_date, r.start_time, r.guest_count,
+    `SELECT r.id, r.created_at, r.reservation_code, r.reservation_date, r.start_time, r.guest_count,
             r.customer_type, r.source, r.status, r.deposit_status, r.deposit_amount,
             r.occasion, r.cancel_reason,
             GROUP_CONCAT(b.number_ban ORDER BY b.number_ban SEPARATOR ', ') AS table_names
@@ -335,7 +335,7 @@ async function lichSuKhach(dienThoai, { gioiHan = 50 } = {}) {
        LEFT JOIN ban b ON b.Id_ban = rt.table_id
       WHERE r.phone = ?
       GROUP BY r.id
-      ORDER BY r.reservation_date DESC, r.start_time DESC
+      ORDER BY r.created_at DESC, r.id DESC, r.reservation_date DESC, r.start_time DESC
       LIMIT ${Math.min(200, Number(gioiHan) || 50)}`, [so]);
   return rows.map((r) => ({
     ...r,
@@ -352,15 +352,18 @@ async function lichSuKhachTheoTaiKhoan(userId, phone, { gioiHan = 50 } = {}) {
     `SELECT r.id, r.reservation_code, r.reservation_date, r.start_time, r.expected_end_time, r.duration_minutes,
             r.guest_count, r.customer_name, r.phone, r.email, r.customer_type, r.source, r.status,
             r.deposit_status, r.deposit_amount, r.occasion, r.special_requests, r.cancel_reason,
-            v.Name_vitri AS area_name,
+            r.area_id, r.created_at, v.Name_vitri AS area_name,
             GROUP_CONCAT(b.number_ban ORDER BY b.number_ban SEPARATOR ', ') AS table_names
        FROM reservations r
        LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
        LEFT JOIN ban b ON b.Id_ban = rt.table_id
        LEFT JOIN vitri v ON v.id_vitri = r.area_id
       WHERE (r.customer_id = ? OR (r.phone = ? AND ? != ''))
-      GROUP BY r.id
-      ORDER BY r.reservation_date DESC, r.start_time DESC, r.id DESC
+      GROUP BY r.id, r.reservation_code, r.reservation_date, r.start_time, r.expected_end_time, r.duration_minutes,
+               r.guest_count, r.customer_name, r.phone, r.email, r.customer_type, r.source, r.status,
+               r.deposit_status, r.deposit_amount, r.occasion, r.special_requests, r.cancel_reason,
+               r.area_id, r.created_at, v.Name_vitri
+      ORDER BY r.created_at DESC, r.id DESC, r.reservation_date DESC, r.start_time DESC
       LIMIT ${Math.min(200, Number(gioiHan) || 50)}`,
     [userId || 0, so, so]
   );

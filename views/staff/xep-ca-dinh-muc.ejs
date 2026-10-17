@@ -1,13 +1,6 @@
-<% if (locals.isStaff) { %>
-  <%- include('../staff/partials/header', { activePage: 'xep-ca', staffName: session.staffName || 'Quản lý' }) %>
-<% } else { %>
-  <%- include('partials/header') %>
-  <%- include('partials/sidebar') %>
-<% } %>
+<%- include('partials/header', { activePage: 'xep-ca', staffName: session.staffName || 'Quản lý' }) %>
 
 <%
-  // getDay(): 0 = Chu nhat. Bang xep theo thu tu Viet Nam (thu 2 truoc, CN cuoi)
-  // nen phai giu rieng danh sach nay thay vi lap 0..6.
   var THU = [
     { so: 1, ten: 'Thứ 2' }, { so: 2, ten: 'Thứ 3' }, { so: 3, ten: 'Thứ 4' },
     { so: 4, ten: 'Thứ 5' }, { so: 5, ten: 'Thứ 6' }, { so: 6, ten: 'Thứ 7' },
@@ -20,8 +13,6 @@
   });
   function soHienCo(thu, maCa, cv) { return mucHienCo[thu + '|' + maCa + '|' + cv] || 0; }
 
-  // Chi hien nhung chuc vu thuc su co nguoi. Bay cot chuc vu trong khong ma
-  // khong bao gio dien duoc chi lam bang kho doc.
   var cvHienThi = (chucVuList || []).filter(function (cv) { return (soNguoi[cv] || 0) > 0; });
 
   var tongTuan = 0;
@@ -39,20 +30,20 @@
   .dm-ghichu { font-size: 13px; color: #6b6b6b; margin-bottom: 14px; line-height: 1.6; }
 </style>
 
-<div class="qt-card">
-  <div class="qt-card__head">
+<div class="card mb-4 shadow">
+  <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
     <div>
-      <h2>Định mức nhân sự theo ca</h2>
-      <p>Mỗi ca cần bao nhiêu người — hiện <%= tongTuan %> lượt người mỗi tuần</p>
+      <h6 class="m-0 font-weight-bold" style="color: #241d18;">Định mức nhân sự theo ca</h6>
+      <small class="text-muted">Mỗi ca cần bao nhiêu người — hiện <%= tongTuan %> lượt người mỗi tuần</small>
     </div>
-    <div class="qt-card__act">
-      <a class="qt-btn qt-btn--ghost" href="/admin/xep-ca">
-        <i class="fas fa-table-cells"></i> Về lưới xếp ca
+    <div>
+      <a class="btn btn-sm btn-outline-primary" href="/staff/xep-ca">
+        <i class="fas fa-table-cells mr-1"></i> Về lưới xếp ca
       </a>
     </div>
   </div>
 
-  <div class="qt-card__body">
+  <div class="card-body">
 
     <% if (msg) { %>
       <div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %>"><%= msg %></div>
@@ -71,8 +62,8 @@
       <em>số người × 6</em> thì chắc chắn sẽ báo thiếu.
     </div>
 
-    <form method="POST" action="/admin/xep-ca/dinh-muc">
-      <div class="qt-tablewrap">
+    <form method="POST" action="/staff/xep-ca/dinh-muc">
+      <div class="table-responsive">
         <table class="dm-bang">
           <thead>
             <tr>
@@ -122,10 +113,10 @@
       </div>
 
       <div style="margin-top:14px;">
-        <button class="qt-btn qt-btn--primary" type="submit">
-          <i class="fas fa-floppy-disk"></i> Lưu định mức
+        <button class="btn btn-primary" type="submit">
+          <i class="fas fa-save mr-1"></i> Lưu định mức
         </button>
-        <span class="qt-sub" style="margin-left:10px;">
+        <span class="text-muted ml-2 small">
           Lưu xong hãy quay về lưới và bấm “Xếp tự động” để áp dụng.
         </span>
       </div>
@@ -134,8 +125,4 @@
   </div>
 </div>
 
-<% if (locals.isStaff) { %>
-  <%- include('../staff/partials/footer') %>
-<% } else { %>
-  <%- include('partials/footer') %>
-<% } %>
+<%- include('partials/footer') %>

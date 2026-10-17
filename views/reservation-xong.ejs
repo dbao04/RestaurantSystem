@@ -75,6 +75,11 @@ var canCoc = Number(r.deposit_amount) > 0 && r.deposit_status !== 'PAID';
           <%= Number(r.deposit_amount).toLocaleString('vi-VN') %>đ
         </p>
         <p class="nh-hint"><%= t('dat_ban_moi.coc_huong_dan') %></p>
+        <div style="margin-top:1rem;">
+          <a href="/thanh-toan/dat-ban/<%= encodeURIComponent(r.reservation_code) %>?dt=<%= encodeURIComponent(r.phone) %>" class="nh-btn nh-btn--gold">
+            <i class="fas fa-qrcode"></i> <%= t('don.thanh_toan_vietqr') %>
+          </a>
+        </div>
       </div>
     <% } %>
 

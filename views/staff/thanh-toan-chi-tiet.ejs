@@ -180,8 +180,8 @@
         <div class="form-group">
           <label class="small font-weight-bold text-uppercase text-muted">Số tiền thu lần này</label>
           <div class="input-group">
-            <input type="number" class="form-control form-control-lg text-right font-weight-bold"
-                   id="so-tien" value="<%= t.con_phai_tra %>" min="1000" step="1000">
+            <input type="text" inputmode="numeric" class="form-control form-control-lg text-right font-weight-bold"
+                   id="so-tien" value="<%= formatMoney(t.con_phai_tra) %>" placeholder="0">
             <div class="input-group-append"><span class="input-group-text">đ</span></div>
           </div>
           <div class="mt-2 d-flex flex-wrap" style="gap:6px">
@@ -219,7 +219,10 @@
         <div id="o-tien-mat" class="d-none">
           <div class="form-group">
             <label class="small font-weight-bold text-uppercase text-muted">Khách đưa</label>
-            <input type="number" class="form-control form-control-lg text-right" id="khach-dua" step="1000" placeholder="0">
+            <div class="input-group">
+              <input type="text" inputmode="numeric" class="form-control form-control-lg text-right font-weight-bold" id="khach-dua" placeholder="0">
+              <div class="input-group-append"><span class="input-group-text">đ</span></div>
+            </div>
             <div class="mt-2 d-flex flex-wrap" style="gap:6px">
               <button class="btn btn-sm btn-light border nut-menh-gia" data-v="50000">50k</button>
               <button class="btn btn-sm btn-light border nut-menh-gia" data-v="100000">100k</button>
@@ -244,7 +247,10 @@
 
         <div class="form-group mt-3 mb-2">
           <label class="small font-weight-bold text-uppercase text-muted">Tiền tip <span class="font-weight-normal">(không bắt buộc)</span></label>
-          <input type="number" class="form-control form-control-sm" id="tien-tip" value="0" min="0" step="1000">
+          <div class="input-group input-group-sm">
+            <input type="text" inputmode="numeric" class="form-control text-right" id="tien-tip" value="0" placeholder="0">
+            <div class="input-group-append"><span class="input-group-text">đ</span></div>
+          </div>
         </div>
 
         <button class="btn btn-success btn-lg btn-block mt-3" id="nut-thu">
@@ -338,6 +344,33 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
+  var docTien = function (el) {
+    if (!el) return 0;
+    var v = (el.value || '').toString().replace(/[^\d]/g, '');
+    return Number(v) || 0;
+  };
+  var ganTien = function (el, val) {
+    if (!el) return;
+    var n = Number(val) || 0;
+    el.value = n > 0 ? tien(n) : (n === 0 && el.id === 'tien-tip' ? '0' : '');
+  };
+  var formatInputTien = function (el, onChange) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      var so = docTien(this);
+      if (so > 0) {
+        var viTriCu = this.selectionStart;
+        var doDaiCu = this.value.length;
+        this.value = tien(so);
+        var doDaiMoi = this.value.length;
+        var viTriMoi = Math.max(0, viTriCu + (doDaiMoi - doDaiCu));
+        this.setSelectionRange(viTriMoi, viTriMoi);
+      } else if (this.value !== '') {
+        this.value = '';
+      }
+      if (typeof onChange === 'function') onChange(so);
+    });
+  };
 
   /* ---------------------------------------------- tính lại bảng tiền --- */
   var conPhaiTra = <%= t.con_phai_tra %>;
@@ -359,7 +392,7 @@
       $('o-tien-diem').textContent = '− ' + tien(t.tien_tu_diem);
 
       $('o-con-lai').textContent = tien(t.con_phai_tra) + 'đ';
-      $('so-tien').value = t.con_phai_tra;
+      ganTien($('so-tien'), t.con_phai_tra);
       $('diem-max').textContent = t.diem_toi_da_dung;
       $('diem-dung').max = t.diem_toi_da_dung;
 
@@ -416,7 +449,7 @@
       var phan = Number(this.dataset.phan);
       // Làm tròn LÊN bội số 1.000đ để không bao giờ thu thiếu tổng do chia lẻ.
       var moiPhan = Math.ceil(conPhaiTra / phan / 1000) * 1000;
-      $('so-tien').value = Math.min(moiPhan, conPhaiTra);
+      ganTien($('so-tien'), Math.min(moiPhan, conPhaiTra));
       capNhatThoiLai();
     };
   });
@@ -441,31 +474,33 @@
 
   /* ------------------------------------------------------- tiền mặt --- */
   function capNhatThoiLai() {
-    var dua = Number($('khach-dua').value) || 0;
-    var can = Number($('so-tien').value) || 0;
+    var dua = docTien($('khach-dua'));
+    var can = docTien($('so-tien'));
     var lai = dua - can;
     $('o-thoi-lai').classList.toggle('d-none', !(dua > 0));
     $('so-thoi-lai').textContent = lai >= 0 ? tien(lai) : 'thiếu ' + tien(-lai);
     $('o-thoi-lai').className = 'alert py-2 mb-0 ' + (lai >= 0 ? 'alert-info' : 'alert-danger');
   }
-  $('khach-dua').addEventListener('input', capNhatThoiLai);
-  $('so-tien').addEventListener('input', capNhatThoiLai);
+  formatInputTien($('khach-dua'), capNhatThoiLai);
+  formatInputTien($('so-tien'), capNhatThoiLai);
+  formatInputTien($('tien-tip'));
+
   document.querySelectorAll('.nut-menh-gia').forEach(function (b) {
     b.onclick = function () {
-      $('khach-dua').value = (Number($('khach-dua').value) || 0) + Number(this.dataset.v);
+      ganTien($('khach-dua'), docTien($('khach-dua')) + Number(this.dataset.v));
       capNhatThoiLai();
     };
   });
-  $('nut-dung-du').onclick = function () { $('khach-dua').value = $('so-tien').value; capNhatThoiLai(); };
+  $('nut-dung-du').onclick = function () { ganTien($('khach-dua'), docTien($('so-tien'))); capNhatThoiLai(); };
 
   /* --------------------------------------------------------- thu tiền --- */
   $('nut-thu').onclick = function () {
     var nut = this;
-    var soTien = Number($('so-tien').value) || 0;
+    var soTien = docTien($('so-tien'));
     if (soTien <= 0) return Swal.fire('Số tiền không hợp lệ', 'Nhập số tiền lớn hơn 0.', 'warning');
 
     if (loaiPT === 'cash') {
-      var dua = Number($('khach-dua').value) || 0;
+      var dua = docTien($('khach-dua'));
       if (dua > 0 && dua < soTien) {
         return Swal.fire('Khách đưa chưa đủ', 'Khách đưa ' + tien(dua) + 'đ nhưng cần ' + tien(soTien) + 'đ.', 'warning');
       }
@@ -480,8 +515,8 @@
         phuong_thuc: maPT,
         ma_giam_gia: $('ma-giam-gia').value.trim() || null,
         diem_dung: Number($('diem-dung').value) || 0,
-        tien_khach_dua: loaiPT === 'cash' ? ($('khach-dua').value || null) : null,
-        tien_tip: Number($('tien-tip').value) || 0,
+        tien_khach_dua: loaiPT === 'cash' ? (docTien($('khach-dua')) || null) : null,
+        tien_tip: docTien($('tien-tip')),
         ghi_chu_phan_chia: $('ghi-chu-chia').value.trim() || null,
         ghi_chu: loaiPT === 'card' && $('ma-chuan-chi').value ? 'Mã chuẩn chi POS: ' + $('ma-chuan-chi').value : null,
       }),
@@ -502,7 +537,7 @@
   if (nutGiaLap) {
     nutGiaLap.onclick = function () {
       var nut = this;
-      var soTien = Number($('so-tien').value) || 0;
+      var soTien = docTien($('so-tien'));
       if (soTien <= 0) return Swal.fire('Số tiền không hợp lệ', 'Nhập số tiền lớn hơn 0.', 'warning');
 
       Swal.fire({
@@ -522,7 +557,7 @@
             so_tien: soTien,
             ma_giam_gia: $('ma-giam-gia').value.trim() || null,
             diem_dung: Number($('diem-dung').value) || 0,
-            tien_tip: Number($('tien-tip').value) || 0,
+            tien_tip: docTien($('tien-tip')),
             ghi_chu_phan_chia: $('ghi-chu-chia').value.trim() || null,
           }),
         })

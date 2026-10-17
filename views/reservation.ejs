@@ -39,6 +39,29 @@ var nhanThe = function (the) {
 };
 var dsMonAn = typeof dsMonAn !== 'undefined' && Array.isArray(dsMonAn) ? dsMonAn : [];
 var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) ? danhMucMon : [];
+
+var tenKhuVucDich = function (k) {
+  var tenGoc = (k && k.ten) ? k.ten : (k || '');
+  var khoa = 'khu_vuc.' + String(tenGoc).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  var dich = t(khoa);
+  return dich === khoa ? tenGoc : dich;
+};
+
+var tenLoaiDich = function (l) {
+  if (typeof tenNhom === 'function') return tenNhom(l);
+  return (l && l.name_loai) || '';
+};
+
+var tenMonDich = function (m) {
+  if (typeof tenMon === 'function') {
+    var tm = tenMon(m);
+    return tm ? tm.chinh : (m && m.name_mon) || '';
+  }
+  return (m && m.name_mon) || '';
+};
 %>
 
 <section class="nh-subhero nh-subhero--sm">
@@ -54,7 +77,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
   </div>
 </section>
 
-<%- include('partials/so-do-dat-ban') %>
+<%- include('partials/so-do-dat-ban', { laKhuKhach: true }) %>
 
 <style>
   /* ---------- Thanh buoc ---------- */
@@ -140,12 +163,16 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
   .db-combo-title i { color: var(--nh-gold); }
   .db-combo-badge { font-size: 0.75rem; background: var(--nh-gold); color: var(--nh-espresso); font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; }
   
-  .db-combo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem; }
-  .db-combo-card { background: #fff; border: 1.5px solid rgba(200,162,75,0.25); border-radius: 12px; padding: 0.85rem 0.95rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; transition: all 0.25s var(--nh-ease); box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+  .db-combo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; }
+  .db-combo-card { background: #fff; border: 1.5px solid rgba(200,162,75,0.25); border-radius: 12px; padding: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 0; transition: all 0.25s var(--nh-ease); box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
   .db-combo-card:hover { border-color: var(--nh-gold); box-shadow: 0 6px 18px rgba(200,162,75,0.2); transform: translateY(-2px); }
   .db-combo-card.is-recommended { border-color: var(--nh-gold); background: #fffdf7; }
-  .db-combo-tag { position: absolute; top: 0; right: 0; background: linear-gradient(135deg, var(--nh-gold), #e5c378); color: var(--nh-espresso); font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.6rem; border-bottom-left-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .db-combo-banner { width: 100%; height: 120px; overflow: hidden; position: relative; background: #231c19; }
+  .db-combo-banner img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+  .db-combo-card:hover .db-combo-banner img { transform: scale(1.05); }
+  .db-combo-tag { position: absolute; top: 0; right: 0; background: linear-gradient(135deg, var(--nh-gold), #e5c378); color: var(--nh-espresso); font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.6rem; border-bottom-left-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em; z-index: 2; }
   
+  .db-combo-inner { padding: 0.85rem 0.95rem; display: flex; flex-direction: column; justify-content: space-between; flex: 1; gap: 0.6rem; }
   .db-combo-top { display: flex; flex-direction: column; gap: 0.3rem; }
   .db-combo-name { font-size: 0.92rem; font-weight: 700; color: var(--nh-espresso); line-height: 1.3; }
   .db-combo-for { font-size: 0.78rem; color: #b45309; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -246,7 +273,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
                 <select id="dbKhuVuc" class="nh-select">
                   <option value=""><%= t('dat_ban_moi.khu_bat_ky') %></option>
                   <% khuVuc.forEach(function (k) { %>
-                    <option value="<%= k.id %>"><%= k.la_vip ? '★ ' : '' %><%= k.ten %> — <%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %><%= k.mo_ta ? ' · ' + k.mo_ta : '' %></option>
+                    <option value="<%= k.id %>"><%= k.la_vip ? '★ ' : '' %><%= tenKhuVucDich(k) %> — <%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %><%= k.mo_ta ? ' · ' + k.mo_ta : '' %></option>
                   <% }); %>
                 </select>
               </div>
@@ -277,6 +304,16 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
             <h3 class="nh-panel__title"><i class="fas fa-map-marked-alt"></i> <%= t('dat_ban_moi.b2_tieu_de') %></h3>
             <p class="nh-hint" style="margin-bottom:1.1rem"><%= t('dat_ban_moi.b2_mo_ta') %></p>
 
+            <div class="db-filter-status" id="dbFilterStatus" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; background: #fffdf5; border: 1.5px solid rgba(200,162,75,0.35); border-radius: 10px; padding: 0.55rem 0.95rem; font-size: 0.88rem;">
+              <span id="dbFilterStatusText" style="color: var(--nh-espresso); font-weight: 600;">
+                <i class="fas fa-filter" style="color: var(--nh-gold); margin-right: 0.35rem;"></i>
+                <span id="dbFilterTextContent"></span>
+              </span>
+              <button type="button" id="dbBtnToggleFilter" class="nh-btn nh-btn--xs nh-btn--outline" style="font-size: 0.78rem; padding: 0.25rem 0.75rem; border-radius: 999px;">
+                <%= t('dat_ban_moi.hien_tat_ca_ban') %>
+              </button>
+            </div>
+
             <div id="dbTabs"></div>
             <div id="dbSoDo" class="sdb"></div>
             <div class="sdb__tomtat" id="dbTomTatBan"><%= t('dat_ban_moi.dang_tai') %></div>
@@ -299,51 +336,51 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
         <div class="db-man" id="manMon" data-buoc="mon">
           <div class="nh-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
-              <h3 class="nh-panel__title" style="margin:0"><i class="fas fa-utensils"></i> Gọi món trước (Tùy chọn)</h3>
-              <span class="nh-hint" style="margin:0">Bếp chuẩn bị trước — hoặc bấm Bỏ qua để đến quán gọi món</span>
+              <h3 class="nh-panel__title" style="margin:0"><i class="fas fa-utensils"></i> <%= t('dat_ban_moi.b_mon_tieu_de') %></h3>
+              <span class="nh-hint" style="margin:0"><%= t('dat_ban_moi.b_mon_mo_ta') %></span>
             </div>
             <p class="nh-hint" style="margin-bottom:1rem">
-              Bạn có thể chọn trước các món yêu thích để nhà hàng chuẩn bị chu đáo khi bạn tới, hoặc bỏ qua bước này nếu muốn chọn món tại bàn.
+              <%= t('dat_ban_moi.b_mon_hint') %>
             </p>
 
             <!-- COMBO GỢI Ý THEO SỐ LƯỢNG KHÁCH -->
             <div class="db-combo-section" id="dbComboSection">
               <div class="db-combo-header">
                 <h4 class="db-combo-title">
-                  <i class="fas fa-crown"></i> Gợi ý Set Combo phù hợp cho <span id="dbComboGuestText">2 khách</span>
+                  <i class="fas fa-crown"></i> <span id="dbComboGuestTitle"><%= t('dat_ban_moi.goi_y_combo', null, { n: '2' }) %></span>
                 </h4>
-                <span class="db-combo-badge"><i class="fas fa-sparkles"></i> Tiết kiệm & Đủ vị</span>
+                <span class="db-combo-badge"><i class="fas fa-sparkles"></i> <%= t('dat_ban_moi.tiet_kiem_du_vi') %></span>
               </div>
               <div class="db-combo-grid" id="dbComboGrid"></div>
             </div>
 
             <div style="margin-bottom: 0.8rem;">
-              <input type="text" id="dbTimMon" class="nh-input" placeholder="🔍 Hoặc tìm kiếm món ăn riêng lẻ theo tên..." style="max-width: 360px;">
+              <input type="text" id="dbTimMon" class="nh-input" placeholder="<%= t('dat_ban_moi.tim_mon_placeholder') %>" style="max-width: 360px;">
             </div>
 
             <div class="db-mon-layout">
               <!-- Danh mục món bên trái -->
               <div class="db-loai-list" id="dbLoaiList">
-                <button type="button" class="db-loai-btn active" data-loai="ALL">Tất cả món (<%= (dsMonAn||[]).length %>)</button>
+                <button type="button" class="db-loai-btn active" data-loai="ALL"><%= t('dat_ban_moi.tat_ca_mon') %> (<%= (dsMonAn||[]).length %>)</button>
                 <% (danhMucMon||[]).forEach(function(l) { %>
-                  <button type="button" class="db-loai-btn" data-loai="<%= l.id_loai %>"><%= l.name_loai %> (<%= l.so_mon || 0 %>)</button>
+                  <button type="button" class="db-loai-btn" data-loai="<%= l.id_loai %>"><%= tenLoaiDich(l) %> (<%= l.so_mon || 0 %>)</button>
                 <% }) %>
               </div>
 
               <!-- Lưới món ăn bên phải -->
               <div class="db-mon-grid" id="dbMonGrid">
                 <% (dsMonAn||[]).forEach(function(m) { %>
-                  <div class="db-dish-card" data-loai="<%= m.id_loai %>" data-ten="<%= (m.name_mon||'').toLowerCase() %>">
+                  <div class="db-dish-card" data-loai="<%= m.id_loai %>" data-ten="<%= (tenMonDich(m) + ' ' + (m.name_mon||'')).toLowerCase() %>">
                     <div class="db-dish-thumb">
-                      <img src="/food/<%= m.images || '' %>" alt="<%= m.name_mon %>" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+                      <img src="/food/<%= m.images || '' %>" alt="<%= tenMonDich(m) %>" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
                     </div>
                     <div class="db-dish-body">
-                      <div class="db-dish-name" title="<%= m.name_mon %>"><%= m.name_mon %></div>
+                      <div class="db-dish-name" title="<%= tenMonDich(m) %>"><%= tenMonDich(m) %></div>
                       <div class="db-dish-price"><%= Number(m.gia_mon||0).toLocaleString('vi-VN') %> ₫</div>
                       <div class="db-dish-qty">
-                        <button type="button" class="btn-giam-mon" data-id="<%= m.id_mon %>" title="Bớt 1"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn-giam-mon" data-id="<%= m.id_mon %>" title="<%= t('dat_ban_moi.giam_bo') %>"><i class="fas fa-minus"></i></button>
                         <span id="qty_<%= m.id_mon %>">0</span>
-                        <button type="button" class="btn-tang-mon" data-id="<%= m.id_mon %>" data-ten="<%= m.name_mon %>" data-gia="<%= m.gia_mon %>" title="Thêm 1"><i class="fas fa-plus"></i></button>
+                        <button type="button" class="btn-tang-mon" data-id="<%= m.id_mon %>" data-ten="<%= tenMonDich(m) %>" data-gia="<%= m.gia_mon %>" title="+1"><i class="fas fa-plus"></i></button>
                       </div>
                     </div>
                   </div>
@@ -354,7 +391,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
             <!-- Khay món đã chọn -->
             <div class="db-selected-tray" id="dbSelectedTray" style="display:none">
               <div class="db-selected-title">
-                <span><i class="fas fa-shopping-basket" style="color:var(--nh-gold)"></i> Các món đã chọn gọi trước:</span>
+                <span><i class="fas fa-shopping-basket" style="color:var(--nh-gold)"></i> <%= t('dat_ban_moi.mon_da_chon_goi_truoc') %></span>
                 <span id="dbSelectedTongTien" style="color:var(--nh-gold)">0 ₫</span>
               </div>
               <div class="db-selected-list" id="dbSelectedList"></div>
@@ -365,10 +402,10 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
                 <i class="fas fa-arrow-left"></i> <%= t('dat_ban_moi.quay_lai') %>
               </button>
               <button type="button" class="nh-btn nh-btn--outline" id="dbBoQuaMon">
-                <i class="fas fa-forward"></i> Bỏ qua bước này
+                <i class="fas fa-forward"></i> <%= t('dat_ban_moi.bo_qua_buoc_nay') %>
               </button>
               <button type="button" class="nh-btn nh-btn--gold" id="dbTiepMon">
-                Tiếp tục <i class="fas fa-arrow-right"></i>
+                <%= t('dat_ban_moi.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
               </button>
             </div>
           </div>
@@ -486,6 +523,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
 
   var CF = <%- JSON.stringify(cauHinh) %>;
   var KHU = <%- JSON.stringify(khuVuc) %>;
+  var DS_MON_AN = <%- JSON.stringify((dsMonAn || []).map(function(m){ return { id_mon: m.id_mon, name_mon: m.name_mon, images: m.images || '' }; })) %>;
 
   /*
     Trang thai cua ca man hinh nam trong MOT doi tuong.
@@ -514,7 +552,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
   var TEN_BUOC = {
     1: T['dat_ban_moi.b1_ngan'] || 'Thời gian',
     2: T['dat_ban_moi.b2_ngan'] || 'Chọn bàn',
-    'mon': 'Gọi món',
+    'mon': T['dat_ban_moi.b_mon_ngan'] || 'Gọi món',
     3: T['dat_ban_moi.b3_ngan'] || 'Thông tin',
     4: T['dat_ban_moi.b4_ngan'] || 'Xác nhận'
   };
@@ -700,11 +738,69 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
   // -------------------------------------------------------------- bước 2
 
   var dieuKhienSoDo = null;
+  var chiHienBanPhuHop = true;
+
+  function laBanPhuHop(b, soKhach) {
+    var k = Number(soKhach) || 2;
+    var c = Number(b.so_cho) || 4;
+    // Bàn phải đủ chỗ cho khách và phù hợp quy mô đoàn
+    if (k <= 2) return c >= 2 && c <= 4;
+    if (k <= 4) return c >= 4 && c <= 6;
+    if (k <= 6) return c >= 6 && c <= 8;
+    if (k <= 8) return c >= 8 && c <= 10;
+    if (k <= 10) return c >= 10 && c <= 12;
+    return c >= k;
+  }
+
+  function layMotaKhoangCho(soKhach) {
+    var k = Number(soKhach) || 2;
+    if (k <= 2) return '2 – 4';
+    if (k <= 4) return '4 – 6';
+    if (k <= 6) return '6 – 8';
+    if (k <= 8) return '8 – 10';
+    if (k <= 10) return '10 – 12';
+    return k + '+';
+  }
+
+  function locDanhSachBan(dsBan, soKhach, batBuocPhuHop) {
+    if (!batBuocPhuHop) return dsBan;
+    var phuHop = dsBan.filter(function (b) { return laBanPhuHop(b, soKhach); });
+    if (phuHop.length > 0) return phuHop;
+    var duCho = dsBan.filter(function (b) { return Number(b.so_cho) >= soKhach; });
+    return duCho.length > 0 ? duCho : dsBan;
+  }
+
+  function capNhatThanhLocBan() {
+    var hop = $('dbFilterStatus');
+    var txt = $('dbFilterTextContent');
+    var btn = $('dbBtnToggleFilter');
+    if (!hop || !txt || !btn) return;
+
+    if (chiHienBanPhuHop) {
+      txt.innerHTML = (T['dat_ban_moi.loc_ban_phu_hop'] || 'Đang lọc các bàn phù hợp cho {n} khách').replace('{n}', '<b>' + S.soKhach + '</b>')
+        + ' <span style="color:var(--nh-muted); font-weight:normal;">(Bàn ' + layMotaKhoangCho(S.soKhach) + ' chỗ)</span>';
+      btn.textContent = T['dat_ban_moi.hien_tat_ca_ban'] || 'Xem tất cả bàn';
+      btn.className = 'nh-btn nh-btn--xs nh-btn--outline';
+    } else {
+      txt.innerHTML = '<span style="color:var(--nh-muted); font-weight:500;"><i class="fas fa-eye"></i> Đang hiển thị toàn bộ bàn của nhà hàng</span>';
+      btn.textContent = (T['dat_ban_moi.chi_hien_phu_hop'] || 'Chỉ hiện bàn phù hợp') + ' (' + S.soKhach + ' khách)';
+      btn.className = 'nh-btn nh-btn--xs nh-btn--gold';
+    }
+  }
+
+  var btnToggleFilter = $('dbBtnToggleFilter');
+  if (btnToggleFilter) {
+    btnToggleFilter.addEventListener('click', function () {
+      chiHienBanPhuHop = !chiHienBanPhuHop;
+      taiSoDo();
+    });
+  }
 
   async function taiSoDo() {
     var khung = $('dbSoDo');
     khung.innerHTML = '<div class="sdb__khung sdb__khung--tai">' + T['dat_ban_moi.dang_tai_so_do'] + '</div>';
     $('dbTomTatBan').textContent = T['dat_ban_moi.dang_tai'];
+    capNhatThanhLocBan();
 
     var q = function (khu) {
       var p = new URLSearchParams({ ngay: S.ngay, gio: S.gio, so_khach: S.soKhach });
@@ -716,11 +812,19 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       var tatCa = await q(S.khuVuc);
       if (!tatCa.ok) { bao($('dbTomTatBan'), 'loi', tatCa.thong_bao); return; }
 
+      var banHienThi = locDanhSachBan(tatCa.ban || [], S.soKhach, chiHienBanPhuHop);
+      var tatCaDaLoc = Object.assign({}, tatCa, { ban: banHienThi });
+
       var dem = {};
-      dem['*'] = tatCa.ban.filter(function (b) { return b.kha_dung; }).length;
+      dem['*'] = banHienThi.filter(function (b) { return b.kha_dung; }).length;
       var demTheoKhu = await Promise.all(KHU.map(function (k) { return q(k.id); }));
       demTheoKhu.forEach(function (r, i) {
-        dem[String(KHU[i].id)] = r.ok ? r.ban.filter(function (b) { return b.kha_dung; }).length : 0;
+        if (r.ok) {
+          var banKhu = locDanhSachBan(r.ban || [], S.soKhach, chiHienBanPhuHop);
+          dem[String(KHU[i].id)] = banKhu.filter(function (b) { return b.kha_dung; }).length;
+        } else {
+          dem[String(KHU[i].id)] = 0;
+        }
       });
 
       SoDoDatBan.veTabs($('dbTabs'), KHU, S.khuVuc, dem, function (khu) {
@@ -732,7 +836,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
 
       var khuDangXem = KHU.filter(function (k) { return String(k.id) === String(S.khuVuc); })[0];
 
-      dieuKhienSoDo = SoDoDatBan.ve(khung, tatCa, {
+      dieuKhienSoDo = SoDoDatBan.ve(khung, tatCaDaLoc, {
         choChon: tatCa.cho_chon_ban,
         soKhach: S.soKhach,
         daChon: S.ban,
@@ -786,15 +890,19 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
 
   // -------------------------------------------------------------- bước GỌI MÓN
 
-  // Định nghĩa các gói Combo gợi ý theo số lượng người (chuẩn thực đơn nhà hàng)
+  // Định nghĩa các gói Combo gợi ý phong phú theo số lượng người
   var DANH_SACH_COMBOS = [
+    // ---------------------- 1 - 2 KHÁCH ----------------------
     {
       id: 'combo_2k_henho',
-      ten: 'Combo Hẹn Hò Lãng Mạn (2 người)',
+      tenKey: 'dat_ban_moi.combo_2k_henho_ten',
+      nguoiKey: 'dat_ban_moi.combo_2k_henho_nguoi',
+      moTaKey: 'dat_ban_moi.combo_2k_henho_mota',
+      tenVi: 'Combo Hẹn Hò Lãng Mạn (2 người)',
+      nguoiVi: 'Dành cho 1 - 2 người',
+      moTaVi: '1 Salad bơ + 1 Sashimi Set A (259k) + 1 Combo Sushi Set 1 (139k) + 2 Trà xanh Nhật.',
       minKhach: 1,
-      maxKhach: 3,
-      nguoiText: 'Dành cho 2 người',
-      moTa: '1 Salad bơ + 1 Sashimi Set A (259k) + 1 Combo Sushi Set 1 (139k) + 2 Trà xanh Nhật.',
+      maxKhach: 2,
       monList: [
         { id_mon: 126, name_mon: 'SA07-SALAD BƠ', gia_mon: 99000, soluong: 1 },
         { id_mon: 161, name_mon: 'SETA-SASHIMI SET A', gia_mon: 259000, soluong: 1 },
@@ -804,11 +912,14 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     },
     {
       id: 'combo_2k_sashimi',
-      ten: 'Combo Tinh Hoa Sashimi (2 người)',
+      tenKey: 'dat_ban_moi.combo_2k_sashimi_ten',
+      nguoiKey: 'dat_ban_moi.combo_2k_sashimi_nguoi',
+      moTaKey: 'dat_ban_moi.combo_2k_sashimi_mota',
+      tenVi: 'Combo Tinh Hoa Sashimi (2 người)',
+      nguoiVi: 'Dành cho 1 - 2 người',
+      moTaVi: '1 Salad rong nho + 1 Sashimi Set B (249k) + 1 Cuộn cá hồi nướng + 1 Lẩu Nấm Cá Hồi.',
       minKhach: 1,
-      maxKhach: 3,
-      nguoiText: 'Dành cho 2 người',
-      moTa: '1 Salad rong nho + 1 Sashimi Set B (249k) + 1 Cuộn cá hồi nướng + 1 Lẩu Nấm Cá Hồi.',
+      maxKhach: 2,
       monList: [
         { id_mon: 109, name_mon: 'A06-RONG NHO', gia_mon: 32000, soluong: 1 },
         { id_mon: 162, name_mon: 'SETB-SASHIMI SET B', gia_mon: 249000, soluong: 1 },
@@ -817,12 +928,53 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       ]
     },
     {
+      id: 'combo_2k_bbq',
+      tenKey: 'dat_ban_moi.combo_2k_bbq_ten',
+      nguoiKey: 'dat_ban_moi.combo_2k_bbq_nguoi',
+      moTaKey: 'dat_ban_moi.combo_2k_bbq_mota',
+      tenVi: 'Combo Nướng & Teppan Nhật Bản (2 người)',
+      nguoiVi: 'Dành cho 1 - 2 người',
+      moTaVi: '1 Salad Rong Nho + 1 Bò Aukobe Steak + 1 Gà Karaage + 1 Cơm Lươn Nhật + 2 Panna Cotta dâu.',
+      minKhach: 1,
+      maxKhach: 2,
+      monList: [
+        { id_mon: 109, name_mon: 'A06-RONG NHO', gia_mon: 32000, soluong: 1 },
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 1 },
+        { id_mon: 321, name_mon: 'T09-GÀ CHIÊN KARAAGE', gia_mon: 95000, soluong: 1 },
+        { id_mon: 304, name_mon: 'K03-CƠM LƯƠN NHẬT', gia_mon: 169000, soluong: 1 },
+        { id_mon: 326, name_mon: 'DE05-PANNA COTTA DÂU', gia_mon: 25000, soluong: 2 }
+      ]
+    },
+    {
+      id: 'combo_2k_sushi_udon',
+      tenKey: 'dat_ban_moi.combo_2k_sushi_udon_ten',
+      nguoiKey: 'dat_ban_moi.combo_2k_sushi_udon_nguoi',
+      moTaKey: 'dat_ban_moi.combo_2k_sushi_udon_mota',
+      tenVi: 'Combo Sushi & Mì Udon Truyền Thống (2 người)',
+      nguoiVi: 'Dành cho 1 - 2 người',
+      moTaVi: '1 Salad Bơ + 1 Combo Sushi Set 2 + 1 Udon Bò Mỹ + 1 Trứng Cuộn Mentaiko + 2 Kem Matcha.',
+      minKhach: 1,
+      maxKhach: 2,
+      monList: [
+        { id_mon: 126, name_mon: 'SA07-SALAD BƠ', gia_mon: 99000, soluong: 1 },
+        { id_mon: 206, name_mon: 'SET2-COMBO SUSHI SET 2', gia_mon: 199000, soluong: 1 },
+        { id_mon: 289, name_mon: 'U02-UDON BÒ MỸ', gia_mon: 129000, soluong: 1 },
+        { id_mon: 271, name_mon: 'D02-TRỨNG CUỘN MENTAIKO', gia_mon: 49000, soluong: 1 },
+        { id_mon: 322, name_mon: 'DE01-KEM MATCHA', gia_mon: 45000, soluong: 2 }
+      ]
+    },
+
+    // ---------------------- 3 - 4 KHÁCH ----------------------
+    {
       id: 'combo_4k_giadinh',
-      ten: 'Combo Sum Họp Gia Đình (3 - 4 người)',
+      tenKey: 'dat_ban_moi.combo_4k_giadinh_ten',
+      nguoiKey: 'dat_ban_moi.combo_4k_giadinh_nguoi',
+      moTaKey: 'dat_ban_moi.combo_4k_giadinh_mota',
+      tenVi: 'Combo Sum Họp Gia Đình (3 - 4 người)',
+      nguoiVi: 'Dành cho 3 - 4 người',
+      moTaVi: '1 Salad hải sản + 1 Sashimi Set D (489k) + 1 Combo Sushi Set 2 (199k) + 1 Lẩu Sukiyaki (259k).',
       minKhach: 3,
-      maxKhach: 5,
-      nguoiText: 'Dành cho 3 - 4 người',
-      moTa: '1 Salad hải sản + 1 Sashimi Set D (489k) + 1 Combo Sushi Set 2 (199k) + 1 Lẩu Sukiyaki (259k).',
+      maxKhach: 4,
       monList: [
         { id_mon: 124, name_mon: 'SA05-SALAD HẢI SẢN', gia_mon: 159000, soluong: 1 },
         { id_mon: 164, name_mon: 'SETD-SASHIMI SET D', gia_mon: 489000, soluong: 1 },
@@ -832,11 +984,14 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     },
     {
       id: 'combo_4k_bbq',
-      ten: 'Combo Thưởng Thức Nướng & Sushi (4 người)',
+      tenKey: 'dat_ban_moi.combo_4k_bbq_ten',
+      nguoiKey: 'dat_ban_moi.combo_4k_bbq_nguoi',
+      moTaKey: 'dat_ban_moi.combo_4k_bbq_mota',
+      tenVi: 'Combo Thưởng Thức Nướng & Sushi (3 - 4 người)',
+      nguoiVi: 'Dành cho 3 - 4 người',
+      moTaVi: '1 Bò Aukobe Steak + 1 Combo Hàu Hyogo + 1 Combo Sushi Set 3 + 1 Lẩu Nabe Hải Sản.',
       minKhach: 3,
-      maxKhach: 5,
-      nguoiText: 'Dành cho 4 người',
-      moTa: '1 Bò Aukobe Steak + 1 Combo Hàu Hyogo + 1 Combo Sushi Set 3 + 1 Lẩu Nabe Hải Sản.',
+      maxKhach: 4,
       monList: [
         { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 1 },
         { id_mon: 127, name_mon: 'SH01-COMBO HÀU HYOGO', gia_mon: 199000, soluong: 1 },
@@ -845,12 +1000,53 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       ]
     },
     {
+      id: 'combo_4k_lau_sashimi',
+      tenKey: 'dat_ban_moi.combo_4k_lau_sashimi_ten',
+      nguoiKey: 'dat_ban_moi.combo_4k_lau_sashimi_nguoi',
+      moTaKey: 'dat_ban_moi.combo_4k_lau_sashimi_mota',
+      tenVi: 'Combo Lẩu Nấm & Sashimi Tươi (3 - 4 người)',
+      nguoiVi: 'Dành cho 3 - 4 người',
+      moTaVi: '1 Salad Cua Lột + 1 Sashimi Set C + 1 Lẩu Nấm Cá Mú + 1 Tempura Tôm + 1 Bò cuộn nấm kim châm.',
+      minKhach: 3,
+      maxKhach: 4,
+      monList: [
+        { id_mon: 120, name_mon: 'SA01-SALAD CUA LỘT', gia_mon: 189000, soluong: 1 },
+        { id_mon: 163, name_mon: 'SETC-SASHIMI SET C', gia_mon: 249000, soluong: 1 },
+        { id_mon: 295, name_mon: 'H03-LẨU NẤM CÁ MÚ', gia_mon: 279000, soluong: 1 },
+        { id_mon: 315, name_mon: 'T01-TEMPURA TÔM', gia_mon: 109000, soluong: 1 },
+        { id_mon: 272, name_mon: 'D03-BÒ CUỘN NẤM KIM CHÂM', gia_mon: 79000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_4k_gourmet',
+      tenKey: 'dat_ban_moi.combo_4k_gourmet_ten',
+      nguoiKey: 'dat_ban_moi.combo_4k_gourmet_nguoi',
+      moTaKey: 'dat_ban_moi.combo_4k_gourmet_mota',
+      tenVi: 'Combo Hải Sản & Yakiniku Cao Cấp (3 - 4 người)',
+      nguoiVi: 'Dành cho 3 - 4 người',
+      moTaVi: '1 Sashimi Sò Điệp + 1 Bò Aukobe Áp Chảo + 1 Cá Hồi sốt Teriyaki + 1 Cơm chiên cua + 1 Lẩu Kim Chi Hải Sản.',
+      minKhach: 3,
+      maxKhach: 4,
+      monList: [
+        { id_mon: 159, name_mon: 'S28-SASHIMI SÒ ĐIỆP', gia_mon: 299000, soluong: 1 },
+        { id_mon: 263, name_mon: 'E01-BÒ AUKOBE ÁP CHẢO', gia_mon: 159000, soluong: 1 },
+        { id_mon: 264, name_mon: 'E02-CÁ HỒI SỐT TERIYAKI', gia_mon: 159000, soluong: 1 },
+        { id_mon: 305, name_mon: 'K04-CƠM CHIÊN CUA', gia_mon: 145000, soluong: 1 },
+        { id_mon: 296, name_mon: 'H04-LẨU KIM CHI HẢI SẢN', gia_mon: 199000, soluong: 1 }
+      ]
+    },
+
+    // ---------------------- 5 - 6 KHÁCH ----------------------
+    {
       id: 'combo_6k_tiec',
-      ten: 'Combo Tiệc Bạn Bè & Đồng Nghiệp (5 - 6 người)',
+      tenKey: 'dat_ban_moi.combo_6k_tiec_ten',
+      nguoiKey: 'dat_ban_moi.combo_6k_tiec_nguoi',
+      moTaKey: 'dat_ban_moi.combo_6k_tiec_mota',
+      tenVi: 'Combo Tiệc Bạn Bè & Đồng Nghiệp (5 - 6 người)',
+      nguoiVi: 'Dành cho 5 - 6 người',
+      moTaVi: '1 Salad bò Mỹ + 1 Sashimi Set G Đại Tiệc (799k) + 1 Combo Sushi Set 4 (399k) + 1 Lẩu Kim Chi Hải Sản + 1 Bò Áp Chảo.',
       minKhach: 5,
-      maxKhach: 8,
-      nguoiText: 'Dành cho 5 - 6 người',
-      moTa: '1 Salad bò Mỹ + 1 Sashimi Set G Đại Tiệc (799k) + 1 Combo Sushi Set 4 (399k) + 1 Lẩu Kim Chi Hải Sản + 1 Bò Áp Chảo.',
+      maxKhach: 6,
       monList: [
         { id_mon: 125, name_mon: 'SA06-SALAD BÒ MỸ XÀO VÀ TRỨNG ONSEN', gia_mon: 119000, soluong: 1 },
         { id_mon: 167, name_mon: 'SETG-SASHIMI SET G', gia_mon: 799000, soluong: 1 },
@@ -860,12 +1056,55 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       ]
     },
     {
+      id: 'combo_6k_haisan',
+      tenKey: 'dat_ban_moi.combo_6k_haisan_ten',
+      nguoiKey: 'dat_ban_moi.combo_6k_haisan_nguoi',
+      moTaKey: 'dat_ban_moi.combo_6k_haisan_mota',
+      tenVi: 'Combo Đại Dương Hải Sản Tươi Sống (5 - 6 người)',
+      nguoiVi: 'Dành cho 5 - 6 người',
+      moTaVi: '1 Salad Cua Lột + 1 Sashimi Set F (459k) + 1 Combo Hàu Hyogo + 1 Lẩu Nấm Cá Cam (299k) + 1 Sò điệp Mentaiko + 1 Cơm chiên hải sản.',
+      minKhach: 5,
+      maxKhach: 6,
+      monList: [
+        { id_mon: 120, name_mon: 'SA01-SALAD CUA LỘT', gia_mon: 189000, soluong: 1 },
+        { id_mon: 166, name_mon: 'SETF-SASHIMI SET F', gia_mon: 459000, soluong: 1 },
+        { id_mon: 127, name_mon: 'SH01-COMBO HÀU HYOGO', gia_mon: 199000, soluong: 1 },
+        { id_mon: 294, name_mon: 'H02-LẨU NẤM CÁ CAM', gia_mon: 299000, soluong: 1 },
+        { id_mon: 256, name_mon: 'B18-SÒ ĐIỆP NƯỚNG SỐT MENTAIKO', gia_mon: 129000, soluong: 1 },
+        { id_mon: 307, name_mon: 'K06-CƠM CHIÊN HẢI SẢN', gia_mon: 119000, soluong: 1 }
+      ]
+    },
+    {
+      id: 'combo_6k_amthuc',
+      tenKey: 'dat_ban_moi.combo_6k_amthuc_ten',
+      nguoiKey: 'dat_ban_moi.combo_6k_amthuc_nguoi',
+      moTaKey: 'dat_ban_moi.combo_6k_amthuc_mota',
+      tenVi: 'Combo Tinh Hoa Ẩm Thực Tokyo (5 - 6 người)',
+      nguoiVi: 'Dành cho 5 - 6 người',
+      moTaVi: '1 Sashimi Set E + 1 Combo Sushi Set 3 + 2 Bò Aukobe Steak + 1 Lẩu Sukiyaki + 1 Tempura Thập Cẩm + 1 Gà Karaage.',
+      minKhach: 5,
+      maxKhach: 6,
+      monList: [
+        { id_mon: 165, name_mon: 'SETE-SASHIMI SET E', gia_mon: 429000, soluong: 1 },
+        { id_mon: 207, name_mon: 'SET3-COMBO SUSHI SET 3', gia_mon: 299000, soluong: 1 },
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 2 },
+        { id_mon: 297, name_mon: 'H05-LẨU SUKIYAKI', gia_mon: 259000, soluong: 1 },
+        { id_mon: 316, name_mon: 'T02-TEMPURA THẬP CẨM', gia_mon: 99000, soluong: 1 },
+        { id_mon: 321, name_mon: 'T09-GÀ CHIÊN KARAAGE', gia_mon: 95000, soluong: 1 }
+      ]
+    },
+
+    // ---------------------- 7 - 9 KHÁCH ----------------------
+    {
       id: 'combo_8k_hoangia',
-      ten: 'Combo Đại Tiệc Hoàng Gia (7 - 10+ người)',
+      tenKey: 'dat_ban_moi.combo_8k_hoangia_ten',
+      nguoiKey: 'dat_ban_moi.combo_8k_hoangia_nguoi',
+      moTaKey: 'dat_ban_moi.combo_8k_hoangia_mota',
+      tenVi: 'Combo Đại Tiệc Hoàng Gia (7 - 9 người)',
+      nguoiVi: 'Dành cho 7 - 9 người',
+      moTaVi: '1 Sashimi Set H Premium (899k) + 2 Combo Sushi Set 3 + 1 Lẩu Nấm Cá Hồi + 1 Lẩu Sukiyaki + 2 Bò Aukobe Steak + Khai vị.',
       minKhach: 7,
-      maxKhach: 99,
-      nguoiText: 'Dành cho 7 - 10+ người',
-      moTa: '1 Sashimi Set H Premium (899k) + 2 Combo Sushi Set 3 + 1 Lẩu Nấm Cá Hồi + 1 Lẩu Sukiyaki + 2 Bò Aukobe Steak + Khai vị.',
+      maxKhach: 9,
       monList: [
         { id_mon: 168, name_mon: 'SETH-SASHIMI SET H PREMIUM', gia_mon: 899000, soluong: 1 },
         { id_mon: 207, name_mon: 'SET3-COMBO SUSHI SET 3', gia_mon: 299000, soluong: 2 },
@@ -874,51 +1113,201 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
         { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 2 },
         { id_mon: 120, name_mon: 'SA01-SALAD CUA LỘT', gia_mon: 189000, soluong: 1 }
       ]
+    },
+    {
+      id: 'combo_8k_samurai',
+      tenKey: 'dat_ban_moi.combo_8k_samurai_ten',
+      nguoiKey: 'dat_ban_moi.combo_8k_samurai_nguoi',
+      moTaKey: 'dat_ban_moi.combo_8k_samurai_mota',
+      tenVi: 'Combo Yến Tiệc Samurai Thượng Hạng (7 - 9 người)',
+      nguoiVi: 'Dành cho 7 - 9 người',
+      moTaVi: '1 Sashimi Set G (799k) + 2 Combo Sushi Set 4 + 2 Lẩu Nabe Hải Sản + 2 Mực Teriyaki + 2 Hàu nướng Phô Mai + 2 Cơm chiên cua.',
+      minKhach: 7,
+      maxKhach: 9,
+      monList: [
+        { id_mon: 167, name_mon: 'SETG-SASHIMI SET G', gia_mon: 799000, soluong: 1 },
+        { id_mon: 208, name_mon: 'SET4-COMBO SUSHI SET 4', gia_mon: 399000, soluong: 2 },
+        { id_mon: 298, name_mon: 'H06-LẨU NABE HẢI SẢN', gia_mon: 249000, soluong: 2 },
+        { id_mon: 266, name_mon: 'E04-MỰC SỐT TERIYAKI', gia_mon: 199000, soluong: 2 },
+        { id_mon: 253, name_mon: 'B15-HÀU NƯỚNG PHÔ MAI', gia_mon: 159000, soluong: 2 },
+        { id_mon: 305, name_mon: 'K04-CƠM CHIÊN CUA', gia_mon: 145000, soluong: 2 }
+      ]
+    },
+    {
+      id: 'combo_8k_lau_nuong',
+      tenKey: 'dat_ban_moi.combo_8k_lau_nuong_ten',
+      nguoiKey: 'dat_ban_moi.combo_8k_lau_nuong_nguoi',
+      moTaKey: 'dat_ban_moi.combo_8k_lau_nuong_mota',
+      tenVi: 'Combo Đại Tiệc Lẩu Nướng Tổng Hợp (7 - 9 người)',
+      nguoiVi: 'Dành cho 7 - 9 người',
+      moTaVi: '2 Salad Hải Sản + 1 Sashimi Set F + 3 Bò Aukobe Steak + 2 Lẩu Nấm Cá Mú + 2 Cuộn bơ phủ lươn + 1 Tempura Tôm.',
+      minKhach: 7,
+      maxKhach: 9,
+      monList: [
+        { id_mon: 124, name_mon: 'SA05-SALAD HẢI SẢN', gia_mon: 159000, soluong: 2 },
+        { id_mon: 166, name_mon: 'SETF-SASHIMI SET F', gia_mon: 459000, soluong: 1 },
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 3 },
+        { id_mon: 295, name_mon: 'H03-LẨU NẤM CÁ MÚ', gia_mon: 279000, soluong: 2 },
+        { id_mon: 224, name_mon: 'R03-CUỘN BƠ PHỦ LƯƠN NHẬT', gia_mon: 199000, soluong: 2 },
+        { id_mon: 315, name_mon: 'T01-TEMPURA TÔM', gia_mon: 109000, soluong: 1 }
+      ]
+    },
+
+    // ---------------------- 10 - 15+ KHÁCH ----------------------
+    {
+      id: 'combo_10k_daichieu',
+      tenKey: 'dat_ban_moi.combo_10k_daichieu_ten',
+      nguoiKey: 'dat_ban_moi.combo_10k_daichieu_nguoi',
+      moTaKey: 'dat_ban_moi.combo_10k_daichieu_mota',
+      tenVi: 'Combo Đại Tiệc Thịnh Soạn (10 - 15+ người)',
+      nguoiVi: 'Dành cho 10 - 15+ người',
+      moTaVi: '1 Sashimi Set H Premium (899k) + 2 Combo Sushi Set 4 (399k) + 2 Lẩu Nấm Cá Cam + 2 Bò Aukobe Steak + 2 Salad Cua Lột + 2 Combo Hàu Hyogo.',
+      minKhach: 10,
+      maxKhach: 99,
+      monList: [
+        { id_mon: 168, name_mon: 'SETH-SASHIMI SET H PREMIUM', gia_mon: 899000, soluong: 1 },
+        { id_mon: 208, name_mon: 'SET4-COMBO SUSHI SET 4', gia_mon: 399000, soluong: 2 },
+        { id_mon: 294, name_mon: 'H02-LẨU NẤM CÁ CAM', gia_mon: 299000, soluong: 2 },
+        { id_mon: 267, name_mon: 'E05-BÒ AUKOBE STEAK', gia_mon: 159000, soluong: 2 },
+        { id_mon: 120, name_mon: 'SA01-SALAD CUA LỘT', gia_mon: 189000, soluong: 2 },
+        { id_mon: 127, name_mon: 'SH01-COMBO HÀU HYOGO', gia_mon: 199000, soluong: 2 }
+      ]
+    },
+    {
+      id: 'combo_10k_tonghop',
+      tenKey: 'dat_ban_moi.combo_10k_tonghop_ten',
+      nguoiKey: 'dat_ban_moi.combo_10k_tonghop_nguoi',
+      moTaKey: 'dat_ban_moi.combo_10k_tonghop_mota',
+      tenVi: 'Combo Yến Tiệc Đỉnh Cao Nhật Bản (10 - 15+ người)',
+      nguoiVi: 'Dành cho 10 - 15+ người',
+      moTaVi: '2 Sashimi Set G + 3 Combo Sushi Set 3 + 2 Lẩu Sukiyaki + 2 Lẩu Nấm Cá Mú + 3 Bò Aukobe Áp Chảo + 3 Cơm chiên hải sản + 2 Salad Bò Mỹ.',
+      minKhach: 10,
+      maxKhach: 99,
+      monList: [
+        { id_mon: 167, name_mon: 'SETG-SASHIMI SET G', gia_mon: 799000, soluong: 2 },
+        { id_mon: 207, name_mon: 'SET3-COMBO SUSHI SET 3', gia_mon: 299000, soluong: 3 },
+        { id_mon: 297, name_mon: 'H05-LẨU SUKIYAKI', gia_mon: 259000, soluong: 2 },
+        { id_mon: 295, name_mon: 'H03-LẨU NẤM CÁ MÚ', gia_mon: 279000, soluong: 2 },
+        { id_mon: 263, name_mon: 'E01-BÒ AUKOBE ÁP CHẢO', gia_mon: 159000, soluong: 3 },
+        { id_mon: 307, name_mon: 'K06-CƠM CHIÊN HẢI SẢN', gia_mon: 119000, soluong: 3 },
+        { id_mon: 125, name_mon: 'SA06-SALAD BÒ MỸ XÀO VÀ TRỨNG ONSEN', gia_mon: 119000, soluong: 2 }
+      ]
+    },
+    {
+      id: 'combo_10k_haisan_vip',
+      tenKey: 'dat_ban_moi.combo_10k_haisan_vip_ten',
+      nguoiKey: 'dat_ban_moi.combo_10k_haisan_vip_nguoi',
+      moTaKey: 'dat_ban_moi.combo_10k_haisan_vip_mota',
+      tenVi: 'Combo Siêu Tiệc Hải Sản Hoàng Gia (10 - 15+ người)',
+      nguoiVi: 'Dành cho 10 - 15+ người',
+      moTaVi: '2 Sashimi Set H Premium + 2 Combo Sushi Tataki + 3 Lẩu Nabe Hải Sản + 3 Combo Hàu Hyogo + 3 Cá hồi sốt Táo Steak + 3 Salad Hải Sản.',
+      minKhach: 10,
+      maxKhach: 99,
+      monList: [
+        { id_mon: 168, name_mon: 'SETH-SASHIMI SET H PREMIUM', gia_mon: 899000, soluong: 2 },
+        { id_mon: 204, name_mon: 'COMBO SUSHI PREMIUM TATAKI', gia_mon: 229000, soluong: 2 },
+        { id_mon: 298, name_mon: 'H06-LẨU NABE HẢI SẢN', gia_mon: 249000, soluong: 3 },
+        { id_mon: 127, name_mon: 'SH01-COMBO HÀU HYOGO', gia_mon: 199000, soluong: 3 },
+        { id_mon: 265, name_mon: 'E03-CÁ HỒI SỐT TÁO STEAK', gia_mon: 159000, soluong: 3 },
+        { id_mon: 124, name_mon: 'SA05-SALAD HẢI SẢN', gia_mon: 159000, soluong: 3 }
+      ]
     }
   ];
 
   function veGoiYCombo() {
     var grid = $('dbComboGrid');
-    var textKhach = $('dbComboGuestText');
+    var titleKhach = $('dbComboGuestTitle');
+    var section = $('dbComboSection');
     if (!grid) return;
     grid.innerHTML = '';
     var soK = Number(S.soKhach || 2);
-    if (textKhach) textKhach.textContent = soK + ' khách';
+    if (titleKhach) {
+      var mauTieuDe = T['dat_ban_moi.goi_y_combo'] || 'Gợi ý Set Combo phù hợp cho {n} khách';
+      titleKhach.textContent = mauTieuDe.replace('{n}', soK);
+    }
 
-    // Sắp xếp combo ưu tiên combo khớp với số lượng khách của phiên đặt hiện tại
-    var combosHienThi = DANH_SACH_COMBOS.slice().sort(function (a, b) {
-      var aKhop = (soK >= a.minKhach && soK <= a.maxKhach);
-      var bKhop = (soK >= b.minKhach && soK <= b.maxKhach);
-      if (aKhop && !bKhop) return -1;
-      if (!aKhop && bKhop) return 1;
-      return 0;
+    // Lọc CHỈ các combo phù hợp với số lượng khách hiện tại
+    var combosHienThi = DANH_SACH_COMBOS.filter(function (cb) {
+      return soK >= cb.minKhach && soK <= cb.maxKhach;
     });
 
+    // Nếu số khách lớn hơn khoảng thông thường, ưu tiên combo nhóm đông
+    if (combosHienThi.length === 0) {
+      if (soK >= 10) {
+        combosHienThi = DANH_SACH_COMBOS.filter(function (cb) { return cb.minKhach >= 10 || cb.maxKhach >= 10; });
+      }
+      if (combosHienThi.length === 0) {
+        combosHienThi = [DANH_SACH_COMBOS[DANH_SACH_COMBOS.length - 1]];
+      }
+    }
+
+    if (combosHienThi.length === 0) {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    if (section) section.style.display = 'block';
+
+    // Bản đồ ảnh món ăn từ dsMonAn
+    var anhMonMap = {};
+    if (typeof DS_MON_AN !== 'undefined' && Array.isArray(DS_MON_AN)) {
+      DS_MON_AN.forEach(function (m) {
+        if (m.images) anhMonMap[m.id_mon] = m.images;
+      });
+    }
+
     combosHienThi.forEach(function (cb) {
-      var laGoiYChinh = (soK >= cb.minKhach && soK <= cb.maxKhach);
       var tongTienCombo = cb.monList.reduce(function (sum, item) {
         return sum + (item.gia_mon * item.soluong);
       }, 0);
 
       var card = document.createElement('div');
-      card.className = 'db-combo-card' + (laGoiYChinh ? ' is-recommended' : '');
+      card.className = 'db-combo-card is-recommended';
       
-      var tagHtml = laGoiYChinh ? '<div class="db-combo-tag"><i class="fas fa-thumbs-up"></i> Khuyên dùng</div>' : '';
+      var tagHtml = '<div class="db-combo-tag"><i class="fas fa-thumbs-up"></i> ' + (T['dat_ban_moi.khuyen_dung'] || 'Khuyên dùng') + '</div>';
 
-      card.innerHTML = tagHtml +
-        '<div class="db-combo-top">' +
-          '<div class="db-combo-for"><i class="fas fa-user-friends"></i> ' + cb.nguoiText + '</div>' +
-          '<div class="db-combo-name">' + cb.ten + '</div>' +
-          '<p class="db-combo-desc">' + cb.moTa + '</p>' +
-        '</div>' +
-        '<div>' +
-          '<div class="db-combo-price-row">' +
-            '<span style="font-size:0.78rem; color:var(--nh-muted);">Trọn gói combo:</span>' +
-            '<span class="db-combo-price">' + tien(tongTienCombo) + '</span>' +
+      // Tìm ảnh đại diện đẹp nhất của combo
+      var monChinh = cb.monList.find(function (m) {
+        var ten = (m.name_mon || '').toUpperCase();
+        return (ten.includes('SASHIMI') || ten.includes('SET')) && (m.images || anhMonMap[m.id_mon]);
+      });
+      if (!monChinh) {
+        monChinh = cb.monList.find(function (m) {
+          var ten = (m.name_mon || '').toUpperCase();
+          return (ten.includes('LẨU') || ten.includes('STEAK') || ten.includes('BÒ')) && (m.images || anhMonMap[m.id_mon]);
+        });
+      }
+      if (!monChinh) {
+        monChinh = cb.monList.find(function (m) { return m.images || anhMonMap[m.id_mon]; });
+      }
+
+      var anhCombo = (monChinh && (monChinh.images || anhMonMap[monChinh.id_mon]))
+        ? ('/food/' + (monChinh.images || anhMonMap[monChinh.id_mon]))
+        : '/mon-thay-the.svg';
+
+      var bannerHtml = '<div class="db-combo-banner">' +
+        '<img src="' + anhCombo + '" alt="' + (cb.tenVi || cb.id) + '" loading="lazy" onerror="this.onerror=null;this.src=\'/mon-thay-the.svg\'">' +
+      '</div>';
+
+      var tenCombo = T[cb.tenKey] || cb.tenVi || cb.id;
+      var nguoiText = T[cb.nguoiKey] || cb.nguoiVi || '';
+      var moTaCombo = T[cb.moTaKey] || cb.moTaVi || '';
+
+      card.innerHTML = bannerHtml + tagHtml +
+        '<div class="db-combo-inner">' +
+          '<div class="db-combo-top">' +
+            '<div class="db-combo-for"><i class="fas fa-user-friends"></i> ' + nguoiText + '</div>' +
+            '<div class="db-combo-name">' + tenCombo + '</div>' +
+            '<p class="db-combo-desc">' + moTaCombo + '</p>' +
           '</div>' +
-          '<button type="button" class="db-combo-btn mt-2" data-comboid="' + cb.id + '">' +
-            '<i class="fas fa-cart-plus"></i> Chọn Combo này' +
-          '</button>' +
+          '<div>' +
+            '<div class="db-combo-price-row">' +
+              '<span style="font-size:0.78rem; color:var(--nh-muted);">' + (T['dat_ban_moi.tron_goi_combo'] || 'Trọn gói combo:') + '</span>' +
+              '<span class="db-combo-price">' + tien(tongTienCombo) + '</span>' +
+            '</div>' +
+            '<button type="button" class="db-combo-btn mt-2" data-comboid="' + cb.id + '">' +
+              '<i class="fas fa-cart-plus"></i> ' + (T['dat_ban_moi.chon_combo_nay'] || 'Chọn Combo này') +
+            '</button>' +
+          '</div>' +
         '</div>';
 
       var btn = card.querySelector('button');
@@ -1097,6 +1486,19 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     return h;
   }
 
+  function layTenKhuVuc(idKhu) {
+    if (!idKhu) return T['dat_ban_moi.khu_bat_ky'] || 'Khu vực bất kỳ';
+    var k = KHU.find(function (x) { return String(x.id) === String(idKhu); });
+    if (!k) return T['dat_ban_moi.khu_bat_ky'] || 'Khu vực bất kỳ';
+    var tenGoc = k.ten || '';
+    var khoa = 'khu_vuc.' + String(tenGoc).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    var dich = T[khoa];
+    return dich || tenGoc;
+  }
+
   function veTomTat() {
     var o = $('dbTomTat');
     o.innerHTML = '';
@@ -1105,9 +1507,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     o.appendChild(hang(T['dat_ban_moi.so_khach'], S.soKhach + ' ' + T['dat_ban_moi.khach']));
     if (S.thoiLuong) o.appendChild(hang(T['dat_ban_moi.thoi_luong'], S.thoiLuong + ' ' + T['dat_ban_moi.phut']));
 
-    var tenKhu = T['dat_ban_moi.khu_bat_ky'];
-    KHU.forEach(function (k) { if (String(k.id) === String(S.khuVuc)) tenKhu = k.ten; });
-    o.appendChild(hang(T['dat_ban_moi.khu_vuc'], tenKhu));
+    o.appendChild(hang(T['dat_ban_moi.khu_vuc'], layTenKhuVuc(S.khuVuc)));
 
     if (S.ban.length) {
       o.appendChild(hang(T['dat_ban_moi.ban_da_chon'], S.ban.length + ' ' + T['dat_ban_moi.ban_dv'] + ' · ' + S.tongChoDaChon + ' ' + T['dat_ban_moi.cho']));
@@ -1120,7 +1520,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     if (dsMon.length > 0) {
       var tongMon = dsMon.reduce(function (s, m) { return s + m.soluong; }, 0);
       var tongTienMon = dsMon.reduce(function (s, m) { return s + (m.soluong * m.gia_mon); }, 0);
-      o.appendChild(hang('Món gọi trước', tongMon + ' phần (' + tien(tongTienMon) + ')'));
+      o.appendChild(hang(T['dat_ban_moi.mon_goi_truoc'] || 'Món gọi trước', tongMon + ' ' + (T['chung.phan'] || 'phần') + ' (' + tien(tongTienMon) + ')'));
     }
 
     if (S.the.length) {
@@ -1150,8 +1550,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       dl.appendChild(chu('dt', null, nhan));
       dl.appendChild(chu('dd', null, giaTri));
     }
-    var tenKhu = T['dat_ban_moi.khu_bat_ky'];
-    KHU.forEach(function (k) { if (String(k.id) === String(S.khuVuc)) tenKhu = k.ten; });
+    var tenKhu = layTenKhuVuc(S.khuVuc);
     var tenThe = Array.prototype.slice
       .call(document.querySelectorAll('#dbThe input:checked'))
       .map(function (o) { return o.parentNode.querySelector('span').textContent.trim(); });
@@ -1171,7 +1570,7 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
     if (dsMon.length > 0) {
       var dsMonChuoi = dsMon.map(function (m) { return m.name_mon + ' x' + m.soluong; }).join(', ');
       var tongTienMon = dsMon.reduce(function (s, m) { return s + (m.soluong * m.gia_mon); }, 0);
-      muc('Món gọi trước', dsMonChuoi + ' (' + tien(tongTienMon) + ')');
+      muc(T['dat_ban_moi.mon_goi_truoc'] || 'Món gọi trước', dsMonChuoi + ' (' + tien(tongTienMon) + ')');
     }
 
     muc(T['dat_ban_moi.yeu_cau'], tenThe.join(' · '));
@@ -1224,8 +1623,15 @@ var danhMucMon = typeof danhMucMon !== 'undefined' && Array.isArray(danhMucMon) 
       var kq = await r.json();
 
       if (kq.ok) {
-        window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(kq.ma)
-          + '&dt=' + encodeURIComponent(goi.phone);
+        var coMon = itemsList && itemsList.length > 0;
+        var coCoc = kq.coc && Number(kq.coc.soTien) > 0;
+        if (coMon || coCoc) {
+          window.location.href = '/thanh-toan/dat-ban/' + encodeURIComponent(kq.ma)
+            + '?dt=' + encodeURIComponent(goi.phone);
+        } else {
+          window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(kq.ma)
+            + '&dt=' + encodeURIComponent(goi.phone);
+        }
         return;
       }
 

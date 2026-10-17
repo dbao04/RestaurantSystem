@@ -90,6 +90,51 @@
     transform: translateY(-1px);
   }
 
+  .sdb-date-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .35rem .65rem;
+    background: #ffffff;
+    border: 1px solid var(--sdb-line);
+    border-radius: 9px;
+    box-shadow: 0 2px 6px rgba(36, 26, 20, .04);
+  }
+  .sdb-date-input {
+    border: 1px solid var(--sdb-line);
+    border-radius: 6px;
+    padding: .2rem .5rem;
+    font-family: inherit;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--sdb-ink);
+    background: #faf8f5;
+    outline: none;
+    cursor: pointer;
+  }
+  .sdb-date-input:focus {
+    border-color: var(--sdb-gold);
+    background: #ffffff;
+  }
+  .sdb-btn-today {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .22rem .55rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--sdb-gold-dark);
+    background: var(--sdb-cream);
+    border: 1px solid rgba(200, 162, 75, .3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .sdb-btn-today:hover {
+    background: var(--sdb-gold);
+    color: #ffffff;
+  }
+
   /* Grid Thống Kê KPI */
   .sdb-kpi-grid {
     display: grid;
@@ -430,6 +475,11 @@
       </div>
     </div>
     <div class="sdb-nav-links">
+      <div class="sdb-date-picker">
+        <i class="fas fa-calendar-days" style="color:var(--sdb-gold);"></i>
+        <input type="date" id="chonNgaySDB" class="sdb-date-input" onchange="doiNgayXem(this.value)" />
+        <button class="sdb-btn-today" onclick="veHomNay()"><i class="fas fa-rotate-left"></i>Hôm nay</button>
+      </div>
       <a class="sdb-link-btn" href="/kds"><i class="fas fa-fire-burner" style="color:var(--sdb-gold);"></i>Màn hình bếp</a>
       <a class="sdb-link-btn" href="/analytics"><i class="fas fa-chart-pie" style="color:var(--sdb-gold);"></i>Dashboard</a>
       <a class="sdb-link-btn" href="/staff"><i class="fas fa-id-badge" style="color:var(--sdb-gold);"></i>Trang nhân viên</a>
@@ -461,11 +511,32 @@
   </div>
 </div>
 
-<!-- Modal Đổi Trạng Thái Bàn -->
+<!-- Modal Đổi Trạng Thái & Thao Tác Bàn -->
 <div class="lop" id="lop">
   <div class="hop">
-    <h3 id="hopTieuDe">Bàn</h3>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <h3 id="hopTieuDe">Bàn</h3>
+      <button onclick="dongHop()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--sdb-muted); line-height:1;">&times;</button>
+    </div>
     <div class="p" id="hopMoTa"></div>
+
+    <!-- Nút Gọi Món Cho Bàn (Chức năng cốt lõi của Phục vụ) -->
+    <div class="nut" id="hopNutOrder" style="margin-bottom: 12px;">
+      <button id="btnOrderBan" style="background:#2e7d4f; font-weight:700; font-size:.92rem; color:#fff;" onclick="moModalOrder()">
+        <span><i class="fas fa-utensils" style="margin-right:8px;"></i><span id="txtBtnOrder">Gọi món cho bàn</span></span>
+        <i class="fas fa-plus-circle" style="font-size:1.1rem;"></i>
+      </button>
+    </div>
+
+    <!-- Danh sách món đã gọi của bàn -->
+    <div id="hopDsMon" style="display:none; max-height:160px; overflow-y:auto; margin-bottom:14px; padding:10px 12px; background:#fbf7f0; border:1px solid var(--sdb-line); border-radius:10px; font-size:.82rem;">
+      <div style="font-weight:700; color:var(--sdb-dark); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+        <span><i class="fas fa-receipt mr-1"></i> Món đã gọi (<span id="demMonDaGoi">0</span>)</span>
+        <span id="tongTienMonDaGoi" style="color:#b3352c; font-weight:700;"></span>
+      </div>
+      <div id="dsMonDaGoiChiTiet" style="display:grid; gap:4px;"></div>
+    </div>
+
     <div class="nut" id="hopNutThuTien"><a class="thu-tien" id="hopLinkThuTien" href="#"><i class="fas fa-cash-register" style="margin-right: 6px;"></i>Tính tiền bàn này</a></div>
     <div class="nut">
       <button style="background:var(--sdb-trong)"  onclick="doiTrangThai(0)"><span><i class="fas fa-check-circle" style="margin-right: 6px;"></i>Đặt là Trống</span> <i class="fas fa-chevron-right" style="opacity: .6;"></i></button>
@@ -477,6 +548,49 @@
   </div>
 </div>
 
+<!-- Modal Gọi Món Trực Tiếp Cho Bàn (Menu popup) -->
+<div class="lop" id="lopOrder" style="z-index: 1060;">
+  <div class="hop" style="width: min(760px, 96vw); max-height: 90vh; display: flex; flex-direction: column; padding: 20px 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--sdb-line); padding-bottom:10px; margin-bottom:12px;">
+      <div>
+        <h3 id="orderTieuDe" style="margin:0; font-size:1.25rem;">Gọi món - Bàn</h3>
+        <small class="text-muted" id="orderPhuDe">Chọn món gửi trực tiếp vào màn hình Bếp KDS</small>
+      </div>
+      <button type="button" onclick="dongModalOrder()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--sdb-muted); line-height:1;">&times;</button>
+    </div>
+
+    <!-- Thanh tìm kiếm & lọc loại -->
+    <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+      <input type="text" id="orderTimKiem" class="form-control form-control-sm" placeholder="Tìm tên món ăn..." oninput="locMonOrder()" style="flex:1; min-width:180px;">
+      <select id="orderLocLoai" class="form-control form-control-sm" onchange="locMonOrder()" style="width:170px;">
+        <option value="">Tất cả danh mục</option>
+      </select>
+    </div>
+
+    <!-- Danh sách món để chọn -->
+    <div id="orderDanhSachMon" style="flex:1; overflow-y:auto; min-height:220px; max-height:360px; display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px; padding:4px;">
+      <div style="text-align:center; padding:30px; color:var(--sdb-muted); grid-column:1/-1;">Đang tải thực đơn...</div>
+    </div>
+
+    <!-- Giỏ món đã chọn -->
+    <div id="orderGioHang" style="margin-top:12px; padding:10px 14px; background:#fbf7f0; border:1px solid var(--sdb-line); border-radius:10px; max-height:130px; overflow-y:auto; font-size:.85rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-weight:700;">
+        <span>Món chọn thêm: <span id="orderTongSoMon" class="badge badge-success">0</span></span>
+        <span style="color:#b3352c; font-size:.95rem;" id="orderTongTienTam">0 ₫</span>
+      </div>
+      <div id="orderDanhSachChon" style="margin-top:6px; color:#555;">Chưa chọn món nào</div>
+    </div>
+
+    <!-- Nút hành động -->
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px; border-top:1px solid var(--sdb-line); padding-top:12px;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="dongModalOrder()">Hủy bỏ</button>
+      <button type="button" id="btnGuiBep" class="btn btn-success btn-sm font-weight-bold" onclick="xacNhanGuiBep()" disabled>
+        <i class="fas fa-fire mr-1"></i> GỬI BẾP CHẾ BIẾN
+      </button>
+    </div>
+  </div>
+</div>
+
 <%- include('../partials/so-do-dat-ban') %>
 
 <script>
@@ -485,6 +599,7 @@ const tien = (v) => Number(v || 0).toLocaleString('vi-VN');
 
 let duLieu = { ban: [], vi_tri: [], thong_ke: {} };
 let viTriDangXem = 'tat_ca';
+let ngayDangXem = new Date().toISOString().slice(0, 10);
 let dangSapXep = false;
 let banDangChon = null;
 
@@ -493,9 +608,26 @@ const CAO_TIEU_DE = 38;
 const CAO_BAN = 120;
 const DEM_KHU = 26;
 
+// Khởi tạo ngày hiện tại vào input
+if ($('chonNgaySDB')) {
+  $('chonNgaySDB').value = ngayDangXem;
+}
+
+function doiNgayXem(ngay) {
+  if (!ngay) return;
+  ngayDangXem = ngay;
+  tai();
+}
+
+function veHomNay() {
+  ngayDangXem = new Date().toISOString().slice(0, 10);
+  if ($('chonNgaySDB')) $('chonNgaySDB').value = ngayDangXem;
+  tai();
+}
+
 async function tai() {
   try {
-    const r = await fetch('/so-do-ban/api/du-lieu');
+    const r = await fetch('/so-do-ban/api/du-lieu?ngay=' + encodeURIComponent(ngayDangXem));
     if (!r.ok) throw new Error(r.status);
     duLieu = await r.json();
   } catch (e) {
@@ -509,6 +641,9 @@ async function tai() {
 
 function veChiSo() {
   const t = duLieu.thong_ke || {};
+  const isHomNay = ngayDangXem === new Date().toISOString().slice(0, 10);
+  const nhanDoanhThu = isHomNay ? 'Doanh thu hôm nay' : `Doanh thu (${ngayDangXem})`;
+
   $('chiSo').innerHTML = `
     <div class="sdb-kpi-card t">
       <div class="sdb-kpi-title">Bàn trống</div>
@@ -531,7 +666,7 @@ function veChiSo() {
       <div class="sdb-kpi-val" style="font-size:1.2rem; color:var(--sdb-gold-dark);">${tien(t.doanh_thu_dang_mo)}đ</div>
     </div>
     <div class="sdb-kpi-card">
-      <div class="sdb-kpi-title">Doanh thu hôm nay</div>
+      <div class="sdb-kpi-title">${nhanDoanhThu}</div>
       <div class="sdb-kpi-val" style="font-size:1.2rem; color:var(--sdb-ink);">${tien(t.doanh_thu_hom_nay)}đ</div>
     </div>`;
 }
@@ -568,7 +703,12 @@ function theBan(b, doLech) {
   el.dataset.khu = b.id_vitri;
   el.style.left = b.toa_do_x + 'px';
   el.style.top = (Number(b.toa_do_y) + doLech) + 'px';
-  el.title = `Bàn ${b.number_ban} · ${b.so_cho} chỗ · ${b.ten_trang_thai}`;
+  
+  let ttMoTa = b.ten_trang_thai;
+  if (b.dat_truoc) {
+    ttMoTa = `Đã đặt trước: ${b.dat_truoc.ten_khach} (${b.dat_truoc.gio})`;
+  }
+  el.title = `Bàn ${b.number_ban} · ${b.so_cho} chỗ · ${ttMoTa}`;
   el.onclick = () => moHop(b.Id_ban);
 
   el.appendChild(SoDoDatBan.veBan(b.so_cho, KIEU_VE[b.trangthai] || 'trong', b.number_ban).svg);
@@ -576,6 +716,8 @@ function theBan(b, doLech) {
   let ct = '';
   if (b.trangthai === 1 && b.so_mon) {
     ct = `${b.so_mon} món · <b>${tien(b.tong_tien)}đ</b>` + (b.so_khach ? ` · ${b.so_khach} khách` : '');
+  } else if (b.dat_truoc) {
+    ct = `Giữ chỗ: <b>${b.dat_truoc.gio ? b.dat_truoc.gio.slice(0,5) : ''}</b>`;
   } else if (b.trangthai === 2) {
     ct = 'Giữ chỗ';
   } else if (b.trangthai === 4) {
@@ -690,16 +832,35 @@ async function luuViTri() {
   }
 }
 
-// --- Đổi trạng thái ---
-function moHop(id) {
+// --- Đổi trạng thái & Gọi món ---
+let toanBoMon = [];
+let danhMucMon = [];
+let monDangChonOrder = {}; // id_mon -> { mon, qty }
+let thucDonDaTai = false;
+
+async function moHop(id) {
   if (dangSapXep) return;
   const b = (duLieu.ban || []).find(x => x.Id_ban === id);
   if (!b) return;
   banDangChon = b;
   $('hopTieuDe').textContent = 'Bàn ' + b.number_ban;
-  $('hopMoTa').innerHTML = `Trạng thái hiện tại: <b>${b.ten_trang_thai}</b> &middot; ${b.so_cho} chỗ` +
-    (b.so_mon ? `<br>Đang có ${b.so_mon} món, tổng <b>${tien(b.tong_tien)}đ</b>` : '');
+  let moTa = `Trạng thái: <b>${b.ten_trang_thai}</b> &middot; ${b.so_cho} chỗ`;
+  if (b.so_mon) {
+    moTa += `<br>Đang có ${b.so_mon} món, tổng <b>${tien(b.tong_tien)}đ</b>`;
+  }
+  if (b.dat_truoc) {
+    moTa += `<br><span style="color:var(--sdb-dat)"><i class="fas fa-calendar-check" style="margin-right:4px;"></i><b>Đã đặt trước</b>: ${b.dat_truoc.ten_khach} (${b.dat_truoc.so_khach} khách) - Giờ đến: <b>${b.dat_truoc.gio}</b> (Mã: ${b.dat_truoc.ma})</span>`;
+  }
+  $('hopMoTa').innerHTML = moTa;
 
+  // Nút Gọi món
+  if (b.sesis_hien_tai) {
+    $('txtBtnOrder').textContent = 'Gọi thêm món cho bàn';
+  } else {
+    $('txtBtnOrder').textContent = 'Mở bàn & Gọi món ngay';
+  }
+
+  // Nút tính tiền
   if (b.sesis_hien_tai) {
     $('hopLinkThuTien').href = '/staff/thanh-toan/' + encodeURIComponent(b.sesis_hien_tai);
     $('hopNutThuTien').style.display = 'grid';
@@ -707,9 +868,205 @@ function moHop(id) {
     $('hopNutThuTien').style.display = 'none';
   }
 
+  // Tải danh sách món đã gọi
+  $('hopDsMon').style.display = 'none';
+  $('dsMonDaGoiChiTiet').innerHTML = '';
+  if (b.sesis_hien_tai) {
+    fetch('/so-do-ban/api/mon-cua-ban/' + b.Id_ban)
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.items && d.items.length > 0) {
+          $('demMonDaGoi').textContent = d.items.length;
+          let tongTien = 0;
+          let html = '';
+          const nhanBep = {
+            0: '<span class="badge badge-secondary" style="font-size:10px;">Chờ làm</span>',
+            1: '<span class="badge badge-warning" style="font-size:10px;">Đang làm</span>',
+            2: '<span class="badge badge-success" style="font-size:10px;">Đã xong</span>',
+            3: '<span class="badge badge-info" style="font-size:10px;">Đã phục vụ</span>'
+          };
+          d.items.forEach(m => {
+            tongTien += Number(m.thanhtien || 0);
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e7ded0; padding:3px 0;">
+              <div><strong>${m.name_mon}</strong> <span class="text-muted">x${m.soluong}</span></div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#b3352c; font-weight:600;">${tien(m.thanhtien)}đ</span>
+                ${nhanBep[m.trangthai_bep] || ''}
+              </div>
+            </div>`;
+          });
+          $('tongTienMonDaGoi').textContent = tien(tongTien) + ' ₫';
+          $('dsMonDaGoiChiTiet').innerHTML = html;
+          $('hopDsMon').style.display = 'block';
+        }
+      })
+      .catch(() => {});
+  }
+
   $('lop').style.display = 'flex';
 }
 function dongHop() { $('lop').style.display = 'none'; banDangChon = null; }
+
+// --- GỌI MÓN TRỰC TIẾP ---
+async function taiThucDon() {
+  if (thucDonDaTai) return;
+  try {
+    const res = await fetch('/staff/bookings/dishes');
+    const data = await res.json();
+    if (data.success) {
+      toanBoMon = data.dishes || [];
+      danhMucMon = data.categories || [];
+      thucDonDaTai = true;
+
+      // Đổ options loại món
+      const sel = $('orderLocLoai');
+      sel.innerHTML = '<option value="">Tất cả danh mục</option>';
+      danhMucMon.forEach(c => {
+        sel.innerHTML += `<option value="${c.id_loai}">${c.name_loai}</option>`;
+      });
+    }
+  } catch (err) {
+    console.error('Lỗi tải thực đơn:', err);
+  }
+}
+
+async function moModalOrder() {
+  if (!banDangChon) return;
+  dongHop(); // đóng popup nhỏ
+  monDangChonOrder = {};
+  $('orderTieuDe').textContent = 'Gọi món - Bàn ' + banDangChon.number_ban;
+  $('orderPhuDe').textContent = banDangChon.sesis_hien_tai 
+    ? 'Thêm món cho bàn đang phục vụ (Phiên: ' + banDangChon.sesis_hien_tai.substring(0,6).toUpperCase() + ')'
+    : 'Mở bàn mới và chọn món phục vụ khách';
+  $('orderTimKiem').value = '';
+  $('orderLocLoai').value = '';
+
+  $('lopOrder').style.display = 'flex';
+  await taiThucDon();
+  locMonOrder();
+  capNhatGioOrder();
+}
+
+function dongModalOrder() {
+  $('lopOrder').style.display = 'none';
+  monDangChonOrder = {};
+}
+
+function locMonOrder() {
+  const tim = ($('orderTimKiem').value || '').trim().toLowerCase();
+  const loai = $('orderLocLoai').value;
+
+  const loc = toanBoMon.filter(m => {
+    const khopTen = !tim || m.name_mon.toLowerCase().includes(tim);
+    const khopLoai = !loai || String(m.id_loai) === String(loai);
+    return khopTen && khopLoai;
+  });
+
+  const box = $('orderDanhSachMon');
+  if (loc.length === 0) {
+    box.innerHTML = '<div style="text-align:center; padding:30px; color:var(--sdb-muted); grid-column:1/-1;">Không tìm thấy món ăn phù hợp.</div>';
+    return;
+  }
+
+  let html = '';
+  loc.forEach(d => {
+    const curQty = monDangChonOrder[d.id_mon] ? monDangChonOrder[d.id_mon].qty : 0;
+    html += `
+      <div style="background:#fff; border:1px solid ${curQty > 0 ? '#2e7d4f' : 'var(--sdb-line)'}; border-radius:10px; padding:8px 10px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 6px rgba(0,0,0,.04);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${d.images ? `<img src="/food/${d.images}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;border-radius:6px;background:#f0ede6;display:grid;place-items:center;">🍲</div>'}
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:.85rem; color:var(--sdb-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${d.name_mon}">${d.name_mon}</div>
+            <div style="color:#b3352c; font-weight:700; font-size:.8rem;">${tien(d.gia_mon)} ₫</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px; margin-top:8px;">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="doiSoLuongOrder(${d.id_mon}, -1)" style="padding:1px 8px; font-weight:bold; line-height:1.2;">−</button>
+          <span id="orderQty_${d.id_mon}" style="font-weight:700; min-width:20px; text-align:center; font-size:.88rem;">${curQty}</span>
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="doiSoLuongOrder(${d.id_mon}, 1, ${JSON.stringify(d).replace(/"/g, '&quot;')})" style="padding:1px 8px; font-weight:bold; line-height:1.2;">+</button>
+        </div>
+      </div>
+    `;
+  });
+  box.innerHTML = html;
+}
+
+function doiSoLuongOrder(idMon, delta, objMon) {
+  if (!monDangChonOrder[idMon] && delta > 0 && objMon) {
+    monDangChonOrder[idMon] = { mon: objMon, qty: 0 };
+  }
+  if (!monDangChonOrder[idMon]) return;
+
+  monDangChonOrder[idMon].qty += delta;
+  if (monDangChonOrder[idMon].qty <= 0) {
+    delete monDangChonOrder[idMon];
+  }
+
+  const el = $('orderQty_' + idMon);
+  if (el) el.textContent = monDangChonOrder[idMon] ? monDangChonOrder[idMon].qty : 0;
+
+  capNhatGioOrder();
+}
+
+function capNhatGioOrder() {
+  const items = Object.values(monDangChonOrder);
+  const btn = $('btnGuiBep');
+  if (items.length === 0) {
+    $('orderTongSoMon').textContent = '0';
+    $('orderTongTienTam').textContent = '0 ₫';
+    $('orderDanhSachChon').innerHTML = '<span class="text-muted">Chưa chọn món nào</span>';
+    btn.disabled = true;
+    return;
+  }
+
+  let tongMon = 0;
+  let tongTien = 0;
+  let html = '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+  items.forEach(it => {
+    tongMon += it.qty;
+    const sub = it.mon.gia_mon * it.qty;
+    tongTien += sub;
+    html += `<span class="badge badge-light" style="border:1px solid var(--sdb-line); padding:4px 8px; font-size:12px;"><strong>${it.mon.name_mon}</strong> x${it.qty} (${tien(sub)}đ)</span>`;
+  });
+  html += '</div>';
+
+  $('orderTongSoMon').textContent = tongMon;
+  $('orderTongTienTam').textContent = tien(tongTien) + ' ₫';
+  $('orderDanhSachChon').innerHTML = html;
+  btn.disabled = false;
+}
+
+async function xacNhanGuiBep() {
+  if (!banDangChon) return;
+  const items = Object.values(monDangChonOrder).map(it => ({
+    id_mon: it.mon.id_mon,
+    soluong: it.qty
+  }));
+  if (items.length === 0) return alert('Vui lòng chọn ít nhất 1 món!');
+
+  const btn = $('btnGuiBep');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang gửi bếp...';
+
+  try {
+    const res = await fetch('/so-do-ban/api/order-mon/' + banDangChon.Id_ban, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.loi || 'Lỗi khi gửi món');
+
+    dongModalOrder();
+    alert('✅ Đã gửi ' + items.length + ' món vào bếp thành công cho Bàn ' + banDangChon.number_ban + '!');
+    await tai();
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-fire mr-1"></i> GỬI BẾP CHẾ BIẾN';
+  }
+}
 
 async function doiTrangThai(tt) {
   if (!banDangChon) return;
@@ -729,6 +1086,7 @@ async function doiTrangThai(tt) {
 }
 
 $('lop').addEventListener('click', (e) => { if (e.target.id === 'lop') dongHop(); });
+$('lopOrder').addEventListener('click', (e) => { if (e.target.id === 'lopOrder') dongModalOrder(); });
 
 // --- Realtime ---
 const socket = io();

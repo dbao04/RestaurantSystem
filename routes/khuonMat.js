@@ -84,12 +84,12 @@ router.get('/staff/khuon-mat', canDangNhap, (req, res) => {
 });
 
 /** Chuyen huong duong dan cu ve /admin/khuon-mat */
-router.get('/to-chuc/khuon-mat', (req, res) => {
+router.get(['/to-chuc/khuon-mat', '/staff/to-chuc/khuon-mat', '/staff/khuon-mat-quan-ly'], (req, res) => {
   res.redirect('/admin/khuon-mat');
 });
 
 /** Trang quan tri du lieu khuon mat va cau hinh cham cong */
-router.get('/admin/khuon-mat', canDangNhap, canQuyen([QUYEN_QL, QUYEN_XEM]), bat(async (req, res) => {
+router.get(['/admin/khuon-mat', '/staff/khuon-mat/quan-ly'], canDangNhap, canQuyen([QUYEN_QL, QUYEN_XEM]), bat(async (req, res) => {
   const [tt, dsDangKy, nhatKy, tongQuan, viTri, nhanDien] = await Promise.all([
     face.trangThaiDichVu(),
     face.danhSachDangKy(),

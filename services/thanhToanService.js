@@ -748,7 +748,10 @@ async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
 function rutMaDoiSoat(noiDung) {
   const s = vietQR.boDau(noiDung).toUpperCase();
   const khop = s.match(/BD[A-Z0-9]{9}/);
-  return khop ? khop[0] : null;
+  if (khop) return khop[0];
+  const khopRSV = s.match(/RSV-[0-9]{6}-[A-Z0-9]{4}/);
+  if (khopRSV) return khopRSV[0];
+  return null;
 }
 
 /**
@@ -791,6 +794,24 @@ async function ghiNhanGiaoDichNganHang(gd) {
   if (!ma) {
     await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'khong_khop', ghi_chu = 'Nội dung CK không chứa mã đối soát' WHERE id = ?", [giaoDichId]);
     return { trungLap: false, khop: false, giaoDichId, lyDo: 'khong_co_ma' };
+  }
+
+  // Truong hop ma la RSV (Dat ban)
+  if (ma.startsWith('RSV-')) {
+    const reservationService = require('./reservationService');
+    const realtime = require('./realtime');
+    const [dsRsv] = await db.query('SELECT * FROM reservations WHERE reservation_code = ? LIMIT 1', [ma]);
+    if (dsRsv.length > 0) {
+      const r = dsRsv[0];
+      await reservationService.luuCoc(r.id, {
+        amount: tien,
+        status: 'PAID',
+        transaction_id: ma_tham_chieu,
+      });
+      realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'RESERVATION_CONFIRMED', reservation_id: r.id, ma: r.reservation_code });
+      await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'da_khop', ghi_chu = ? WHERE id = ?", [`Đã khớp đặt cọc cho lượt đặt bàn ${r.reservation_code}`, giaoDichId]);
+      return { trungLap: false, khop: true, giaoDichId, ma, reservation: r };
+    }
   }
 
   const [phien] = await db.query(

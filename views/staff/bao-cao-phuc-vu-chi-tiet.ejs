@@ -1,0 +1,166 @@
+<%
+  var activePage = 'bao-cao-phuc-vu';
+  var staffName = session.staffName || 'Nhân viên';
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <a href="/staff/phuc-vu/bao-cao/lich-su" class="small text-muted"><i class="fas fa-arrow-left"></i> Về danh sách báo cáo</a>
+    <h1 class="h3 mb-1 text-gray-800">Chi tiết Báo cáo Cuối ngày #<%= report.id %></h1>
+    <div class="small text-muted">
+      Báo cáo ngày <b><%= new Date(report.ngay).toLocaleDateString('vi-VN') %></b> · <b><%= report.ca %></b>
+    </div>
+  </div>
+  <div>
+    <% if (report.trang_thai === 'DA_DUYET') { %>
+      <span class="badge badge-success px-3 py-2" style="font-size:0.95rem;"><i class="fas fa-check-circle mr-1"></i> Đã được Quản lý duyệt</span>
+    <% } else if (report.trang_thai === 'YEU_CAU_SUA') { %>
+      <span class="badge badge-danger px-3 py-2" style="font-size:0.95rem;"><i class="fas fa-exclamation-circle mr-1"></i> Quản lý yêu cầu bổ sung</span>
+    <% } else { %>
+      <span class="badge badge-warning text-dark px-3 py-2" style="font-size:0.95rem;"><i class="fas fa-clock mr-1"></i> Đang chờ Quản lý duyệt</span>
+    <% } %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Cột trái: Chi tiết nội dung báo cáo -->
+  <div class="col-lg-8 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-file-lines mr-1"></i> Nội dung báo cáo chi tiết</h6>
+      </div>
+      <div class="card-body">
+        <!-- Thông tin nhân sự và thời gian -->
+        <div class="row mb-4 pb-3 border-bottom">
+          <div class="col-md-6 mb-2">
+            <span class="text-muted small">Nhân viên báo cáo:</span>
+            <div class="font-weight-bold h6 text-dark mt-1">
+              <i class="fas fa-user-circle text-primary mr-1"></i> <%= report.ten_nv %> (<%= report.ma_nv %>)
+            </div>
+            <small class="text-muted"><%= report.ten_cd || 'Nhân viên Phục vụ' %> · <%= report.ten_bp || 'Bộ phận Ẩm thực' %></small>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="text-muted small">Thời gian nộp báo cáo:</span>
+            <div class="font-weight-bold text-dark mt-1">
+              <i class="fas fa-clock text-info mr-1"></i> <%= new Date(report.tao_luc).toLocaleString('vi-VN') %>
+            </div>
+            <small class="text-muted">Đánh giá chung ca làm: 
+              <b><%= report.danh_gia_ca %></b>
+            </small>
+          </div>
+        </div>
+
+        <!-- 4 Thẻ chỉ số quan trọng -->
+        <div class="row mb-4">
+          <div class="col-sm-3 mb-2">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="text-muted small">Số bàn phục vụ</div>
+              <div class="h4 font-weight-bold text-primary mb-0"><%= report.so_ban_phuc_vu %></div>
+            </div>
+          </div>
+          <div class="col-sm-3 mb-2">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="text-muted small">Số món đã gọi</div>
+              <div class="h4 font-weight-bold text-dark mb-0"><%= report.so_mon_da_goi %></div>
+            </div>
+          </div>
+          <div class="col-sm-3 mb-2">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="text-muted small">Số khách phục vụ</div>
+              <div class="h4 font-weight-bold text-info mb-0"><%= report.so_khach_phuc_vu %></div>
+            </div>
+          </div>
+          <div class="col-sm-3 mb-2">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="text-muted small">Doanh thu ước tính</div>
+              <div class="h5 font-weight-bold text-success mb-0"><%= Number(report.tong_doanh_thu || 0).toLocaleString('vi-VN') %> đ</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Các mục chi tiết văn bản -->
+        <div class="mb-4">
+          <h6 class="font-weight-bold text-danger"><i class="fas fa-triangle-exclamation mr-1"></i> Sự cố / Vấn đề phát sinh:</h6>
+          <div class="p-3 rounded border" style="background:#fff5f5; border-color:#fed7d7;">
+            <%= report.su_co_phat_sinh && report.su_co_phat_sinh.trim() ? report.su_co_phat_sinh : 'Không có sự cố nào phát sinh trong ca.' %>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="font-weight-bold text-info"><i class="fas fa-comments mr-1"></i> Ý kiến &amp; Phản hồi của khách hàng:</h6>
+          <div class="p-3 rounded border" style="background:#f0f9ff; border-color:#bae6fd;">
+            <%= report.phan_hoi_khach && report.phan_hoi_khach.trim() ? report.phan_hoi_khach : 'Không có ghi nhận ý kiến đặc biệt từ khách.' %>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="font-weight-bold text-primary"><i class="fas fa-handshake mr-1"></i> Bàn giao ca sau &amp; Vệ sinh đóng cửa:</h6>
+          <div class="p-3 rounded border bg-light">
+            <%= report.ban_giao_ca_sau && report.ban_giao_ca_sau.trim() ? report.ban_giao_ca_sau : 'Đã hoàn thành kiểm tra và bàn giao theo quy trình chuẩn.' %>
+          </div>
+        </div>
+
+        <div>
+          <h6 class="font-weight-bold text-warning"><i class="fas fa-lightbulb mr-1"></i> Đề xuất &amp; Kiến nghị với Quản lý:</h6>
+          <div class="p-3 rounded border bg-light">
+            <%= report.de_xuat_quan_ly && report.de_xuat_quan_ly.trim() ? report.de_xuat_quan_ly : 'Không có đề xuất thêm.' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cột phải: Phần phản hồi & duyệt của Quản lý -->
+  <div class="col-lg-4 mb-4">
+    <!-- Phản hồi Quản lý -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-shield mr-1"></i> Phản hồi từ Quản lý</h6>
+      </div>
+      <div class="card-body">
+        <% if (report.trang_thai !== 'CHO_DUYET') { %>
+          <div class="mb-3">
+            <span class="text-muted small">Người duyệt:</span>
+            <div class="font-weight-bold text-dark"><%= report.ten_quan_ly || 'Quản lý nhà hàng' %></div>
+            <small class="text-muted">Thời gian: <%= report.ngay_duyet ? new Date(report.ngay_duyet).toLocaleString('vi-VN') : '-' %></small>
+          </div>
+          <div class="mb-3">
+            <span class="text-muted small">Ý kiến chỉ đạo / Ghi chú duyệt:</span>
+            <div class="p-3 bg-light rounded border mt-1 font-italic text-dark">
+              <%= report.ghi_chu_duyet || 'Đã ghi nhận báo cáo và đánh giá hoàn thành tốt ca làm.' %>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="alert alert-warning small mb-3">
+            <i class="fas fa-info-circle mr-1"></i> Báo cáo đang chờ Quản lý kiểm tra và phản hồi.
+          </div>
+        <% } %>
+
+        <!-- Form Duyệt dành cho Quản lý -->
+        <% if (laQuanLy) { %>
+          <hr>
+          <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-gavel text-primary mr-1"></i> Thao tác duyệt (Dành cho Quản lý)</h6>
+          <form action="/staff/phuc-vu/bao-cao/<%= report.id %>/duyet" method="POST">
+            <div class="form-group">
+              <label class="small font-weight-bold">Trạng thái duyệt:</label>
+              <select name="trang_thai" class="form-control form-control-sm font-weight-bold">
+                <option value="DA_DUYET" <%= report.trang_thai === 'DA_DUYET' ? 'selected' : '' %>>✅ Duyệt &amp; Tiếp nhận báo cáo</option>
+                <option value="YEU_CAU_SUA" <%= report.trang_thai === 'YEU_CAU_SUA' ? 'selected' : '' %>>⚠️ Yêu cầu nhân viên giải trình / bổ sung</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="small font-weight-bold">Ý kiến / Lời dặn dò gửi nhân viên:</label>
+              <textarea name="ghi_chu_duyet" class="form-control form-control-sm" rows="3" placeholder="Nhập ý kiến chỉ đạo, nhắc nhở hoặc biểu dương nhân viên..."><%= report.ghi_chu_duyet || '' %></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-sm font-weight-bold">
+              <i class="fas fa-check-double mr-1"></i> Lưu kết quả duyệt
+            </button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,413 @@
+<%- include('partials/header', { title: t('dieu_huong.thuc_don'), activeNav: 'combos' }) %>
+
+<style>
+  /* Giao diện Trang Thực Đơn Combo */
+  .nh-combo-page {
+    padding: 3rem 0 5rem;
+    background: var(--nh-sand, #fdfbf7);
+  }
+
+  /* Bộ lọc số lượng khách */
+  .nh-combo-filter {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 2rem 0 2.8rem;
+  }
+  .nh-combo-filter-btn {
+    padding: 0.65rem 1.4rem;
+    border-radius: 999px;
+    border: 1.5px solid rgba(200, 162, 75, 0.4);
+    background: var(--nh-cream, #fff);
+    color: var(--nh-espresso, #2d2424);
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .nh-combo-filter-btn:hover {
+    border-color: var(--nh-gold, #c8a24b);
+    background: #fffdf8;
+    transform: translateY(-1px);
+  }
+  .nh-combo-filter-btn.is-active {
+    background: var(--nh-espresso, #1f1a1a);
+    color: var(--nh-gold, #c8a24b);
+    border-color: var(--nh-espresso, #1f1a1a);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Lưới danh sách Combo */
+  .nh-combo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 2rem;
+  }
+  @media (max-width: 768px) {
+    .nh-combo-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  /* Thẻ Combo Card */
+  .nh-combo-card {
+    background: var(--nh-cream, #fff);
+    border-radius: 18px;
+    border: 1px solid rgba(200, 162, 75, 0.25);
+    box-shadow: 0 8px 24px rgba(45, 36, 36, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+  .nh-combo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(200, 162, 75, 0.15);
+    border-color: var(--nh-gold, #c8a24b);
+  }
+
+  .nh-combo-card__banner {
+    position: relative;
+    height: 200px;
+    background: #231c19;
+    overflow: hidden;
+  }
+  .nh-combo-card__banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .nh-combo-card:hover .nh-combo-card__banner img {
+    transform: scale(1.06);
+  }
+  .nh-combo-card__badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: linear-gradient(135deg, var(--nh-gold, #c8a24b), #b38b36);
+    color: #1a1515;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    letter-spacing: 0.03em;
+  }
+  .nh-combo-card__guest-tag {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(18, 14, 13, 0.85);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .nh-combo-card__body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .nh-combo-card__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--nh-espresso, #231c19);
+    margin: 0 0 0.5rem;
+    line-height: 1.35;
+  }
+  .nh-combo-card__desc {
+    font-size: 0.88rem;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Danh sách món chi tiết */
+  .nh-combo-card__dishes {
+    background: #fdfaf4;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.4rem;
+    border: 1px dashed rgba(200, 162, 75, 0.35);
+    flex: 1;
+  }
+  .nh-combo-card__dishes-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--nh-gold-dark, #8b6b23);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .nh-combo-card__dish-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    font-size: 0.88rem;
+  }
+  .nh-combo-card__dish-item:last-child {
+    border-bottom: none;
+  }
+  .nh-combo-card__dish-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--nh-espresso, #2b2320);
+  }
+  .nh-combo-card__dish-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .nh-combo-card__dish-qty {
+    background: rgba(200, 162, 75, 0.18);
+    color: var(--nh-espresso, #231c19);
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+  }
+
+  /* Footer Card & Giá */
+  .nh-combo-card__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid rgba(200, 162, 75, 0.2);
+    margin-top: auto;
+  }
+  .nh-combo-card__price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .nh-combo-card__price-label {
+    font-size: 0.82rem;
+    color: var(--nh-muted, #7c6858);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .nh-combo-card__price-label i {
+    color: var(--nh-gold, #c8a24b);
+  }
+  .nh-combo-card__price-val {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #c026d3;
+    color: #b91c1c;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.01em;
+  }
+
+  .nh-combo-card__btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    width: 100%;
+  }
+  .nh-combo-card__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--nh-gold, #c8a24b);
+    color: var(--nh-espresso, #1f1a1a);
+    font-weight: 700;
+    font-size: 0.86rem;
+    padding: 0.65rem 0.6rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .nh-combo-card__action:hover {
+    background: var(--nh-espresso, #1f1a1a);
+    color: var(--nh-gold, #c8a24b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .nh-combo-card__action--delivery {
+    background: #fff;
+    color: var(--nh-espresso, #1f1a1a);
+    border: 1.5px solid var(--nh-gold, #c8a24b);
+  }
+  .nh-combo-card__action--delivery:hover {
+    background: var(--nh-gold, #c8a24b);
+    color: var(--nh-espresso, #1f1a1a);
+  }
+</style>
+
+<!-- ================= HERO NHỎ ================= -->
+<section class="nh-subhero">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('thuc_don_combo.eyebrow') %></span>
+    <h1><%= t('thuc_don_combo.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.thuc_don') %>
+    </div>
+  </div>
+</section>
+
+<!-- ================= NỘI DUNG CHÍNH ================= -->
+<main class="nh-combo-page">
+  <div class="nh-container">
+    <div style="text-align: center; max-width: 680px; margin: 0 auto;">
+      <p class="nh-lead" style="color: #666; font-size: 1.05rem;">
+        <%= t('thuc_don_combo.mo_ta') %>
+      </p>
+    </div>
+
+    <!-- Bộ lọc số lượng khách -->
+    <div class="nh-combo-filter" id="comboFilter">
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === 'all' ? 'is-active' : '' %>" data-filter="all">
+        <i class="fas fa-layer-group"></i> <%= t('thuc_don_combo.tat_ca') %>
+      </button>
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === '2' ? 'is-active' : '' %>" data-filter="2">
+        <i class="fas fa-user-group"></i> <%= t('thuc_don_combo.loc_2_khach') %>
+      </button>
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === '4' ? 'is-active' : '' %>" data-filter="4">
+        <i class="fas fa-users"></i> <%= t('thuc_don_combo.loc_4_khach') %>
+      </button>
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === '6' ? 'is-active' : '' %>" data-filter="6">
+        <i class="fas fa-users-rectangle"></i> <%= t('thuc_don_combo.loc_6_khach') %>
+      </button>
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === '8' ? 'is-active' : '' %>" data-filter="8">
+        <i class="fas fa-people-group"></i> <%= t('thuc_don_combo.loc_8_khach') %>
+      </button>
+      <button type="button" class="nh-combo-filter-btn <%= soKhachLoc === '10' ? 'is-active' : '' %>" data-filter="10">
+        <i class="fas fa-crown"></i> <%= t('thuc_don_combo.loc_10_khach') %>
+      </button>
+    </div>
+
+    <!-- Lưới Combo -->
+    <div class="nh-combo-grid" id="comboGrid">
+      <% combos.forEach(function (cb) { %>
+        <%
+          var tenHienThi = (cb.tenKey && t(cb.tenKey) !== cb.tenKey) ? t(cb.tenKey) : (cb.tenVi || cb.id);
+          var nguoiHienThi = (cb.nguoiKey && t(cb.nguoiKey) !== cb.nguoiKey) ? t(cb.nguoiKey) : (cb.nguoiVi || (cb.minKhach + ' - ' + cb.maxKhach + ' khách'));
+          var moTaHienThi = (cb.moTaKey && t(cb.moTaKey) !== cb.moTaKey) ? t(cb.moTaKey) : (cb.moTaVi || '');
+          var filterCategory = 'all';
+          if (cb.maxKhach <= 2) filterCategory = '2';
+          else if (cb.maxKhach <= 4) filterCategory = '4';
+          else if (cb.maxKhach <= 6) filterCategory = '6';
+          else if (cb.maxKhach <= 9) filterCategory = '8';
+          else filterCategory = '10';
+        %>
+        <div class="nh-combo-card" data-category="<%= filterCategory %>" data-min="<%= cb.minKhach %>" data-max="<%= cb.maxKhach %>">
+          <div class="nh-combo-card__banner">
+            <img src="<%= cb.anhDaiDien || '/mon-thay-the.svg' %>" alt="<%= tenHienThi %>" loading="lazy" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+            <span class="nh-combo-card__badge"><i class="fas fa-sparkles"></i> Set Menu</span>
+            <span class="nh-combo-card__guest-tag"><i class="fas fa-user-friends"></i> <%= nguoiHienThi %></span>
+          </div>
+
+          <div class="nh-combo-card__body">
+            <h3 class="nh-combo-card__title"><%= tenHienThi %></h3>
+            <div class="nh-combo-card__desc"><%= moTaHienThi %></div>
+
+            <div class="nh-combo-card__dishes">
+              <div class="nh-combo-card__dishes-title">
+                <i class="fas fa-utensils"></i> <%= t('thuc_don_combo.chi_tiet_mon') %> (<%= cb.monList.length %> món)
+              </div>
+              <% cb.monList.forEach(function (m) { %>
+                <div class="nh-combo-card__dish-item">
+                  <div class="nh-combo-card__dish-name">
+                    <% if (m.images) { %>
+                      <img src="/food/<%= m.images %>" alt="<%= m.name_mon %>" class="nh-combo-card__dish-thumb" loading="lazy" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+                    <% } else { %>
+                      <div class="nh-combo-card__dish-thumb" style="display:flex;align-items:center;justify-content:center;background:#eee;color:#999;font-size:0.7rem;"><i class="fas fa-bowl-food"></i></div>
+                    <% } %>
+                    <span><%= m.name_mon %></span>
+                  </div>
+                  <span class="nh-combo-card__dish-qty">x<%= m.soluong || 1 %></span>
+                </div>
+              <% }); %>
+            </div>
+
+            <div class="nh-combo-card__footer">
+              <div class="nh-combo-card__price-row">
+                <span class="nh-combo-card__price-label"><i class="fas fa-tag"></i> <%= t('thuc_don_combo.tiet_kiem') %></span>
+                <span class="nh-combo-card__price-val"><%= formatMoney(cb.tongGia) %></span>
+              </div>
+              <div class="nh-combo-card__btn-group">
+                <form action="/add-combo-to-cart" method="POST" style="margin:0; width:100%;">
+                  <input type="hidden" name="comboId" value="<%= cb.id %>">
+                  <button type="submit" class="nh-combo-card__action nh-combo-card__action--delivery" title="<%= t('thuc_don_combo.dat_giao_ngay') %>">
+                    <i class="fas fa-motorcycle"></i> <%= t('thuc_don_combo.them_vao_gio') %>
+                  </button>
+                </form>
+                <a href="/datban" class="nh-combo-card__action" title="<%= t('thuc_don_combo.dat_ban_ngay') %>">
+                  <i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var buttons = document.querySelectorAll('#comboFilter .nh-combo-filter-btn');
+    var cards = document.querySelectorAll('#comboGrid .nh-combo-card');
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var filter = this.getAttribute('data-filter');
+        buttons.forEach(function (b) { b.classList.remove('is-active'); });
+        this.classList.add('is-active');
+
+        cards.forEach(function (card) {
+          if (filter === 'all') {
+            card.style.display = 'flex';
+          } else {
+            var cat = card.getAttribute('data-category');
+            var minK = parseInt(card.getAttribute('data-min'), 10);
+            var maxK = parseInt(card.getAttribute('data-max'), 10);
+            var targetK = parseInt(filter, 10);
+
+            var match = (cat === filter) || (targetK >= minK && targetK <= maxK);
+            card.style.display = match ? 'flex' : 'none';
+          }
+        });
+      });
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>

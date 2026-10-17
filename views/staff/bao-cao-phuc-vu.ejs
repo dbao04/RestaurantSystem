@@ -1,0 +1,231 @@
+<%
+  var activePage = 'bao-cao-phuc-vu';
+  var staffName = session.staffName || 'Nhân viên phục vụ';
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-clipboard-check text-primary mr-2"></i> Báo cáo cuối ngày / Giao ca</h1>
+    <div class="small text-muted">
+      Dành cho Nhân viên Phục vụ &amp; Sảnh tổng kết hoạt động, bàn giao ca và gửi báo cáo cho Quản lý.
+    </div>
+  </div>
+  <div>
+    <a href="/staff/phuc-vu/bao-cao/lich-su" class="btn btn-sm btn-outline-primary shadow-sm">
+      <i class="fas fa-list-check fa-sm mr-1"></i> Lịch sử báo cáo
+    </a>
+  </div>
+</div>
+
+<% if (msg) { %>
+<div class="alert alert-<%= msgType === 'success' ? 'success' : 'danger' %> alert-dismissible fade show shadow-sm" role="alert">
+  <i class="fas fa-<%= msgType === 'success' ? 'check-circle' : 'exclamation-circle' %> mr-2"></i>
+  <%= msg %>
+  <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+</div>
+<% } %>
+
+<div class="row">
+  <!-- Cột trái: Form Báo cáo -->
+  <div class="col-lg-8 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-edit mr-1"></i> Điền thông tin báo cáo ca làm</h6>
+        <span class="badge badge-warning">Phục vụ &amp; Sảnh</span>
+      </div>
+      <div class="card-body">
+        <form action="/staff/phuc-vu/bao-cao" method="POST" id="formBaoCaoPhucVu">
+          <!-- Thông tin nhân sự & Ca -->
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold text-dark">Nhân viên báo cáo</label>
+              <input type="text" class="form-control" value="<%= staffName %>" readonly style="background:#f8fafc;">
+            </div>
+            <div class="form-group col-md-6">
+              <label class="font-weight-bold text-dark">Ngày làm việc <span class="text-danger">*</span></label>
+              <input type="date" id="inputNgay" name="ngay" class="form-control font-weight-bold text-primary" value="<%= ngay %>" required onchange="capNhatSoLieuTheoNgay(this.value)">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label class="font-weight-bold text-dark">Ca làm việc <span class="text-danger">*</span></label>
+              <select name="ca" class="form-control" required>
+                <option value="Ca sáng (08:00 - 14:00)">Ca sáng (08:00 - 14:00)</option>
+                <option value="Ca chiều (14:00 - 18:00)">Ca chiều (14:00 - 18:00)</option>
+                <option value="Ca tối (18:00 - 23:00)" selected>Ca tối (18:00 - 23:00)</option>
+                <option value="Full ca (Cả ngày)">Full ca (Cả ngày)</option>
+              </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="font-weight-bold text-dark">Giờ bắt đầu ca</label>
+              <input type="time" name="gio_bat_dau" class="form-control" value="18:00">
+            </div>
+            <div class="form-group col-md-4">
+              <label class="font-weight-bold text-dark">Giờ kết thúc ca</label>
+              <input type="time" name="gio_ket_thuc" class="form-control" value="23:00">
+            </div>
+          </div>
+
+          <!-- Khối chỉ số tự động gợi ý -->
+          <div class="p-3 mb-4 rounded" style="background:#f1f5f9; border:1px solid #cbd5e1;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="font-weight-bold text-dark"><i class="fas fa-calculator text-primary mr-1"></i> Số liệu phục vụ ghi nhận trong ngày</span>
+              <small class="text-muted"><i class="fas fa-magic text-warning"></i> Tự động gợi ý từ hệ thống</small>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-3 mb-2">
+                <label class="small text-muted mb-1">Số bàn phục vụ</label>
+                <input type="number" id="statSoBan" name="so_ban_phuc_vu" class="form-control form-control-sm font-weight-bold" value="<%= autoStats.soBan %>" min="0" required>
+              </div>
+              <div class="form-group col-md-3 mb-2">
+                <label class="small text-muted mb-1">Số món đã gọi</label>
+                <input type="number" id="statSoMon" name="so_mon_da_goi" class="form-control form-control-sm font-weight-bold" value="<%= autoStats.soMon %>" min="0" required>
+              </div>
+              <div class="form-group col-md-3 mb-2">
+                <label class="small text-muted mb-1">Số khách phục vụ</label>
+                <input type="number" id="statSoKhach" name="so_khach_phuc_vu" class="form-control form-control-sm font-weight-bold" value="<%= autoStats.soKhach %>" min="0" required>
+              </div>
+              <div class="form-group col-md-3 mb-2">
+                <label class="small text-muted mb-1">Doanh thu ước tính (đ)</label>
+                <input type="number" id="statDoanhThu" name="tong_doanh_thu" class="form-control form-control-sm font-weight-bold text-success" value="<%= autoStats.tongDoanhThu %>" min="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Đánh giá chung & Bàn giao -->
+          <div class="form-group">
+            <label class="font-weight-bold text-dark">Đánh giá tình hình chung ca làm <span class="text-danger">*</span></label>
+            <div class="d-flex flex-wrap" style="gap:1rem;">
+              <label class="btn btn-outline-success btn-sm active" style="cursor:pointer;">
+                <input type="radio" name="danh_gia_ca" value="Rất tốt" checked> <i class="fas fa-smile-beam mr-1"></i> Rất tốt / Đông khách
+              </label>
+              <label class="btn btn-outline-primary btn-sm" style="cursor:pointer;">
+                <input type="radio" name="danh_gia_ca" value="Bình thường"> <i class="fas fa-meh mr-1"></i> Bình thường / Ổn định
+              </label>
+              <label class="btn btn-outline-warning btn-sm" style="cursor:pointer;">
+                <input type="radio" name="danh_gia_ca" value="Có sự cố"> <i class="fas fa-exclamation-triangle mr-1"></i> Có phát sinh sự cố
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold text-dark"><i class="fas fa-triangle-exclamation text-danger mr-1"></i> Sự cố / Vấn đề phát sinh trong ca (nếu có)</label>
+            <textarea name="su_co_phat_sinh" class="form-control" rows="2" placeholder="Ví dụ: Bàn 5 khách đổi món do dị ứng, vỡ 1 ly rượu vang tại bàn 3, trễ món 15p do bếp quá tải..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold text-dark"><i class="fas fa-comments text-info mr-1"></i> Phản hồi / Đóng góp ý kiến của khách hàng</label>
+            <textarea name="phan_hoi_khach" class="form-control" rows="2" placeholder="Ví dụ: Khách khen món bò Wagyu rất ngon; bàn 8 mong muốn thêm lựa chọn sốt cay..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold text-dark"><i class="fas fa-handshake text-primary mr-1"></i> Nội dung bàn giao ca sau / Vệ sinh đóng cửa</label>
+            <textarea name="ban_giao_ca_sau" class="form-control" rows="2" placeholder="Ví dụ: Đã dọn dẹp sạch sẽ toàn bộ khu vực sảnh B, đã kiểm tra tắt máy lạnh, còn 1 bàn đặt lúc 21:30 đã chuẩn bị sẵn menu..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="font-weight-bold text-dark"><i class="fas fa-lightbulb text-warning mr-1"></i> Đề xuất / Kiến nghị gửi Quản lý nhà hàng</label>
+            <textarea name="de_xuat_quan_ly" class="form-control" rows="2" placeholder="Ví dụ: Cần bổ sung thêm khăn giấy sảnh trước, kiểm tra lại điều hòa khu VIP 2..."></textarea>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4 pt-3 border-top" style="gap:0.75rem;">
+            <button type="reset" class="btn btn-outline-secondary">
+              <i class="fas fa-rotate-left mr-1"></i> Nhập lại
+            </button>
+            <button type="submit" class="btn btn-primary font-weight-bold px-4">
+              <i class="fas fa-paper-plane mr-1"></i> Gửi báo cáo cho Quản lý
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cột phải: Hướng dẫn & Danh sách báo cáo gần nhất -->
+  <div class="col-lg-4 mb-4">
+    <!-- Quy trình bàn giao -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-tasks mr-1"></i> Tiêu chuẩn chốt ca phục vụ</h6>
+      </div>
+      <div class="card-body small text-muted">
+        <div class="mb-3 d-flex align-items-start">
+          <span class="badge badge-primary mr-2" style="font-size:0.85rem;">1</span>
+          <div><b>Kiểm tra bàn &amp; order:</b> Đảm bảo toàn bộ bàn trong khu vực phụ trách đã thanh toán hoặc đóng ca.</div>
+        </div>
+        <div class="mb-3 d-flex align-items-start">
+          <span class="badge badge-primary mr-2" style="font-size:0.85rem;">2</span>
+          <div><b>Dọn dẹp &amp; Vệ sinh:</b> Lau bàn, set up lại dụng cụ ăn, tắt thiết bị điện không dùng.</div>
+        </div>
+        <div class="mb-3 d-flex align-items-start">
+          <span class="badge badge-primary mr-2" style="font-size:0.85rem;">3</span>
+          <div><b>Ghi nhận sự cố &amp; Ý kiến khách:</b> Báo cáo trung thực để Quản lý kịp thời cải thiện dịch vụ.</div>
+        </div>
+        <div class="d-flex align-items-start">
+          <span class="badge badge-primary mr-2" style="font-size:0.85rem;">4</span>
+          <div><b>Bàn giao ca sau:</b> Nhắc nhở các việc còn tồn đọng hoặc lịch bàn đặt sắp tới.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danh sách báo cáo gần đây -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Báo cáo gần đây</h6>
+        <a href="/staff/phuc-vu/bao-cao/lich-su" class="small">Xem tất cả</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          <% if (lichSu && lichSu.length > 0) { %>
+            <% lichSu.forEach(function(b) { %>
+              <a href="/staff/phuc-vu/bao-cao/<%= b.id %>" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong class="text-dark"><%= b.ca %></strong>
+                  <% if (b.trang_thai === 'DA_DUYET') { %>
+                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Đã duyệt</span>
+                  <% } else if (b.trang_thai === 'YEU_CAU_SUA') { %>
+                    <span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> Cần bổ sung</span>
+                  <% } else { %>
+                    <span class="badge badge-warning text-dark"><i class="fas fa-clock"></i> Chờ duyệt</span>
+                  <% } %>
+                </div>
+                <div class="small text-muted d-flex justify-content-between">
+                  <span><i class="fas fa-calendar-day mr-1"></i> <%= new Date(b.ngay).toLocaleDateString('vi-VN') %></span>
+                  <span><b><%= b.so_ban_phuc_vu %></b> bàn · <b><%= b.so_khach_phuc_vu %></b> khách</span>
+                </div>
+                <% if (b.ten_nv && laQuanLy) { %>
+                  <div class="small text-primary mt-1"><i class="fas fa-user mr-1"></i> <%= b.ten_nv %></div>
+                <% } %>
+              </a>
+            <% }) %>
+          <% } else { %>
+            <div class="text-center py-4 text-muted small">
+              <i class="fas fa-folder-open fa-2x mb-2 text-gray-300"></i><br>
+              Chưa có báo cáo nào được gửi.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function capNhatSoLieuTheoNgay(ngayStr) {
+  fetch('/staff/phuc-vu/api/so-lieu-ngay?ngay=' + encodeURIComponent(ngayStr))
+    .then(res => res.json())
+    .then(res => {
+      if (res.ok && res.data) {
+        document.getElementById('statSoBan').value = res.data.soBan || 0;
+        document.getElementById('statSoMon').value = res.data.soMon || 0;
+        document.getElementById('statSoKhach').value = res.data.soKhach || 0;
+        document.getElementById('statDoanhThu').value = res.data.tongDoanhThu || 0;
+      }
+    })
+    .catch(err => console.error('Lỗi lấy số liệu tự động:', err));
+}
+</script>
+
+<%- include('partials/footer') %>

@@ -257,6 +257,11 @@ Object.keys(SD_GOC).forEach(function (k) {
   var dich = t(khoa);
   SD_NHAN[k] = dich === khoa ? SD_GOC[k] : dich;
 });
+if (typeof laKhuKhach !== 'undefined' && laKhuKhach) {
+  ['sanh_chinh', 'san_vuon', 'tang_1', 'tang_2', 'tang_3', 'phong_vip', 'ngoai_troi', 'quay_bar', 'khu_vuc'].forEach(function (kv) {
+    SD_NHAN['kv_' + kv] = t('khu_vuc.' + kv);
+  });
+}
 %>
 
 <script>
@@ -944,6 +949,15 @@ window.SoDoDatBan = (function () {
     */
     var cacSan = [];
 
+    function layTenKhu(tenGoc) {
+      if (!tenGoc) return N.khu_vuc || 'Khu vực';
+      var k = 'kv_' + String(tenGoc).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      return N[k] || tenGoc;
+    }
+
     if (!nhieuKhu) {
       // MOT khu: dung ca khung lam san, kem hai moc dinh huong mat bang.
       [['mocTren', 'sdb__moc sdb__moc--tren'], ['mocDuoi', 'sdb__moc sdb__moc--duoi']].forEach(function (p) {
@@ -962,7 +976,7 @@ window.SoDoDatBan = (function () {
       // NHIEU khu: moi khu mot dai rieng, xep chong theo chieu doc.
       nhom.forEach(function (k) {
         var hop = el('div', 'sdb__khu');
-        var dai = el('div', 'sdb__khu__dai', k.ten);
+        var dai = el('div', 'sdb__khu__dai', layTenKhu(k.ten));
         var trong = k.ban.filter(function (b) { return b.kha_dung; }).length;
         dai.appendChild(el('span', 'sdb__khu__dem', N.dai_khu
           .replace('{ban}', k.ban.length)
@@ -1036,8 +1050,17 @@ window.SoDoDatBan = (function () {
     khung.className = 'sdb__tabs';
     khung.setAttribute('role', 'tablist');
 
+    function layTenKhuTab(tenGoc) {
+      if (!tenGoc) return N.khu_vuc || 'Khu vực';
+      var k = 'kv_' + String(tenGoc).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      return N[k] || tenGoc;
+    }
+
     var muc = [{ id: '', ten: N.tat_ca_khu }].concat(dsKhu.map(function (k) {
-      return { id: String(k.id), ten: k.ten, vip: k.la_vip };
+      return { id: String(k.id), ten: layTenKhuTab(k.ten), vip: k.la_vip };
     }));
 
     muc.forEach(function (m) {

@@ -220,8 +220,7 @@
   function nhanCach(pt, tinCay) {
     if (!pt) return '<span class="text-muted">—</span>';
     var c = CACH[pt] || ['badge-light', pt];
-    return '<span class="badge ' + c[0] + '">' + c[1] + '</span>' +
-      (tinCay != null ? ' <span class="small text-muted">' + (tinCay * 100).toFixed(0) + '%</span>' : '');
+    return '<span class="badge ' + c[0] + '">' + c[1] + '</span>';
   }
 
   function ve() {

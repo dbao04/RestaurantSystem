@@ -1,0 +1,523 @@
+<%- include('partials/header', { title: t('tt_dat_ban.tieu_de') }) %>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --spf-orange: #d97706;
+    --spf-orange-light: #fffbeb;
+    --spf-orange-border: #fde68a;
+    --spf-dark: #221711;
+    --spf-gold: #c8a24b;
+    --spf-gray: #666666;
+    --spf-bg: #fdfbf7;
+  }
+
+  body {
+    background-color: var(--spf-bg);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .spf-checkout-wrap {
+    max-width: 980px;
+    margin: 32px auto 60px;
+    padding: 0 16px;
+  }
+
+  /* Header banner phong cách thanh toán hiện đại */
+  .spf-top-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e8e8ed;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .spf-top-card h1 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--spf-dark);
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .spf-badge-order {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--spf-orange);
+    background: var(--spf-orange-light);
+    border: 1px solid var(--spf-orange-border);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .spf-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) {
+    .spf-grid { grid-template-columns: 1fr; }
+  }
+
+  .spf-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e8e8ed;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .spf-card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--spf-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f0f0f4;
+    padding-bottom: 12px;
+  }
+
+  /* Khối QR trung tâm */
+  .spf-qr-box {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .spf-qr-image-wrapper {
+    display: inline-block;
+    padding: 12px;
+    background: #ffffff;
+    border: 2px solid #e8decb;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(200, 162, 75, 0.15);
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .spf-qr-image-wrapper img {
+    width: 240px;
+    height: 240px;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .spf-amount-hero {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--spf-orange);
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+
+  .spf-info-table {
+    width: 100%;
+    margin-top: 14px;
+    border-collapse: collapse;
+    background: #fdfdfd;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #f0f0f4;
+  }
+  .spf-info-table tr {
+    border-bottom: 1px solid #f0f0f4;
+  }
+  .spf-info-table tr:last-child {
+    border-bottom: none;
+  }
+  .spf-info-table td {
+    padding: 11px 16px;
+    font-size: 13.5px;
+  }
+  .spf-info-table td:first-child {
+    color: var(--spf-gray);
+    width: 38%;
+    font-weight: 500;
+  }
+  .spf-info-table td:last-child {
+    font-weight: 700;
+    color: var(--spf-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .spf-btn-copy {
+    background: #ffffff;
+    border: 1px solid #d4d4d8;
+    color: #4b5563;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .spf-btn-copy:hover { background: #f3f4f6; color: #111827; border-color: #9ca3af; }
+
+  .spf-memo-highlight {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--spf-orange);
+    letter-spacing: 1px;
+  }
+
+  /* Trạng thái lắng nghe thanh toán */
+  .spf-live-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-top: 18px;
+  }
+  .spf-dot-spin {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #16a34a;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Chi tiết món ăn & thông tin đặt bàn */
+  .spf-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f2f2f6;
+  }
+  .spf-item-row:last-child { border-bottom: none; }
+  .spf-item-name { font-weight: 700; color: #1f2937; }
+  .spf-item-qty { font-size: 13px; color: #6b7280; margin-left: 4px; }
+  .spf-item-price { font-weight: 700; color: #111827; }
+
+  .spf-total-summary {
+    background: #fffbf9;
+    border: 1px solid #ffeedb;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 16px;
+  }
+  .spf-sum-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #4b5563;
+  }
+  .spf-sum-final {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed #ffd8b2;
+    padding-top: 10px;
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--spf-orange);
+  }
+
+  .spf-sim-box {
+    background: #fdf8eb;
+    border: 1px dashed var(--spf-gold);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-top: 18px;
+  }
+</style>
+
+<div class="spf-checkout-wrap">
+
+  <!-- Top bar -->
+  <div class="spf-top-card">
+    <div>
+      <h1><i class="fas fa-receipt" style="color:var(--spf-gold)"></i> <%= t('tt_dat_ban.tieu_de') %></h1>
+      <p style="margin:0; font-size:13.5px; color:var(--spf-gray);"><%= t('tt_dat_ban.banner_mo_ta') %></p>
+    </div>
+    <div class="spf-badge-order">
+      <%= t('don.ma') %>: <strong><%= r.reservation_code %></strong>
+    </div>
+  </div>
+
+  <div class="spf-grid">
+    <!-- CỘT TRÁI: MÃ QR & THÔNG TIN CHUYỂN KHOẢN -->
+    <div>
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-qrcode" style="color:var(--spf-orange)"></i> <%= t('tt_dat_ban.quet_vietqr') %>
+        </div>
+
+        <div class="spf-qr-box">
+          <div class="spf-amount-hero">
+            <%= Number(tongThanhToan).toLocaleString('vi-VN') %> ₫
+          </div>
+
+          <div class="spf-qr-image-wrapper">
+            <% if (qr && qr.anh) { %>
+              <img src="<%= qr.anh %>" alt="VietQR Thanh Toán Đặt Bàn">
+            <% } else { %>
+              <div style="width:240px; height:240px; display:grid; place-content:center; background:#f9fafb; color:#9ca3af; font-size:13px;">
+                <%= t('tt_dat_ban.dang_chuan_bi_qr') %>
+              </div>
+            <% } %>
+          </div>
+
+          <div style="font-size:13px; color:var(--spf-gray); margin-bottom:14px;">
+            <%- t('tt_dat_ban.huong_dan_quet') %>
+          </div>
+
+          <!-- Bảng thông tin chuyển khoản thủ công nếu không quét được -->
+          <table class="spf-info-table">
+            <tr>
+              <td><%= t('tt_dat_ban.ngan_hang_nhan') %></td>
+              <td>
+                <span><%= (taiKhoan && taiKhoan.tenNganHang) ? taiKhoan.tenNganHang : 'Ngân hàng TMCP Quốc tế Việt Nam' %> (<%= (taiKhoan && taiKhoan.maNganHang) ? taiKhoan.maNganHang : 'VIB' %>)</span>
+              </td>
+            </tr>
+            <tr>
+              <td><%= t('tt_dat_ban.so_tai_khoan') %></td>
+              <td>
+                <span id="copyStk"><%= taiKhoan ? taiKhoan.soTaiKhoan : '071120047' %></span>
+                <button type="button" class="spf-btn-copy" onclick="copyText('copyStk', this)"><%= t('tt_dat_ban.sao_chep') %></button>
+              </td>
+            </tr>
+            <tr>
+              <td><%= t('tt_dat_ban.chu_tai_khoan') %></td>
+              <td>
+                <span><%= taiKhoan ? taiKhoan.tenTaiKhoan : 'NHA HANG BAO DOAN' %></span>
+              </td>
+            </tr>
+            <tr>
+              <td><%= t('tt_dat_ban.so_tien') %></td>
+              <td>
+                <span id="copyTien" style="color:var(--spf-orange)"><%= Number(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
+                <button type="button" class="spf-btn-copy" onclick="copyValue('<%= tongThanhToan %>', this)"><%= t('tt_dat_ban.sao_chep') %></button>
+              </td>
+            </tr>
+            <tr>
+              <td><%= t('tt_dat_ban.noi_dung_ck') %></td>
+              <td>
+                <span class="spf-memo-highlight" id="copyNoiDung">DATBAN <%= r.reservation_code %></span>
+                <button type="button" class="spf-btn-copy" onclick="copyText('copyNoiDung', this)"><%= t('tt_dat_ban.sao_chep') %></button>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Lắng nghe tự động -->
+          <div class="spf-live-status">
+            <div class="spf-dot-spin"></div>
+            <span><%= t('tt_dat_ban.dang_nhan_dien') %></span>
+          </div>
+
+          <!-- Chức năng giả lập dành cho môi trường dev/demo giảng viên -->
+          <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+            <div class="spf-sim-box">
+              <div style="font-size:12.5px; font-weight:700; color:#854d0e; margin-bottom:6px;">
+                <i class="fas fa-flask"></i> <%= t('tt_dat_ban.demo_tieu_de') %>
+              </div>
+              <p style="font-size:12px; color:#a16207; margin-bottom:10px;">
+                <%= t('tt_dat_ban.demo_mo_ta') %>
+              </p>
+              <button type="button" id="btnGiaLap" class="nh-btn nh-btn--gold nh-btn--sm" style="width:100%; border-radius:8px; font-weight:700;">
+                <i class="fas fa-check-double"></i> <%= t('tt_dat_ban.demo_nut') %>
+              </button>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: TÓM TẮT ĐẶT BÀN & MÓN ĂN -->
+    <div>
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-calendar-alt" style="color:var(--spf-gold)"></i> <%= t('tt_dat_ban.thong_tin_dat_ban') %>
+        </div>
+        <div style="font-size:14px; line-height:1.7;">
+          <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.khach_hang') %></span> <strong><%= r.customer_name %></strong></div>
+          <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.so_dien_thoai') %></span> <strong><%= r.phone %></strong></div>
+          <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.thoi_gian') %></span> <strong><%= r.gio %> · <%= r.reservation_date.split('-').reverse().join('/') %></strong></div>
+          <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.so_luong_khach') %></span> <strong><%= r.guest_count %> <%= t('dat_ban_moi.khach') %></strong></div>
+          <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.khu_vuc') %></span> <strong><%= r.area_name || t('tt_dat_ban.tieu_chuan') %></strong></div>
+          <% if (r.ban && r.ban.length) { %>
+            <div><span style="color:var(--spf-gray)"><%= t('tt_dat_ban.ban_phuc_vu') %></span> <strong style="color:var(--spf-gold)"><%= r.ban.join(', ') %></strong></div>
+          <% } %>
+          <% if (r.special_requests) { %>
+            <div style="margin-top:6px; font-style:italic; font-size:13px; color:var(--spf-gray)">
+              <i class="fas fa-comment-dots"></i> "<%= r.special_requests %>"
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-utensils" style="color:var(--spf-gold)"></i> <%= t('tt_dat_ban.chi_tiet_goi_truoc', { n: (preorders||[]).length }) %>
+        </div>
+
+        <% if (preorders && preorders.length > 0) { %>
+          <div style="max-height:220px; overflow-y:auto; padding-right:4px;">
+            <% preorders.forEach(function(item) { %>
+              <div class="spf-item-row">
+                <div>
+                  <span class="spf-item-name"><%= item.dish_name %></span>
+                  <span class="spf-item-qty">x<%= item.quantity %></span>
+                  <% if (item.note) { %><div style="font-size:11.5px; color:var(--spf-gray); font-style:italic;"><%= item.note %></div><% } %>
+                </div>
+                <div class="spf-item-price">
+                  <%= (Number(item.price||0) * Number(item.quantity||1)).toLocaleString('vi-VN') %> ₫
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div style="font-size:13.5px; color:var(--spf-gray); font-style:italic; padding:6px 0;">
+            <%= t('tt_dat_ban.khong_goi_truoc') %>
+          </div>
+        <% } %>
+
+        <div class="spf-total-summary">
+          <% if (tongTienMon > 0) { %>
+            <div class="spf-sum-row">
+              <span><%= t('tt_dat_ban.tong_tien_mon') %></span>
+              <span><%= Number(tongTienMon).toLocaleString('vi-VN') %> ₫</span>
+            </div>
+          <% } %>
+          <% if (tienCoc > 0) { %>
+            <div class="spf-sum-row">
+              <span><%= t('tt_dat_ban.tien_coc_giu_ban') %></span>
+              <span><%= Number(tienCoc).toLocaleString('vi-VN') %> ₫</span>
+            </div>
+          <% } %>
+          <div class="spf-sum-final">
+            <span><%= t('tt_dat_ban.tong_thanh_toan') %></span>
+            <span><%= Number(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; text-align:center;">
+          <a href="/my-orders" class="nh-btn nh-btn--outline nh-btn--sm" style="width:100%; border-radius:8px;">
+            <i class="fas fa-arrow-left"></i> <%= t('tt_dat_ban.xem_lai_don') %>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Socket.IO & Polling tự động chuyển hướng -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var TXT_DA_CHEP = "<%= t('tt_dat_ban.da_chep') %>";
+  var TXT_DANG_XAC_NHAN = "<%= t('tt_dat_ban.demo_dang_xac_nhan') %>";
+  var TXT_LOI_MANG = "<%= t('don.loi_ket_noi') %>";
+
+  function copyText(id, btn) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    navigator.clipboard.writeText(el.innerText.trim()).then(function() {
+      showCopied(btn);
+    });
+  }
+
+  function copyValue(val, btn) {
+    navigator.clipboard.writeText(val).then(function() {
+      showCopied(btn);
+    });
+  }
+
+  function showCopied(btn) {
+    var oldText = btn.innerText;
+    btn.innerText = TXT_DA_CHEP;
+    btn.style.background = '#22c55e';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#22c55e';
+    setTimeout(function() {
+      btn.innerText = oldText;
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 1600);
+  }
+
+  // Kết nối socket theo dõi mã đặt bàn
+  var maDatBan = "<%= r.reservation_code %>";
+  var dt = "<%= r.phone %>";
+  var socket = io();
+
+  socket.emit('tt:theo-doi-don', maDatBan);
+
+  socket.on('tt:da-thanh-toan', function(data) {
+    chuyenSangThanhCong();
+  });
+
+  // Polling dự phòng mỗi 3 giây kiểm tra trạng thái cọc
+  var checkInterval = setInterval(function() {
+    fetch('/api/dat-ban/tra-cuu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ma: maDatBan, dien_thoai: dt })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      if (res.ok && res.r && (res.r.trang_thai_coc === 'PAID' || res.r.trang_thai === 'CONFIRMED')) {
+        clearInterval(checkInterval);
+        chuyenSangThanhCong();
+      }
+    }).catch(function(){});
+  }, 3000);
+
+  function chuyenSangThanhCong() {
+    window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(maDatBan) + '&dt=' + encodeURIComponent(dt);
+  }
+
+  // Nút giả lập thanh toán
+  var btnGiaLap = document.getElementById('btnGiaLap');
+  if (btnGiaLap) {
+    btnGiaLap.addEventListener('click', function() {
+      btnGiaLap.disabled = true;
+      btnGiaLap.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + TXT_DANG_XAC_NHAN;
+      fetch('/thanh-toan/dat-ban/' + encodeURIComponent(maDatBan) + '/gia-lap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        if (res.thanhCong) {
+          chuyenSangThanhCong();
+        } else {
+          alert(res.loi || 'Có lỗi xảy ra');
+          btnGiaLap.disabled = false;
+        }
+      })
+      .catch(function(err) {
+        alert(TXT_LOI_MANG);
+        btnGiaLap.disabled = false;
+      });
+    });
+  }
+</script>
+
+<%- include('partials/footer') %>

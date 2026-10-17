@@ -62,7 +62,8 @@
         <ul class="nh-nav__links" id="nh-menu">
           <li><a href="/" class="<%= (typeof activeNav !== 'undefined' && activeNav==='home') ? 'is-active' : '' %>"><%= t('dieu_huong.trang_chu') %></a></li>
           <li><a href="/about" class="<%= (typeof activeNav !== 'undefined' && activeNav==='about') ? 'is-active' : '' %>"><%= t('dieu_huong.gioi_thieu') %></a></li>
-          <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
+          <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.mon_an') %></a></li>
+          <li><a href="/combos" class="<%= (typeof activeNav !== 'undefined' && activeNav==='combos') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
           <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
           <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
@@ -74,7 +75,7 @@
             <a href="javascript:void(0)" class="nh-theme-toggle-mobile" id="nh-theme-toggle-mobile"><i class="fas fa-moon"></i> <span id="nh-theme-mobile-text">Chế độ tối</span></a>
           </li>
           <li class="nh-menu-mobile">
-            <a href="/giao-hang" style="color:var(--nh-gold); font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+            <a href="/cart" style="color:var(--nh-gold); font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
           </li>
           <li class="nh-menu-mobile">
             <a href="/datban"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
@@ -98,7 +99,7 @@
 
         <div class="nh-nav__actions">
           <!-- Nut Dat mon Giao hang & Dat ban -->
-          <a href="/giao-hang" class="nh-nav-action-btn nh-nav-action-btn--delivery d-none-mobile" title="<%= t('gio_hang.dat_mon_giao_tan_noi') %>">
+          <a href="/cart" class="nh-nav-action-btn nh-nav-action-btn--delivery d-none-mobile" title="<%= t('gio_hang.dat_mon_giao_tan_noi') %>">
             <i class="fas fa-motorcycle"></i>
             <span><%= t('dat_ban.giao_hang') %></span>
           </a>

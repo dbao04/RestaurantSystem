@@ -1,0 +1,505 @@
+<%- include('partials/header', { title: 'Thanh toán chuyển khoản VietQR - ShopeeFood Style' }) %>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --spf-orange: #ee4d2d;
+    --spf-orange-light: #fff5f2;
+    --spf-orange-border: #ffc5b5;
+    --spf-dark: #221711;
+    --spf-gold: #c8a24b;
+    --spf-gray: #666666;
+    --spf-bg: #f5f5f7;
+  }
+
+  body {
+    background-color: var(--spf-bg);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .spf-checkout-wrap {
+    max-width: 980px;
+    margin: 32px auto 60px;
+    padding: 0 16px;
+  }
+
+  /* Header banner phong cách thanh toán hiện đại */
+  .spf-top-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e8e8ed;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .spf-top-card h1 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--spf-dark);
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .spf-badge-order {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--spf-orange);
+    background: var(--spf-orange-light);
+    border: 1px solid var(--spf-orange-border);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .spf-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) {
+    .spf-grid { grid-template-columns: 1fr; }
+  }
+
+  .spf-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e8e8ed;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .spf-card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--spf-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f0f0f4;
+    padding-bottom: 12px;
+  }
+
+  /* Khối QR trung tâm */
+  .spf-qr-box {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .spf-qr-image-wrapper {
+    display: inline-block;
+    padding: 12px;
+    background: #ffffff;
+    border: 2px solid #e8decb;
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .spf-qr-img {
+    width: 240px;
+    height: 240px;
+    display: block;
+    border-radius: 10px;
+  }
+  .spf-timer-pill {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  /* Bảng chi tiết chuyển khoản */
+  .spf-info-table {
+    width: 100%;
+    background: #fafafc;
+    border-radius: 12px;
+    border: 1px solid #ededf2;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .spf-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed #e2e2ea;
+  }
+  .spf-info-row:last-child { border-bottom: none; }
+  .spf-info-label { color: #666; font-weight: 500; }
+  .spf-info-val {
+    font-weight: 700;
+    color: var(--spf-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .spf-btn-copy {
+    background: #ffffff;
+    border: 1px solid #d4d4d8;
+    color: #4b5563;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .spf-btn-copy:hover { background: #f3f4f6; color: #111827; border-color: #9ca3af; }
+
+  .spf-memo-highlight {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--spf-orange);
+    letter-spacing: 1px;
+  }
+
+  /* Trạng thái lắng nghe thanh toán */
+  .spf-live-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-top: 18px;
+  }
+  .spf-dot-spin {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #16a34a;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Chi tiết món ăn & địa chỉ giao */
+  .spf-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f2f2f6;
+  }
+  .spf-item-row:last-child { border-bottom: none; }
+  .spf-item-name { font-weight: 700; color: #1f2937; }
+  .spf-item-qty { font-size: 13px; color: #6b7280; margin-left: 4px; }
+  .spf-item-price { font-weight: 700; color: #111827; }
+
+  .spf-total-summary {
+    background: #fffbf9;
+    border: 1px solid #ffeedb;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 16px;
+  }
+  .spf-sum-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #4b5563;
+  }
+  .spf-sum-final {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed #ffd8b2;
+    padding-top: 10px;
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--spf-orange);
+  }
+
+  .spf-sim-box {
+    background: #fdf8eb;
+    border: 1px dashed var(--spf-gold);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-top: 18px;
+  }
+</style>
+
+<div class="spf-checkout-wrap">
+
+  <!-- Top bar -->
+  <div class="spf-top-card">
+    <div>
+      <h1><i class="fas fa-qrcode" style="color:var(--spf-orange);"></i> Thanh toán đơn hàng</h1>
+      <div style="font-size:13.5px; color:#6b7280;">Vui lòng mở ứng dụng ngân hàng hoặc ví điện tử để quét mã thanh toán</div>
+    </div>
+    <div class="spf-badge-order">
+      Mã đơn: <b><%= donGiao ? donGiao.ma_giao : ('DH' + hoaDon.sesis.slice(-6).toUpperCase()) %></b>
+    </div>
+  </div>
+
+  <div class="spf-grid">
+    <!-- CỘT TRÁI: KHỐI QUÉT MÃ VIETQR -->
+    <div>
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-wallet" style="color:var(--spf-orange);"></i>
+          Mã VietQR chuyển khoản nhanh 24/7
+        </div>
+
+        <div class="spf-qr-box">
+          <div class="spf-timer-pill">
+            <i class="fas fa-clock"></i> Đang chờ chuyển khoản (Mã tự duyệt tức thì)
+          </div>
+
+          <div class="spf-qr-image-wrapper">
+            <img id="spf-qr-img" class="spf-qr-img" src="<%= (qr && qr.anh) ? qr.anh : '' %>" alt="Mã VietQR ShopeeFood Style">
+          </div>
+
+          <div style="font-size:13.5px; color:#4b5563; font-weight:600;">
+            Quét mã bằng <b style="color:var(--spf-dark);">bất kỳ App Ngân hàng</b> hoặc <b style="color:#0284c7;">Viettel Money / VNPT Money</b>
+          </div>
+        </div>
+
+        <!-- Bảng thông tin chuyển khoản chi tiết -->
+        <div class="spf-info-table">
+          <div class="spf-info-row">
+            <span class="spf-info-label">Ngân hàng thụ hưởng:</span>
+            <span class="spf-info-val">
+              <span style="color:#0284c7;"><i class="fas fa-building-columns"></i> <%= (qr && qr.nganHang) ? qr.nganHang : 'VIB (NH Quốc Tế)' %></span>
+            </span>
+          </div>
+
+          <div class="spf-info-row">
+            <span class="spf-info-label">Số tài khoản:</span>
+            <span class="spf-info-val">
+              <b style="font-size:15px; letter-spacing:0.5px;"><%= (qr && qr.soTaiKhoan) ? qr.soTaiKhoan : '071120047' %></b>
+              <button type="button" class="spf-btn-copy" onclick="copyText('<%= (qr && qr.soTaiKhoan) ? qr.soTaiKhoan : '071120047' %>', 'Đã chép số tài khoản!')">
+                <i class="fas fa-copy"></i> Sao chép
+              </button>
+            </span>
+          </div>
+
+          <div class="spf-info-row">
+            <span class="spf-info-label">Tên chủ tài khoản:</span>
+            <span class="spf-info-val">
+              <%= (qr && qr.tenTaiKhoan) ? qr.tenTaiKhoan : 'NHA HANG BAO DOAN' %>
+            </span>
+          </div>
+
+          <div class="spf-info-row">
+            <span class="spf-info-label">Số tiền thanh toán:</span>
+            <span class="spf-info-val" style="color:var(--spf-orange); font-size:16px; font-weight:800;">
+              <%= Math.round(tongThanhToan).toLocaleString('vi-VN') %> ₫
+            </span>
+          </div>
+
+          <div class="spf-info-row">
+            <span class="spf-info-label">Nội dung chuyển khoản:</span>
+            <span class="spf-info-val">
+              <% var memoCode = (qr && qr.noiDung) ? qr.noiDung : ((payment && payment.ma_doi_soat) ? payment.ma_doi_soat : ('TT' + hoaDon.sesis.slice(-6).toUpperCase())); %>
+              <span class="spf-memo-highlight"><%= memoCode %></span>
+              <button type="button" class="spf-btn-copy" onclick="copyText('<%= memoCode %>', 'Đã chép nội dung chuyển khoản!')">
+                <i class="fas fa-copy"></i> Sao chép
+              </button>
+            </span>
+          </div>
+        </div>
+
+        <div class="spf-live-status" id="spf-box-status">
+          <div class="spf-dot-spin"></div>
+          <span>Đang lắng nghe thanh toán từ tài khoản của bạn...</span>
+        </div>
+
+        <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+          <div class="spf-sim-box">
+            <div style="font-size: 12.5px; color: #854d0e; font-weight: 700; margin-bottom: 8px;">
+              <i class="fas fa-flask"></i> Môi trường thử nghiệm &amp; Demo giảng viên
+            </div>
+            <button type="button" class="nh-btn nh-btn--gold nh-btn--sm" id="nut-gia-lap-spf" style="border-radius:8px; font-weight:700; padding:9px 20px;">
+              <i class="fas fa-check-double"></i> Xác nhận giả lập chuyển khoản ngay (Demo)
+            </button>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: CHI TIẾT ĐƠN HÀNG & ĐỊA CHỈ GIAO TỚI -->
+    <div>
+      <!-- Thông tin giao hàng -->
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-location-dot" style="color:#ef4444;"></i>
+          Địa chỉ giao tới
+        </div>
+        <div style="font-size:14.5px; font-weight:700; color:var(--spf-dark); line-height:1.4; margin-bottom:6px;">
+          <%= donGiao ? donGiao.dia_chi_giao : (hoaDon.thongTin ? hoaDon.thongTin.diachi : 'Địa chỉ nhận hàng') %>
+        </div>
+        <div style="font-size:13px; color:#6b7280; display:flex; flex-wrap:wrap; gap:10px;">
+          <span><i class="fas fa-user" style="color:var(--spf-gold);"></i> <%= donGiao ? donGiao.ten_nguoi_nhan : (hoaDon.thongTin ? hoaDon.thongTin.ten_khach : '') %></span>
+          <span><i class="fas fa-phone" style="color:var(--spf-gold);"></i> <%= donGiao ? donGiao.sdt_nguoi_nhan : (hoaDon.thongTin ? hoaDon.thongTin.sodienthoai : '') %></span>
+        </div>
+      </div>
+
+      <!-- Danh sách món đã đặt -->
+      <div class="spf-card">
+        <div class="spf-card-title">
+          <i class="fas fa-bag-shopping" style="color:var(--spf-gold);"></i>
+          Món ăn đã chọn (<%= (mon || []).length %> món)
+        </div>
+
+        <div>
+          <% (mon || []).forEach(function(m) { %>
+            <div class="spf-item-row">
+              <div>
+                <span class="spf-item-name"><%= m.name_mon %></span>
+                <span class="spf-item-qty">×<%= m.soluong %></span>
+              </div>
+              <span class="spf-item-price"><%= Math.round(m.thanhtien || (m.gia * m.soluong)).toLocaleString('vi-VN') %> ₫</span>
+            </div>
+          <% }) %>
+        </div>
+
+        <div class="spf-total-summary">
+          <div class="spf-sum-row">
+            <span>Tiền món ăn</span>
+            <b><%= Math.round((tongThanhToan - phiShip)).toLocaleString('vi-VN') %> ₫</b>
+          </div>
+          <div class="spf-sum-row">
+            <span>Phí giao hàng</span>
+            <b><%= phiShip > 0 ? (Math.round(phiShip).toLocaleString('vi-VN') + ' ₫') : 'Miễn phí' %></b>
+          </div>
+          <div class="spf-sum-final">
+            <span>Tổng thanh toán</span>
+            <span><%= Math.round(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 18px; text-align: center;">
+          <a href="/cart" style="color: #6b7280; font-size: 13.5px; text-decoration: none; font-weight: 600;">
+            <i class="fas fa-arrow-left"></i> Quay lại Giỏ hàng &amp; Đổi món
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="spf-toast" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1f2937; color:#fff; padding:10px 20px; border-radius:30px; font-size:13.5px; font-weight:600; display:none; z-index:9999; box-shadow:0 6px 20px rgba(0,0,0,0.2);"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+function copyText(txt, msg) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(function() {
+      showToast(msg || 'Đã sao chép!');
+    });
+  } else {
+    var inp = document.createElement('input');
+    inp.value = txt;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('copy');
+    document.body.removeChild(inp);
+    showToast(msg || 'Đã sao chép!');
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('spf-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function() { t.style.display = 'none'; }, 2200);
+}
+
+(function() {
+  var SESIS = '<%= hoaDon.sesis %>';
+  var MA_GIAO = '<%= donGiao ? donGiao.ma_giao : "" %>';
+  var TONG_TIEN = <%= tongThanhToan %>;
+  var paymentId = <%= (payment && payment.id) ? payment.id : "null" %>;
+
+  var socket = typeof io !== 'undefined' ? io() : null;
+  if (socket) {
+    socket.emit('tt:theo-doi-don', SESIS);
+    socket.on('tt:da-thanh-toan', function(data) {
+      daThanhToanXong();
+    });
+  }
+
+  function daThanhToanXong() {
+    var boxStatus = document.getElementById('spf-box-status');
+    if (boxStatus) {
+      boxStatus.style.background = '#dcfce7';
+      boxStatus.style.borderColor = '#86efac';
+      boxStatus.style.color = '#15803d';
+      boxStatus.innerHTML = '<i class="fas fa-circle-check" style="font-size:18px;"></i> <b>Thanh toán thành công! Đang chuyển tiếp tới tài xế...</b>';
+    }
+    setTimeout(function() {
+      if (MA_GIAO) {
+        window.location.href = '/theo-doi/' + MA_GIAO;
+      } else {
+        window.location.href = '/cart';
+      }
+    }, 1200);
+  }
+
+  if (paymentId) {
+    var timer = setInterval(function() {
+      fetch('/qr/phien/' + paymentId + '/trang-thai')
+        .then(function(r) { return r.json(); })
+        .then(function(st) {
+          if (st && (st.status === 'success' || st.da_tra_du)) {
+            clearInterval(timer);
+            daThanhToanXong();
+          }
+        }).catch(function(){});
+    }, 3000);
+  }
+
+  var nutGiaLap = document.getElementById('nut-gia-lap-spf');
+  if (nutGiaLap) {
+    nutGiaLap.onclick = function() {
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xác nhận thanh toán...';
+      fetch('/thanh-toan/don-hang/' + SESIS + '/gia-lap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ so_tien: TONG_TIEN })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res && res.thanhCong) {
+          daThanhToanXong();
+        } else {
+          alert(res.loi || 'Lỗi giả lập thanh toán');
+        }
+      });
+    };
+  }
+})();
+</script>
+
+<%- include('partials/footer') %>

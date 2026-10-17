@@ -379,6 +379,20 @@ function tenNhom(loai, ngonNgu) {
   return dich.startsWith('nhom_mon.') ? goc : goc.replace(nhan, dich);
 }
 
+/**
+ * Ten khu vuc / vi tri theo ngon ngu.
+ */
+function tenKhuVuc(ten, ngonNgu) {
+  const goc = String(ten || '').trim();
+  if (!goc) return '';
+  const khoa = 'khu_vuc.' + goc.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const dich = t(khoa, ngonNgu);
+  return dich === khoa ? goc : dich;
+}
+
 
 // ===========================================================================
 // TEN NGUYEN LIEU THEO NGON NGU
@@ -541,5 +555,5 @@ function tenNguyenLieu(ten, ngonNgu) {
 
 module.exports = {
   DS_NGON_NGU, MAC_DINH, chuanHoa, doanTuTrinhDuyet, t,
-  tenMon, tenNhom, tenTiengAnh, tenTiengNhat, tenNguyenLieu, nhanDip, nhanSoKhach,
+  tenMon, tenNhom, tenTiengAnh, tenTiengNhat, tenNguyenLieu, nhanDip, nhanSoKhach, tenKhuVuc,
 };

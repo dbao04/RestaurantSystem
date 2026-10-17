@@ -1,0 +1,92 @@
+<%- include('partials/header', { activePage: 'schedule-approval', staffName: session.staffName || 'Quản lý' }) %>
+
+<%
+  var choDuyet = (schedules || []).filter(function (s) { return s.trangthai == 0; }).length;
+%>
+
+<div class="card mb-4 shadow">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <div>
+            <h6 class="m-0 font-weight-bold" style="color: #241d18;">Duyệt lịch làm việc</h6>
+            <small class="text-muted"><%= schedules ? schedules.length : 0 %> ca đăng ký · <%= choDuyet %> ca chờ duyệt</small>
+        </div>
+        <div>
+            <a class="btn btn-sm btn-outline-primary" href="/staff/xep-ca"><i class="fas fa-calendar-check mr-1"></i> Xếp ca tự động</a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <% if (schedules && schedules.length > 0) { %>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="scheduleApprovalTable">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Nhân viên</th>
+                        <th>Ca làm việc</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% schedules.forEach(s => { %>
+                    <tr>
+                        <td>
+                            <strong style="color: #241d18;"><%= new Date(s.ngay).toLocaleDateString('vi-VN') %></strong><br>
+                            <small class="text-muted"><%= new Date(s.ngay).toLocaleDateString('vi-VN', { weekday: 'long' }) %></small>
+                        </td>
+                        <td>
+                            <strong style="color: #241d18;"><%= s.ten_nhanvien %></strong><br>
+                            <small class="text-muted"><%= s.chucvu %></small>
+                        </td>
+                        <td>
+                            <span class="badge badge-secondary font-weight-bold"><%= (s.ca || '').toUpperCase() %></span><br>
+                            <small class="text-muted">
+                                <%= s.gio_bat_dau ? s.gio_bat_dau.slice(0, 5) : '--:--' %> – <%= s.gio_ket_thuc ? s.gio_ket_thuc.slice(0, 5) : '--:--' %>
+                            </small>
+                        </td>
+                        <td>
+                            <% if (s.trangthai == 0) { %>
+                                <span class="badge badge-warning px-2 py-1">Chờ duyệt</span>
+                            <% } else if (s.trangthai == 1) { %>
+                                <span class="badge badge-success px-2 py-1">Đã duyệt</span>
+                            <% } else { %>
+                                <span class="badge badge-danger px-2 py-1">Từ chối</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (s.trangthai == 0) { %>
+                            <div class="d-flex" style="gap: 6px;">
+                                <form action="/staff/schedule/update/<%= s.id_lich %>" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="1">
+                                    <button class="btn btn-success btn-sm" type="submit"
+                                            onclick="return confirm('Duyệt ca làm việc này?')">
+                                        <i class="fas fa-check mr-1"></i> Duyệt
+                                    </button>
+                                </form>
+                                <form action="/staff/schedule/update/<%= s.id_lich %>" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="2">
+                                    <button class="btn btn-danger btn-sm" type="submit"
+                                            onclick="return confirm('Từ chối ca làm việc này?')">
+                                        <i class="fas fa-times mr-1"></i> Từ chối
+                                    </button>
+                                </form>
+                            </div>
+                            <% } else { %>
+                                <small class="text-muted">Đã xử lý</small>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-calendar-days fa-3x mb-3 text-gray-300"></i>
+            <p>Chưa có lịch làm việc nào được đăng ký.</p>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

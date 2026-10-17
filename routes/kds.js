@@ -81,10 +81,11 @@ module.exports = function (io) {
   }));
 
   router.get('/so-do-ban/api/du-lieu', requireNhanSu, bat(async (req, res) => {
+    const ngay = req.query.ngay || null;
     const [ban, viTri, thongKe] = await Promise.all([
-      kds.laySoDoBan(),
+      kds.laySoDoBan(ngay),
       kds.layViTri(),
-      kds.thongKeBan(),
+      kds.thongKeBan(ngay),
     ]);
     res.json({ ban, vi_tri: viTri, thong_ke: thongKe });
   }));
@@ -114,6 +115,85 @@ module.exports = function (io) {
     const n = await kds.luuViTriBan(ds);
     io.to('staff_room').emit('so-do-thay-doi');
     res.json({ ok: true, da_luu: n });
+  }));
+
+  /** Lấy danh sách món hiện tại của bàn */
+  router.get('/so-do-ban/api/mon-cua-ban/:id', requireNhanSu, bat(async (req, res) => {
+    const idBan = Number(req.params.id);
+    const db = require('../config/db');
+    const [banRows] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);
+    if (!banRows.length) return res.status(404).json({ ok: false, loi: 'Không tìm thấy bàn.' });
+    const ban = banRows[0];
+    if (!ban.sesis_hien_tai) {
+      return res.json({ ok: true, ban, items: [] });
+    }
+    const [items] = await db.query(
+      `SELECT h.id, h.id_mon, h.name_mon, h.soluong, h.gia, h.thanhtien, h.trangthai_bep,
+              m.images
+       FROM hopdong h
+       LEFT JOIN monan m ON m.id_mon = h.id_mon
+       WHERE h.sesis = ? AND h.id_mon > 0
+       ORDER BY h.id ASC`,
+      [ban.sesis_hien_tai]
+    );
+    res.json({ ok: true, ban, sesis: ban.sesis_hien_tai, items });
+  }));
+
+  /** Nhân viên phục vụ gọi món / thêm món trực tiếp cho bàn */
+  router.post('/so-do-ban/api/order-mon/:id', requireNhanSu, bat(async (req, res) => {
+    const idBan = Number(req.params.id);
+    const { items, so_khach, ghi_chu } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ ok: false, loi: 'Vui lòng chọn ít nhất 1 món ăn.' });
+    }
+
+    const db = require('../config/db');
+    const orderService = require('../services/orderService');
+
+    const [banRows] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);
+    if (!banRows.length) return res.status(404).json({ ok: false, loi: 'Không tìm thấy bàn.' });
+    const ban = banRows[0];
+
+    let sesis = ban.sesis_hien_tai;
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+
+    // Nếu bàn chưa có phiên (bàn trống), khởi tạo phiên mới
+    if (!sesis) {
+      sesis = 'TB_' + Date.now().toString(36).toUpperCase();
+      await db.query(
+        `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat, id_ban)
+         VALUES (?, 0, 'Khởi tạo bàn tại chỗ', 1, ?, ?, 0, ?, ?, 0, 0, '', 1, ?, ?, ?)`,
+        [sesis, today, now, ghi_chu || ('Bàn ' + ban.number_ban), Number(so_khach) || 2, today, now, idBan]
+      );
+      await db.query('UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?', [sesis, idBan]);
+    }
+
+    // Thêm từng món vào đơn
+    for (const item of items) {
+      const idMon = Number(item.id_mon || item.id);
+      const qty = Number(item.soluong || item.qty) || 1;
+      if (idMon > 0 && qty > 0) {
+        await orderService.addDishToOrder(sesis, idMon, qty);
+      }
+    }
+
+    // Đảm bảo id_ban được gắn vào tất cả các dòng của đơn
+    await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ? AND (id_ban IS NULL OR id_ban = 0)', [idBan, sesis]);
+
+    // Lấy thông tin bàn mới nhất
+    const [banCapNhat] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);
+
+    // Bắn realtime thông báo bếp và sơ đồ bàn
+    const staffName = req.session.staffName || req.session.adminname || 'Nhân viên';
+    io.to('kitchen_room').emit('new-order-to-kitchen', {
+      message: `Nhân viên [${staffName}] vừa gọi món cho Bàn ${ban.number_ban}!`,
+      sesis
+    });
+    io.to('staff_room').emit('ban-cap-nhat', banCapNhat[0]);
+    io.to('kitchen_room').emit('ban-cap-nhat', banCapNhat[0]);
+
+    res.json({ ok: true, sesis, da_them: items.length, ban: banCapNhat[0] });
   }));
 
   return router;

@@ -1,0 +1,651 @@
+<%- include('partials/header') %>
+
+<link rel="stylesheet" href="/leaflet.css">
+<script src="/leaflet.js"></script>
+
+<style>
+  /* Giao diện đồng bộ Admin Espresso + Gold */
+  .km-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 992px) {
+    .km-grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .km-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .km-form-grid-3 {
+      grid-template-columns: 1.2fr 1fr 1.4fr;
+    }
+    .km-form-grid-gps {
+      grid-template-columns: 1fr 1fr 120px 1.5fr;
+    }
+  }
+
+  .km-map-container {
+    height: 380px;
+    width: 100%;
+    min-height: 380px;
+    border-radius: var(--qt-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--qt-line);
+    background: #f4efe6;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .leaflet-container {
+    font-family: inherit;
+    width: 100%;
+    height: 100%;
+  }
+
+  .km-switch-box {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem .75rem;
+    background: #fdfaf5;
+    border: 1px solid var(--qt-line);
+    border-radius: var(--qt-radius-sm);
+    margin-bottom: .6rem;
+    cursor: pointer;
+  }
+  .km-switch-box input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #8a6a1f;
+    cursor: pointer;
+  }
+  .km-switch-box span {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--qt-ink);
+  }
+
+  .km-alert {
+    padding: .75rem 1rem;
+    border-radius: 10px;
+    font-size: .82rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    line-height: 1.5;
+  }
+  .km-alert--warn { background: var(--qt-warn-bg); color: var(--qt-warn); border: 1px solid rgba(169, 117, 15, .25); }
+  .km-alert--info { background: var(--qt-info-bg); color: var(--qt-info); border: 1px solid rgba(43, 95, 138, .25); }
+  .km-alert--danger { background: var(--qt-danger-bg); color: var(--qt-danger); border: 1px solid rgba(179, 53, 44, .25); }
+  .km-alert--ok { background: var(--qt-ok-bg); color: var(--qt-ok); border: 1px solid rgba(46, 125, 79, .25); }
+
+  .km-range-val {
+    display: inline-block;
+    padding: .15rem .5rem;
+    background: #f4ecd8;
+    color: #8a6a1f;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: .9rem;
+    margin-left: .35rem;
+  }
+</style>
+
+<!-- Tiêu đề trang & Thao tác chính -->
+<div class="qt-card" style="margin-bottom: 1.25rem;">
+  <div class="qt-card__head" style="background: linear-gradient(180deg, #fffdf9, #fbf7f0); border-bottom: 0;">
+    <div>
+      <h2 style="font-size: 1.25rem;"><i class="fas fa-camera" style="color: var(--qt-gold); margin-right: .4rem;"></i> Cấu hình nhận diện khuôn mặt &amp; Chấm công GPS</h2>
+      <p>Quản trị máy học nhận diện khuôn mặt, thiết lập toạ độ chấm công và theo dõi dữ liệu đăng ký nhân sự.</p>
+    </div>
+    <div class="qt-card__act">
+      <a class="qt-btn qt-btn--ghost" href="/cham-cong-khuon-mat" target="_blank">
+        <i class="fas fa-desktop"></i> Mở màn hình Kiosk
+      </a>
+      <% if (coTheSua) { %>
+        <button class="qt-btn qt-btn--primary" id="nut-danh-gia">
+          <i class="fas fa-vial"></i> Đánh giá độ chính xác
+        </button>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (!trangThai || trangThai.ket_noi === false) { %>
+  <div class="km-alert km-alert--warn">
+    <i class="fas fa-triangle-exclamation" style="font-size: 1.1rem;"></i>
+    <div><strong>Dịch vụ nhận diện (Python ML Service) chưa bật.</strong> Danh sách mẫu vẫn xem được nhưng chưa thực hiện quét nhận diện tự động hoặc đăng ký mới qua webcam được.</div>
+  </div>
+<% } %>
+
+<div id="kq-danh-gia"></div>
+
+<!-- Thống kê chỉ số nhanh -->
+<div class="qt-stats">
+  <div class="qt-stat qt-stat--gold">
+    <div class="qt-stat__icon"><i class="fas fa-id-badge"></i></div>
+    <div class="qt-stat__label">Đã đăng ký</div>
+    <div class="qt-stat__value"><span id="sl-dk"><%= tongQuan.da_dang_ky %></span><span style="font-size: 1rem; font-weight: normal; color: var(--qt-muted);"> / <%= tongQuan.tong_nv %> người</span></div>
+    <div class="qt-stat__note">Tỷ lệ hoàn thành hồ sơ nhận diện</div>
+  </div>
+
+  <div class="qt-stat qt-stat--blue">
+    <div class="qt-stat__icon"><i class="fas fa-images"></i></div>
+    <div class="qt-stat__label">Tổng mẫu khuôn mặt</div>
+    <div class="qt-stat__value" id="sl-mau"><%= tongQuan.tong_mau %></div>
+    <div class="qt-stat__note">Vector đặc trưng đã mã hóa (SFace)</div>
+  </div>
+
+  <div class="qt-stat qt-stat--green">
+    <div class="qt-stat__icon"><i class="fas fa-circle-check"></i></div>
+    <div class="qt-stat__label">Chấm công thành công</div>
+    <div class="qt-stat__value" id="sl-tc"><%= tongQuan.hom_nay.thanh_cong %></div>
+    <div class="qt-stat__note">Lượt chấm công hợp lệ hôm nay</div>
+  </div>
+
+  <div class="qt-stat qt-stat--plum">
+    <div class="qt-stat__icon"><i class="fas fa-shield-halved"></i></div>
+    <div class="qt-stat__label">Nghi ngờ giả mạo</div>
+    <div class="qt-stat__value" id="sl-gm"><%= tongQuan.hom_nay.gia_mao %></div>
+    <div class="qt-stat__note">Lượt bị chặn chống gian lận hôm nay</div>
+  </div>
+</div>
+
+<!-- Thẻ 1: Cấu hình ngưỡng nhận diện -->
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2><i class="fas fa-sliders" style="color: var(--qt-gold); margin-right: .4rem;"></i> Ngưỡng nhận diện &amp; Chống giả mạo</h2>
+      <p>Cân bằng giữa độ nhạy nhận diện và tính an toàn bảo mật khi nhân viên chấm công.</p>
+    </div>
+    <div class="qt-card__act">
+      <span class="qt-pill qt-pill--info" id="nhan-nguong">
+        Đang cho vào từ <%= nhanDien.nguong_phan_tram %>% trở lên
+      </span>
+    </div>
+  </div>
+  <div class="qt-card__body">
+    <div class="km-form-grid km-form-grid-3">
+      <div class="qt-field" style="margin-bottom: 0;">
+        <label>Độ khớp tối thiểu: <span class="km-range-val" id="nd-nguong-hien"><%= nhanDien.nguong_phan_tram %>%</span></label>
+        <input type="range" class="qt-input" id="nd-nguong" min="20" max="95" step="1"
+               value="<%= nhanDien.nguong_phan_tram %>" style="padding: 0; height: 36px; accent-color: #8a6a1f; cursor: pointer;">
+        <div class="qt-field__hint">Khuôn mặt khớp từ mức này trở lên là được chấm công. Mức chuẩn khuyến nghị: 50% - 65%.</div>
+      </div>
+
+      <div class="qt-field" style="margin-bottom: 0;">
+        <label>Độ khó động tác sống (Liveness)</label>
+        <select class="qt-select" id="nd-dong-tac">
+          <option value="de"  <%= nhanDien.muc_dong_tac === 'de'  ? 'selected' : '' %>>Dễ — webcam đặt xa, cử động nhẹ</option>
+          <option value="vua" <%= nhanDien.muc_dong_tac === 'vua' ? 'selected' : '' %>>Vừa (Khuyên dùng chuẩn)</option>
+          <option value="kho" <%= nhanDien.muc_dong_tac === 'kho' ? 'selected' : '' %>>Khó — chống giả mạo cao nhất</option>
+        </select>
+        <div class="qt-field__hint">Biên độ gật/quay đầu cần đạt để xác nhận là người thật (chống ảnh in).</div>
+      </div>
+
+      <div>
+        <label class="qt-label">Tùy chọn bảo vệ</label>
+        <label class="km-switch-box">
+          <input type="checkbox" id="nd-song" <%= nhanDien.bat_kiem_tra_song ? 'checked' : '' %>>
+          <span>Bắt buộc cử động sống (chống ảnh in / video)</span>
+        </label>
+        <label class="km-switch-box">
+          <input type="checkbox" id="nd-cham-ho" <%= nhanDien.chan_cham_ho ? 'checked' : '' %>>
+          <span>Chặn nghi ngờ chấm công hộ trên máy cá nhân</span>
+        </label>
+        <div style="margin-top: .75rem;">
+          <button class="qt-btn qt-btn--primary" id="nd-luu">
+            <i class="fas fa-floppy-disk"></i> Lưu ngưỡng nhận diện
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="nd-thong-bao" style="margin-top: .75rem;"></div>
+
+    <div class="km-alert km-alert--warn" style="margin-top: 1rem; margin-bottom: 0;">
+      <i class="fas fa-circle-info" style="font-size: 1rem;"></i>
+      <div><strong>Lưu ý về nhận diện:</strong> Khi "Chặn nghi chấm hộ" được bật, nếu một nhân viên có 2 hồ sơ khuôn mặt bị trùng lặp, thuật toán sẽ báo "người khác giống hơn". Hãy đảm bảo mỗi nhân sự có 1 hồ sơ duy nhất.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Thẻ 2: Cấu hình toạ độ GPS & Bán kính chấm công -->
+<div class="qt-card">
+  <div class="qt-card__head">
+    <div>
+      <h2><i class="fas fa-location-dot" style="color: var(--qt-gold); margin-right: .4rem;"></i> Toạ độ nhà hàng &amp; Bán kính GPS</h2>
+      <p>Nhân viên chỉ có thể chấm công khi ở trong phạm vi bán kính cho phép của nhà hàng.</p>
+    </div>
+    <div class="qt-card__act">
+      <span class="qt-pill <%= viTri.bat_gps ? 'qt-pill--ok' : 'qt-pill--muted' %>" id="nhan-gps">
+        <%= viTri.bat_gps ? 'Bắt buộc đúng vị trí' : 'Không kiểm tra GPS' %>
+      </span>
+    </div>
+  </div>
+  <div class="qt-card__body">
+    <div class="km-map-container" id="ban-do"></div>
+
+    <div style="display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center;">
+      <div style="display: flex; gap: .35rem; max-width: 420px; flex: 1;">
+        <input type="text" class="qt-input" id="vt-tim" placeholder="Tìm theo địa chỉ nhà hàng..." style="font-size: .84rem;">
+        <button class="qt-btn qt-btn--ghost" id="vt-nut-tim" type="button" style="padding: .5rem .85rem;">
+          <i class="fas fa-magnifying-glass"></i>
+        </button>
+      </div>
+      <div id="vt-goi-y" style="font-size: .78rem; color: var(--qt-muted); display: flex; align-items: center; gap: .4rem;">
+        <i class="fas fa-hand-pointer" style="color: var(--qt-gold);"></i> Bấm vào bản đồ hoặc kéo ghim để chọn toạ độ chính xác.
+      </div>
+    </div>
+
+    <div class="km-form-grid km-form-grid-gps" style="align-items: flex-end;">
+      <div class="qt-field" style="margin-bottom: 0;">
+        <label>Vĩ độ (Latitude)</label>
+        <input type="number" step="0.000001" class="qt-input" id="vt-vi-do" value="<%= viTri.vi_do != null ? viTri.vi_do : '' %>">
+      </div>
+
+      <div class="qt-field" style="margin-bottom: 0;">
+        <label>Kinh độ (Longitude)</label>
+        <input type="number" step="0.000001" class="qt-input" id="vt-kinh-do" value="<%= viTri.kinh_do != null ? viTri.kinh_do : '' %>">
+      </div>
+
+      <div class="qt-field" style="margin-bottom: 0;">
+        <label>Bán kính (m)</label>
+        <input type="number" min="5" max="5000" class="qt-input" id="vt-ban-kinh" value="<%= viTri.ban_kinh_m %>">
+      </div>
+
+      <div>
+        <label class="km-switch-box" style="margin-bottom: .6rem;">
+          <input type="checkbox" id="vt-bat-gps" <%= viTri.bat_gps ? 'checked' : '' %>>
+          <span>Bắt buộc đúng GPS khi chấm công</span>
+        </label>
+        <div style="display: flex; gap: .4rem; flex-wrap: wrap;">
+          <button class="qt-btn qt-btn--ghost" id="vt-lay-hien-tai" type="button">
+            <i class="fas fa-crosshairs"></i> Vị trí hiện tại
+          </button>
+          <button class="qt-btn qt-btn--primary" id="vt-luu" type="button">
+            <i class="fas fa-floppy-disk"></i> Lưu toạ độ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="vt-thong-bao"></div>
+  </div>
+</div>
+
+<!-- Thẻ 3: Bảng danh sách & Nhật ký nhận diện gần đây -->
+<div class="km-grid-2">
+  <!-- Danh sách đăng ký -->
+  <div class="qt-card" style="margin-bottom: 0;">
+    <div class="qt-card__head">
+      <div>
+        <h2><i class="fas fa-user-check" style="color: var(--qt-gold); margin-right: .4rem;"></i> Tình trạng đăng ký khuôn mặt</h2>
+        <p>Danh sách nhân sự đã có mẫu nhận diện trong CSDL.</p>
+      </div>
+      <div class="qt-card__act">
+        <input type="text" class="qt-input" id="tim" placeholder="Tìm tên nhân viên..." style="width: 160px; padding: .35rem .65rem; font-size: .8rem;">
+      </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+      <div class="qt-tablewrap" style="max-height: 480px; overflow-y: auto;">
+        <table class="qt-table">
+          <thead>
+            <tr>
+              <th>Nhân viên</th>
+              <th>Chức danh</th>
+              <th class="qt-center">Mẫu</th>
+              <th>Đăng ký cuối</th>
+              <% if (coTheSua) { %><th class="qt-right">Thao tác</th><% } %>
+            </tr>
+          </thead>
+          <tbody id="tbody-dk"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nhật ký quét gần đây -->
+  <div class="qt-card" style="margin-bottom: 0;">
+    <div class="qt-card__head">
+      <div>
+        <h2><i class="fas fa-clock-rotate-left" style="color: var(--qt-gold); margin-right: .4rem;"></i> Nhật ký nhận diện gần đây</h2>
+        <p>Lịch sử các lần chấm công và kết quả nhận dạng AI.</p>
+      </div>
+    </div>
+    <div class="qt-card__body qt-card__body--flush">
+      <div class="qt-tablewrap" style="max-height: 480px; overflow-y: auto;">
+        <table class="qt-table">
+          <thead>
+            <tr>
+              <th>Thời điểm</th>
+              <th>Chế độ</th>
+              <th>Người</th>
+              <th class="qt-center">Độ khớp</th>
+              <th>Kết quả</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-log"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/cham-cong-khuon-mat.js"></script>
+<script>
+(function () {
+  var E = RT.escapeHtml;
+  var dsDangKy = <%- JSON.stringify(dsDangKy) %>;
+  var nhatKy = <%- JSON.stringify(nhatKy) %>;
+  var coTheSua = <%= coTheSua ? 'true' : 'false' %>;
+  var coTheSuaViTri = <%= coTheSuaViTri ? 'true' : 'false' %>;
+
+  function ngay(s) {
+    if (!s) return '—';
+    var d = new Date(s);
+    return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' +
+           ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  var KQ = {
+    thanh_cong: ['qt-pill--ok', 'Thành công'],
+    khong_khop: ['qt-pill--muted', 'Không khớp'],
+    gia_mao: ['qt-pill--danger', 'Giả mạo'],
+    nghi_cham_ho: ['qt-pill--warn', 'Nghi chấm hộ'],
+    sai_vi_tri: ['qt-pill--warn', 'Sai vị trí'],
+    chua_dat_thu_thach: ['qt-pill--muted', 'Chưa đủ động tác'],
+    khung_khong_dong_nhat: ['qt-pill--muted', 'Ảnh chưa rõ']
+  };
+  var CHE_DO = { nhan_dien: 'Kiosk 1:N', xac_minh: 'Cá nhân 1:1' };
+
+  function veDangKy() {
+    var tu = (document.getElementById('tim').value || '').toLowerCase().trim();
+    var ds = dsDangKy.filter(function(n) { return !tu || String(n.ten).toLowerCase().indexOf(tu) >= 0; });
+    document.getElementById('tbody-dk').innerHTML = ds.map(function (n) {
+      var co = n.so_mau > 0;
+      return '<tr>' +
+        '<td><div class="qt-strong">' + E(n.ten) + '</div><div class="qt-sub">' + E(n.ma_nv || '') + '</div></td>' +
+        '<td>' + (n.ten_bp ? '<span class="qt-pill qt-pill--muted">' + E(n.ten_cd || '') + '</span>' : '<span class="qt-sub">—</span>') + '</td>' +
+        '<td class="qt-center">' + (co ? '<span class="qt-pill qt-pill--info">' + n.so_mau + ' mẫu</span>' : '<span class="qt-pill qt-pill--muted">chưa có</span>') + '</td>' +
+        '<td class="qt-sub">' + ngay(n.lan_dang_ky_cuoi) + '</td>' +
+        (coTheSua ? '<td class="qt-right">' + (co ? '<button class="qt-btn qt-btn--danger qt-btn--sm xoa" data-id="' + n.id_nv + '" data-ten="' + E(n.ten) + '"><i class="fas fa-trash"></i> Xóa</button>' : '') + '</td>' : '') +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="qt-center" style="padding: 2rem; color: var(--qt-muted);">Không có nhân viên nào phù hợp.</td></tr>';
+
+    document.querySelectorAll('.xoa').forEach(function(b) {
+      b.onclick = function() {
+        if (!confirm('Xóa toàn bộ mẫu khuôn mặt của ' + b.getAttribute('data-ten') + '?')) return;
+        b.disabled = true;
+        RT.gui('/api/khuon-mat/xoa', { id_nv: Number(b.getAttribute('data-id')) })
+          .then(function() { RT.thongBao('Đã xóa mẫu nhận diện thành công.', 'thanh-cong'); taiDanhSach(); })
+          .catch(function(e) { RT.thongBao(e.message, 'loi'); b.disabled = false; });
+      };
+    });
+  }
+
+  function veLog() {
+    document.getElementById('tbody-log').innerHTML = nhatKy.map(function (j) {
+      var kq = KQ[j.ket_qua] || ['qt-pill--muted', j.ket_qua];
+      var ten = j.ten_nhan_dien || j.ten_ky_vong || '—';
+      return '<tr>' +
+        '<td class="qt-sub" style="white-space: nowrap;">' + ngay(j.thoi_diem) + '</td>' +
+        '<td><span class="qt-pill qt-pill--muted">' + (CHE_DO[j.che_do] || j.che_do) + '</span></td>' +
+        '<td class="qt-strong">' + E(ten) + '</td>' +
+        '<td class="qt-center qt-money">' + (j.do_tuong_dong != null ? (j.do_tuong_dong * 100).toFixed(0) + '%' : '—') + '</td>' +
+        '<td><span class="qt-pill ' + kq[0] + '">' + kq[1] + '</span>' +
+          (j.khoang_cach_m != null ? '<div class="qt-sub"><i class="fas fa-location-dot"></i> ' + Math.round(j.khoang_cach_m) + ' m</div>' : '') + '</td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="qt-center" style="padding: 2rem; color: var(--qt-muted);">Chưa có lượt chấm công nào.</td></tr>';
+  }
+
+  document.getElementById('tim').oninput = veDangKy;
+
+  var taiDanhSach = RT.dongBo('/api/khuon-mat/danh-sach', function (d) {
+    dsDangKy = d.danh_sach;
+    veDangKy();
+    if (d.tong_quan) {
+      document.getElementById('sl-dk').textContent = d.tong_quan.da_dang_ky;
+      document.getElementById('sl-mau').textContent = d.tong_quan.tong_mau;
+      document.getElementById('sl-tc').textContent = d.tong_quan.hom_nay.thanh_cong;
+      document.getElementById('sl-gm').textContent = d.tong_quan.hom_nay.gia_mao;
+    }
+  }, ['khuon-mat:dang-ky', 'cham-cong:moi']);
+
+  RT.dongBo('/api/khuon-mat/nhat-ky', function (d) {
+    nhatKy = d.nhat_ky;
+    veLog();
+  }, ['cham-cong:moi', 'khuon-mat:dang-ky']);
+
+  // Đánh giá độ chính xác
+  var nutDG = document.getElementById('nut-danh-gia');
+  if (nutDG) {
+    nutDG.onclick = function () {
+      nutDG.disabled = true;
+      var box = document.getElementById('kq-danh-gia');
+      box.innerHTML = '<div class="km-alert km-alert--info"><i class="fas fa-spinner fa-spin"></i> Đang phân tích mô hình nhận diện khuôn mặt AI...</div>';
+      RT.gui('/api/khuon-mat/danh-gia', {}).then(function (d) {
+        var n1 = d.nhan_dien_1_n || {};
+        var s = n1.SFace_cosine || {}, l = n1.LBPH_moc_so_sanh || null;
+        var canhBao = (d.canh_bao || []).map(function (c) {
+          return '<div class="km-alert km-alert--warn" style="margin-top: .5rem;"><i class="fas fa-triangle-exclamation"></i> ' + E(c) + '</div>';
+        }).join('');
+        box.innerHTML = '<div class="qt-card" style="margin-bottom: 1.25rem;"><div class="qt-card__body">' +
+          '<h3 style="font-size: 1.05rem; margin-bottom: .5rem;"><i class="fas fa-chart-column" style="color: var(--qt-gold);"></i> Kết quả đánh giá độ chính xác (Leave-One-Out)</h3>' +
+          '<p class="qt-field__hint" style="margin-bottom: 1rem;">Phân tích trên ' + (d.so_nhan_vien || 0) + ' nhân viên · ' + (d.so_anh_mau || 0) + ' mẫu vector khuôn mặt</p>' +
+          '<table class="qt-table"><thead><tr><th>Mô hình AI</th><th>Độ chính xác</th><th>Số mẫu chuẩn</th></tr></thead><tbody>' +
+          '<tr><td><strong class="qt-strong">SFace Deep Learning (Mặc định)</strong></td><td class="qt-money" style="font-size: 1.05rem;">' + ((s.do_chinh_xac != null ? (s.do_chinh_xac * 100).toFixed(1) : '—')) + '%</td><td>' + (s.so_dung != null ? s.so_dung + ' / ' + s.so_mau : '—') + '</td></tr>' +
+          (l && l.do_chinh_xac != null ? '<tr><td>LBPH (Thuật toán đối sánh mốc)</td><td>' + (l.do_chinh_xac * 100).toFixed(1) + '%</td><td>' + (l.so_dung + ' / ' + l.so_mau) + '</td></tr>' : '') +
+          '</tbody></table>' + canhBao +
+          '</div></div>';
+      }).catch(function (e) {
+        box.innerHTML = '<div class="km-alert km-alert--danger">' + e.message + '</div>';
+      }).then(function() { nutDG.disabled = false; });
+    };
+  }
+
+  // Toạ độ GPS & Bản đồ
+  var nutLay = document.getElementById('vt-lay-hien-tai');
+  var nutLuu = document.getElementById('vt-luu');
+  var bcVt = document.getElementById('vt-thong-bao');
+  var oViDo = document.getElementById('vt-vi-do');
+  var oKinhDo = document.getElementById('vt-kinh-do');
+  var oBanKinh = document.getElementById('vt-ban-kinh');
+
+  function bao(html, loai) {
+    bcVt.innerHTML = '<div class="km-alert km-alert--' + (loai === 'success' ? 'ok' : (loai === 'danger' ? 'danger' : 'info')) + '" style="margin-top: .75rem; margin-bottom: 0;">' + html + '</div>';
+  }
+
+  var banDo = null, ghim = null, vong = null;
+
+  function toaDoHienTai() {
+    var a = parseFloat(oViDo.value), b = parseFloat(oKinhDo.value);
+    if (!isFinite(a) || !isFinite(b)) return { lat: 10.762622, lng: 106.660172, trong: true };
+    return { lat: a, lng: b, trong: false };
+  }
+
+  function datToaDo(lat, lng, keoBanDo) {
+    oViDo.value = Number(lat).toFixed(6);
+    oKinhDo.value = Number(lng).toFixed(6);
+    if (ghim) ghim.setLatLng([lat, lng]);
+    if (vong) vong.setLatLng([lat, lng]);
+    if (keoBanDo && banDo) banDo.panTo([lat, lng]);
+  }
+
+  function capNhatVong() {
+    if (vong) vong.setRadius(Math.max(5, Number(oBanKinh.value) || 30));
+  }
+
+  function dungBanDo() {
+    var el = document.getElementById('ban-do');
+    if (!el || typeof L === 'undefined') {
+      if (el) el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--qt-muted); font-size:.85rem;">Không thể tải bản đồ vệ tinh. Bạn vẫn có thể nhập toạ độ thủ công.</div>';
+      return;
+    }
+
+    try {
+      if (L.Icon && L.Icon.Default && L.Icon.Default.prototype) {
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: '/images/marker-icon-2x.png',
+          iconUrl: '/images/marker-icon.png',
+          shadowUrl: '/images/marker-shadow.png',
+        });
+      }
+    } catch (e) {}
+
+    var t = toaDoHienTai();
+    banDo = L.map(el, {
+      center: [t.lat, t.lng],
+      zoom: t.trong ? 13 : 17,
+      scrollWheelZoom: true
+    });
+
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      attribution: '&copy; Google Maps'
+    }).addTo(banDo);
+
+    vong = L.circle([t.lat, t.lng], {
+      radius: Math.max(5, Number(oBanKinh.value) || 30),
+      color: '#8a6a1f',
+      fillColor: '#c8a24b',
+      fillOpacity: 0.25,
+      weight: 2
+    }).addTo(banDo);
+
+    ghim = L.marker([t.lat, t.lng], { draggable: coTheSuaViTri }).addTo(banDo);
+    ghim.bindTooltip('Vị trí nhà hàng', { permanent: false });
+
+    if (coTheSuaViTri) {
+      ghim.on('drag', function (e) { datToaDo(e.latlng.lat, e.latlng.lng, false); });
+      banDo.on('click', function (e) { datToaDo(e.latlng.lat, e.latlng.lng, false); });
+    }
+
+    [100, 300, 600, 1200].forEach(function(delay) {
+      setTimeout(function () {
+        if (banDo) banDo.invalidateSize();
+      }, delay);
+    });
+
+    window.addEventListener('resize', function() {
+      if (banDo) banDo.invalidateSize();
+    });
+  }
+  dungBanDo();
+
+  if (coTheSuaViTri) {
+    [oViDo, oKinhDo].forEach(function (o) {
+      o.oninput = function () {
+        var a = parseFloat(oViDo.value), b = parseFloat(oKinhDo.value);
+        if (isFinite(a) && isFinite(b) && ghim) {
+          ghim.setLatLng([a, b]);
+          vong.setLatLng([a, b]);
+        }
+      };
+    });
+    oBanKinh.oninput = capNhatVong;
+
+    function tim() {
+      var q = document.getElementById('vt-tim').value.trim();
+      if (!q) return;
+      var goiY = document.getElementById('vt-goi-y');
+      goiY.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm địa chỉ...';
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (ds) {
+          if (!ds || !ds.length) {
+            goiY.innerHTML = '<span style="color:var(--qt-danger);">Không tìm thấy địa chỉ. Hãy kéo ghim trên bản đồ.</span>';
+            return;
+          }
+          var v = ds[0];
+          datToaDo(parseFloat(v.lat), parseFloat(v.lon), true);
+          if (banDo) banDo.setView([parseFloat(v.lat), parseFloat(v.lon)], 17);
+          goiY.innerHTML = '<i class="fas fa-map-pin" style="color:var(--qt-gold);"></i> ' + E(String(v.display_name).slice(0, 80));
+        })
+        .catch(function () {
+          goiY.innerHTML = '<span style="color:var(--qt-danger);">Không thể kết nối tìm kiếm địa chỉ.</span>';
+        });
+    }
+    document.getElementById('vt-nut-tim').onclick = tim;
+    document.getElementById('vt-tim').onkeydown = function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); tim(); }
+    };
+  }
+
+  if (nutLay) {
+    nutLay.onclick = function () {
+      nutLay.disabled = true;
+      bao('<i class="fas fa-spinner fa-spin"></i> Đang định vị GPS từ thiết bị...', 'info');
+      CamCC.layViTri({ hetHanMs: 15000 }).then(function (v) {
+        nutLay.disabled = false;
+        if (!v.co) return bao('<i class="fas fa-circle-xmark"></i> ' + E(v.ly_do), 'danger');
+        datToaDo(v.vi_do, v.kinh_do, true);
+        if (banDo) banDo.setView([v.vi_do, v.kinh_do], 18);
+        bao('<i class="fas fa-circle-check"></i> Đã lấy toạ độ GPS (sai số ~' + (v.do_chinh_xac_m != null ? v.do_chinh_xac_m + 'm' : 'ít') + '). Hãy bấm <strong>Lưu toạ độ</strong>.', 'success');
+      });
+    };
+  }
+
+  if (nutLuu) {
+    nutLuu.onclick = function () {
+      nutLuu.disabled = true;
+      RT.gui('/api/khuon-mat/vi-tri', {
+        vi_do: Number(document.getElementById('vt-vi-do').value),
+        kinh_do: Number(document.getElementById('vt-kinh-do').value),
+        ban_kinh_m: Number(document.getElementById('vt-ban-kinh').value),
+        bat_gps: document.getElementById('vt-bat-gps').checked,
+      }).then(function (d) {
+        var nhan = document.getElementById('nhan-gps');
+        nhan.className = 'qt-pill ' + (d.cau_hinh.bat_gps ? 'qt-pill--ok' : 'qt-pill--muted');
+        nhan.textContent = d.cau_hinh.bat_gps ? 'Bắt buộc đúng vị trí' : 'Không kiểm tra GPS';
+        bao('<i class="fas fa-circle-check"></i> Đã lưu cấu hình GPS nhà hàng thành công.', 'success');
+        capNhatVong();
+        RT.thongBao('Đã lưu toạ độ nhà hàng.', 'thanh-cong');
+      }).catch(function (e) {
+        bao('<i class="fas fa-circle-xmark"></i> ' + E(e.message), 'danger');
+      }).then(function () { nutLuu.disabled = false; });
+    };
+  }
+
+  // Ngưỡng nhận diện
+  var ndNguong = document.getElementById('nd-nguong');
+  var ndHien   = document.getElementById('nd-nguong-hien');
+  var ndLuu    = document.getElementById('nd-luu');
+
+  if (ndNguong && ndHien) {
+    ndNguong.oninput = function () { ndHien.textContent = ndNguong.value + '%'; };
+  }
+
+  if (ndLuu) {
+    ndLuu.onclick = function () {
+      ndLuu.disabled = true;
+      var hop = document.getElementById('nd-thong-bao');
+      RT.gui('/api/khuon-mat/cau-hinh', {
+        nguong_phan_tram: Number(ndNguong.value),
+        muc_dong_tac: document.getElementById('nd-dong-tac').value,
+        bat_kiem_tra_song: document.getElementById('nd-song').checked,
+        chan_cham_ho: document.getElementById('nd-cham-ho').checked,
+      }).then(function (d) {
+        document.getElementById('nhan-nguong').textContent = 'Đang cho vào từ ' + d.cau_hinh.nguong_phan_tram + '% trở lên';
+        hop.innerHTML = '<div class="km-alert km-alert--ok"><i class="fas fa-circle-check"></i> Đã lưu ngưỡng nhận diện. Áp dụng ngay lập tức cho các lượt quét tiếp theo.</div>';
+        RT.thongBao('Đã lưu ngưỡng nhận diện.', 'thanh-cong');
+      }).catch(function (e) {
+        hop.innerHTML = '<div class="km-alert km-alert--danger"><i class="fas fa-circle-xmark"></i> ' + E(e.message) + '</div>';
+      }).then(function () { ndLuu.disabled = false; });
+    };
+  }
+
+  veDangKy();
+  veLog();
+})();
+</script>
+
+<%- include('partials/footer') %>

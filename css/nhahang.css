@@ -824,7 +824,7 @@ body::-webkit-scrollbar {
    ========================================================================= */
 .nh-footer { background: #1c110b; color: rgba(255, 255, 255, .82); padding: 4.5rem 0 0; width: 100%; }
 .nh-footer__inner { width: 100%; padding-inline: clamp(1.5rem, 5vw, 5rem); margin-inline: auto; }
-.nh-footer__grid { display: grid; grid-template-columns: 1.4fr 1fr 1.1fr 1.1fr; gap: clamp(1.5rem, 3.5vw, 4rem); padding-bottom: 3rem; }
+.nh-footer__grid { display: grid; grid-template-columns: 1.2fr 0.9fr 1.4fr 1fr; gap: clamp(1.5rem, 3.5vw, 4rem); padding-bottom: 3rem; }
 .nh-footer h4 { color: #fff; font-family: var(--nh-serif); font-size: 1.2rem; margin-bottom: 1.2rem; position: relative; padding-bottom: .7rem; }
 .nh-footer h4::after { content: ""; position: absolute; left: 0; bottom: 0; width: 34px; height: 2px; background: var(--nh-gold); }
 .nh-footer__brand { display: flex; align-items: center; gap: .6rem; font-family: var(--nh-brand-font); font-weight: 700; font-size: 2.1rem; color: var(--nh-gold-soft); margin-bottom: 1rem; }

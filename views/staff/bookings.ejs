@@ -2,161 +2,460 @@
   var activePage = 'bookings';
   var staffName = session.staffName || 'Nhân viên';
   var unreadCount = unread || 0;
+  var userRole = session.staffRole || '';
+
+  // Thống kê nhanh
+  var countChoXacNhan = 0;
+  var countDaXacNhan = 0;
+  var countDangPhucVu = 0;
+  var countDaThanhToan = 0;
+  if (bookings && bookings.length > 0) {
+    bookings.forEach(b => {
+      if (b.tinhtrang == 0) countChoXacNhan++;
+      else if (b.tinhtrang == 1) countDaXacNhan++;
+      else if (b.tinhtrang == 5 || b.tinhtrang == 6) countDangPhucVu++;
+      else if (b.tinhtrang == 3) countDaThanhToan++;
+    });
+  }
 %>
 <%- include('partials/header') %>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-3">
-  <h1 class="h3 mb-0 text-gray-800">Quản lý Đặt bàn (Hệ thống cũ)</h1>
-  <div class="d-flex gap-2" style="gap:8px;">
-    <a href="/staff/dat-ban" class="btn btn-sm btn-success shadow-sm font-weight-bold">
-      <i class="fas fa-calendar-check fa-sm"></i> Đến Trung tâm Đặt bàn mới
+<style>
+  /* Theme hiện đại, tinh tế chuẩn Nhà Hàng Bảo Đoàn */
+  .order-stat-card {
+    border-radius: 12px;
+    border: 1px solid #e7ded0;
+    background: #fff;
+    padding: 16px 20px;
+    box-shadow: 0 4px 15px rgba(36,26,20,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .order-stat-card:hover, .order-stat-card.active-filter {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(200, 162, 75, 0.2);
+    border-color: #c8a24b;
+  }
+  .stat-icon-wrapper {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8c7b6e;
+    margin-bottom: 2px;
+  }
+  .stat-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #241a14;
+    line-height: 1.2;
+  }
+
+  /* Table styling */
+  .table-custom {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .table-custom thead th {
+    background: #fbf9f5;
+    color: #4a3c31;
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-top: none;
+    border-bottom: 2px solid #e7ded0;
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+  .table-custom tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-top: 1px solid #f0eae1;
+    font-size: 0.88rem;
+  }
+  .table-custom tbody tr:hover td {
+    background-color: #fefdfa;
+  }
+  
+  /* Filter tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e7ded0;
+    padding-bottom: 12px;
+  }
+  .tab-btn {
+    border: 1px solid #e7ded0;
+    background: #fff;
+    color: #5d4037;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover {
+    background: #fbf7f0;
+    border-color: #c8a24b;
+    color: #241a14;
+  }
+  .tab-btn.active {
+    background: #241a14;
+    border-color: #241a14;
+    color: #c8a24b;
+  }
+
+  .table-code-badge {
+    background: #f5eedf;
+    color: #633f00;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+
+  .table-seat-badge {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .table-seat-none {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  /* Dish items view popup */
+  .items-list-box {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px dashed #eee;
+  }
+  .item-row:last-child {
+    border-bottom: none;
+  }
+</style>
+
+<!-- Top Header Section -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800" style="font-weight: 700;">Quản lý Gọi món &amp; Bàn ăn</h1>
+    <p class="text-muted mb-0" style="font-size: 0.85rem;">
+      <i class="fas fa-layer-group text-warning mr-1"></i> Theo dõi các bàn đang phục vụ, gọi món thêm cho khách và quản lý đơn bàn
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mt-3 mt-sm-0" style="gap:8px;">
+    <a href="/so-do-ban" class="btn btn-sm btn-outline-primary shadow-sm font-weight-bold">
+      <i class="fas fa-chair fa-sm"></i> Sơ đồ bàn trực quan
     </a>
-    <a href="/staff/qr-codes" class="d-none d-sm-inline-block btn btn-sm btn-outline-info shadow-sm">
-      <i class="fas fa-qrcode fa-sm"></i> Quản lý QR Đặt Món
+    <a href="/kds" class="btn btn-sm btn-outline-warning shadow-sm font-weight-bold">
+      <i class="fas fa-bell-concierge fa-sm"></i> Theo dõi món ra (KDS)
     </a>
-    <a href="/staff/bookings/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-      <i class="fas fa-plus fa-sm text-white-50"></i> Tạo Đặt bàn nhanh
+    <a href="/staff/bookings/create" class="btn btn-sm btn-primary shadow-sm">
+      <i class="fas fa-plus fa-sm mr-1"></i> Tạo đơn bàn mới
     </a>
   </div>
 </div>
 
-<div class="alert alert-warning border-left-warning shadow-sm mb-4" role="alert">
-  <div class="d-flex align-items-center justify-content-between">
-    <div>
-      <i class="fas fa-info-circle mr-2"></i>
-      <strong>Lưu ý:</strong> Khách đặt bàn trên website hiện tại đều được ghi nhận trực tiếp vào <strong>Trung tâm Đặt bàn mới</strong> với đầy đủ tính năng: sơ đồ bàn 2D, chọn giờ cao điểm, tính tiền cọc và timeline.
+<!-- Thống kê nhanh theo trạng thái -->
+<div class="row mb-4">
+  <div class="col-6 col-md-3 mb-3">
+    <div class="order-stat-card" onclick="filterByTab('all')">
+      <div>
+        <div class="stat-label">Tất cả đơn bàn</div>
+        <div class="stat-num"><%= bookings ? bookings.length : 0 %></div>
+      </div>
+      <div class="stat-icon-wrapper" style="background: rgba(36, 26, 20, 0.08); color: #241a14;">
+        <i class="fas fa-receipt"></i>
+      </div>
     </div>
-    <a href="/staff/dat-ban" class="btn btn-sm btn-warning text-dark font-weight-bold text-nowrap ml-3">
-      Mở Trung tâm Đặt bàn <i class="fas fa-arrow-right ml-1"></i>
-    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="order-stat-card" onclick="filterByTab('active')">
+      <div>
+        <div class="stat-label">Đang phục vụ</div>
+        <div class="stat-num text-warning"><%= countDangPhucVu %></div>
+      </div>
+      <div class="stat-icon-wrapper" style="background: rgba(255, 193, 7, 0.15); color: #b78103;">
+        <i class="fas fa-utensils"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="order-stat-card" onclick="filterByTab('confirmed')">
+      <div>
+        <div class="stat-label">Đã xác nhận / Chờ đến</div>
+        <div class="stat-num text-primary"><%= countDaXacNhan %></div>
+      </div>
+      <div class="stat-icon-wrapper" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd;">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="order-stat-card" onclick="filterByTab('paid')">
+      <div>
+        <div class="stat-label">Đã thanh toán</div>
+        <div class="stat-num text-success"><%= countDaThanhToan %></div>
+      </div>
+      <div class="stat-icon-wrapper" style="background: rgba(25, 135, 84, 0.12); color: #198754;">
+        <i class="fas fa-check-double"></i>
+      </div>
+    </div>
   </div>
 </div>
 
 <% if (typeof msg !== 'undefined' && msg) { %>
-<div class="alert alert-<%= msgType || 'info' %> alert-dismissible fade show" role="alert">
-  <%= msg %>
+<div class="alert alert-<%= msgType || 'info' %> alert-dismissible fade show shadow-sm" role="alert">
+  <i class="fas fa-info-circle mr-2"></i> <%= msg %>
   <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
 </div>
 <% } %>
 
+<!-- Danh sách Đơn đặt bàn -->
 <div class="card shadow mb-4">
-  <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">Danh sách các Đơn đặt bàn</h6>
+  <div class="card-header py-3 bg-white">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="gap: 12px;">
+      <!-- Filter Tabs -->
+      <div class="filter-tabs border-0 p-0 mb-0">
+        <button class="tab-btn active" data-filter="all" onclick="filterByTab('all')">Tất cả (<%= bookings ? bookings.length : 0 %>)</button>
+        <button class="tab-btn" data-filter="active" onclick="filterByTab('active')">Đang dùng món / Tại bàn (<%= countDangPhucVu %>)</button>
+        <button class="tab-btn" data-filter="confirmed" onclick="filterByTab('confirmed')">Đã xác nhận (<%= countDaXacNhan %>)</button>
+        <button class="tab-btn" data-filter="pending" onclick="filterByTab('pending')">Chờ xác nhận (<%= countChoXacNhan %>)</button>
+        <button class="tab-btn" data-filter="paid" onclick="filterByTab('paid')">Đã thanh toán (<%= countDaThanhToan %>)</button>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="d-flex align-items-center" style="max-width: 320px; width: 100%;">
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-light border-right-0"><i class="fas fa-search text-muted"></i></span>
+          </div>
+          <input type="text" id="orderSearchInput" class="form-control border-left-0 bg-light" placeholder="Tìm theo mã, tên khách, số bàn, SĐT..." oninput="filterOrdersTable()">
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="card-body">
+
+  <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+      <table class="table table-custom table-hover" id="ordersTable" width="100%">
         <thead>
           <tr>
-            <th>Mã (Sesis)</th>
+            <th width="110">Mã đơn</th>
+            <th width="130">Bàn ăn</th>
             <th>Khách hàng</th>
-            <th>Lịch đến</th>
-            <th>Số lượng</th>
-            <th>Yêu cầu</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
+            <th width="140">Thời gian</th>
+            <th width="90" class="text-center">Số khách</th>
+            <th width="110" class="text-center">Món ăn</th>
+            <th width="120" class="text-right">Tổng tiền</th>
+            <th width="140" class="text-center">Trạng thái</th>
             <th width="180" class="text-center">Hành động</th>
           </tr>
         </thead>
-        <tbody>
-          <% if(bookings && bookings.length > 0) { %>
-            <% bookings.forEach(b => { %>
-              <tr>
-                <td><%= b.sesis.substring(0,6).toUpperCase() %></td>
+        <tbody id="ordersTableBody">
+          <% if (bookings && bookings.length > 0) { %>
+            <% bookings.forEach(b => { 
+                var statusGroup = 'other';
+                if (b.tinhtrang == 0) statusGroup = 'pending';
+                else if (b.tinhtrang == 1) statusGroup = 'confirmed';
+                else if (b.tinhtrang == 5 || b.tinhtrang == 6) statusGroup = 'active';
+                else if (b.tinhtrang == 3) statusGroup = 'paid';
+                else if (b.tinhtrang == 2) statusGroup = 'cancelled';
+            %>
+              <tr class="order-row" 
+                  data-status-group="<%= statusGroup %>" 
+                  data-search="<%= (b.sesis + ' ' + (b.ten_khach || '') + ' ' + (b.sodienthoai || '') + ' ' + (b.table_name || '') + ' ' + (b.noidung || '')).toLowerCase() %>">
+                
+                <!-- Mã đơn -->
                 <td>
-                  <strong><%= b.ten_khach %></strong>
+                  <span class="table-code-badge" title="Mã đơn: <%= b.sesis %>">#<%= b.sesis.substring(0,6).toUpperCase() %></span>
+                </td>
+
+                <!-- Bàn ăn -->
+                <td>
                   <% if (b.table_name) { %>
-                    <span class="badge badge-warning" style="font-size: 11px;">🪑 <%= b.table_name %></span>
+                    <span class="table-seat-badge">
+                      <i class="fas fa-chair mr-1"></i> Bàn <%= b.table_name %>
+                    </span>
+                  <% } else { %>
+                    <span class="table-seat-none" title="Chưa gán vị trí bàn">
+                      <i class="fas fa-question-circle mr-1"></i> Chưa gán
+                    </span>
                   <% } %>
-                  <br>
-                  <small class="text-muted"><%= b.sodienthoai %></small>
                 </td>
-                <td><%= new Date(b.dates).toLocaleDateString('vi-VN') %> <%= b.tg %></td>
-                <td><%= b.so_user %> người</td>
-                <td><%= b.noidung || 'Không có' %></td>
-                <td class="text-danger font-weight-bold"><%= parseInt(b.tong_tien).toLocaleString('vi-VN') %>đ</td>
+
+                <!-- Khách hàng -->
                 <td>
-                  <% if(b.tinhtrang == 0) { %>
-                    <span class="badge badge-secondary">Chờ xác nhận</span>
-                  <% } else if(b.tinhtrang == 1) { %>
-                    <span class="badge badge-primary">Đã xác nhận</span>
-                  <% } else if(b.tinhtrang == 5) { %>
-                    <span class="badge badge-info">Khách đã đến</span>
-                  <% } else if(b.tinhtrang == 6) { %>
-                    <span class="badge badge-warning">Đang dùng món</span>
-                  <% } else if (b.tinhtrang == 2) { %>
-                    <span class="badge badge-danger">Đã hủy</span>
-                  <% } else if (b.tinhtrang == 3) { %>
-                    <span class="badge badge-success">Đã thanh toán</span>
+                  <div class="font-weight-bold text-dark"><%= b.ten_khach || 'Khách vãng lai' %></div>
+                  <small class="text-muted"><i class="fas fa-phone fa-xs mr-1"></i><%= b.sodienthoai || 'Không có' %></small>
+                  <% if (b.noidung && b.noidung !== 'Không có') { %>
+                    <div style="font-size: 0.78rem; color: #795548; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="<%= b.noidung %>">
+                      📝 <%= b.noidung %>
+                    </div>
                   <% } %>
                 </td>
+
+                <!-- Thời gian -->
+                <td>
+                  <div class="text-dark font-weight-bold" style="font-size: 0.85rem;"><%= b.tg %></div>
+                  <div class="text-muted" style="font-size: 0.78rem;">
+                    <%= new Date(b.dates).toLocaleDateString('vi-VN') %>
+                  </div>
+                </td>
+
+                <!-- Số khách -->
                 <td class="text-center">
-                  <!-- In Hóa đơn btn -->
-                  <button type="button" class="btn btn-sm btn-outline-info mb-1" title="In Hóa Đơn" onclick="window.open('/staff/bookings/print/<%= b.sesis %>', '', 'width=600,height=800')"><i class="fas fa-print"></i></button>
+                  <span class="badge badge-light border text-dark font-weight-bold px-2 py-1">
+                    <i class="fas fa-users mr-1 text-muted"></i><%= b.so_user || 1 %>
+                  </span>
+                </td>
 
-                  <% if(b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                    <!-- Update form via Modal trigger -->
-                    <button class="btn btn-sm btn-outline-warning mb-1" data-toggle="modal" data-target="#editModal<%= b.sesis %>" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
-
-                    <% if (b.tinhtrang == 0) { %>
-                      <!-- Xác nhận đơn -->
-                      <form action="/staff/bookings/confirm/<%= b.sesis %>" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-success mb-1" title="Xác nhận đơn"><i class="fas fa-check"></i></button>
-                      </form>
-                    <% } %>
-
-                    <!-- ✅ NÚT THÊM MÓN (mới) -->
-                    <button class="btn btn-sm btn-outline-success mb-1" title="Thêm món cho khách"
-                      onclick="openAddDishModal('<%= b.sesis %>', '<%= b.ten_khach %>')">
-                      <i class="fas fa-plus"></i>
+                <!-- Món ăn (Số lượng & nút xem nhanh) -->
+                <td class="text-center">
+                  <% if (b.so_mon > 0) { %>
+                    <button type="button" class="btn btn-sm btn-outline-info px-2 py-1 font-weight-bold" style="font-size: 0.8rem; border-radius: 6px;" onclick="viewOrderItems('<%= b.sesis %>', '<%= b.ten_khach %>', '<%= b.table_name || 'Chưa gán' %>')" title="Bấm để xem danh sách món đã gọi">
+                      <i class="fas fa-utensils mr-1"></i> <%= b.so_mon %> món (<%= b.tong_soluong_mon %>)
                     </button>
+                  <% } else { %>
+                    <span class="text-muted" style="font-size: 0.8rem;">Chưa gọi món</span>
+                  <% } %>
+                </td>
 
-                    <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                      <!-- Gán bàn / Xác nhận khách đến -->
-                      <button class="btn btn-sm btn-outline-primary mb-1" data-toggle="modal" data-target="#tableModal<%= b.sesis %>" title="Gán bàn / Khách đến">
-                        <i class="fas fa-chair"></i>
+                <!-- Tổng tiền -->
+                <td class="text-right">
+                  <span class="text-danger font-weight-bold" style="font-size: 0.95rem;">
+                    <%= parseInt(b.tong_tien || 0).toLocaleString('vi-VN') %>đ
+                  </span>
+                </td>
+
+                <!-- Trạng thái -->
+                <td class="text-center">
+                  <% if (b.tinhtrang == 0) { %>
+                    <span class="badge badge-secondary px-2 py-1" style="font-weight: 600;">Chờ xác nhận</span>
+                  <% } else if (b.tinhtrang == 1) { %>
+                    <span class="badge badge-primary px-2 py-1" style="font-weight: 600;">Đã xác nhận</span>
+                  <% } else if (b.tinhtrang == 5) { %>
+                    <span class="badge badge-info px-2 py-1" style="font-weight: 600;">Khách đã đến</span>
+                  <% } else if (b.tinhtrang == 6) { %>
+                    <span class="badge badge-warning text-dark px-2 py-1" style="font-weight: 600;">Đang dùng món</span>
+                  <% } else if (b.tinhtrang == 2) { %>
+                    <span class="badge badge-danger px-2 py-1" style="font-weight: 600;">Đã hủy</span>
+                  <% } else if (b.tinhtrang == 3) { %>
+                    <span class="badge badge-success px-2 py-1" style="font-weight: 600;">Đã thanh toán</span>
+                  <% } %>
+                </td>
+
+                <!-- Hành động thông minh -->
+                <td class="text-center">
+                  <div class="d-inline-flex align-items-center" style="gap: 4px;">
+                    <!-- Nút Thêm Món (Trọng tâm cho Phục vụ) -->
+                    <% if (b.tinhtrang != 2 && b.tinhtrang != 3) { %>
+                      <button class="btn btn-sm btn-success px-2 py-1 shadow-sm" title="Gọi thêm món cho khách"
+                        onclick="openAddDishModal('<%= b.sesis %>', '<%= b.ten_khach %>')">
+                        <i class="fas fa-plus mr-1"></i> Gọi món
                       </button>
                     <% } %>
 
-                    <!--
-                      Thanh toán.
-                      Trước đây nút này POST thẳng /staff/bookings/pay và chỉ đổi
-                      tinhtrang = 3, không ghi số tiền, không ghi hình thức trả,
-                      không có biên lai. Nay chuyển sang màn hình thu ngân để có
-                      hóa đơn thật: chọn phương thức, áp mã giảm giá, chia bill,
-                      sinh mã VietQR và in biên lai.
-                    -->
-                    <a href="/staff/thanh-toan/<%= b.sesis %>" class="btn btn-sm btn-success mb-1" title="Thanh toán">
-                      <i class="fas fa-cash-register"></i>
-                    </a>
-                  <% } %>
+                    <!-- In Phiếu Tạm Tính / Hóa đơn -->
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" title="In Phiếu / Hóa Đơn" 
+                      onclick="window.open('/staff/bookings/print/<%= b.sesis %>', '', 'width=650,height=800')">
+                      <i class="fas fa-print"></i>
+                    </button>
 
-                  <% if(b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                    <!-- Table Assign Modal -->
+                    <!-- Dropdown thêm tùy chọn -->
+                    <div class="dropdown d-inline-block">
+                      <button class="btn btn-sm btn-light border px-2 py-1 text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right shadow border-0" style="font-size: 0.85rem;">
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="viewOrderItems('<%= b.sesis %>', '<%= b.ten_khach %>', '<%= b.table_name || 'Chưa gán' %>')">
+                          <i class="fas fa-list-ul mr-2 text-info"></i> Xem chi tiết món đã gọi
+                        </a>
+
+                        <% if (b.tinhtrang == 0) { %>
+                          <form action="/staff/bookings/confirm/<%= b.sesis %>" method="POST">
+                            <button type="submit" class="dropdown-item">
+                              <i class="fas fa-check-circle mr-2 text-success"></i> Xác nhận đơn này
+                            </button>
+                          </form>
+                        <% } %>
+
+                        <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
+                          <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#tableModal<%= b.sesis %>">
+                            <i class="fas fa-chair mr-2 text-primary"></i> Đổi bàn / Gán bàn
+                          </a>
+                        <% } %>
+
+                        <% if (b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
+                          <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#editModal<%= b.sesis %>">
+                            <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin giờ / khách
+                          </a>
+                        <% } %>
+
+                        <% if (b.tinhtrang != 2 && b.tinhtrang != 3) { %>
+                          <div class="dropdown-divider"></div>
+                          <a class="dropdown-item text-success font-weight-bold" href="/staff/thanh-toan/<%= b.sesis %>">
+                            <i class="fas fa-cash-register mr-2"></i> Chuyển sang Thu ngân POS
+                          </a>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Table Assign Modal -->
+                  <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
                     <div class="modal fade text-left" id="tableModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <form action="/staff/bookings/arrive/<%= b.sesis %>" method="POST">
                             <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff;">
-                              <h5 class="modal-title">Gán bàn & Xác nhận khách đến</h5>
+                              <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
+                                <i class="fas fa-chair mr-2 text-warning"></i> Gán bàn cho đơn: <%= b.ten_khach %>
+                              </h5>
                               <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                               </button>
                             </div>
                             <div class="modal-body text-dark">
-                              <div class="alert alert-info">
+                              <div class="alert alert-light border">
                                 <strong>Khách hàng:</strong> <%= b.ten_khach %><br>
-                                <strong>Trạng thái hiện tại:</strong> 
-                                <% if (b.tinhtrang == 1) { %>
-                                  Chờ khách đến (Sau khi gán bàn, trạng thái sẽ chuyển thành "Khách đã đến")
-                                <% } else if (b.tinhtrang == 5) { %>
-                                  Khách đã đến
-                                <% } else { %>
-                                  Đang dùng món
-                                <% } %>
+                                <strong>Vị trí hiện tại:</strong> <%= b.table_name ? 'Bàn ' + b.table_name : 'Chưa gán vị trí' %>
                               </div>
                               <div class="form-group text-dark">
-                                <label class="font-weight-bold">Chọn bàn phục vụ (Mã QR)</label>
+                                <label class="font-weight-bold">Chọn bàn phục vụ</label>
                                 <select name="table_id" class="form-control" required>
                                   <option value="">-- Chọn bàn --</option>
                                   <% qrCodes.forEach(qr => { %>
@@ -168,8 +467,8 @@
                               </div>
                             </div>
                             <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-                              <button type="submit" class="btn btn-primary">Xác nhận</button>
+                              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+                              <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Xác nhận chuyển bàn</button>
                             </div>
                           </form>
                         </div>
@@ -177,20 +476,23 @@
                     </div>
                   <% } %>
 
-                    <!-- Edit Modal -->
+                  <!-- Edit Modal -->
+                  <% if (b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
                     <div class="modal fade text-left" id="editModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <form action="/staff/bookings/edit/<%= b.sesis %>" method="POST">
-                            <div class="modal-header">
-                              <h5 class="modal-title">Sửa thông tin Đặt bàn</h5>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <div class="modal-header" style="background:#241a14; color:#fff;">
+                              <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
+                                <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin Đặt bàn
+                              </h5>
+                              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                               </button>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body text-dark">
                               <div class="form-group">
-                                <label>Ngày đến</label>
+                                <label class="font-weight-bold">Ngày đến</label>
                                 <% 
                                   let formattedDate = '';
                                   try { 
@@ -200,31 +502,37 @@
                                 <input type="date" name="dates" class="form-control" value="<%= formattedDate %>" required>
                               </div>
                               <div class="form-group">
-                                <label>Giờ đến</label>
+                                <label class="font-weight-bold">Giờ đến</label>
                                 <input type="time" name="tg" class="form-control" value="<%= b.tg %>" required>
                               </div>
                               <div class="form-group">
-                                <label>Số khách</label>
+                                <label class="font-weight-bold">Số khách</label>
                                 <input type="number" name="so_user" class="form-control" value="<%= b.so_user %>" required>
                               </div>
                               <div class="form-group">
-                                <label>Ghi chú / Yêu cầu đặc biệt</label>
+                                <label class="font-weight-bold">Ghi chú / Yêu cầu đặc biệt</label>
                                 <textarea name="noidung" class="form-control" rows="3"><%= b.noidung %></textarea>
                               </div>
                             </div>
                             <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-                              <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+                              <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Lưu thay đổi</button>
                             </div>
                           </form>
                         </div>
                       </div>
                     </div>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr><td colspan="8" class="text-center">Chưa có dữ liệu đặt bàn</td></tr>
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="fas fa-clipboard-list fa-3x mb-3 text-gray-300 d-block"></i>
+                Chưa có đơn đặt bàn nào trong hệ thống
+              </td>
+            </tr>
           <% } %>
         </tbody>
       </table>
@@ -232,40 +540,74 @@
   </div>
 </div>
 
-<!-- ✅ MODAL THÊM MÓN CHO KHÁCH (mới) -->
+<!-- MODAL XEM CHI TIẾT CÁC MÓN CỦA ĐƠN -->
+<div class="modal fade" id="viewItemsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #241a14, #3d2b21); color: #fff; border-radius: 14px 14px 0 0;">
+        <h5 class="modal-title font-weight-bold" style="font-size: 1.05rem;">
+          <i class="fas fa-utensils text-warning mr-2"></i> Chi tiết món ăn (<span id="viewItemsTableName"></span>)
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="mb-2 text-muted" style="font-size: 0.85rem;">
+          Khách hàng: <strong class="text-dark" id="viewItemsCustName"></strong> &bull; Mã đơn: <strong class="text-dark" id="viewItemsSesis"></strong>
+        </div>
+        <div class="items-list-box border rounded bg-light" id="viewItemsContent">
+          <div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Đang tải dữ liệu...</div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+          <span class="font-weight-bold">Tổng thành tiền:</span>
+          <span class="text-danger font-weight-bold h5 mb-0" id="viewItemsTotal">0đ</span>
+        </div>
+      </div>
+      <div class="modal-footer bg-light" style="border-radius: 0 0 14px 14px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-success btn-sm font-weight-bold" id="btnGoToAddDish">
+          <i class="fas fa-plus-circle mr-1"></i> Gọi thêm món cho đơn này
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL THÊM MÓN CHO KHÁCH (ORDER) -->
 <div class="modal fade" id="addDishModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff;">
-        <h5 class="modal-title"><i class="fas fa-utensils"></i> Thêm món cho khách: <span id="addDishCustomerName"></span></h5>
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#241a14,#3d2b21); color:#fff; border-radius: 14px 14px 0 0;">
+        <h5 class="modal-title font-weight-bold" style="font-size: 1.05rem;">
+          <i class="fas fa-utensils text-warning mr-2"></i> Gọi thêm món: <span id="addDishCustomerName" class="text-warning"></span>
+        </h5>
         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-3">
         <!-- Search bar -->
         <div class="input-group mb-3">
           <div class="input-group-prepend">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
           </div>
-          <input type="text" id="dishSearchInput" class="form-control" placeholder="Tìm kiếm món ăn..." oninput="filterModalDishes()">
+          <input type="text" id="dishSearchInput" class="form-control border-left-0" placeholder="Nhập tên món ăn cần tìm..." oninput="filterModalDishes()">
         </div>
         <!-- Category filter -->
         <div id="modalCatFilter" class="mb-3" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
         <!-- Dish list -->
-        <div id="modalDishList" style="max-height:400px; overflow-y:auto;">
-          <div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Đang tải thực đơn...</div>
+        <div id="modalDishList" style="max-height:380px; overflow-y:auto; padding-right: 4px;">
+          <div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin"></i> Đang tải thực đơn...</div>
         </div>
         <!-- Selected items summary -->
         <div id="selectedSummary" style="display:none; margin-top:16px; border-top:1px solid #eee; padding-top:12px;">
-          <h6 class="font-weight-bold text-success"><i class="fas fa-check-circle"></i> Món đã chọn</h6>
-          <div id="selectedList"></div>
+          <h6 class="font-weight-bold text-success mb-2"><i class="fas fa-check-circle"></i> Món đã chọn thêm</h6>
+          <div id="selectedList" class="bg-light p-2 rounded"></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-        <button type="button" class="btn btn-success" id="btnConfirmAddDish" onclick="confirmAddDishes()">
-          <i class="fas fa-plus-circle"></i> Thêm vào đơn
+      <div class="modal-footer bg-light" style="border-radius: 0 0 14px 14px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-success btn-sm font-weight-bold px-3" id="btnConfirmAddDish" onclick="confirmAddDishes()">
+          <i class="fas fa-paper-plane mr-1"></i> GỬI MÓN XUỐNG BẾP
         </button>
       </div>
     </div>
@@ -273,15 +615,108 @@
 </div>
 
 <script>
+  let currentActiveTab = 'all';
   let currentSesis = '';
+  let currentCustomerName = '';
   let allDishes = [];
   let allCats = [];
   let selectedDishes = {}; // { id_mon: { dish, qty } }
   let currentModalCat = 'all';
   let dishesLoaded = false;
 
+  // Lọc theo Tab trạng thái
+  function filterByTab(tab) {
+    currentActiveTab = tab;
+    document.querySelectorAll('.filter-tabs .tab-btn').forEach(btn => {
+      if (btn.getAttribute('data-filter') === tab) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    filterOrdersTable();
+  }
+
+  // Lọc bảng Đơn đặt bàn
+  function filterOrdersTable() {
+    const search = (document.getElementById('orderSearchInput').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#ordersTableBody .order-row');
+    
+    rows.forEach(row => {
+      const statusGroup = row.getAttribute('data-status-group');
+      const searchData = row.getAttribute('data-search') || '';
+      
+      const matchTab = (currentActiveTab === 'all') || (statusGroup === currentActiveTab);
+      const matchSearch = !search || searchData.includes(search);
+      
+      if (matchTab && matchSearch) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // Xem chi tiết các món của đơn
+  async function viewOrderItems(sesis, custName, tableName) {
+    currentSesis = sesis;
+    currentCustomerName = custName;
+    document.getElementById('viewItemsSesis').textContent = '#' + sesis.substring(0,6).toUpperCase();
+    document.getElementById('viewItemsCustName').textContent = custName;
+    document.getElementById('viewItemsTableName').textContent = tableName;
+    document.getElementById('viewItemsTotal').textContent = '0đ';
+    document.getElementById('viewItemsContent').innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Đang tải dữ liệu...</div>';
+    
+    document.getElementById('btnGoToAddDish').onclick = function() {
+      $('#viewItemsModal').modal('hide');
+      openAddDishModal(sesis, custName);
+    };
+
+    $('#viewItemsModal').modal('show');
+
+    try {
+      const res = await fetch('/staff/bookings/items/' + sesis);
+      const data = await res.json();
+      if (!data.success || !data.items || data.items.length === 0) {
+        document.getElementById('viewItemsContent').innerHTML = '<div class="text-center py-3 text-muted">Đơn này chưa có món ăn nào được gọi</div>';
+        return;
+      }
+
+      let total = 0;
+      let html = '';
+      data.items.forEach((it, idx) => {
+        total += Number(it.thanhtien || 0);
+        let bepBadge = '';
+        if (it.trangthai_bep === 0) bepBadge = '<span class="badge badge-secondary">Chờ làm</span>';
+        else if (it.trangthai_bep === 1) bepBadge = '<span class="badge badge-warning text-dark">Đang nấu</span>';
+        else if (it.trangthai_bep === 2) bepBadge = '<span class="badge badge-success">Đã xong</span>';
+        else if (it.trangthai_bep === 3) bepBadge = '<span class="badge badge-info">Đã lên bàn</span>';
+
+        html += `
+          <div class="item-row">
+            <div>
+              <div class="font-weight-bold text-dark" style="font-size:0.88rem;">${idx + 1}. ${it.name_mon}</div>
+              <small class="text-muted">${Number(it.gia).toLocaleString('vi-VN')}đ x ${it.soluong}</small>
+            </div>
+            <div class="text-right">
+              <div class="text-danger font-weight-bold">${Number(it.thanhtien).toLocaleString('vi-VN')}đ</div>
+              <div class="mt-1">${bepBadge}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('viewItemsContent').innerHTML = html;
+      document.getElementById('viewItemsTotal').textContent = total.toLocaleString('vi-VN') + 'đ';
+    } catch (e) {
+      document.getElementById('viewItemsContent').innerHTML = '<div class="alert alert-danger mb-0">Lỗi khi tải chi tiết món ăn!</div>';
+    }
+  }
+
+  // Gọi món Modal logic
   async function openAddDishModal(sesis, customerName) {
     currentSesis = sesis;
+    currentCustomerName = customerName;
     document.getElementById('addDishCustomerName').textContent = customerName;
     selectedDishes = {};
     renderSelectedSummary();
@@ -349,21 +784,21 @@
       const selected = selectedDishes[d.id_mon];
       const qty = selected ? selected.qty : 0;
       html += `
-        <div class="col-md-6 mb-2 dish-modal-item" data-cat="${d.id_loai}" data-name="${d.name_mon.toLowerCase()}">
-          <div class="card border-${qty > 0 ? 'success' : 'light'}" style="cursor:pointer; transition:all 0.2s;">
+        <div class="col-md-6 mb-2 dish-modal-item">
+          <div class="card border-${qty > 0 ? 'success' : 'light'}" style="cursor:pointer; transition:all 0.2s; border-radius:10px;">
             <div class="card-body py-2 px-3">
               <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center" style="flex:1; min-width:0;">
-                  ${d.images ? `<img src="/food/${d.images}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;margin-right:10px;flex-shrink:0;" onerror="this.style.display='none'">` : '<div style="width:44px;height:44px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;">🍜</div>'}
+                  ${d.images ? `<img src="/food/${d.images}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;margin-right:10px;flex-shrink:0;" onerror="this.style.display='none'">` : '<div style="width:42px;height:42px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;">🍜</div>'}
                   <div style="min-width:0;">
-                    <div class="font-weight-bold" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name_mon}</div>
-                    <div class="text-danger" style="font-size:12px;">${d.gia_mon.toLocaleString('vi-VN')}đ</div>
+                    <div class="font-weight-bold text-dark" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name_mon}</div>
+                    <div class="text-danger font-weight-bold" style="font-size:12px;">${d.gia_mon.toLocaleString('vi-VN')}đ</div>
                   </div>
                 </div>
                 <div class="d-flex align-items-center ml-2">
-                  <button class="btn btn-outline-danger btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, -1)" style="font-size:16px; line-height:1;">−</button>
-                  <span id="qty_${d.id_mon}" class="mx-2 font-weight-bold" style="min-width:20px;text-align:center;">${qty}</span>
-                  <button class="btn btn-outline-success btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, 1, ${JSON.stringify(d).replace(/"/g, '&quot;')})" style="font-size:16px; line-height:1;">+</button>
+                  <button class="btn btn-outline-danger btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, -1)" style="font-size:16px; line-height:1; border-radius:6px;">−</button>
+                  <span id="qty_${d.id_mon}" class="mx-2 font-weight-bold text-dark" style="min-width:20px;text-align:center;">${qty}</span>
+                  <button class="btn btn-outline-success btn-sm px-2 py-1" onclick="changeModalQty(${d.id_mon}, 1, ${JSON.stringify(d).replace(/"/g, '&quot;')})" style="font-size:16px; line-height:1; border-radius:6px;">+</button>
                 </div>
               </div>
             </div>
@@ -386,7 +821,6 @@
       delete selectedDishes[dishId];
     }
 
-    // Update qty display
     const qtyEl = document.getElementById('qty_' + dishId);
     if (qtyEl) qtyEl.textContent = selectedDishes[dishId] ? selectedDishes[dishId].qty : 0;
 
@@ -412,9 +846,9 @@
     items.forEach(item => {
       const subtotal = item.dish.gia_mon * item.qty;
       total += subtotal;
-      html += `<li><i class="fas fa-check text-success"></i> <strong>${item.dish.name_mon}</strong> x${item.qty} = <span class="text-danger">${subtotal.toLocaleString('vi-VN')}đ</span></li>`;
+      html += `<li><i class="fas fa-check text-success mr-1"></i> <strong>${item.dish.name_mon}</strong> x${item.qty} = <span class="text-danger font-weight-bold">${subtotal.toLocaleString('vi-VN')}đ</span></li>`;
     });
-    html += `</ul><div class="font-weight-bold">Tổng thêm: <span class="text-danger">${total.toLocaleString('vi-VN')}đ</span></div>`;
+    html += `</ul><div class="font-weight-bold text-dark">Tổng tiền thêm: <span class="text-danger font-weight-bold">${total.toLocaleString('vi-VN')}đ</span></div>`;
     list.innerHTML = html;
   }
 
@@ -424,16 +858,13 @@
 
     const btn = document.getElementById('btnConfirmAddDish');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi bếp...';
 
     try {
       for (const item of items) {
-        const formData = new FormData();
-        formData.append('id_mon', item.dish.id_mon);
-        formData.append('soluong', item.qty);
         const res = await fetch('/staff/bookings/add-dish/' + currentSesis, {
           method: 'POST',
-          headers: { 'Accept': 'application/json' },
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({ id_mon: item.dish.id_mon, soluong: item.qty })
         });
         const data = await res.json();
@@ -442,17 +873,15 @@
 
       $('#addDishModal').modal('hide');
       selectedDishes = {};
-      dishesLoaded = false; // force reload next time
-      alert('✅ Đã thêm ' + items.length + ' món vào đơn thành công!');
+      alert('✅ Đã thêm ' + items.length + ' món và gửi lệnh chế biến xuống Bếp thành công!');
       location.reload();
     } catch (err) {
       alert('Lỗi: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-plus-circle"></i> Thêm vào đơn';
+      btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> GỬI MÓN XUỐNG BẾP';
     }
   }
 </script>
 
 <%- include('partials/footer') %>
-

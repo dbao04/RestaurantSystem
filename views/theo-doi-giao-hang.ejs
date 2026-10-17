@@ -27,98 +27,259 @@
   <title><%= t('theo_doi.don_ma', { ma: don.ma_giao }) %></title>
   <meta name="theme-color" content="#2c1810">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <% if (don.dang_chay) { %>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <% } %>
   <style>
     * { box-sizing:border-box; }
-    body { margin:0; min-height:100vh; min-height:100dvh;
-           font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
-           background:linear-gradient(170deg,#2c1810,#4e342e 65%,#3a241a); color:#fff; }
-    .boc { max-width:520px; margin:0 auto;
-           padding:calc(18px + env(safe-area-inset-top)) 15px
-                   calc(28px + env(safe-area-inset-bottom)); }
+    body {
+      margin:0; min-height:100vh; min-height:100dvh;
+      font-family:'Plus Jakarta Sans','Nunito',sans-serif;
+      background:radial-gradient(circle at 50% 0%, #3d2117 0%, #1c100b 100%);
+      color:#f8fafc; -webkit-font-smoothing:antialiased;
+    }
+    .boc {
+      max-width:540px; margin:0 auto;
+      padding:calc(20px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom));
+    }
 
-    .dau { text-align:center; margin-bottom:20px; }
-    .dau .ma { font-size:12.5px; letter-spacing:2px; opacity:.6; text-transform:uppercase; }
-    .dau h1 { font-size:23px; margin:6px 0 4px; }
-    .dau p { font-size:14px; opacity:.8; margin:0; }
+    /* Header & Status */
+    .top-nav {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px; font-size:14px;
+    }
+    .top-nav a {
+      color:#d4af37; text-decoration:none; font-weight:600;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 12px; background:rgba(212,175,55,0.1); border-radius:8px;
+      border:1px solid rgba(212,175,55,0.2); transition:all .2s ease;
+    }
+    .top-nav a:hover { background:rgba(212,175,55,0.2); }
 
-    .vong { width:76px; height:76px; border-radius:50%; display:flex; align-items:center;
-            justify-content:center; font-size:31px; margin:0 auto 14px; color:#fff; }
+    .hero-box {
+      text-align:center; padding:24px 20px; margin-bottom:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+      border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+      backdrop-filter:blur(12px); box-shadow:0 12px 30px rgba(0,0,0,0.3);
+    }
+    .hero-icon-ring {
+      width:72px; height:72px; border-radius:50%;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:28px; color:#fff; margin-bottom:14px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.35); position:relative;
+    }
+    .hero-icon-ring::after {
+      content:''; position:absolute; inset:-4px; border-radius:50%;
+      border:2px solid rgba(255,255,255,0.25);
+    }
+    .hero-ma {
+      font-size:12px; font-weight:700; letter-spacing:2px;
+      color:#d4af37; text-transform:uppercase; margin-bottom:6px;
+    }
+    .hero-title {
+      font-size:24px; font-weight:800; margin:0 0 6px; color:#fff;
+    }
+    .hero-sub {
+      font-size:14.5px; color:#cbd5e1; margin:0; font-weight:500;
+    }
+    .live-dot {
+      display:inline-block; width:8px; height:8px; border-radius:50%;
+      background:#10b981; margin-right:6px; animation:pulse-dot 1.5s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow:0 0 0 0 rgba(16,185,129,0.7); }
+      70% { box-shadow:0 0 0 8px rgba(16,185,129,0); }
+    }
 
-    /* ------------------------------------------------------------ tiến trình */
-    .buoc { display:flex; margin:0 0 22px; }
-    .buoc__o { flex:1; text-align:center; position:relative; font-size:10.5px; line-height:1.35; }
-    .buoc__o::before { content:''; position:absolute; top:11px; left:-50%; width:100%; height:2px;
-                       background:rgba(255,255,255,.16); }
-    .buoc__o:first-child::before { display:none; }
-    .buoc__o.qua::before { background:#c8a951; }
-    .buoc__cham { width:24px; height:24px; border-radius:50%; margin:0 auto 5px; position:relative;
-                  background:rgba(255,255,255,.14); display:flex; align-items:center;
-                  justify-content:center; font-size:10px; }
-    .buoc__o.qua .buoc__cham { background:#c8a951; color:#2c1810; }
-    .buoc__o.qua { opacity:1; }
-    .buoc__o { opacity:.45; }
-    /* Bước hiện tại nhấp nháy nhẹ — thứ khách nhìn vào đầu tiên khi mở trang. */
-    .buoc__o.nay .buoc__cham { background:#1cc88a; color:#08351f; animation:tho 1.6s infinite; }
-    .buoc__o.nay { opacity:1; font-weight:800; }
-    @keyframes tho { 0%,100% { box-shadow:0 0 0 0 rgba(28,200,138,.55); }
-                     70% { box-shadow:0 0 0 9px rgba(28,200,138,0); } }
+    /* Stepper Progress Bar */
+    .stepper {
+      display:flex; justify-content:space-between; position:relative;
+      margin:26px 0 24px; padding:0 6px;
+    }
+    .stepper::before {
+      content:''; position:absolute; top:15px; left:24px; right:24px; height:3px;
+      background:rgba(255,255,255,0.12); z-index:1; border-radius:2px;
+    }
+    .step-item {
+      position:relative; z-index:2; text-align:center; flex:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .step-circle {
+      width:30px; height:30px; border-radius:50%;
+      background:#2c1912; border:2px solid rgba(255,255,255,0.2);
+      color:rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:700; transition:all .3s ease; margin-bottom:8px;
+    }
+    .step-label {
+      font-size:11px; font-weight:600; color:rgba(255,255,255,0.5);
+      line-height:1.3; max-width:70px;
+    }
 
-    #ban-do { height:270px; border-radius:14px; margin-bottom:16px; z-index:1; }
+    .step-item.done .step-circle {
+      background:#d4af37; border-color:#d4af37; color:#1a0f0a;
+      box-shadow:0 0 10px rgba(212,175,55,0.4);
+    }
+    .step-item.done .step-label { color:#e2e8f0; font-weight:700; }
 
-    .the { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.11);
-           border-radius:14px; padding:15px; margin-bottom:13px; }
-    .the h2 { font-size:13px; text-transform:uppercase; letter-spacing:1px; opacity:.6;
-              margin:0 0 10px; font-weight:800; }
-    .hang { display:flex; justify-content:space-between; gap:12px; font-size:14px;
-            padding:5px 0; border-bottom:1px dashed rgba(255,255,255,.1); }
-    .hang:last-child { border:0; }
-    .hang--tong { font-size:17px; font-weight:800; color:#c8a951; padding-top:10px; }
+    .step-item.active .step-circle {
+      background:#10b981; border-color:#10b981; color:#fff;
+      box-shadow:0 0 14px rgba(16,185,129,0.6);
+      animation:pulse-active 1.8s infinite;
+    }
+    .step-item.active .step-label {
+      color:#34d399; font-weight:800; transform:scale(1.05);
+    }
+    @keyframes pulse-active {
+      0%, 100% { transform:scale(1); }
+      50% { transform:scale(1.12); }
+    }
 
-    .moc { display:flex; gap:11px; padding:7px 0; font-size:13.5px; }
-    .moc__cham { width:9px; height:9px; border-radius:50%; margin-top:6px; flex:none; }
-    .moc__gio { opacity:.55; font-size:11.5px; }
+    /* Map Box */
+    #ban-do {
+      height:260px; border-radius:18px; margin-bottom:18px;
+      border:1px solid rgba(255,255,255,0.15); box-shadow:0 8px 24px rgba(0,0,0,0.35);
+      overflow:hidden; z-index:1;
+    }
 
-    .canh { background:rgba(231,74,59,.18); border:1px solid rgba(231,74,59,.4); color:#ffd5d0;
-            border-radius:12px; padding:14px; font-size:14px; line-height:1.6; margin-bottom:14px; }
-    .chan { text-align:center; font-size:12.5px; opacity:.55; margin-top:22px; line-height:1.7; }
-    .chan a { color:#c8a951; }
-    .cham-song { display:inline-block; width:7px; height:7px; border-radius:50%; background:#1cc88a;
-                 margin-right:5px; animation:tho 1.6s infinite; }
+    /* Glass Cards */
+    .card {
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.09);
+      border-radius:18px; padding:18px 20px; margin-bottom:16px;
+      backdrop-filter:blur(8px);
+    }
+    .card-header {
+      display:flex; align-items:center; gap:8px; margin-bottom:14px;
+    }
+    .card-icon {
+      font-size:13px; color:#d4af37;
+    }
+    .card-title {
+      font-size:13px; font-weight:800; text-transform:uppercase;
+      letter-spacing:1px; color:#94a3b8; margin:0;
+    }
+
+    /* Delivery Info */
+    .dia-chi-box {
+      font-size:16px; font-weight:700; color:#fff; line-height:1.45;
+      margin-bottom:10px; display:flex; align-items:flex-start; gap:8px;
+    }
+    .dia-chi-box i { color:#ef4444; margin-top:3px; flex-shrink:0; }
+    
+    .info-sub {
+      font-size:13.5px; color:#cbd5e1; display:flex; flex-wrap:wrap; gap:12px;
+      padding-top:6px; border-top:1px solid rgba(255,255,255,0.06);
+    }
+    .info-sub span { display:inline-flex; align-items:center; gap:5px; }
+    .info-sub i { color:#d4af37; }
+
+    .ghi-chu-box {
+      margin-top:12px; padding:10px 14px; border-radius:10px;
+      background:rgba(234,179,8,0.12); border-left:3px solid #eab308;
+      font-size:13px; color:#fef08a; line-height:1.4;
+    }
+    .shipper-box {
+      margin-top:12px; padding:10px 14px; border-radius:10px;
+      background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25);
+      font-size:13.5px; color:#6ee7b7; display:flex; align-items:center; gap:8px;
+    }
+
+    /* Order Items */
+    .item-row {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:8px 0; font-size:14px; border-bottom:1px dashed rgba(255,255,255,0.08);
+    }
+    .item-row:last-child { border-bottom:none; }
+    .item-name { font-weight:600; color:#f1f5f9; }
+    .item-qty { color:#94a3b8; font-size:13px; margin-left:4px; }
+    .item-price { font-weight:600; color:#e2e8f0; }
+
+    .total-row {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 0 4px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.12);
+      font-size:18px; font-weight:800; color:#d4af37;
+    }
+
+    /* Timeline Log */
+    .timeline {
+      position:relative; padding-left:18px; margin:4px 0;
+    }
+    .timeline::before {
+      content:''; position:absolute; top:6px; bottom:6px; left:5px; width:2px;
+      background:rgba(255,255,255,0.1);
+    }
+    .timeline-item {
+      position:relative; margin-bottom:14px; font-size:13.5px;
+    }
+    .timeline-item:last-child { margin-bottom:0; }
+    .timeline-dot {
+      position:absolute; left:-18px; top:4px; width:12px; height:12px;
+      border-radius:50%; border:2px solid #1c100b;
+    }
+    .timeline-title { font-weight:700; color:#f1f5f9; }
+    .timeline-time { font-size:12px; color:#94a3b8; margin-top:2px; }
+
+    /* Footer */
+    .footer-actions {
+      text-align:center; font-size:13px; color:#94a3b8; margin-top:24px; line-height:1.8;
+    }
+    .footer-actions a {
+      color:#d4af37; text-decoration:none; font-weight:600;
+      transition:color .2s ease;
+    }
+    .footer-actions a:hover { color:#fef08a; text-decoration:underline; }
   </style>
 </head>
 <body>
 <div class="boc">
 
-  <div class="dau">
-    <div class="vong" style="background:<%= don.mau %>"><i class="fas <%= don.icon %>"></i></div>
-    <div class="ma"><%= don.ma_giao %></div>
-    <h1 id="tt-nhan"><%= don.nhan %></h1>
-    <p id="tt-phu">
+  <!-- Top Nav Bar -->
+  <div class="top-nav">
+    <a href="/cart"><i class="fas fa-chevron-left"></i> Giỏ hàng &amp; Đơn của tôi</a>
+    <a href="/"><i class="fas fa-house"></i> Trang chủ</a>
+  </div>
+
+  <!-- Hero Status Card -->
+  <div class="hero-box">
+    <div class="hero-icon-ring" style="background:<%= don.mau %>">
+      <i class="fas <%= don.icon %>"></i>
+    </div>
+    <div class="hero-ma"><%= don.ma_giao %></div>
+    <h1 class="hero-title" id="tt-nhan"><%= don.nhan %></h1>
+    <p class="hero-sub" id="tt-phu">
       <% if (don.trang_thai === 'dang_giao') { %>
-        <span class="cham-song"></span><%= t('theo_doi.dang_toi') %>
+        <span class="live-dot"></span><%= t('theo_doi.dang_toi') %>
       <% } else if (don.trang_thai === 'da_giao') { %>
         <%= t('theo_doi.cam_on') %>
       <% } else if (don.du_kien_luc && !don.da_xong) { %>
         <%= t('theo_doi.du_kien') %>
-        <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
+        <b style="color:#d4af37;"><%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %></b>
       <% } %>
     </p>
   </div>
 
   <% if (hong) { %>
-    <div class="canh">
-      <strong><%= t('theo_doi.that_bai') %></strong><br>
+    <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; border-radius:14px; padding:16px; font-size:14px; line-height:1.6; margin-bottom:16px;">
+      <strong style="font-size:15px;"><i class="fas fa-triangle-exclamation"></i> <%= t('theo_doi.that_bai') %></strong><br>
       <%= t('theo_doi.that_bai_mo_ta') %>
     </div>
   <% } else { %>
-    <div class="buoc">
+    <!-- Stepper Indicator -->
+    <div class="stepper">
       <% BUOC.forEach(function (b, i) { %>
-        <div class="buoc__o <%= i < viTriBuoc ? 'qua' : (i === viTriBuoc ? 'qua nay' : '') %>">
-          <div class="buoc__cham"><i class="fas <%= i < viTriBuoc ? 'fa-check' : 'fa-circle' %>"></i></div>
-          <%= TEN_BUOC[b] %>
+        <div class="step-item <%= i < viTriBuoc ? 'done' : (i === viTriBuoc ? 'active' : '') %>">
+          <div class="step-circle">
+            <% if (i < viTriBuoc) { %>
+              <i class="fas fa-check"></i>
+            <% } else { %>
+              <span><%= i + 1 %></span>
+            <% } %>
+          </div>
+          <div class="step-label"><%= TEN_BUOC[b] %></div>
         </div>
       <% }) %>
     </div>
@@ -128,62 +289,90 @@
     <div id="ban-do"></div>
   <% } %>
 
-  <div class="the">
-    <h2><%= t('theo_doi.giao_toi') %></h2>
-    <p style="margin:0 0 4px; font-size:16px; font-weight:700"><%= don.dia_chi_giao %></p>
-    <p style="margin:0; font-size:13.5px; opacity:.75">
-      <%= don.ten_nguoi_nhan %>
-      <% if (don.khoang_cach_km !== null) { %> · <%= t('theo_doi.cach_nha_hang', { km: don.khoang_cach_km }) %><% } %>
-    </p>
+  <!-- Delivery Info -->
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-location-arrow card-icon"></i>
+      <h2 class="card-title"><%= t('theo_doi.giao_toi') %></h2>
+    </div>
+    <div class="dia-chi-box">
+      <i class="fas fa-location-dot"></i>
+      <span><%= don.dia_chi_giao %></span>
+    </div>
+    <div class="info-sub">
+      <span><i class="fas fa-user"></i> <%= don.ten_nguoi_nhan %></span>
+      <% if (don.sdt_nguoi_nhan) { %>
+        <span><i class="fas fa-phone"></i> <%= don.sdt_nguoi_nhan %></span>
+      <% } %>
+      <% if (don.khoang_cach_km !== null) { %>
+        <span><i class="fas fa-route"></i> <%= t('theo_doi.cach_nha_hang', { km: don.khoang_cach_km }) %></span>
+      <% } %>
+    </div>
+    <% if (don.ghi_chu) { %>
+      <div class="ghi-chu-box">
+        <i class="fas fa-note-sticky"></i> <b>Ghi chú:</b> <%= don.ghi_chu %>
+      </div>
+    <% } %>
     <% if (don.ten_shipper && !don.da_xong) { %>
-      <p style="margin:10px 0 0; font-size:13.5px">
-        <i class="fas fa-motorcycle" style="color:#c8a951"></i>
-        <strong><%= don.ten_shipper %></strong> <%= t('theo_doi.dang_cam_don') %>
-        <% if (don.ten_dv) { %><span style="opacity:.65"> · <%= don.ten_dv %></span><% } %>
-      </p>
+      <div class="shipper-box">
+        <i class="fas fa-motorcycle" style="font-size:16px;"></i>
+        <span><strong><%= don.ten_shipper %></strong> <%= t('theo_doi.dang_cam_don') %> <% if (don.ten_dv) { %>(<%= don.ten_dv %>)<% } %></span>
+      </div>
     <% } %>
   </div>
 
-  <div class="the">
-    <h2><%= t('theo_doi.don_hang') %></h2>
+  <!-- Order Items -->
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-bag-shopping card-icon"></i>
+      <h2 class="card-title"><%= t('theo_doi.don_hang') %></h2>
+    </div>
     <% (mon || []).forEach(function (m) { %>
-      <div class="hang">
-        <span><%= tenMon(m).chinh %> <span style="opacity:.6">×<%= m.soluong %></span></span>
-        <span><%= formatMoney(m.thanhtien) %>đ</span>
+      <div class="item-row">
+        <div>
+          <span class="item-name"><%= tenMon(m).chinh %></span>
+          <span class="item-qty">× <%= m.soluong %></span>
+        </div>
+        <span class="item-price"><%= formatMoney(m.thanhtien) %>đ</span>
       </div>
     <% }) %>
-    <div class="hang">
-      <span style="opacity:.7"><%= t('dat_ban.phi_giao') %></span>
-      <span><%= don.phi_giao > 0 ? formatMoney(don.phi_giao) + 'đ' : t('chung.mien_phi') %></span>
+    <div class="item-row">
+      <span style="color:#94a3b8;"><%= t('dat_ban.phi_giao') %></span>
+      <span class="item-price"><%= don.phi_giao > 0 ? formatMoney(don.phi_giao) + 'đ' : t('chung.mien_phi') %></span>
     </div>
-    <div class="hang hang--tong">
+    <div class="total-row">
       <span><%= t('chung.tong_cong') %></span>
       <span><%= formatMoney(don.tong_thu) %>đ</span>
     </div>
     <% if (don.tien_thu_ho > 0) { %>
-      <p style="margin:9px 0 0; font-size:12.5px; opacity:.7">
-        <%= t('theo_doi.tra_tien_mat') %>
+      <p style="margin:8px 0 0; font-size:12.5px; color:#cbd5e1; text-align:right;">
+        <i class="fas fa-money-bill-wave" style="color:#10b981;"></i> <%= t('theo_doi.tra_tien_mat') %>
       </p>
     <% } %>
   </div>
 
-  <div class="the">
-    <h2><%= t('theo_doi.dien_bien') %></h2>
-    <% (lichSu || []).forEach(function (n) { %>
-      <div class="moc">
-        <span class="moc__cham" style="background:<%= n.mau %>"></span>
-        <div>
-          <div><%= n.nhan %></div>
-          <div class="moc__gio"><%= new Date(n.luc).toLocaleString('vi-VN') %></div>
+  <!-- Timeline Log -->
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-clock-rotate-left card-icon"></i>
+      <h2 class="card-title"><%= t('theo_doi.dien_bien') %></h2>
+    </div>
+    <div class="timeline">
+      <% (lichSu || []).forEach(function (n) { %>
+        <div class="timeline-item">
+          <span class="timeline-dot" style="background:<%= n.mau %>"></span>
+          <div class="timeline-title"><%= n.nhan %></div>
+          <div class="timeline-time"><%= new Date(n.luc).toLocaleString('vi-VN') %></div>
         </div>
-      </div>
-    <% }) %>
+      <% }) %>
+    </div>
   </div>
 
-  <div class="chan">
-    <%= t('theo_doi.tu_cap_nhat') %><br>
-    <a href="/"><%= t('chung.ten_nha_hang') %></a> · <a href="/theo-doi"><%= t('theo_doi.tra_cuu_khac') %></a>
+  <!-- Footer Actions -->
+  <div class="footer-actions">
+    <p style="margin:0 0 6px;"><i class="fas fa-rotate" style="margin-right:4px;"></i> <%= t('theo_doi.tu_cap_nhat') %></p>
   </div>
+</div>
 </div>
 
 <% if (don.dang_chay) { %>

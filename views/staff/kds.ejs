@@ -277,12 +277,16 @@ function thoat(s) {
 }
 
 function veThe(m, loai) {
-  const tre = (loai === 'cho' || loai === 'lam') && LA_TRE(m.cho_phut);
-  const ban = m.number_ban ? `Bàn <b>${m.number_ban}</b>` : 'Mang về / giao hàng';
+  const choPhut = Math.max(0, Number(m.cho_phut) || 0);
+  const tre = (loai === 'cho' || loai === 'lam') && LA_TRE(choPhut);
+  const laGiao = m.loai_don === 'giao_hang' || !m.number_ban;
+  const ban = m.number_ban
+    ? `Bàn <b>${m.number_ban}</b>`
+    : `<span style="background:rgba(212,175,55,0.18);color:#dfb962;padding:2px 7px;border-radius:6px;font-weight:700;"><i class="fas fa-truck-fast"></i> ${m.ma_giao || 'Giao hàng'}</span>`;
   const nut = {
-    cho:  `<button class="b-lam"  onclick="doi(${m.id},'bat-dau',this)">Bắt đầu chế biến</button>`,
-    lam:  `<button class="b-xong" onclick="doi(${m.id},'hoan-thanh',this)">Hoàn thành</button>`,
-    xong: `<button class="b-pv"   onclick="doi(${m.id},'da-phuc-vu',this)">Đã mang ra bàn</button>`,
+    cho:  `<button class="b-lam"  onclick="doi(${m.id},'bat-dau',this)"><i class="fas fa-play"></i> Bắt đầu chế biến</button>`,
+    lam:  `<button class="b-xong" onclick="doi(${m.id},'hoan-thanh',this)"><i class="fas fa-check"></i> Hoàn thành món</button>`,
+    xong: `<button class="b-pv"   onclick="doi(${m.id},'da-phuc-vu',this)"><i class="fas ${laGiao ? 'fa-box' : 'fa-bell'}"></i> ${laGiao ? 'Sẵn sàng giao' : 'Đã mang ra bàn'}</button>`,
   }[loai] || '';
 
   // Ghi chu khach go tren dien thoai -> phai thoat truoc khi do vao innerHTML.
@@ -298,10 +302,10 @@ function veThe(m, loai) {
       </div>
       ${ghiChu}
       <div class="meta">
-        ${ban} &middot; ${m.ten_khach || 'Khách lẻ'}<br>
+        ${ban} &middot; <b>${m.ten_khach || 'Khách lẻ'}</b><br>
         Giờ order: <b>${m.tg || '—'}</b>
-        ${m.cho_phut !== null && m.cho_phut !== undefined
-          ? ` &middot; <span class="${tre ? 'cho-lau' : ''}">chờ ${m.cho_phut} phút${tre ? ' ⚠' : ''}</span>`
+        ${m.cho_phut !== null && m.cho_phut !== undefined && Number(m.cho_phut) > 0
+          ? ` &middot; <span class="${tre ? 'cho-lau' : ''}">chờ ${choPhut} phút${tre ? ' ⚠' : ''}</span>`
           : ''}
       </div>
       ${nut}

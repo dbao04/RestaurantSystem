@@ -142,7 +142,7 @@ const orderService = {
               MAX(ngay_dat) AS ngay_sap, MAX(gio_dat) AS gio_sap, MAX(id) AS id_cuoi
        FROM hopdong WHERE id_user = ?
        GROUP BY sesis, dates, so_user, noidung, tg, tinhtrang
-       ORDER BY ngay_sap DESC, gio_sap DESC, id_cuoi DESC
+       ORDER BY id_cuoi DESC, ngay_sap DESC, gio_sap DESC
        LIMIT ? OFFSET ?`,
       [userId, soMoiTrang, boQua]
     );
@@ -187,12 +187,26 @@ const orderService = {
 
   getAllBookings: async () => {
     const [rows] = await db.query(`
-      SELECT h.sesis, h.dates, k.ten as ten_khach, k.sodienthoai, h.so_user, h.noidung, h.tg, h.tinhtrang, SUM(h.thanhtien) as tong_tien, q.table_name
+      SELECT 
+        h.sesis, 
+        MAX(h.dates) as dates, 
+        MAX(k.ten) as ten_khach, 
+        MAX(k.sodienthoai) as sodienthoai, 
+        MAX(h.so_user) as so_user, 
+        MAX(h.noidung) as noidung, 
+        MAX(h.tg) as tg, 
+        MAX(h.tinhtrang) as tinhtrang, 
+        SUM(h.thanhtien) as tong_tien, 
+        COALESCE(MAX(b.number_ban), MAX(q.table_name)) as table_name,
+        COUNT(CASE WHEN h.id_mon > 0 THEN 1 END) as so_mon,
+        COALESCE(SUM(CASE WHEN h.id_mon > 0 THEN h.soluong ELSE 0 END), 0) as tong_soluong_mon,
+        MAX(h.id) as max_id
       FROM hopdong h
       INNER JOIN khach_hang k ON h.id_user = k.id
+      LEFT JOIN ban b ON h.id_ban = b.Id_ban
       LEFT JOIN qr_tables q ON h.sesis = q.active_sesis
-      GROUP BY h.sesis, h.dates, k.ten, k.sodienthoai, h.so_user, h.noidung, h.tg, h.tinhtrang, q.table_name
-      ORDER BY h.dates DESC, h.tg DESC
+      GROUP BY h.sesis
+      ORDER BY max_id DESC
     `);
     return rows;
   },

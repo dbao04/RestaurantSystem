@@ -1,6 +1,7 @@
-<%- include('partials/header', { activePage: 'xep-ca', staffName: session.staffName }) %>
+<%- include('partials/header', { activePage: 'xep-ca', staffName: session.staffName || 'Quản lý' }) %>
 
 <%
+  // Ngay luon la chuoi 'YYYY-MM-DD'. Phai them 'T00:00:00' khi dung new Date()
   function ngayVN(s) {
     var d = new Date(s + 'T00:00:00');
     return d.getDate() + '/' + (d.getMonth() + 1);
@@ -15,6 +16,7 @@
   }
   function thuCua(s) { return new Date(s + 'T00:00:00').getDay(); }
 
+  // Gom lich thanh 'ngay|ca' -> [dong, ...]
   var oLich = {};
   (lich || []).forEach(function (l) {
     var k = l.ngay + '|' + l.ca;
@@ -63,26 +65,26 @@
   .xc-chugiai span { margin-right: 14px; }
 </style>
 
-<div class="qt-card">
-  <div class="qt-card__head">
+<div class="card mb-4 shadow">
+  <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
     <div>
-      <h2>Xếp ca tự động</h2>
-      <p>
+      <h6 class="m-0 font-weight-bold" style="color: #241d18;">Xếp ca tự động</h6>
+      <small class="text-muted">
         Tuần <%= ngayVN(tuNgay) %> – <%= ngayVN(denNgay) %>
         · <%= soChot %> ca đã chốt · <%= soNhap %> ca đang là bản nháp
-      </p>
+      </small>
     </div>
-    <div class="qt-card__act">
-      <a class="qt-btn qt-btn--ghost" href="/staff/xep-ca/dinh-muc">
-        <i class="fas fa-sliders"></i> Định mức nhân sự
+    <div class="d-flex" style="gap: 8px;">
+      <a class="btn btn-sm btn-outline-primary" href="/staff/xep-ca/dinh-muc">
+        <i class="fas fa-sliders-h mr-1"></i> Định mức nhân sự
       </a>
-      <a class="qt-btn qt-btn--ghost" href="/staff/schedule/approval">
-        <i class="fas fa-list-check"></i> Duyệt đơn đăng ký
+      <a class="btn btn-sm btn-outline-primary" href="/staff/schedule/approval">
+        <i class="fas fa-list-check mr-1"></i> Duyệt đơn đăng ký
       </a>
     </div>
   </div>
 
-  <div class="qt-card__body">
+  <div class="card-body">
 
     <% if (msg) { %>
       <div class="alert alert-<%= msgType === 'danger' ? 'danger' : (msgType === 'warning' ? 'warning' : (msgType === 'info' ? 'info' : 'success')) %>">
@@ -92,14 +94,14 @@
 
     <!-- Thanh dieu huong tuan + cac nut thao tac -->
     <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px;">
-      <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/staff/xep-ca?tuan=<%= tuanTruoc %>">
+      <a class="btn btn-sm btn-outline-secondary" href="/staff/xep-ca?tuan=<%= tuanTruoc %>">
         <i class="fas fa-chevron-left"></i> Tuần trước
       </a>
       <form method="GET" action="/staff/xep-ca" style="display:inline-flex; gap:6px;">
         <input type="date" name="tuan" value="<%= tuNgay %>" class="form-control form-control-sm" style="width:auto;">
-        <button class="qt-btn qt-btn--ghost qt-btn--sm" type="submit">Xem tuần</button>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Xem tuần</button>
       </form>
-      <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/staff/xep-ca?tuan=<%= tuanSau %>">
+      <a class="btn btn-sm btn-outline-secondary" href="/staff/xep-ca?tuan=<%= tuanSau %>">
         Tuần sau <i class="fas fa-chevron-right"></i>
       </a>
 
@@ -107,25 +109,25 @@
 
       <form method="POST" action="/staff/xep-ca/tu-dong" style="display:inline;">
         <input type="hidden" name="tuan" value="<%= tuNgay %>">
-        <button class="qt-btn qt-btn--primary qt-btn--sm" type="submit"
+        <button class="btn btn-primary btn-sm" type="submit"
                 onclick="return confirm('Xếp lại cả tuần? Bản nháp hiện tại sẽ bị thay thế. Lịch đã chốt và đơn đăng ký của nhân viên không bị ảnh hưởng.')">
-          <i class="fas fa-wand-magic-sparkles"></i> Xếp tự động
+          <i class="fas fa-wand-magic-sparkles mr-1"></i> Xếp tự động
         </button>
       </form>
 
       <% if (coNhap) { %>
         <form method="POST" action="/staff/xep-ca/chot" style="display:inline;">
           <input type="hidden" name="tuan" value="<%= tuNgay %>">
-          <button class="qt-btn qt-btn--ok qt-btn--sm" type="submit"
+          <button class="btn btn-success btn-sm" type="submit"
                   onclick="return confirm('Chốt bản nháp thành lịch chính thức? Nhân viên sẽ nhìn thấy ngay.')">
-            <i class="fas fa-check-double"></i> Chốt lịch
+            <i class="fas fa-check-double mr-1"></i> Chốt lịch
           </button>
         </form>
         <form method="POST" action="/staff/xep-ca/xoa-nhap" style="display:inline;">
           <input type="hidden" name="tuan" value="<%= tuNgay %>">
-          <button class="qt-btn qt-btn--danger qt-btn--sm" type="submit"
+          <button class="btn btn-danger btn-sm" type="submit"
                   onclick="return confirm('Xoá bản nháp của tuần này? Lịch đã chốt vẫn giữ nguyên.')">
-            <i class="fas fa-trash"></i> Xoá nháp
+            <i class="fas fa-trash mr-1"></i> Xoá nháp
           </button>
         </form>
       <% } %>
@@ -134,7 +136,7 @@
     <!-- Canh bao thieu nguoi -->
     <% if (thieu && thieu.length > 0) { %>
       <div class="xc-canhbao">
-        <strong><i class="fas fa-triangle-exclamation"></i>
+        <strong><i class="fas fa-exclamation-triangle"></i>
           Còn <%= thieu.reduce(function (s, t) { return s + t.thieu; }, 0) %> lượt chưa có người</strong>
         <div style="font-size:13px; margin-top:4px;">
           Hệ thống không tự hạ định mức. Cần gọi người làm thêm, giảm định mức, hoặc tuyển thêm.
@@ -151,7 +153,7 @@
     <% } %>
 
     <!-- Luoi tuan -->
-    <div class="qt-tablewrap">
+    <div class="table-responsive">
       <table class="xc-luoi">
         <thead>
           <tr>
@@ -168,7 +170,7 @@
             <tr>
               <td class="xc-cotca">
                 <strong><%= ca.ten_ca %></strong><br>
-                <span class="qt-sub"><%= String(ca.gio_bat_dau).slice(0,5) %>–<%= String(ca.gio_ket_thuc).slice(0,5) %></span>
+                <small class="text-muted"><%= String(ca.gio_bat_dau).slice(0,5) %>–<%= String(ca.gio_ket_thuc).slice(0,5) %></small>
               </td>
 
               <% cacNgay.forEach(function (ng) { %>
@@ -215,7 +217,7 @@
                             <option value="<%= n.id_nv %>"><%= n.ten %></option>
                           <% }) %>
                         </select>
-                        <button class="qt-btn qt-btn--ghost qt-btn--sm" type="submit">Thêm</button>
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">Thêm</button>
                       </form>
                     <% } %>
 

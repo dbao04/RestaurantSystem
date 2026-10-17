@@ -71,30 +71,38 @@
   .badge--NO_SHOW { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
   .badge--REJECTED { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
 
-  /* Modal chi tiết */
+  /* Modal chi tiết & sửa đặt bàn */
   .nh-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(24, 14, 9, 0.65);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(24, 14, 9, 0.75) !important;
     display: none;
-    place-content: center;
-    z-index: 9999;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
     padding: 1.2rem;
     backdrop-filter: blur(4px);
   }
   .nh-modal-overlay.active {
-    display: grid;
+    display: flex !important;
   }
   .nh-modal-box {
-    background: #fff;
+    background: #fff !important;
     border-radius: 20px;
     padding: 2rem;
-    max-width: 540px;
+    max-width: 560px;
     width: 100%;
-    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.5);
-    border: 1px solid rgba(200, 162, 75, 0.25);
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.6);
+    border: 1px solid rgba(200, 162, 75, 0.35);
     max-height: 90vh;
     overflow-y: auto;
+    position: relative;
+    z-index: 1000000;
   }
   .nh-modal-grid {
     display: grid;
@@ -138,7 +146,14 @@
       var thongBao = typeof msg !== 'undefined' ? msg : null;
       var loaiTB = (typeof msgType !== 'undefined' && msgType) ? msgType : 'success';
 
-      var listDatBan = (typeof reservations !== 'undefined' && reservations) ? reservations : [];
+      var listDatBan = (typeof reservations !== 'undefined' && reservations) ? [...reservations] : [];
+      // Đảm bảo đơn mới nhất (theo thời gian tạo created_at hoặc id) luôn hiển thị trên đầu
+      listDatBan.sort(function(a, b) {
+        var timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        var timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
     %>
 
     <% if (thongBao) { %>
@@ -171,28 +186,72 @@
               </div>
 
               <div class="nh-order__body">
-                <div class="nh-order__fact"><%= t('don.so_khach') %> <b><%= r.guest_count %> khách</b></div>
-                <div class="nh-order__fact">Khu vực: <b><%= r.area_name || 'Tiêu chuẩn' %></b></div>
+                <div class="nh-order__fact"><%= t('don.so_khach') %> <b><%= r.guest_count %> <%= t('dat_ban_moi.khach') %></b></div>
+                <div class="nh-order__fact"><%= t('don.khu_vuc') %>: <b><%= r.area_name || t('tt_dat_ban.tieu_chuan') %></b></div>
                 <% if (r.ban && r.ban.length > 0) { %>
-                  <div class="nh-order__fact">Bàn: <b style="color:var(--nh-gold)"><%= r.ban.join(', ') %></b></div>
+                  <div class="nh-order__fact"><%= t('don.ban') %>: <b style="color:var(--nh-gold)"><%= r.ban.join(', ') %></b></div>
                 <% } %>
                 <% if (r.occasion && r.occasion !== 'NORMAL') { %>
                   <div class="nh-order__fact"><%= t('don.dip') %> <b><%= nhanDip(r.occasion) %></b></div>
                 <% } %>
                 <% if (Number(r.deposit_amount) > 0) { %>
-                  <div class="nh-order__fact">Tiền cọc: <b><%= formatMoney(r.deposit_amount) %> ₫</b> (<%= r.deposit_status %>)</div>
+                  <div class="nh-order__fact"><%= t('don.tien_coc') %>: <b><%= formatMoney(r.deposit_amount) %> ₫</b> (<%= r.deposit_status %>)</div>
                 <% } %>
                 <% if (r.special_requests) { %>
                   <div class="nh-order__fact" style="grid-column:1/-1; color:var(--nh-muted); font-size:0.85rem">
-                    <i class="fas fa-comment-dots"></i> Yêu cầu: <em><%= r.special_requests %></em>
+                    <i class="fas fa-comment-dots"></i> <%= t('don.yeu_cau') %>: <em><%= r.special_requests %></em>
                   </div>
                 <% } %>
 
-                <!-- Nút xem chi tiết ở cuối -->
-                <div class="nh-order__actions" style="margin-top:0.9rem">
-                  <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick='moChiTiet(<%= JSON.stringify(r) %>)'>
-                    <i class="fas fa-eye"></i> Xem chi tiết
+                <!-- Nút thao tác -->
+                <div class="nh-order__actions" style="margin-top:0.9rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                  <button type="button" class="nh-btn nh-btn--dark nh-btn--sm btn-mo-chi-tiet"
+                    onclick="moModalChiTiet(this)"
+                    data-code="<%= r.reservation_code %>"
+                    data-name="<%= r.customer_name || 'Khách hàng' %>"
+                    data-phone="<%= r.phone || '' %>"
+                    data-time="<%= (r.gio || '') + (r.gio_ket_thuc ? ' – ' + r.gio_ket_thuc : '') + ' · ' + (r.reservation_date || '') %>"
+                    data-guests="<%= r.guest_count || 1 %>"
+                    data-area="<%= r.area_name || t('tt_dat_ban.tieu_chuan') %>"
+                    data-tables="<%= (r.ban && r.ban.length > 0) ? r.ban.join(', ') : t('don.xep_ban_khi_den') %>"
+                    data-occasion="<%= r.occasion || t('don.thong_thuong') %>"
+                    data-deposit="<%= Number(r.deposit_amount) > 0 ? (Number(r.deposit_amount).toLocaleString('vi-VN') + ' ₫ (' + r.deposit_status + ')') : t('don.khong_yeu_cau_coc') %>"
+                    data-requests="<%= r.special_requests || t('don.khong_co') %>"
+                    data-status="<%= r.nhan_trang_thai || r.status || '' %>"
+                    data-raw-status="<%= r.status || 'PENDING' %>">
+                    <i class="fas fa-eye"></i> <%= t('don.xem_chi_tiet_btn') %>
                   </button>
+
+                  <% 
+                    var tongTienPreorder = (r.mon_dat_truoc || []).reduce(function(sum, m) { return sum + (Number(m.price||0) * Number(m.quantity||1)); }, 0);
+                    var canThanhToan = (Number(r.deposit_amount) > 0 || tongTienPreorder > 0) && r.deposit_status !== 'PAID' && ['PENDING', 'CONFIRMED'].includes(r.status);
+                  %>
+
+                  <% if (canThanhToan) { %>
+                    <a href="/thanh-toan/dat-ban/<%= encodeURIComponent(r.reservation_code) %>?dt=<%= encodeURIComponent(r.phone) %>" class="nh-btn nh-btn--gold nh-btn--sm">
+                      <i class="fas fa-qrcode"></i> <%= t('don.thanh_toan_vietqr') %>
+                    </a>
+                  <% } %>
+
+                  <% if (['PENDING', 'CONFIRMED', 'WAITLIST'].includes(r.status)) { %>
+                    <button type="button" class="nh-btn nh-btn--outline nh-btn--sm btn-mo-sua"
+                      onclick="moModalSuaDatBan(this)"
+                      data-code="<%= r.reservation_code %>"
+                      data-phone="<%= r.phone || userPhone || '' %>"
+                      data-date="<%= (r.reservation_date || '').toString().slice(0, 10) %>"
+                      data-time="<%= (r.gio || r.start_time || '').toString().slice(0, 5) %>"
+                      data-guests="<%= r.guest_count || 2 %>"
+                      data-area="<%= r.area_id || '' %>"
+                      data-requests="<%= r.special_requests || '' %>">
+                      <i class="fas fa-edit"></i> <%= t('don.sua_dat_ban') %>
+                    </button>
+                    <button type="button" class="nh-btn nh-btn--outline nh-btn--sm btn-mo-huy" style="color:#ef4444; border-color:#fca5a5;"
+                      onclick="moModalHuyDatBan(this)"
+                      data-code="<%= r.reservation_code %>"
+                      data-phone="<%= r.phone || userPhone || '' %>">
+                      <i class="fas fa-calendar-times"></i> <%= t('don.huy_dat_ban') %>
+                    </button>
+                  <% } %>
                 </div>
               </div>
             </article>
@@ -201,9 +260,9 @@
       <% } else { %>
         <div class="nh-empty nh-reveal">
           <i class="fas fa-calendar-plus" style="font-size:3rem; color:var(--nh-gold); margin-bottom:1rem"></i>
-          <h3>Bạn chưa có lịch đặt bàn nào</h3>
+          <h3><%= t('don.chua_co_lich') %></h3>
           <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:480px">
-            Trải nghiệm ẩm thực Nhật Bản tinh tế cùng không gian sang trọng tại nhà hàng Bảo Đoàn.
+            <%= t('don.chua_co_lich_mo_ta') %>
           </p>
           <a href="/dat-ban" class="nh-btn nh-btn--gold"><i class="fas fa-chair"></i> <%= t('chung.dat_ban_ngay') %></a>
         </div>
@@ -220,41 +279,44 @@
       <div>
         <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chung.ten_nha_hang') %></span>
         <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
-          <i class="fas fa-calendar-check" style="color:var(--nh-gold); margin-right:.4rem;"></i> Chi tiết đặt bàn
+          <i class="fas fa-calendar-check" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('don.chi_tiet_dat_ban') %>
         </h3>
         <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
-          Mã: <strong id="mMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+          <%= t('don.ma') %>: <strong id="mMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
         </div>
       </div>
       <span id="mTrangThaiBadge" class="nh-reservation-badge"></span>
     </div>
 
     <dl class="nh-modal-grid">
-      <dt>Người đặt</dt>
+      <dt><%= t('don.nguoi_dat') %></dt>
       <dd id="mTenKhach"></dd>
 
-      <dt>Điện thoại</dt>
+      <dt><%= t('don.dien_thoai') %></dt>
       <dd id="mSdt"></dd>
 
-      <dt>Thời gian</dt>
+      <dt><%= t('don.thoi_gian') %></dt>
       <dd id="mThoiGian"></dd>
 
-      <dt>Số khách</dt>
+      <dt><%= t('don.so_khach') %></dt>
       <dd id="mSoKhach"></dd>
 
-      <dt>Khu vực</dt>
+      <dt><%= t('don.khu_vuc') %></dt>
       <dd id="mKhuVuc"></dd>
 
-      <dt>Bàn phục vụ</dt>
+      <dt><%= t('don.ban_phuc_vu') %></dt>
       <dd id="mBan"></dd>
 
-      <dt>Dịp đặc biệt</dt>
+      <dt><%= t('don.dip_dac_biet') %></dt>
       <dd id="mDip"></dd>
 
-      <dt>Tiền đặt cọc</dt>
+      <dt><%= t('don.tien_dat_coc') %></dt>
       <dd id="mTienCoc"></dd>
 
-      <dt>Yêu cầu</dt>
+      <dt><%= t('don.mon_goi_truoc') %></dt>
+      <dd id="mMonGoiTruoc"></dd>
+
+      <dt><%= t('don.yeu_cau') %></dt>
       <dd id="mYeuCau" style="font-style:italic; color:var(--nh-muted);"></dd>
     </dl>
 
@@ -266,45 +328,358 @@
   </div>
 </div>
 
+<!-- MODAL SỬA THÔNG TIN ĐẶT BÀN -->
+<div class="nh-modal-overlay" id="modalSuaDatBan" onclick="if(event.target===this) dongSuaDatBan()">
+  <div class="nh-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chung.ten_nha_hang') %></span>
+        <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
+          <i class="fas fa-user-edit" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('don.sua_tieu_de') %>
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          <%= t('don.ma') %>: <strong id="suaMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <button type="button" onclick="dongSuaDatBan()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--nh-muted);">&times;</button>
+    </div>
+
+    <!-- Thông báo thời hạn sửa đổi -->
+    <div id="suaHanThongBao" style="margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 0.85rem; line-height: 1.5;">
+      <i class="fas fa-clock" style="margin-right:0.3rem;"></i> <strong><%= t('don.thoi_han_chinh_sua') %>:</strong> <%= t('don.thoi_han_chinh_sua_mo_ta', { phut: '<strong id="suaHanPhut">30</strong>' }) %>
+    </div>
+
+    <div id="suaBaoLoi" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:8px; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; font-size:0.85rem;"></div>
+
+    <form id="formSuaDatBan" onsubmit="xuLyLuuSua(event)">
+      <input type="hidden" id="suaMaAn">
+      <input type="hidden" id="suaPhoneAn">
+
+      <div class="nh-fields" style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+        <div class="nh-field">
+          <label for="suaNgay"><%= t('don.ngay_den') %> <span style="color:#ef4444">*</span></label>
+          <input type="date" id="suaNgay" class="nh-input" required min="<%= new Date().toISOString().slice(0, 10) %>">
+        </div>
+        <div class="nh-field">
+          <label for="suaGio"><%= t('don.gio_den') %> <span style="color:#ef4444">*</span></label>
+          <input type="time" id="suaGio" class="nh-input" required>
+        </div>
+      </div>
+
+      <div class="nh-fields" style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-top:0.8rem;">
+        <div class="nh-field">
+          <label for="suaSoKhach"><%= t('don.so_luong_khach') %> <span style="color:#ef4444">*</span></label>
+          <input type="number" id="suaSoKhach" class="nh-input" min="1" max="50" required>
+        </div>
+        <div class="nh-field">
+          <label for="suaKhuVuc"><%= t('don.khu_vuc_uu_tien') %></label>
+          <select id="suaKhuVuc" class="nh-input">
+            <option value=""><%= t('don.khu_vuc_bat_ky') %></option>
+            <% (typeof khuVuc !== 'undefined' && khuVuc ? khuVuc : []).forEach(function(k) { %>
+              <option value="<%= k.id || k.id_vitri %>"><%= k.ten || k.Name_vitri %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="nh-field" style="margin-top:0.8rem;">
+        <label for="suaYeuCau"><%= t('don.yeu_cau_them') %></label>
+        <textarea id="suaYeuCau" class="nh-textarea" rows="2" placeholder="<%= t('don.yeu_cau_placeholder') %>"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.5rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+        <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" onclick="dongSuaDatBan()">
+          <%= t('don.huy_bo') %>
+        </button>
+        <button type="submit" id="suaBtnLuu" class="nh-btn nh-btn--gold nh-btn--sm">
+          <i class="fas fa-save"></i> <%= t('don.luu_thay_doi') %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL HỦY ĐẶT BÀN -->
+<div class="nh-modal-overlay" id="modalHuyDatBan" onclick="if(event.target===this) dongHuyDatBan()">
+  <div class="nh-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <span class="nh-eyebrow nh-eyebrow--sm" style="color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> <%= t('don.xac_nhan_huy_tieu_de') %></span>
+        <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
+          <%= t('don.huy_lich_dat_ban') %>
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          <%= t('don.ma') %>: <strong id="huyMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <button type="button" onclick="dongHuyDatBan()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--nh-muted);">&times;</button>
+    </div>
+
+    <!-- Thông tin hoàn tiền nếu có cọc -->
+    <div id="huyThongTinHoan" style="margin: 1rem 0; padding: 0.85rem 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 0.88rem; line-height: 1.5;">
+      <i class="fas fa-info-circle"></i> <%= t('don.dang_tai_chinh_sach') %>
+    </div>
+
+    <div id="huyBaoLoi" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:8px; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; font-size:0.85rem;"></div>
+
+    <form id="formHuyDatBan" onsubmit="xuLyHuyDatBan(event)">
+      <input type="hidden" id="huyMaAn">
+      <input type="hidden" id="huyPhoneAn">
+
+      <div class="nh-field">
+        <label for="huyLyDo"><%= t('don.ly_do_huy') %> <span style="color:#ef4444">*</span></label>
+        <textarea id="huyLyDo" class="nh-textarea" rows="3" required placeholder="<%= t('don.ly_do_placeholder') %>"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.5rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+        <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" onclick="dongHuyDatBan()">
+          <%= t('don.giu_lai_ban') %>
+        </button>
+        <button type="submit" id="huyBtnSubmit" class="nh-btn nh-btn--sm" style="background:#ef4444; color:#fff; border-color:#ef4444;">
+          <i class="fas fa-trash-alt"></i> <%= t('don.xac_nhan_huy_ban') %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.nh-tab-content').forEach(function(el) {
-    el.classList.remove('active');
-  });
-  document.querySelectorAll('.nh-order-tab-btn').forEach(function(el) {
-    el.classList.remove('active');
-  });
-  var target = document.getElementById(tabId);
-  if (target) {
-    target.classList.add('active');
+var LEAD_MINUTES = <%= (typeof cauHinh !== 'undefined' && cauHinh.minimum_lead_minutes) ? Number(cauHinh.minimum_lead_minutes) : 30 %>;
+var TXT_KHACH = "<%= t('dat_ban_moi.khach') %>";
+var TXT_KHONG_CO_MON = "<%= t('don.khong_co_mon_goi_truoc') %>";
+var TXT_KHONG_CO = "<%= t('don.khong_co') %>";
+var TXT_KHONG_YEU_CAU_COC = "<%= t('don.khong_yeu_cau_coc') %>";
+var TXT_XEP_BAN_KHI_DEN = "<%= t('don.xep_ban_khi_den') %>";
+var TXT_THONG_THUONG = "<%= t('don.thong_thuong') %>";
+var TXT_DANG_LUU = "<%= t('don.dang_luu') %>";
+var TXT_LUU_THAY_DOI = "<%= t('don.luu_thay_doi') %>";
+var TXT_DANG_HUY = "<%= t('don.dang_huy') %>";
+var TXT_XAC_NHAN_HUY = "<%= t('don.xac_nhan_huy_ban') %>";
+var TXT_CAP_NHAT_OK = "<%= t('don.cap_nhat_thanh_cong') %>";
+var TXT_HUY_OK = "<%= t('don.huy_thanh_cong_msg') %>";
+var TXT_LOI_MANG = "<%= t('don.loi_ket_noi') %>";
+
+function moModalSuaDatBan(btn) {
+  var d = btn.dataset;
+  document.getElementById('suaMa').textContent = d.code || '';
+  document.getElementById('suaMaAn').value = d.code || '';
+  document.getElementById('suaPhoneAn').value = d.phone || '';
+  document.getElementById('suaNgay').value = d.date || '';
+  document.getElementById('suaGio').value = d.time || '';
+  document.getElementById('suaSoKhach').value = d.guests || 2;
+  document.getElementById('suaKhuVuc').value = d.area || '';
+  document.getElementById('suaYeuCau').value = d.requests || '';
+  var hanEl = document.getElementById('suaHanPhut');
+  if (hanEl) hanEl.textContent = LEAD_MINUTES;
+
+  var loiBox = document.getElementById('suaBaoLoi');
+  if (loiBox) {
+    loiBox.style.display = 'none';
+    loiBox.textContent = '';
   }
-  if (btn) {
-    btn.classList.add('active');
+  var modal = document.getElementById('modalSuaDatBan');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
   }
 }
 
-function moChiTiet(r) {
-  if (!r) return;
-  document.getElementById('mMa').textContent = r.reservation_code || '';
-  document.getElementById('mTenKhach').textContent = r.customer_name || 'Khách hàng';
-  document.getElementById('mSdt').textContent = r.phone || '-';
-  document.getElementById('mThoiGian').textContent = (r.gio || '') + (r.gio_ket_thuc ? ' – ' + r.gio_ket_thuc : '') + ' · ' + (r.reservation_date || '');
-  document.getElementById('mSoKhach').textContent = (r.guest_count || 1) + ' khách';
-  document.getElementById('mKhuVuc').textContent = r.area_name || 'Tiêu chuẩn';
-  document.getElementById('mBan').textContent = (r.ban && r.ban.length > 0) ? r.ban.join(', ') : 'Xếp bàn khi đến';
-  document.getElementById('mDip').textContent = r.occasion || 'Thông thường';
-  document.getElementById('mTienCoc').textContent = Number(r.deposit_amount) > 0 ? (Number(r.deposit_amount).toLocaleString('vi-VN') + ' ₫ (' + r.deposit_status + ')') : 'Không yêu cầu cọc';
-  document.getElementById('mYeuCau').textContent = r.special_requests || 'Không có';
+function moModalChiTiet(btn) {
+  var d = btn.dataset;
+  document.getElementById('mMa').textContent = d.code || '';
+  document.getElementById('mTenKhach').textContent = d.name || 'Khách hàng';
+  document.getElementById('mSdt').textContent = d.phone || '-';
+  document.getElementById('mThoiGian').textContent = d.time || '';
+  document.getElementById('mSoKhach').textContent = (d.guests || 1) + ' ' + TXT_KHACH;
+  document.getElementById('mKhuVuc').textContent = d.area || "<%= t('tt_dat_ban.tieu_chuan') %>";
+  document.getElementById('mBan').textContent = d.tables || TXT_XEP_BAN_KHI_DEN;
+  document.getElementById('mDip').textContent = d.occasion || TXT_THONG_THUONG;
+  document.getElementById('mTienCoc').textContent = d.deposit || TXT_KHONG_YEU_CAU_COC;
+  document.getElementById('mYeuCau').textContent = d.requests || TXT_KHONG_CO;
 
   var badge = document.getElementById('mTrangThaiBadge');
-  badge.textContent = r.nhan_trang_thai || r.status || '';
-  badge.className = 'nh-reservation-badge badge--' + (r.status || 'PENDING');
+  if (badge) {
+    badge.textContent = d.status || '';
+    badge.className = 'nh-reservation-badge badge--' + (d.rawStatus || 'PENDING');
+  }
 
-  document.getElementById('modalChiTietDatBan').classList.add('active');
+  var modal = document.getElementById('modalChiTietDatBan');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
 }
 
+function moModalHuyDatBan(btn) {
+  var d = btn.dataset;
+  document.getElementById('huyMa').textContent = d.code || '';
+  document.getElementById('huyMaAn').value = d.code || '';
+  document.getElementById('huyPhoneAn').value = d.phone || '';
+  document.getElementById('huyLyDo').value = '';
+
+  var box = document.getElementById('huyThongTinHoan');
+  var loiBox = document.getElementById('huyBaoLoi');
+  if (loiBox) loiBox.style.display = 'none';
+  if (box) box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <%= t("don.dang_tai_chinh_sach") %>';
+
+  var modal = document.getElementById('modalHuyDatBan');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+
+  fetch('/api/dat-ban/tra-cuu', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ma: d.code, dien_thoai: d.phone })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.ok && data.huy) {
+      var h = data.huy;
+      if (h.soTien > 0) {
+        box.innerHTML = '<i class="fas fa-check-circle" style="color:#16a34a"></i> <strong>Chính sách hoàn tiền:</strong> Bạn sẽ được hoàn <strong>' + Number(h.soTien).toLocaleString('vi-VN') + ' ₫ (' + h.phanTram + '%)</strong> theo chính sách ' + (h.chinhSach || '') + '.';
+      } else if (h.da_coc > 0) {
+        box.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#d97706"></i> <strong>Lưu ý:</strong> Do hủy sát giờ hẹn (' + h.gio_con_lai + ' giờ trước giờ dùng bữa), tiền đặt cọc sẽ <strong>không được hoàn lại</strong> theo quy định nhà hàng.';
+      } else {
+        box.innerHTML = '<i class="fas fa-info-circle"></i> Đơn đặt bàn này không có tiền cọc, việc hủy bàn sẽ được thực hiện ngay lập tức.';
+      }
+    } else {
+      box.innerHTML = '<i class="fas fa-info-circle"></i> Xác nhận hủy bàn này. Bàn của bạn sẽ được mở lại cho các khách hàng khác.';
+    }
+  })
+  .catch(function() {
+    if (box) box.innerHTML = '<i class="fas fa-info-circle"></i> Xác nhận hủy bàn này. Bàn của bạn sẽ được mở lại cho các khách hàng khác.';
+  });
+}
+
+// Xu ly su kien click delegated tren toan bo document de phong ngua
+document.addEventListener('click', function(e) {
+  var btnSua = e.target.closest('.btn-mo-sua');
+  if (btnSua) {
+    e.preventDefault();
+    moModalSuaDatBan(btnSua);
+    return;
+  }
+
+  var btnChiTiet = e.target.closest('.btn-mo-chi-tiet');
+  if (btnChiTiet) {
+    e.preventDefault();
+    moModalChiTiet(btnChiTiet);
+    return;
+  }
+
+  var btnHuy = e.target.closest('.btn-mo-huy');
+  if (btnHuy) {
+    e.preventDefault();
+    moModalHuyDatBan(btnHuy);
+    return;
+  }
+});
+
 function dongChiTiet() {
-  document.getElementById('modalChiTietDatBan').classList.remove('active');
+  var modal = document.getElementById('modalChiTietDatBan');
+  if (modal) modal.classList.remove('active');
+}
+
+function dongSuaDatBan() {
+  var modal = document.getElementById('modalSuaDatBan');
+  if (modal) modal.classList.remove('active');
+}
+
+function dongHuyDatBan() {
+  var modal = document.getElementById('modalHuyDatBan');
+  if (modal) modal.classList.remove('active');
+}
+
+function xuLyLuuSua(e) {
+  e.preventDefault();
+  var ma = document.getElementById('suaMaAn').value;
+  var dt = document.getElementById('suaPhoneAn').value;
+  var ngay = document.getElementById('suaNgay').value;
+  var gio = document.getElementById('suaGio').value;
+  var soKhach = document.getElementById('suaSoKhach').value;
+  var khuVuc = document.getElementById('suaKhuVuc').value;
+  var yeuCau = document.getElementById('suaYeuCau').value;
+
+  var btn = document.getElementById('suaBtnLuu');
+  var loiBox = document.getElementById('suaBaoLoi');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + TXT_DANG_LUU;
+  loiBox.style.display = 'none';
+
+  fetch('/api/dat-ban/tra-cuu/doi-lich', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ma: ma,
+      dien_thoai: dt,
+      ngay: ngay,
+      gio: gio,
+      so_khach: Number(soKhach),
+      khu_vuc: khuVuc || null,
+      yeu_cau: yeuCau
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(res) {
+    if (res.ok) {
+      alert(TXT_CAP_NHAT_OK);
+      window.location.reload();
+    } else {
+      loiBox.textContent = res.thong_bao || 'Có lỗi khi cập nhật lịch đặt bàn.';
+      loiBox.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> ' + TXT_LUU_THAY_DOI;
+    }
+  })
+  .catch(function(err) {
+    loiBox.textContent = TXT_LOI_MANG;
+    loiBox.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> ' + TXT_LUU_THAY_DOI;
+  });
+}
+
+function xuLyHuyDatBan(e) {
+  e.preventDefault();
+  var ma = document.getElementById('huyMaAn').value;
+  var dt = document.getElementById('huyPhoneAn').value;
+  var lyDo = document.getElementById('huyLyDo').value;
+
+  var btn = document.getElementById('huyBtnSubmit');
+  var loiBox = document.getElementById('huyBaoLoi');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + TXT_DANG_HUY;
+  loiBox.style.display = 'none';
+
+  fetch('/api/dat-ban/tra-cuu/huy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ma: ma,
+      dien_thoai: dt,
+      ly_do: lyDo
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(res) {
+    if (res.ok) {
+      alert(TXT_HUY_OK);
+      window.location.reload();
+    } else {
+      loiBox.textContent = res.thong_bao || 'Có lỗi khi hủy lượt đặt bàn.';
+      loiBox.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-trash-alt"></i> ' + TXT_XAC_NHAN_HUY;
+    }
+  })
+  .catch(function(err) {
+    loiBox.textContent = TXT_LOI_MANG;
+    loiBox.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-trash-alt"></i> ' + TXT_XAC_NHAN_HUY;
+  });
 }
 </script>
 

@@ -70,12 +70,14 @@ const laSo = (req, res, next) => {
  * Lay danh sach khoa tu ban TIENG VIET vi do la ban goc - moi khoa deu phai co
  * o day, cac ngon ngu khac lui ve no khi thieu (xem services/ngonNgu.js).
  */
-const KHOA_GIAO_DIEN = Object.keys(require('../locales/vi'))
-  .filter((k) => k.startsWith('dat_ban_moi.'));
-
 function nhanGiaoDien(t) {
+  const viDict = require('../locales/vi');
   const doc = {};
-  for (const k of KHOA_GIAO_DIEN) doc[k] = t(k);
+  for (const k of Object.keys(viDict)) {
+    if (k.startsWith('dat_ban_moi.') || k.startsWith('khu_vuc.') || k.startsWith('so_do.')) {
+      doc[k] = t(k);
+    }
+  }
   return doc;
 }
 
@@ -374,7 +376,18 @@ router.post('/api/dat-ban/tra-cuu', bat(async (req, res) => {
 /** Khach tu huy. Ma + so dien thoai la giay to tuy than o day. */
 router.post('/api/dat-ban/tra-cuu/huy', bat(async (req, res) => {
   try {
-    const r = await dv.traCuuChoKhach(req.body.ma, req.body.dien_thoai);
+    let dt = req.body.dien_thoai;
+    if (!dt && req.session && req.session.usersdt) {
+      dt = req.session.usersdt;
+    }
+    let r = await dv.traCuuChoKhach(req.body.ma, dt);
+    if (!r && req.session && req.session.userId) {
+      // Neu da dang nhap, cho phep tra cuu don thuoc so huu cua user
+      const ds = await dv.danhSach({ ma: req.body.ma, gioi_han: 1 });
+      if (ds.length && (Number(ds[0].customer_id) === Number(req.session.userId) || (req.session.usersdt && ds[0].phone === req.session.usersdt))) {
+        r = ds[0];
+      }
+    }
     if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
     const kq = await dv.doiTrangThai(r.id, 'CANCELLED', {
       lyDo: String(req.body.ly_do || '').trim() || 'Khách tự hủy trực tuyến',
@@ -388,7 +401,18 @@ router.post('/api/dat-ban/tra-cuu/huy', bat(async (req, res) => {
 /** Khach tu doi gio / doi so khach. Van di qua dung duong kiem tra nhu nhan vien. */
 router.post('/api/dat-ban/tra-cuu/doi-lich', bat(async (req, res) => {
   try {
-    const r = await dv.traCuuChoKhach(req.body.ma, req.body.dien_thoai);
+    let dt = req.body.dien_thoai;
+    if (!dt && req.session && req.session.usersdt) {
+      dt = req.session.usersdt;
+    }
+    let r = await dv.traCuuChoKhach(req.body.ma, dt);
+    if (!r && req.session && req.session.userId) {
+      // Neu da dang nhap, cho phep tra cuu don thuoc so huu cua user
+      const ds = await dv.danhSach({ ma: req.body.ma, gioi_han: 1 });
+      if (ds.length && (Number(ds[0].customer_id) === Number(req.session.userId) || (req.session.usersdt && ds[0].phone === req.session.usersdt))) {
+        r = ds[0];
+      }
+    }
     if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
     const moi = await dv.capNhat(r.id, {
       reservation_date: req.body.ngay,

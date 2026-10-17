@@ -135,22 +135,10 @@ const personnelService = {
 
   getRevenueByMonth: async () => {
     const [rows] = await db.query(`
-      SELECT MONTH(COALESCE(
-        STR_TO_DATE(dates, '%Y-%m-%d'),
-        STR_TO_DATE(dates, '%m/%d/%Y'),
-        STR_TO_DATE(dates, '%c/%e/%Y')
-      )) as month, SUM(thanhtien) as revenue 
+      SELECT MONTH(ngay_dat) as month, SUM(thanhtien) as revenue 
       FROM hopdong 
-      WHERE tinhtrang = 3 AND YEAR(COALESCE(
-        STR_TO_DATE(dates, '%Y-%m-%d'),
-        STR_TO_DATE(dates, '%m/%d/%Y'),
-        STR_TO_DATE(dates, '%c/%e/%Y')
-      )) = YEAR(CURDATE())
-      GROUP BY MONTH(COALESCE(
-        STR_TO_DATE(dates, '%Y-%m-%d'),
-        STR_TO_DATE(dates, '%m/%d/%Y'),
-        STR_TO_DATE(dates, '%c/%e/%Y')
-      ))
+      WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat IS NOT NULL AND YEAR(ngay_dat) = YEAR(CURDATE())
+      GROUP BY MONTH(ngay_dat)
       ORDER BY month ASC
     `);
     return rows;

@@ -30,13 +30,13 @@ const TEN_TRANG_THAI_BAN = {
   3: 'Đang dọn',
 };
 
-/** Chi cac don dang hoat dong moi hien tren man hinh bep. */
 /**
- * Man hinh bep chi hien don CUA CA HIEN TAI. Neu khong gioi han theo ngay,
- * nhung don cu tu vai thang truoc chua bao gio duoc dong se do het len man
- * hinh va lam bep khong nhin thay don thuc su can lam.
+ * Màn hình bếp hiển thị các đơn đang hoạt động (ăn tại chỗ hoặc giao hàng / mang về).
+ * - tinhtrang IN (0, 1, 5, 6): 0 = Đơn mới tạo (online/giao hàng), 1 = Đã xác nhận/đang phục vụ, 5 = Đang chế biến, 6 = Đã lên món
+ * - Ngày đặt khớp ngày hiện tại (hoặc đơn giao hàng đang chờ chế biến chưa xong).
  */
-const DON_DANG_HOAT_DONG = 'h.tinhtrang IN (1, 5, 6) AND h.ngay_dat = CURDATE()';
+const DON_DANG_HOAT_DONG = '(h.tinhtrang IN (0, 1, 5, 6) OR h.loai_don = "giao_hang") AND (h.ngay_dat = CURDATE() OR (h.loai_don = "giao_hang" AND h.trangthai_bep < 3))';
+
 
 const kdsService = {
   TEN_TRANG_THAI_BEP,
@@ -51,15 +51,22 @@ const kdsService = {
       `SELECT h.id, h.sesis, h.id_mon, h.name_mon, h.soluong, h.trangthai_bep,
               h.tg, h.ngay_dat, h.gio_dat, h.bep_bat_dau, h.bep_ket_thuc,
               h.noidung, h.ghi_chu_mon, h.so_user, h.id_ban, h.loai_don,
-              b.number_ban,
+              b.number_ban, dg.ma_giao, dg.trang_thai AS trang_thai_giao,
               COALESCE(k.ten, 'Khách lẻ') AS ten_khach,
               TIMESTAMPDIFF(MINUTE,
                 COALESCE(h.bep_bat_dau, CONCAT(h.ngay_dat, ' ', COALESCE(h.gio_dat, '00:00:00'))),
                 NOW()) AS cho_phut
        FROM hopdong h
-       LEFT JOIN khach_hang k ON k.id = h.id_user
-       LEFT JOIN ban b        ON b.Id_ban = h.id_ban
-       WHERE h.id_mon > 0 AND ${DON_DANG_HOAT_DONG} AND h.trangthai_bep < 3
+       LEFT JOIN khach_hang k    ON k.id = h.id_user
+       LEFT JOIN ban b           ON b.Id_ban = h.id_ban
+       LEFT JOIN don_giao_hang dg ON dg.sesis = h.sesis
+       WHERE h.id_mon > 0
+         AND h.trangthai_bep < 3
+         AND (
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy')) AND h.tinhtrang NOT IN (2, 3, 4))
+           OR
+           (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
+         )
        ORDER BY h.trangthai_bep ASC, h.id ASC`
     );
 
@@ -173,11 +180,18 @@ const kdsService = {
   thongKeBep: async () => {
     const [rows] = await db.query(
       `SELECT
-         SUM(CASE WHEN trangthai_bep = 0 THEN 1 ELSE 0 END) AS cho,
-         SUM(CASE WHEN trangthai_bep = 1 THEN 1 ELSE 0 END) AS dang_lam,
-         SUM(CASE WHEN trangthai_bep = 2 THEN 1 ELSE 0 END) AS xong
+         SUM(CASE WHEN h.trangthai_bep = 0 THEN 1 ELSE 0 END) AS cho,
+         SUM(CASE WHEN h.trangthai_bep = 1 THEN 1 ELSE 0 END) AS dang_lam,
+         SUM(CASE WHEN h.trangthai_bep = 2 THEN 1 ELSE 0 END) AS xong
        FROM hopdong h
-       WHERE h.id_mon > 0 AND ${DON_DANG_HOAT_DONG} AND h.trangthai_bep < 3`
+       LEFT JOIN don_giao_hang dg ON dg.sesis = h.sesis
+       WHERE h.id_mon > 0
+         AND h.trangthai_bep < 3
+         AND (
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy')) AND h.tinhtrang NOT IN (2, 3, 4))
+           OR
+           (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
+         )`
     );
     const [homNay] = await db.query(
       `SELECT COUNT(*) AS da_phuc_vu,
@@ -198,35 +212,79 @@ const kdsService = {
   // So do ban
   // ------------------------------------------------------------------
 
-  /** Danh sach ban kem vi tri, trang thai va thong tin phien dang phuc vu. */
-  laySoDoBan: async () => {
+  /** Danh sach ban kem vi tri, trang thai va thong tin phien dang phuc vu theo ngay. */
+  laySoDoBan: async (ngay = null) => {
+    const ngayLoc = ngay ? String(ngay).trim() : null;
+    const isHomNay = !ngayLoc || ngayLoc === new Date().toISOString().slice(0, 10);
+
     const [rows] = await db.query(
       `SELECT b.Id_ban, b.number_ban, b.trangthai, b.so_cho,
               b.toa_do_x, b.toa_do_y, b.sesis_hien_tai, b.ghichu,
               v.id_vitri, v.name_vitri, v.thu_tu,
-              p.so_mon, p.tong_tien, p.so_khach, p.bat_dau
+              p.so_mon, p.tong_tien, p.so_khach, p.bat_dau,
+              r.guest_name, r.guest_count AS r_guest_count, r.reservation_time, r.reservation_code
        FROM ban b
        LEFT JOIN vitri v ON v.id_vitri = b.id_vitri
        LEFT JOIN (
          SELECT sesis,
+                id_ban,
                 COUNT(*)                 AS so_mon,
                 SUM(thanhtien)           AS tong_tien,
                 MAX(so_user)             AS so_khach,
                 MIN(CONCAT(ngay_dat, ' ', COALESCE(gio_dat, '00:00:00'))) AS bat_dau
-         FROM hopdong WHERE id_mon > 0 GROUP BY sesis
-       ) p ON p.sesis = b.sesis_hien_tai
-       ORDER BY v.thu_tu, v.id_vitri, b.number_ban`
+         FROM hopdong 
+         WHERE id_mon > 0 AND tinhtrang IN (1, 5, 6) ${ngayLoc ? 'AND ngay_dat = ?' : ''}
+         GROUP BY sesis, id_ban
+       ) p ON (p.sesis = b.sesis_hien_tai OR (p.id_ban = b.Id_ban AND NOT ?))
+       LEFT JOIN (
+         SELECT rt.table_id, res.customer_name AS guest_name, res.guest_count, res.start_time AS reservation_time, res.reservation_code
+         FROM reservation_tables rt
+         JOIN reservations res ON res.id = rt.reservation_id
+         WHERE res.status IN ('CONFIRMED', 'PENDING', 'SEATED')
+           AND res.reservation_date = ?
+       ) r ON r.table_id = b.Id_ban
+       ORDER BY v.thu_tu, v.id_vitri, b.number_ban`,
+      ngayLoc ? [ngayLoc, isHomNay, ngayLoc] : [isHomNay, new Date().toISOString().slice(0, 10)]
     );
-    return rows.map((r) => ({
-      ...r,
-      ten_trang_thai: TEN_TRANG_THAI_BAN[r.trangthai] || 'Không rõ',
-    }));
+
+    return rows.map((r) => {
+      let tt = r.trangthai;
+      let tenTT = TEN_TRANG_THAI_BAN[tt] || 'Không rõ';
+
+      // Nếu xem ngày khác, trạng thái hiển thị theo đặt trước của ngày đó
+      if (!isHomNay) {
+        if (r.guest_name) {
+          tt = 2; // Đã đặt trước
+          tenTT = 'Đã đặt trước';
+        } else if (r.so_mon && Number(r.so_mon) > 0) {
+          tt = 1; // Đang phục vụ / có đơn
+          tenTT = 'Đang phục vụ';
+        } else {
+          tt = 0; // Trống
+          tenTT = 'Trống';
+        }
+      } else if (r.guest_name && tt === 0) {
+        tt = 2;
+        tenTT = 'Đã đặt trước';
+      }
+
+      return {
+        ...r,
+        trangthai: tt,
+        sesis_hien_tai: (r.so_mon && Number(r.so_mon) > 0) ? r.sesis_hien_tai : null,
+        ten_trang_thai: tenTT,
+        dat_truoc: r.guest_name ? {
+          ten_khach: r.guest_name,
+          so_khach: r.r_guest_count,
+          gio: r.reservation_time,
+          ma: r.reservation_code
+        } : null
+      };
+    });
   },
 
   /** Khu vuc / tang - dung lam tab tren so do. */
   layViTri: async () => {
-    // `thu_tu` sap khu theo luong phuc vu thuc te (sanh -> san vuon -> tang 2 ->
-    // VIP), khong theo id_vitri - id chi phan anh thu tu tao ban ghi.
     const [rows] = await db.query(
       `SELECT v.id_vitri, v.name_vitri, v.thu_tu,
               COUNT(b.Id_ban)          AS so_ban,
@@ -243,7 +301,6 @@ const kdsService = {
     if (![0, 1, 2, 3].includes(Number(trangThai))) {
       throw new Error('Trạng thái bàn không hợp lệ.');
     }
-    // Ban ve trong thi xoa luon lien ket phien dang phuc vu.
     const sesisMoi = Number(trangThai) === 0 ? null : sesis;
     await db.query(
       'UPDATE ban SET trangthai = ?, sesis_hien_tai = ? WHERE Id_ban = ?',
@@ -268,7 +325,10 @@ const kdsService = {
     return danhSach.length;
   },
 
-  thongKeBan: async () => {
+  thongKeBan: async (ngay = null) => {
+    const ngayLoc = ngay ? String(ngay).trim() : null;
+    const isHomNay = !ngayLoc || ngayLoc === new Date().toISOString().slice(0, 10);
+
     const [rows] = await db.query(
       `SELECT trangthai, COUNT(*) AS n, COALESCE(SUM(so_cho), 0) AS cho
          FROM ban GROUP BY trangthai`
@@ -281,23 +341,40 @@ const kdsService = {
       kq.tong += Number(r.n);
       kq.so_cho += Number(r.cho);
     }
-    // Ty le lap day = ban dang co khach hoac da giu cho / tong so ban. Voi 40 ban
-    // thi con so nay noi len tinh trang nha hang nhanh hon la dem tung trang thai.
+
+    if (!isHomNay) {
+      // Đếm số bàn đã đặt của ngày được chọn
+      const [resvCount] = await db.query(
+        `SELECT COUNT(DISTINCT rt.table_id) as da_dat
+         FROM reservation_tables rt
+         JOIN reservations res ON res.id = rt.reservation_id
+         WHERE res.status IN ('CONFIRMED', 'PENDING', 'SEATED')
+           AND res.reservation_date = ?`,
+        [ngayLoc]
+      );
+      kq.da_dat = Number(resvCount[0].da_dat) || 0;
+      kq.dang_phuc_vu = 0;
+      kq.dang_don = 0;
+      kq.trong = Math.max(0, kq.tong - kq.da_dat);
+    }
+
     kq.ty_le_lap_day = kq.tong
       ? Math.round(((kq.dang_phuc_vu + kq.da_dat) / kq.tong) * 100)
       : 0;
-    // Doanh thu cac ban dang phuc vu - "dashboard thoi gian thuc" theo de bai.
+
     const [dt] = await db.query(
       `SELECT COALESCE(SUM(h.thanhtien), 0) AS dang_mo
        FROM ban b JOIN hopdong h ON h.sesis = b.sesis_hien_tai
-       WHERE b.trangthai = 1 AND h.id_mon > 0`
+       WHERE b.trangthai = 1 AND h.id_mon > 0 ${ngayLoc ? 'AND h.ngay_dat = ?' : ''}`,
+      ngayLoc ? [ngayLoc] : []
     );
     const [hn] = await db.query(
-      `SELECT COALESCE(SUM(thanhtien), 0) AS doanh_thu_hom_nay
-       FROM hopdong WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat = CURDATE()`
+      `SELECT COALESCE(SUM(thanhtien), 0) AS doanh_thu_ngay
+       FROM hopdong WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat = ?`,
+      [ngayLoc || new Date().toISOString().slice(0, 10)]
     );
-    kq.doanh_thu_dang_mo = Number(dt[0].dang_mo) || 0;
-    kq.doanh_thu_hom_nay = Number(hn[0].doanh_thu_hom_nay) || 0;
+    kq.doanh_thu_dang_mo = isHomNay ? (Number(dt[0].dang_mo) || 0) : 0;
+    kq.doanh_thu_hom_nay = Number(hn[0].doanh_thu_ngay) || 0;
     return kq;
   },
 };

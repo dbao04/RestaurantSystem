@@ -35,13 +35,13 @@ function boi(req) {
 // ===========================================================================
 
 /** So do to chuc - moi nhan vien deu xem duoc de biet minh bao cao cho ai. */
-router.get(['/to-chuc', '/staff/to-chuc', '/admin/to-chuc'], canDangNhap, bat(async (req, res) => {
+router.get(['/to-chuc', '/staff/to-chuc'], canDangNhap, bat(async (req, res) => {
   const [cay, boPhan, tongQuan] = await Promise.all([
     toChuc.soDoToChuc(),
     toChuc.danhSachBoPhan(),
     toChuc.tongQuanVanHanh(),
   ]);
-  const isStaff = req.originalUrl.startsWith('/staff') || (!req.originalUrl.startsWith('/admin') && req.session && req.session.stafflogin && !req.session.adminlogin);
+  const isStaff = true;
   res.render('staff/to-chuc', {
     title: 'Sơ đồ tổ chức',
     activePage: 'to-chuc',
@@ -51,7 +51,7 @@ router.get(['/to-chuc', '/staff/to-chuc', '/admin/to-chuc'], canDangNhap, bat(as
 }));
 
 /** Bang dieu hanh - danh cho cap quan ly. */
-router.get(['/dieu-hanh', '/staff/dieu-hanh', '/admin/dieu-hanh'], canDangNhap, canQuyen('dieu_hanh.bang_dieu_khien'), bat(async (req, res) => {
+router.get(['/dieu-hanh', '/staff/dieu-hanh'], canDangNhap, canQuyen('dieu_hanh.bang_dieu_khien'), bat(async (req, res) => {
   const [tongQuan, nhanSu, viec, to] = await Promise.all([
     toChuc.tongQuanVanHanh(),
     toChuc.danhSachNhanSu({}),
@@ -61,7 +61,7 @@ router.get(['/dieu-hanh', '/staff/dieu-hanh', '/admin/dieu-hanh'], canDangNhap, 
     }),
     toChuc.danhSachTo(),
   ]);
-  const isStaff = req.originalUrl.startsWith('/staff') || (!req.originalUrl.startsWith('/admin') && req.session && req.session.stafflogin && !req.session.adminlogin);
+  const isStaff = true;
   res.render('staff/dieu-hanh', {
     title: 'Bảng điều hành',
     activePage: 'dieu-hanh',

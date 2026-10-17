@@ -179,52 +179,7 @@ router.post('/admin/van-chuyen/tham-so', canQuanTri, bat(async (req, res) => {
   veAdmin(res, '/admin/van-chuyen', 'Đã lưu tham số vận hành.');
 }));
 
-// ===========================================================================
-// KHU QUAN TRI - SHIPPER
-// ===========================================================================
 
-router.get('/admin/van-chuyen/shipper', canQuanTri, bat(async (req, res) => {
-  const [dsSp, dsDv, dsNv] = await Promise.all([
-    vc.dsShipper(), vc.dsDonVi({ chiHoatDong: true }), vc.nhanVienChuaLaShipper(),
-  ]);
-  res.render('admin/van-chuyen-shipper', {
-    title: 'Quản lý shipper',
-    dsSp, dsDv, dsNv,
-    suaId: Number(req.query.sua) || null,
-    msg: req.query.msg || null,
-    msgType: req.query.msgType || 'success',
-  });
-}));
-
-router.post('/admin/van-chuyen/shipper/them', canQuanTri, bat(async (req, res) => {
-  try {
-    await vc.themShipper(req.body || {});
-    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/admin/van-chuyen/shipper' });
-    veAdmin(res, '/admin/van-chuyen/shipper', 'Đã thêm shipper.');
-  } catch (e) {
-    veAdmin(res, '/admin/van-chuyen/shipper', e.message, 'danger');
-  }
-}));
-
-router.post('/admin/van-chuyen/shipper/sua/:id', canQuanTri, bat(async (req, res) => {
-  try {
-    await vc.suaShipper(Number(req.params.id), req.body || {});
-    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/admin/van-chuyen/shipper' });
-    veAdmin(res, '/admin/van-chuyen/shipper', 'Đã lưu hồ sơ shipper.');
-  } catch (e) {
-    veAdmin(res, '/admin/van-chuyen/shipper', e.message, 'danger');
-  }
-}));
-
-router.post('/admin/van-chuyen/shipper/xoa/:id', canQuanTri, bat(async (req, res) => {
-  try {
-    await vc.xoaShipper(Number(req.params.id));
-    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/admin/van-chuyen/shipper' });
-    veAdmin(res, '/admin/van-chuyen/shipper', 'Đã xóa hồ sơ shipper.');
-  } catch (e) {
-    veAdmin(res, '/admin/van-chuyen/shipper', e.message, 'danger');
-  }
-}));
 
 // ===========================================================================
 // KHU DIEU PHOI
@@ -750,14 +705,14 @@ router.get('/shipper/sw.js', (req, res) => {
 router.get('/theo-doi', (req, res) => {
   const ma = String(req.query.ma || '').trim().toUpperCase();
   if (ma) return res.redirect('/theo-doi/' + encodeURIComponent(ma));
-  res.render('theo-doi-nhap-ma', { layout: false, title: 'Theo dõi đơn giao hàng', loi: req.query.loi || null });
+  res.redirect('/cart');
 });
 
 router.get('/theo-doi/:ma', bat(async (req, res) => {
   const ma = String(req.params.ma || '').trim().toUpperCase();
   const don = await vc.donGiaoTheoMa(ma);
   if (!don) {
-    return res.redirect('/theo-doi?loi=' + encodeURIComponent(`Không tìm thấy đơn "${ma}". Hãy kiểm tra lại mã trên hóa đơn.`));
+    return res.redirect('/cart');
   }
 
   const [mon, lichSu, goc] = await Promise.all([

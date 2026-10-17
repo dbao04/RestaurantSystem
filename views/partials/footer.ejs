@@ -39,8 +39,9 @@
             <ul>
               <li><a href="/"><%= t('dieu_huong.trang_chu') %></a></li>
               <li><a href="/about"><%= t('dieu_huong.gioi_thieu') %></a></li>
-              <li><a href="/menu"><%= t('dieu_huong.thuc_don') %></a></li>
-              <li><a href="/giao-hang"><i class="fas fa-motorcycle" style="color:var(--nh-gold); margin-right:4px;"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a></li>
+              <li><a href="/menu"><%= t('dieu_huong.mon_an') %></a></li>
+              <li><a href="/combos"><%= t('dieu_huong.thuc_don') %></a></li>
+              <li><a href="/giao-hang"><%= t('gio_hang.dat_mon_giao_tan_noi') %></a></li>
               <li><a href="/blog"><%= t('dieu_huong.tin_tuc') %></a></li>
               <li><a href="/datban"><%= t('chung.dat_ban') %></a></li>
               <li><a href="/huong-dan-dat-ban"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
@@ -50,7 +51,7 @@
           <div>
             <h4><%= t('chan_trang.lien_he') %></h4>
             <ul>
-              <li><i class="fas fa-map-marker-alt"></i><span><%= t('chan_trang.dia_chi') %></span></li>
+              <li style="line-height:1.55;"><i class="fas fa-map-marker-alt" style="margin-top:0.2rem;"></i><span style="display:inline-block;"><%= t('chan_trang.dia_chi') %></span></li>
               <li><i class="fas fa-phone-alt"></i><a href="tel:0388062048">0388 062 048</a></li>
               <li><i class="fas fa-headset"></i><a href="/chat" style="color:var(--nh-gold-soft); font-weight:600;"><%= t('chat.tieu_de') || 'Chat với nhân viên' %></a></li>
             </ul>

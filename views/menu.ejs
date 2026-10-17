@@ -1,7 +1,7 @@
-<%- include('partials/header', { title: t('dieu_huong.thuc_don'), activeNav: 'menu' }) %>
+<%- include('partials/header', { title: t('dieu_huong.mon_an'), activeNav: 'menu' }) %>
 <%
 /*
-  TRANG THỰC ĐƠN: 3 DANH MỤC CHÍNH (Khai vị, Món chính, Đồ uống).
+  TRANG MÓN ĂN: 3 DANH MỤC CHÍNH (Khai vị, Món chính, Đồ uống).
 */
 var boSo = function (s) { return String(s || '').replace(/^\d+\s*[.)-]\s*/, '').trim(); };
 var dsLoai = (typeof categories !== 'undefined' && categories) ? categories : [];
@@ -50,7 +50,7 @@ if (typeof mainGroups === 'undefined' || !mainGroups || !mainGroups.length) {
   <div class="nh-container nh-subhero__inner">
     <span class="nh-eyebrow"><%= t('thuc_don.eyebrow_bep') %></span>
     <h1><%= t('thuc_don.tieu_de') %></h1>
-    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.thuc_don') %></div>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; <%= t('dieu_huong.mon_an') %></div>
   </div>
 </section>
 

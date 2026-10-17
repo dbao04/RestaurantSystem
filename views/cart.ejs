@@ -4,226 +4,1283 @@
   var coMon = cartItems && cartItems.length > 0;
   var tt = (typeof thongTinGiao !== 'undefined' && thongTinGiao) ? thongTinGiao : null;
   var bg = (typeof baoGia !== 'undefined' && baoGia) ? baoGia : null;
-  var phiShip = (bg && bg.giao_duoc) ? bg.phi : (tt && tt.phi_co_ban ? tt.phi_co_ban : 0);
-  var tongTien = Number(subtotal || 0) + (tt ? Number(phiShip || 0) : 0);
+  var phiShip = (bg && bg.giao_duoc) ? bg.phi : (tt && tt.phi_co_ban ? tt.phi_co_ban : 15000);
+  var tongTien = Number(subtotal || 0) + (coMon ? Number(phiShip || 0) : 0);
+  var kh = typeof khach !== 'undefined' && khach ? khach : null;
+  var tenMacDinh = (tt && tt.ten_nguoi_nhan) || (kh && kh.ten) || session.username || '';
+  var sdtMacDinh = (tt && tt.sdt_nguoi_nhan) || (kh && kh.sdt) || (kh && kh.sodienthoai) || session.usersdt || '';
+  // Chỉ dùng địa chỉ giao hàng đã được xác định trước đó, tránh điền text hồ sơ thô chưa có tọa độ (như "An Giang")
+  var diaChiMacDinh = (tt && tt.dia_chi_giao) || '';
+  var diaChiHoSo = (kh && kh.diachi && kh.diachi.trim()) ? kh.diachi.trim() : '';
+  var ghiChuMacDinh = (tt && tt.ghi_chu_giao) || '';
+  var viDoMacDinh = (tt && tt.vi_do) || '';
+  var kinhDoMacDinh = (tt && tt.kinh_do) || '';
 %>
+
+<style>
+  /* ------------------------------------------------------------- SHOPEEFOOD CHECKOUT STYLES */
+  .gh-cart-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  @media (max-width: 992px) {
+    .gh-cart-layout { grid-template-columns: 1fr; }
+  }
+
+  .gh-box {
+    background: #ffffff;
+    border: 1.5px solid #e8decb;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 18px rgba(34, 23, 17, 0.05);
+  }
+  .gh-box__title {
+    margin: 0 0 16px;
+    font-family: var(--nh-serif, 'Playfair Display', serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--nh-espresso, #221711);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f2ece1;
+  }
+  .gh-box__title i {
+    color: var(--nh-gold, #c8a24b);
+  }
+
+  /* Search address bar */
+  .gh-search-group {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 2px solid var(--nh-gold, #c8a24b);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(200, 162, 75, 0.12);
+    position: relative;
+    overflow: hidden;
+  }
+  .gh-search-group:focus-within {
+    border-color: #9e7d30;
+    box-shadow: 0 6px 20px rgba(200, 162, 75, 0.25);
+  }
+  .gh-search-icon {
+    padding: 0 14px;
+    color: #c8a24b;
+    font-size: 16px;
+  }
+  .gh-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 6px 12px 0;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: #2c1810;
+    font-weight: 500;
+    background: transparent;
+  }
+  .gh-btn-gps {
+    background: linear-gradient(135deg, #241a14, #3b2a20);
+    color: #c8a24b;
+    border: none;
+    padding: 8px 12px;
+    margin: 4px 6px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .gh-btn-gps:hover {
+    background: #c8a24b;
+    color: #1f160e;
+  }
+  .gh-btn-clear {
+    border: none;
+    background: transparent;
+    color: #999;
+    font-size: 16px;
+    padding: 8px 10px;
+    cursor: pointer;
+    display: none;
+  }
+
+  /* Quick address helper chips */
+  .gh-chip-addr {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdfaf3;
+    border: 1px dashed #c8a24b;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    color: #4a3629;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .gh-chip-addr:hover {
+    background: #fbf2dc;
+    border-color: #a8812c;
+    color: #1f160e;
+    box-shadow: 0 2px 8px rgba(200, 162, 75, 0.2);
+  }
+
+  /* Autocomplete Dropdown */
+  .gh-sug-box {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2d9cd;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-height: 260px;
+    overflow-y: auto;
+    display: none;
+    padding: 6px 0;
+  }
+  .gh-sug-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f6f2ec;
+    transition: background 0.15s;
+  }
+  .gh-sug-item:last-child { border-bottom: none; }
+  .gh-sug-item:hover { background: #fbf8f2; }
+  .gh-sug-item i { color: #c8a24b; margin-top: 3px; font-size: 14px; flex-shrink: 0; }
+  .gh-sug-title { font-size: 14px; font-weight: 700; color: #241a14; }
+  .gh-sug-sub { font-size: 12.5px; color: #777; }
+
+  /* Map */
+  .gh-map-box {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 12px;
+    border: 1.5px solid #e2d9cd;
+    height: 280px;
+    background: #f0ede8;
+    z-index: 1;
+    isolation: isolate;
+  }
+  #gh-cart-map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+  }
+  .leaflet-top, .leaflet-bottom, .leaflet-pane, .leaflet-control-container {
+    z-index: 5 !important;
+  }
+  .leaflet-control-zoom {
+    margin-top: 10px !important;
+    margin-left: 10px !important;
+  }
+
+  /* Delivery Fee summary */
+  .gh-fee-badge {
+    background: #fdfaf3;
+    border: 1px solid #ebd9b0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13.5px;
+  }
+  .gh-fee-badge b { color: var(--nh-espresso, #221711); font-size: 14.5px; }
+
+  /* Payment method selector */
+  .gh-pay-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  @media (max-width: 500px) {
+    .gh-pay-options { grid-template-columns: 1fr; }
+  }
+  .gh-pay-card {
+    border: 1.5px solid #e8decb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+  }
+  .gh-pay-card:hover { border-color: #c8a24b; background: #fdfcf9; }
+  .gh-pay-card.active {
+    border-color: #c8a24b;
+    background: #fdf9ee;
+    box-shadow: 0 0 0 2px rgba(200, 162, 75, 0.25);
+  }
+  .gh-pay-card input { display: none; }
+  .gh-pay-card__icon {
+    font-size: 20px;
+    color: #c8a24b;
+  }
+  .gh-pay-card__text { font-size: 13.5px; font-weight: 700; color: #241a14; }
+
+  @keyframes markerPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(220, 53, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+  }
+  .gh-pulse-marker { animation: markerPulse 2s infinite; border-radius: 50%; }
+  /* Modal Xác Nhận Đặt Hàng */
+  .gh-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(34, 23, 17, 0.7);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    animation: fadeInModal 0.25s ease;
+  }
+  .gh-modal-box {
+    background: #ffffff;
+    border: 2px solid var(--nh-gold, #c8a24b);
+    border-radius: 20px;
+    max-width: 460px;
+    width: 100%;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    transform: scale(0.95);
+    animation: popModal 0.25s ease forwards;
+  }
+  @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popModal { to { transform: scale(1); } }
+  .gh-modal-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: #fdf8eb;
+    color: var(--nh-gold, #c8a24b);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 16px;
+    border: 2px solid #ebd9b0;
+  }
+  .gh-modal-title {
+    font-family: var(--nh-serif, 'Playfair Display', serif);
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--nh-espresso, #221711);
+    margin: 0 0 10px;
+  }
+  .gh-modal-desc {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.55;
+    margin: 0 0 20px;
+  }
+  .gh-modal-summary {
+    background: #faf7f2;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 22px;
+    text-align: left;
+    font-size: 13.5px;
+    border: 1px solid #efe8db;
+  }
+  .gh-modal-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .gh-modal-actions button {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .gh-btn-modal-cancel {
+    background: #f0ebe1;
+    color: #555;
+    border: 1px solid #ddd2c0;
+  }
+  .gh-btn-modal-cancel:hover { background: #e5decb; color: #221711; }
+  .gh-btn-modal-confirm {
+    background: var(--nh-gold, #c8a24b);
+    color: #241a14;
+    border: none;
+    box-shadow: 0 4px 14px rgba(200, 162, 75, 0.35);
+  }
+  .gh-btn-modal-confirm:hover { background: #b8933e; }
+</style>
 
 <section class="nh-subhero nh-subhero--sm">
   <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <% if (coMon && tt) { %>
-      <span class="nh-eyebrow"><%= t('gio_hang.buoc_3_tieu_de') %></span>
-      <h1><%= t('gio_hang.gio_hang_va_dat_mon') %></h1>
-      <div class="nh-crumbs">
-        <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
-        <a href="/giao-hang"><%= t('gio_hang.thong_tin_giao_hang') %></a> &nbsp;/&nbsp; 
-        <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; 
-        <span><%= t('gio_hang.gio_hang_va_dat_mon') %></span>
-      </div>
-    <% } else { %>
-      <span class="nh-eyebrow"><%= t('gio_hang.eyebrow') %></span>
-      <h1><%= t('gio_hang.tieu_de') %></h1>
-      <div class="nh-crumbs">
-        <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
-        <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; 
-        <span><%= t('gio_hang.tieu_de') %></span>
-      </div>
-    <% } %>
+    <span class="nh-eyebrow"><%= t('dat_ban.dich_vu_giao_tan_noi') %></span>
+    <h1><%= coMon ? 'Giỏ hàng & Thanh toán giao tận nơi' : t('gio_hang.tieu_de') %></h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; 
+      <a href="/menu"><%= t('dieu_huong.thuc_don') %></a> &nbsp;/&nbsp; 
+      <span><%= t('gio_hang.tieu_de') %></span>
+    </div>
   </div>
 </section>
 
+<%
+  var TT_GIAO = {
+    cho_phan:  { nhan: 'Chờ phân shipper', mau: '#b45309', bg: '#fef3c7', icon: 'fa-hourglass-half' },
+    da_phan:   { nhan: 'Đã phân shipper',  mau: '#1d4ed8', bg: '#dbeafe', icon: 'fa-user-check' },
+    dang_lay:  { nhan: 'Đang lấy món',    mau: '#6d28d9', bg: '#ede9fe', icon: 'fa-box-open' },
+    dang_giao: { nhan: 'Đang trên đường giao', mau: '#c2410c', bg: '#ffedd5', icon: 'fa-motorcycle' },
+    da_giao:   { nhan: 'Đã giao thành công', mau: '#15803d', bg: '#dcfce7', icon: 'fa-circle-check' },
+    that_bai:  { nhan: 'Giao thất bại',    mau: '#b91c1c', bg: '#fee2e2', icon: 'fa-triangle-exclamation' },
+    huy:       { nhan: 'Đã hủy',           mau: '#4b5563', bg: '#f3f4f6', icon: 'fa-ban' }
+  };
+  var dsDonGiao = (typeof donGiaoList !== 'undefined' && donGiaoList) ? donGiaoList : [];
+  var donDangXuLy = dsDonGiao.filter(function(d) { return ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) >= 0; });
+%>
+
 <section class="nh-section nh-section--cream">
   <div class="nh-container">
-    <%# Chỉ hiện thanh tiến trình bước khi giỏ hàng ĐANG CÓ MÓN %>
-    <% if (coMon && tt) { %>
-      <%- include('partials/nh-steps', { buoc: 3 }) %>
-    <% } %>
-
-    <% if (typeof error !== 'undefined' && error) { %>
-      <div class="nh-panel nh-reveal" style="border-left:4px solid var(--nh-gold); margin-bottom:1.4rem">
-        <div style="display:flex; gap:.9rem; align-items:flex-start">
-          <i class="fas fa-circle-info" style="color:var(--nh-gold); font-size:1.3rem; margin-top:.2rem"></i>
+      <!-- Alert nhỏ gọn khi trong giỏ có món mà đang có đơn giao khác đang chạy -->
+      <% if (donDangXuLy.length > 0) { %>
+        <div style="background:#ffffff; border:1.5px solid var(--nh-gold); border-radius:12px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; box-shadow:0 4px 14px rgba(200,162,75,0.12);">
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--nh-espresso);">
+            <i class="fas fa-motorcycle" style="color:var(--nh-gold); font-size:16px;"></i>
+            <span>Bạn đang có <b><%= donDangXuLy.length %></b> đơn giao hàng đang xử lý (#<%= donDangXuLy[0].ma_giao %>)</span>
+          </div>
           <div>
-            <strong style="color:var(--nh-espresso)"><%= error %></strong>
-          </div>
-        </div>
-      </div>
-    <% } %>
-
-    <% if (coMon) { %>
-      <div class="nh-checkout">
-        <!-- Danh sách món trong giỏ -->
-        <div>
-          <div class="nh-panel nh-reveal">
-            <h3 class="nh-panel__title">
-              <i class="fas fa-utensils"></i>
-              <%= t('gio_hang.mon_da_chon') %>
-              <span class="nh-locked" style="margin-left:auto"><%= t('gio_hang.so_mon_count', { n: cartItems.length }) %></span>
-            </h3>
-
-            <% cartItems.forEach(function (item) { %>
-              <div class="nh-line">
-                <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= tenMon(item).chinh %>"
-                     onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
-
-                <div class="nh-line__info">
-                  <h4 class="nh-line__name"><%= tenMon(item).chinh %></h4>
-                  <div class="nh-line__unit"><%= formatMoney(item.gia_mon) %> ₫ / <%= t('chung.phan') %></div>
-                </div>
-
-                <!-- Đổi số lượng -->
-                <form action="/update-cart" method="post" class="nh-line__qty js-qty">
-                  <input type="hidden" name="cartid" value="<%= item.cart_id %>">
-                  <div class="nh-qty">
-                    <button type="button" data-buoc="-1" aria-label="-"
-                      <%= item.soluong <= 1 ? 'disabled' : '' %>><i class="fas fa-minus"></i></button>
-                    <input type="number" name="soluong" value="<%= item.soluong %>" min="1" max="50"
-                           aria-label="<%= tenMon(item).chinh %>">
-                    <button type="button" data-buoc="1" aria-label="+"><i class="fas fa-plus"></i></button>
-                  </div>
-                  <noscript><button type="submit" class="nh-btn nh-btn--sm nh-btn--dark"><%= t('gio_hang.cap_nhat') %></button></noscript>
-                </form>
-
-                <div class="nh-line__sum"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
-
-                <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>"
-                   title="<%= t('gio_hang.xoa') %>"
-                   onclick="return confirm('<%= t('gio_hang.xac_nhan_xoa_mon', { mon: tenMon(item).chinh }) %>')">
-                  <i class="fas fa-times"></i>
-                </a>
-              </div>
-            <% }) %>
-          </div>
-
-          <div style="margin-top:1.2rem; display:flex; gap:12px; flex-wrap:wrap;">
-            <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm">
-              <i class="fas fa-plus"></i> <%= t('gio_hang.chon_them_mon') %>
+            <a href="/theo-doi/<%= donDangXuLy[0].ma_giao %>" class="nh-btn nh-btn--gold nh-btn--sm" style="border-radius:8px; padding:6px 14px; font-size:12.5px;">
+              <i class="fas fa-location-crosshairs"></i> Theo dõi đơn ngay
             </a>
-            <% if (!tt) { %>
-              <a href="/giao-hang" class="nh-btn nh-btn--gold nh-btn--sm">
-                <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_giao') %>
-              </a>
-            <% } %>
           </div>
         </div>
+      <% } %>
 
-        <!-- Tóm tắt đơn hàng & Địa chỉ nhận -->
-        <aside class="nh-summary nh-reveal">
-          <div class="nh-panel">
-            <h3 class="nh-panel__title"><i class="fas fa-location-dot"></i> <%= t('gio_hang.thong_tin_giao_hang') %></h3>
+      <form action="/datban" method="post" id="form-dat-giao-hang">
+        <input type="hidden" name="hinh_thuc" value="giao_hang">
+        <%
+          var viDoVal = viDoMacDinh || ((giaoHang && giaoHang.nha_hang && giaoHang.nha_hang.vi_do) ? (Number(giaoHang.nha_hang.vi_do) + 0.003).toFixed(6) : '10.737646');
+          var kinhDoVal = kinhDoMacDinh || ((giaoHang && giaoHang.nha_hang && giaoHang.nha_hang.kinh_do) ? (Number(giaoHang.nha_hang.kinh_do) + 0.003).toFixed(6) : '106.706505');
+        %>
+        <input type="hidden" name="vi_do" id="o-vi-do" value="<%= viDoVal %>">
+        <input type="hidden" name="kinh_do" id="o-kinh-do" value="<%= kinhDoVal %>">
 
-            <% if (tt) { %>
-              <div style="background:#fffdf7; border:1px solid #eee3d0; border-radius:10px; padding:12px; margin-bottom:14px; font-size:0.92rem; line-height:1.6;">
-                <div><strong style="color:var(--nh-espresso);"><i class="fas fa-map-marker-alt" style="color:var(--nh-gold); margin-right:4px;"></i> <%= tt.dia_chi_giao %></strong></div>
-                <div style="color:#666; margin-top:3px;"><i class="fas fa-user" style="margin-right:4px;"></i> <%= tt.ten_nguoi_nhan %> · <%= tt.sdt_nguoi_nhan %></div>
-                <div style="color:#666;"><i class="fas fa-clock" style="margin-right:4px;"></i> <%= t('gio_hang.giao_luc', { gio: tt.timebook, ngay: tt.datebook }) %></div>
-                <% if (tt.ghi_chu_giao) { %>
-                  <div style="color:#888; font-style:italic; font-size:0.86rem; margin-top:2px;"><%= t('gio_hang.ghi_chu') %>: <%= tt.ghi_chu_giao %></div>
-                <% } %>
-                <div style="margin-top:6px;">
-                  <a href="/giao-hang" style="color:var(--nh-gold); font-weight:600; text-decoration:underline; font-size:0.86rem;"><i class="fas fa-edit"></i> <%= t('gio_hang.thay_doi_dia_chi') %></a>
-                </div>
-              </div>
-            <% } else { %>
-              <div style="background:#fdf0ee; border:1px solid #f0c8c0; border-radius:10px; padding:12px; margin-bottom:14px; color:#b03a2e; font-size:0.92rem;">
-                <i class="fas fa-exclamation-triangle"></i> <%= t('gio_hang.chua_co_dia_chi') %>
-                <div style="margin-top:8px;">
-                  <a href="/giao-hang" class="nh-btn nh-btn--sm nh-btn--dark" style="width:100%; justify-content:center;">
-                    <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_ngay') %>
+        <div class="gh-cart-layout">
+          <!-- CỘT TRÁI: MÓN ĂN + ĐỊA CHỈ & BẢN ĐỒ -->
+          <div>
+            <!-- 1. Danh sách món ăn trong giỏ -->
+            <div class="gh-box">
+              <h3 class="gh-box__title">
+                <i class="fas fa-utensils"></i> Món ăn đã chọn
+                <span style="margin-left:auto; font-size:13px; font-weight:600; color:#777;"><%= cartItems.length %> món</span>
+              </h3>
+
+              <% if (coMon) { %>
+                <% cartItems.forEach(function (item) { %>
+                  <div class="nh-line" style="padding:10px 0; border-bottom:1px solid #f6f2ec;">
+                    <img class="nh-line__img" src="/food/<%= item.images %>" alt="<%= tenMon(item).chinh %>"
+                         onerror="this.onerror=null;this.src='/mon-thay-the.svg'" style="width:64px; height:64px; border-radius:10px;">
+
+                    <div class="nh-line__info">
+                      <h4 class="nh-line__name" style="font-size:15px;"><%= tenMon(item).chinh %></h4>
+                      <div class="nh-line__unit" style="font-size:13px; color:#888;"><%= formatMoney(item.gia_mon) %> ₫ / phần</div>
+                    </div>
+
+                    <!-- Tăng giảm số lượng -->
+                    <div class="nh-qty">
+                      <button type="button" class="btn-qty-minus" data-id="<%= item.cart_id %>" data-val="<%= item.soluong - 1 %>"
+                        <%= item.soluong <= 1 ? 'disabled' : '' %>><i class="fas fa-minus"></i></button>
+                      <input type="number" value="<%= item.soluong %>" readonly style="width:36px; text-align:center;">
+                      <button type="button" class="btn-qty-plus" data-id="<%= item.cart_id %>" data-val="<%= item.soluong + 1 %>"><i class="fas fa-plus"></i></button>
+                    </div>
+
+                    <div class="nh-line__sum" style="font-size:15px; font-weight:700; color:var(--nh-espresso);"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
+
+                    <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>" title="Xóa món"
+                       onclick="return confirm('Bạn muốn xóa món <%= tenMon(item).chinh %> khỏi giỏ?')">
+                      <i class="fas fa-times"></i>
+                    </a>
+                  </div>
+                <% }) %>
+
+                <div style="margin-top:14px;">
+                  <a href="/menu" class="nh-btn nh-btn--dark nh-btn--sm" style="border-radius:8px;">
+                    <i class="fas fa-plus"></i> Chọn thêm món khác
                   </a>
                 </div>
+              <% } else { %>
+                <div style="padding: 20px 10px; text-align: center; background: #fffdf8; border: 1.5px dashed var(--nh-gold); border-radius: 12px;">
+                  <i class="fas fa-shopping-bag" style="font-size: 26px; color: var(--nh-gold); margin-bottom: 8px; display: block;"></i>
+                  <p style="color: #666; margin-bottom: 12px; font-size: 14px;">Bạn chưa có món ăn nào trong giỏ hàng.</p>
+                  <a href="/menu" class="nh-btn nh-btn--gold nh-btn--sm" style="border-radius: 8px;">
+                    <i class="fas fa-plus"></i> Xem thực đơn &amp; Chọn món
+                  </a>
+                </div>
+              <% } %>
+            </div>
+
+          <!-- 2. Thông tin nhận hàng & Bản đồ ShopeeFood -->
+            <div class="gh-box">
+              <h3 class="gh-box__title">
+                <i class="fas fa-location-dot"></i> Địa chỉ giao hàng tận nơi
+              </h3>
+
+              <!-- Ô tìm kiếm địa chỉ thông minh ShopeeFood -->
+              <div style="position:relative; margin-bottom:14px;">
+                <label style="font-weight:700; font-size:13.5px; margin-bottom:6px; display:block;">
+                  Địa chỉ nhận hàng <span style="color:#c0392b">*</span>
+                </label>
+
+                <div class="gh-search-group">
+                  <span class="gh-search-icon"><i class="fas fa-magnifying-glass"></i></span>
+                  <input class="gh-search-input" name="dia_chi_giao" id="o-dia-chi" maxlength="300" required
+                         autocomplete="off"
+                         value="<%= diaChiMacDinh %>" 
+                         placeholder="Tìm tên đường, số nhà, tòa nhà hoặc khu vực...">
+                  <button type="button" class="gh-btn-clear" id="nut-xoa-dc"><i class="fas fa-xmark"></i></button>
+                  <button type="button" class="gh-btn-gps" id="nut-vi-tri" title="Lấy tọa độ GPS hiện tại">
+                    <i class="fas fa-crosshairs"></i> Vị trí của tôi
+                  </button>
+                </div>
+
+                <!-- Dòng gợi ý nhanh -->
+                <div class="gh-addr-helpers" style="margin-top:8px;">
+                  <span style="font-size:12.5px; color:#777; display:inline-flex; align-items:center; gap:5px;">
+                    <i class="fas fa-circle-info" style="color:var(--nh-gold);"></i> Bấm <b>"Vị trí của tôi"</b> hoặc chạm trên bản đồ để tự động xác định vị trí giao hàng
+                  </span>
+                </div>
+
+                <!-- Autocomplete Dropdown -->
+                <div class="gh-sug-box" id="ds-goi-y-dc"></div>
               </div>
-            <% } %>
 
-            <h3 class="nh-panel__title" style="margin-top:1rem;"><i class="fas fa-receipt"></i> <%= t('gio_hang.tam_tinh') %></h3>
+              <!-- Chi tiết địa chỉ (Số nhà, số tầng, phòng, tòa nhà, ngõ hẻm...) -->
+              <div class="nh-field" style="margin-bottom:14px;">
+                <label style="font-weight:700; font-size:13.5px; margin-bottom:6px; display:block;">
+                  <i class="fas fa-door-open" style="color:#c8a24b; margin-right:4px;"></i>
+                  Chi tiết địa chỉ <span style="font-size:12px; font-weight:normal; color:#777;">(Tòa nhà, số tầng, số phòng, số hẻm...)</span>
+                </label>
+                <input class="nh-input" name="chi_tiet_dia_chi" id="o-chi-tiet-dc" maxlength="200"
+                       placeholder="Ví dụ: Tòa Landmark 81 - Căn hộ 12.04 / Hẻm 45, Nhà số 8 (Không bắt buộc)">
+              </div>
 
-            <div class="nh-summary__row">
-              <span><%= t('gio_hang.so_mon') %></span><span><%= t('gio_hang.so_mon_count', { n: cartItems.length }) %></span>
+              <!-- Tên & SĐT người nhận -->
+              <div class="nh-fields" style="margin-bottom:12px;">
+                <div class="nh-field">
+                  <label>Tên người nhận <span style="color:#c0392b">*</span></label>
+                  <input class="nh-input" name="ten_nguoi_nhan" required value="<%= tenMacDinh %>" placeholder="Họ và tên người nhận">
+                </div>
+                <div class="nh-field">
+                  <label>Số điện thoại <span style="color:#c0392b">*</span></label>
+                  <input class="nh-input" name="sdt_nguoi_nhan" required value="<%= sdtMacDinh %>" placeholder="Số điện thoại nhận hàng">
+                </div>
+              </div>
+
+              <!-- Ghi chú cho Shipper -->
+              <div class="nh-field" style="margin-bottom:14px;">
+                <label>Ghi chú cho Shipper &amp; Nhà hàng</label>
+                <input class="nh-input" name="ghi_chu_giao" value="<%= ghiChuMacDinh %>" placeholder="Ví dụ: Giao lên tận phòng, gọi trước khi tới, ít cay...">
+              </div>
+
+              <!-- Bản đồ ghim vị trí Leaflet -->
+              <div class="gh-map-box">
+                <div id="gh-cart-map"></div>
+              </div>
+
+              <div class="gh-fee-badge" id="gh-badge-status">
+                <div>
+                  <i class="fas fa-route" style="color:#c8a24b; margin-right:4px;"></i>
+                  Khoảng cách: <b id="gh-txt-km"><%= (bg && bg.khoang_cach_km) ? bg.khoang_cach_km + ' km' : '1.5 km' %></b>
+                  &nbsp;&bull;&nbsp;
+                  <i class="fas fa-stopwatch" style="color:#c8a24b; margin-right:4px;"></i>
+                  Giao dự kiến: <b id="gh-txt-time">~25 - 35 phút</b>
+                </div>
+                <div style="color:#2e7d32; font-weight:700;" id="gh-txt-dv">
+                  <i class="fas fa-check-circle"></i> Trong bán kính phục vụ
+                </div>
+              </div>
             </div>
-            <div class="nh-summary__row">
-              <span><%= t('gio_hang.tien_mon_an') %></span>
-              <span><%= formatMoney(subtotal) %> ₫</span>
-            </div>
-            <div class="nh-summary__row">
-              <span><%= t('gio_hang.phi_giao_hang') %></span>
-              <span><%= tt ? (phiShip > 0 ? formatMoney(phiShip) + ' ₫' : t('chung.mien_phi')) : '—' %></span>
-            </div>
-
-            <div class="nh-summary__total" style="border-top:1.5px dashed #eee3d0; padding-top:10px; margin-top:8px;">
-              <span><%= t('gio_hang.tong_thanh_toan') %></span>
-              <b><%= formatMoney(tongTien) %> ₫</b>
-            </div>
-
-            <% if (tt) { %>
-              <form action="/datban" method="post" id="form-xacnhan">
-                <input type="hidden" name="hinh_thuc" value="giao_hang">
-                <input type="hidden" name="dia_chi_giao" value="<%= tt.dia_chi_giao %>">
-                <input type="hidden" name="ten_nguoi_nhan" value="<%= tt.ten_nguoi_nhan %>">
-                <input type="hidden" name="sdt_nguoi_nhan" value="<%= tt.sdt_nguoi_nhan %>">
-                <input type="hidden" name="ghi_chu_giao" value="<%= tt.ghi_chu_giao %>">
-                <input type="hidden" name="vi_do" value="<%= tt.vi_do %>">
-                <input type="hidden" name="kinh_do" value="<%= tt.kinh_do %>">
-                <input type="hidden" name="datebook" value="<%= tt.datebook %>">
-                <input type="hidden" name="timebook" value="<%= tt.timebook %>">
-
-                <button type="submit" class="nh-btn nh-btn--gold" id="nut-xac-nhan">
-                  <i class="fas fa-check-circle"></i> <%= t('gio_hang.xac_nhan_dat_ngay') %>
-                </button>
-              </form>
-            <% } else { %>
-              <a href="/giao-hang" class="nh-btn nh-btn--gold">
-                <i class="fas fa-location-dot"></i> <%= t('gio_hang.nhap_dia_chi_giao') %> <i class="fas fa-arrow-right"></i>
-              </a>
-            <% } %>
-
-            <p class="nh-note" style="margin-top:1rem">
-              <%- t('gio_hang.ghi_chu_thanh_toan_shipper') %>
-            </p>
           </div>
-        </aside>
-      </div>
-    <% } else { %>
-      <div class="nh-empty nh-reveal">
-        <i class="fas fa-shopping-bag"></i>
-        <h3><%= t('gio_hang.gio_hang_trong') %></h3>
-        <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:460px">
-          <%= t('gio_hang.gio_hang_trong_mo_ta') %>
-        </p>
-        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-          <a href="/menu" class="nh-btn nh-btn--gold"><i class="fas fa-book-open"></i> <%= t('gio_hang.xem_thuc_don_va_chon') %></a>
-          <a href="/giao-hang" class="nh-btn nh-btn--dark"><i class="fas fa-location-dot"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+
+          <!-- CỘT PHẢI: TÓM TẮT THANH TOÁN & ĐẶT HÀNG -->
+          <aside>
+            <div class="gh-box" style="position:sticky; top:90px;">
+              <h3 class="gh-box__title">
+                <i class="fas fa-receipt"></i> Tóm tắt thanh toán
+              </h3>
+
+              <div class="nh-summary__row" style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14.5px;">
+                <span>Tiền món ăn (<%= cartItems.length %> món)</span>
+                <b><%= formatMoney(subtotal) %> ₫</b>
+              </div>
+
+              <div class="nh-summary__row" style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14.5px;">
+                <span>Phí giao hàng</span>
+                <b id="gh-txt-phi" style="color:var(--nh-gold);"><%= phiShip > 0 ? formatMoney(phiShip) + ' ₫' : 'Miễn phí' %></b>
+              </div>
+
+              <div style="border-top:1.5px dashed #e8decb; padding-top:12px; margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:16px; font-weight:700;">Tổng thanh toán</span>
+                <b id="gh-txt-tong" style="font-size:22px; font-weight:800; color:var(--nh-espresso);"><%= formatMoney(tongTien) %> ₫</b>
+              </div>
+
+              <!-- Phương thức thanh toán -->
+              <div style="margin-top:18px;">
+                <label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:8px;">
+                  Phương thức thanh toán:
+                </label>
+                
+                <div class="gh-pay-options">
+                  <label class="gh-pay-card active" id="pay-card-cod" onclick="chonPhuongThucTT('tien_mat')">
+                    <input type="radio" name="phuong_thuc_tt" value="tien_mat" checked>
+                    <div class="gh-pay-card__icon"><i class="fas fa-money-bill-wave"></i></div>
+                    <div>
+                      <div class="gh-pay-card__text">Tiền mặt (COD)</div>
+                      <div style="font-size:11.5px; color:#777; font-weight:normal;">Nhận hàng trả tiền</div>
+                    </div>
+                  </label>
+
+                  <label class="gh-pay-card" id="pay-card-qr" onclick="chonPhuongThucTT('vietqr')">
+                    <input type="radio" name="phuong_thuc_tt" value="vietqr">
+                    <div class="gh-pay-card__icon"><i class="fas fa-qrcode"></i></div>
+                    <div>
+                      <div class="gh-pay-card__text">Chuyển khoản VietQR</div>
+                      <div style="font-size:11.5px; color:#777; font-weight:normal;">Quét mã nhận ngay</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Nút Đặt Hàng -->
+              <div style="margin-top:20px;">
+                <button type="submit" class="nh-btn nh-btn--gold" id="nut-dat-hang" style="width:100%; justify-content:center; padding:14px; font-size:16px; border-radius:12px;">
+                  <i class="fas fa-bag-shopping" id="icon-nut-dat"></i> <span id="txt-nut-dat">ĐẶT ĐƠN HÀNG NGAY</span>
+                </button>
+              </div>
+
+              <div style="margin-top:12px; font-size:12.5px; color:#888; text-align:center; line-height:1.5;">
+                <i class="fas fa-shield-halved"></i> Đơn hàng được chuyển trực tiếp xuống bếp KDS và điều phối Shipper giao tận nơi nhanh chóng.
+              </div>
+            </div>
+          </aside>
+        </div>
+      </form>
+
+      <!-- Form ẩn đổi số lượng món -->
+      <form action="/update-cart" method="post" id="form-update-qty" style="display:none;">
+        <input type="hidden" name="cartid" id="up-cart-id">
+        <input type="hidden" name="soluong" id="up-cart-qty">
+      </form>
+
+      <!-- MODAL XÁC NHẬN ĐẶT HÀNG -->
+      <div class="gh-modal-overlay" id="modal-xac-nhan-dat">
+        <div class="gh-modal-box">
+          <div class="gh-modal-icon">
+            <i class="fas fa-bell-concierge"></i>
+          </div>
+          <h3 class="gh-modal-title">Xác nhận đặt món &amp; Giao tận nơi</h3>
+          <p class="gh-modal-desc">
+            Quý khách có chắc chắn muốn xác nhận đơn hàng này không?<br>
+            Bếp nhà hàng sẽ tiếp nhận và chuẩn bị món ăn tươi nóng ngay sau khi quý khách xác nhận.
+          </p>
+          
+          <div class="gh-modal-summary" id="modal-tom-tat">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="color:#666;">Số lượng món:</span>
+              <strong style="color:#241a14;"><%= cartItems.length %> món</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="color:#666;">Địa chỉ giao:</span>
+              <strong style="color:#241a14; max-width:240px; text-align:right; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" id="modal-dia-chi">--</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="color:#666;">Phương thức:</span>
+              <strong style="color:#241a14;" id="modal-pt-tt">Tiền mặt (COD)</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-top:1px dashed #e2d9cd; padding-top:8px; margin-top:6px;">
+              <span style="font-weight:700; color:#241a14;">Tổng thanh toán:</span>
+              <strong style="color:var(--nh-gold); font-size:16px;" id="modal-tong-tien"><%= formatMoney(tongTien) %> ₫</strong>
+            </div>
+          </div>
+
+          <div class="gh-modal-actions">
+            <button type="button" class="gh-btn-modal-cancel" id="nut-modal-huy">
+              <i class="fas fa-xmark"></i> Kiểm tra lại
+            </button>
+            <button type="button" class="gh-btn-modal-confirm" id="nut-modal-dong-y">
+              <i class="fas fa-check"></i> Xác nhận đặt ngay
+            </button>
+          </div>
         </div>
       </div>
-    <% } %>
+
+      <!-- Lịch sử đơn hàng trước đây (nếu có) -->
+      <% if (dsDonGiao.length > 0) { 
+           var donHoanTat = dsDonGiao.filter(function(d) { return ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) === -1; });
+      %>
+        <div style="background:#ffffff; border:1.5px solid #e8decb; border-radius:18px; padding:26px 28px; margin-top:28px; margin-bottom:24px; box-shadow:0 6px 24px rgba(34,23,17,0.06);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; border-bottom:1px solid #f2ece1; padding-bottom:16px;">
+            <div>
+              <h3 style="margin:0 0 4px; font-family:var(--nh-serif); font-size:20px; font-weight:700; color:var(--nh-espresso);">
+                <i class="fas fa-boxes-packing" style="color:var(--nh-gold); margin-right:8px;"></i>
+                Lịch sử đơn hàng của bạn
+              </h3>
+              <p style="margin:0; font-size:13.5px; color:#777;">Theo dõi trực tiếp hành trình đơn hàng và lịch sử đặt trước đây.</p>
+            </div>
+          </div>
+
+          <!-- 2. LỊCH SỬ ĐƠN TRƯỚC ĐÂY -->
+          <% if (donHoanTat.length > 0) { %>
+            <div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+                <% donHoanTat.forEach(function(d) { 
+                     var st = TT_GIAO[d.trang_thai] || TT_GIAO.huy;
+                %>
+                  <div style="border:1.5px solid #ece5d8; border-radius:12px; padding:15px 16px; background:#fff; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+                    <div>
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:700; font-size:15px; color:#444;">#<%= d.ma_giao %></span>
+                        <span style="background:<%= st.bg %>; color:<%= st.mau %>; font-weight:600; font-size:12px; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                          <i class="fas <%= st.icon %>"></i> <%= st.nhan %>
+                        </span>
+                      </div>
+
+                      <div style="font-size:13px; color:#555; margin-bottom:6px; line-height:20px; min-height:40px; max-height:40px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" title="<%= d.dia_chi_giao %>">
+                        <i class="fas fa-location-dot" style="color:#999; margin-right:4px;"></i> <%= d.dia_chi_giao %>
+                      </div>
+
+                      <div style="font-size:12.5px; color:#777; display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #f0eae1; padding-top:8px; margin-top:4px;">
+                        <span><i class="fas fa-calendar" style="margin-right:4px;"></i> <%= new Date(d.tao_luc).toLocaleDateString('vi-VN') %></span>
+                        <b style="font-size:14.5px; font-weight:700; color:#333;"><%= formatMoney(d.tong_tien) %> ₫</b>
+                      </div>
+                    </div>
+
+                    <div>
+                      <a href="/theo-doi/<%= d.ma_giao %>" class="nh-btn nh-btn--dark nh-btn--sm" style="width:100%; justify-content:center; border-radius:8px; padding:8px; font-weight:600; font-size:13px;">
+                        <i class="fas fa-receipt"></i> Xem chi tiết đơn
+                      </a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+        </div>
+      <% } %>
+
   </div>
 </section>
 
 <script>
-  document.querySelectorAll('.js-qty').forEach(function (form) {
-    var o = form.querySelector('input[name="soluong"]');
-    var hen = null;
-    function guiSau() { clearTimeout(hen); hen = setTimeout(function () { form.submit(); }, 500); }
-    form.querySelectorAll('[data-buoc]').forEach(function (n) {
-      n.onclick = function () {
-        var v = (parseInt(o.value, 10) || 1) + Number(n.getAttribute('data-buoc'));
-        o.value = Math.min(50, Math.max(1, v));
-        guiSau();
-      };
-    });
-    o.onchange = guiSau;
+(function () {
+  var NHA_HANG = <%- (typeof giaoHang !== 'undefined' && giaoHang && giaoHang.nha_hang) ? JSON.stringify(giaoHang.nha_hang) : 'null' %>;
+  var subtotal = <%= Number(subtotal || 0) %>;
+  var oViDo = document.getElementById('o-vi-do');
+  var oKinhDo = document.getElementById('o-kinh-do');
+  var oDiaChi = document.getElementById('o-dia-chi');
+  var nutXoaDc = document.getElementById('nut-xoa-dc');
+  var dsGoiY = document.getElementById('ds-goi-y-dc');
+  var txtKm = document.getElementById('gh-txt-km');
+  var txtPhi = document.getElementById('gh-txt-phi');
+  var txtTong = document.getElementById('gh-txt-tong');
+  var txtTime = document.getElementById('gh-txt-time');
+  var txtDv = document.getElementById('gh-txt-dv');
+  var formDatHang = document.getElementById('form-dat-giao-hang');
+
+  var ban_do = null, ghim = null, duongNoi = null;
+
+  function tien(n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); }
+
+  // 1. Tăng giảm số lượng món
+  document.querySelectorAll('.btn-qty-plus, .btn-qty-minus').forEach(function (btn) {
+    btn.onclick = function () {
+      var cid = this.getAttribute('data-id');
+      var val = parseInt(this.getAttribute('data-val'), 10);
+      if (val >= 1 && val <= 50) {
+        document.getElementById('up-cart-id').value = cid;
+        document.getElementById('up-cart-qty').value = val;
+        document.getElementById('form-update-qty').submit();
+      }
+    };
   });
 
-  var formXacNhan = document.getElementById('form-xacnhan');
-  if (formXacNhan) {
-    formXacNhan.onsubmit = function () {
-      var nut = document.getElementById('nut-xac-nhan');
-      if (nut) {
-        nut.disabled = true;
-        nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + <%= JSON.stringify(t('gio_hang.dang_tao_don')) %>;
+  // 2. Chọn phương thức thanh toán
+  window.chonPhuongThucTT = function(pt) {
+    var cardCod = document.getElementById('pay-card-cod');
+    var cardQr = document.getElementById('pay-card-qr');
+    var txtNut = document.getElementById('txt-nut-dat');
+    var iconNut = document.getElementById('icon-nut-dat');
+    
+    if (pt === 'vietqr') {
+      if (cardCod) cardCod.classList.remove('active');
+      if (cardQr) cardQr.classList.add('active');
+      if (txtNut) txtNut.textContent = 'THANH TOÁN CHUYỂN KHOẢN VIETQR';
+      if (iconNut) iconNut.className = 'fas fa-qrcode';
+    } else {
+      if (cardQr) cardQr.classList.remove('active');
+      if (cardCod) cardCod.classList.add('active');
+      if (txtNut) txtNut.textContent = 'ĐẶT ĐƠN HÀNG NGAY (COD)';
+      if (iconNut) iconNut.className = 'fas fa-bag-shopping';
+    }
+  };
+
+  // 3. Khởi tạo Bản đồ Leaflet
+  function dungBanDo() {
+    var mapEl = document.getElementById('gh-cart-map');
+    if (!mapEl) return;
+    if (typeof L === 'undefined') {
+      setTimeout(dungBanDo, 100);
+      return;
+    }
+
+    var tamNhaHang = (NHA_HANG && NHA_HANG.vi_do && NHA_HANG.kinh_do)
+      ? [Number(NHA_HANG.vi_do), Number(NHA_HANG.kinh_do)]
+      : [10.734646, 106.703505];
+
+    if (ban_do) {
+      ban_do.invalidateSize();
+      return;
+    }
+
+    try {
+      ban_do = L.map('gh-cart-map', {
+        zoomControl: true,
+        fadeAnimation: false
+      }).setView(tamNhaHang, 14);
+
+      var tileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        attribution: '&copy; Google Maps'
+      }).addTo(ban_do);
+
+      tileLayer.on('tileerror', function() {
+        if (!this._fallbackSet) {
+          this._fallbackSet = true;
+          this.setUrl('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png');
+        }
+      });
+
+      // Marker Nhà hàng
+      L.marker(tamNhaHang, {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="display:flex;align-items:center;justify-content:center;width:34px;' +
+                'height:34px;border-radius:50%;background:#241a14;color:#c8a24b;border:2px solid #c8a24b;' +
+                'box-shadow:0 3px 10px rgba(0,0,0,.4);font-size:14px"><i class="fas fa-utensils"></i></div>',
+          iconSize: [34, 34], iconAnchor: [17, 17],
+        }),
+      }).addTo(ban_do).bindPopup('<b>Nhà Hàng Bảo Đoàn</b><br>Điểm xuất phát');
+
+      var initLat = (oViDo.value && !isNaN(Number(oViDo.value))) ? Number(oViDo.value) : (tamNhaHang[0] + 0.003);
+      var initLng = (oKinhDo.value && !isNaN(Number(oKinhDo.value))) ? Number(oKinhDo.value) : (tamNhaHang[1] + 0.003);
+
+      datGhim(initLat, initLng, false);
+      ban_do.setView([initLat, initLng], 15);
+
+      ban_do.on('click', function (e) {
+        datGhim(e.latlng.lat, e.latlng.lng, true);
+      });
+
+      [100, 300, 600, 1200].forEach(function(t) {
+        setTimeout(function () { if (ban_do) ban_do.invalidateSize(); }, t);
+      });
+    } catch (e) {
+      console.error('Lỗi bản đồ:', e);
+    }
+  }
+
+  // Đặt ghim và vẽ lộ trình ShopeeFood
+  function datGhim(lat, lng, updateText) {
+    lat = Number(lat).toFixed(6);
+    lng = Number(lng).toFixed(6);
+    oViDo.value = lat;
+    oKinhDo.value = lng;
+
+    var tamNhaHang = (NHA_HANG && NHA_HANG.vi_do && NHA_HANG.kinh_do)
+      ? [Number(NHA_HANG.vi_do), Number(NHA_HANG.kinh_do)]
+      : [10.734646, 106.703505];
+
+    if (!ban_do) dungBanDo();
+
+    if (ban_do) {
+      var posKhach = [parseFloat(lat), parseFloat(lng)];
+      if (ghim) {
+        ghim.setLatLng(posKhach);
+      } else {
+        ghim = L.marker(posKhach, {
+          draggable: true,
+          icon: L.divIcon({
+            className: 'gh-pulse-marker',
+            html: '<div style="display:flex;align-items:center;justify-content:center;width:36px;' +
+                  'height:36px;border-radius:50%;background:#e74c3c;color:#ffffff;border:2.5px solid #fff;' +
+                  'box-shadow:0 4px 14px rgba(231,76,60,.6);font-size:16px"><i class="fas fa-location-dot"></i></div>',
+            iconSize: [36, 36], iconAnchor: [18, 36]
+          })
+        }).addTo(ban_do).bindPopup('<b>Điểm nhận hàng của bạn</b>');
+
+        ghim.on('dragend', function () {
+          var v = ghim.getLatLng();
+          datGhim(v.lat, v.lng, true);
+        });
+      }
+
+      // Vẽ đường nối lộ trình
+      if (duongNoi) ban_do.removeLayer(duongNoi);
+      duongNoi = L.polyline([tamNhaHang, posKhach], {
+        color: '#c8a24b',
+        weight: 3.5,
+        opacity: 0.85,
+        dashArray: '6, 6'
+      }).addTo(ban_do);
+    }
+
+    if (updateText) layTenDiaChi(lat, lng);
+    tinhPhiGiaoHang(lat, lng);
+  }
+
+  // Helper chuẩn hóa & hiển thị địa chỉ chi tiết rõ ràng, không bị trôi về An Giang
+  function taoThongTinDiaChi(it) {
+    if (!it) return { title: '', sub: '', full: '' };
+    var a = it.address || {};
+    
+    // 1. Tên đường / Số nhà / Địa danh nổi bật
+    var tenDiem = a.amenity || a.building || a.shop || a.tourism || a.leisure || '';
+    var soNha = a.house_number || '';
+    var tenDuong = a.road || a.pedestrian || a.street || a.highway || '';
+    
+    var dong1 = '';
+    if (soNha && tenDuong) {
+      dong1 = soNha + ' ' + tenDuong;
+    } else if (tenDuong) {
+      dong1 = tenDuong;
+    } else if (tenDiem) {
+      dong1 = tenDiem;
+    } else {
+      var p0 = (it.display_name || '').split(',')[0] || '';
+      dong1 = p0.trim();
+    }
+    
+    if (tenDiem && dong1 !== tenDiem && dong1.indexOf(tenDiem) === -1) {
+      dong1 = tenDiem + ' - ' + dong1;
+    }
+
+    // 2. Phường/Xã, Quận/Huyện, Tỉnh/TP
+    var phuongXa = a.suburb || a.quarter || a.ward || a.neighbourhood || a.village || '';
+    var quanHuyen = a.city_district || a.district || a.county || a.town || '';
+    var tinhTp = a.city || a.state || a.province || '';
+
+    var cacPhan = [];
+    if (phuongXa) cacPhan.push(phuongXa);
+    if (quanHuyen && quanHuyen !== phuongXa) cacPhan.push(quanHuyen);
+    if (tinhTp && tinhTp !== quanHuyen) cacPhan.push(tinhTp);
+
+    var dong2 = cacPhan.join(', ');
+
+    // 3. Chuỗi địa chỉ đầy đủ tự nhiên
+    var full = '';
+    if (dong1 && dong2) {
+      full = dong1 + ', ' + dong2;
+    } else {
+      var rawParts = (it.display_name || '').split(',').map(function(s){ return s.trim(); });
+      var cleaned = rawParts.filter(function(part) {
+        return part && !/^\d{5,6}$/.test(part) && part.toLowerCase() !== 'việt nam';
+      });
+      full = cleaned.join(', ');
+      dong1 = cleaned[0] || (it.display_name || '');
+      dong2 = cleaned.slice(1, 4).join(', ');
+    }
+
+    return {
+      title: dong1,
+      sub: dong2,
+      full: full
+    };
+  }
+
+  // Reverse Geocode: Lấy địa chỉ khi kéo ghim hoặc bấm GPS (đa tầng Photon + Nominatim + BigDataCloud)
+  var henRev = null;
+  function layTenDiaChi(lat, lng) {
+    clearTimeout(henRev);
+    if (!oDiaChi.value || oDiaChi.value.indexOf('Đang') === 0) {
+      oDiaChi.value = 'Đang xác định địa chỉ...';
+    }
+
+    henRev = setTimeout(function () {
+      // 1. Photon Komoot Reverse (Đầy đủ Tên đường, Hẻm, Tòa nhà, Phường/Quận cực nhanh)
+      fetch('https://photon.komoot.io/reverse?lat=' + lat + '&lon=' + lng)
+        .then(function(r) { return r.json(); })
+        .then(function(pData) {
+          var f = (pData && pData.features && pData.features[0]) ? pData.features[0].properties : null;
+          if (f && (f.name || f.street)) {
+            var street = f.name || f.street || '';
+            var house = f.housenumber || '';
+            var streetFull = (house && street && street.indexOf(house) === -1) ? (house + ' ' + street) : street;
+            
+            var parts = [];
+            if (streetFull) parts.push(streetFull);
+            if (f.district && f.district !== street) parts.push(f.district);
+            if (f.city && f.city !== f.district) parts.push(f.city);
+            if (f.state && f.state !== f.city) parts.push(f.state);
+
+            var fullText = parts.join(', ');
+            if (fullText) {
+              oDiaChi.value = fullText;
+              nutXoaDc.style.display = 'block';
+              if (ghim) {
+                ghim.bindPopup('<b>📍 Điểm giao hàng</b><br><span style="font-size:12px;color:#555;">' + fullText + '</span>').openPopup();
+              }
+              return;
+            }
+          }
+          throw new Error('Photon empty');
+        })
+        .catch(function() {
+          // 2. Thử tiếp Nominatim OpenStreetMap
+          fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1', {
+            headers: { 'Accept-Language': 'vi,en' }
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d && (d.address || d.display_name)) {
+              var info = taoThongTinDiaChi(d);
+              if (info.full) {
+                oDiaChi.value = info.full;
+                nutXoaDc.style.display = 'block';
+                if (ghim) {
+                  ghim.bindPopup('<b>📍 Điểm giao hàng</b><br><span style="font-size:12px;color:#555;">' + info.full + '</span>').openPopup();
+                }
+                return;
+              }
+            }
+            throw new Error('Nominatim empty');
+          })
+          .catch(function() {
+            // 3. Fallback BigDataCloud API
+            fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=vi')
+              .then(function(r) { return r.json(); })
+              .then(function(bdc) {
+                if (bdc) {
+                  var parts = [];
+                  if (bdc.locality) parts.push('Phường ' + bdc.locality.replace(/^phường\s+/i, ''));
+                  if (bdc.city && bdc.city !== bdc.principalSubdivision) parts.push(bdc.city);
+                  if (bdc.principalSubdivision) parts.push(bdc.principalSubdivision);
+                  
+                  var text = parts.join(', ') || bdc.city || (lat + ', ' + lng);
+                  oDiaChi.value = text;
+                  nutXoaDc.style.display = 'block';
+                  if (ghim) {
+                    ghim.bindPopup('<b>📍 Điểm giao hàng</b><br><span style="font-size:12px;color:#555;">' + text + '</span>').openPopup();
+                  }
+                }
+              })
+              .catch(function() {
+                if (oDiaChi.value.indexOf('Đang') === 0) {
+                  oDiaChi.value = 'Tọa độ GPS: ' + lat + ', ' + lng;
+                  nutXoaDc.style.display = 'block';
+                }
+              });
+          });
+        });
+    }, 150);
+  }
+
+  // Báo giá cước phí theo tọa độ
+  var henPhi = null;
+  function tinhPhiGiaoHang(lat, lng) {
+    clearTimeout(henPhi);
+    txtKm.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    txtPhi.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    henPhi = setTimeout(function () {
+      fetch('/api/giao-hang/bao-gia?vi_do=' + lat + '&kinh_do=' + lng + '&tien_hang=' + subtotal)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.giao_duoc) {
+            txtKm.textContent = (d.khoang_cach_km ? d.khoang_cach_km + ' km' : 'Ngoài vùng');
+            txtPhi.textContent = 'Không hỗ trợ';
+            txtDv.style.color = '#b91c1c';
+            txtDv.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Ngoài bán kính phục vụ';
+            txtTong.textContent = tien(subtotal) + ' ₫';
+            return;
+          }
+          var km = parseFloat(d.khoang_cach_km) || 1.5;
+          var fee = Number(d.phi || 0);
+          txtKm.textContent = km + ' km';
+          txtPhi.textContent = fee > 0 ? (tien(fee) + ' ₫') : 'Miễn phí';
+          txtDv.style.color = '#2e7d32';
+          txtDv.innerHTML = '<i class="fas fa-check-circle"></i> ' + (d.don_vi ? d.don_vi.ten_dv : 'Giao hàng tiêu chuẩn');
+
+          var phut = Math.max(20, Math.round(15 + km * 4));
+          txtTime.textContent = '~' + phut + ' - ' + (phut + 10) + ' phút';
+
+          var tong = subtotal + fee;
+          txtTong.textContent = tien(tong) + ' ₫';
+        })
+        .catch(function() {
+          txtKm.textContent = '1.5 km';
+          txtPhi.textContent = '15.000 ₫';
+          txtTong.textContent = tien(subtotal + 15000) + ' ₫';
+        });
+    }, 150);
+  }
+
+  // 4. Tìm kiếm Autocomplete ShopeeFood (Ưu tiên khu vực nhà hàng, không mặc định An Giang)
+  var henTim = null;
+  function timKiemDiaChi(q) {
+    clearTimeout(henTim);
+    q = (q || '').trim();
+    if (q.length < 2) {
+      dsGoiY.style.display = 'none';
+      dsGoiY.innerHTML = '';
+      return;
+    }
+    dsGoiY.style.display = 'block';
+    dsGoiY.innerHTML = '<div style="padding:10px 14px; color:#888; font-size:13px;"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm địa chỉ cụ thể...</div>';
+
+    var refLat = (NHA_HANG && NHA_HANG.vi_do) ? Number(NHA_HANG.vi_do) : 10.734646;
+    var refLng = (NHA_HANG && NHA_HANG.kinh_do) ? Number(NHA_HANG.kinh_do) : 106.703505;
+    // Bán kính ưu tiên tìm kiếm quanh nhà hàng / TP.HCM (~60km)
+    var vBox = (refLng - 0.6).toFixed(4) + ',' + (refLat + 0.6).toFixed(4) + ',' + (refLng + 0.6).toFixed(4) + ',' + (refLat - 0.6).toFixed(4);
+
+    henTim = setTimeout(function () {
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&countrycodes=vn&viewbox=' + vBox + '&bounded=0&limit=7&addressdetails=1';
+      fetch(url, { headers: { 'Accept-Language': 'vi,en' } })
+        .then(function(r){ return r.json(); })
+        .then(function(results) {
+          if (!results || !results.length) {
+            // Fallback sang Photon API kèm tọa độ ưu tiên
+            return fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lat=' + refLat + '&lon=' + refLng)
+              .then(function(pr){ return pr.json(); })
+              .then(function(pData){
+                var feats = (pData && pData.features) ? pData.features : [];
+                return feats.map(function(f){
+                  var p = f.properties || {};
+                  var coords = f.geometry ? f.geometry.coordinates : [refLng, refLat];
+                  var title = [p.housenumber, p.street || p.name].filter(Boolean).join(' ') || p.name || q;
+                  var sub = [p.district, p.city, p.state].filter(Boolean).join(', ');
+                  var full = [title, sub].filter(Boolean).join(', ');
+                  return {
+                    lat: coords[1],
+                    lon: coords[0],
+                    info: { title: title, sub: sub, full: full }
+                  };
+                });
+              });
+          }
+          return results.map(function(it) {
+            return {
+              lat: it.lat,
+              lon: it.lon,
+              info: taoThongTinDiaChi(it)
+            };
+          });
+        })
+        .then(function(items) {
+          if (!items || !items.length) {
+            dsGoiY.innerHTML = '<div style="padding:10px 14px; color:#999; font-size:13px;">Không tìm thấy địa chỉ chính xác. Bạn có thể kéo thả ghim trên bản đồ để chọn vị trí.</div>';
+            return;
+          }
+          var html = '';
+          items.forEach(function(it) {
+            html += '<div class="gh-sug-item" data-lat="' + it.lat + '" data-lng="' + it.lon + '" data-name="' + encodeURIComponent(it.info.full) + '">' +
+                      '<i class="fas fa-location-dot" style="color:#e74c3c;"></i>' +
+                      '<div style="flex:1; min-width:0;">' +
+                        '<div class="gh-sug-title" style="font-weight:700; color:#221711;">' + (it.info.title || it.info.full) + '</div>' +
+                        (it.info.sub ? '<div class="gh-sug-sub" style="font-size:12.5px; color:#777; margin-top:2px;">' + it.info.sub + '</div>' : '') +
+                      '</div>' +
+                    '</div>';
+          });
+          dsGoiY.innerHTML = html;
+
+          dsGoiY.querySelectorAll('.gh-sug-item').forEach(function(el) {
+            el.onclick = function() {
+              var lat = parseFloat(this.getAttribute('data-lat'));
+              var lng = parseFloat(this.getAttribute('data-lng'));
+              var name = decodeURIComponent(this.getAttribute('data-name'));
+              oDiaChi.value = name;
+              nutXoaDc.style.display = 'block';
+              dsGoiY.style.display = 'none';
+
+              dungBanDo();
+              if (ban_do && lat && lng) {
+                ban_do.flyTo([lat, lng], 16, { animate: true, duration: 1 });
+                datGhim(lat, lng, false);
+              }
+            };
+          });
+        }).catch(function(){
+          dsGoiY.innerHTML = '<div style="padding:10px 14px; color:#999; font-size:13px;">Hãy nhấp trên bản đồ hoặc kéo ghim để chọn vị trí.</div>';
+        });
+    }, 250);
+  }
+
+  if (oDiaChi) {
+    oDiaChi.addEventListener('input', function () {
+      nutXoaDc.style.display = this.value.length > 0 ? 'block' : 'none';
+      timKiemDiaChi(this.value);
+    });
+    oDiaChi.addEventListener('focus', function () {
+      if (this.value.trim().length >= 2 && dsGoiY.children.length > 0) dsGoiY.style.display = 'block';
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.gh-search-group') && !e.target.closest('#ds-goi-y-dc')) {
+        dsGoiY.style.display = 'none';
+      }
+    });
+  }
+
+  if (nutXoaDc) {
+    nutXoaDc.onclick = function () {
+      oDiaChi.value = '';
+      this.style.display = 'none';
+      dsGoiY.style.display = 'none';
+      oDiaChi.focus();
+    };
+  }
+
+  var nutViTri = document.getElementById('nut-vi-tri');
+  if (nutViTri) {
+    nutViTri.onclick = function () {
+      var nut = this;
+      if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ định vị GPS'); return; }
+      nut.disabled = true;
+      nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang định vị...';
+      oDiaChi.value = 'Đang xác định vị trí của bạn...';
+
+      navigator.geolocation.getCurrentPosition(function (v) {
+        dungBanDo();
+        var lat = v.coords.latitude, lng = v.coords.longitude;
+        if (ban_do) {
+          ban_do.flyTo([lat, lng], 16, { animate: true, duration: 1 });
+        }
+        datGhim(lat, lng, true);
+        nut.disabled = false;
+        nut.innerHTML = '<i class="fas fa-crosshairs"></i> Vị trí của tôi';
+      }, function () {
+        oDiaChi.value = '';
+        alert('Không lấy được vị trí GPS. Hãy bật quyền vị trí hoặc gõ địa chỉ vào ô tìm kiếm.');
+        nut.disabled = false;
+        nut.innerHTML = '<i class="fas fa-crosshairs"></i> Vị trí của tôi';
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    };
+  }
+
+  // 5. Submit Form & Xác Nhận Đặt Hàng
+  var modalDat = document.getElementById('modal-xac-nhan-dat');
+  var nutModalHuy = document.getElementById('nut-modal-huy');
+  var nutModalDongY = document.getElementById('nut-modal-dong-y');
+  var modalDiaChi = document.getElementById('modal-dia-chi');
+  var modalPtTt = document.getElementById('modal-pt-tt');
+  var modalTongTien = document.getElementById('modal-tong-tien');
+  var daXacNhan = false;
+
+  formDatHang.onsubmit = function (e) {
+    if (daXacNhan) return true;
+
+    // Kiểm tra số lượng món
+    var soMon = <%= cartItems.length %>;
+    if (soMon <= 0) {
+      alert('Giỏ hàng của quý khách đang trống. Vui lòng chọn món trước khi đặt hàng nhé!');
+      return false;
+    }
+
+    // Kiểm tra địa chỉ
+    if (!oDiaChi.value.trim()) {
+      alert('Quý khách vui lòng nhập hoặc chọn địa chỉ nhận hàng trên bản đồ.');
+      oDiaChi.focus();
+      return false;
+    }
+
+    // Điền thông tin vào Modal xác nhận
+    var chiTiet = (document.getElementById('o-chi-tiet-dc') ? document.getElementById('o-chi-tiet-dc').value.trim() : '');
+    var dcFull = chiTiet ? (chiTiet + ', ' + oDiaChi.value.trim()) : oDiaChi.value.trim();
+    if (modalDiaChi) modalDiaChi.textContent = dcFull;
+
+    var pt = document.querySelector('input[name="phuong_thuc_tt"]:checked');
+    if (modalPtTt) {
+      modalPtTt.textContent = (pt && pt.value === 'vietqr') ? 'Chuyển khoản VietQR' : 'Tiền mặt khi nhận hàng (COD)';
+    }
+
+    if (modalTongTien && txtTong) {
+      modalTongTien.textContent = txtTong.textContent;
+    }
+
+    // Hiển thị Modal
+    if (modalDat) {
+      modalDat.style.display = 'flex';
+    }
+
+    return false;
+  };
+
+  // Đóng modal khi bấm Kiểm tra lại
+  if (nutModalHuy) {
+    nutModalHuy.onclick = function () {
+      if (modalDat) modalDat.style.display = 'none';
+    };
+  }
+
+  // Xác nhận đặt hàng thật
+  if (nutModalDongY) {
+    nutModalDongY.onclick = function () {
+      daXacNhan = true;
+      nutModalDongY.disabled = true;
+      nutModalDongY.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi đơn...';
+      var nutChinh = document.getElementById('nut-dat-hang');
+      if (nutChinh) {
+        nutChinh.disabled = true;
+        nutChinh.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG TẠO ĐƠN HÀNG...';
+      }
+      formDatHang.submit();
+    };
+  }
+
+  // Đóng modal khi nhấp ra ngoài hộp
+  if (modalDat) {
+    modalDat.onclick = function (e) {
+      if (e.target === modalDat) {
+        modalDat.style.display = 'none';
       }
     };
   }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', dungBanDo);
+  } else {
+    dungBanDo();
+  }
+  window.addEventListener('load', dungBanDo);
+  setTimeout(dungBanDo, 300);
+})();
 </script>
 
 <%- include('partials/footer') %>

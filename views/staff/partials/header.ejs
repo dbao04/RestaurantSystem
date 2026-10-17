@@ -439,9 +439,29 @@
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>" href="/staff" data-match="/staff"><i class="fas fa-gauge-high"></i><span>Tổng quan</span></a>
       </div>
 
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quay', 'letan', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Lễ tân &amp; Tiếp đón</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reservations' ? 'active' : '' %>" href="/staff/dat-ban" data-match="/staff/dat-ban"><i class="fas fa-calendar-check"></i><span>Quản lý Đặt bàn</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn (Đón khách)</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>" href="/staff/qr-codes" data-match="/staff/qr-codes"><i class="fas fa-qrcode"></i><span>Mã QR bàn</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='customers' ? 'active' : '' %>" href="/staff/customers" data-match="/staff/customers"><i class="fas fa-address-book"></i><span>Danh sách khách hàng</span></a>
+        </div>
+      <% } %>
+
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Phuc vu', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Phục vụ bàn</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-utensils"></i><span>Sơ đồ bàn &amp; Gọi món</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>" href="/staff/bookings" data-match="/staff/bookings"><i class="fas fa-receipt"></i><span>Đơn gọi món tại bàn</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds') ? 'active' : '' %>" href="/kds" data-match="/kds,/staff/kitchen"><i class="fas fa-bell-concierge"></i><span>Theo dõi món ra (KDS)</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bao-cao-phuc-vu' ? 'active' : '' %>" href="/staff/phuc-vu/bao-cao" data-match="/staff/phuc-vu/bao-cao"><i class="fas fa-clipboard-check"></i><span>Báo cáo ca phục vụ</span></a>
+        </div>
+      <% } %>
+
       <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Bep', 'Quan ly'])) { %>
         <div class="qt-side__group">
-          <div class="qt-side__label">Khu vực Bếp</div>
+          <div class="qt-side__label">Khu vực Bếp &amp; Bar</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>" href="/kds" data-match="/kds"><i class="fas fa-fire-burner"></i><span>Màn hình Bếp (KDS)</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>" href="/staff/kitchen/recipes" data-match="/staff/kitchen/recipes"><i class="fas fa-scroll"></i><span>Công thức món ăn</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='inventory' ? 'active' : '' %>" href="/staff/kitchen/inventory" data-match="/staff/kitchen/inventory"><i class="fas fa-boxes-stacked"></i><span>Tồn kho nguyên liệu</span></a>
@@ -449,29 +469,24 @@
         </div>
       <% } %>
 
-      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Phuc vu', 'letan', 'Quay', 'Quan ly'])) { %>
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Thu ngan', 'Quan ly'])) { %>
         <div class="qt-side__group">
-          <div class="qt-side__label">Phục vụ &amp; Sảnh</div>
-          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn &amp; Gọi món</span></a>
-          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reservations' ? 'active' : '' %>" href="/staff/dat-ban" data-match="/staff/dat-ban"><i class="fas fa-calendar-check"></i><span>Quản lý Đặt bàn</span></a>
-          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds') ? 'active' : '' %>" href="/kds" data-match="/kds,/staff/kitchen"><i class="fas fa-bell-concierge"></i><span>Theo dõi món ra (KDS)</span></a>
-          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>" href="/staff/qr-codes" data-match="/staff/qr-codes"><i class="fas fa-qrcode"></i><span>Mã QR bàn</span></a>
-        </div>
-      <% } %>
-
-      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Thu ngan', 'Ke toan', 'Quan ly'])) { %>
-        <div class="qt-side__group">
-          <div class="qt-side__label">Thu ngân &amp; Kế toán</div>
+          <div class="qt-side__label">Thu ngân quầy</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='thanh-toan' ? 'active' : '' %>" href="/staff/thanh-toan" data-match="/staff/thanh-toan"><i class="fas fa-cash-register"></i><span>Thu ngân POS</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='chot-ca' ? 'active' : '' %>" href="/staff/chot-ca" data-match="/staff/chot-ca"><i class="fas fa-vault"></i><span>Chốt ca thu ngân</span></a>
-          <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Ke toan', 'Quan ly'])) { %>
-            <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>" href="/staff/accountant/salary" data-match="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i><span>Bảng lương</span></a>
-            <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
-          <% } %>
         </div>
       <% } %>
 
-      <% if (typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) { %>
+      <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Ke toan', 'Quan ly'])) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Kế toán &amp; Tài chính</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>" href="/staff/accountant/salary" data-match="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i><span>Bảng lương</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='doi-soat' ? 'active' : '' %>" href="/staff/thanh-toan/doi-soat" data-match="/staff/thanh-toan/doi-soat"><i class="fas fa-file-invoice-dollar"></i><span>Đối soát chốt ca</span></a>
+        </div>
+      <% } %>
+
+      <% if ((typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) || (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly']))) { %>
         <div class="qt-side__group">
           <div class="qt-side__label">Giao hàng</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>" href="/staff/giao-hang" data-match="/staff/giao-hang"><i class="fas fa-truck-fast"></i><span>Điều phối giao hàng</span></a>
@@ -491,6 +506,7 @@
           <a class="qt-nav__item" href="/staff/thanh-vien" data-match="/staff/thanh-vien,/admin/thanh-vien"><i class="fas fa-medal"></i><span>Khách hàng &amp; Hạng</span></a>
           <a class="qt-nav__item" href="/staff/to-chuc" data-match="/staff/to-chuc,/to-chuc"><i class="fas fa-sitemap"></i><span>Sơ đồ tổ chức</span></a>
           <a class="qt-nav__item" href="/staff/to-chuc/cham-cong" data-match="/staff/to-chuc/cham-cong,/to-chuc/cham-cong"><i class="fas fa-user-clock"></i><span>Quản lý chấm công</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bao-cao-phuc-vu' ? 'active' : '' %>" href="/staff/phuc-vu/bao-cao/lich-su" data-match="/staff/phuc-vu/bao-cao/lich-su"><i class="fas fa-clipboard-user"></i><span>Duyệt báo cáo phục vụ</span></a>
         </div>
       <% } %>
 
