@@ -26,6 +26,7 @@
     "dienthoai:check": "node scripts/kiemTraDienThoai.js",
     "test:automation": "node scripts/test-toan-bo-he-thong.js",
     "test:all": "node scripts/test-toan-bo-he-thong.js",
+    "test:manual": "start reports/manual-testing-checklist.html",
     "test": "node scripts/test-toan-bo-he-thong.js"
   },
   "keywords": [],

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng Kiểm Thử Thủ Công (Manual Testing Checklist) - GS Restaurant</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); padding: 24px 16px 80px; }
+    .container { max-width: 1440px; margin: 0 auto; }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%);
+      color: white;
+      padding: 32px 28px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+    header p { opacity: 0.9; font-size: 15px; max-width: 800px; line-height: 1.5; }
+    
+    .save-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 14px;
+    }
+
+    /* KPI Summary Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      justifyContent: space-between;
+    }
+    .kpi-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .kpi-value { font-size: 32px; font-weight: 800; line-height: 1; }
+    .val-total { color: #0284c7; }
+    .val-pass { color: var(--success); }
+    .val-fail { color: var(--danger); }
+    .val-progress { color: #8b5cf6; }
+
+    /* Progress bar */
+    .progress-wrapper {
+      background: var(--card-bg);
+      padding: 20px 24px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 700; font-size: 15px; }
+    .progress-bar-bg { width: 100%; height: 16px; background-color: #e2e8f0; border-radius: 9999px; overflow: hidden; }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.3s ease;
+      border-radius: 9999px;
+    }
+
+    /* Controls & Toolbar */
+    .toolbar {
+      background: var(--card-bg);
+      padding: 18px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .search-input {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      width: 280px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .select-filter {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      outline: none;
+    }
+    .btn {
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger:hover { background: #fecaca; }
+
+    /* Table */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th {
+      background: #f8fafc;
+      padding: 14px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #475569;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    tr:hover { background-color: #f8fafc; }
+    tr.checked-row { background-color: #f0fdf4; }
+
+    /* Checkbox & Badges */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .test-check {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: var(--success);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-code { background: #e0f2fe; color: #0369a1; font-family: monospace; }
+    .badge-section { background: #ede9fe; color: #6d28d9; }
+    .badge-status { cursor: pointer; transition: transform 0.1s; }
+    .badge-status:active { transform: scale(0.95); }
+    .status-pass { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .status-pending { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+    .step-text { line-height: 1.5; color: #334155; margin-bottom: 4px; }
+    .step-text code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #0f172a; font-family: monospace; }
+    .expected-text { font-size: 13px; color: #059669; font-weight: 500; }
+    
+    .note-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .note-input:focus { border-color: var(--primary); }
+
+    /* Quick Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Print styles */
+    @media print {
+      body { padding: 0; background: white; }
+      header { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .toolbar, .btn, .search-input, .select-filter { display: none !important; }
+      .table-container { border: none; box-shadow: none; }
+      tr { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📋 BẢNG KIỂM THỬ THỦ CÔNG TOÀN DIỆN (MANUAL TESTING CHECKLIST)</h1>
+      <p>GS Restaurant &bull; Hệ thống quản lý nhà hàng 4 phân hệ (Khách hàng, Nhân viên, Quản trị, Bảo mật). Tự động lưu tiến độ vào máy tính khi tick kiểm thử.</p>
+      <div class="save-indicator">
+        <span>💾 Trạng thái:</span>
+        <span id="saveStatus">Đã lưu tự động</span>
+      </div>
+    </header>
+
+    <!-- KPI Summary Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Tổng số kịch bản</div>
+        <div class="kpi-value val-total" id="kpiTotal">100</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Đã kiểm thử Đạt (PASS)</div>
+        <div class="kpi-value val-pass" id="kpiPass">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Chưa Đạt / Có Lỗi (FAIL)</div>
+        <div class="kpi-value val-fail" id="kpiFail">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Tiến độ hoàn thành</div>
+        <div class="kpi-value val-progress" id="kpiProgress">0%</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-wrapper">
+      <div class="progress-header">
+        <span>Tiến trình hoàn tất kiểm thử:</span>
+        <span id="progressText">0 / 100 kịch bản</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Toolbar Controls -->
+    <div class="toolbar">
+      <div class="filter-group">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm kiếm kịch bản, URL, chức năng..." oninput="filterTable()">
+        <select id="sectionFilter" class="select-filter" onchange="filterTable()">
+          <option value="ALL">📁 Tất cả phân hệ (10 nhóm)</option>
+          <option value="CUST">Khách hàng & Thực đơn & Đặt bàn</option>
+          <option value="FOH">Lễ tân & Sơ đồ bàn & QR</option>
+          <option value="KITCHEN">Bếp trưởng & Màn hình KDS</option>
+          <option value="POS">Thu ngân & POS & VietQR</option>
+          <option value="DELIVERY">Điều phối & Shipper Giao hàng</option>
+          <option value="HR">Quản lý nhân sự & Xếp ca & Chấm công</option>
+          <option value="REPORT">Báo cáo cuối ngày phục vụ (Mới)</option>
+          <option value="ACCOUNT">Kế toán & Bảng lương & Thu chi</option>
+          <option value="ADMIN">Quản trị viên hệ thống (Admin)</option>
+          <option value="SEC">Bảo mật & Phân quyền RBAC</option>
+        </select>
+        <select id="statusFilter" class="select-filter" onchange="filterTable()">
+          <option value="ALL">🎯 Tất cả trạng thái</option>
+          <option value="PASS">✅ Đã Đạt (PASS)</option>
+          <option value="FAIL">❌ Bị Lỗi (FAIL)</option>
+          <option value="PENDING">⏳ Chưa kiểm thử</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <button class="btn btn-outline" onclick="checkAll(true)">✓ Tick tất cả</button>
+        <button class="btn btn-outline" onclick="checkAll(false)">Bỏ tick tất cả</button>
+        <button class="btn btn-primary" onclick="exportReport()">📥 Xuất JSON</button>
+        <button class="btn btn-outline" onclick="window.print()">🖨️ In / Xuất PDF</button>
+        <button class="btn btn-danger" onclick="resetAll()">🔄 Đặt lại</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table id="testTable">
+        <thead>
+          <tr>
+            <th style="width: 50px; text-align: center;">Tick</th>
+            <th style="width: 100px;">Mã TC</th>
+            <th style="width: 150px;">Phân hệ</th>
+            <th style="width: 180px;">Chức năng</th>
+            <th>Các bước thực hiện kiểm thử thủ công (Step-by-step)</th>
+            <th>Kết quả mong đợi</th>
+            <th style="width: 110px; text-align: center;">Trạng thái</th>
+            <th style="width: 220px;">Ghi chú của bạn</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rendered dynamically via JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Đã lưu tiến độ kiểm thử!</div>
+
+  <script>
+    // Dữ liệu 100 Test Cases Kiểm thử thủ công chi tiết
+    const testCasesData = [
+      // 1. Phân hệ Khách hàng
+      { id: "TC-CUST-01", sec: "CUST", secName: "Khách hàng", name: "Trang chủ & Giao diện", steps: "Mở trình duyệt truy cập <code>http://localhost:3000/</code>. Quan sát banner, danh mục món nổi bật và thanh menu chính.", expected: "Trang hiển thị đầy đủ, không bị vỡ giao diện, tải ảnh nhanh.", status: "PENDING", note: "" },
+      { id: "TC-CUST-02", sec: "CUST", secName: "Khách hàng", name: "Đa ngôn ngữ (i18n)", steps: "Bấm vào biểu tượng cờ hoặc nút chuyển ngôn ngữ trên header chọn Tiếng Anh (EN), Tiếng Nhật (JA), Tiếng Việt (VI).", expected: "Toàn bộ tiêu đề, menu, nút bấm tự động dịch chuẩn xác sang ngôn ngữ tương ứng.", status: "PENDING", note: "" },
+      { id: "TC-CUST-03", sec: "CUST", secName: "Khách hàng", name: "Thực đơn món ăn", steps: "Bấm vào mục <b>Món ăn</b> trên menu (<code>/menu</code>), chọn thử các loại: Khai vị, Món chính, Tráng miệng.", expected: "Danh sách món hiển thị đúng theo loại đã lọc, có giá tiền và hình ảnh rõ ràng.", status: "PENDING", note: "" },
+      { id: "TC-CUST-04", sec: "CUST", secName: "Khách hàng", name: "Tìm kiếm món ăn", steps: "Nhập từ khóa <code>lẩu</code> vào ô tìm kiếm trên trang thực đơn rồi nhấn Enter.", expected: "Chỉ hiển thị các món có chứa từ khóa 'lẩu' trong tên món.", status: "PENDING", note: "" },
+      { id: "TC-CUST-05", sec: "CUST", secName: "Khách hàng", name: "Chi tiết món & Dị ứng", steps: "Bấm vào một món ăn bất kỳ để xem chi tiết (ví dụ: <code>/detail?monid=85</code>).", expected: "Hiển thị mô tả món, công thức nguyên liệu và bảng phân tích cảnh báo dị ứng.", status: "PENDING", note: "" },
+      { id: "TC-CUST-06", sec: "CUST", secName: "Khách hàng", name: "Thực đơn Combo mới", steps: "Bấm vào mục <b>Thực đơn</b> mới (<code>/combos</code>). Xem các gói Combo: Gia đình, Hẹn hò, Tiệc liên hoan.", expected: "Hiển thị đầy đủ danh sách món trong combo, giá gốc, giá ưu đãi và hình ảnh đại diện.", status: "PENDING", note: "" },
+      { id: "TC-CUST-07", sec: "CUST", secName: "Khách hàng", name: "Đăng ký tài khoản", steps: "Bấm <b>Đăng ký</b> (<code>/register</code>), điền Họ tên, Số điện thoại mới, Mật khẩu và bấm Xác nhận.", expected: "Hệ thống thông báo đăng ký thành công và chuyển sang trang Đăng nhập.", status: "PENDING", note: "" },
+      { id: "TC-CUST-08", sec: "CUST", secName: "Khách hàng", name: "Đăng nhập khách hàng", steps: "Nhập số điện thoại và mật khẩu vừa đăng ký ở <code>/login</code> rồi bấm Đăng nhập.", expected: "Đăng nhập thành công, trên thanh menu hiển thị tên khách hàng và điểm tích lũy.", status: "PENDING", note: "" },
+      { id: "TC-CUST-09", sec: "CUST", secName: "Khách hàng", name: "Hồ sơ cá nhân", steps: "Vào trang <b>Thông tin cá nhân</b> (<code>/profile</code>), cập nhật địa chỉ giao hàng rồi bấm Lưu.", expected: "Thông tin được cập nhật thành công và lưu lại trong hệ thống.", status: "PENDING", note: "" },
+      { id: "TC-CUST-10", sec: "CUST", secName: "Khách hàng", name: "Thêm món vào giỏ", steps: "Tại trang thực đơn, bấm nút <b>Thêm vào giỏ</b> ở 1-2 món ăn bất kỳ.", expected: "Icon giỏ hàng trên header nhảy số lượng tương ứng.", status: "PENDING", note: "" },
+      { id: "TC-CUST-11", sec: "CUST", secName: "Khách hàng", name: "Thêm Combo vào giỏ", steps: "Vào trang <code>/combos</code>, bấm nút <b>Chọn Combo này</b> (ví dụ Combo Gia đình).", expected: "Tất cả các món thành phần trong Combo được tự động thêm vào giỏ hàng và mở <code>/cart</code>.", status: "PENDING", note: "" },
+      { id: "TC-CUST-12", sec: "CUST", secName: "Khách hàng", name: "Quản lý giỏ hàng", steps: "Tại trang <code>/cart</code>, thử tăng/giảm số lượng món, thử xóa 1 món khỏi giỏ.", expected: "Tổng tiền tạm tính tự động tính lại chính xác.", status: "PENDING", note: "" },
+      { id: "TC-CUST-13", sec: "CUST", secName: "Khách hàng", name: "Đặt bàn trực tuyến", steps: "Vào <code>/dat-ban</code>, chọn ngày (ngày mai), giờ (19:00), số khách (4 người), chọn bàn và bấm Đặt bàn.", expected: "Hệ thống thông báo đặt bàn thành công, sinh mã đặt chỗ <code>RSV-...</code>.", status: "PENDING", note: "" },
+      { id: "TC-CUST-14", sec: "CUST", secName: "Khách hàng", name: "Tra cứu đặt bàn", steps: "Vào <code>/dat-ban/tra-cuu</code>, nhập số điện thoại và mã đặt bàn vừa tạo.", expected: "Hiển thị đầy đủ thông tin: ngày giờ, số khách, bàn đã gán và trạng thái đơn.", status: "PENDING", note: "" },
+      { id: "TC-CUST-15", sec: "CUST", secName: "Khách hàng", name: "Thanh toán cọc VietQR", steps: "Bấm vào link thanh toán cọc (<code>/thanh-toan/dat-ban/:ma_dat</code>).", expected: "Hiển thị mã QR ngân hàng chuẩn VietQR kèm số tiền cọc và nội dung chuyển khoản tự động.", status: "PENDING", note: "" },
+      { id: "TC-CUST-16", sec: "CUST", secName: "Khách hàng", name: "Đặt món giao tận nơi", steps: "Từ giỏ hàng bấm <b>Giao hàng tận nơi</b> (<code>/giao-hang</code>), nhập địa chỉ nhận hàng.", expected: "Hệ thống tự động tính cước phí ship theo khoảng cách GPS.", status: "PENDING", note: "" },
+      { id: "TC-CUST-17", sec: "CUST", secName: "Khách hàng", name: "Theo dõi đơn giao hàng", steps: "Sau khi chốt đơn giao hàng, mở link theo dõi (<code>/theo-doi/:ma_don</code>).", expected: "Hiển thị tiến trình: Chờ xác nhận -> Đang nấu -> Shipper đang giao -> Giao thành công.", status: "PENDING", note: "" },
+      { id: "TC-CUST-18", sec: "CUST", secName: "Khách hàng", name: "Đơn hàng của tôi", steps: "Bấm vào menu cá nhân chọn <b>Đơn hàng của tôi</b> (<code>/my-orders</code>).", expected: "Hiển thị toàn bộ lịch sử các lượt đặt bàn và đơn giao hàng đã đặt.", status: "PENDING", note: "" },
+      { id: "TC-CUST-19", sec: "CUST", secName: "Khách hàng", name: "Trợ lý ảo Chatbot AI", steps: "Bấm vào bong bóng Chatbot ở góc phải màn hình, bấm câu hỏi gợi ý 'Quán có món gì ngon?'.", expected: "Chatbot AI phân tích ý định và phản hồi danh sách món gợi ý ngay lập tức.", status: "PENDING", note: "" },
+      { id: "TC-CUST-20", sec: "CUST", secName: "Khách hàng", name: "Đánh giá chất lượng", steps: "Vào mục Đánh giá (<code>/rate</code>), chọn 5 sao, viết nhận xét trải nghiệm và bấm Gửi.", expected: "Hệ thống ghi nhận đánh giá và thông báo cảm ơn khách hàng.", status: "PENDING", note: "" },
+
+      // 2. Phân hệ Nhân viên Phục vụ & Lễ tân
+      { id: "TC-FOH-01", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Đăng nhập Lễ tân", steps: "Mở <code>/staff/login</code>, đăng nhập tài khoản <code>letan</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công, chuyển hướng vào Dashboard Lễ tân.", status: "PENDING", note: "" },
+      { id: "TC-FOH-02", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Sơ đồ 40 bàn ăn", steps: "Mở mục <b>Sơ đồ bàn</b> (<code>/staff/so-do-ban</code> hoặc <code>/so-do-ban</code>).", expected: "Hiển thị sơ đồ 40 bàn chia theo 4 khu vực (Sảnh, Tầng lửng, Sân vườn, VIP).", status: "PENDING", note: "" },
+      { id: "TC-FOH-03", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Mở bàn đón khách", steps: "Tại sơ đồ bàn, bấm vào một bàn Trống (màu xám/xanh lá), chọn số lượng khách và bấm Mở bàn.", expected: "Bàn đổi màu sang Đang phục vụ (màu cam/đỏ), bắt đầu tính giờ sử dụng bàn.", status: "PENDING", note: "" },
+      { id: "TC-FOH-04", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Gọi món vào bàn", steps: "Bấm vào bàn đang phục vụ, chọn các món ăn từ danh mục thực đơn và bấm <b>Gửi đơn bếp</b>.", expected: "Món ăn được lưu vào bàn và chuyển tức thì sang màn hình KDS của Bếp.", status: "PENDING", note: "" },
+      { id: "TC-FOH-05", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Chuyển bàn cho khách", steps: "Tại bàn đang phục vụ, bấm nút <b>Chuyển bàn</b>, chọn bàn trống muốn chuyển tới và bấm Xác nhận.", expected: "Toàn bộ món ăn và phiên thanh toán chuyển sang bàn mới, bàn cũ trở về trạng thái Trống.", status: "PENDING", note: "" },
+      { id: "TC-FOH-06", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Danh sách đặt bàn", steps: "Mở trang <b>Đặt bàn</b> (<code>/staff/bookings</code>).", expected: "Hiển thị danh sách khách đặt bàn theo ngày, có nút Xác nhận, Hủy hoặc Gán bàn.", status: "PENDING", note: "" },
+      { id: "TC-FOH-07", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Tạo đặt bàn hộ khách", steps: "Tại <code>/staff/bookings/create</code>, nhập tên khách, số điện thoại, giờ đến và lưu.", expected: "Tạo thành công lượt đặt bàn mới trong hệ thống.", status: "PENDING", note: "" },
+      { id: "TC-FOH-08", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Timeline xếp bàn", steps: "Vào Trung tâm đặt bàn Timeline (<code>/staff/dat-ban</code>).", expected: "Hiển thị trục thời gian trực quan cho phép kéo thả xếp khách vào các bàn trống.", status: "PENDING", note: "" },
+      { id: "TC-FOH-09", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "Quét QR Menu tại bàn", steps: "Dùng điện thoại hoặc tab mới mở <code>/qr/table/1</code> (menu QR bàn 1).", expected: "Hiển thị giao diện gọi món tối ưu cho điện thoại, khách tự gọi món không cần cài app.", status: "PENDING", note: "" },
+      { id: "TC-FOH-10", sec: "FOH", secName: "Lễ tân & Phục vụ", name: "In mã QR các bàn", steps: "Vào mục <code>/staff/qr-codes</code>, bấm xem và in mã QR cho từng bàn.", expected: "Mã QR sắc nét, chứa đúng link bàn ăn.", status: "PENDING", note: "" },
+
+      // 3. Phân hệ Bếp trưởng & Màn hình KDS
+      { id: "TC-KIT-01", sec: "KITCHEN", secName: "Bếp & KDS", name: "Đăng nhập Bếp trưởng", steps: "Đăng nhập <code>/staff/login</code> với tài khoản <code>beptruong</code>, mật khẩu <code>123456</code>.", expected: "Vào đúng giao diện làm việc của bộ phận Bếp.", status: "PENDING", note: "" },
+      { id: "TC-KIT-02", sec: "KITCHEN", secName: "Bếp & KDS", name: "Màn hình KDS Realtime", steps: "Mở màn hình KDS (<code>/kds</code> hoặc <code>/staff/kds</code>).", expected: "Hiển thị danh sách các món ăn đang chờ chế biến sắp xếp theo thứ tự đặt trước/sau.", status: "PENDING", note: "" },
+      { id: "TC-KIT-03", sec: "KITCHEN", secName: "Bếp & KDS", name: "Bắt đầu nấu món", steps: "Trên thẻ món ăn ở KDS, bấm nút <b>Bắt đầu nấu</b>.", expected: "Thẻ món chuyển sang trạng thái 'Đang chế biến' (màu vàng), đồng hồ đếm giờ bắt đầu chạy.", status: "PENDING", note: "" },
+      { id: "TC-KIT-04", sec: "KITCHEN", secName: "Bếp & KDS", name: "Hoàn tất món ăn", steps: "Khi nấu xong, bấm nút <b>Đã xong</b> trên thẻ món.", expected: "Món chuyển sang trạng thái sẵn sàng phục vụ, KDS phát thông báo cho bồi bàn.", status: "PENDING", note: "" },
+      { id: "TC-KIT-05", sec: "KITCHEN", secName: "Bếp & KDS", name: "Bật/Tắt hết món", steps: "Vào trang <code>/staff/kitchen/dishes</code>, gạt công tắc tắt 1 món đã hết nguyên liệu.", expected: "Món ăn đó lập tức hiển thị 'Tạm hết' ngoài thực đơn của khách.", status: "PENDING", note: "" },
+      { id: "TC-KIT-06", sec: "KITCHEN", secName: "Bếp & KDS", name: "Quản lý Combo Bếp", steps: "Vào mục <code>/staff/kitchen/combos</code>, kiểm tra danh sách các gói combo.", expected: "Hiển thị đủ định lượng món của từng combo cho bếp dễ chuẩn bị.", status: "PENDING", note: "" },
+      { id: "TC-KIT-07", sec: "KITCHEN", secName: "Bếp & KDS", name: "Tồn kho nguyên liệu FIFO", steps: "Vào mục <code>/staff/kitchen/inventory</code>, xem danh sách tồn kho theo lô.", expected: "Hiển thị số lượng tồn, hạn sử dụng và cảnh báo nguyên liệu sắp hết/hết hạn.", status: "PENDING", note: "" },
+      { id: "TC-KIT-08", sec: "KITCHEN", secName: "Bếp & KDS", name: "Công thức chế biến", steps: "Vào <code>/staff/kitchen/recipes</code>, xem định mức gram/ml nguyên liệu của món ăn.", expected: "Định mức công thức hiển thị chuẩn xác.", status: "PENDING", note: "" },
+      { id: "TC-KIT-09", sec: "KITCHEN", secName: "Bếp & KDS", name: "Chốt ca trực bếp", steps: "Vào mục <code>/staff/kitchen/shift</code>, nhập số lượng tồn thực tế cuối ngày và bấm Chốt ca.", expected: "Lưu biên bản bàn giao ca trực bếp thành công.", status: "PENDING", note: "" },
+
+      // 4. Phân hệ Thu ngân & POS & VietQR
+      { id: "TC-POS-01", sec: "POS", secName: "Thu ngân & POS", name: "Đăng nhập Thu ngân", steps: "Đăng nhập <code>/staff/login</code> tài khoản <code>thungan</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công vào phân hệ Thu ngân.", status: "PENDING", note: "" },
+      { id: "TC-POS-02", sec: "POS", secName: "Thu ngân & POS", name: "Màn hình POS Thu ngân", steps: "Mở trang <code>/staff/thanh-toan</code>. Xem danh sách các bàn đang chờ tính tiền.", expected: "Hiển thị danh sách các bàn kèm số tiền tạm tính.", status: "PENDING", note: "" },
+      { id: "TC-POS-03", sec: "POS", secName: "Thu ngân & POS", name: "Xem chi tiết hóa đơn", steps: "Bấm vào một bàn để mở hóa đơn chi tiết.", expected: "Hiển thị chi tiết từng món ăn, số lượng, đơn giá, thuế VAT và tổng thanh toán.", status: "PENDING", note: "" },
+      { id: "TC-POS-04", sec: "POS", secName: "Thu ngân & POS", name: "Áp dụng khuyến mãi", steps: "Nhập mã voucher hoặc chọn chiết khấu % giảm giá trên hóa đơn.", expected: "Tổng tiền thanh toán tự động giảm đúng theo chiết khấu.", status: "PENDING", note: "" },
+      { id: "TC-POS-05", sec: "POS", secName: "Thu ngân & POS", name: "Thanh toán Tiền mặt", steps: "Chọn phương thức <b>Tiền mặt</b>, nhập số tiền khách đưa (ví dụ 500.000đ).", expected: "Hệ thống tự tính tiền thừa trả khách, in biên lai hóa đơn và đóng bàn.", status: "PENDING", note: "" },
+      { id: "TC-POS-06", sec: "POS", secName: "Thu ngân & POS", name: "Thanh toán VietQR động", steps: "Chọn phương thức <b>VietQR / Chuyển khoản</b>.", expected: "Hiển thị mã QR ngân hàng kèm số tiền chính xác từng đồng và mã giao dịch.", status: "PENDING", note: "" },
+      { id: "TC-POS-07", sec: "POS", secName: "Thu ngân & POS", name: "Đối soát chuyển khoản", steps: "Vào trang Đối soát (<code>/staff/thanh-toan/doi-soat</code>).", expected: "Hiển thị danh sách các giao dịch chuyển khoản ngân hàng tự động khớp đơn.", status: "PENDING", note: "" },
+      { id: "TC-POS-08", sec: "POS", secName: "Thu ngân & POS", name: "Lịch sử hóa đơn", steps: "Mở <code>/staff/thanh-toan/lich-su</code>.", expected: "Hiển thị danh sách toàn bộ các hóa đơn đã thanh toán trong ngày.", status: "PENDING", note: "" },
+      { id: "TC-POS-09", sec: "POS", secName: "Thu ngân & POS", name: "Kiểm két & Chốt ca", steps: "Mở <code>/staff/chot-ca</code>, nhập số tờ tiền các mệnh giá (500k, 200k, 100k, 50k...).", expected: "Hệ thống tự động tính tổng tiền mặt thực tế và so sánh chênh lệch với phần mềm.", status: "PENDING", note: "" },
+      { id: "TC-POS-10", sec: "POS", secName: "Thu ngân & POS", name: "Lịch sử biên bản chốt ca", steps: "Vào <code>/staff/chot-ca/lich-su</code>, xem các biên bản chốt két đã nộp.", expected: "Hiển thị đầy đủ biên bản kèm chữ ký người chốt ca.", status: "PENDING", note: "" },
+
+      // 5. Phân hệ Điều phối & Shipper Giao hàng
+      { id: "TC-DEL-01", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "Đăng nhập Điều phối", steps: "Đăng nhập <code>/staff/login</code> tài khoản <code>dieuphoi</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công vào bảng Điều phối giao hàng.", status: "PENDING", note: "" },
+      { id: "TC-DEL-02", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "Điều phối đơn cho Shipper", steps: "Tại <code>/staff/giao-hang</code>, chọn một đơn hàng mới và chọn Shipper để bàn giao.", expected: "Đơn hàng được chuyển sang shipper phụ trách.", status: "PENDING", note: "" },
+      { id: "TC-DEL-03", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "Bản đồ GPS Shipper", steps: "Mở Bản đồ giao hàng (<code>/staff/giao-hang/ban-do</code>).", expected: "Hiển thị vị trí thực tế của các shipper trên bản đồ số.", status: "PENDING", note: "" },
+      { id: "TC-DEL-04", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "Đăng nhập Shipper", steps: "Đăng nhập <code>/staff/login</code> tài khoản <code>shipper1</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công với vai trò Shipper.", status: "PENDING", note: "" },
+      { id: "TC-DEL-05", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "App PWA Shipper", steps: "Mở ứng dụng <code>http://localhost:3000/shipper/</code> trên trình duyệt điện thoại.", expected: "Giao diện PWA chuyên dụng cho shipper mở mượt mà, hỗ trợ offline.", status: "PENDING", note: "" },
+      { id: "TC-DEL-06", sec: "DELIVERY", secName: "Giao hàng & Shipper", name: "Shipper cập nhật trạng thái", steps: "Trên đơn hàng ở app shipper, bấm <b>Đang lấy hàng</b> -> <b>Đang giao</b> -> <b>Giao thành công</b>.", expected: "Trạng thái đơn hàng đồng bộ theo thời gian thực về tổng đài và trang theo dõi của khách.", status: "PENDING", note: "" },
+
+      // 6. Phân hệ Quản lý Nhân sự, Xếp ca & Chấm công
+      { id: "TC-HR-01", sec: "HR", secName: "Nhân sự & Chấm công", name: "Đăng nhập Quản lý", steps: "Đăng nhập <code>/staff/login</code> tài khoản <code>quanly</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công vào bảng Quản trị điều hành.", status: "PENDING", note: "" },
+      { id: "TC-HR-02", sec: "HR", secName: "Nhân sự & Chấm công", name: "Bảng điều hành Realtime", steps: "Mở <code>/staff/dieu-hanh</code>. Quan sát các widget doanh thu, công suất bàn, đơn bếp.", expected: "Dữ liệu vận hành thời gian thực hiển thị sống động, không bị đơ giật.", status: "PENDING", note: "" },
+      { id: "TC-HR-03", sec: "HR", secName: "Nhân sự & Chấm công", name: "Sơ đồ cơ cấu tổ chức", steps: "Vào <code>/to-chuc/quan-ly</code> hoặc <code>/staff/to-chuc</code>.", expected: "Hiển thị sơ đồ cây 6 cấp bậc phân cấp 25 chức danh toàn nhà hàng.", status: "PENDING", note: "" },
+      { id: "TC-HR-04", sec: "HR", secName: "Nhân sự & Chấm công", name: "Định mức nhân sự ca", steps: "Vào <code>/staff/xep-ca/dinh-muc</code>, xem định mức nhân sự sáng/chiều/tối.", expected: "Hiển thị đủ định mức nhân sự cho từng bộ phận.", status: "PENDING", note: "" },
+      { id: "TC-HR-05", sec: "HR", secName: "Nhân sự & Chấm công", name: "Thuật toán xếp ca tuần", steps: "Mở <code>/staff/xep-ca</code>, bấm nút <b>Tự động xếp ca</b> cho tuần tới.", expected: "Hệ thống tự động phân chia ca đều cho nhân viên, không ai bị trùng lịch.", status: "PENDING", note: "" },
+      { id: "TC-HR-06", sec: "HR", secName: "Nhân sự & Chấm công", name: "Kiosk Chấm công khuôn mặt", steps: "Mở màn hình <code>/cham-cong-khuon-mat</code> trên máy Kiosk.", expected: "Camera hoạt động, thuật toán AI nhận diện khuôn mặt nhân viên 1:N và ghi nhận giờ vào ca.", status: "PENDING", note: "" },
+      { id: "TC-HR-07", sec: "HR", secName: "Nhân sự & Chấm công", name: "Chấm công di động GPS", steps: "Mở ứng dụng <code>/cham-cong/</code> trên điện thoại cá nhân của nhân viên.", expected: "Yêu cầu quyền GPS vị trí, nếu đứng trong bán kính nhà hàng thì cho phép điểm danh.", status: "PENDING", note: "" },
+      { id: "TC-HR-08", sec: "HR", secName: "Nhân sự & Chấm công", name: "Bảng chấm công ngày", steps: "Vào <code>/staff/cham-cong</code>, xem bảng điểm danh hôm nay của các nhân sự.", expected: "Hiển thị chi tiết giờ vào, giờ ra, ảnh nhận diện và độ tin cậy AI.", status: "PENDING", note: "" },
+      { id: "TC-HR-09", sec: "HR", secName: "Nhân sự & Chấm công", name: "Duyệt đơn nghỉ phép", steps: "Mở mục <code>/staff/leave</code>, xem danh sách đơn xin nghỉ phép của nhân viên.", expected: "Có nút Phê duyệt hoặc Từ chối đơn xin phép.", status: "PENDING", note: "" },
+
+      // 7. Báo cáo cuối ngày của Nhân viên phục vụ (Mới)
+      { id: "TC-RPT-01", sec: "REPORT", secName: "Báo cáo Phục vụ", name: "Mở form Báo cáo cuối ngày", steps: "Đăng nhập <code>phucvu</code>, vào mục Báo cáo cuối ngày (<code>/staff/phuc-vu/bao-cao</code>).", expected: "Trang mở thành công, hiển thị tên nhân viên và ca làm việc hôm nay.", status: "PENDING", note: "" },
+      { id: "TC-RPT-02", sec: "REPORT", secName: "Báo cáo Phục vụ", name: "Tự động gợi ý số liệu", steps: "Kiểm tra các ô số liệu tự động: Số bàn đã phục vụ, Số món đã order, Tổng tiền mặt thu.", expected: "Số liệu được tự động tính toán từ hệ thống, nhân viên không phải tự cộng tay.", status: "PENDING", note: "" },
+      { id: "TC-RPT-03", sec: "REPORT", secName: "Báo cáo Phục vụ", name: "Gửi báo cáo ca trực", steps: "Nhập phản hồi của khách, các vấn đề tồn đọng và bấm <b>Gửi báo cáo</b>.", expected: "Báo cáo được lưu thành công, thông báo gửi lên Quản lý.", status: "PENDING", note: "" },
+      { id: "TC-RPT-04", sec: "REPORT", secName: "Báo cáo Phục vụ", name: "Xem lịch sử báo cáo", steps: "Mở mục Lịch sử báo cáo (<code>/staff/phuc-vu/bao-cao/lich-su</code>).", expected: "Hiển thị danh sách các báo cáo trước đây kèm trạng thái 'Chờ duyệt' hoặc 'Đã duyệt'.", status: "PENDING", note: "" },
+      { id: "TC-RPT-05", sec: "REPORT", secName: "Báo cáo Phục vụ", name: "Quản lý duyệt báo cáo", steps: "Đăng nhập <code>quanly</code>, mở chi tiết báo cáo của nhân viên và bấm <b>Ký duyệt</b>.", expected: "Trạng thái báo cáo chuyển sang 'Đã duyệt' thành công.", status: "PENDING", note: "" },
+
+      // 8. Phân hệ Kế toán & Quản trị Lương
+      { id: "TC-ACC-01", sec: "ACCOUNT", secName: "Kế toán & Lương", name: "Đăng nhập Kế toán", steps: "Đăng nhập <code>/staff/login</code> tài khoản <code>ketoantruong</code>, mật khẩu <code>123456</code>.", expected: "Đăng nhập thành công vào phòng Kế toán.", status: "PENDING", note: "" },
+      { id: "TC-ACC-02", sec: "ACCOUNT", secName: "Kế toán & Lương", name: "Bảng lương tự động", steps: "Mở trang tính lương (<code>/staff/accountant/salary</code>).", expected: "Hiển thị bảng lương tự động tính từ số giờ chấm công thực tế, phụ cấp và thưởng.", status: "PENDING", note: "" },
+      { id: "TC-ACC-03", sec: "ACCOUNT", secName: "Kế toán & Lương", name: "Đối soát chấm công tháng", steps: "Mở mục <code>/staff/accountant/attendance</code> và xem tổng hợp công tháng.", expected: "Bảng tổng hợp công thể hiện chính xác ngày công của 75 nhân viên.", status: "PENDING", note: "" },
+      { id: "TC-ACC-04", sec: "ACCOUNT", secName: "Kế toán & Lương", name: "Quản lý phiếu chi", steps: "Vào mục <code>/staff/accountant/expenses</code>, tạo thử 1 phiếu chi tiền mua nguyên liệu.", expected: "Phiếu chi được ghi nhận vào sổ sách tài chính.", status: "PENDING", note: "" },
+      { id: "TC-ACC-05", sec: "ACCOUNT", secName: "Kế toán & Lương", name: "Báo cáo tài chính P&L", steps: "Mở <code>/staff/accountant/reports</code>.", expected: "Hiển thị báo cáo Doanh thu, Chi phí, Giá vốn hàng bán và Lợi nhuận ròng rõ ràng.", status: "PENDING", note: "" },
+
+      // 9. Phân hệ Quản trị viên Hệ thống (Admin Portal)
+      { id: "TC-ADM-01", sec: "ADMIN", secName: "Quản trị Admin", name: "Đăng nhập Quản trị", steps: "Mở <code>/admin/login</code>, nhập <code>admin</code> / <code>123456</code> rồi bấm Đăng nhập.", expected: "Đăng nhập thành công vào Admin Dashboard (<code>/admin/</code>).", status: "PENDING", note: "" },
+      { id: "TC-ADM-02", sec: "ADMIN", secName: "Quản trị Admin", name: "Thống kê kinh doanh", steps: "Vào mục Thống kê (<code>/admin/stats</code>).", expected: "Hiển thị biểu đồ doanh thu theo tháng và danh sách 10 món bán chạy nhất.", status: "PENDING", note: "" },
+      { id: "TC-ADM-03", sec: "ADMIN", secName: "Quản trị Admin", name: "Quản lý loại món (Cat)", steps: "Vào <code>/admin/catlist</code>, bấm thêm loại món mới, sửa tên và xóa loại món.", expected: "Quy trình CRUD loại món hoạt động chuẩn xác.", status: "PENDING", note: "" },
+      { id: "TC-ADM-04", sec: "ADMIN", secName: "Quản trị Admin", name: "Quản lý món ăn (Product)", steps: "Vào <code>/admin/productlist</code>, xem danh sách 258 món, thử thêm món mới có upload ảnh.", expected: "Món mới xuất hiện ngay ngoài thực đơn khách hàng.", status: "PENDING", note: "" },
+      { id: "TC-ADM-05", sec: "ADMIN", secName: "Quản trị Admin", name: "Quản lý tài khoản nhân sự", steps: "Vào <code>/admin/stafflist</code>, xem danh sách 75 nhân sự.", expected: "Hiển thị đầy đủ chức danh, số điện thoại, bộ phận và trạng thái tài khoản.", status: "PENDING", note: "" },
+      { id: "TC-ADM-06", sec: "ADMIN", secName: "Quản trị Admin", name: "Cấu hình cổng VietQR", steps: "Vào <code>/admin/thanh-toan</code>, kiểm tra số tài khoản ngân hàng, tên chủ tài khoản và mã Webhook.", expected: "Thông tin cổng thanh toán lưu thành công.", status: "PENDING", note: "" },
+      { id: "TC-ADM-07", sec: "ADMIN", secName: "Quản trị Admin", name: "Chính sách Đặt bàn", steps: "Vào <code>/admin/dat-ban</code>, chỉnh sửa thời gian giữ chỗ tối đa (ví dụ 15 phút) và tiền cọc.", expected: "Cấu hình chính sách mới có hiệu lực ngay lập tức.", status: "PENDING", note: "" },
+      { id: "TC-ADM-08", sec: "ADMIN", secName: "Quản trị Admin", name: "Đơn vị vận chuyển", steps: "Vào <code>/admin/van-chuyen</code>, xem danh sách các đơn vị và biểu phí cước giao hàng.", expected: "Cấu hình bảng cước phí giao hàng hoạt động đúng.", status: "PENDING", note: "" },
+      { id: "TC-ADM-09", sec: "ADMIN", secName: "Quản trị Admin", name: "Chương trình Khuyến mãi", steps: "Vào <code>/admin/khuyen-mai</code>, tạo một mã voucher mới (ví dụ: GIAM20K).", expected: "Voucher có thể áp dụng thành công khi khách hàng thanh toán.", status: "PENDING", note: "" },
+      { id: "TC-ADM-10", sec: "ADMIN", secName: "Quản trị Admin", name: "Hạng thành viên tích điểm", steps: "Vào <code>/admin/thanh-vien</code>, xem các mốc điểm và tỷ lệ chiết khấu cho hội viên.", expected: "Chính sách tích điểm hiển thị đầy đủ.", status: "PENDING", note: "" },
+      { id: "TC-ADM-11", sec: "ADMIN", secName: "Quản trị Admin", name: "Quản trị Trợ lý AI Chatbot", steps: "Vào <code>/admin/chatbot</code>, xem thống kê độ chính xác các câu trả lời của Chatbot.", expected: "Hiển thị số lượt hỏi, tỷ lệ hiểu ý định và danh sách câu hỏi chưa rõ.", status: "PENDING", note: "" },
+      { id: "TC-ADM-12", sec: "ADMIN", secName: "Quản trị Admin", name: "Trung tâm Dự báo AI (ML)", steps: "Vào <code>/admin/du-bao</code>, xem kết quả chạy mô hình Machine Learning dự báo khách.", expected: "Hiển thị biểu đồ dự báo số khách theo ngày và nguyên liệu cần nhập.", status: "PENDING", note: "" },
+      { id: "TC-ADM-13", sec: "ADMIN", secName: "Quản trị Admin", name: "Quản lý bài viết Blog", steps: "Vào <code>/admin/bloglist</code>, viết thử một bài tin tức mới và xuất bản.", expected: "Bài viết xuất hiện ngay trên trang tin tức của khách hàng.", status: "PENDING", note: "" },
+      { id: "TC-ADM-14", sec: "ADMIN", secName: "Quản trị Admin", name: "Đổi mật khẩu Quản trị", steps: "Mở <code>/admin/changepassword</code>, kiểm tra form đổi mật khẩu tài khoản Admin.", expected: "Form yêu cầu nhập mật khẩu cũ và xác nhận mật khẩu mới.", status: "PENDING", note: "" },
+
+      // 10. Bảo mật & Phân quyền RBAC & Xử lý lỗi biên
+      { id: "TC-SEC-01", sec: "SEC", secName: "Bảo mật & RBAC", name: "Chặn truy cập trái phép Admin", steps: "Mở tab ẩn danh (chưa đăng nhập), gõ trực tiếp URL <code>http://localhost:3000/admin/catlist</code>.", expected: "Bị chặn lập tức và tự động chuyển hướng về trang <code>/admin/login</code>.", status: "PENDING", note: "" },
+      { id: "TC-SEC-02", sec: "SEC", secName: "Bảo mật & RBAC", name: "Chặn truy cập trái phép Staff", steps: "Mở tab ẩn danh, gõ trực tiếp URL <code>http://localhost:3000/staff/so-do-ban</code>.", expected: "Bị chặn lập tức và chuyển hướng về <code>/staff/login</code>.", status: "PENDING", note: "" },
+      { id: "TC-SEC-03", sec: "SEC", secName: "Bảo mật & RBAC", name: "Phân quyền vai trò Phục vụ", steps: "Đăng nhập <code>phucvu</code>, cố tình gõ URL bảng lương <code>/staff/accountant/salary</code>.", expected: "Hệ thống từ chối truy cập (Báo lỗi 403 Forbidden).", status: "PENDING", note: "" },
+      { id: "TC-SEC-04", sec: "SEC", secName: "Bảo mật & RBAC", name: "Phân quyền vai trò Thu ngân", steps: "Đăng nhập <code>thungan</code>, cố tình gõ link tạo tài khoản admin <code>/admin/staffadd</code>.", expected: "Bị từ chối quyền truy cập, bảo vệ an toàn hệ thống.", status: "PENDING", note: "" },
+      { id: "TC-SEC-05", sec: "SEC", secName: "Bảo mật & RBAC", name: "Đăng nhập sai mật khẩu", steps: "Tại <code>/admin/login</code>, nhập user: <code>admin</code>, pass: <code>wrongpassword</code>.", expected: "Báo lỗi thông tin đăng nhập không chính xác, không cho vào hệ thống.", status: "PENDING", note: "" },
+      { id: "TC-SEC-06", sec: "SEC", secName: "Bảo mật & RBAC", name: "Xử lý Route 404 Not Found", steps: "Gõ một đường link không tồn tại như <code>http://localhost:3000/duong-dan-khong-co</code>.", expected: "Hiển thị trang thông báo lỗi 404 thân thiện, không bị lộ thông tin stack trace server.", status: "PENDING", note: "" }
+    ];
+
+    // Khởi tạo trạng thái từ LocalStorage
+    const STORAGE_KEY = 'gs_manual_testing_checklist_v1';
+    let appState = {};
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          appState = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Lỗi nạp state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        const statusEl = document.getElementById('saveStatus');
+        statusEl.innerText = 'Đã lưu lúc ' + new Date().toLocaleTimeString();
+        showToast('Đã lưu tiến độ kiểm thử thành công!');
+      } catch (e) {
+        console.error('Lỗi lưu state:', e);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Render bảng
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      testCasesData.forEach((tc, idx) => {
+        // Nạp state đã lưu
+        const saved = appState[tc.id] || {};
+        const isChecked = saved.checked || false;
+        const currentStatus = saved.status || tc.status || 'PENDING';
+        const currentNote = saved.note !== undefined ? saved.note : tc.note;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${tc.id}`;
+        tr.dataset.id = tc.id;
+        tr.dataset.sec = tc.sec;
+        tr.dataset.status = currentStatus;
+        if (isChecked) tr.classList.add('checked-row');
+
+        tr.innerHTML = `
+          <td style="text-align: center;">
+            <input type="checkbox" class="test-check" id="check-${tc.id}" ${isChecked ? 'checked' : ''} onchange="toggleCheck('${tc.id}')">
+          </td>
+          <td><span class="badge badge-code">${tc.id}</span></td>
+          <td><span class="badge badge-section">${tc.secName}</span></td>
+          <td style="font-weight: 600;">${tc.name}</td>
+          <td>
+            <div class="step-text">${tc.steps}</div>
+          </td>
+          <td>
+            <div class="expected-text">✓ ${tc.expected}</div>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge badge-status ${getStatusClass(currentStatus)}" id="status-badge-${tc.id}" onclick="cycleStatus('${tc.id}')" title="Bấm vào để đổi trạng thái">
+              ${getStatusText(currentStatus)}
+            </span>
+          </td>
+          <td>
+            <input type="text" class="note-input" id="note-${tc.id}" value="${escapeHtml(currentNote)}" placeholder="Ghi chú kết quả..." onchange="updateNote('${tc.id}', this.value)">
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      updateKPIs();
+    }
+
+    function getStatusClass(status) {
+      if (status === 'PASS') return 'status-pass';
+      if (status === 'FAIL') return 'status-fail';
+      return 'status-pending';
+    }
+
+    function getStatusText(status) {
+      if (status === 'PASS') return '✓ ĐẠT';
+      if (status === 'FAIL') return '✗ HỎNG';
+      return '⏳ CHỜ TEST';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/"/g, '&quot;');
+    }
+
+    // Toggle Checkbox
+    function toggleCheck(id) {
+      if (!appState[id]) appState[id] = {};
+      const chk = document.getElementById(`check-${id}`);
+      appState[id].checked = chk.checked;
+      
+      // Nếu tick chọn và trạng thái đang là PENDING thì tự động đặt sang PASS
+      if (chk.checked && (!appState[id].status || appState[id].status === 'PENDING')) {
+        appState[id].status = 'PASS';
+        const badge = document.getElementById(`status-badge-${id}`);
+        badge.className = 'badge badge-status status-pass';
+        badge.innerText = '✓ ĐẠT';
+      }
+
+      const row = document.getElementById(`row-${id}`);
+      if (chk.checked) {
+        row.classList.add('checked-row');
+      } else {
+        row.classList.remove('checked-row');
+      }
+
+      saveState();
+      updateKPIs();
+    }
+
+    // Cycle Status: PENDING -> PASS -> FAIL -> PENDING
+    function cycleStatus(id) {
+      if (!appState[id]) appState[id] = {};
+      const current = appState[id].status || 'PENDING';
+      let next = 'PASS';
+      if (current === 'PENDING') next = 'PASS';
+      else if (current === 'PASS') next = 'FAIL';
+      else if (current === 'FAIL') next = 'PENDING';
+
+      appState[id].status = next;
+      const badge = document.getElementById(`status-badge-${id}`);
+      badge.className = `badge badge-status ${getStatusClass(next)}`;
+      badge.innerText = getStatusText(next);
+
+      // Nếu chọn PASS thì tự động tick checkbox
+      const chk = document.getElementById(`check-${id}`);
+      if (next === 'PASS') {
+        chk.checked = true;
+        appState[id].checked = true;
+        document.getElementById(`row-${id}`).classList.add('checked-row');
+      } else if (next === 'PENDING') {
+        chk.checked = false;
+        appState[id].checked = false;
+        document.getElementById(`row-${id}`).classList.remove('checked-row');
+      }
+
+      saveState();
+      updateKPIs();
+    }
+
+    // Update Note
+    function updateNote(id, noteValue) {
+      if (!appState[id]) appState[id] = {};
+      appState[id].note = noteValue;
+      saveState();
+    }
+
+    // Cập nhật các chỉ số KPI
+    function updateKPIs() {
+      const total = testCasesData.length;
+      let passed = 0;
+      let failed = 0;
+
+      testCasesData.forEach(tc => {
+        const s = appState[tc.id] || {};
+        if (s.status === 'PASS' || s.checked) passed++;
+        else if (s.status === 'FAIL') failed++;
+      });
+
+      const percent = Math.round((passed / total) * 100);
+
+      document.getElementById('kpiTotal').innerText = total;
+      document.getElementById('kpiPass').innerText = passed;
+      document.getElementById('kpiFail').innerText = failed;
+      document.getElementById('kpiProgress').innerText = percent + '%';
+
+      document.getElementById('progressText').innerText = `${passed} / ${total} kịch bản hoàn tất (${percent}%)`;
+      document.getElementById('progressBar').style.width = percent + '%';
+    }
+
+    // Bộ lọc bảng
+    function filterTable() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const sec = document.getElementById('sectionFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      const rows = document.querySelectorAll('#tableBody tr');
+      rows.forEach(row => {
+        const id = row.dataset.id;
+        const rowSec = row.dataset.sec;
+        const s = appState[id] || {};
+        const rowStatus = s.status || 'PENDING';
+        const rowText = row.innerText.toLowerCase();
+
+        const matchSearch = !search || rowText.includes(search);
+        const matchSec = sec === 'ALL' || rowSec === sec;
+        const matchStatus = status === 'ALL' || rowStatus === status;
+
+        if (matchSearch && matchSec && matchStatus) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Đánh dấu tất cả
+    function checkAll(val) {
+      testCasesData.forEach(tc => {
+        if (!appState[tc.id]) appState[tc.id] = {};
+        appState[tc.id].checked = val;
+        appState[tc.id].status = val ? 'PASS' : 'PENDING';
+      });
+      saveState();
+      renderTable();
+    }
+
+    // Đặt lại (Reset)
+    function resetAll() {
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ dấu tick và ghi chú để kiểm thử lại từ đầu?')) {
+        appState = {};
+        localStorage.removeItem(STORAGE_KEY);
+        renderTable();
+        showToast('Đã đặt lại bảng kiểm thử!');
+      }
+    }
+
+    // Xuất file kết quả JSON
+    function exportReport() {
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        totalTests: testCasesData.length,
+        results: testCasesData.map(tc => {
+          const s = appState[tc.id] || {};
+          return {
+            id: tc.id,
+            section: tc.secName,
+            name: tc.name,
+            checked: !!s.checked,
+            status: s.status || 'PENDING',
+            note: s.note || ''
+          };
+        })
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `manual-testing-results-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Khởi chạy khi tải trang
+    window.onload = function() {
+      loadState();
+      renderTable();
+    };
+  </script>
+</body>
+</html>
