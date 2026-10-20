@@ -434,13 +434,7 @@ const orderService = {
   // ============ MENU & STATS ============
   getTopDishes: async (limit = 10) => {
     const [rows] = await db.query(`
-      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, COALESCE(SUM(h.soluong), 0) as total
-      FROM monan m
-      LEFT JOIN hopdong h ON m.id_mon = h.id_mon
-      WHERE m.tinhtrang = 1
-      GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images
-      ORDER BY total DESC
-      LIMIT ?
+      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, COALESCE(top.total, 0) as total\n      FROM monan m\n      LEFT JOIN (\n        SELECT id_mon, SUM(soluong) as total\n        FROM hopdong\n        WHERE id_mon > 0\n        GROUP BY id_mon\n      ) top ON m.id_mon = top.id_mon\n      WHERE m.tinhtrang = 1\n      ORDER BY total DESC\n      LIMIT ?
     `, [limit]);
     return rows;
   },

@@ -137,7 +137,7 @@ const personnelService = {
     const [rows] = await db.query(`
       SELECT MONTH(ngay_dat) as month, SUM(thanhtien) as revenue 
       FROM hopdong 
-      WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat IS NOT NULL AND YEAR(ngay_dat) = YEAR(CURDATE())
+      WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat IS NOT NULL AND ngay_dat >= CONCAT(YEAR(CURDATE()), '-01-01') AND ngay_dat <= CONCAT(YEAR(CURDATE()), '-12-31 23:59:59')
       GROUP BY MONTH(ngay_dat)
       ORDER BY month ASC
     `);

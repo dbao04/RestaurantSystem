@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Test Automation Toàn Diện - GS Restaurant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f8fafc; color: #1e293b; padding: 24px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header { background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%); color: white; padding: 32px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.3); }
+    header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    header p { opacity: 0.9; font-size: 15px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .kpi-title { font-size: 13px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+    .kpi-value { font-size: 32px; font-weight: 800; }
+    .val-pass { color: #16a34a; }
+    .val-fail { color: #dc2626; }
+    .val-blue { color: #0284c7; }
+    .val-purp { color: #9333ea; }
+    .table-container { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #f1f5f9; padding: 14px 16px; font-size: 12px; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
+    tr:hover { background-color: #f8fafc; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; }
+    .badge-pass { background-color: #dcfce7; color: #15803d; }
+    .badge-fail { background-color: #fee2e2; color: #b91c1c; }
+    .badge-sec { background-color: #e0f2fe; color: #0369a1; }
+    .badge-mod { background-color: #f1f5f9; color: #475569; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>BÁO CÁO TEST AUTOMATION TOÀN DIỆN HỆ THỐNG</h1>
+      <p>GS Restaurant &bull; Thực thi: 21:06:00 20/10/2026 &bull; Thời gian chạy: 44.76s</p>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Tổng số Test Cases</div>
+        <div class="kpi-value val-blue">175</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Thành công (Passed)</div>
+        <div class="kpi-value val-pass">175</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Thất bại (Failed)</div>
+        <div class="kpi-value val-pass">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Tỷ lệ Thành công</div>
+        <div class="kpi-value val-purp">100.00%</div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px; text-align: center;">#</th>
+            <th>Phân hệ</th>
+            <th>Mô-đun</th>
+            <th>Tên kịch bản kiểm thử</th>
+            <th style="text-align: center;">Trạng thái</th>
+            <th>Ghi chú / Kết quả</th>
+            <th style="text-align: right;">Thời gian</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">1</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Trang chủ Website (/)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">517ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">2</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Trang Giới thiệu nhà hàng (/about)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">3</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Trang Chính sách hội viên (/thanh-vien)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">4</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Trang Tin tức & Bài viết (/blog)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">5</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">25ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">6</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_PAGES</span></td>
+      <td style="font-weight: 500;">Cổng Đặt bàn trực tuyến (/dat-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">58ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">7</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_ROUTING</span></td>
+      <td style="font-weight: 500;">Alias chuyển hướng /datban -> /dat-ban</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">302 -> /dat-ban</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">8</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_ROUTING</span></td>
+      <td style="font-weight: 500;">Redirect 301 chuẩn SEO /reservation -> /dat-ban</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">301 -> /dat-ban</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">9</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_ROUTING</span></td>
+      <td style="font-weight: 500;">Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">301 -> /dat-ban/tra-cuu</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">10</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_I18N</span></td>
+      <td style="font-weight: 500;">Chuyển đổi ngôn ngữ sang Tiếng Việt (?lang=vi)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">478ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">11</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_I18N</span></td>
+      <td style="font-weight: 500;">Chuyển đổi ngôn ngữ sang English (?lang=en)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">452ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">12</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_I18N</span></td>
+      <td style="font-weight: 500;">Chuyển đổi ngôn ngữ sang Japanese (日本語) (?lang=ja)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">503ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">13</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_MENU</span></td>
+      <td style="font-weight: 500;">Xem danh mục thực đơn món ăn (/menu)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">38ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">14</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_MENU</span></td>
+      <td style="font-weight: 500;">Tìm kiếm món ăn với từ khóa "lẩu" (POST /menu)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">57ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">15</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_MENU</span></td>
+      <td style="font-weight: 500;">Lọc danh sách món theo danh mục (GET /menu?id_loai=18)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">30ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">16</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_MENU</span></td>
+      <td style="font-weight: 500;">Xem chi tiết món & cảnh báo dị ứng nguyên liệu (/detail?monid=85)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">15ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">17</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_COMBOS</span></td>
+      <td style="font-weight: 500;">Trang Thực đơn Combo (/combos)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">18</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_COMBOS</span></td>
+      <td style="font-weight: 500;">Alias Thực đơn Combo (/thuc-don)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">19</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_COMBOS</span></td>
+      <td style="font-weight: 500;">Alias Thực đơn Combo (/thuc-don-combo)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">20</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng ký tài khoản khách hàng mới (SĐT: 0988556091)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">21</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập tài khoản khách hàng thành công (Redirect -> /)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">22</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AUTH</span></td>
+      <td style="font-weight: 500;">Xem trang thông tin cá nhân hồ sơ khách (/profile)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">23</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AUTH</span></td>
+      <td style="font-weight: 500;">Cập nhật hồ sơ & địa chỉ nhận hàng (/profile POST)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">24</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_CART</span></td>
+      <td style="font-weight: 500;">Thêm món lẻ vào giỏ hàng (POST /add-to-cart, monid=85)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">25</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_CART</span></td>
+      <td style="font-weight: 500;">Thêm Combo mới vào giỏ hàng (POST /add-combo-to-cart, combo_4k_giadinh)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /cart</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">26</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_CART</span></td>
+      <td style="font-weight: 500;">Xem giỏ hàng với danh sách món & combo đã chọn (/cart)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1313ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">27</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">API Lấy danh sách khu vực bàn ăn</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">21ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">28</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">API Lấy danh mục phục vụ</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">29</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">API Truy vấn khung giờ khả dụng theo ngày & số khách</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">353ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">30</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">API Kiểm tra bàn trống phù hợp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">16ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">31</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">API Lấy sơ đồ bàn trực quan cho khách</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">16ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">32</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_BOOKING</span></td>
+      <td style="font-weight: 500;">Tạo lượt đặt bàn trực tuyến mới thành công (Mã: RSV)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Code: </td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">29ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">33</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_DELIVERY</span></td>
+      <td style="font-weight: 500;">API Tính phí ship theo tọa độ GPS (/api/giao-hang/bao-gia)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">34</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_DELIVERY</span></td>
+      <td style="font-weight: 500;">Lưu thông tin giao hàng & người nhận (POST /giao-hang)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">35</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_DELIVERY</span></td>
+      <td style="font-weight: 500;">Chốt đơn giao hàng tận nơi (POST /datban -> /contract?sesis=tl1s1l6zl3ajzjd0)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Vận đơn: GH</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">12ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">36</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_SERVICES</span></td>
+      <td style="font-weight: 500;">Xem danh sách đơn hàng đã đặt của tôi (/my-orders)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">339ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">37</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_SERVICES</span></td>
+      <td style="font-weight: 500;">Trang gửi đánh giá chất lượng phục vụ (GET /rate)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">12ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">38</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AI_BOT</span></td>
+      <td style="font-weight: 500;">API Lấy danh sách câu hỏi mẫu gợi ý của Trợ lý AI (/chatbot/api/cau-hoi-mau)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">39</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AI_BOT</span></td>
+      <td style="font-weight: 500;">Trợ lý ảo AI trả lời câu hỏi thực đơn của khách (POST /chatbot/api/hoi)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">137ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">40</td>
+      <td><span class="badge badge-sec">PHẦN 1</span></td>
+      <td><span class="badge badge-mod">CUST_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng xuất tài khoản khách hàng an toàn (/logout)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">41</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Quản lý nhà hàng (@quanly)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">18ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">42</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Trợ lý quản lý (@trolyquanly)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/khuon-mat/lan-dau</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">43</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Bếp trưởng (@beptruong)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">44</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Đầu bếp (@daubep)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">45</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Nhân viên phục vụ (@phucvu)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">46</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Lễ tân nhà hàng (@letan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/khuon-mat/lan-dau</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">47</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Thu ngân (@thungan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">48</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Kế toán viên (@ketoan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">49</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Kế toán trưởng (@ketoantruong)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/khuon-mat/lan-dau</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">50</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Điều phối giao hàng (@dieuphoi)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/khuon-mat/lan-dau</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">51</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập Nhân viên giao hàng (@shipper1)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/khuon-mat/lan-dau</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">52</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Dashboard Tổng quan nhân viên (/staff)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">26ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">53</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Bảng Điều hành Thời gian thực (Live Dashboard)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">21ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">54</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Hồ sơ cá nhân nhân viên (/staff/profile)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">16ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">55</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Trung tâm thông báo công việc (/staff/notifications)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">22ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">56</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Lịch làm việc & Đăng ký ca tuần (/staff/schedule)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">18ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">57</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Bảng chấm công cá nhân (/staff/attendance)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">112ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">58</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Gửi & Quản lý đơn xin nghỉ phép (/staff/leave)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">59</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Hệ thống nhắn tin nội bộ (/staff/chat)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">60</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Tra cứu danh sách khách hàng (/staff/customers)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">61</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Hộp thư điện tử nội bộ (/staff/emails)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">62</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_GENERAL</span></td>
+      <td style="font-weight: 500;">Quản lý mã QR bàn & thực đơn số (/staff/qr-codes)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">22ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">63</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Màn hình KDS Bếp Realtime (/kds)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">64</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Màn hình KDS qua Staff Portal (/staff/kds)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">65</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Tổng quan khu Bếp (/staff/kitchen)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">66</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Bật/tắt trạng thái món ăn (Hết/Còn)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">17ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">67</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Danh mục nhóm món khu bếp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">68</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Quản lý các gói Combo bếp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">69</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Quản lý tồn kho nguyên liệu (FIFO)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">32ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">70</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Định mức công thức nấu từng món</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">71</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Quản lý trang thiết bị nhà bếp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">72</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Nhật ký xuất nhập hao hụt nguyên liệu</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">73</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">Ca trực và phân công khu bếp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">74</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_KITCHEN</span></td>
+      <td style="font-weight: 500;">API Lấy danh sách phiếu chế biến KDS (/kds/api/don)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">75</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">Sơ đồ 40 bàn 4 khu vực trực quan (/so-do-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">76</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">Danh sách và trạng thái các lượt đặt bàn (/staff/bookings)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2784ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">77</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">Form nhân viên tạo đơn đặt bàn hộ khách (/staff/bookings/create)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">78</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">Trung tâm Đặt bàn thông minh (Timeline & Xếp bàn)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">37ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">79</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">Phân tích hiệu suất đặt bàn & no-show (Quản lý)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">80</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">API Dashboard KPI Đặt bàn</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">12ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">81</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">API Timeline danh sách đặt bàn theo ngày</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">22ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">82</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">API Kiểm tra bàn trống khả dụng (Ngày tương lai)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">14ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">83</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">API Tọa độ & trạng thái 40 bàn trên sơ đồ</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">35ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">84</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_TABLES</span></td>
+      <td style="font-weight: 500;">API Trạng thái thời gian thực bàn ăn</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">55ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">85</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">Màn hình POS Thu ngân thanh toán đơn</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">30ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">86</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">Lịch sử giao dịch các phiên thanh toán</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">87</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">Đối soát chuyển khoản ngân hàng & VietQR</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">88</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">Màn hình kiểm đếm & chốt két tiền mặt cuối ca</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">16ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">89</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">Lịch sử các biên bản chốt ca thu ngân</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">90</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_CASHIER</span></td>
+      <td style="font-weight: 500;">API Tổng hợp doanh thu ca trực thu ngân (/staff/chot-ca/tong-hop)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">91</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Bảng tính lương nhân viên toàn nhà hàng</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">22ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">92</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Đối soát chấm công toàn thể nhân viên</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">93</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Tổng hợp ngày công & giờ công theo tháng</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">14ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">94</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Quản lý phiếu chi & chi phí vận hành</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">95</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Tổng hợp xét duyệt nghỉ phép nhân sự</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">96</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Báo cáo tài chính kế toán tổng hợp</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9330ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">97</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Danh sách hồ sơ nhân sự phòng kế toán</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">17ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">98</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_ACCOUNTANT</span></td>
+      <td style="font-weight: 500;">Lịch làm việc phòng kế toán</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">90ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">99</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_DELIVERY</span></td>
+      <td style="font-weight: 500;">Bảng điều phối đơn giao hàng cho Shipper</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">762ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">100</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_DELIVERY</span></td>
+      <td style="font-weight: 500;">Bản đồ giám sát lộ trình GPS Realtime</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">670ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">101</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_DELIVERY</span></td>
+      <td style="font-weight: 500;">Ứng dụng PWA dành cho nhân viên giao hàng</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">15ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">102</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_DELIVERY</span></td>
+      <td style="font-weight: 500;">API Danh sách đơn hàng phân công cho Shipper (/api/shipper/don-cua-toi)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">103</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_DELIVERY</span></td>
+      <td style="font-weight: 500;">API Tọa độ các shipper đang trực tuyến (/api/giao-hang/ban-do)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">672ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">104</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Sơ đồ Cơ cấu tổ chức, Chức danh & Phân quyền</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">29ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">105</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Xem cây phòng ban & nhân sự (Nhân viên)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">29ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">106</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Màn hình Kiosk Nhận diện khuôn mặt 1:N</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">26ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">107</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Màn hình nhân viên chụp mẫu khuôn mặt 1:1</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">21ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">108</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Quản lý bảng chấm công theo ngày (Manager)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">61ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">109</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Ứng dụng Chấm công Di động PWA (GPS + Face)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">19ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">110</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Lưới xếp ca tự động theo tuần</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">43ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">111</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">Khai báo định mức nhân sự mỗi ca</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">10ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">112</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Sơ đồ cây tổ chức</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">20ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">113</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Thống kê tổng quan nhân sự</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">114</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Danh sách nhân viên & chức danh</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">115</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Trạng thái hiện diện theo ca</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">116</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Danh mục chức danh & quyền hạn</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">117</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Danh sách các tổ làm việc</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">118</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Hồ sơ phân quyền người đăng nhập</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">119</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Lịch sử chấm công của nhân viên</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">120</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_HR</span></td>
+      <td style="font-weight: 500;">API Kiểm tra trạng thái AI nhận diện khuôn mặt</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">121</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_REPORT</span></td>
+      <td style="font-weight: 500;">Màn hình Báo cáo cuối ngày phục vụ (/staff/phuc-vu/bao-cao)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">472ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">122</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_REPORT</span></td>
+      <td style="font-weight: 500;">API Tự động tổng hợp số liệu ca phục vụ (/staff/phuc-vu/api/so-lieu-ngay)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">464ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">123</td>
+      <td><span class="badge badge-sec">PHẦN 2</span></td>
+      <td><span class="badge badge-mod">STAFF_REPORT</span></td>
+      <td style="font-weight: 500;">Lịch sử báo cáo giao ca phục vụ (/staff/phuc-vu/bao-cao/lich-su)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">124</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AUTH</span></td>
+      <td style="font-weight: 500;">Từ chối đăng nhập khi sai mật khẩu Admin</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">125</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AUTH</span></td>
+      <td style="font-weight: 500;">Đăng nhập thành công tài khoản Quản trị Admin</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">126</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Dashboard Quản trị tổng quan (/admin/)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8152ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">127</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Thống kê kinh doanh & doanh thu (/admin/stats)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">14942ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">128</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Danh sách các loại món ăn (/admin/catlist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">129</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form thêm loại món mới (/admin/catadd)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">130</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Danh mục món ăn & thực đơn (/admin/productlist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">16ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">131</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form thêm món ăn mới (/admin/productadd)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">7ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">132</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Danh sách nhân sự toàn hệ thống (/admin/stafflist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">133</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form thêm tài khoản nhân viên (/admin/staffadd)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">134</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Cấu hình thanh toán & VietQR (/admin/thanh-toan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">35ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">135</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Chính sách & Quy tắc đặt bàn (/admin/dat-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">30ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">136</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Đơn vị vận chuyển & Cước phí (/admin/van-chuyen)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">11ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">137</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Danh sách chương trình khuyến mãi (/admin/khuyen-mai)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">138</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form tạo mới khuyến mãi (/admin/khuyen-mai/them)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">19ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">139</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Hạng thành viên & Tích điểm (/admin/thanh-vien)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">13ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">140</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Danh sách bài viết tin tức (/admin/bloglist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">9ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">141</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form soạn thảo bài viết mới (/admin/blogadd)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">142</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Cơ cấu tổ chức & Phân quyền (/admin/to-chuc-quan-ly)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">25ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">143</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Hồ sơ tài khoản Quản trị (/admin/profile)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">144</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_VIEW</span></td>
+      <td style="font-weight: 500;">Form đổi mật khẩu Quản trị (/admin/changepassword)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">8ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">145</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">Quản trị Trợ lý AI Chatbot & Huấn luyện ý định (/admin/chatbot)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">70ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">146</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">Trung tâm Phân tích & Dự báo AI (/admin/du-bao)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">117ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">147</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">API Thống kê độ chuẩn xác câu trả lời Chatbot</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">148</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">API Dữ liệu AI dự báo lượng khách</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">149</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">API Dữ liệu AI dự báo tiêu thụ nguyên liệu</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">150</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">API Đánh giá độ chính xác mô hình học máy</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">151</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_AI</span></td>
+      <td style="font-weight: 500;">API Kiểm tra tiến trình huấn luyện AI</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 200</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">45ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">152</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_CRUD</span></td>
+      <td style="font-weight: 500;">1. Tạo loại món mới: "LoaiTest_1792505205090"</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/catlist</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">153</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_CRUD</span></td>
+      <td style="font-weight: 500;">2. Xác nhận loại món mới đã xuất hiện trong CSDL (ID: #56)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">ID: #56</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">154</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_CRUD</span></td>
+      <td style="font-weight: 500;">3. Cập nhật tên loại món thành: "LoaiTest_1792505205090_Upd"</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">155</td>
+      <td><span class="badge badge-sec">PHẦN 3</span></td>
+      <td><span class="badge badge-mod">ADMIN_CRUD</span></td>
+      <td style="font-weight: 500;">4. Xóa dọn dẹp dữ liệu loại món test (ID: #56)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">156</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Dashboard Quản trị (/admin/)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">157</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Quản lý loại món (/admin/catlist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">158</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Quản lý món ăn (/admin/productlist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">159</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Quản lý nhân viên (/admin/stafflist)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">160</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Cấu hình thanh toán (/admin/thanh-toan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">161</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Chính sách đặt bàn (/admin/dat-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">162</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Đơn vị vận chuyển (/admin/van-chuyen)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">163</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Quản trị AI Chatbot (/admin/chatbot)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">164</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Chương trình khuyến mãi (/admin/khuyen-mai)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">165</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Admin: Hạng thành viên (/admin/thanh-vien)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /admin/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">166</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: Dashboard Nhân viên (/staff)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">167</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: Sơ đồ bàn (/staff/so-do-ban)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">168</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: Màn hình KDS Bếp (/staff/kds)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">1ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">169</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: POS Thu ngân (/staff/thanh-toan)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">170</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: Điều phối giao hàng (/staff/giao-hang)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">171</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_UNAUTH</span></td>
+      <td style="font-weight: 500;">Chặn truy cập trái phép Staff: Báo cáo giao ca (/staff/phuc-vu/bao-cao)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Redirect -> /staff/login</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">2ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">172</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_RBAC</span></td>
+      <td style="font-weight: 500;">Phục vụ bị chặn khi truy cập Bảng tính lương Kế toán (/staff/accountant/salary)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 403</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">6ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">173</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">SEC_RBAC</span></td>
+      <td style="font-weight: 500;">Thu ngân bị chặn khi truy cập Trang thêm nhân sự Admin (/admin/staffadd)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 302</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">3ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">174</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">ROBUSTNESS</span></td>
+      <td style="font-weight: 500;">Xử lý chuẩn xác khi gọi route không tồn tại (404 Handler)</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Status: 404</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">4ms</td>
+    </tr>
+  
+    <tr class="pass-row">
+      <td style="text-align: center; color: #64748b;">175</td>
+      <td><span class="badge badge-sec">PHẦN 4</span></td>
+      <td><span class="badge badge-mod">ROBUSTNESS</span></td>
+      <td style="font-weight: 500;">Xử lý an toàn khi gửi payload rỗng vào API Chatbot</td>
+      <td style="text-align: center;">
+        <span class="badge badge-pass">
+          ✓ PASSED
+        </span>
+      </td>
+      <td style="color: #64748b; font-size: 13px;">Response: Bạn nhắn câu hỏi giúp mình nhé!</td>
+      <td style="text-align: right; font-family: monospace; color: #475569;">5ms</td>
+    </tr>
+  
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
