@@ -208,6 +208,71 @@
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
   }
+
+  /* Mobile App Responsive Layout (< 768px) */
+  @media (max-width: 767.98px) {
+    .order-stat-card {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+    }
+    .stat-num {
+      font-size: 1.25rem;
+    }
+    .stat-icon-wrapper {
+      width: 36px;
+      height: 36px;
+      font-size: 15px;
+    }
+    .filter-tabs {
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 6px !important;
+      gap: 6px !important;
+    }
+    .tab-btn {
+      white-space: nowrap !important;
+      padding: 5px 12px !important;
+      font-size: 0.78rem !important;
+      flex-shrink: 0;
+    }
+    #ordersTable thead {
+      display: none !important;
+    }
+    #ordersTable,
+    #ordersTable tbody,
+    #ordersTable tr.order-row {
+      display: block !important;
+      width: 100% !important;
+    }
+    #ordersTable tr.order-row {
+      background: #ffffff !important;
+      border: 1px solid #e7ded0 !important;
+      border-radius: 14px !important;
+      margin-bottom: 12px !important;
+      padding: 12px 14px !important;
+      box-shadow: 0 4px 14px rgba(36, 26, 20, 0.05) !important;
+    }
+    #ordersTable tr.order-row[data-status-group="active"] {
+      border-left: 4px solid #f59e0b !important;
+    }
+    #ordersTable tr.order-row[data-status-group="confirmed"] {
+      border-left: 4px solid #3b82f6 !important;
+    }
+    #ordersTable tr.order-row[data-status-group="paid"] {
+      border-left: 4px solid #10b981 !important;
+    }
+    #ordersTable td {
+      display: block !important;
+      padding: 4px 0 !important;
+      border: none !important;
+      width: 100% !important;
+      text-align: left !important;
+    }
+  }
 </style>
 
 <!-- Floating Toast Container for Realtime Updates -->

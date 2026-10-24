@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#241a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Nhân viên - Nhà Hàng Bảo Đoàn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,39 +14,34 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/admin/quantri.css">
   <style>
-    /* Đồng bộ tuyệt đối Staff Sidebar với Admin Sidebar */
-    .sidebar,
-    .sidebar.toggled,
-    #accordionSidebar {
-      background: linear-gradient(180deg, #241a14 0%, #1c130e 100%) !important;
-      min-height: 100vh;
-      width: 262px !important;
-      min-width: 262px !important;
-      max-width: 262px !important;
-      flex: 0 0 262px !important;
-      box-sizing: border-box !important;
-      border-right: 1px solid rgba(200, 162, 75, .16) !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-    #wrapper {
-      display: flex;
-      width: 100%;
-      align-items: stretch;
-    }
-    #content-wrapper {
-      flex: 1 1 auto;
-      width: calc(100% - 262px);
-      min-width: 0;
-      background: var(--qt-cream) !important;
-      min-height: 100vh;
-    }
+    /* Sidebar & Layout cho màn hình Desktop (>= 768px) */
     @media (min-width: 768px) {
-      .sidebar {
+      .sidebar,
+      .sidebar.toggled,
+      #accordionSidebar {
+        background: linear-gradient(180deg, #241a14 0%, #1c130e 100%) !important;
+        min-height: 100vh;
         width: 262px !important;
         min-width: 262px !important;
         max-width: 262px !important;
         flex: 0 0 262px !important;
+        box-sizing: border-box !important;
+        border-right: 1px solid rgba(200, 162, 75, .16) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: relative !important;
+      }
+      #wrapper {
+        display: flex;
+        width: 100%;
+        align-items: stretch;
+      }
+      #content-wrapper {
+        flex: 1 1 auto;
+        width: calc(100% - 262px);
+        min-width: 0;
+        background: var(--qt-cream) !important;
+        min-height: 100vh;
       }
     }
     .qt-side__scroll {
@@ -379,14 +377,64 @@
 
     .sb-che { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1040; display: none; }
 
+    /* Mobile Navigation Bar & Drawer (< 768px) */
     @media (max-width: 767.98px) {
-      .sidebar, .sidebar.toggled {
-        position: fixed; top: 0; left: 0; bottom: 0; z-index: 1045;
-        width: 15rem !important; min-height: 100vh;
-        transform: translateX(-100%); transition: transform .25s ease;
-        overflow-y: auto; -webkit-overflow-scrolling: touch;
+      body {
+        overflow-x: hidden;
       }
-      body.sb-mo .sidebar, body.sb-mo .sidebar.toggled { transform: none; }
+      #wrapper {
+        display: block !important;
+        width: 100% !important;
+      }
+      .sidebar, .sidebar.toggled, #accordionSidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        z-index: 1060 !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 85vw !important;
+        min-height: 100vh !important;
+        transform: translateX(-100%) !important;
+        transition: transform .28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        box-shadow: none !important;
+        background: linear-gradient(180deg, #241a14 0%, #1c130e 100%) !important;
+      }
+      body.sb-mo .sidebar, body.sb-mo .sidebar.toggled, body.sb-mo #accordionSidebar {
+        transform: translateX(0) !important;
+        box-shadow: 6px 0 30px rgba(0,0,0,0.6) !important;
+      }
+      .sb-che {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(18, 12, 8, 0.65);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+      }
+      body.sb-mo .sb-che {
+        display: block;
+      }
+      body.sb-mo {
+        overflow: hidden;
+      }
+      #content-wrapper {
+        width: 100% !important;
+        min-width: 100% !important;
+        margin-left: 0 !important;
+        padding-bottom: 72px !important;
+      }
+      .topbar {
+        height: 56px !important;
+        padding: 0 0.85rem !important;
+      }
+      .container-fluid {
+        padding: 0.85rem !important;
+        padding-bottom: 80px !important;
+      }
       .sidebar .nav-item .nav-link span,
       .sidebar.toggled .nav-item .nav-link span { display: inline !important; font-size: 14px; }
       .sidebar .nav-item .nav-link,
@@ -398,13 +446,190 @@
       .sidebar .sidebar-heading, .sidebar.toggled .sidebar-heading {
         display: block !important; text-align: left !important; }
       .sidebar-brand { height: auto !important; padding: 1rem !important; }
-      #content-wrapper { width: 100%; margin-left: 0 !important; }
-      body.sb-mo .sb-che { display: block; }
-      body.sb-mo { overflow: hidden; }
+    }
+
+    /* Mobile Bottom Navigation Bar */
+    .mobile-app-bottom-bar {
+      display: none;
+    }
+    @media (max-width: 767.98px) {
+      .mobile-app-bottom-bar {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 62px !important;
+        background: #241a14 !important;
+        border-top: 1px solid rgba(200, 162, 75, 0.3) !important;
+        z-index: 1045 !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        padding: 4px 6px !important;
+        padding-bottom: calc(4px + env(safe-area-inset-bottom)) !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35) !important;
+      }
+      .mbb-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        color: #b5a494;
+        text-decoration: none !important;
+        font-size: 0.7rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+      .mbb-item i {
+        font-size: 1.15rem;
+        margin-bottom: 3px;
+        transition: transform 0.2s;
+      }
+      .mbb-item:hover, .mbb-item:active {
+        color: #fff;
+        text-decoration: none;
+      }
+      .mbb-item.active {
+        color: #c8a24b !important;
+        font-weight: 700 !important;
+      }
+      .mbb-item.active i {
+        transform: translateY(-2px);
+        color: #c8a24b;
+      }
+      .mbb-item.active::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        width: 32px;
+        height: 3px;
+        background: #c8a24b;
+        border-radius: 0 0 3px 3px;
+        box-shadow: 0 2px 8px rgba(200, 162, 75, 0.6);
+      }
+    }
+
+    /* ===================================================================== */
+    /* CHẾ ĐỘ GIẢ LẬP KHUNG ĐIỆN THOẠI TRÊN MÁY TÍNH (MOBILE SIMULATOR FRAME) */
+    /* ===================================================================== */
+    body.mobile-simulator-active {
+      background: #120c08 !important;
+      overflow: hidden !important;
+      height: 100vh !important;
+      margin: 0 !important;
+    }
+    body.mobile-simulator-active #wrapper {
+      width: 412px !important;
+      max-width: 95vw !important;
+      height: 860px !important;
+      max-height: 94vh !important;
+      margin: 20px auto !important;
+      border-radius: 48px !important;
+      border: 12px solid #2d2621 !important;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.85), 0 0 0 2px #4a3c33, inset 0 0 0 1px #1a120d !important;
+      overflow: hidden !important;
+      position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: var(--qt-cream) !important;
+    }
+    body.mobile-simulator-active .sidebar,
+    body.mobile-simulator-active .sidebar.toggled,
+    body.mobile-simulator-active #accordionSidebar {
+      position: absolute !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 280px !important;
+      z-index: 1060 !important;
+      transform: translateX(-100%) !important;
+      transition: transform .28s ease !important;
+    }
+    body.mobile-simulator-active.sb-mo .sidebar {
+      transform: translateX(0) !important;
+      box-shadow: 6px 0 24px rgba(0,0,0,0.5) !important;
+    }
+    body.mobile-simulator-active .sb-che {
+      position: absolute !important;
+    }
+    body.mobile-simulator-active #content-wrapper {
+      width: 100% !important;
+      height: 100% !important;
+      overflow-y: auto !important;
+      padding-bottom: 70px !important;
+    }
+    body.mobile-simulator-active .mobile-app-bottom-bar {
+      display: flex !important;
+      position: absolute !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      z-index: 1045 !important;
+    }
+    body.mobile-simulator-active .sim-phone-header {
+      display: flex !important;
+    }
+    body.mobile-simulator-active .sim-home-indicator {
+      display: block !important;
+    }
+    body.mobile-simulator-active .sim-control-bar {
+      display: flex !important;
+    }
+    .sim-phone-header {
+      display: none;
+      height: 38px;
+      padding: 0 22px;
+      align-items: center;
+      justify-content: space-between;
+      background: #241a14;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 1070;
+      border-radius: 36px 36px 0 0;
+      flex-shrink: 0;
+    }
+    .sim-dynamic-island {
+      width: 95px;
+      height: 22px;
+      background: #000;
+      border-radius: 20px;
+      margin: 0 auto;
+    }
+    .sim-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sim-home-indicator {
+      display: none;
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      z-index: 1060;
+      pointer-events: none;
     }
   </style>
 </head>
 <body id="page-top">
+
+<!-- Thanh điều khiển Thoát Khung Điện Thoại (chỉ hiện khi bật giả lập) -->
+<div id="simControlBar" class="sim-control-bar" style="display:none; position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:999999; background:rgba(36,26,20,0.95); backdrop-filter:blur(10px); border:1px solid #c8a24b; border-radius:30px; padding:6px 18px; align-items:center; gap:14px; box-shadow:0 8px 30px rgba(0,0,0,0.6); color:#fff; font-size:13px;">
+  <span style="color:#c8a24b; font-weight:700;"><i class="fas fa-mobile-screen mr-1"></i> Khung iPhone 15 Pro</span>
+  <span style="color:#8c7b6e;">|</span>
+  <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleMobileSimulator()" style="border-radius:15px; font-size:11px; padding:2px 10px; font-weight:bold;">
+    <i class="fas fa-times mr-1"></i> Thoát khung
+  </button>
+</div>
 
 <!--
   Socket.io + thu vien RT phai nap O DAY, truoc noi dung trang.
@@ -421,8 +646,18 @@
 <script src="/realtime-to-chuc.js"></script>
 
 <div id="wrapper">
+  <!-- Mô phỏng Dynamic Island & Status Bar cho Khung Điện Thoại -->
+  <div class="sim-phone-header">
+    <span class="sim-time">9:41</span>
+    <div class="sim-dynamic-island"></div>
+    <div class="sim-icons">
+      <i class="fas fa-signal fa-xs"></i>
+      <i class="fas fa-wifi fa-xs"></i>
+      <i class="fas fa-battery-full fa-xs"></i>
+    </div>
+  </div>
   <!-- Sidebar -->
-  <aside class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="padding:0; box-shadow:none; position:relative !important;">
+  <aside class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="padding:0; box-shadow:none;">
     <div class="qt-side__brand">
       <span class="qt-side__mark">
         <img src="/logo.svg" alt="Logo" width="32" height="32" style="filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(10deg);">
@@ -541,6 +776,9 @@
                   style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d4f"></span>
             <span class="small" style="color:#6b5f54; font-size:12px;">thời gian thực</span>
           </div>
+          <button type="button" class="btn btn-sm btn-outline-warning d-none d-md-inline-flex align-items-center mr-2 shadow-sm" id="btnToggleSim" onclick="toggleMobileSimulator()" style="border-radius:20px; font-size:11.5px; font-weight:700; gap:5px; padding:4px 11px;" title="Bật/Tắt xem trước trên Khung Điện Thoại iPhone">
+            <i class="fas fa-mobile-screen"></i> <span>Khung ĐT</span>
+          </button>
           <div class="qt-chip">
             <span class="qt-chip__ava"><%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %></span>
             <span class="qt-chip__meta">
