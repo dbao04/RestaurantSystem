@@ -104,6 +104,17 @@ const kdsService = {
     return kdsService.layMotMon(id);
   },
 
+  /** Bep keo nguoc tu Dang che bien (1) ve Cho che bien (0) neu nhan nham. */
+  traLaiChoCheBien: async (id) => {
+    const [r] = await db.query(
+      `UPDATE hopdong SET trangthai_bep = 0, bep_bat_dau = NULL
+       WHERE id = ? AND trangthai_bep = 1`,
+      [id]
+    );
+    if (!r.affectedRows) throw new Error('Chỉ có thể trả lại món đang chế biến về hàng chờ.');
+    return kdsService.layMotMon(id);
+  },
+
   /**
    * Hoan thanh che bien: 1 -> 2. Day la thoi diem TRU KHO tu dong theo cong
    * thuc, va ghi nhat ky xuat kho de phuc vu bai toan du bao nguyen lieu.

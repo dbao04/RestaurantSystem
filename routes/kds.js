@@ -45,6 +45,7 @@ module.exports = function (io) {
 
   /** Cac buoc chuyen trang thai cua mot mon. */
   const BUOC = {
+    'tra-lai-cho': kds.traLaiChoCheBien,
     'bat-dau': kds.batDauCheBien,
     'hoan-thanh': kds.hoanThanhCheBien,
     'da-phuc-vu': kds.danhDauDaPhucVu,

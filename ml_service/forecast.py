@@ -111,16 +111,19 @@ def _du_bao_de_quy(
 ) -> pd.DataFrame:
     """Du bao `so_ngay` ngay tiep theo bang cach lan luot noi dai chuoi."""
     lam_viec = lich_su[["ngay", cot_muc_tieu]].copy()
+    ngay_goc = pd.to_datetime(lam_viec["ngay"].min())
     ket_qua = []
 
     for _ in range(so_ngay):
         ngay_moi = lam_viec["ngay"].max() + pd.Timedelta(days=1)
-        # Them mot dong tam voi gia tri NaN roi tinh lai dac trung.
+        # Chi can lay 35 dong cuoi (du cho cua so truot 28 ngay) de tinh nhanh
+        cua_so = lam_viec.tail(35)
         tam = pd.concat(
-            [lam_viec, pd.DataFrame({"ngay": [ngay_moi], cot_muc_tieu: [np.nan]})],
+            [cua_so, pd.DataFrame({"ngay": [ngay_moi], cot_muc_tieu: [np.nan]})],
             ignore_index=True,
         )
         tam = ft.them_dac_trung_lich(tam, "ngay")
+        tam["chi_so_ngay"] = (pd.to_datetime(tam["ngay"]) - ngay_goc).dt.days
         tam = ft.them_dac_trung_tre(tam, cot_muc_tieu)
 
         dong = tam.iloc[[-1]]

@@ -58,8 +58,12 @@ def them_dac_trung_lich(df: pd.DataFrame, cot_ngay: str = "ngay") -> pd.DataFram
     df["thang_cos"] = np.cos(2 * np.pi * df["thang"] / 12)
 
     # Khoang cach (ngay) toi Tet gan nhat, chan trong [-30, 30].
-    khoang = np.array([np.min(np.abs((t - TET).days)) for t in d])
-    huong = np.array([(t - TET[np.argmin(np.abs((t - TET).days))]).days for t in d])
+    d_ngay = d.values.astype("datetime64[D]")[:, None]
+    tet_ngay = TET.values.astype("datetime64[D]")[None, :]
+    hieu = (d_ngay - tet_ngay).astype(int)
+    idx_gan = np.argmin(np.abs(hieu), axis=1)
+    huong = hieu[np.arange(len(d)), idx_gan]
+    khoang = np.abs(huong)
     df["cach_tet"] = np.clip(np.where(khoang > 30, 30, huong), -30, 30)
 
     df["chi_so_ngay"] = (d - d.min()).dt.days
