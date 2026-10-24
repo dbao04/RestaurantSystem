@@ -99,6 +99,8 @@ module.exports = function (io) {
       );
       io.to('staff_room').emit('ban-cap-nhat', ban);
       io.to('kitchen_room').emit('ban-cap-nhat', ban);
+      io.to('staff_room').emit('so-do-thay-doi');
+      io.to('staff_room').emit('booking-updated', { sesis: ban.sesis_hien_tai, action: 'table-status' });
       res.json({ ok: true, ban });
     } catch (err) {
       res.status(400).json({ loi: err.message });
@@ -192,6 +194,8 @@ module.exports = function (io) {
     });
     io.to('staff_room').emit('ban-cap-nhat', banCapNhat[0]);
     io.to('kitchen_room').emit('ban-cap-nhat', banCapNhat[0]);
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'order-mon' });
 
     res.json({ ok: true, sesis, da_them: items.length, ban: banCapNhat[0] });
   }));

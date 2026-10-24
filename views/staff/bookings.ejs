@@ -4,24 +4,19 @@
   var unreadCount = unread || 0;
   var userRole = session.staffRole || '';
 
-  // Thống kê nhanh
-  var countChoXacNhan = 0;
-  var countDaXacNhan = 0;
-  var countDangPhucVu = 0;
-  var countDaThanhToan = 0;
-  if (bookings && bookings.length > 0) {
-    bookings.forEach(b => {
-      if (b.tinhtrang == 0) countChoXacNhan++;
-      else if (b.tinhtrang == 1) countDaXacNhan++;
-      else if (b.tinhtrang == 5 || b.tinhtrang == 6) countDangPhucVu++;
-      else if (b.tinhtrang == 3) countDaThanhToan++;
-    });
-  }
+  // Thống kê từ server
+  var st = (typeof stats !== 'undefined' && stats) ? stats : {
+    tong_don: (bookings ? bookings.length : 0),
+    dang_phuc_vu: 0,
+    da_xac_nhan: 0,
+    cho_xac_nhan: 0,
+    da_thanh_toan: 0
+  };
 %>
 <%- include('partials/header') %>
 
 <style>
-  /* Theme hiện đại, tinh tế chuẩn Nhà Hàng Bảo Đoàn */
+  /* Theme hiện đại chuẩn Nhà Hàng Bảo Đoàn */
   .order-stat-card {
     border-radius: 12px;
     border: 1px solid #e7ded0;
@@ -166,24 +161,82 @@
   .item-row:last-child {
     border-bottom: none;
   }
+
+  /* Realtime Pulse Indicator */
+  .rt-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #2e7d32;
+    background: #e8f5e9;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid #c8e6c9;
+  }
+  .rt-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #43a047;
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    animation: rt-pulse 1.8s infinite;
+  }
+  @keyframes rt-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(76, 175, 80, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+  }
+
+  /* Realtime Toast */
+  .rt-toast {
+    background: #241a14;
+    color: #fff;
+    border-left: 4px solid #c8a24b;
+    padding: 12px 18px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease-out;
+    pointer-events: auto;
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
+
+<!-- Floating Toast Container for Realtime Updates -->
+<div id="bookingToastContainer" style="position: fixed; top: 75px; right: 20px; z-index: 99999; pointer-events: none;"></div>
 
 <!-- Top Header Section -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
   <div>
-    <h1 class="h3 mb-1 text-gray-800" style="font-weight: 700;">Quản lý Gọi món &amp; Bàn ăn</h1>
+    <div class="d-flex align-items-center gap-2 mb-1" style="gap: 10px;">
+      <h1 class="h3 mb-0 text-gray-800" style="font-weight: 700;">Quản lý Gọi món &amp; Bàn ăn</h1>
+      <span class="rt-indicator" title="Dữ liệu được đồng bộ thời gian thực 2 chiều với Sơ đồ bàn và Bếp KDS">
+        <span class="rt-dot"></span> Realtime Sync
+      </span>
+    </div>
     <p class="text-muted mb-0" style="font-size: 0.85rem;">
       <i class="fas fa-layer-group text-warning mr-1"></i> Theo dõi các bàn đang phục vụ, gọi món thêm cho khách và quản lý đơn bàn
     </p>
   </div>
   <div class="d-flex flex-wrap gap-2 mt-3 mt-sm-0" style="gap:8px;">
+    <button type="button" class="btn btn-sm btn-outline-secondary shadow-sm font-weight-bold" onclick="syncBookingsData(true)" title="Làm mới dữ liệu từ máy chủ">
+      <i class="fas fa-sync-alt fa-sm mr-1" id="btnRefreshIcon"></i> Làm mới
+    </button>
     <a href="/so-do-ban" class="btn btn-sm btn-outline-primary shadow-sm font-weight-bold">
-      <i class="fas fa-chair fa-sm"></i> Sơ đồ bàn trực quan
+      <i class="fas fa-chair fa-sm mr-1"></i> Sơ đồ bàn trực quan
     </a>
     <a href="/kds" class="btn btn-sm btn-outline-warning shadow-sm font-weight-bold">
-      <i class="fas fa-bell-concierge fa-sm"></i> Theo dõi món ra (KDS)
+      <i class="fas fa-bell-concierge fa-sm mr-1"></i> Màn hình Bếp (KDS)
     </a>
-    <a href="/staff/bookings/create" class="btn btn-sm btn-primary shadow-sm">
+    <a href="/staff/bookings/create" class="btn btn-sm btn-primary shadow-sm font-weight-bold">
       <i class="fas fa-plus fa-sm mr-1"></i> Tạo đơn bàn mới
     </a>
   </div>
@@ -195,7 +248,7 @@
     <div class="order-stat-card" onclick="filterByTab('all')">
       <div>
         <div class="stat-label">Tất cả đơn bàn</div>
-        <div class="stat-num"><%= bookings ? bookings.length : 0 %></div>
+        <div class="stat-num" id="stat_tong_don"><%= st.tong_don %></div>
       </div>
       <div class="stat-icon-wrapper" style="background: rgba(36, 26, 20, 0.08); color: #241a14;">
         <i class="fas fa-receipt"></i>
@@ -205,8 +258,8 @@
   <div class="col-6 col-md-3 mb-3">
     <div class="order-stat-card" onclick="filterByTab('active')">
       <div>
-        <div class="stat-label">Đang phục vụ</div>
-        <div class="stat-num text-warning"><%= countDangPhucVu %></div>
+        <div class="stat-label">Đang phục vụ / Tại bàn</div>
+        <div class="stat-num text-warning" id="stat_dang_phuc_vu"><%= st.dang_phuc_vu %></div>
       </div>
       <div class="stat-icon-wrapper" style="background: rgba(255, 193, 7, 0.15); color: #b78103;">
         <i class="fas fa-utensils"></i>
@@ -217,7 +270,7 @@
     <div class="order-stat-card" onclick="filterByTab('confirmed')">
       <div>
         <div class="stat-label">Đã xác nhận / Chờ đến</div>
-        <div class="stat-num text-primary"><%= countDaXacNhan %></div>
+        <div class="stat-num text-primary" id="stat_da_xac_nhan"><%= st.da_xac_nhan %></div>
       </div>
       <div class="stat-icon-wrapper" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd;">
         <i class="fas fa-calendar-check"></i>
@@ -228,7 +281,7 @@
     <div class="order-stat-card" onclick="filterByTab('paid')">
       <div>
         <div class="stat-label">Đã thanh toán</div>
-        <div class="stat-num text-success"><%= countDaThanhToan %></div>
+        <div class="stat-num text-success" id="stat_da_thanh_toan"><%= st.da_thanh_toan %></div>
       </div>
       <div class="stat-icon-wrapper" style="background: rgba(25, 135, 84, 0.12); color: #198754;">
         <i class="fas fa-check-double"></i>
@@ -250,11 +303,21 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="gap: 12px;">
       <!-- Filter Tabs -->
       <div class="filter-tabs border-0 p-0 mb-0">
-        <button class="tab-btn active" data-filter="all" onclick="filterByTab('all')">Tất cả (<%= bookings ? bookings.length : 0 %>)</button>
-        <button class="tab-btn" data-filter="active" onclick="filterByTab('active')">Đang dùng món / Tại bàn (<%= countDangPhucVu %>)</button>
-        <button class="tab-btn" data-filter="confirmed" onclick="filterByTab('confirmed')">Đã xác nhận (<%= countDaXacNhan %>)</button>
-        <button class="tab-btn" data-filter="pending" onclick="filterByTab('pending')">Chờ xác nhận (<%= countChoXacNhan %>)</button>
-        <button class="tab-btn" data-filter="paid" onclick="filterByTab('paid')">Đã thanh toán (<%= countDaThanhToan %>)</button>
+        <button class="tab-btn active" data-filter="all" onclick="filterByTab('all')">
+          Tất cả (<span id="tab_all_count"><%= st.tong_don %></span>)
+        </button>
+        <button class="tab-btn" data-filter="active" onclick="filterByTab('active')">
+          Đang dùng món / Tại bàn (<span id="tab_active_count"><%= st.dang_phuc_vu %></span>)
+        </button>
+        <button class="tab-btn" data-filter="confirmed" onclick="filterByTab('confirmed')">
+          Đã xác nhận (<span id="tab_confirmed_count"><%= st.da_xac_nhan %></span>)
+        </button>
+        <button class="tab-btn" data-filter="pending" onclick="filterByTab('pending')">
+          Chờ xác nhận (<span id="tab_pending_count"><%= st.cho_xac_nhan %></span>)
+        </button>
+        <button class="tab-btn" data-filter="paid" onclick="filterByTab('paid')">
+          Đã thanh toán (<span id="tab_paid_count"><%= st.da_thanh_toan %></span>)
+        </button>
       </div>
 
       <!-- Quick Search Bar -->
@@ -294,8 +357,11 @@
                 else if (b.tinhtrang == 5 || b.tinhtrang == 6) statusGroup = 'active';
                 else if (b.tinhtrang == 3) statusGroup = 'paid';
                 else if (b.tinhtrang == 2) statusGroup = 'cancelled';
+                var safeTenKhach = (b.ten_khach || 'Khách vãng lai').replace(/'/g, "\\'");
+                var safeTableName = (b.table_name || '').replace(/'/g, "\\'");
+                var safeNoidung = (b.noidung || '').replace(/'/g, "\\'");
             %>
-              <tr class="order-row" 
+              <tr class="order-row" id="row_<%= b.sesis %>"
                   data-status-group="<%= statusGroup %>" 
                   data-search="<%= (b.sesis + ' ' + (b.ten_khach || '') + ' ' + (b.sodienthoai || '') + ' ' + (b.table_name || '') + ' ' + (b.noidung || '')).toLowerCase() %>">
                 
@@ -332,7 +398,7 @@
                 <td>
                   <div class="text-dark font-weight-bold" style="font-size: 0.85rem;"><%= b.tg %></div>
                   <div class="text-muted" style="font-size: 0.78rem;">
-                    <%= new Date(b.dates).toLocaleDateString('vi-VN') %>
+                    <%= b.dates ? new Date(b.dates).toLocaleDateString('vi-VN') : '' %>
                   </div>
                 </td>
 
@@ -346,7 +412,7 @@
                 <!-- Món ăn (Số lượng & nút xem nhanh) -->
                 <td class="text-center">
                   <% if (b.so_mon > 0) { %>
-                    <button type="button" class="btn btn-sm btn-outline-info px-2 py-1 font-weight-bold" style="font-size: 0.8rem; border-radius: 6px;" onclick="viewOrderItems('<%= b.sesis %>', '<%= b.ten_khach %>', '<%= b.table_name || 'Chưa gán' %>')" title="Bấm để xem danh sách món đã gọi">
+                    <button type="button" class="btn btn-sm btn-outline-info px-2 py-1 font-weight-bold" style="font-size: 0.8rem; border-radius: 6px;" onclick="viewOrderItems('<%= b.sesis %>', '<%= safeTenKhach %>', '<%= safeTableName || 'Chưa gán' %>')" title="Bấm để xem danh sách món đã gọi">
                       <i class="fas fa-utensils mr-1"></i> <%= b.so_mon %> món (<%= b.tong_soluong_mon %>)
                     </button>
                   <% } else { %>
@@ -378,13 +444,13 @@
                   <% } %>
                 </td>
 
-                <!-- Hành động thông minh -->
+                <!-- Hành động -->
                 <td class="text-center">
                   <div class="d-inline-flex align-items-center" style="gap: 4px;">
                     <!-- Nút Thêm Món (Trọng tâm cho Phục vụ) -->
                     <% if (b.tinhtrang != 2 && b.tinhtrang != 3) { %>
-                      <button class="btn btn-sm btn-success px-2 py-1 shadow-sm" title="Gọi thêm món cho khách"
-                        onclick="openAddDishModal('<%= b.sesis %>', '<%= b.ten_khach %>')">
+                      <button class="btn btn-sm btn-success px-2 py-1 shadow-sm font-weight-bold" title="Gọi thêm món cho khách"
+                        onclick="openAddDishModal('<%= b.sesis %>', '<%= safeTenKhach %>')">
                         <i class="fas fa-plus mr-1"></i> Gọi món
                       </button>
                     <% } %>
@@ -401,26 +467,24 @@
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
                       <div class="dropdown-menu dropdown-menu-right shadow border-0" style="font-size: 0.85rem;">
-                        <a class="dropdown-item" href="javascript:void(0)" onclick="viewOrderItems('<%= b.sesis %>', '<%= b.ten_khach %>', '<%= b.table_name || 'Chưa gán' %>')">
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="viewOrderItems('<%= b.sesis %>', '<%= safeTenKhach %>', '<%= safeTableName || 'Chưa gán' %>')">
                           <i class="fas fa-list-ul mr-2 text-info"></i> Xem chi tiết món đã gọi
                         </a>
 
                         <% if (b.tinhtrang == 0) { %>
-                          <form action="/staff/bookings/confirm/<%= b.sesis %>" method="POST">
-                            <button type="submit" class="dropdown-item">
-                              <i class="fas fa-check-circle mr-2 text-success"></i> Xác nhận đơn này
-                            </button>
-                          </form>
+                          <a class="dropdown-item" href="javascript:void(0)" onclick="confirmOrder('<%= b.sesis %>')">
+                            <i class="fas fa-check-circle mr-2 text-success"></i> Xác nhận đơn này
+                          </a>
                         <% } %>
 
                         <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                          <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#tableModal<%= b.sesis %>">
+                          <a class="dropdown-item" href="javascript:void(0)" onclick="openTableAssignModal('<%= b.sesis %>', '<%= safeTenKhach %>', '<%= safeTableName %>')">
                             <i class="fas fa-chair mr-2 text-primary"></i> Đổi bàn / Gán bàn
                           </a>
                         <% } %>
 
                         <% if (b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                          <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#editModal<%= b.sesis %>">
+                          <a class="dropdown-item" href="javascript:void(0)" onclick="openEditBookingModal('<%= b.sesis %>', '<%= b.dates %>', '<%= b.tg %>', '<%= b.so_user %>', '<%= safeNoidung %>')">
                             <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin giờ / khách
                           </a>
                         <% } %>
@@ -434,100 +498,11 @@
                       </div>
                     </div>
                   </div>
-
-                  <!-- Table Assign Modal -->
-                  <% if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                    <div class="modal fade text-left" id="tableModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <form action="/staff/bookings/arrive/<%= b.sesis %>" method="POST">
-                            <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff;">
-                              <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
-                                <i class="fas fa-chair mr-2 text-warning"></i> Gán bàn cho đơn: <%= b.ten_khach %>
-                              </h5>
-                              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <div class="modal-body text-dark">
-                              <div class="alert alert-light border">
-                                <strong>Khách hàng:</strong> <%= b.ten_khach %><br>
-                                <strong>Vị trí hiện tại:</strong> <%= b.table_name ? 'Bàn ' + b.table_name : 'Chưa gán vị trí' %>
-                              </div>
-                              <div class="form-group text-dark">
-                                <label class="font-weight-bold">Chọn bàn phục vụ</label>
-                                <select name="table_id" class="form-control" required>
-                                  <option value="">-- Chọn bàn --</option>
-                                  <% qrCodes.forEach(qr => { %>
-                                    <option value="<%= qr.table_id %>" <%= b.table_name === qr.table_name ? 'selected' : '' %>>
-                                      <%= qr.table_name %> <%= qr.active_sesis ? '(Đang có khách: ' + qr.active_sesis.substring(0,6).toUpperCase() + ')' : '(Bàn trống)' %>
-                                    </option>
-                                  <% }) %>
-                                </select>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
-                              <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Xác nhận chuyển bàn</button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  <% } %>
-
-                  <!-- Edit Modal -->
-                  <% if (b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) { %>
-                    <div class="modal fade text-left" id="editModal<%= b.sesis %>" tabindex="-1" role="dialog" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <form action="/staff/bookings/edit/<%= b.sesis %>" method="POST">
-                            <div class="modal-header" style="background:#241a14; color:#fff;">
-                              <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
-                                <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin Đặt bàn
-                              </h5>
-                              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <div class="modal-body text-dark">
-                              <div class="form-group">
-                                <label class="font-weight-bold">Ngày đến</label>
-                                <% 
-                                  let formattedDate = '';
-                                  try { 
-                                    if(b.dates) formattedDate = (b.dates instanceof Date ? b.dates : new Date(b.dates)).toISOString().split('T')[0]; 
-                                  } catch(e) {} 
-                                %>
-                                <input type="date" name="dates" class="form-control" value="<%= formattedDate %>" required>
-                              </div>
-                              <div class="form-group">
-                                <label class="font-weight-bold">Giờ đến</label>
-                                <input type="time" name="tg" class="form-control" value="<%= b.tg %>" required>
-                              </div>
-                              <div class="form-group">
-                                <label class="font-weight-bold">Số khách</label>
-                                <input type="number" name="so_user" class="form-control" value="<%= b.so_user %>" required>
-                              </div>
-                              <div class="form-group">
-                                <label class="font-weight-bold">Ghi chú / Yêu cầu đặc biệt</label>
-                                <textarea name="noidung" class="form-control" rows="3"><%= b.noidung %></textarea>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
-                              <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Lưu thay đổi</button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  <% } %>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr>
+            <tr id="emptyTableRow">
               <td colspan="9" class="text-center py-5 text-muted">
                 <i class="fas fa-clipboard-list fa-3x mb-3 text-gray-300 d-block"></i>
                 Chưa có đơn đặt bàn nào trong hệ thống
@@ -540,7 +515,88 @@
   </div>
 </div>
 
-<!-- MODAL XEM CHI TIẾT CÁC MÓN CỦA ĐƠN -->
+<!-- ==================== DYNAMIC SHARED MODALS (OUTSIDE LOOP) ==================== -->
+
+<!-- 1. Single Shared Table Assign Modal -->
+<div class="modal fade text-left" id="singleTableModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+      <form id="singleTableForm" method="POST">
+        <div class="modal-header" style="background:linear-gradient(135deg,#4e342e,#2c1810); color:#fff; border-radius: 14px 14px 0 0;">
+          <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
+            <i class="fas fa-chair mr-2 text-warning"></i> Gán bàn cho đơn: <span id="stm_customerName"></span>
+          </h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body text-dark">
+          <div class="alert alert-light border">
+            <strong>Khách hàng:</strong> <span id="stm_alertCust"></span><br>
+            <strong>Vị trí hiện tại:</strong> <span id="stm_alertTable" class="text-primary font-weight-bold">Chưa gán vị trí</span>
+          </div>
+          <div class="form-group text-dark">
+            <label class="font-weight-bold">Chọn bàn phục vụ</label>
+            <select name="table_id" id="stm_tableSelect" class="form-control" required>
+              <option value="">-- Chọn bàn --</option>
+              <% (qrCodes || []).forEach(qr => { %>
+                <option value="<%= qr.table_id %>" data-table-name="<%= qr.table_name %>">
+                  Bàn <%= qr.table_name %> <%= qr.active_sesis ? '(Đang có khách: ' + qr.active_sesis.substring(0,6).toUpperCase() + ')' : '(Bàn trống)' %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light" style="border-radius: 0 0 14px 14px;">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Xác nhận gán bàn</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Single Shared Edit Booking Modal -->
+<div class="modal fade text-left" id="singleEditModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+      <form id="singleEditForm" method="POST">
+        <div class="modal-header" style="background:#241a14; color:#fff; border-radius: 14px 14px 0 0;">
+          <h5 class="modal-title font-weight-bold" style="font-size: 1rem;">
+            <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin Đặt bàn
+          </h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body text-dark">
+          <div class="form-group">
+            <label class="font-weight-bold">Ngày đến</label>
+            <input type="date" name="dates" id="sem_dates" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Giờ đến</label>
+            <input type="time" name="tg" id="sem_tg" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Số khách</label>
+            <input type="number" name="so_user" id="sem_so_user" class="form-control" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Ghi chú / Yêu cầu đặc biệt</label>
+            <textarea name="noidung" id="sem_noidung" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light" style="border-radius: 0 0 14px 14px;">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary btn-sm font-weight-bold">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Modal xem chi tiết các món của đơn -->
 <div class="modal fade" id="viewItemsModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
@@ -572,7 +628,7 @@
   </div>
 </div>
 
-<!-- MODAL THÊM MÓN CHO KHÁCH (ORDER) -->
+<!-- 4. Modal thêm món cho khách (Gọi món) -->
 <div class="modal fade" id="addDishModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
@@ -623,6 +679,7 @@
   let selectedDishes = {}; // { id_mon: { dish, qty } }
   let currentModalCat = 'all';
   let dishesLoaded = false;
+  let debounceSyncTimer = null;
 
   // Lọc theo Tab trạng thái
   function filterByTab(tab) {
@@ -655,6 +712,249 @@
         row.style.display = 'none';
       }
     });
+  }
+
+  // Mở modal Gán bàn
+  function openTableAssignModal(sesis, custName, tableName) {
+    document.getElementById('singleTableForm').action = '/staff/bookings/arrive/' + sesis;
+    document.getElementById('stm_customerName').textContent = custName || 'Khách vãng lai';
+    document.getElementById('stm_alertCust').textContent = custName || 'Khách vãng lai';
+    document.getElementById('stm_alertTable').textContent = tableName ? ('Bàn ' + tableName) : 'Chưa gán vị trí';
+    
+    const select = document.getElementById('stm_tableSelect');
+    select.value = '';
+    if (tableName) {
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].getAttribute('data-table-name') === tableName) {
+          select.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    $('#singleTableModal').modal('show');
+  }
+
+  // Mở modal Sửa thông tin đặt bàn
+  function openEditBookingModal(sesis, datesStr, tg, soUser, noidung) {
+    document.getElementById('singleEditForm').action = '/staff/bookings/edit/' + sesis;
+    let formatted = '';
+    try {
+      if (datesStr) {
+        const d = new Date(datesStr);
+        if (!isNaN(d.getTime())) {
+          formatted = d.toISOString().split('T')[0];
+        }
+      }
+    } catch (e) {}
+    document.getElementById('sem_dates').value = formatted;
+    document.getElementById('sem_tg').value = tg || '';
+    document.getElementById('sem_so_user').value = soUser || 1;
+    document.getElementById('sem_noidung').value = (noidung && noidung !== 'Không có') ? noidung : '';
+    $('#singleEditModal').modal('show');
+  }
+
+  // Xác nhận đơn đặt bàn
+  async function confirmOrder(sesis) {
+    if (!confirm('Bạn có chắc muốn xác nhận đơn bàn #' + sesis.substring(0,6).toUpperCase() + '?')) return;
+    try {
+      const res = await fetch('/staff/bookings/confirm/' + sesis, { method: 'POST' });
+      if (res.ok) {
+        showBookingToast('Đã xác nhận đơn #' + sesis.substring(0,6).toUpperCase());
+        syncBookingsData();
+      } else {
+        alert('Có lỗi xảy ra khi xác nhận đơn!');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối: ' + err.message);
+    }
+  }
+
+  // Hiển thị thông báo Toast góc màn hình khi có cập nhật realtime
+  function showBookingToast(message) {
+    const container = document.getElementById('bookingToastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'rt-toast';
+    toast.innerHTML = '<i class="fas fa-bell text-warning fa-lg"></i><div style="font-size:0.88rem;">' + message + '</div>';
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
+
+  // Debounced sync để gom nhiều socket events liên tiếp
+  function syncBookingsDataDebounced() {
+    if (debounceSyncTimer) clearTimeout(debounceSyncTimer);
+    debounceSyncTimer = setTimeout(() => {
+      syncBookingsData(false);
+    }, 300);
+  }
+
+  // Đồng bộ dữ liệu Realtime không cần reload cả trang
+  async function syncBookingsData(showSpinner = false) {
+    const icon = document.getElementById('btnRefreshIcon');
+    if (showSpinner && icon) icon.classList.add('fa-spin');
+
+    try {
+      const res = await fetch('/staff/bookings/api/data');
+      const data = await res.json();
+      if (!data.success) return;
+
+      const stats = data.stats || {};
+      const bookings = data.bookings || [];
+
+      // Cập nhật thẻ KPI
+      if (document.getElementById('stat_tong_don')) document.getElementById('stat_tong_don').textContent = stats.tong_don || 0;
+      if (document.getElementById('stat_dang_phuc_vu')) document.getElementById('stat_dang_phuc_vu').textContent = stats.dang_phuc_vu || 0;
+      if (document.getElementById('stat_da_xac_nhan')) document.getElementById('stat_da_xac_nhan').textContent = stats.da_xac_nhan || 0;
+      if (document.getElementById('stat_da_thanh_toan')) document.getElementById('stat_da_thanh_toan').textContent = stats.da_thanh_toan || 0;
+
+      // Cập nhật số đếm trên các Tabs
+      if (document.getElementById('tab_all_count')) document.getElementById('tab_all_count').textContent = stats.tong_don || 0;
+      if (document.getElementById('tab_active_count')) document.getElementById('tab_active_count').textContent = stats.dang_phuc_vu || 0;
+      if (document.getElementById('tab_confirmed_count')) document.getElementById('tab_confirmed_count').textContent = stats.da_xac_nhan || 0;
+      if (document.getElementById('tab_pending_count')) document.getElementById('tab_pending_count').textContent = stats.cho_xac_nhan || 0;
+      if (document.getElementById('tab_paid_count')) document.getElementById('tab_paid_count').textContent = stats.da_thanh_toan || 0;
+
+      // Cập nhật lại các dòng của bảng
+      const tbody = document.getElementById('ordersTableBody');
+      if (!tbody) return;
+
+      if (bookings.length === 0) {
+        tbody.innerHTML = '<tr id="emptyTableRow"><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-clipboard-list fa-3x mb-3 text-gray-300 d-block"></i>Chưa có đơn đặt bàn nào trong hệ thống</td></tr>';
+        return;
+      }
+
+      let html = '';
+      bookings.forEach(b => {
+        let statusGroup = 'other';
+        if (b.tinhtrang == 0) statusGroup = 'pending';
+        else if (b.tinhtrang == 1) statusGroup = 'confirmed';
+        else if (b.tinhtrang == 5 || b.tinhtrang == 6) statusGroup = 'active';
+        else if (b.tinhtrang == 3) statusGroup = 'paid';
+        else if (b.tinhtrang == 2) statusGroup = 'cancelled';
+
+        const safeCust = (b.ten_khach || 'Khách vãng lai').replace(/'/g, "\\'");
+        const safeTable = (b.table_name || '').replace(/'/g, "\\'");
+        const safeNote = (b.noidung || '').replace(/'/g, "\\'");
+        const searchStr = (b.sesis + ' ' + (b.ten_khach || '') + ' ' + (b.sodienthoai || '') + ' ' + (b.table_name || '') + ' ' + (b.noidung || '')).toLowerCase();
+
+        let tableBadge = '<span class="table-seat-none" title="Chưa gán vị trí bàn"><i class="fas fa-question-circle mr-1"></i> Chưa gán</span>';
+        if (b.table_name) {
+          tableBadge = '<span class="table-seat-badge"><i class="fas fa-chair mr-1"></i> Bàn ' + b.table_name + '</span>';
+        }
+
+        let dishBtn = '<span class="text-muted" style="font-size: 0.8rem;">Chưa gọi món</span>';
+        if (b.so_mon > 0) {
+          dishBtn = `<button type="button" class="btn btn-sm btn-outline-info px-2 py-1 font-weight-bold" style="font-size: 0.8rem; border-radius: 6px;" onclick="viewOrderItems('${b.sesis}', '${safeCust}', '${safeTable || 'Chưa gán'}')"><i class="fas fa-utensils mr-1"></i> ${b.so_mon} món (${b.tong_soluong_mon})</button>`;
+        }
+
+        let statusBadge = '';
+        if (b.tinhtrang == 0) statusBadge = '<span class="badge badge-secondary px-2 py-1" style="font-weight: 600;">Chờ xác nhận</span>';
+        else if (b.tinhtrang == 1) statusBadge = '<span class="badge badge-primary px-2 py-1" style="font-weight: 600;">Đã xác nhận</span>';
+        else if (b.tinhtrang == 5) statusBadge = '<span class="badge badge-info px-2 py-1" style="font-weight: 600;">Khách đã đến</span>';
+        else if (b.tinhtrang == 6) statusBadge = '<span class="badge badge-warning text-dark px-2 py-1" style="font-weight: 600;">Đang dùng món</span>';
+        else if (b.tinhtrang == 2) statusBadge = '<span class="badge badge-danger px-2 py-1" style="font-weight: 600;">Đã hủy</span>';
+        else if (b.tinhtrang == 3) statusBadge = '<span class="badge badge-success px-2 py-1" style="font-weight: 600;">Đã thanh toán</span>';
+
+        let callDishBtn = '';
+        if (b.tinhtrang != 2 && b.tinhtrang != 3) {
+          callDishBtn = `<button class="btn btn-sm btn-success px-2 py-1 shadow-sm font-weight-bold" title="Gọi thêm món cho khách" onclick="openAddDishModal('${b.sesis}', '${safeCust}')"><i class="fas fa-plus mr-1"></i> Gọi món</button>`;
+        }
+
+        let dropdownItems = `
+          <a class="dropdown-item" href="javascript:void(0)" onclick="viewOrderItems('${b.sesis}', '${safeCust}', '${safeTable || 'Chưa gán'}')">
+            <i class="fas fa-list-ul mr-2 text-info"></i> Xem chi tiết món đã gọi
+          </a>
+        `;
+        if (b.tinhtrang == 0) {
+          dropdownItems += `
+            <a class="dropdown-item" href="javascript:void(0)" onclick="confirmOrder('${b.sesis}')">
+              <i class="fas fa-check-circle mr-2 text-success"></i> Xác nhận đơn này
+            </a>
+          `;
+        }
+        if (b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) {
+          dropdownItems += `
+            <a class="dropdown-item" href="javascript:void(0)" onclick="openTableAssignModal('${b.sesis}', '${safeCust}', '${safeTable}')">
+              <i class="fas fa-chair mr-2 text-primary"></i> Đổi bàn / Gán bàn
+            </a>
+          `;
+        }
+        if (b.tinhtrang == 0 || b.tinhtrang == 1 || b.tinhtrang == 5 || b.tinhtrang == 6) {
+          dropdownItems += `
+            <a class="dropdown-item" href="javascript:void(0)" onclick="openEditBookingModal('${b.sesis}', '${b.dates}', '${b.tg}', '${b.so_user}', '${safeNote}')">
+              <i class="fas fa-edit mr-2 text-warning"></i> Sửa thông tin giờ / khách
+            </a>
+          `;
+        }
+        if (b.tinhtrang != 2 && b.tinhtrang != 3) {
+          dropdownItems += `
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item text-success font-weight-bold" href="/staff/thanh-toan/${b.sesis}">
+              <i class="fas fa-cash-register mr-2"></i> Chuyển sang Thu ngân POS
+            </a>
+          `;
+        }
+
+        const dateStr = b.dates ? new Date(b.dates).toLocaleDateString('vi-VN') : '';
+        const noteHtml = (b.noidung && b.noidung !== 'Không có') ? `<div style="font-size: 0.78rem; color: #795548; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;" title="${b.noidung}">📝 ${b.noidung}</div>` : '';
+
+        html += `
+          <tr class="order-row" id="row_${b.sesis}" data-status-group="${statusGroup}" data-search="${searchStr}">
+            <td><span class="table-code-badge" title="Mã đơn: ${b.sesis}">#${b.sesis.substring(0,6).toUpperCase()}</span></td>
+            <td>${tableBadge}</td>
+            <td>
+              <div class="font-weight-bold text-dark">${b.ten_khach || 'Khách vãng lai'}</div>
+              <small class="text-muted"><i class="fas fa-phone fa-xs mr-1"></i>${b.sodienthoai || 'Không có'}</small>
+              ${noteHtml}
+            </td>
+            <td>
+              <div class="text-dark font-weight-bold" style="font-size: 0.85rem;">${b.tg || ''}</div>
+              <div class="text-muted" style="font-size: 0.78rem;">${dateStr}</div>
+            </td>
+            <td class="text-center">
+              <span class="badge badge-light border text-dark font-weight-bold px-2 py-1">
+                <i class="fas fa-users mr-1 text-muted"></i>${b.so_user || 1}
+              </span>
+            </td>
+            <td class="text-center">${dishBtn}</td>
+            <td class="text-right">
+              <span class="text-danger font-weight-bold" style="font-size: 0.95rem;">
+                ${parseInt(b.tong_tien || 0).toLocaleString('vi-VN')}đ
+              </span>
+            </td>
+            <td class="text-center">${statusBadge}</td>
+            <td class="text-center">
+              <div class="d-inline-flex align-items-center" style="gap: 4px;">
+                ${callDishBtn}
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" title="In Phiếu / Hóa Đơn" onclick="window.open('/staff/bookings/print/${b.sesis}', '', 'width=650,height=800')">
+                  <i class="fas fa-print"></i>
+                </button>
+                <div class="dropdown d-inline-block">
+                  <button class="btn btn-sm btn-light border px-2 py-1 text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-right shadow border-0" style="font-size: 0.85rem;">
+                    ${dropdownItems}
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      filterOrdersTable();
+    } catch (err) {
+      console.error('Lỗi khi đồng bộ dữ liệu đặt bàn:', err);
+    } finally {
+      if (showSpinner && icon) icon.classList.remove('fa-spin');
+    }
   }
 
   // Xem chi tiết các món của đơn
@@ -873,8 +1173,8 @@
 
       $('#addDishModal').modal('hide');
       selectedDishes = {};
-      alert('✅ Đã thêm ' + items.length + ' món và gửi lệnh chế biến xuống Bếp thành công!');
-      location.reload();
+      showBookingToast('✅ Đã thêm ' + items.length + ' món và gửi lệnh chế biến xuống Bếp thành công!');
+      syncBookingsData();
     } catch (err) {
       alert('Lỗi: ' + err.message);
     } finally {
@@ -882,6 +1182,44 @@
       btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> GỬI MÓN XUỐNG BẾP';
     }
   }
+
+  // --- Realtime WebSocket Connection ---
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof io !== 'undefined') {
+      const socket = io();
+      socket.on('connect', () => {
+        socket.emit('join-room', { role: 'Phuc vu' });
+        console.log('[Realtime] Đã kết nối staff_room cho Quản lý Đặt bàn & Gọi món');
+      });
+
+      // Lắng nghe các sự kiện đồng bộ
+      socket.on('booking-updated', (data) => {
+        const sesisTag = (data && data.sesis) ? (' #' + data.sesis.substring(0,6).toUpperCase()) : '';
+        showBookingToast('Đơn bàn' + sesisTag + ' vừa được cập nhật');
+        syncBookingsDataDebounced();
+      });
+
+      socket.on('ban-cap-nhat', (ban) => {
+        const banName = (ban && ban.number_ban) ? (' Bàn ' + ban.number_ban) : '';
+        showBookingToast('Sơ đồ bàn' + banName + ' vừa thay đổi trạng thái');
+        syncBookingsDataDebounced();
+      });
+
+      socket.on('so-do-thay-doi', () => {
+        syncBookingsDataDebounced();
+      });
+
+      socket.on('new-order-to-kitchen', (data) => {
+        if (data && data.message) showBookingToast(data.message);
+        syncBookingsDataDebounced();
+      });
+    }
+
+    // Tự động đồng bộ dự phòng mỗi 30s
+    setInterval(() => {
+      syncBookingsData(false);
+    }, 30000);
+  });
 </script>
 
 <%- include('partials/footer') %>

@@ -304,15 +304,6 @@ var tenMonDich = function (m) {
             <h3 class="nh-panel__title"><i class="fas fa-map-marked-alt"></i> <%= t('dat_ban_moi.b2_tieu_de') %></h3>
             <p class="nh-hint" style="margin-bottom:1.1rem"><%= t('dat_ban_moi.b2_mo_ta') %></p>
 
-            <div class="db-filter-status" id="dbFilterStatus" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; background: #fffdf5; border: 1.5px solid rgba(200,162,75,0.35); border-radius: 10px; padding: 0.55rem 0.95rem; font-size: 0.88rem;">
-              <span id="dbFilterStatusText" style="color: var(--nh-espresso); font-weight: 600;">
-                <i class="fas fa-filter" style="color: var(--nh-gold); margin-right: 0.35rem;"></i>
-                <span id="dbFilterTextContent"></span>
-              </span>
-              <button type="button" id="dbBtnToggleFilter" class="nh-btn nh-btn--xs nh-btn--outline" style="font-size: 0.78rem; padding: 0.25rem 0.75rem; border-radius: 999px;">
-                <%= t('dat_ban_moi.hien_tat_ca_ban') %>
-              </button>
-            </div>
 
             <div id="dbTabs"></div>
             <div id="dbSoDo" class="sdb"></div>
@@ -739,11 +730,24 @@ var tenMonDich = function (m) {
 
   var dieuKhienSoDo = null;
   var chiHienBanPhuHop = true;
+  var laCaoDiemHienTai = false;
 
-  function laBanPhuHop(b, soKhach) {
+  function laBanPhuHop(b, soKhach, laCaoDiem) {
     var k = Number(soKhach) || 2;
     var c = Number(b.so_cho) || 4;
-    // Bàn phải đủ chỗ cho khách và phù hợp quy mô đoàn
+
+    // Giờ cao điểm: Khách chỉ được ngồi đúng số chỗ của bàn (2 người chỉ ngồi bàn 2)
+    if (laCaoDiem) {
+      if (k <= 2) return c === 2;
+      if (k <= 4) return c === 4;
+      if (k <= 6) return c === 6;
+      if (k <= 8) return c === 8;
+      if (k <= 10) return c === 10;
+      if (k <= 12) return c === 12;
+      return c >= k;
+    }
+
+    // Giờ bình thường: 2 người ngồi bàn 4 vẫn được
     if (k <= 2) return c >= 2 && c <= 4;
     if (k <= 4) return c >= 4 && c <= 6;
     if (k <= 6) return c >= 6 && c <= 8;
@@ -752,56 +756,45 @@ var tenMonDich = function (m) {
     return c >= k;
   }
 
-  function layMotaKhoangCho(soKhach) {
+  function layMotaKhoangCho(soKhach, laCaoDiem) {
     var k = Number(soKhach) || 2;
-    if (k <= 2) return '2 – 4';
-    if (k <= 4) return '4 – 6';
-    if (k <= 6) return '6 – 8';
-    if (k <= 8) return '8 – 10';
-    if (k <= 10) return '10 – 12';
+    if (laCaoDiem) {
+      if (k <= 2) return 'đúng 2 chỗ (giờ cao điểm)';
+      if (k <= 4) return 'đúng 4 chỗ (giờ cao điểm)';
+      if (k <= 6) return 'đúng 6 chỗ (giờ cao điểm)';
+      if (k <= 8) return 'đúng 8 chỗ (giờ cao điểm)';
+      if (k <= 10) return 'đúng 10 chỗ (giờ cao điểm)';
+      if (k <= 12) return 'đúng 12 chỗ (giờ cao điểm)';
+      return k + '+ chỗ';
+    }
+    if (k <= 2) return '2 – 4 chỗ (cho phép bàn 4)';
+    if (k <= 4) return '4 – 6 chỗ';
+    if (k <= 6) return '6 – 8 chỗ';
+    if (k <= 8) return '8 – 10 chỗ';
+    if (k <= 10) return '10 – 12 chỗ';
     return k + '+';
   }
 
-  function locDanhSachBan(dsBan, soKhach, batBuocPhuHop) {
-    if (!batBuocPhuHop) return dsBan;
-    var phuHop = dsBan.filter(function (b) { return laBanPhuHop(b, soKhach); });
+  function locDanhSachBan(dsBan, soKhach, batBuocPhuHop, laCaoDiem) {
+    if (!batBuocPhuHop) {
+      // Dù xem tất cả, trong giờ cao điểm các bàn quá lớn vẫn bị vô hiệu hoá
+      return dsBan;
+    }
+    var phuHop = dsBan.filter(function (b) { return laBanPhuHop(b, soKhach, laCaoDiem); });
     if (phuHop.length > 0) return phuHop;
+    // Nếu trong giờ cao điểm không có bàn đúng chỗ: không tự nới lỏng sang bàn to để tránh vi phạm quy tắc
+    if (laCaoDiem) return [];
     var duCho = dsBan.filter(function (b) { return Number(b.so_cho) >= soKhach; });
     return duCho.length > 0 ? duCho : dsBan;
   }
 
-  function capNhatThanhLocBan() {
-    var hop = $('dbFilterStatus');
-    var txt = $('dbFilterTextContent');
-    var btn = $('dbBtnToggleFilter');
-    if (!hop || !txt || !btn) return;
 
-    if (chiHienBanPhuHop) {
-      txt.innerHTML = (T['dat_ban_moi.loc_ban_phu_hop'] || 'Đang lọc các bàn phù hợp cho {n} khách').replace('{n}', '<b>' + S.soKhach + '</b>')
-        + ' <span style="color:var(--nh-muted); font-weight:normal;">(Bàn ' + layMotaKhoangCho(S.soKhach) + ' chỗ)</span>';
-      btn.textContent = T['dat_ban_moi.hien_tat_ca_ban'] || 'Xem tất cả bàn';
-      btn.className = 'nh-btn nh-btn--xs nh-btn--outline';
-    } else {
-      txt.innerHTML = '<span style="color:var(--nh-muted); font-weight:500;"><i class="fas fa-eye"></i> Đang hiển thị toàn bộ bàn của nhà hàng</span>';
-      btn.textContent = (T['dat_ban_moi.chi_hien_phu_hop'] || 'Chỉ hiện bàn phù hợp') + ' (' + S.soKhach + ' khách)';
-      btn.className = 'nh-btn nh-btn--xs nh-btn--gold';
-    }
-  }
-
-  var btnToggleFilter = $('dbBtnToggleFilter');
-  if (btnToggleFilter) {
-    btnToggleFilter.addEventListener('click', function () {
-      chiHienBanPhuHop = !chiHienBanPhuHop;
-      taiSoDo();
-    });
-  }
 
   async function taiSoDo() {
     var khung = $('dbSoDo');
     khung.innerHTML = '<div class="sdb__khung sdb__khung--tai">' + T['dat_ban_moi.dang_tai_so_do'] + '</div>';
     $('dbTomTatBan').textContent = T['dat_ban_moi.dang_tai'];
-    capNhatThanhLocBan();
-
+    
     var q = function (khu) {
       var p = new URLSearchParams({ ngay: S.ngay, gio: S.gio, so_khach: S.soKhach });
       if (khu) p.set('khu_vuc', khu);
@@ -812,7 +805,9 @@ var tenMonDich = function (m) {
       var tatCa = await q(S.khuVuc);
       if (!tatCa.ok) { bao($('dbTomTatBan'), 'loi', tatCa.thong_bao); return; }
 
-      var banHienThi = locDanhSachBan(tatCa.ban || [], S.soKhach, chiHienBanPhuHop);
+      laCaoDiemHienTai = !!(tatCa.cao_diem || (tatCa.khung && tatCa.khung.cao_diem));
+      
+      var banHienThi = locDanhSachBan(tatCa.ban || [], S.soKhach, chiHienBanPhuHop, laCaoDiemHienTai);
       var tatCaDaLoc = Object.assign({}, tatCa, { ban: banHienThi });
 
       var dem = {};
@@ -820,7 +815,7 @@ var tenMonDich = function (m) {
       var demTheoKhu = await Promise.all(KHU.map(function (k) { return q(k.id); }));
       demTheoKhu.forEach(function (r, i) {
         if (r.ok) {
-          var banKhu = locDanhSachBan(r.ban || [], S.soKhach, chiHienBanPhuHop);
+          var banKhu = locDanhSachBan(r.ban || [], S.soKhach, chiHienBanPhuHop, laCaoDiemHienTai);
           dem[String(KHU[i].id)] = banKhu.filter(function (b) { return b.kha_dung; }).length;
         } else {
           dem[String(KHU[i].id)] = 0;
@@ -867,18 +862,45 @@ var tenMonDich = function (m) {
     }
 
     var du = tongCho >= S.soKhach;
-    o.classList.add(du ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu');
+    var ktrSucChua = true;
+    var lyDoKhongHopLe = '';
+
+    if (laCaoDiemHienTai) {
+      var choChuan = S.soKhach <= 2 ? 2 : (S.soKhach <= 4 ? 4 : (S.soKhach <= 6 ? 6 : (S.soKhach <= 8 ? 8 : (S.soKhach <= 10 ? 10 : 12))));
+      if (tongCho > choChuan) {
+        ktrSucChua = false;
+        lyDoKhongHopLe = 'Giờ cao điểm: Đoàn ' + S.soKhach + ' khách chỉ được chọn bàn đúng ' + choChuan + ' chỗ (Bàn đã chọn có ' + tongCho + ' chỗ).';
+      }
+    } else {
+      if (S.soKhach <= 2 && tongCho > 4) {
+        ktrSucChua = false;
+        lyDoKhongHopLe = 'Giờ thường: Đoàn ' + S.soKhach + ' khách tối đa chỉ chọn bàn 4 chỗ (Bàn đã chọn có ' + tongCho + ' chỗ).';
+      }
+    }
+
+    var hopLe = du && ktrSucChua;
+    o.classList.add(hopLe ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu');
     var m = chu('span');
     m.appendChild(document.createTextNode(T['dat_ban_moi.da_chon'] + ' '));
     var b = document.createElement('b');
     b.textContent = S.ban.length + ' ' + T['dat_ban_moi.ban_dv'] + ' · ' + tongCho + ' ' + T['dat_ban_moi.cho'];
     m.appendChild(b);
     o.appendChild(m);
-    o.appendChild(chu('span', null, du
-      ? T['dat_ban_moi.du_cho']
-      : T['dat_ban_moi.thieu_cho'].replace('{n}', S.soKhach - tongCho)));
 
-    $('dbTiep2').disabled = !du;
+    if (!du) {
+      o.appendChild(chu('span', null, T['dat_ban_moi.thieu_cho'].replace('{n}', S.soKhach - tongCho)));
+    } else if (!ktrSucChua) {
+      var canhBao = chu('span', null, ' ⚠️ ' + lyDoKhongHopLe);
+      canhBao.style.color = '#b3352c';
+      canhBao.style.fontWeight = 'bold';
+      canhBao.style.display = 'block';
+      canhBao.style.marginTop = '4px';
+      o.appendChild(canhBao);
+    } else {
+      o.appendChild(chu('span', null, T['dat_ban_moi.du_cho']));
+    }
+
+    $('dbTiep2').disabled = !hopLe;
   }
 
   $('dbTuXep').addEventListener('click', function () {
