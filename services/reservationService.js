@@ -185,6 +185,142 @@ async function capNhatHoSoKhach(conn, dienThoai) {
         last_visit_date = VALUES(last_visit_date)`, [dienThoai]);
 }
 
+/**
+ * Dong bo luot dat ban (`reservations`) sang bang `hopdong` va `qr_tables`
+ * de man hinh "Don goi mon tai ban" (/staff/bookings), man hinh Bep (KDS) va
+ * POS Thu ngan nhin thay ngay khi khach dat ban hoac duoc xep vao ban (SEATED).
+ */
+async function dongBoHopDong(conn, reservationId) {
+  const [[r]] = await conn.query('SELECT * FROM reservations WHERE id = ?', [reservationId]);
+  if (!r || !r.reservation_code) return;
+
+  const sesis = r.reservation_code;
+  const mapTinhTrang = {
+    PENDING: 0,
+    WAITLIST: 0,
+    CONFIRMED: 1,
+    ARRIVED: 1,
+    SEATED: 5,
+    COMPLETED: 3,
+    CANCELLED: 4,
+    REJECTED: 4,
+    NO_SHOW: 4,
+  };
+  const tinhTrang = mapTinhTrang[r.status] !== undefined ? mapTinhTrang[r.status] : 0;
+
+  // Lay ban duoc gan cho luot dat nay (neu co)
+  const [dsBan] = await conn.query(
+    `SELECT rt.table_id, b.number_ban
+       FROM reservation_tables rt
+       JOIN ban b ON b.Id_ban = rt.table_id
+      WHERE rt.reservation_id = ?
+      ORDER BY rt.table_id ASC`,
+    [reservationId]
+  );
+  const idBan = dsBan.length ? dsBan[0].table_id : null;
+  const tenBan = dsBan.length ? dsBan[0].number_ban : null;
+
+  // Tim hoac tao khach hang trong bang khach_hang theo so dien thoai
+  let userId = r.customer_id || null;
+  if (!userId) {
+    const [khRows] = await conn.query('SELECT id FROM khach_hang WHERE sodienthoai = ? LIMIT 1', [r.phone]);
+    if (khRows.length) {
+      userId = khRows[0].id;
+      if (r.customer_name) {
+        await conn.query('UPDATE khach_hang SET ten = ? WHERE id = ?', [r.customer_name, userId]);
+      }
+    } else {
+      const md5 = require('md5');
+      const [insKh] = await conn.query(
+        'INSERT INTO khach_hang (ten, sodienthoai, email, passwords) VALUES (?, ?, ?, ?)',
+        [r.customer_name || 'Khách đặt bàn', r.phone, r.email || null, md5('123456')]
+      );
+      userId = insKh.insertId;
+    }
+  }
+
+  const ngayDat = qt.ngayChuoi(r.reservation_date);
+  const gioDat = String(r.start_time || '18:00:00').slice(0, 8);
+  const gioHienThi = gioDat.slice(0, 5);
+  const noiDung = r.occasion || r.special_requests || 'Đặt bàn';
+  const soKhach = String(r.guest_count || 1);
+
+  const [existing] = await conn.query('SELECT id FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
+  if (!existing.length) {
+    const [preorders] = await conn.query(
+      `SELECT p.*, m.images
+         FROM reservation_preorders p
+         LEFT JOIN monan m ON m.id_mon = p.dish_id
+        WHERE p.reservation_id = ?`,
+      [reservationId]
+    );
+    if (preorders.length > 0) {
+      for (const item of preorders) {
+        const thanhTien = (Number(item.price) || 0) * (Number(item.quantity) || 1);
+        await conn.query(
+          `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep, ngay_dat, gio_dat, id_ban, ghi_chu_mon)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+          [sesis, item.dish_id, item.dish_name, userId, ngayDat, gioHienThi, item.quantity, noiDung, soKhach, item.price, thanhTien, item.images || '', tinhTrang, ngayDat, gioDat, idBan, item.note || null]
+        );
+      }
+    } else {
+      await conn.query(
+        `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat, id_ban)
+         VALUES (?, 0, 'Chưa chọn món', ?, ?, ?, 0, ?, ?, 0, 0, '', ?, ?, ?, ?)`,
+        [sesis, userId, ngayDat, gioHienThi, noiDung, soKhach, tinhTrang, ngayDat, gioDat, idBan]
+      );
+    }
+  } else {
+    await conn.query(
+      `UPDATE hopdong
+          SET tinhtrang = ?,
+              id_ban = COALESCE(?, id_ban),
+              id_user = COALESCE(?, id_user),
+              dates = ?,
+              tg = ?,
+              ngay_dat = ?,
+              gio_dat = ?,
+              so_user = ?,
+              noidung = ?
+        WHERE sesis = ?`,
+      [tinhTrang, idBan, userId, ngayDat, gioHienThi, ngayDat, gioDat, soKhach, noiDung, sesis]
+    );
+  }
+
+  // Dong bo active_sesis tren qr_tables va sesis_hien_tai tren ban khi SEATED
+  if (r.status === 'SEATED' && idBan) {
+    await conn.query('UPDATE ban SET sesis_hien_tai = ? WHERE Id_ban = ?', [sesis, idBan]);
+    if (tenBan) {
+      await conn.query('UPDATE qr_tables SET active_sesis = ? WHERE table_name = ?', [sesis, tenBan]);
+    }
+  } else if (['COMPLETED', 'CANCELLED', 'REJECTED', 'NO_SHOW'].includes(r.status)) {
+    await conn.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
+  }
+
+  // Dong bo khoan da thanh toan truoc / dat coc khi dat ban sang bang payments
+  const tienDaCoc = Number(r.deposit_amount) || 0;
+  if (r.deposit_status === 'PAID' && tienDaCoc > 0) {
+    const [daGhiPay] = await conn.query(
+      "SELECT id FROM payments WHERE sesis = ? AND loai = 'dat_coc' AND status = 'success' LIMIT 1",
+      [sesis]
+    );
+    if (!daGhiPay.length) {
+      const [[pm]] = await conn.query("SELECT id FROM payment_methods WHERE code = 'vietqr' LIMIT 1");
+      const pmId = pm ? pm.id : 1;
+      await conn.query(
+        `INSERT INTO payments (sesis, amount, payment_method_id, status, loai, nguon, thanh_cong_luc, notes)
+         VALUES (?, ?, ?, 'success', 'dat_coc', 'web', NOW(), 'Đã thanh toán trước khi đặt bàn')`,
+        [sesis, tienDaCoc, pmId]
+      );
+    }
+  } else if (r.deposit_status === 'REFUNDED') {
+    await conn.query(
+      "UPDATE payments SET status = 'refunded', updated_at = NOW() WHERE sesis = ? AND loai = 'dat_coc' AND status = 'success'",
+      [sesis]
+    );
+  }
+}
+
 /** Quan ly sua ho so khach: gan VIP, ghi chu, so thich, chan dat. */
 async function luuHoSoKhach(dienThoai, input) {
   const so = qt.chuanHoaDienThoai(dienThoai);
@@ -678,6 +814,7 @@ async function taoLuotDat(input, ctx = {}) {
           ctx.nhanVienId);
 
         await capNhatHoSoKhach(conn, khach.dienThoai);
+        await dongBoHopDong(conn, id);
         await xepThongBao(conn, {
           reservationId: id,
           suKien: vaoWaitlist ? 'RESERVATION_WAITLISTED' : 'RESERVATION_CREATED',
@@ -946,6 +1083,7 @@ async function capNhat(id, input, ctx = {}) {
       doi.length ? `Cập nhật: ${doi.join('; ')}` : 'Cập nhật thông tin', ctx.nhanVienId);
 
     await capNhatHoSoKhach(conn, khach.dienThoai);
+    await dongBoHopDong(conn, id);
     if (doi.length) {
       await xepThongBao(conn, {
         reservationId: id,
@@ -1016,6 +1154,7 @@ async function ganBan(id, dsBanId, ctx = {}) {
     await ghiNhatKy(conn, id, r.status, r.status,
       `Đổi bàn: ${banCu.map((b) => b.ten).join(', ') || '—'} → ${goi.chon.ban.map((b) => b.ten).join(', ')}`,
       ctx.nhanVienId);
+    await dongBoHopDong(conn, id);
 
     await conn.commit();
     return { ban: goi.chon.ban };
@@ -1185,6 +1324,7 @@ async function doiTrangThai(id, trangThaiMoi, ctx = {}) {
     await ghiNhatKy(conn, id, r.status, den,
       ctx.ghiChu ? `${nhan} — ${ctx.ghiChu}` : nhan, ctx.nhanVienId);
     await capNhatHoSoKhach(conn, r.phone);
+    await dongBoHopDong(conn, id);
     await xepThongBao(conn, {
       reservationId: id,
       suKien: `RESERVATION_${den}`,
@@ -1273,6 +1413,7 @@ async function luuCoc(id, input, ctx = {}) {
 
     await ghiNhatKy(conn, id, r.status, r.status,
       `Tiền cọc: ${soTien.toLocaleString('vi-VN')}đ · ${trangThai}`, ctx.nhanVienId);
+    await dongBoHopDong(conn, id);
     await xepThongBao(conn, {
       reservationId: id, suKien: `DEPOSIT_${trangThai}`, nguoiNhan: r.email,
       duLieu: { so_tien: soTien, ma: r.reservation_code },
@@ -1567,4 +1708,5 @@ module.exports = {
   lamGiau,
   ghiNhatKy,
   xepThongBao,
+  dongBoHopDong,
 };

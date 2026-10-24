@@ -233,18 +233,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
   const diemThucDung = Math.max(0, Math.min(Number(diemDung) || 0, diemToiDaDung));
   const tienTuDiem = diemThucDung * Number(ch.gia_tri_1_diem);
 
-  // --- Phi va thue tinh tren TAM TINH (khong tru giam gia) ---
-  // Phi phuc vu la phi cua nha hang, khong phu thuoc khach co ma giam gia hay
-  // khong. Tinh tren phan da tru giam gia se khien tong hoa don thay doi moi
-  // khi ap ma, rat kho doi chieu voi bao cao doanh thu.
-  const phiPhucVu = Math.round(tamTinh * Number(ch.phi_phuc_vu) / 100);
-  const thueVat = Math.round((tamTinh + phiPhucVu) * Number(ch.thue_vat) / 100);
-
-  const tongTruocLamTron = tamTinh + phiPhucVu + thueVat;
-  const tongCong = lamTronLen(tongTruocLamTron, Number(ch.lam_tron));
-  const tienLamTron = tongCong - tongTruocLamTron;
-
-  // --- Da tra bao nhieu roi (chia bill / dat coc) ---
+  // --- Da tra bao nhieu roi (chia bill / dat coc / thanh toan truoc khi dat ban) ---
   //
   // `con_phai_tra` KHONG the tinh don gian la tongCong - SUM(amount).
   // Khi khach da tra mot phan bang ma giam gia hoac bang diem tich luy, phan
@@ -266,10 +255,33 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
      WHERE sesis = ? AND status = 'success' AND loai = 'dat_coc'`,
     [sesis]
   );
+  // Doi chieu them bang reservations (truong hop khach da thanh toan truoc/dat coc
+  // khi dat ban tren web nhung chua co dong trong payments).
+  const [[rsvCoc]] = await db.query(
+    `SELECT COALESCE(deposit_amount, 0) AS tong
+       FROM reservations
+      WHERE reservation_code = ? AND deposit_status = 'PAID'
+      LIMIT 1`,
+    [sesis]
+  ).catch(() => [[{ tong: 0 }]]);
 
-  const daThuTien = Number(daTra.tong_tien || 0) + Number(daCoc.tong || 0);
+  const tienDaCoc = Math.max(Number(daCoc.tong || 0), Number(rsvCoc && rsvCoc.tong || 0));
+  const daThuTien = Number(daTra.tong_tien || 0) + tienDaCoc;
   const daGiamTruocDo = Number(daTra.tong_giam || 0)
     + Number(daTra.tong_diem || 0) * Number(ch.gia_tri_1_diem);
+
+  // --- Phi va thue: chi tinh tren phan CHUA THANH TOAN TRUOC ---
+  // Phan mon khach da thanh toan truoc khi dat ban (tienDaCoc) da chot gia luc
+  // dat ban, khong tinh thue VAT hay lam tron chong len phan da tra do nua.
+  const phanChuaTraTruoc = Math.max(0, tamTinh - tienDaCoc);
+  const phiPhucVu = Math.round(phanChuaTraTruoc * Number(ch.phi_phuc_vu) / 100);
+  const thueVat = Math.round((phanChuaTraTruoc + phiPhucVu) * Number(ch.thue_vat) / 100);
+
+  const tongTruocLamTron = tamTinh + phiPhucVu + thueVat;
+  const tongCong = phanChuaTraTruoc > 0
+    ? tienDaCoc + lamTronLen(phanChuaTraTruoc + phiPhucVu + thueVat, Number(ch.lam_tron))
+    : tamTinh;
+  const tienLamTron = Math.max(0, tongCong - tongTruocLamTron);
 
   // Giam gia / diem cua phien DANG DUNG (chua ghi vao payments) tru them.
   const conPhaiTra = Math.max(0, tongCong - daThuTien - daGiamTruocDo - giamGia - tienTuDiem);
@@ -318,7 +330,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
       tien_lam_tron: tienLamTron,
       tong_cong: tongCong,
       da_thanh_toan: daThanhToan,
-      da_dat_coc: Number(daCoc.tong || 0),
+      da_dat_coc: tienDaCoc,
       da_giam_truoc_do: daGiamTruocDo,
       so_lan_da_tra: Number(daTra.so_lan || 0),
       con_phai_tra: conPhaiTra,
@@ -910,6 +922,10 @@ async function danhSachCanThanhToan() {
            MAX(b.number_ban) AS so_ban,
            (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
              WHERE p.sesis = h.sesis AND p.status = 'success') AS da_thanh_toan,
+           (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+             WHERE p.sesis = h.sesis AND p.status = 'success' AND p.loai = 'dat_coc') AS da_coc,
+           (SELECT COALESCE(r.deposit_amount, 0) FROM reservations r
+             WHERE r.reservation_code = h.sesis AND r.deposit_status = 'PAID' LIMIT 1) AS rsv_coc,
            (SELECT COALESCE(SUM(p.discount_amount), 0) FROM payments p
              WHERE p.sesis = h.sesis AND p.status = 'success' AND p.loai = 'thanh_toan') AS da_giam,
            (SELECT COALESCE(SUM(p.loyalty_points_used), 0) FROM payments p
@@ -926,30 +942,25 @@ async function danhSachCanThanhToan() {
     ORDER BY phien_dang_cho DESC, MAX(h.ngay_dat) DESC, MAX(h.gio_dat) DESC
     LIMIT 200
   `);
-  /*
-   * Phai ap DUNG cong thuc cua layHoaDon() o day, khong duoc rut gon thanh
-   * `tam_tinh - da_thanh_toan`.
-   *
-   * Ngay khi quan ly dat VAT hay phi phuc vu khac 0 trong /admin/thanh-toan,
-   * hai cho se lech nhau: the ban ngoai danh sach bao "con 425.000d" con man
-   * hinh tinh tien bao "con 467.500d". Thu ngan doc con so ngoai danh sach roi
-   * go dung so do vao o thu tien, he thong bao tra thieu - loi hien ra dung
-   * luc khach dang dung cho.
-   *
-   * Cong doan chi la so hoc tren cac tong da lay san, khong them truy van nao.
-   */
   const ch = await layCauHinh();
   return rows.map((r) => {
     const tamTinh = Number(r.tam_tinh) || 0;
-    const phiPhucVu = Math.round(tamTinh * Number(ch.phi_phuc_vu) / 100);
-    const thueVat = Math.round((tamTinh + phiPhucVu) * Number(ch.thue_vat) / 100);
-    const tongCong = lamTronLen(tamTinh + phiPhucVu + thueVat, Number(ch.lam_tron));
+    const tienDaCoc = Math.max(Number(r.da_coc || 0), Number(r.rsv_coc || 0));
+    const daTraThanhToan = Math.max(0, Number(r.da_thanh_toan || 0) - Number(r.da_coc || 0));
+    const daThuTien = daTraThanhToan + tienDaCoc;
+    const phanChuaTraTruoc = Math.max(0, tamTinh - tienDaCoc);
+    const phiPhucVu = Math.round(phanChuaTraTruoc * Number(ch.phi_phuc_vu) / 100);
+    const thueVat = Math.round((phanChuaTraTruoc + phiPhucVu) * Number(ch.thue_vat) / 100);
+    const tongCong = phanChuaTraTruoc > 0
+      ? tienDaCoc + lamTronLen(phanChuaTraTruoc + phiPhucVu + thueVat, Number(ch.lam_tron))
+      : tamTinh;
     const daGiam = Number(r.da_giam || 0) + Number(r.diem_da_dung || 0) * Number(ch.gia_tri_1_diem);
     return {
       ...r,
+      da_thanh_toan: daThuTien,
       ten_ban: r.ten_ban_qr || (r.so_ban ? 'Bàn ' + r.so_ban : null),
       tong_cong: tongCong,
-      con_phai_tra: Math.max(0, tongCong - Number(r.da_thanh_toan) - daGiam),
+      con_phai_tra: Math.max(0, tongCong - daThuTien - daGiam),
     };
   });
 }

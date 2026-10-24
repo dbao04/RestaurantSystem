@@ -72,13 +72,13 @@ def danh_sach_mo_hinh(nho: bool = False) -> dict:
         return {
             "Ridge": Pipeline([("chuan_hoa", StandardScaler()), ("mh", Ridge(alpha=1.0))]),
             "RandomForest": RandomForestRegressor(
-                n_estimators=200, max_depth=12, min_samples_leaf=2,
-                random_state=42, n_jobs=-1
+                n_estimators=30, max_depth=8, min_samples_leaf=2,
+                random_state=42, n_jobs=1
             ),
             "XGBoost": XGBRegressor(
-                n_estimators=300, max_depth=5, learning_rate=0.06,
+                n_estimators=50, max_depth=4, learning_rate=0.1,
                 subsample=0.9, colsample_bytree=0.9, random_state=42,
-                n_jobs=-1, verbosity=0,
+                n_jobs=1, verbosity=0,
             ),
         }
     return {

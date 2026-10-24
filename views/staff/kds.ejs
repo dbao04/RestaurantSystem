@@ -146,7 +146,47 @@
       border: 1px solid var(--vien);
       border-left: 4.5px solid var(--vien-dam);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      transition: all .2s ease;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, border-color .18s ease;
+      position: relative;
+    }
+    .the[draggable="true"] {
+      cursor: grab;
+      user-select: none;
+    }
+    .the[draggable="true"]:active {
+      cursor: grabbing;
+    }
+    .the.dang-keo {
+      opacity: 0.42;
+      transform: scale(0.97) rotate(-1deg);
+      border-color: var(--gold);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+    }
+    .the .grip-icon {
+      color: rgba(200, 162, 75, 0.45);
+      font-size: 13px;
+      margin-right: 6px;
+      transition: color .2s ease;
+    }
+    .the[draggable="true"]:hover .grip-icon {
+      color: var(--gold-light);
+    }
+    .cot {
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .cot.drag-over {
+      border-color: var(--gold-light) !important;
+      background: linear-gradient(180deg, #281a10 0%, #1a0f08 100%);
+      box-shadow: 0 0 0 2px rgba(223, 185, 98, 0.35), 0 12px 32px rgba(0, 0, 0, 0.55);
+    }
+    .cot.cho.drag-over  { border-color: var(--cho) !important; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 12px 32px rgba(0, 0, 0, 0.55); }
+    .cot.lam.drag-over  { border-color: var(--lam) !important; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 12px 32px rgba(0, 0, 0, 0.55); }
+    .cot.xong.drag-over { border-color: var(--xong) !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4), 0 12px 32px rgba(0, 0, 0, 0.55); }
+    .cot.pv.drag-over   { border-color: #a8a29e !important; box-shadow: 0 0 0 2px rgba(168, 162, 158, 0.4), 0 12px 32px rgba(0, 0, 0, 0.55); }
+    .goi-y-keo {
+      font-size: 12px; color: var(--gold-light); background: rgba(200, 162, 75, 0.12);
+      border: 1px dashed rgba(200, 162, 75, 0.35); padding: 5px 12px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
     }
     .the:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
     .the.cho  { border-left-color: var(--cho); }
@@ -222,6 +262,7 @@
       <div class="sub">
         <span class="cham" id="chamKN"></span><span id="ttKetNoi">Đang kết nối...</span>
         &nbsp;|&nbsp; <%= tenNguoiDung %><%= vaiTro ? ' (' + vaiTro + ')' : '' %>
+        &nbsp;&middot;&nbsp; <span class="goi-y-keo"><i class="fas fa-hand-pointer"></i> Kéo thả thẻ món sang cột kế tiếp hoặc bấm nút</span>
       </div>
     </div>
     <nav>
@@ -235,19 +276,19 @@
   <div class="chiso" id="chiSo"></div>
 
   <div class="bang">
-    <div class="cot cho">
+    <div class="cot cho" data-col="cho">
       <h2>1. Chờ chế biến <span class="dem" id="dCho">0</span></h2>
       <div id="colCho"></div>
     </div>
-    <div class="cot lam">
+    <div class="cot lam" data-col="lam">
       <h2>2. Đang chế biến <span class="dem" id="dLam">0</span></h2>
       <div id="colLam"></div>
     </div>
-    <div class="cot xong">
+    <div class="cot xong" data-col="xong">
       <h2>3. Hoàn thành <span class="dem" id="dXong">0</span></h2>
       <div id="colXong"></div>
     </div>
-    <div class="cot pv">
+    <div class="cot pv" data-col="pv">
       <h2>4. Đã phục vụ <span class="dem" id="dPv">0</span></h2>
       <div id="colPv"></div>
     </div>
@@ -295,9 +336,9 @@ function veThe(m, loai) {
     : '';
 
   return `
-    <div class="the ${tre ? 'tre' : loai}">
+    <div class="the ${tre ? 'tre' : loai}" draggable="true" data-id="${m.id}" data-loai="${loai}" title="Kéo thả sang cột khác để chuyển trạng thái">
       <div class="dong1">
-        <div class="ten">${String(m.name_mon).trim()}</div>
+        <div class="ten"><i class="fas fa-grip-vertical grip-icon"></i>${String(m.name_mon).trim()}</div>
         <div class="sl">x${m.soluong}</div>
       </div>
       ${ghiChu}
@@ -354,9 +395,11 @@ async function tai() {
 }
 
 async function doi(id, buoc, nut) {
-  nut.disabled = true;
-  const cu = nut.textContent;
-  nut.textContent = 'Đang xử lý...';
+  if (nut) {
+    nut.disabled = true;
+    nut._cu = nut.textContent;
+    nut.textContent = 'Đang xử lý...';
+  }
   try {
     const r = await fetch(`/kds/api/${buoc}/${id}`, { method: 'POST' });
     const kq = await r.json();
@@ -365,10 +408,119 @@ async function doi(id, buoc, nut) {
     await tai();
   } catch (e) {
     alert('Không đổi được trạng thái: ' + e.message);
-    nut.disabled = false;
-    nut.textContent = cu;
+    if (nut) {
+      nut.disabled = false;
+      nut.textContent = nut._cu || 'Thử lại';
+    }
+    await tai();
   }
 }
+
+// --- Kéo thả (Drag & Drop) Kanban giữa 4 cột ---
+let theDangKeo = null;
+
+document.addEventListener('dragstart', (e) => {
+  const the = e.target.closest('.the[draggable="true"]');
+  if (!the) return;
+  theDangKeo = {
+    id: Number(the.dataset.id),
+    tuCot: the.dataset.loai,
+    el: the,
+  };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(the.dataset.id));
+  setTimeout(() => the.classList.add('dang-keo'), 0);
+});
+
+document.addEventListener('dragend', () => {
+  if (theDangKeo && theDangKeo.el) {
+    theDangKeo.el.classList.remove('dang-keo');
+  }
+  document.querySelectorAll('.cot.drag-over').forEach(c => c.classList.remove('drag-over'));
+  theDangKeo = null;
+});
+
+document.querySelectorAll('.cot[data-col]').forEach((cot) => {
+  cot.addEventListener('dragover', (e) => {
+    if (!theDangKeo) return;
+    const denCot = cot.dataset.col;
+    if (denCot === theDangKeo.tuCot) return;
+    // Cho phép kéo tiến (cho -> lam -> xong -> pv) hoặc kéo lùi (lam -> cho)
+    const hopLe =
+      (theDangKeo.tuCot === 'cho' && ['lam', 'xong', 'pv'].includes(denCot)) ||
+      (theDangKeo.tuCot === 'lam' && ['cho', 'xong', 'pv'].includes(denCot)) ||
+      (theDangKeo.tuCot === 'xong' && denCot === 'pv');
+    if (!hopLe) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    cot.classList.add('drag-over');
+  });
+
+  cot.addEventListener('dragleave', (e) => {
+    if (!cot.contains(e.relatedTarget)) {
+      cot.classList.remove('drag-over');
+    }
+  });
+
+  cot.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    cot.classList.remove('drag-over');
+    if (!theDangKeo) return;
+
+    const { id, tuCot, el } = theDangKeo;
+    const denCot = cot.dataset.col;
+    theDangKeo = null;
+    if (!id || tuCot === denCot) return;
+
+    // Xác định danh sách bước API cần gọi để đảm bảo đúng quy trình & trừ kho FIFO
+    let cacBuoc = [];
+    if (tuCot === 'cho' && denCot === 'lam') cacBuoc = ['bat-dau'];
+    else if (tuCot === 'cho' && denCot === 'xong') cacBuoc = ['hoan-thanh'];
+    else if (tuCot === 'cho' && denCot === 'pv') cacBuoc = ['hoan-thanh', 'da-phuc-vu'];
+    else if (tuCot === 'lam' && denCot === 'cho') cacBuoc = ['tra-lai-cho'];
+    else if (tuCot === 'lam' && denCot === 'xong') cacBuoc = ['hoan-thanh'];
+    else if (tuCot === 'lam' && denCot === 'pv') cacBuoc = ['hoan-thanh', 'da-phuc-vu'];
+    else if (tuCot === 'xong' && denCot === 'pv') cacBuoc = ['da-phuc-vu'];
+
+    if (!cacBuoc.length) return;
+
+    // Di chuyển thẻ ngay lập tức trên giao diện (Optimistic UI) để cảm giác kéo thả mượt
+    const khungDich = cot.querySelector('div[id^="col"]');
+    if (khungDich && el) {
+      const rong = khungDich.querySelector('.rong');
+      if (rong) rong.remove();
+      el.classList.remove('dang-keo', 'cho', 'lam', 'xong');
+      el.classList.add(denCot);
+      const nut = el.querySelector('button');
+      if (nut) {
+        nut.disabled = true;
+        nut.textContent = 'Đang cập nhật...';
+      }
+      khungDich.prepend(el);
+    }
+
+    try {
+      for (const b of cacBuoc) {
+        const r = await fetch(`/kds/api/${b}/${id}`, { method: 'POST' });
+        const kq = await r.json();
+        if (!r.ok) throw new Error(kq.loi || 'Lỗi chuyển trạng thái');
+      }
+      if (cacBuoc.includes('hoan-thanh')) {
+        baoNho('Đã hoàn thành món & tự động trừ kho theo công thức');
+      } else if (denCot === 'lam') {
+        baoNho('Đã bắt đầu chế biến món');
+      } else if (denCot === 'pv') {
+        baoNho('Đã đánh dấu phục vụ món');
+      } else if (denCot === 'cho') {
+        baoNho('Đã chuyển món về lại hàng chờ');
+      }
+    } catch (err) {
+      alert('Không chuyển được trạng thái: ' + err.message);
+    } finally {
+      await tai();
+    }
+  });
+});
 
 // --- Realtime qua Socket.IO ---
 const socket = io();

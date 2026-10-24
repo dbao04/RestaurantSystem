@@ -9,7 +9,7 @@
 const db = require('../config/db');
 
 const MAC_DINH_URL = 'http://127.0.0.1:8000';
-const TIMEOUT_MS = 120000; // huan luyen lai co the mat vai chuc giay
+const TIMEOUT_MS = 300000; // huan luyen lai 116 nguyen lieu co the mat vai chuc giay
 
 let urlCache = null;
 let urlCacheLuc = 0;
