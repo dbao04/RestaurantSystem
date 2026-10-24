@@ -114,10 +114,16 @@ module.exports = function (io) {
     return res.redirect('/login');
   }
 
-  /** Phat su kien cho ca hai phong lien quan den mot hoa don. */
+  /** Phat su kien cho ca hai phong lien quan den mot hoa don, dong thoi dong bo thoi gian thuc toi so do ban va quan ly don. */
   function phat(sesis, suKien, duLieu) {
     io.to('thanh_toan').emit(suKien, duLieu);
     io.to('tt:' + sesis).emit(suKien, duLieu);
+    if (suKien === 'tt:da-thanh-toan') {
+      io.to('staff_room').emit('ban-cap-nhat');
+      io.to('staff_room').emit('so-do-thay-doi');
+      io.to('staff_room').emit('booking-updated', { sesis, action: 'paid' });
+      io.to('kitchen_room').emit('ban-cap-nhat');
+    }
   }
 
   /* ======================================================================== */

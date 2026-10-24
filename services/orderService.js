@@ -185,7 +185,21 @@ const orderService = {
     return rows[0].count > 0;
   },
 
-  getAllBookings: async () => {
+  getBookingStats: async () => {
+    const [stats] = await db.query(`
+      SELECT 
+        COUNT(DISTINCT sesis) as tong_don,
+        COUNT(DISTINCT CASE WHEN tinhtrang IN (5, 6) THEN sesis END) as dang_phuc_vu,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 1 THEN sesis END) as da_xac_nhan,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 0 THEN sesis END) as cho_xac_nhan,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 3 THEN sesis END) as da_thanh_toan
+      FROM hopdong
+    `);
+    return stats[0] || { tong_don: 0, dang_phuc_vu: 0, da_xac_nhan: 0, cho_xac_nhan: 0, da_thanh_toan: 0 };
+  },
+
+  getAllBookings: async (limit = 150) => {
+    const safeLimit = Math.max(10, Math.min(parseInt(limit) || 150, 500));
     const [rows] = await db.query(`
       SELECT 
         h.sesis, 
@@ -205,9 +219,11 @@ const orderService = {
       INNER JOIN khach_hang k ON h.id_user = k.id
       LEFT JOIN ban b ON h.id_ban = b.Id_ban
       LEFT JOIN qr_tables q ON h.sesis = q.active_sesis
+      WHERE h.tinhtrang IN (0, 1, 5, 6) OR h.id >= (SELECT MAX(id) - 4000 FROM hopdong)
       GROUP BY h.sesis
-      ORDER BY max_id DESC
-    `);
+      ORDER BY (CASE WHEN MAX(h.tinhtrang) IN (0, 1, 5, 6) THEN 0 ELSE 1 END), max_id DESC
+      LIMIT ?
+    `, [safeLimit]);
     return rows;
   },
 

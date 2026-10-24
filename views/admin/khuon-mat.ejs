@@ -375,7 +375,7 @@
         '<td><div class="qt-strong">' + E(n.ten) + '</div><div class="qt-sub">' + E(n.ma_nv || '') + '</div></td>' +
         '<td>' + (n.ten_bp ? '<span class="qt-pill qt-pill--muted">' + E(n.ten_cd || '') + '</span>' : '<span class="qt-sub">—</span>') + '</td>' +
         '<td class="qt-center">' + (co ? '<span class="qt-pill qt-pill--info">' + n.so_mau + ' mẫu</span>' : '<span class="qt-pill qt-pill--muted">chưa có</span>') + '</td>' +
-        '<td class="qt-sub">' + ngay(n.lan_dang_ky_cuoi) + '</td>' +
+        '<td><span class="qt-sub">' + ngay(n.lan_dang_ky_cuoi) + '</span></td>' +
         (coTheSua ? '<td class="qt-right">' + (co ? '<button class="qt-btn qt-btn--danger qt-btn--sm xoa" data-id="' + n.id_nv + '" data-ten="' + E(n.ten) + '"><i class="fas fa-trash"></i> Xóa</button>' : '') + '</td>' : '') +
       '</tr>';
     }).join('') || '<tr><td colspan="5" class="qt-center" style="padding: 2rem; color: var(--qt-muted);">Không có nhân viên nào phù hợp.</td></tr>';
@@ -396,7 +396,7 @@
       var kq = KQ[j.ket_qua] || ['qt-pill--muted', j.ket_qua];
       var ten = j.ten_nhan_dien || j.ten_ky_vong || '—';
       return '<tr>' +
-        '<td class="qt-sub" style="white-space: nowrap;">' + ngay(j.thoi_diem) + '</td>' +
+        '<td><span class="qt-sub" style="white-space: nowrap;">' + ngay(j.thoi_diem) + '</span></td>' +
         '<td><span class="qt-pill qt-pill--muted">' + (CHE_DO[j.che_do] || j.che_do) + '</span></td>' +
         '<td class="qt-strong">' + E(ten) + '</td>' +
         '<td class="qt-center qt-money">' + (j.do_tuong_dong != null ? (j.do_tuong_dong * 100).toFixed(0) + '%' : '—') + '</td>' +

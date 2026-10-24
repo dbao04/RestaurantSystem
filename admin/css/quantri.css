@@ -314,6 +314,7 @@ table.qt-table tbody tr:last-child td { border-bottom: 0; }
 table.qt-table .qt-num { font-variant-numeric: tabular-nums; }
 table.qt-table .qt-strong { font-weight: 600; }
 table.qt-table .qt-sub { display: block; font-size: .74rem; color: var(--qt-muted); }
+table.qt-table td.qt-sub, table.qt-table th.qt-sub { display: table-cell; }
 table.qt-table .qt-center { text-align: center; }
 table.qt-table .qt-right { text-align: right; }
 .qt-money { font-weight: 600; color: #8a6a1f; font-variant-numeric: tabular-nums; white-space: nowrap; }

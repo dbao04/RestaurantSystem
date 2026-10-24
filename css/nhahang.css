@@ -92,7 +92,7 @@ body::-webkit-scrollbar {
    THANH ĐIỀU HƯỚNG (HEADER NAVBAR)
    ========================================================================= */
 .nh-nav { 
-  position: fixed; inset: 0 0 auto 0; z-index: 1000; padding: 1.2rem 0;
+  position: fixed; inset: 0 0 auto 0; z-index: 1000; padding: 0.85rem 0;
   transition: all .35s var(--nh-ease); 
 }
 .nh-nav:not(.is-solid) {
@@ -101,7 +101,7 @@ body::-webkit-scrollbar {
 .nh-nav.is-solid { 
   background: rgba(22, 13, 8, 0.94); 
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  padding: .7rem 0; 
+  padding: .5rem 0; 
   box-shadow: 0 10px 32px -10px rgba(0, 0, 0, 0.7);
   border-bottom: 1px solid rgba(200, 162, 75, 0.2);
 }
@@ -109,36 +109,36 @@ body::-webkit-scrollbar {
 .nh-nav .nh-container { 
   width: 100%; 
   max-width: 100%;
-  padding-inline: clamp(0.75rem, 1.8vw, 2.5rem);
+  padding-inline: clamp(0.75rem, 1.25vw, 1.8rem);
+  box-sizing: border-box;
 }
 .nh-nav__inner { 
-  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; position: relative; flex-wrap: nowrap; width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; position: relative; flex-wrap: nowrap; width: 100%; max-width: 100%; box-sizing: border-box; overflow: visible;
 }
 
 /* Brand Logo */
 .nh-brand { 
-  display: flex; align-items: center; gap: .6rem; color: #fff; flex-shrink: 0; text-decoration: none; 
+  display: flex; align-items: center; gap: .5rem; color: #fff; flex-shrink: 0; text-decoration: none; 
   transition: transform .25s var(--nh-ease);
 }
 .nh-brand:hover { transform: scale(1.02); }
 .nh-brand img { 
-  height: 38px; width: auto; flex-shrink: 0; 
+  height: 36px; width: auto; flex-shrink: 0; 
   filter: drop-shadow(0 2px 8px rgba(200, 162, 75, 0.5));
 }
 .nh-brand__name { 
-  font-family: var(--nh-brand-font); font-weight: 700; font-size: 1.85rem; line-height: 1;
+  font-family: var(--nh-brand-font); font-weight: 700; font-size: clamp(1.45rem, 1.6vw, 1.75rem); line-height: 1;
   color: var(--nh-gold-soft); white-space: nowrap; 
   text-shadow: 0 2px 10px rgba(0,0,0,0.6);
   letter-spacing: .3px;
 }
-.nh-nav.is-solid .nh-brand__name { font-size: 1.7rem; }
+.nh-nav.is-solid .nh-brand__name { font-size: clamp(1.35rem, 1.5vw, 1.6rem); }
 
 /* Menu Links */
 .nh-nav__links { 
-  display: flex; align-items: center; gap: .15rem; list-style: none; padding: 0; margin: 0;
-  flex-wrap: nowrap;
+  display: flex; align-items: center; gap: 2px; list-style: none; padding: 2px 5px; margin: 0;
+  flex-wrap: nowrap; flex-shrink: 1; min-width: 0;
   background: rgba(255, 255, 255, 0.05);
-  padding: .25rem .45rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
@@ -148,13 +148,13 @@ body::-webkit-scrollbar {
 .nh-nav__links a { 
   font-family: 'Plus Jakarta Sans', 'Montserrat', var(--nh-sans);
   color: rgba(255, 248, 235, 0.9); 
-  font-weight: 600; font-size: .83rem; 
-  padding: .38rem .65rem; 
+  font-weight: 600; font-size: clamp(0.74rem, 0.78vw, 0.81rem); 
+  padding: .32rem .52rem; 
   border-radius: 999px;
   white-space: nowrap; 
   text-decoration: none;
   transition: all .25s var(--nh-ease);
-  letter-spacing: .1px;
+  letter-spacing: 0;
 }
 .nh-nav__links a:hover { 
   color: #fff; 
@@ -170,24 +170,25 @@ body::-webkit-scrollbar {
 
 /* Actions Right */
 .nh-nav__actions { 
-  display: flex; align-items: center; gap: .35rem; flex-shrink: 0; 
+  display: flex; align-items: center; gap: .3rem; flex-shrink: 0; margin-left: auto;
 }
 
 /* Nav Action Buttons (Giao hàng & Đặt bàn) */
 .nh-nav-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: .45rem;
-  padding: .46rem .95rem;
+  gap: .35rem;
+  padding: .38rem .76rem;
   border-radius: 999px;
   font-family: var(--nh-sans);
-  font-size: .84rem;
+  font-size: .78rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
   transition: all .25s var(--nh-ease);
   letter-spacing: .2px;
   box-shadow: none;
+  flex-shrink: 0;
 }
 .nh-nav-action-btn--delivery {
   background: rgba(200, 162, 75, 0.14);
@@ -258,15 +259,16 @@ body::-webkit-scrollbar {
 /* Cart Icon */
 .nh-cart { 
   position: relative; 
-  width: 42px; height: 42px; 
+  width: 38px; height: 38px; 
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff; 
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.05rem; 
+  font-size: .95rem; 
   transition: all .25s var(--nh-ease);
   text-decoration: none;
+  flex-shrink: 0;
 }
 .nh-cart:hover {
   background: rgba(200, 162, 75, 0.2);
@@ -285,48 +287,50 @@ body::-webkit-scrollbar {
 
 /* User Pill */
 .nh-user { 
-  display: inline-flex; align-items: center; gap: .6rem; 
+  display: inline-flex; align-items: center; gap: .45rem; 
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: .32rem .9rem .32rem .35rem;
+  padding: .26rem .7rem .26rem .28rem;
   border-radius: 999px;
   color: #fff; 
-  font-size: .92rem; font-weight: 600;
+  font-size: .84rem; font-weight: 600;
   text-decoration: none;
   transition: all .25s var(--nh-ease);
+  flex-shrink: 0;
 }
 .nh-user:hover {
   background: rgba(200, 162, 75, 0.15);
   border-color: var(--nh-gold);
 }
 .nh-user__avatar { 
-  width: 34px; height: 34px; border-radius: 50%; 
+  width: 30px; height: 30px; border-radius: 50%; 
   background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-soft)); 
   color: var(--nh-espresso);
   display: flex; align-items: center; justify-content: center; 
-  font-weight: 800; font-family: var(--nh-sans); font-size: .95rem;
+  font-weight: 800; font-family: var(--nh-sans); font-size: .88rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .nh-user__name {
   color: var(--nh-gold-soft);
-  max-width: 110px;
+  max-width: 85px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* Language selector */
-.nh-lang { position: relative; }
+.nh-lang { position: relative; flex-shrink: 0; }
 .nh-lang__nut {
-  display: inline-flex; align-items: center; gap: .45rem;
+  display: inline-flex; align-items: center; gap: .35rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--nh-gold-soft);
-  padding: .5rem .9rem;
+  padding: .4rem .75rem;
   border-radius: 999px;
-  font-size: .85rem; font-weight: 700;
+  font-size: .78rem; font-weight: 700;
   cursor: pointer;
   transition: all .25s var(--nh-ease);
+  flex-shrink: 0;
 }
 .nh-lang__nut:hover {
   border-color: var(--nh-gold);
@@ -357,15 +361,16 @@ body::-webkit-scrollbar {
 
 /* Circular Icon Button (Login, Logout) */
 .nh-icon-btn {
-  width: 40px; height: 40px;
+  width: 38px; height: 38px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.85);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1rem;
+  font-size: .95rem;
   transition: all .25s var(--nh-ease);
   text-decoration: none;
+  flex-shrink: 0;
 }
 .nh-icon-btn:hover {
   background: rgba(200, 162, 75, 0.2);
@@ -374,16 +379,28 @@ body::-webkit-scrollbar {
   transform: translateY(-2px);
 }
 
-.nh-burger { display: none; background: none; border: 0; color: #fff; font-size: 1.5rem; cursor: pointer; margin-left: auto; }
+.nh-burger { 
+  display: none; background: none; border: 0; color: #fff; font-size: 1.35rem; cursor: pointer; margin-left: .4rem; flex-shrink: 0;
+  width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 8px;
+}
 
 /* Responsive adjustments */
-@media (max-width: 1480px) {
-  .nh-nav__inner { gap: 1rem; }
-  .nh-nav__links a { font-size: .86rem; padding: .45rem .85rem; }
-  .nh-brand__name { font-size: 1.8rem; }
+@media (max-width: 1560px) {
+  .nh-nav-action-btn span { display: none; }
+  .nh-nav-action-btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
+  .nh-nav-action-btn i { font-size: 0.95rem; }
+  .nh-nav__links a { font-size: 0.74rem; padding: 0.28rem 0.44rem; }
 }
-@media (max-width: 1280px) {
-  .nh-burger { display: block; }
+@media (max-width: 1400px) {
+  .nh-nav .nh-container { padding-inline: 0.75rem; }
+  .nh-nav__inner { gap: 0.35rem; }
+  .nh-lang__nut span { display: none; }
+  .nh-lang__nut { padding: 5px 8px; }
+  .nh-nav__links a { font-size: 0.72rem; padding: 0.25rem 0.4rem; }
+  .nh-brand__name { font-size: 1.45rem; }
+}
+@media (max-width: 1260px) {
+  .nh-burger { display: flex; }
   .nh-nav__links { 
     position: fixed; inset: 0 0 0 auto; width: min(320px, 85%); 
     flex-direction: column; align-items: flex-start;
@@ -398,7 +415,7 @@ body::-webkit-scrollbar {
   .nh-nav__inner > .nh-nav__actions { margin-left: auto; }
 }
 @media (max-width: 760px) {
-  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.45rem; }
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.35rem; }
 }
 
 /* =========================================================================
@@ -411,49 +428,51 @@ body::-webkit-scrollbar {
 .nh-hero .nh-container {
   width: 100%;
   max-width: 100%;
-  padding-inline: clamp(1.5rem, 3.5vw, 3.5rem);
+  padding-inline: clamp(1.2rem, 3vw, 3.5rem);
 }
 .nh-hero__inner { 
   position: relative; 
   z-index: 2; 
-  padding-top: 50px; 
-  max-width: min(980px, 58vw); 
+  padding-top: clamp(35px, 6vh, 60px);
+  padding-bottom: clamp(35px, 6vh, 70px);
+  max-width: min(920px, 57vw); 
   margin: 0;
 }
 .nh-hero .nh-eyebrow { 
   color: var(--nh-gold-soft); 
-  font-size: clamp(2.8rem, 4.5vw, 4.2rem); 
-  margin-bottom: 0.8rem;
+  font-size: clamp(2rem, 3.2vw, 3.6rem); 
+  margin-bottom: 0.5rem;
   text-shadow: 0 3px 18px rgba(0,0,0,0.6);
   letter-spacing: 1px;
 }
 .nh-hero h1 { 
   color: #fff; 
-  font-size: clamp(3.8rem, 5.6vw, 5.8rem); 
-  line-height: 1.12; 
-  margin: .4rem 0 1.8rem; 
+  font-size: clamp(2.6rem, 4vw, 4.5rem); 
+  line-height: 1.15; 
+  margin: .3rem 0 1.1rem; 
   letter-spacing: -.5px; 
   white-space: nowrap;
   text-shadow: 0 6px 28px rgba(0,0,0,0.7);
 }
 .nh-hero h1 span { color: var(--nh-gold); font-style: italic; }
 .nh-hero p { 
-  font-size: 1.35rem; 
+  font-size: clamp(1rem, 1.15vw, 1.22rem); 
   color: rgba(255, 255, 255, .96); 
-  max-width: 820px; 
-  margin-bottom: 2.8rem; 
-  line-height: 1.88; 
+  max-width: 680px; 
+  margin-bottom: 1.8rem; 
+  line-height: 1.7; 
   text-shadow: 0 3px 16px rgba(0,0,0,.7); 
 }
-.nh-hero__actions { display: flex; flex-wrap: wrap; gap: 1.6rem; }
+.nh-hero__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; }
 .nh-hero__actions .nh-btn { 
-  padding: 1.15rem 2.8rem; 
-  font-size: 1.05rem; 
-  letter-spacing: 1.8px;
-  box-shadow: 0 14px 32px -8px rgba(0,0,0,0.7);
+  padding: 0.85rem 1.65rem; 
+  font-size: 0.92rem; 
+  letter-spacing: 0.8px;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px -6px rgba(0,0,0,0.7);
 }
-.nh-hero__scroll { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 2; color: rgba(255,255,255,.7); font-size: .75rem; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
-.nh-hero__scroll span { display: block; width: 1px; height: 42px; background: linear-gradient(rgba(255,255,255,.7), transparent); margin: 8px auto 0; animation: nh-line 2s infinite; }
+.nh-hero__scroll { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 2; color: rgba(255,255,255,.7); font-size: .72rem; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+.nh-hero__scroll span { display: block; width: 1px; height: 32px; background: linear-gradient(rgba(255,255,255,.7), transparent); margin: 6px auto 0; animation: nh-line 2s infinite; }
 @keyframes nh-line { 0%,100%{opacity:.3} 50%{opacity:1} }
 
 /* -------- Trang trong: hero nhỏ (menu, about...) -------- */
@@ -1212,8 +1231,8 @@ body::-webkit-scrollbar {
 
 /* --- Khối 4 món ăn nổi trong Hero (Showcase & Carousel) ------------------ */
 .nh-hero__showcase {
-  position: absolute; right: 4%; top: 50%; transform: translateY(-46%); z-index: 1;
-  width: min(48vw, 680px); height: min(48vw, 680px);
+  position: absolute; right: 4%; top: 50%; transform: translateY(-48%); z-index: 1;
+  width: min(43vw, 65vh, 560px); height: min(43vw, 65vh, 560px);
   pointer-events: auto;
 }
 @media (max-width: 1000px) { .nh-hero__showcase { display: none; } }
@@ -1238,20 +1257,20 @@ body::-webkit-scrollbar {
 }
 
 .nh-hero__dish-tag {
-  position: absolute; top: 20px; right: 26px;
+  position: absolute; top: 16px; right: 20px;
   background: linear-gradient(135deg, rgba(35, 20, 14, 0.94), rgba(20, 12, 8, 0.98));
   border: 2px solid var(--nh-gold);
   backdrop-filter: blur(12px);
-  padding: 0.65rem 1.45rem;
+  padding: 0.5rem 1.15rem;
   border-radius: 999px;
-  display: inline-flex; align-items: center; gap: 0.6rem;
+  display: inline-flex; align-items: center; gap: 0.5rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 22px rgba(200, 162, 75, 0.4);
   white-space: nowrap; pointer-events: none;
   z-index: 5;
 }
 .nh-hero__dish-price { 
   font-family: var(--nh-sans); 
-  font-size: 1.35rem; 
+  font-size: 1.18rem; 
   font-weight: 800; 
   color: var(--nh-gold); 
   letter-spacing: .5px;
@@ -1264,20 +1283,20 @@ body::-webkit-scrollbar {
   right: auto; 
   bottom: 0px;
   transform: translateX(-50%);
-  display: flex; flex-direction: row; gap: 0.85rem;
+  display: flex; flex-direction: row; gap: 0.65rem;
   z-index: 10;
-  background: rgba(24, 14, 9, 0.8);
-  padding: 9px 16px;
-  border-radius: 22px;
+  background: rgba(24, 14, 9, 0.85);
+  padding: 7px 13px;
+  border-radius: 18px;
   border: 1px solid rgba(200, 162, 75, 0.38);
   backdrop-filter: blur(12px);
   box-shadow: 0 14px 34px rgba(0,0,0,0.6);
 }
 .nh-hero__thumb-btn {
-  width: 56px; height: 56px; border-radius: 13px;
+  width: 48px; height: 48px; border-radius: 11px;
   background: rgba(43, 26, 18, 0.9);
   border: 2px solid rgba(200, 162, 75, 0.25);
-  padding: 3px; cursor: pointer;
+  padding: 2.5px; cursor: pointer;
   position: relative; overflow: hidden;
   transition: all 0.25s var(--nh-ease);
 }
@@ -1524,7 +1543,7 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
    của nó chứ không phải nét vẽ chưa xong. */
 .nh-hero__enso {
   position: absolute; right: 3.5%; top: 50%; z-index: 0; pointer-events: none;
-  width: min(52vw, 720px); aspect-ratio: 1;
+  width: min(48vw, 70vh, 640px); aspect-ratio: 1;
   transform: translate(6%, -46%) rotate(-18deg);
   opacity: .42;
 }
@@ -1534,7 +1553,7 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
 .nh-hero__mon::before { content: none; }
 .nh-hero__quang {
   position: absolute; right: 3.5%; top: 50%; z-index: 0; pointer-events: none;
-  width: min(46vw, 620px); aspect-ratio: 1;
+  width: min(43vw, 64vh, 560px); aspect-ratio: 1;
   transform: translate(8%, -44%);
   background: radial-gradient(circle, rgba(200, 162, 75, .28) 0%, rgba(200, 162, 75, .10) 44%, transparent 70%);
   filter: blur(16px);
@@ -1641,13 +1660,11 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
      2. Man hinh qua thap thi AN han dai di - do la mot goi y trang tri, va
         tren man hinh thap nguoi dung dang nhien phai cuon, khong can nhac.
    ========================================================================== */
-.nh-hero__inner { padding-bottom: 96px; }
+.nh-hero__inner { padding-bottom: clamp(30px, 5vh, 60px); }
 
-/* Nguong 740 chu khong phai 700: do o cua so cao 710px thi khoang ho chi con
-   15px - khong de len nhau nhung nhin da thay chat. */
-@media (max-height: 740px) {
+@media (max-height: 580px) {
   .nh-hero__scroll { display: none; }
-  .nh-hero__inner { padding-bottom: 24px; }
+  .nh-hero__inner { padding-bottom: 20px; }
 }
 
 /* ==========================================================================
@@ -1783,8 +1800,8 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
    NÚT CHUYỂN ĐỔI CHẾ ĐỘ SÁNG / TỐI (DARK / LIGHT THEME TOGGLE)
    ========================================================================= */
 .nh-theme-btn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -1792,11 +1809,12 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s var(--nh-ease);
   position: relative;
   outline: none;
+  flex-shrink: 0;
 }
 .nh-theme-btn:hover {
   background: rgba(200, 162, 75, 0.2);

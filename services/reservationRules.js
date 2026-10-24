@@ -467,10 +467,82 @@ async function kiemTraGioMoCua(khung, chiNhanhId = null) {
 // -------------------------------------------------------------- tien coc
 
 function laGioCaoDiem(gio, ch) {
-  const m = String(ch.peak_hours || '').match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
-  if (!m) return false;
+  if (!ch || !ch.peak_hours) return false;
   const p = phutTuChuoi(gio);
-  return p >= phutTuChuoi(m[1]) && p < phutTuChuoi(m[2]);
+  const dsDoan = String(ch.peak_hours).split(/[,;]/);
+  for (const doan of dsDoan) {
+    const m = doan.trim().match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+    if (m) {
+      const batDau = phutTuChuoi(m[1]);
+      const ketThuc = phutTuChuoi(m[2]);
+      if (ketThuc >= batDau) {
+        if (p >= batDau && p < ketThuc) return true;
+      } else {
+        if (p >= batDau || p < ketThuc) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Xác định số chỗ ngồi chuẩn tối đa của một bàn / tổ hợp bàn cho đoàn khách
+ * trong giờ cao điểm hoặc giờ bình thường.
+ *
+ * @param {number} soKhach Số lượng khách đặt bàn
+ * @param {boolean} laCaoDiem Có phải khung giờ cao điểm không
+ * @returns {number} Số chỗ ngồi tối đa được phép ngồi
+ */
+function soChoChuan(soKhach, laCaoDiem = false) {
+  const k = Math.max(1, Number(soKhach) || 1);
+  if (laCaoDiem) {
+    // Giờ cao điểm: Phải ngồi đúng số chỗ ngồi của bàn (không lãng phí ghế)
+    if (k <= 2) return 2;
+    if (k <= 4) return 4;
+    if (k <= 6) return 6;
+    if (k <= 8) return 8;
+    if (k <= 10) return 10;
+    if (k <= 12) return 12;
+    return Math.ceil(k / 2) * 2;
+  }
+  // Giờ bình thường: 2 người ngồi bàn 4 vẫn được
+  if (k <= 2) return 4;
+  if (k <= 4) return 6;
+  if (k <= 6) return 8;
+  if (k <= 8) return 10;
+  if (k <= 10) return 12;
+  return k + 4;
+}
+
+/**
+ * Kiểm tra xem sức chứa bàn có hợp lệ với số khách trong khung giờ hay không.
+ */
+function kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem = false) {
+  const k = Math.max(1, Number(soKhach) || 1);
+  const c = Number(tongCho) || 0;
+
+  if (c < k) {
+    return {
+      hopLe: false,
+      lyDo: `Bàn đã chọn có ${c} chỗ, không đủ cho ${k} khách.`
+    };
+  }
+
+  const toiDa = soChoChuan(k, laCaoDiem);
+  if (c > toiDa) {
+    if (laCaoDiem) {
+      return {
+        hopLe: false,
+        lyDo: `Trong khung giờ cao điểm, đoàn ${k} khách chỉ được chọn bàn đúng ${toiDa} chỗ để đảm bảo phục vụ tối đa lượt khách (bàn đã chọn có ${c} chỗ, thừa ${c - k} ghế).`
+      };
+    }
+    return {
+      hopLe: false,
+      lyDo: `Bàn đã chọn có ${c} chỗ là quá lớn so với đoàn ${k} khách (tối đa bàn ${toiDa} chỗ).`
+    };
+  }
+
+  return { hopLe: true, lyDo: null };
 }
 
 /**
@@ -670,6 +742,8 @@ module.exports = {
   kiemTraGioMoCua,
 
   laGioCaoDiem,
+  soChoChuan,
+  kiemTraSucChuaHopLe,
   tinhTienCoc,
   tinhHoanTien,
   hoanTienKhiNoShow,

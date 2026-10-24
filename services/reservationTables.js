@@ -279,6 +279,7 @@ function chamDiem(dsBan, soKhach, { soThich = [], laVip = false, chungKhu = true
  */
 function timToHop(dsBan, soKhach, {
   choGhep = true, toiDaBan = 4, chungKhuThoi = true, soThich = [], laVip = false, toiDaKetQua = 6,
+  laCaoDiem = false,
 } = {}) {
   const ungVien = [...dsBan].sort((a, b) => b.so_cho - a.so_cho || a.ten.localeCompare(b.ten));
   const ketQua = [];
@@ -297,6 +298,8 @@ function timToHop(dsBan, soKhach, {
     if (soNut > 40000) return;
     if (tongCho >= soKhach) {
       if (!chungNhom(daChon)) return;
+      const ktr = qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem);
+      if (!ktr.hopLe) return;
       const chungKhu = daChon.every((b) => b.khu_vuc_id === daChon[0].khu_vuc_id);
       ketQua.push({
         ban: [...daChon],
@@ -319,15 +322,18 @@ function timToHop(dsBan, soKhach, {
       if (daChon.length === 0 && !choGhep) {
         // Khong cho ghep: chi xet phuong an mot ban.
         if (ban.so_cho >= soKhach) {
-          ketQua.push({
-            ban: [ban],
-            tong_cho: ban.so_cho,
-            so_ban: 1,
-            ghe_thua: ban.so_cho - soKhach,
-            chung_khu: true,
-            khu_vuc: ban.khu_vuc,
-            diem: chamDiem([ban], soKhach, { soThich, laVip, chungKhu: true }),
-          });
+          const ktr = qt.kiemTraSucChuaHopLe(ban.so_cho, soKhach, laCaoDiem);
+          if (ktr.hopLe) {
+            ketQua.push({
+              ban: [ban],
+              tong_cho: ban.so_cho,
+              so_ban: 1,
+              ghe_thua: ban.so_cho - soKhach,
+              chung_khu: true,
+              khu_vuc: ban.khu_vuc,
+              diem: chamDiem([ban], soKhach, { soThich, laVip, chungKhu: true }),
+            });
+          }
         }
         continue;
       }
@@ -359,9 +365,11 @@ function timToHop(dsBan, soKhach, {
  */
 async function goiYXepBan(khung, {
   soKhach, areaId = null, dsThe = [], loaiKhach = 'REGULAR', boQuaId = null,
-  banChiDinh = null, client = db,
+  banChiDinh = null, client = db, laCaoDiem: optCaoDiem = undefined,
 } = {}) {
   const ch = await qt.docCauHinh();
+  const gioCheck = khung.gio || (khung.batDau ? qt.gioNgan(khung.batDau) : '19:00');
+  const laCaoDiem = optCaoDiem !== undefined ? !!optCaoDiem : qt.laGioCaoDiem(gioCheck, ch);
   const { trong, kem, tatCa } = await banKhaDung(khung, { areaId, boQuaId, client });
 
   // Khach (hoac nhan vien) chi dinh san ban: khong tu chon nua, chi kiem tra.
@@ -381,6 +389,11 @@ async function goiYXepBan(khung, {
       throw new LoiDatBan(
         `Bàn bạn chọn có ${tongCho} chỗ, không đủ cho ${soKhach} khách. `
         + 'Vui lòng chọn thêm bàn hoặc đổi bàn lớn hơn.', 'NOT_ENOUGH_SEATS');
+    }
+    // Ràng buộc số người và số chỗ ngồi: giờ cao điểm chỉ được ngồi đúng số chỗ; giờ thường 2 người ngồi bàn 4 vẫn được
+    const ktrSucChua = qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem);
+    if (!ktrSucChua.hopLe) {
+      throw new LoiDatBan(ktrSucChua.lyDo, laCaoDiem ? 'PEAK_HOUR_SEAT_MISMATCH' : 'CAPACITY_MISMATCH');
     }
     if (chon.length > 1 && ch.allow_table_combination === 0) {
       throw new LoiDatBan('Nhà hàng hiện không nhận ghép bàn', 'NO_COMBINATION');
@@ -415,6 +428,7 @@ async function goiYXepBan(khung, {
     chungKhuThoi: Number(ch.combine_same_area_only) === 1,
     soThich,
     laVip: loaiKhach === 'VIP',
+    laCaoDiem,
   });
 
   return {
@@ -529,6 +543,8 @@ async function soDoBan({
     duration_minutes: thoiLuong || undefined,
   }, ch);
 
+  const gioCheck = gio || (khung.batDau ? qt.gioNgan(khung.batDau) : '19:00');
+  const laCaoDiem = qt.laGioCaoDiem(gioCheck, ch);
   const { tatCa, dsO } = await banKhaDung(khung, { areaId, boQuaId, chiChoDat: false });
 
   // Thong tin luot dat dang chiem tung ban - chi doc khi la man hinh nhan vien.
@@ -548,6 +564,21 @@ async function soDoBan({
 
   const ban = tatCa.map((b) => {
     const r = theoban.get(b.id) || null;
+    const ktrSucChua = qt.kiemTraSucChuaHopLe(b.so_cho, soKhach, laCaoDiem);
+    const phuHopSoKhach = ktrSucChua.hopLe;
+
+    let khaDung = b.kha_dung;
+    let lyDo = b.ly_do;
+
+    // Nếu cho khách (đặt bàn online) trong giờ cao điểm: bàn không đúng số chỗ bị khóa
+    if (choKhach && laCaoDiem && khaDung && !phuHopSoKhach) {
+      khaDung = false;
+      lyDo = {
+        ma: 'PEAK_HOUR_MISMATCH',
+        mo_ta: `Giờ cao điểm: Bàn ${b.so_cho} chỗ chỉ nhận khách đúng số chỗ`
+      };
+    }
+
     return {
       id: b.id,
       ten: b.ten,
@@ -557,8 +588,9 @@ async function soDoBan({
       khu_vuc_id: b.khu_vuc_id,
       khu_vuc: b.khu_vuc,
       trang_thai_ban: Number(b.trang_thai),
-      kha_dung: b.kha_dung,
-      ly_do: b.ly_do,
+      kha_dung: khaDung,
+      ly_do: lyDo,
+      phu_hop_so_khach: phuHopSoKhach,
       thuoc_tinh: {
         gan_cua_so: b.gan_cua_so,
         yen_tinh: b.yen_tinh,
@@ -592,7 +624,10 @@ async function soDoBan({
       den: qt.gioNgan(khung.ketThuc),
       thoi_luong: khung.thoiLuong,
       dem_don: khung.demDon,
+      cao_diem: laCaoDiem,
     },
+    cao_diem: laCaoDiem,
+    peak_hours: ch.peak_hours || '18:00-21:00',
     khu_vuc: dsKhu,
     ban,
     tong_ket: {
