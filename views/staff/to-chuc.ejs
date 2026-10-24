@@ -7,6 +7,15 @@
 <% } else { %>
   <%- include('../admin/partials/header', { title: 'Sơ đồ tổ chức', activePage: 'to-chuc' }) %>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css">
+  <style>
+    a, a:hover, a:focus, a:active,
+    .qt-side a, .qt-side a:hover, .qt-side a:focus,
+    .qt-nav__item, .qt-nav__item:hover, .qt-nav__item:focus,
+    .nav-tabs .nav-link, .nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus,
+    .btn, .btn:hover, .btn:focus {
+      text-decoration: none !important;
+    }
+  </style>
 <% } %>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">

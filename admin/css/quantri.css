@@ -52,7 +52,26 @@ body.qt-body {
   -webkit-font-smoothing: antialiased;
 }
 
-.qt-body a { color: inherit; text-decoration: none; }
+.qt-body a,
+.qt-body a:hover,
+.qt-body a:focus,
+.qt-body a:active,
+.qt-side a,
+.qt-side a:hover,
+.qt-side a:focus,
+.qt-nav__item,
+.qt-nav__item:hover,
+.qt-nav__item:focus,
+.qt-nav__item:active,
+.qt-link,
+.qt-link:hover,
+.qt-link:focus,
+.nav-link,
+.nav-link:hover,
+.nav-link:focus {
+  color: inherit;
+  text-decoration: none !important;
+}
 .qt-body h1, .qt-body h2, .qt-body h3, .qt-body h4 {
   font-family: var(--qt-serif);
   font-weight: 700;
@@ -115,6 +134,7 @@ body.qt-body {
 }
 
 .qt-nav__item {
+  text-decoration: none !important;
   display: flex;
   align-items: center;
   gap: .75rem;
@@ -127,7 +147,7 @@ body.qt-body {
   position: relative;
 }
 .qt-nav__item i { width: 18px; text-align: center; font-size: .95rem; color: rgba(200, 162, 75, .7); transition: color .2s; }
-.qt-nav__item:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.qt-nav__item:hover { background: rgba(255, 255, 255, .06); color: #fff; text-decoration: none !important; }
 .qt-nav__item:hover i { color: var(--qt-gold); }
 .qt-nav__item.is-active {
   background: linear-gradient(90deg, rgba(200, 162, 75, .22), rgba(200, 162, 75, .04));

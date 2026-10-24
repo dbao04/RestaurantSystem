@@ -10,6 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/admin/quantri.css" />
+    <style>
+      /* Ngăn chặn tuyệt đối tình trạng gạch chân khi hover/click menu hoặc tab */
+      a, a:hover, a:focus, a:active,
+      .qt-side a, .qt-side a:hover, .qt-side a:focus,
+      .qt-nav__item, .qt-nav__item:hover, .qt-nav__item:focus,
+      .qt-link, .qt-link:hover, .qt-link:focus,
+      .nav-link, .nav-link:hover, .nav-link:focus,
+      .btn, .btn:hover, .btn:focus {
+        text-decoration: none !important;
+      }
+    </style>
 
     <script src="/admin-js/jquery-1.6.4.min.js"></script>
     <script src="/admin-js/table/jquery.dataTables.min.js"></script>
