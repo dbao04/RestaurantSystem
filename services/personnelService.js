@@ -7,6 +7,15 @@
 const db = require('../config/db');
 const md5 = require('md5');
 
+// In-memory cache de tang toc do load trang Quan tri (/admin)
+let _dashboardStatsCache = null;
+let _dashboardStatsCacheTime = 0;
+const STATS_CACHE_TTL = 30 * 1000; // 30 giay
+
+let _revenueByMonthCache = null;
+let _revenueByMonthCacheTime = 0;
+const REVENUE_CACHE_TTL = 60 * 1000; // 60 giay
+
 const personnelService = {
   // ============ ADMIN LOGIN & PROFILE ============
   adminLogin: async (adminuser, adminpass) => {
@@ -119,21 +128,37 @@ const personnelService = {
 
   // ============ DASHBOARD & STATS ============
   getDashboardStats: async () => {
-    const [rev1] = await db.query('SELECT SUM(thanhtien) as total FROM hopdong WHERE tinhtrang = 3');
-    const [rev2] = await db.query('SELECT SUM(tong_tien) as total FROM chot_ca');
-    const [orders] = await db.query('SELECT COUNT(DISTINCT sesis) as total FROM hopdong');
-    const [customers] = await db.query('SELECT COUNT(*) as total FROM khach_hang');
-    const [staff] = await db.query('SELECT COUNT(*) as total FROM nhan_vien');
+    const now = Date.now();
+    if (_dashboardStatsCache && (now - _dashboardStatsCacheTime < STATS_CACHE_TTL)) {
+      return _dashboardStatsCache;
+    }
+
+    const [ [rev1], [rev2], [orders], [customers], [staff] ] = await Promise.all([
+      db.query('SELECT SUM(thanhtien) as total FROM hopdong WHERE tinhtrang = 3'),
+      db.query('SELECT SUM(tong_tien) as total FROM chot_ca'),
+      db.query('SELECT COUNT(DISTINCT sesis) as total FROM hopdong'),
+      db.query('SELECT COUNT(*) as total FROM khach_hang'),
+      db.query('SELECT COUNT(*) as total FROM nhan_vien')
+    ]);
     
-    return {
+    const result = {
       revenue: Number(rev1[0].total || 0) + Number(rev2[0].total || 0),
       orders: orders[0].total || 0,
       customers: customers[0].total || 0,
       staff: staff[0].total || 0
     };
+
+    _dashboardStatsCache = result;
+    _dashboardStatsCacheTime = now;
+    return result;
   },
 
   getRevenueByMonth: async () => {
+    const now = Date.now();
+    if (_revenueByMonthCache && (now - _revenueByMonthCacheTime < REVENUE_CACHE_TTL)) {
+      return _revenueByMonthCache;
+    }
+
     const [rows] = await db.query(`
       SELECT MONTH(ngay_dat) as month, SUM(thanhtien) as revenue 
       FROM hopdong 
@@ -141,6 +166,9 @@ const personnelService = {
       GROUP BY MONTH(ngay_dat)
       ORDER BY month ASC
     `);
+
+    _revenueByMonthCache = rows;
+    _revenueByMonthCacheTime = now;
     return rows;
   },
 
