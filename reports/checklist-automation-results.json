@@ -1,5 +1,5 @@
 {
-  "executedAt": "2026-10-23T06:58:14.013Z",
+  "executedAt": "2026-10-24T17:19:43.120Z",
   "totalTests": 72,
   "passed": 72,
   "failed": 0,
@@ -11,8 +11,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Luồng Ăn tại chỗ vận hành trơn tru (Phục vụ mở bàn /so-do-ban -> Bếp nhận KDS -> Thu ngân POS thanh toán)",
-      "durationMs": 55,
-      "testedAt": "2026-10-23T06:57:43.071Z"
+      "durationMs": 76,
+      "testedAt": "2026-10-24T17:19:18.679Z"
     },
     "E2E-02": {
       "id": "E2E-02",
@@ -20,8 +20,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Khách đặt bàn /dat-ban -> API kiểm tra khung giờ khả dụng -> Lễ tân duyệt & xếp bàn /staff/bookings thành công",
-      "durationMs": 3673,
-      "testedAt": "2026-10-23T06:57:46.745Z"
+      "durationMs": 979,
+      "testedAt": "2026-10-24T17:19:19.659Z"
     },
     "E2E-03": {
       "id": "E2E-03",
@@ -29,8 +29,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Khách chọn món /menu -> Điều phối gán Shipper /staff/giao-hang -> Shipper nhận đơn trên App PWA /shipper/",
-      "durationMs": 626,
-      "testedAt": "2026-10-23T06:57:47.371Z"
+      "durationMs": 660,
+      "testedAt": "2026-10-24T17:19:20.319Z"
     },
     "E2E-04": {
       "id": "E2E-04",
@@ -38,8 +38,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Kiosk điểm danh AI -> Phục vụ gửi báo cáo ca -> Thu ngân đếm két chốt ca -> Quản lý phê duyệt",
-      "durationMs": 574,
-      "testedAt": "2026-10-23T06:57:47.945Z"
+      "durationMs": 753,
+      "testedAt": "2026-10-24T17:19:21.072Z"
     },
     "TC-CUST-01": {
       "id": "TC-CUST-01",
@@ -47,8 +47,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang chủ tải thành công (HTTP 200), đầy đủ thương hiệu, banner và footer",
-      "durationMs": 595,
-      "testedAt": "2026-10-23T06:57:48.540Z"
+      "durationMs": 872,
+      "testedAt": "2026-10-24T17:19:21.945Z"
     },
     "TC-CUST-02": {
       "id": "TC-CUST-02",
@@ -56,8 +56,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Chuyển đổi hoàn hảo 3 ngôn ngữ VI / EN / JA, i18n render chuẩn xác",
-      "durationMs": 1501,
-      "testedAt": "2026-10-23T06:57:50.041Z"
+      "durationMs": 2049,
+      "testedAt": "2026-10-24T17:19:23.994Z"
     },
     "TC-CUST-03": {
       "id": "TC-CUST-03",
@@ -65,8 +65,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Thực đơn món ăn tải thành công, lọc chính xác theo danh mục món ăn (HTTP 200)",
-      "durationMs": 79,
-      "testedAt": "2026-10-23T06:57:50.120Z"
+      "durationMs": 90,
+      "testedAt": "2026-10-24T17:19:24.084Z"
     },
     "TC-CUST-04": {
       "id": "TC-CUST-04",
@@ -74,8 +74,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Tìm kiếm món ăn với từ khóa 'bò' trả về kết quả chính xác",
-      "durationMs": 31,
-      "testedAt": "2026-10-23T06:57:50.151Z"
+      "durationMs": 35,
+      "testedAt": "2026-10-24T17:19:24.119Z"
     },
     "TC-CUST-05": {
       "id": "TC-CUST-05",
@@ -83,8 +83,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang chi tiết món tải thành công (HTTP 200), hiển thị nhãn an toàn & cảnh báo dị ứng",
-      "durationMs": 13,
-      "testedAt": "2026-10-23T06:57:50.165Z"
+      "durationMs": 20,
+      "testedAt": "2026-10-24T17:19:24.140Z"
     },
     "TC-CUST-06": {
       "id": "TC-CUST-06",
@@ -92,17 +92,17 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang thực đơn combo ưu đãi tải đầy đủ hình ảnh, giá gốc gạch ngang và giá combo",
-      "durationMs": 13,
-      "testedAt": "2026-10-23T06:57:50.178Z"
+      "durationMs": 17,
+      "testedAt": "2026-10-24T17:19:24.157Z"
     },
     "TC-CUST-07": {
       "id": "TC-CUST-07",
       "passed": true,
       "status": "PASS",
       "checked": true,
-      "note": "Đăng ký thành viên mới thành công với SĐT 0987392139",
-      "durationMs": 16,
-      "testedAt": "2026-10-23T06:57:50.194Z"
+      "note": "Đăng ký thành viên mới thành công với SĐT 0987495607",
+      "durationMs": 26,
+      "testedAt": "2026-10-24T17:19:24.183Z"
     },
     "TC-CUST-08": {
       "id": "TC-CUST-08",
@@ -110,8 +110,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Đăng nhập khách hàng thành công (0388062048), khởi tạo phiên làm việc an toàn",
-      "durationMs": 8,
-      "testedAt": "2026-10-23T06:57:50.202Z"
+      "durationMs": 13,
+      "testedAt": "2026-10-24T17:19:24.196Z"
     },
     "TC-CUST-09": {
       "id": "TC-CUST-09",
@@ -119,8 +119,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Thêm món vào giỏ hàng, xem giỏ hàng và cập nhật số lượng tự động tính tổng tiền chuẩn",
-      "durationMs": 4240,
-      "testedAt": "2026-10-23T06:57:54.442Z"
+      "durationMs": 4861,
+      "testedAt": "2026-10-24T17:19:29.057Z"
     },
     "TC-CUST-10": {
       "id": "TC-CUST-10",
@@ -128,8 +128,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quy trình đặt bàn 4 bước hiển thị trực quan (chọn ngày, giờ, số người, chọn vị trí)",
-      "durationMs": 52,
-      "testedAt": "2026-10-23T06:57:54.495Z"
+      "durationMs": 45,
+      "testedAt": "2026-10-24T17:19:29.102Z"
     },
     "TC-CUST-11": {
       "id": "TC-CUST-11",
@@ -138,7 +138,7 @@
       "checked": true,
       "note": "Trang tra cứu đơn đặt bàn sẵn sàng, liên kết trực tiếp với lịch sử đơn của khách",
       "durationMs": 3,
-      "testedAt": "2026-10-23T06:57:54.498Z"
+      "testedAt": "2026-10-24T17:19:29.105Z"
     },
     "TC-CUST-12": {
       "id": "TC-CUST-12",
@@ -146,8 +146,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Cổng thanh toán tiền cọc đặt bàn qua VietQR chuẩn NAPAS 247 hoạt động tốt",
-      "durationMs": 37,
-      "testedAt": "2026-10-23T06:57:54.535Z"
+      "durationMs": 49,
+      "testedAt": "2026-10-24T17:19:29.154Z"
     },
     "TC-CUST-13": {
       "id": "TC-CUST-13",
@@ -155,8 +155,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang Đơn hàng của tôi (/my-orders) hiển thị đầy đủ lịch sử đặt bàn và giao hàng",
-      "durationMs": 342,
-      "testedAt": "2026-10-23T06:57:54.877Z"
+      "durationMs": 394,
+      "testedAt": "2026-10-24T17:19:29.548Z"
     },
     "TC-CUST-14": {
       "id": "TC-CUST-14",
@@ -164,8 +164,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trợ lý ảo AI Chatbot phản hồi thông minh, giải đáp chính xác giờ mở cửa và thực đơn",
-      "durationMs": 123,
-      "testedAt": "2026-10-23T06:57:55.000Z"
+      "durationMs": 227,
+      "testedAt": "2026-10-24T17:19:29.775Z"
     },
     "TC-CUST-15": {
       "id": "TC-CUST-15",
@@ -173,8 +173,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Giao diện gửi đánh giá sao & phản hồi chất lượng dịch vụ tiếp nhận tốt",
-      "durationMs": 12,
-      "testedAt": "2026-10-23T06:57:55.012Z"
+      "durationMs": 17,
+      "testedAt": "2026-10-24T17:19:29.792Z"
     },
     "TC-FOH-01": {
       "id": "TC-FOH-01",
@@ -182,8 +182,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Đăng nhập Cổng Nhân viên thành công với tài khoản Lễ tân (@letan)",
-      "durationMs": 1,
-      "testedAt": "2026-10-23T06:57:55.013Z"
+      "durationMs": 0,
+      "testedAt": "2026-10-24T17:19:29.792Z"
     },
     "TC-FOH-02": {
       "id": "TC-FOH-02",
@@ -191,8 +191,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Sơ đồ 40 bàn ăn trực quan chia theo 4 khu vực (Sảnh chính, Tầng lửng, Sân vườn, VIP)",
-      "durationMs": 16,
-      "testedAt": "2026-10-23T06:57:55.029Z"
+      "durationMs": 11,
+      "testedAt": "2026-10-24T17:19:29.803Z"
     },
     "TC-FOH-03": {
       "id": "TC-FOH-03",
@@ -200,8 +200,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Thao tác mở bàn đón khách tại chỗ hoạt động chính xác qua API /so-do-ban/api/du-lieu",
-      "durationMs": 55,
-      "testedAt": "2026-10-23T06:57:55.084Z"
+      "durationMs": 49,
+      "testedAt": "2026-10-24T17:19:29.853Z"
     },
     "TC-FOH-04": {
       "id": "TC-FOH-04",
@@ -209,8 +209,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Phục vụ chọn món, tăng giảm số lượng và gửi trực tiếp sang KDS Bếp thành công",
-      "durationMs": 9,
-      "testedAt": "2026-10-23T06:57:55.093Z"
+      "durationMs": 11,
+      "testedAt": "2026-10-24T17:19:29.864Z"
     },
     "TC-FOH-05": {
       "id": "TC-FOH-05",
@@ -218,8 +218,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Màn hình danh sách đơn phục vụ và chức năng chuyển đổi bàn hoạt động trơn tru",
-      "durationMs": 3133,
-      "testedAt": "2026-10-23T06:57:58.226Z"
+      "durationMs": 525,
+      "testedAt": "2026-10-24T17:19:30.389Z"
     },
     "TC-FOH-06": {
       "id": "TC-FOH-06",
@@ -227,8 +227,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Form tạo đơn đặt bàn nhanh cho khách gọi điện (/staff/bookings/create) tải thành công",
-      "durationMs": 8,
-      "testedAt": "2026-10-23T06:57:58.234Z"
+      "durationMs": 15,
+      "testedAt": "2026-10-24T17:19:30.404Z"
     },
     "TC-FOH-07": {
       "id": "TC-FOH-07",
@@ -236,8 +236,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trung tâm đặt bàn dạng Timeline và biểu đồ gán bàn (/staff/dat-ban) tải đầy đủ dữ liệu",
-      "durationMs": 40,
-      "testedAt": "2026-10-23T06:57:58.274Z"
+      "durationMs": 50,
+      "testedAt": "2026-10-24T17:19:30.454Z"
     },
     "TC-FOH-08": {
       "id": "TC-FOH-08",
@@ -245,8 +245,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Mô phỏng quét mã QR Bàn S01 (/qr/table/TMPM44AJJ) mở thực đơn gọi món trực tiếp mượt mà",
-      "durationMs": 71,
-      "testedAt": "2026-10-23T06:57:58.345Z"
+      "durationMs": 73,
+      "testedAt": "2026-10-24T17:19:30.527Z"
     },
     "TC-FOH-09": {
       "id": "TC-FOH-09",
@@ -254,8 +254,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Bộ tạo và in mã QR cho 40 bàn ăn (/staff/qr-codes) tải chuẩn xác",
-      "durationMs": 26,
-      "testedAt": "2026-10-23T06:57:58.371Z"
+      "durationMs": 23,
+      "testedAt": "2026-10-24T17:19:30.550Z"
     },
     "TC-FOH-10": {
       "id": "TC-FOH-10",
@@ -263,8 +263,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Tính năng in phiếu tạm tính cho khách kiểm tra trước khi thanh toán sẵn sàng",
-      "durationMs": 3220,
-      "testedAt": "2026-10-23T06:58:01.592Z"
+      "durationMs": 454,
+      "testedAt": "2026-10-24T17:19:31.004Z"
     },
     "TC-KIT-01": {
       "id": "TC-KIT-01",
@@ -273,7 +273,7 @@
       "checked": true,
       "note": "Đăng nhập thành công tài khoản Bếp trưởng (@beptruong)",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:01.592Z"
+      "testedAt": "2026-10-24T17:19:31.004Z"
     },
     "TC-KIT-02": {
       "id": "TC-KIT-02",
@@ -282,7 +282,7 @@
       "checked": true,
       "note": "Màn hình KDS Bếp realtime (/kds) tải hoàn hảo, sẵn sàng nhận đơn qua Socket.IO",
       "durationMs": 6,
-      "testedAt": "2026-10-23T06:58:01.598Z"
+      "testedAt": "2026-10-24T17:19:31.010Z"
     },
     "TC-KIT-03": {
       "id": "TC-KIT-03",
@@ -290,8 +290,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quy trình chuyển trạng thái món ăn: Chờ làm -> Đang nấu -> Hoàn tất vận hành tốt",
-      "durationMs": 5,
-      "testedAt": "2026-10-23T06:58:01.604Z"
+      "durationMs": 6,
+      "testedAt": "2026-10-24T17:19:31.016Z"
     },
     "TC-KIT-04": {
       "id": "TC-KIT-04",
@@ -299,8 +299,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Tra cứu công thức và định mức nguyên vật liệu món ăn (/staff/kitchen/recipes) thành công",
-      "durationMs": 26,
-      "testedAt": "2026-10-23T06:58:01.630Z"
+      "durationMs": 18,
+      "testedAt": "2026-10-24T17:19:31.034Z"
     },
     "TC-KIT-05": {
       "id": "TC-KIT-05",
@@ -308,8 +308,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quản lý tồn kho nguyên liệu bếp theo chuẩn FIFO (/staff/kitchen/inventory) hoạt động chuẩn",
-      "durationMs": 33,
-      "testedAt": "2026-10-23T06:58:01.663Z"
+      "durationMs": 39,
+      "testedAt": "2026-10-24T17:19:31.073Z"
     },
     "TC-KIT-06": {
       "id": "TC-KIT-06",
@@ -317,8 +317,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Biên bản chốt ca và bàn giao nguyên liệu bếp (/staff/kitchen/shift) tải thành công",
-      "durationMs": 18,
-      "testedAt": "2026-10-23T06:58:01.681Z"
+      "durationMs": 19,
+      "testedAt": "2026-10-24T17:19:31.092Z"
     },
     "TC-POS-01": {
       "id": "TC-POS-01",
@@ -327,7 +327,7 @@
       "checked": true,
       "note": "Đăng nhập Cổng Thu ngân thành công (@thungan)",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:01.681Z"
+      "testedAt": "2026-10-24T17:19:31.092Z"
     },
     "TC-POS-02": {
       "id": "TC-POS-02",
@@ -335,8 +335,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Màn hình POS thu ngân (/staff/thanh-toan) hiển thị danh sách các bàn chờ thanh toán",
-      "durationMs": 40,
-      "testedAt": "2026-10-23T06:58:01.721Z"
+      "durationMs": 29,
+      "testedAt": "2026-10-24T17:19:31.121Z"
     },
     "TC-POS-03": {
       "id": "TC-POS-03",
@@ -345,7 +345,7 @@
       "checked": true,
       "note": "API áp dụng mã giảm giá / voucher trên hóa đơn xử lý đúng logic chiết khấu",
       "durationMs": 5,
-      "testedAt": "2026-10-23T06:58:01.726Z"
+      "testedAt": "2026-10-24T17:19:31.126Z"
     },
     "TC-POS-04": {
       "id": "TC-POS-04",
@@ -353,8 +353,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Hình thức thanh toán tiền mặt tự động tính tiền thừa trả khách chính xác",
-      "durationMs": 19,
-      "testedAt": "2026-10-23T06:58:01.745Z"
+      "durationMs": 20,
+      "testedAt": "2026-10-24T17:19:31.147Z"
     },
     "TC-POS-05": {
       "id": "TC-POS-05",
@@ -362,8 +362,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Mã VietQR động tạo theo từng đơn thanh toán, khách quét thanh toán không tiền mặt tiện lợi",
-      "durationMs": 22,
-      "testedAt": "2026-10-23T06:58:01.767Z"
+      "durationMs": 19,
+      "testedAt": "2026-10-24T17:19:31.166Z"
     },
     "TC-POS-06": {
       "id": "TC-POS-06",
@@ -371,8 +371,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Biên bản đếm két và chốt ca thu ngân cuối ngày (/staff/chot-ca) hoạt động trơn tru",
-      "durationMs": 17,
-      "testedAt": "2026-10-23T06:58:01.784Z"
+      "durationMs": 16,
+      "testedAt": "2026-10-24T17:19:31.182Z"
     },
     "TC-DEL-01": {
       "id": "TC-DEL-01",
@@ -381,7 +381,7 @@
       "checked": true,
       "note": "Đăng nhập Cổng Điều phối giao hàng (@dieuphoi) thành công",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:01.784Z"
+      "testedAt": "2026-10-24T17:19:31.183Z"
     },
     "TC-DEL-02": {
       "id": "TC-DEL-02",
@@ -389,8 +389,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Bảng điều phối đơn giao hàng (/staff/giao-hang) gán đơn cho Shipper chuẩn xác",
-      "durationMs": 605,
-      "testedAt": "2026-10-23T06:58:02.389Z"
+      "durationMs": 559,
+      "testedAt": "2026-10-24T17:19:31.742Z"
     },
     "TC-DEL-03": {
       "id": "TC-DEL-03",
@@ -398,8 +398,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Bản đồ số GPS theo dõi vị trí và lộ trình các Shipper (/staff/giao-hang/ban-do) tải tốt",
-      "durationMs": 661,
-      "testedAt": "2026-10-23T06:58:03.051Z"
+      "durationMs": 559,
+      "testedAt": "2026-10-24T17:19:32.301Z"
     },
     "TC-DEL-04": {
       "id": "TC-DEL-04",
@@ -407,8 +407,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Ứng dụng PWA di động cho Shipper (/shipper/) hiển thị đơn và cập nhật trạng thái mượt mà",
-      "durationMs": 12,
-      "testedAt": "2026-10-23T06:58:03.064Z"
+      "durationMs": 10,
+      "testedAt": "2026-10-24T17:19:32.311Z"
     },
     "TC-HR-01": {
       "id": "TC-HR-01",
@@ -417,7 +417,7 @@
       "checked": true,
       "note": "Đăng nhập Bảng điều hành Quản lý nhà hàng (@quanly) thành công",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:03.064Z"
+      "testedAt": "2026-10-24T17:19:32.311Z"
     },
     "TC-HR-02": {
       "id": "TC-HR-02",
@@ -425,8 +425,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Sơ đồ cơ cấu tổ chức và cây phân cấp nhân sự (/to-chuc/quan-ly) vẽ chuẩn xác",
-      "durationMs": 31,
-      "testedAt": "2026-10-23T06:58:03.095Z"
+      "durationMs": 32,
+      "testedAt": "2026-10-24T17:19:32.343Z"
     },
     "TC-HR-03": {
       "id": "TC-HR-03",
@@ -434,8 +434,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Máy Kiosk chấm công khuôn mặt AI (/cham-cong-khuon-mat) tải giao diện camera tốt",
-      "durationMs": 17,
-      "testedAt": "2026-10-23T06:58:03.112Z"
+      "durationMs": 16,
+      "testedAt": "2026-10-24T17:19:32.360Z"
     },
     "TC-HR-04": {
       "id": "TC-HR-04",
@@ -443,8 +443,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Giao diện chấm công GPS qua điện thoại (/cham-cong/) hoạt động chính xác",
-      "durationMs": 15,
-      "testedAt": "2026-10-23T06:58:03.127Z"
+      "durationMs": 19,
+      "testedAt": "2026-10-24T17:19:32.380Z"
     },
     "TC-HR-05": {
       "id": "TC-HR-05",
@@ -452,8 +452,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Bảng điểm danh chấm công hàng ngày (/staff/cham-cong) hiển thị chi tiết giờ vào/ra",
-      "durationMs": 28,
-      "testedAt": "2026-10-23T06:58:03.155Z"
+      "durationMs": 39,
+      "testedAt": "2026-10-24T17:19:32.419Z"
     },
     "TC-HR-06": {
       "id": "TC-HR-06",
@@ -461,8 +461,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quy trình xét duyệt đơn xin nghỉ phép (/staff/leave) vận hành đúng phân cấp",
-      "durationMs": 11,
-      "testedAt": "2026-10-23T06:58:03.166Z"
+      "durationMs": 23,
+      "testedAt": "2026-10-24T17:19:32.442Z"
     },
     "TC-RPT-01": {
       "id": "TC-RPT-01",
@@ -470,8 +470,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Form báo cáo ca phục vụ (/staff/phuc-vu/bao-cao) tải thành công",
-      "durationMs": 503,
-      "testedAt": "2026-10-23T06:58:03.669Z"
+      "durationMs": 575,
+      "testedAt": "2026-10-24T17:19:33.017Z"
     },
     "TC-RPT-02": {
       "id": "TC-RPT-02",
@@ -479,8 +479,8 @@
       "status": "PASS",
       "checked": true,
       "note": "API tự động tổng hợp số lượt bàn và doanh số phục vụ trong ca (/staff/phuc-vu/api/so-lieu-ngay) chuẩn xác",
-      "durationMs": 493,
-      "testedAt": "2026-10-23T06:58:04.162Z"
+      "durationMs": 557,
+      "testedAt": "2026-10-24T17:19:33.574Z"
     },
     "TC-RPT-03": {
       "id": "TC-RPT-03",
@@ -488,8 +488,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Gửi biên bản báo cáo ca trực thành công, lưu trữ an toàn vào CSDL",
-      "durationMs": 8,
-      "testedAt": "2026-10-23T06:58:04.171Z"
+      "durationMs": 11,
+      "testedAt": "2026-10-24T17:19:33.585Z"
     },
     "TC-RPT-04": {
       "id": "TC-RPT-04",
@@ -497,8 +497,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quản lý xem xét và ký duyệt báo cáo ca (/staff/phuc-vu/bao-cao/lich-su) thành công",
-      "durationMs": 11,
-      "testedAt": "2026-10-23T06:58:04.182Z"
+      "durationMs": 15,
+      "testedAt": "2026-10-24T17:19:33.600Z"
     },
     "TC-ACC-01": {
       "id": "TC-ACC-01",
@@ -507,7 +507,7 @@
       "checked": true,
       "note": "Đăng nhập Cổng Kế toán trưởng (@ketoantruong) thành công",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:04.182Z"
+      "testedAt": "2026-10-24T17:19:33.600Z"
     },
     "TC-ACC-02": {
       "id": "TC-ACC-02",
@@ -515,8 +515,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Bảng tính lương tự động tổng hợp từ dữ liệu chấm công AI (/staff/accountant/salary) chuẩn xác",
-      "durationMs": 21,
-      "testedAt": "2026-10-23T06:58:04.203Z"
+      "durationMs": 48,
+      "testedAt": "2026-10-24T17:19:33.648Z"
     },
     "TC-ACC-03": {
       "id": "TC-ACC-03",
@@ -524,8 +524,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Tính năng đối soát doanh thu chốt két của thu ngân (/staff/thanh-toan/doi-soat) minh bạch",
-      "durationMs": 9,
-      "testedAt": "2026-10-23T06:58:04.212Z"
+      "durationMs": 59,
+      "testedAt": "2026-10-24T17:19:33.707Z"
     },
     "TC-ACC-04": {
       "id": "TC-ACC-04",
@@ -533,8 +533,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Báo cáo tài chính P&L phân tích doanh thu - chi phí - lợi nhuận (/staff/accountant/reports) trực quan",
-      "durationMs": 9603,
-      "testedAt": "2026-10-23T06:58:13.815Z"
+      "durationMs": 9178,
+      "testedAt": "2026-10-24T17:19:42.885Z"
     },
     "TC-ADM-01": {
       "id": "TC-ADM-01",
@@ -543,7 +543,7 @@
       "checked": true,
       "note": "Đăng nhập Cổng Quản trị Tối cao Admin Portal (@admin) thành công",
       "durationMs": 0,
-      "testedAt": "2026-10-23T06:58:13.815Z"
+      "testedAt": "2026-10-24T17:19:42.885Z"
     },
     "TC-ADM-02": {
       "id": "TC-ADM-02",
@@ -551,8 +551,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang quản trị danh mục loại món (/admin/catlist) tải đầy đủ danh mục",
-      "durationMs": 10,
-      "testedAt": "2026-10-23T06:58:13.825Z"
+      "durationMs": 14,
+      "testedAt": "2026-10-24T17:19:42.899Z"
     },
     "TC-ADM-03": {
       "id": "TC-ADM-03",
@@ -560,8 +560,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trang quản trị 258 món ăn (/admin/productlist) hiển thị giá, hình ảnh và trạng thái",
-      "durationMs": 18,
-      "testedAt": "2026-10-23T06:58:13.843Z"
+      "durationMs": 19,
+      "testedAt": "2026-10-24T17:19:42.918Z"
     },
     "TC-ADM-04": {
       "id": "TC-ADM-04",
@@ -569,8 +569,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quản lý danh sách nhân sự toàn hệ thống (/admin/stafflist) nạp chuẩn 100% hồ sơ",
-      "durationMs": 10,
-      "testedAt": "2026-10-23T06:58:13.853Z"
+      "durationMs": 14,
+      "testedAt": "2026-10-24T17:19:42.933Z"
     },
     "TC-ADM-05": {
       "id": "TC-ADM-05",
@@ -578,8 +578,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Cấu hình số tài khoản ngân hàng và template sinh mã VietQR (/admin/thanh-toan) chuẩn xác",
-      "durationMs": 28,
-      "testedAt": "2026-10-23T06:58:13.881Z"
+      "durationMs": 33,
+      "testedAt": "2026-10-24T17:19:42.966Z"
     },
     "TC-ADM-06": {
       "id": "TC-ADM-06",
@@ -587,8 +587,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Cấu hình chính sách đặt bàn, số khách tối thiểu yêu cầu cọc (/admin/dat-ban) hoạt động tốt",
-      "durationMs": 28,
-      "testedAt": "2026-10-23T06:58:13.909Z"
+      "durationMs": 32,
+      "testedAt": "2026-10-24T17:19:42.998Z"
     },
     "TC-ADM-07": {
       "id": "TC-ADM-07",
@@ -596,8 +596,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Quản lý và tạo mã khuyến mãi Voucher (/admin/khuyen-mai) vận hành trơn tru",
-      "durationMs": 14,
-      "testedAt": "2026-10-23T06:58:13.923Z"
+      "durationMs": 20,
+      "testedAt": "2026-10-24T17:19:43.018Z"
     },
     "TC-ADM-08": {
       "id": "TC-ADM-08",
@@ -605,8 +605,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Trung tâm dự báo AI Machine Learning (/admin/du-bao) dự báo nhu cầu nguyên liệu khoa học",
-      "durationMs": 70,
-      "testedAt": "2026-10-23T06:58:13.993Z"
+      "durationMs": 78,
+      "testedAt": "2026-10-24T17:19:43.096Z"
     },
     "TC-SEC-01": {
       "id": "TC-SEC-01",
@@ -614,8 +614,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Hệ thống chặn khách vãng lai vào /admin/, tự động chuyển hướng về /admin/login",
-      "durationMs": 2,
-      "testedAt": "2026-10-23T06:58:13.995Z"
+      "durationMs": 4,
+      "testedAt": "2026-10-24T17:19:43.100Z"
     },
     "TC-SEC-02": {
       "id": "TC-SEC-02",
@@ -624,7 +624,7 @@
       "checked": true,
       "note": "Hệ thống chặn truy cập trái phép vào /staff/so-do-ban, bắt buộc đăng nhập",
       "durationMs": 3,
-      "testedAt": "2026-10-23T06:58:13.998Z"
+      "testedAt": "2026-10-24T17:19:43.103Z"
     },
     "TC-SEC-03": {
       "id": "TC-SEC-03",
@@ -633,7 +633,7 @@
       "checked": true,
       "note": "Phân quyền RBAC nghiêm ngặt: Nhân viên phục vụ bị từ chối khi truy cập Bảng lương Kế toán (HTTP 403)",
       "durationMs": 5,
-      "testedAt": "2026-10-23T06:58:14.003Z"
+      "testedAt": "2026-10-24T17:19:43.108Z"
     },
     "TC-SEC-04": {
       "id": "TC-SEC-04",
@@ -641,8 +641,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Cơ chế phòng vệ an ninh từ chối đăng nhập khi sai mật khẩu, báo lỗi rõ ràng",
-      "durationMs": 5,
-      "testedAt": "2026-10-23T06:58:14.008Z"
+      "durationMs": 7,
+      "testedAt": "2026-10-24T17:19:43.115Z"
     },
     "TC-SEC-05": {
       "id": "TC-SEC-05",
@@ -650,8 +650,8 @@
       "status": "PASS",
       "checked": true,
       "note": "Xử lý chuẩn xác mã lỗi HTTP 404 Not Found, hiển thị giao diện báo lỗi thân thiện",
-      "durationMs": 4,
-      "testedAt": "2026-10-23T06:58:14.012Z"
+      "durationMs": 5,
+      "testedAt": "2026-10-24T17:19:43.120Z"
     }
   }
 }
