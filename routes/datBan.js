@@ -175,10 +175,25 @@ router.get('/dat-ban', bat(async (req, res) => {
 router.get('/dat-ban/xong', bat(async (req, res) => {
   const r = await dv.traCuuChoKhach(req.query.ma, req.query.dt);
   if (!r) return res.redirect('/dat-ban');
+
+  let qrCodeDataUrl = '';
+  try {
+    const QRCode = require('qrcode');
+    const checkinPayload = `${req.protocol}://${req.get('host')}/staff/dat-ban?tim=${encodeURIComponent(r.reservation_code)}`;
+    qrCodeDataUrl = await QRCode.toDataURL(checkinPayload, {
+      margin: 1,
+      width: 200,
+      color: { dark: '#241a14', light: '#ffffff' },
+    });
+  } catch (err) {
+    console.error('Lỗi sinh mã QR đặt bàn:', err);
+  }
+
   res.render('reservation-xong', {
-    title: 'Đặt bàn thành công',
+    title: 'Phiếu xác nhận đặt bàn · ' + r.reservation_code,
     activeNav: 'datban',
     r,
+    qrCodeDataUrl,
     dienThoai: qt.chuanHoaDienThoai(req.query.dt),
   });
 }));
