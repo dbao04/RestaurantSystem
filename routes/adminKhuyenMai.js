@@ -79,6 +79,7 @@ router.get(['/admin/khuyen-mai', '/staff/khuyen-mai'], canQuanLyOrAdmin, bat(asy
 
   res.render('admin/khuyen-mai', {
     title: 'Quản lý Khuyến mãi',
+    crumb: 'Khuyến mãi & Voucher',
     isStaff: isStaffRoute(req),
     danhSach,
     thongKe,
@@ -98,6 +99,7 @@ router.get(['/admin/khuyen-mai/them', '/staff/khuyen-mai/them'], canQuanLyOrAdmi
   const { loaiMon, monAn } = await layDanhMuc();
   res.render('admin/khuyen-mai-form', {
     title: 'Tạo chương trình khuyến mãi',
+    crumb: 'Khuyến mãi & Voucher',
     isStaff: isStaffRoute(req),
     km: null,
     lichSu: [],
@@ -120,6 +122,7 @@ router.post(['/admin/khuyen-mai/them', '/staff/khuyen-mai/them'], canQuanLyOrAdm
     const { loaiMon, monAn } = await layDanhMuc();
     res.render('admin/khuyen-mai-form', {
       title: 'Tạo chương trình khuyến mãi',
+      crumb: 'Khuyến mãi & Voucher',
       isStaff: isStaffRoute(req),
       km: { ...req.body, id: null },
       lichSu: [],
@@ -146,6 +149,7 @@ router.get(['/admin/khuyen-mai/:id', '/staff/khuyen-mai/:id'], canQuanLyOrAdmin,
 
   res.render('admin/khuyen-mai-form', {
     title: 'Sửa · ' + (km.ten || km.code),
+    crumb: 'Khuyến mãi & Voucher',
     isStaff: isStaffRoute(req),
     km,
     lichSu,

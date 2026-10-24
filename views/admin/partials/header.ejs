@@ -76,6 +76,7 @@
 
             <div class="qt-side__group">
                 <div class="qt-side__label">Cấu hình Vận hành</div>
+                <a class="qt-nav__item" href="/admin/khuyen-mai" data-match="/admin/khuyen-mai"><i class="fas fa-ticket"></i><span>Chương trình khuyến mãi</span></a>
                 <a class="qt-nav__item" href="/admin/thanh-toan" data-match="/admin/thanh-toan"><i class="fas fa-credit-card"></i><span>Cấu hình thanh toán</span></a>
                 <a class="qt-nav__item" href="/admin/dat-ban" data-match="/admin/dat-ban"><i class="fas fa-calendar-check"></i><span>Chính sách đặt bàn</span></a>
                 <a class="qt-nav__item" href="/admin/van-chuyen" data-match="/admin/van-chuyen"><i class="fas fa-truck"></i><span>Đơn vị vận chuyển</span></a>
@@ -112,8 +113,8 @@
                 <i class="fas fa-bars"></i>
             </button>
             <div>
-                <div class="qt-top__crumb">Quản trị</div>
-                <h1 class="qt-top__title" id="qtTitle">Bảng điều khiển</h1>
+                <div class="qt-top__crumb"><%= (typeof crumb !== 'undefined' && crumb) ? crumb : 'Quản trị' %></div>
+                <h1 class="qt-top__title" id="qtTitle" <%- (typeof title !== 'undefined' && title) ? 'data-custom-title="1"' : '' %>><%= (typeof title !== 'undefined' && title) ? title : 'Bảng điều khiển' %></h1>
             </div>
             <div class="qt-top__right">
                 <div class="qt-chip">

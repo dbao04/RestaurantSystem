@@ -29,7 +29,7 @@
     totNhat.className += ' is-active';
     var nhan = totNhat.querySelector('span');
     var tieuDe = document.getElementById('qtTitle');
-    if (nhan && tieuDe) tieuDe.textContent = nhan.textContent;
+    if (nhan && tieuDe && !tieuDe.hasAttribute('data-custom-title')) tieuDe.textContent = nhan.textContent;
   }
 
   // --- Menu thu gon tren man hinh nho ------------------------------------

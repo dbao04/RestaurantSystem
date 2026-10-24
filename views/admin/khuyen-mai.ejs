@@ -1,7 +1,7 @@
 <% if (locals.isStaff) { %>
   <%- include('../staff/partials/header', { activePage: 'khuyen-mai', staffName: session.staffName || 'Quản lý' }) %>
 <% } else { %>
-  <%- include('partials/header') %>
+  <%- include('partials/header', { title: (typeof title !== 'undefined' ? title : 'Quản lý Khuyến mãi'), crumb: 'Khuyến mãi & Voucher' }) %>
   <%- include('partials/sidebar') %>
 <% } %>
 
