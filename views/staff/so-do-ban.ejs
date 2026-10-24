@@ -460,6 +460,89 @@
     border: 0;
     gap: .35rem .25rem;
   }
+
+  /* Mobile App Responsive Styling for Sơ đồ bàn */
+  @media (max-width: 767.98px) {
+    .sdb-header-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .sdb-nav-links {
+      width: 100%;
+      justify-content: flex-start;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 4px;
+    }
+    .sdb-kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 0.65rem;
+    }
+    .sdb-kpi-card {
+      padding: 0.75rem 0.85rem;
+    }
+    .sdb-kpi-val {
+      font-size: 1.15rem;
+    }
+    .sdb-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+    .sdb-tabs {
+      overflow-x: auto;
+      flex-wrap: nowrap !important;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      gap: 6px;
+    }
+    .sdb-tab-btn {
+      white-space: nowrap !important;
+      flex-shrink: 0;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+    }
+    .sdb-actions {
+      width: 100%;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .sdb-floor-container {
+      padding: 0.75rem;
+    }
+    .san {
+      min-height: 440px;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sdb-mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .m-table-card {
+      background: #ffffff;
+      border: 1px solid #e7ded0;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(36,26,20,0.06);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .m-table-card:active {
+      transform: scale(0.97);
+    }
+    .m-table-card.m-trong { border-top: 4px solid var(--sdb-trong); }
+    .m-table-card.m-phucvu { border-top: 4px solid var(--sdb-phucvu); background: #fffcfb; }
+    .m-table-card.m-dat { border-top: 4px solid var(--sdb-dat); }
+    .m-table-card.m-don { border-top: 4px solid #f59e0b; }
+    .m-table-card.m-baotri { border-top: 4px solid #6b7280; opacity: 0.7; }
+  }
 </style>
 
 <div class="sdb-container">
@@ -503,8 +586,23 @@
       </div>
     </div>
 
-    <!-- Sàn Nhà -->
+    <!-- Bộ chuyển đổi chế độ xem trên Điện Thoại: Bản đồ toạ độ hoặc Thẻ bàn -->
+    <div class="d-flex d-md-none justify-content-between align-items-center mb-3">
+      <div class="btn-group btn-group-sm w-100 shadow-sm" role="group">
+        <button type="button" class="btn btn-primary font-weight-bold" id="btnModeMap" onclick="setMobileSdbMode('map')">
+          <i class="fas fa-map-marked-alt mr-1"></i> Sơ đồ trực quan
+        </button>
+        <button type="button" class="btn btn-outline-primary font-weight-bold" id="btnModeGrid" onclick="setMobileSdbMode('grid')">
+          <i class="fas fa-th-large mr-1"></i> Thẻ bàn di động
+        </button>
+      </div>
+    </div>
+
+    <!-- Sàn Nhà (Bản đồ) -->
     <div class="san" id="san"></div>
+
+    <!-- Sàn Nhà (Danh sách thẻ bàn tối ưu di động) -->
+    <div id="sanGrid" class="sdb-mobile-grid" style="display:none;"></div>
     <% if (choPhepKeoTha) { %>
       <p class="sdb-guide-text"><i class="fas fa-circle-info" style="color:var(--sdb-gold); margin-right: 4px;"></i>Bấm <b>Sắp xếp sơ đồ</b> để kéo thả bàn về đúng vị trí thực tế trong nhà hàng, sau đó bấm <b>Lưu vị trí</b>.</p>
     <% } %>
@@ -769,6 +867,63 @@ function veSan() {
   san.style.height = Math.max(540, y + 10) + 'px';
 
   if (dangSapXep) ganKeoTha();
+  veSanGrid((duLieu.ban || []).filter(b => tatCa || String(b.id_vitri) === String(viTriDangXem)));
+}
+
+let currentMobileSdbMode = 'map';
+function setMobileSdbMode(mode) {
+  currentMobileSdbMode = mode;
+  const san = $('san');
+  const sanGrid = $('sanGrid');
+  const btnMap = $('btnModeMap');
+  const btnGrid = $('btnModeGrid');
+  if (mode === 'grid') {
+    if (san) san.style.display = 'none';
+    if (sanGrid) sanGrid.style.display = 'grid';
+    if (btnMap) btnMap.className = 'btn btn-outline-primary font-weight-bold';
+    if (btnGrid) btnGrid.className = 'btn btn-primary font-weight-bold';
+  } else {
+    if (san) san.style.display = 'block';
+    if (sanGrid) sanGrid.style.display = 'none';
+    if (btnMap) btnMap.className = 'btn btn-primary font-weight-bold';
+    if (btnGrid) btnGrid.className = 'btn btn-outline-primary font-weight-bold';
+  }
+}
+
+function veSanGrid(dsBans) {
+  const container = $('sanGrid');
+  if (!container) return;
+  if (!dsBans || dsBans.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--sdb-muted);">Khu vực này chưa có bàn nào</div>';
+    return;
+  }
+  let html = '';
+  dsBans.forEach(b => {
+    let kieu = KIEU_VE[b.trangthai] || 'trong';
+    let statusBadge = '<span class="badge badge-success px-2 py-1">Trống</span>';
+    if (b.trangthai === 1) statusBadge = '<span class="badge badge-danger px-2 py-1">Có khách</span>';
+    else if (b.trangthai === 2 || b.dat_truoc) statusBadge = '<span class="badge badge-warning text-dark px-2 py-1">Đã đặt</span>';
+    else if (b.trangthai === 3) statusBadge = '<span class="badge badge-warning px-2 py-1">Cần dọn</span>';
+    else if (b.trangthai === 4) statusBadge = '<span class="badge badge-secondary px-2 py-1">Bảo trì</span>';
+
+    let subText = `<i class="fas fa-users fa-xs mr-1"></i>${b.so_cho} chỗ ngồi`;
+    if (b.trangthai === 1 && b.so_mon) {
+      subText = `<span class="text-danger font-weight-bold">${tien(b.tong_tien)}đ</span> (${b.so_mon} món)`;
+    } else if (b.dat_truoc) {
+      subText = `Giữ chỗ: <b>${b.dat_truoc.gio ? b.dat_truoc.gio.slice(0,5) : ''}</b>`;
+    }
+
+    html += `
+      <div class="m-table-card m-${kieu}" onclick="moHop(${b.Id_ban})">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <strong style="font-size:0.95rem;color:var(--sdb-ink);"><i class="fas fa-chair text-muted mr-1"></i>Bàn ${b.number_ban}</strong>
+          ${statusBadge}
+        </div>
+        <div style="font-size:0.8rem;color:#6b5f54;margin-top:4px;">${subText}</div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
 }
 
 // --- Kéo thả ---
