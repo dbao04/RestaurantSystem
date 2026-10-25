@@ -1,7 +1,7 @@
 {
-  "startedAt": "2026-10-24T11:58:34.095Z",
-  "finishedAt": "2026-10-24T11:59:17.172Z",
-  "totalDurationMs": 43075,
+  "startedAt": "2026-10-25T02:17:47.855Z",
+  "finishedAt": "2026-10-25T02:18:06.200Z",
+  "totalDurationMs": 18342,
   "totalTests": 175,
   "passedTests": 175,
   "failedTests": 0,
@@ -19,8 +19,8 @@
       "name": "Trang chủ Website (/)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 617,
-      "timestamp": "2026-10-24T11:58:34.732Z"
+      "durationMs": 596,
+      "timestamp": "2026-10-25T02:17:48.474Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -28,8 +28,8 @@
       "name": "Trang Giới thiệu nhà hàng (/about)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:34.746Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:17:48.494Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -37,8 +37,8 @@
       "name": "Trang Chính sách hội viên (/thanh-vien)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 15,
-      "timestamp": "2026-10-24T11:58:34.761Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:17:48.514Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -46,8 +46,8 @@
       "name": "Trang Tin tức & Bài viết (/blog)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 24,
-      "timestamp": "2026-10-24T11:58:34.785Z"
+      "durationMs": 23,
+      "timestamp": "2026-10-25T02:17:48.538Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -55,8 +55,8 @@
       "name": "Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 36,
-      "timestamp": "2026-10-24T11:58:34.821Z"
+      "durationMs": 35,
+      "timestamp": "2026-10-25T02:17:48.573Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -64,8 +64,8 @@
       "name": "Cổng Đặt bàn trực tuyến (/dat-ban)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 60,
-      "timestamp": "2026-10-24T11:58:34.882Z"
+      "durationMs": 62,
+      "timestamp": "2026-10-25T02:17:48.635Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -73,8 +73,8 @@
       "name": "Alias chuyển hướng /datban -> /dat-ban",
       "passed": true,
       "note": "302 -> /dat-ban",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:34.886Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:17:48.639Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -82,8 +82,8 @@
       "name": "Redirect 301 chuẩn SEO /reservation -> /dat-ban",
       "passed": true,
       "note": "301 -> /dat-ban",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:34.890Z"
+      "durationMs": 7,
+      "timestamp": "2026-10-25T02:17:48.646Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -91,8 +91,8 @@
       "name": "Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu",
       "passed": true,
       "note": "301 -> /dat-ban/tra-cuu",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:58:34.893Z"
+      "durationMs": 3,
+      "timestamp": "2026-10-25T02:17:48.649Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -100,8 +100,8 @@
       "name": "Chuyển đổi ngôn ngữ sang Tiếng Việt (?lang=vi)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 445,
-      "timestamp": "2026-10-24T11:58:35.338Z"
+      "durationMs": 527,
+      "timestamp": "2026-10-25T02:17:49.176Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -109,8 +109,8 @@
       "name": "Chuyển đổi ngôn ngữ sang English (?lang=en)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 493,
-      "timestamp": "2026-10-24T11:58:35.831Z"
+      "durationMs": 497,
+      "timestamp": "2026-10-25T02:17:49.674Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -118,8 +118,8 @@
       "name": "Chuyển đổi ngôn ngữ sang Japanese (日本語) (?lang=ja)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 509,
-      "timestamp": "2026-10-24T11:58:36.340Z"
+      "durationMs": 525,
+      "timestamp": "2026-10-25T02:17:50.200Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -128,7 +128,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 61,
-      "timestamp": "2026-10-24T11:58:36.401Z"
+      "timestamp": "2026-10-25T02:17:50.261Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -137,7 +137,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 27,
-      "timestamp": "2026-10-24T11:58:36.428Z"
+      "timestamp": "2026-10-25T02:17:50.288Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -145,8 +145,8 @@
       "name": "Lọc danh sách món theo danh mục (GET /menu?id_loai=18)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 25,
-      "timestamp": "2026-10-24T11:58:36.454Z"
+      "durationMs": 26,
+      "timestamp": "2026-10-25T02:17:50.314Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -154,8 +154,8 @@
       "name": "Xem chi tiết món & cảnh báo dị ứng nguyên liệu (/detail?monid=85)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 16,
-      "timestamp": "2026-10-24T11:58:36.471Z"
+      "durationMs": 24,
+      "timestamp": "2026-10-25T02:17:50.339Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -163,8 +163,8 @@
       "name": "Trang Thực đơn Combo (/combos)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 15,
-      "timestamp": "2026-10-24T11:58:36.486Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:17:50.351Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -172,8 +172,8 @@
       "name": "Alias Thực đơn Combo (/thuc-don)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 18,
-      "timestamp": "2026-10-24T11:58:36.505Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:17:50.363Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -182,16 +182,16 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 14,
-      "timestamp": "2026-10-24T11:58:36.519Z"
+      "timestamp": "2026-10-25T02:17:50.378Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
       "module": "CUST_AUTH",
-      "name": "Đăng ký tài khoản khách hàng mới (SĐT: 0988664374)",
+      "name": "Đăng ký tài khoản khách hàng mới (SĐT: 0988897244)",
       "passed": true,
       "note": "Status: 200",
       "durationMs": 18,
-      "timestamp": "2026-10-24T11:58:36.537Z"
+      "timestamp": "2026-10-25T02:17:50.396Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -200,7 +200,7 @@
       "passed": true,
       "note": "Status: 302",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:58:36.555Z"
+      "timestamp": "2026-10-25T02:17:50.412Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -208,8 +208,8 @@
       "name": "Xem trang thông tin cá nhân hồ sơ khách (/profile)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:36.567Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:50.425Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -218,7 +218,7 @@
       "passed": true,
       "note": "Status: 302",
       "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:36.573Z"
+      "timestamp": "2026-10-25T02:17:50.430Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -227,7 +227,7 @@
       "passed": true,
       "note": "Status: 302",
       "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:36.576Z"
+      "timestamp": "2026-10-25T02:17:50.433Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -235,8 +235,8 @@
       "name": "Thêm Combo mới vào giỏ hàng (POST /add-combo-to-cart, combo_4k_giadinh)",
       "passed": true,
       "note": "Redirect -> /cart",
-      "durationMs": 6,
-      "timestamp": "2026-10-24T11:58:36.583Z"
+      "durationMs": 7,
+      "timestamp": "2026-10-25T02:17:50.441Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -245,7 +245,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 1338,
-      "timestamp": "2026-10-24T11:58:37.922Z"
+      "timestamp": "2026-10-25T02:17:51.780Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -253,8 +253,8 @@
       "name": "API Lấy danh sách khu vực bàn ăn",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 19,
-      "timestamp": "2026-10-24T11:58:37.942Z"
+      "durationMs": 24,
+      "timestamp": "2026-10-25T02:17:51.805Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -262,8 +262,8 @@
       "name": "API Lấy danh mục phục vụ",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:37.947Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:17:51.810Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -271,8 +271,8 @@
       "name": "API Truy vấn khung giờ khả dụng theo ngày & số khách",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 363,
-      "timestamp": "2026-10-24T11:58:38.310Z"
+      "durationMs": 380,
+      "timestamp": "2026-10-25T02:17:52.190Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -280,8 +280,8 @@
       "name": "API Kiểm tra bàn trống phù hợp",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:38.323Z"
+      "durationMs": 18,
+      "timestamp": "2026-10-25T02:17:52.208Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -289,8 +289,8 @@
       "name": "API Lấy sơ đồ bàn trực quan cho khách",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 24,
-      "timestamp": "2026-10-24T11:58:38.347Z"
+      "durationMs": 27,
+      "timestamp": "2026-10-25T02:17:52.235Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -298,8 +298,8 @@
       "name": "Tạo lượt đặt bàn trực tuyến mới thành công (Mã: RSV)",
       "passed": true,
       "note": "Code: ",
-      "durationMs": 27,
-      "timestamp": "2026-10-24T11:58:38.374Z"
+      "durationMs": 48,
+      "timestamp": "2026-10-25T02:17:52.283Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -308,7 +308,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:58:38.379Z"
+      "timestamp": "2026-10-25T02:17:52.287Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -316,17 +316,17 @@
       "name": "Lưu thông tin giao hàng & người nhận (POST /giao-hang)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:58:38.382Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:17:52.291Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
       "module": "CUST_DELIVERY",
-      "name": "Chốt đơn giao hàng tận nơi (POST /datban -> /contract?sesis=oxw4jqxmchb11idxy)",
+      "name": "Chốt đơn giao hàng tận nơi (POST /datban -> /contract?sesis=4wh8ywmem4tlz1amf)",
       "passed": true,
       "note": "Vận đơn: GH",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:38.393Z"
+      "durationMs": 9,
+      "timestamp": "2026-10-25T02:17:52.300Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -334,8 +334,8 @@
       "name": "Xem danh sách đơn hàng đã đặt của tôi (/my-orders)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 337,
-      "timestamp": "2026-10-24T11:58:38.730Z"
+      "durationMs": 387,
+      "timestamp": "2026-10-25T02:17:52.688Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -343,8 +343,8 @@
       "name": "Trang gửi đánh giá chất lượng phục vụ (GET /rate)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:38.742Z"
+      "durationMs": 23,
+      "timestamp": "2026-10-25T02:17:52.712Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -353,7 +353,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:38.746Z"
+      "timestamp": "2026-10-25T02:17:52.715Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -361,8 +361,8 @@
       "name": "Trợ lý ảo AI trả lời câu hỏi thực đơn của khách (POST /chatbot/api/hoi)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 141,
-      "timestamp": "2026-10-24T11:58:38.888Z"
+      "durationMs": 239,
+      "timestamp": "2026-10-25T02:17:52.954Z"
     },
     {
       "section": "PHẦN 1: PHÂN HỆ KHÁCH HÀNG (CUSTOMER PORTAL & BOOKING & DELIVERY)",
@@ -370,8 +370,8 @@
       "name": "Đăng xuất tài khoản khách hàng an toàn (/logout)",
       "passed": true,
       "note": "Redirect -> /",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:58:38.891Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:17:52.958Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -379,8 +379,8 @@
       "name": "Đăng nhập Quản lý nhà hàng (@quanly)",
       "passed": true,
       "note": "Redirect -> /staff",
-      "durationMs": 16,
-      "timestamp": "2026-10-24T11:58:38.915Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:52.978Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -388,8 +388,8 @@
       "name": "Đăng nhập Trợ lý quản lý (@trolyquanly)",
       "passed": true,
       "note": "Redirect -> /staff/khuon-mat/lan-dau",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:38.931Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:17:52.996Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -397,8 +397,8 @@
       "name": "Đăng nhập Bếp trưởng (@beptruong)",
       "passed": true,
       "note": "Redirect -> /staff",
-      "durationMs": 6,
-      "timestamp": "2026-10-24T11:58:38.943Z"
+      "durationMs": 9,
+      "timestamp": "2026-10-25T02:17:53.014Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -406,8 +406,8 @@
       "name": "Đăng nhập Đầu bếp (@daubep)",
       "passed": true,
       "note": "Redirect -> /staff",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:38.955Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:17:53.024Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -415,8 +415,8 @@
       "name": "Đăng nhập Nhân viên phục vụ (@phucvu)",
       "passed": true,
       "note": "Redirect -> /staff",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:38.969Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:17:53.034Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -424,8 +424,8 @@
       "name": "Đăng nhập Lễ tân nhà hàng (@letan)",
       "passed": true,
       "note": "Redirect -> /staff/khuon-mat/lan-dau",
-      "durationMs": 7,
-      "timestamp": "2026-10-24T11:58:38.983Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:17:53.044Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -433,8 +433,8 @@
       "name": "Đăng nhập Thu ngân (@thungan)",
       "passed": true,
       "note": "Redirect -> /staff",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:39.002Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:17:53.055Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -443,7 +443,7 @@
       "passed": true,
       "note": "Redirect -> /staff",
       "durationMs": 7,
-      "timestamp": "2026-10-24T11:58:39.020Z"
+      "timestamp": "2026-10-25T02:17:53.065Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -451,8 +451,8 @@
       "name": "Đăng nhập Kế toán trưởng (@ketoantruong)",
       "passed": true,
       "note": "Redirect -> /staff/khuon-mat/lan-dau",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:39.031Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:17:53.075Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -460,8 +460,8 @@
       "name": "Đăng nhập Điều phối giao hàng (@dieuphoi)",
       "passed": true,
       "note": "Redirect -> /staff/khuon-mat/lan-dau",
-      "durationMs": 9,
-      "timestamp": "2026-10-24T11:58:39.047Z"
+      "durationMs": 8,
+      "timestamp": "2026-10-25T02:17:53.087Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -469,8 +469,8 @@
       "name": "Đăng nhập Nhân viên giao hàng (@shipper1)",
       "passed": true,
       "note": "Redirect -> /staff/khuon-mat/lan-dau",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:39.066Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:17:53.096Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -478,8 +478,8 @@
       "name": "Dashboard Tổng quan nhân viên (/staff)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:39.079Z"
+      "durationMs": 20,
+      "timestamp": "2026-10-25T02:17:53.116Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -487,8 +487,8 @@
       "name": "Bảng Điều hành Thời gian thực (Live Dashboard)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 18,
-      "timestamp": "2026-10-24T11:58:39.097Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:17:53.136Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -496,8 +496,8 @@
       "name": "Hồ sơ cá nhân nhân viên (/staff/profile)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 10,
-      "timestamp": "2026-10-24T11:58:39.108Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:53.149Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -505,8 +505,8 @@
       "name": "Trung tâm thông báo công việc (/staff/notifications)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:39.119Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:17:53.162Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -514,8 +514,8 @@
       "name": "Lịch làm việc & Đăng ký ca tuần (/staff/schedule)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 14,
-      "timestamp": "2026-10-24T11:58:39.134Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:17:53.181Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -523,8 +523,8 @@
       "name": "Bảng chấm công cá nhân (/staff/attendance)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 34,
-      "timestamp": "2026-10-24T11:58:39.169Z"
+      "durationMs": 96,
+      "timestamp": "2026-10-25T02:17:53.277Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -532,8 +532,8 @@
       "name": "Gửi & Quản lý đơn xin nghỉ phép (/staff/leave)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:39.182Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:17:53.292Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -541,8 +541,8 @@
       "name": "Hệ thống nhắn tin nội bộ (/staff/chat)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 17,
-      "timestamp": "2026-10-24T11:58:39.199Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:53.305Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -550,8 +550,8 @@
       "name": "Tra cứu danh sách khách hàng (/staff/customers)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:39.211Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:53.318Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -559,8 +559,8 @@
       "name": "Hộp thư điện tử nội bộ (/staff/emails)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 10,
-      "timestamp": "2026-10-24T11:58:39.221Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:17:53.333Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -568,8 +568,8 @@
       "name": "Quản lý mã QR bàn & thực đơn số (/staff/qr-codes)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 22,
-      "timestamp": "2026-10-24T11:58:39.244Z"
+      "durationMs": 28,
+      "timestamp": "2026-10-25T02:17:53.361Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -577,8 +577,8 @@
       "name": "Màn hình KDS Bếp Realtime (/kds)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:39.249Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:17:53.367Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -587,7 +587,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:58:39.254Z"
+      "timestamp": "2026-10-25T02:17:53.371Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -595,8 +595,8 @@
       "name": "Tổng quan khu Bếp (/staff/kitchen)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:39.259Z"
+      "durationMs": 7,
+      "timestamp": "2026-10-25T02:17:53.379Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -605,7 +605,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 21,
-      "timestamp": "2026-10-24T11:58:39.280Z"
+      "timestamp": "2026-10-25T02:17:53.400Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -614,7 +614,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:39.292Z"
+      "timestamp": "2026-10-25T02:17:53.411Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -622,8 +622,8 @@
       "name": "Quản lý các gói Combo bếp",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:39.304Z"
+      "durationMs": 18,
+      "timestamp": "2026-10-25T02:17:53.429Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -632,7 +632,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 37,
-      "timestamp": "2026-10-24T11:58:39.341Z"
+      "timestamp": "2026-10-25T02:17:53.466Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -640,8 +640,8 @@
       "name": "Định mức công thức nấu từng món",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 19,
-      "timestamp": "2026-10-24T11:58:39.361Z"
+      "durationMs": 17,
+      "timestamp": "2026-10-25T02:17:53.483Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -649,8 +649,8 @@
       "name": "Quản lý trang thiết bị nhà bếp",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:39.373Z"
+      "durationMs": 18,
+      "timestamp": "2026-10-25T02:17:53.501Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -659,7 +659,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:39.387Z"
+      "timestamp": "2026-10-25T02:17:53.515Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -667,8 +667,8 @@
       "name": "Ca trực và phân công khu bếp",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 9,
-      "timestamp": "2026-10-24T11:58:39.396Z"
+      "durationMs": 17,
+      "timestamp": "2026-10-25T02:17:53.532Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -676,8 +676,8 @@
       "name": "API Lấy danh sách phiếu chế biến KDS (/kds/api/don)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:39.407Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:53.545Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -685,8 +685,8 @@
       "name": "Sơ đồ 40 bàn 4 khu vực trực quan (/so-do-ban)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:39.418Z"
+      "durationMs": 14,
+      "timestamp": "2026-10-25T02:17:53.560Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -694,8 +694,8 @@
       "name": "Danh sách và trạng thái các lượt đặt bàn (/staff/bookings)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 2687,
-      "timestamp": "2026-10-24T11:58:42.105Z"
+      "durationMs": 475,
+      "timestamp": "2026-10-25T02:17:54.035Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -703,8 +703,8 @@
       "name": "Form nhân viên tạo đơn đặt bàn hộ khách (/staff/bookings/create)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:42.113Z"
+      "durationMs": 14,
+      "timestamp": "2026-10-25T02:17:54.049Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -712,8 +712,8 @@
       "name": "Trung tâm Đặt bàn thông minh (Timeline & Xếp bàn)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 37,
-      "timestamp": "2026-10-24T11:58:42.150Z"
+      "durationMs": 41,
+      "timestamp": "2026-10-25T02:17:54.090Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -721,8 +721,8 @@
       "name": "Phân tích hiệu suất đặt bàn & no-show (Quản lý)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:58:42.162Z"
+      "durationMs": 18,
+      "timestamp": "2026-10-25T02:17:54.108Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -730,8 +730,8 @@
       "name": "API Dashboard KPI Đặt bàn",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:42.171Z"
+      "durationMs": 17,
+      "timestamp": "2026-10-25T02:17:54.127Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -739,8 +739,8 @@
       "name": "API Timeline danh sách đặt bàn theo ngày",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 23,
-      "timestamp": "2026-10-24T11:58:42.194Z"
+      "durationMs": 26,
+      "timestamp": "2026-10-25T02:17:54.153Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -748,8 +748,8 @@
       "name": "API Kiểm tra bàn trống khả dụng (Ngày tương lai)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:42.207Z"
+      "durationMs": 14,
+      "timestamp": "2026-10-25T02:17:54.168Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -757,8 +757,8 @@
       "name": "API Tọa độ & trạng thái 40 bàn trên sơ đồ",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 33,
-      "timestamp": "2026-10-24T11:58:42.241Z"
+      "durationMs": 31,
+      "timestamp": "2026-10-25T02:17:54.200Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -766,8 +766,8 @@
       "name": "API Trạng thái thời gian thực bàn ăn",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 52,
-      "timestamp": "2026-10-24T11:58:42.293Z"
+      "durationMs": 50,
+      "timestamp": "2026-10-25T02:17:54.251Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -775,8 +775,8 @@
       "name": "Màn hình POS Thu ngân thanh toán đơn",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 34,
-      "timestamp": "2026-10-24T11:58:42.327Z"
+      "durationMs": 31,
+      "timestamp": "2026-10-25T02:17:54.282Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -784,8 +784,8 @@
       "name": "Lịch sử giao dịch các phiên thanh toán",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 14,
-      "timestamp": "2026-10-24T11:58:42.341Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:17:54.298Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -793,8 +793,8 @@
       "name": "Đối soát chuyển khoản ngân hàng & VietQR",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:42.352Z"
+      "durationMs": 8,
+      "timestamp": "2026-10-25T02:17:54.306Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -802,8 +802,8 @@
       "name": "Màn hình kiểm đếm & chốt két tiền mặt cuối ca",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 16,
-      "timestamp": "2026-10-24T11:58:42.369Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:17:54.325Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -811,8 +811,8 @@
       "name": "Lịch sử các biên bản chốt ca thu ngân",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:42.381Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:54.338Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -820,8 +820,8 @@
       "name": "API Tổng hợp doanh thu ca trực thu ngân (/staff/chot-ca/tong-hop)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 6,
-      "timestamp": "2026-10-24T11:58:42.388Z"
+      "durationMs": 9,
+      "timestamp": "2026-10-25T02:17:54.347Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -829,8 +829,8 @@
       "name": "Bảng tính lương nhân viên toàn nhà hàng",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 17,
-      "timestamp": "2026-10-24T11:58:42.405Z"
+      "durationMs": 55,
+      "timestamp": "2026-10-25T02:17:54.404Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -838,8 +838,8 @@
       "name": "Đối soát chấm công toàn thể nhân viên",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 22,
-      "timestamp": "2026-10-24T11:58:42.428Z"
+      "durationMs": 16,
+      "timestamp": "2026-10-25T02:17:54.420Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -847,8 +847,8 @@
       "name": "Tổng hợp ngày công & giờ công theo tháng",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 19,
-      "timestamp": "2026-10-24T11:58:42.448Z"
+      "durationMs": 16,
+      "timestamp": "2026-10-25T02:17:54.436Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -856,8 +856,8 @@
       "name": "Quản lý phiếu chi & chi phí vận hành",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 19,
-      "timestamp": "2026-10-24T11:58:42.468Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:54.449Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -865,8 +865,8 @@
       "name": "Tổng hợp xét duyệt nghỉ phép nhân sự",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 14,
-      "timestamp": "2026-10-24T11:58:42.482Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:17:54.462Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -874,8 +874,8 @@
       "name": "Báo cáo tài chính kế toán tổng hợp",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8383,
-      "timestamp": "2026-10-24T11:58:50.865Z"
+      "durationMs": 9204,
+      "timestamp": "2026-10-25T02:18:03.667Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -883,8 +883,8 @@
       "name": "Danh sách hồ sơ nhân sự phòng kế toán",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 9,
-      "timestamp": "2026-10-24T11:58:50.874Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:18:03.681Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -892,8 +892,8 @@
       "name": "Lịch làm việc phòng kế toán",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 81,
-      "timestamp": "2026-10-24T11:58:50.956Z"
+      "durationMs": 89,
+      "timestamp": "2026-10-25T02:18:03.770Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -901,8 +901,8 @@
       "name": "Bảng điều phối đơn giao hàng cho Shipper",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 650,
-      "timestamp": "2026-10-24T11:58:51.606Z"
+      "durationMs": 16,
+      "timestamp": "2026-10-25T02:18:03.786Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -910,8 +910,8 @@
       "name": "Bản đồ giám sát lộ trình GPS Realtime",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 538,
-      "timestamp": "2026-10-24T11:58:52.144Z"
+      "durationMs": 16,
+      "timestamp": "2026-10-25T02:18:03.803Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -919,8 +919,8 @@
       "name": "Ứng dụng PWA dành cho nhân viên giao hàng",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:58:52.152Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:18:03.815Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -929,7 +929,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:52.158Z"
+      "timestamp": "2026-10-25T02:18:03.820Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -937,8 +937,8 @@
       "name": "API Tọa độ các shipper đang trực tuyến (/api/giao-hang/ban-do)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 441,
-      "timestamp": "2026-10-24T11:58:52.600Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:18:03.826Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -946,8 +946,8 @@
       "name": "Sơ đồ Cơ cấu tổ chức, Chức danh & Phân quyền",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 26,
-      "timestamp": "2026-10-24T11:58:52.626Z"
+      "durationMs": 33,
+      "timestamp": "2026-10-25T02:18:03.859Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -955,8 +955,8 @@
       "name": "Xem cây phòng ban & nhân sự (Nhân viên)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 25,
-      "timestamp": "2026-10-24T11:58:52.652Z"
+      "durationMs": 30,
+      "timestamp": "2026-10-25T02:18:03.889Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -964,8 +964,8 @@
       "name": "Màn hình Kiosk Nhận diện khuôn mặt 1:N",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 15,
-      "timestamp": "2026-10-24T11:58:52.667Z"
+      "durationMs": 20,
+      "timestamp": "2026-10-25T02:18:03.909Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -973,8 +973,8 @@
       "name": "Màn hình nhân viên chụp mẫu khuôn mặt 1:1",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:52.678Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:18:03.921Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -982,8 +982,8 @@
       "name": "Quản lý bảng chấm công theo ngày (Manager)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 29,
-      "timestamp": "2026-10-24T11:58:52.708Z"
+      "durationMs": 30,
+      "timestamp": "2026-10-25T02:18:03.951Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -991,8 +991,8 @@
       "name": "Ứng dụng Chấm công Di động PWA (GPS + Face)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 18,
-      "timestamp": "2026-10-24T11:58:52.726Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:18:03.966Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1000,8 +1000,8 @@
       "name": "Lưới xếp ca tự động theo tuần",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 48,
-      "timestamp": "2026-10-24T11:58:52.775Z"
+      "durationMs": 38,
+      "timestamp": "2026-10-25T02:18:04.004Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1009,8 +1009,8 @@
       "name": "Khai báo định mức nhân sự mỗi ca",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:58:52.788Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:18:04.023Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1018,8 +1018,8 @@
       "name": "API Sơ đồ cây tổ chức",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:52.800Z"
+      "durationMs": 21,
+      "timestamp": "2026-10-25T02:18:04.045Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1027,8 +1027,8 @@
       "name": "API Thống kê tổng quan nhân sự",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 6,
-      "timestamp": "2026-10-24T11:58:52.807Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:18:04.050Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1036,8 +1036,8 @@
       "name": "API Danh sách nhân viên & chức danh",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 7,
-      "timestamp": "2026-10-24T11:58:52.814Z"
+      "durationMs": 6,
+      "timestamp": "2026-10-25T02:18:04.056Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1046,7 +1046,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:58:52.818Z"
+      "timestamp": "2026-10-25T02:18:04.061Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1054,8 +1054,8 @@
       "name": "API Danh mục chức danh & quyền hạn",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 11,
-      "timestamp": "2026-10-24T11:58:52.830Z"
+      "durationMs": 17,
+      "timestamp": "2026-10-25T02:18:04.078Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1064,7 +1064,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 5,
-      "timestamp": "2026-10-24T11:58:52.835Z"
+      "timestamp": "2026-10-25T02:18:04.083Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1072,8 +1072,8 @@
       "name": "API Hồ sơ phân quyền người đăng nhập",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:52.838Z"
+      "durationMs": 2,
+      "timestamp": "2026-10-25T02:18:04.086Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1082,7 +1082,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 3,
-      "timestamp": "2026-10-24T11:58:52.842Z"
+      "timestamp": "2026-10-25T02:18:04.089Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1090,8 +1090,8 @@
       "name": "API Kiểm tra trạng thái AI nhận diện khuôn mặt",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 10,
-      "timestamp": "2026-10-24T11:58:52.852Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:18:04.101Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1099,8 +1099,8 @@
       "name": "Màn hình Báo cáo cuối ngày phục vụ (/staff/phuc-vu/bao-cao)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 475,
-      "timestamp": "2026-10-24T11:58:53.327Z"
+      "durationMs": 656,
+      "timestamp": "2026-10-25T02:18:04.758Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1108,8 +1108,8 @@
       "name": "API Tự động tổng hợp số liệu ca phục vụ (/staff/phuc-vu/api/so-lieu-ngay)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 411,
-      "timestamp": "2026-10-24T11:58:53.738Z"
+      "durationMs": 467,
+      "timestamp": "2026-10-25T02:18:05.225Z"
     },
     {
       "section": "PHẦN 2: PHÂN HỆ NHÂN VIÊN ĐA VAI TRÒ (STAFF PORTAL - 11 ROLES)",
@@ -1117,8 +1117,8 @@
       "name": "Lịch sử báo cáo giao ca phục vụ (/staff/phuc-vu/bao-cao/lich-su)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 14,
-      "timestamp": "2026-10-24T11:58:53.752Z"
+      "durationMs": 13,
+      "timestamp": "2026-10-25T02:18:05.238Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1127,7 +1127,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:58:53.760Z"
+      "timestamp": "2026-10-25T02:18:05.247Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1136,7 +1136,7 @@
       "passed": true,
       "note": "Redirect -> /admin",
       "durationMs": 2,
-      "timestamp": "2026-10-24T11:58:53.767Z"
+      "timestamp": "2026-10-25T02:18:05.254Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1144,8 +1144,8 @@
       "name": "Dashboard Quản trị tổng quan (/admin/)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 7695,
-      "timestamp": "2026-10-24T11:59:01.463Z"
+      "durationMs": 76,
+      "timestamp": "2026-10-25T02:18:05.330Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1153,8 +1153,8 @@
       "name": "Thống kê kinh doanh & doanh thu (/admin/stats)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 15045,
-      "timestamp": "2026-10-24T11:59:16.508Z"
+      "durationMs": 241,
+      "timestamp": "2026-10-25T02:18:05.572Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1162,8 +1162,8 @@
       "name": "Danh sách các loại món ăn (/admin/catlist)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:59:16.516Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:18:05.587Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1171,8 +1171,8 @@
       "name": "Form thêm loại món mới (/admin/catadd)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:59:16.522Z"
+      "durationMs": 12,
+      "timestamp": "2026-10-25T02:18:05.599Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1180,8 +1180,8 @@
       "name": "Danh mục món ăn & thực đơn (/admin/productlist)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:59:16.535Z"
+      "durationMs": 16,
+      "timestamp": "2026-10-25T02:18:05.615Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1189,8 +1189,8 @@
       "name": "Form thêm món ăn mới (/admin/productadd)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 12,
-      "timestamp": "2026-10-24T11:59:16.547Z"
+      "durationMs": 9,
+      "timestamp": "2026-10-25T02:18:05.625Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1198,8 +1198,8 @@
       "name": "Danh sách nhân sự toàn hệ thống (/admin/stafflist)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:59:16.561Z"
+      "durationMs": 14,
+      "timestamp": "2026-10-25T02:18:05.639Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1207,8 +1207,8 @@
       "name": "Form thêm tài khoản nhân viên (/admin/staffadd)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 6,
-      "timestamp": "2026-10-24T11:59:16.568Z"
+      "durationMs": 7,
+      "timestamp": "2026-10-25T02:18:05.646Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1216,8 +1216,8 @@
       "name": "Cấu hình thanh toán & VietQR (/admin/thanh-toan)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 31,
-      "timestamp": "2026-10-24T11:59:16.600Z"
+      "durationMs": 35,
+      "timestamp": "2026-10-25T02:18:05.681Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1225,8 +1225,8 @@
       "name": "Chính sách & Quy tắc đặt bàn (/admin/dat-ban)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 26,
-      "timestamp": "2026-10-24T11:59:16.626Z"
+      "durationMs": 30,
+      "timestamp": "2026-10-25T02:18:05.711Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1235,7 +1235,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 12,
-      "timestamp": "2026-10-24T11:59:16.639Z"
+      "timestamp": "2026-10-25T02:18:05.723Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1243,8 +1243,8 @@
       "name": "Danh sách chương trình khuyến mãi (/admin/khuyen-mai)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 21,
-      "timestamp": "2026-10-24T11:59:16.660Z"
+      "durationMs": 11,
+      "timestamp": "2026-10-25T02:18:05.734Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1252,8 +1252,8 @@
       "name": "Form tạo mới khuyến mãi (/admin/khuyen-mai/them)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 17,
-      "timestamp": "2026-10-24T11:59:16.677Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:18:05.753Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1261,8 +1261,8 @@
       "name": "Hạng thành viên & Tích điểm (/admin/thanh-vien)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 13,
-      "timestamp": "2026-10-24T11:59:16.690Z"
+      "durationMs": 19,
+      "timestamp": "2026-10-25T02:18:05.773Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1270,8 +1270,8 @@
       "name": "Danh sách bài viết tin tức (/admin/bloglist)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 10,
-      "timestamp": "2026-10-24T11:59:16.700Z"
+      "durationMs": 15,
+      "timestamp": "2026-10-25T02:18:05.788Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1280,7 +1280,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 10,
-      "timestamp": "2026-10-24T11:59:16.710Z"
+      "timestamp": "2026-10-25T02:18:05.798Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1288,8 +1288,8 @@
       "name": "Cơ cấu tổ chức & Phân quyền (/admin/to-chuc-quan-ly)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 34,
-      "timestamp": "2026-10-24T11:59:16.744Z"
+      "durationMs": 35,
+      "timestamp": "2026-10-25T02:18:05.834Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1297,8 +1297,8 @@
       "name": "Hồ sơ tài khoản Quản trị (/admin/profile)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 8,
-      "timestamp": "2026-10-24T11:59:16.752Z"
+      "durationMs": 10,
+      "timestamp": "2026-10-25T02:18:05.844Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1307,7 +1307,7 @@
       "passed": true,
       "note": "Status: 200",
       "durationMs": 8,
-      "timestamp": "2026-10-24T11:59:16.760Z"
+      "timestamp": "2026-10-25T02:18:05.852Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1315,8 +1315,8 @@
       "name": "Quản trị Trợ lý AI Chatbot & Huấn luyện ý định (/admin/chatbot)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 69,
-      "timestamp": "2026-10-24T11:59:16.831Z"
+      "durationMs": 70,
+      "timestamp": "2026-10-25T02:18:05.922Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1324,8 +1324,8 @@
       "name": "Trung tâm Phân tích & Dự báo AI (/admin/du-bao)",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 227,
-      "timestamp": "2026-10-24T11:59:17.058Z"
+      "durationMs": 150,
+      "timestamp": "2026-10-25T02:18:06.073Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1333,8 +1333,8 @@
       "name": "API Thống kê độ chuẩn xác câu trả lời Chatbot",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 4,
-      "timestamp": "2026-10-24T11:59:17.062Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:18:06.079Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1342,8 +1342,8 @@
       "name": "API Dữ liệu AI dự báo lượng khách",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:59:17.067Z"
+      "durationMs": 3,
+      "timestamp": "2026-10-25T02:18:06.083Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1351,8 +1351,8 @@
       "name": "API Dữ liệu AI dự báo tiêu thụ nguyên liệu",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 4,
-      "timestamp": "2026-10-24T11:59:17.071Z"
+      "durationMs": 11,
+      "timestamp": "2026-10-25T02:18:06.094Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1360,8 +1360,8 @@
       "name": "API Đánh giá độ chính xác mô hình học máy",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:59:17.074Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:18:06.099Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
@@ -1369,44 +1369,44 @@
       "name": "API Kiểm tra tiến trình huấn luyện AI",
       "passed": true,
       "note": "Status: 200",
-      "durationMs": 27,
-      "timestamp": "2026-10-24T11:59:17.101Z"
+      "durationMs": 30,
+      "timestamp": "2026-10-25T02:18:06.129Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
       "module": "ADMIN_CRUD",
-      "name": "1. Tạo loại món mới: \"LoaiTest_1792843157101\"",
+      "name": "1. Tạo loại món mới: \"LoaiTest_1792894686130\"",
       "passed": true,
       "note": "Redirect -> /admin/catlist",
-      "durationMs": 5,
-      "timestamp": "2026-10-24T11:59:17.106Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:18:06.134Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
       "module": "ADMIN_CRUD",
-      "name": "2. Xác nhận loại món mới đã xuất hiện trong CSDL (ID: #59)",
+      "name": "2. Xác nhận loại món mới đã xuất hiện trong CSDL (ID: #60)",
       "passed": true,
-      "note": "ID: #59",
-      "durationMs": 9,
-      "timestamp": "2026-10-24T11:59:17.116Z"
+      "note": "ID: #60",
+      "durationMs": 8,
+      "timestamp": "2026-10-25T02:18:06.143Z"
     },
     {
       "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
       "module": "ADMIN_CRUD",
-      "name": "3. Cập nhật tên loại món thành: \"LoaiTest_1792843157101_Upd\"",
+      "name": "3. Cập nhật tên loại món thành: \"LoaiTest_1792894686130_Upd\"",
+      "passed": true,
+      "note": "Status: 302",
+      "durationMs": 3,
+      "timestamp": "2026-10-25T02:18:06.146Z"
+    },
+    {
+      "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
+      "module": "ADMIN_CRUD",
+      "name": "4. Xóa dọn dẹp dữ liệu loại món test (ID: #60)",
       "passed": true,
       "note": "Status: 302",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:59:17.120Z"
-    },
-    {
-      "section": "PHẦN 3: PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN PORTAL - FULL CONTROL)",
-      "module": "ADMIN_CRUD",
-      "name": "4. Xóa dọn dẹp dữ liệu loại món test (ID: #59)",
-      "passed": true,
-      "note": "Status: 302",
-      "durationMs": 4,
-      "timestamp": "2026-10-24T11:59:17.125Z"
+      "timestamp": "2026-10-25T02:18:06.150Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1414,8 +1414,8 @@
       "name": "Chặn truy cập trái phép Admin: Dashboard Quản trị (/admin/)",
       "passed": true,
       "note": "Redirect -> /admin/login",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.129Z"
+      "durationMs": 3,
+      "timestamp": "2026-10-25T02:18:06.153Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1424,7 +1424,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.131Z"
+      "timestamp": "2026-10-25T02:18:06.155Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1432,8 +1432,8 @@
       "name": "Chặn truy cập trái phép Admin: Quản lý món ăn (/admin/productlist)",
       "passed": true,
       "note": "Redirect -> /admin/login",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.133Z"
+      "durationMs": 1,
+      "timestamp": "2026-10-25T02:18:06.157Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1442,7 +1442,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.135Z"
+      "timestamp": "2026-10-25T02:18:06.159Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1450,8 +1450,8 @@
       "name": "Chặn truy cập trái phép Admin: Cấu hình thanh toán (/admin/thanh-toan)",
       "passed": true,
       "note": "Redirect -> /admin/login",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.137Z"
+      "durationMs": 1,
+      "timestamp": "2026-10-25T02:18:06.161Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1460,7 +1460,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.139Z"
+      "timestamp": "2026-10-25T02:18:06.162Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1469,7 +1469,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.141Z"
+      "timestamp": "2026-10-25T02:18:06.163Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1477,8 +1477,8 @@
       "name": "Chặn truy cập trái phép Admin: Quản trị AI Chatbot (/admin/chatbot)",
       "passed": true,
       "note": "Redirect -> /admin/login",
-      "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.142Z"
+      "durationMs": 2,
+      "timestamp": "2026-10-25T02:18:06.165Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1487,7 +1487,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.144Z"
+      "timestamp": "2026-10-25T02:18:06.166Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1496,7 +1496,7 @@
       "passed": true,
       "note": "Redirect -> /admin/login",
       "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.145Z"
+      "timestamp": "2026-10-25T02:18:06.168Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1504,8 +1504,8 @@
       "name": "Chặn truy cập trái phép Staff: Dashboard Nhân viên (/staff)",
       "passed": true,
       "note": "Redirect -> /staff/login",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:59:17.148Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:18:06.172Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1513,8 +1513,8 @@
       "name": "Chặn truy cập trái phép Staff: Sơ đồ bàn (/staff/so-do-ban)",
       "passed": true,
       "note": "Redirect -> /staff/login",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.151Z"
+      "durationMs": 4,
+      "timestamp": "2026-10-25T02:18:06.176Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1522,8 +1522,8 @@
       "name": "Chặn truy cập trái phép Staff: Màn hình KDS Bếp (/staff/kds)",
       "passed": true,
       "note": "Redirect -> /staff/login",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.153Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:18:06.181Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1532,7 +1532,7 @@
       "passed": true,
       "note": "Redirect -> /staff/login",
       "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.156Z"
+      "timestamp": "2026-10-25T02:18:06.183Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1541,7 +1541,7 @@
       "passed": true,
       "note": "Redirect -> /staff/login",
       "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.158Z"
+      "timestamp": "2026-10-25T02:18:06.184Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1549,8 +1549,8 @@
       "name": "Chặn truy cập trái phép Staff: Báo cáo giao ca (/staff/phuc-vu/bao-cao)",
       "passed": true,
       "note": "Redirect -> /staff/login",
-      "durationMs": 1,
-      "timestamp": "2026-10-24T11:59:17.159Z"
+      "durationMs": 2,
+      "timestamp": "2026-10-25T02:18:06.186Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1559,7 +1559,7 @@
       "passed": true,
       "note": "Status: 403",
       "durationMs": 4,
-      "timestamp": "2026-10-24T11:59:17.163Z"
+      "timestamp": "2026-10-25T02:18:06.190Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1568,7 +1568,7 @@
       "passed": true,
       "note": "Status: 302",
       "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.165Z"
+      "timestamp": "2026-10-25T02:18:06.192Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1576,8 +1576,8 @@
       "name": "Xử lý chuẩn xác khi gọi route không tồn tại (404 Handler)",
       "passed": true,
       "note": "Status: 404",
-      "durationMs": 3,
-      "timestamp": "2026-10-24T11:59:17.169Z"
+      "durationMs": 5,
+      "timestamp": "2026-10-25T02:18:06.197Z"
     },
     {
       "section": "PHẦN 4: BẢO MẬT, PHÂN QUYỀN RBAC & XỬ LÝ LỖI BIÊN (SECURITY & ROBUSTNESS)",
@@ -1585,8 +1585,8 @@
       "name": "Xử lý an toàn khi gửi payload rỗng vào API Chatbot",
       "passed": true,
       "note": "Response: Bạn nhắn câu hỏi giúp mình nhé!",
-      "durationMs": 2,
-      "timestamp": "2026-10-24T11:59:17.172Z"
+      "durationMs": 3,
+      "timestamp": "2026-10-25T02:18:06.200Z"
     }
   ]
 }
