@@ -1,0 +1,147 @@
+<%
+  var activePage = 'dattiec';
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var mauTT = { MOI: 'warning', DA_LIEN_HE: 'info', DA_XAC_NHAN: 'primary', DA_COC: 'success', HOAN_THANH: 'secondary', HUY: 'danger' };
+  var ngayVN = function (s) { if (!s) return ''; var d = s.split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
+%>
+<%- include('partials/header') %>
+
+<style>
+  .tc-stat { border-radius: 12px; padding: .8rem 1rem; background: #fff; border: 1px solid #eadfcf; text-decoration: none !important; display: block; color: inherit; }
+  .tc-stat:hover { border-color: #c8a24b; }
+  .tc-stat.is-on { border-color: #c8a24b; box-shadow: 0 0 0 3px rgba(200,162,75,.2); }
+  .tc-stat b { font-size: 1.5rem; display: block; color: #2b1a12; }
+  .tc-stat span { font-size: .78rem; color: #6c5b4b; text-transform: uppercase; letter-spacing: .04em; }
+  .tc-row { cursor: pointer; }
+  .tc-row:hover { background: #fffaf1; }
+  .tc-detail td { background: #fffcf6; border-top: 0 !important; }
+  .tc-detail h6 { font-weight: 700; color: #4e342e; margin-bottom: .4rem; }
+  .tc-kv { font-size: .88rem; margin-bottom: .25rem; display: flex; gap: .75rem; }
+  .tc-kv > span:first-child { color: #6c5b4b; flex: 0 0 110px; }
+  .tc-kv--tien > span:first-child { flex: 1 1 auto; }
+  .tc-kv--tien > span:last-child { white-space: nowrap; text-align: right; }
+  .tc-kv--tien small { display: block; color: #8a7a6a; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-glass-cheers text-warning"></i> Quản lý Đặt tiệc</h1>
+  <a href="/dat-tiec" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Trang đặt tiệc của khách</a>
+</div>
+
+<div class="row mb-3">
+  <% Object.keys(trangThai).forEach(function (k) { %>
+    <div class="col-6 col-md-4 col-xl-2 mb-2">
+      <a class="tc-stat <%= loc.trangThai === k ? 'is-on' : '' %>" href="?trang_thai=<%= loc.trangThai === k ? '' : k %>">
+        <b><%= tk[k] %></b><span><%= trangThai[k] %></span>
+      </a>
+    </div>
+  <% }) %>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-body">
+    <form class="form-inline mb-3" method="get" style="gap:.5rem">
+      <select name="trang_thai" class="form-control form-control-sm">
+        <option value="">Tất cả trạng thái</option>
+        <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= loc.trangThai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
+      </select>
+      <input type="date" name="tu_ngay" value="<%= loc.tuNgay %>" class="form-control form-control-sm" title="Tổ chức từ ngày">
+      <input type="search" name="tim" value="<%= loc.tim %>" class="form-control form-control-sm" placeholder="Mã, tên, SĐT...">
+      <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Lọc</button>
+      <a href="/staff/dat-tiec" class="btn btn-sm btn-light">Xóa lọc</a>
+    </form>
+
+    <% if (!ds.length) { %>
+      <p class="text-muted text-center py-4 mb-0">Chưa có yêu cầu đặt tiệc nào phù hợp.</p>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead class="thead-light">
+          <tr><th>Mã</th><th>Khách</th><th>Loại tiệc</th><th>Ngày / buổi</th><th>Sảnh</th><th class="text-right">Khách / bàn</th><th class="text-right">Dự toán</th><th>Trạng thái</th></tr>
+        </thead>
+        <tbody>
+        <% ds.forEach(function (d) { %>
+          <tr class="tc-row" data-mo="<%= d.id %>">
+            <td><b><%= d.ma_tiec %></b></td>
+            <td><%= d.ho_ten %><br><small class="text-muted"><%= d.so_dien_thoai %></small></td>
+            <td><%= d.ten_loai %><% if (d.ten_nhan_vat) { %><br><small class="text-muted"><%= d.ten_nhan_vat %></small><% } %></td>
+            <td><%= ngayVN(d.ngay) %><br><small class="text-muted"><%= d.ten_buoi %> · <%= d.gio %></small></td>
+            <td><%= d.ten_sanh %></td>
+            <td class="text-right"><%= d.so_khach %> / <%= d.so_ban %></td>
+            <td class="text-right"><b><%= vnd(d.tong_du_toan) %></b></td>
+            <td><span class="badge badge-<%= mauTT[d.trang_thai] %>"><%= d.ten_trang_thai %></span></td>
+          </tr>
+          <tr class="tc-detail" data-chi-tiet="<%= d.id %>" hidden>
+            <td colspan="8">
+              <div class="row py-2">
+                <div class="col-md-4 mb-3">
+                  <h6>Liên hệ</h6>
+                  <div class="tc-kv"><span>Người đặt</span><span><%= d.ho_ten %></span></div>
+                  <div class="tc-kv"><span>Điện thoại</span><span><a href="tel:<%= d.so_dien_thoai %>"><%= d.so_dien_thoai %></a></span></div>
+                  <div class="tc-kv"><span>Email</span><span><%= d.email || '—' %></span></div>
+                  <div class="tc-kv"><span>Gửi lúc</span><span><%= new Date(d.created_at).toLocaleString('vi-VN') %></span></div>
+                  <% if (d.ghi_chu) { %><div class="tc-kv mt-2"><span>Yêu cầu thêm</span><span><%= d.ghi_chu %></span></div><% } %>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <h6>Dự toán</h6>
+                  <div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div>
+                  <% d.dich_vu.forEach(function (v) { %>
+                    <div class="tc-kv tc-kv--tien"><span><%= v.ten %><small><%= vnd(v.don_gia) %> × <%= v.so_luong %> <%= donVi[v.don_vi] %></small></span><span><%= vnd(v.thanh_tien) %></span></div>
+                  <% }) %>
+                  <div class="tc-kv tc-kv--tien mt-2 pt-2 border-top"><span>Tổng (chưa VAT)</span><span><b class="text-danger"><%= vnd(d.tong_du_toan) %></b></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Cọc 30%</span><span><%= vnd(Math.round(d.tong_du_toan * 0.3)) %></span></div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <h6>Xử lý</h6>
+                  <form data-cap-nhat="<%= d.id %>">
+                    <select name="trang_thai" class="form-control form-control-sm mb-2">
+                      <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= d.trang_thai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
+                    </select>
+                    <textarea name="ghi_chu_noi_bo" rows="3" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
+                    <button class="btn btn-sm btn-warning"><i class="fas fa-save"></i> Lưu</button>
+                    <small class="ml-2" data-kq></small>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('[data-mo]').forEach(function (r) {
+    r.addEventListener('click', function () {
+      var ct = document.querySelector('[data-chi-tiet="' + r.getAttribute('data-mo') + '"]');
+      if (ct) ct.hidden = !ct.hidden;
+    });
+  });
+  document.querySelectorAll('[data-cap-nhat]').forEach(function (f) {
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var kq = f.querySelector('[data-kq]');
+      kq.className = 'ml-2 text-muted'; kq.textContent = 'Đang lưu...';
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + f.getAttribute('data-cap-nhat') + '/trang-thai', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trang_thai: f.trang_thai.value, ghi_chu_noi_bo: f.ghi_chu_noi_bo.value })
+        });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+        kq.className = 'ml-2 text-success'; kq.textContent = 'Đã lưu';
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (err) {
+        kq.className = 'ml-2 text-danger'; kq.textContent = err.message;
+      }
+    });
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

@@ -63,7 +63,7 @@ const kdsService = {
        WHERE h.id_mon > 0
          AND h.trangthai_bep < 3
          AND (
-           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy')) AND h.tinhtrang NOT IN (2, 3, 4))
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
            OR
            (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
          )
@@ -83,11 +83,14 @@ const kdsService = {
   /** Mon da phuc vu trong ca hom nay - cot cuoi cua KDS. */
   layDaPhucVu: async (gioiHan = 30) => {
     const [rows] = await db.query(
-      `SELECT h.id, h.sesis, h.name_mon, h.soluong, h.bep_ket_thuc, b.number_ban
+      `SELECT h.id, h.sesis, h.name_mon, h.soluong, h.bep_ket_thuc, b.number_ban,
+              DATE_FORMAT(h.len_mon_luc, '%H:%i') AS gio_len_mon,
+              COALESCE(nv.ten, IF(h.len_mon_luc IS NULL, NULL, 'Quản trị')) AS nguoi_len_mon
        FROM hopdong h
        LEFT JOIN ban b ON b.Id_ban = h.id_ban
+       LEFT JOIN nhan_vien nv ON nv.id_nv = h.nv_len_mon
        WHERE h.id_mon > 0 AND h.trangthai_bep = 3 AND h.ngay_dat = CURDATE()
-       ORDER BY h.bep_ket_thuc DESC LIMIT ?`,
+       ORDER BY COALESCE(h.len_mon_luc, h.bep_ket_thuc) DESC LIMIT ?`,
       [gioiHan]
     );
     return rows;
@@ -147,11 +150,15 @@ const kdsService = {
             'UPDATE nguyen_lieu SET so_luong = GREATEST(so_luong - ?, 0) WHERE id_nl = ?',
             [tieuHao, nl.id_nl]
           );
-          // Ghi nhat ky de mo hinh du bao co du lieu tieu hao thuc te.
+          // Tru dung LO het han som nhat truoc - de canh bao han dung o kho bep
+          // phan anh hang con that, khong phai hang da nau tu tuan truoc.
+          await require('./khoBepService').truLoFIFO(conn, nl.id_nl, tieuHao);
+          // Ghi nhat ky (kem gia tri theo gia von luc xuat) cho du bao va thong ke bep.
           await conn.query(
-            `INSERT INTO xuat_kho (id_nl, so_luong, ly_do, sesis, id_mon, ngay_xuat)
-             VALUES (?, ?, 'ban_hang', ?, ?, CURDATE())`,
-            [nl.id_nl, tieuHao, sesis, id_mon]
+            `INSERT INTO xuat_kho (id_nl, so_luong, ly_do, sesis, id_mon, ngay_xuat, gia_tri)
+             VALUES (?, ?, 'ban_hang', ?, ?, CURDATE(),
+                     ? * (SELECT gia_von FROM nguyen_lieu WHERE id_nl = ?))`,
+            [nl.id_nl, tieuHao, sesis, id_mon, tieuHao, nl.id_nl]
           );
         }
       }
@@ -166,11 +173,15 @@ const kdsService = {
     return kdsService.layMotMon(id);
   },
 
-  /** Phuc vu mang mon ra ban: 2 -> 3. */
-  danhDauDaPhucVu: async (id) => {
+  /**
+   * Phuc vu XAC NHAN da mang mon ra ban: 2 -> 3. Ghi lai ai xac nhan va luc
+   * nao (`nv_len_mon`, `len_mon_luc`) de quan ly truy duoc mon nao bung ra
+   * tre, do ai bung.
+   */
+  danhDauDaPhucVu: async (id, idNv = null) => {
     const [r] = await db.query(
-      'UPDATE hopdong SET trangthai_bep = 3 WHERE id = ? AND trangthai_bep = 2',
-      [id]
+      'UPDATE hopdong SET trangthai_bep = 3, nv_len_mon = ?, len_mon_luc = NOW() WHERE id = ? AND trangthai_bep = 2',
+      [idNv, id]
     );
     if (!r.affectedRows) throw new Error('Món chưa hoàn thành chế biến.');
     return kdsService.layMotMon(id);
@@ -199,7 +210,7 @@ const kdsService = {
        WHERE h.id_mon > 0
          AND h.trangthai_bep < 3
          AND (
-           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy')) AND h.tinhtrang NOT IN (2, 3, 4))
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
            OR
            (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
          )`

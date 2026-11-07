@@ -32,6 +32,7 @@
  */
 const express = require('express');
 const vc = require('../services/vanChuyenService');
+const db = require('../config/db');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
 const diaChiQR = require('../utils/diaChiQR');
@@ -230,6 +231,63 @@ router.get('/staff/giao-hang/ban-do', canTheoDoi, bat(async (req, res) => {
  * giao tan nha. Dat TRUOC route '/staff/giao-hang/:id' vi 'tao' cung khop mau
  * `:id`; Express lay route dang ky truoc.
  */
+/**
+ * DIEU PHOI TU DONG: bang chia deu, vung giao, nhat ky phan cong, cau hinh.
+ * Xem services/phanCongGiaoService.js de biet quy tac chon shipper.
+ */
+router.get('/staff/giao-hang/dieu-phoi', canXem, bat(async (req, res) => {
+  const pc = require('../services/phanCongGiaoService');
+  const kv = require('../services/khuVucGiaoService');
+  const [tq, khu, nhaHang] = await Promise.all([pc.tongQuan(), kv.dsKhuVuc({ boDem: true }), vc.toaDoNhaHang()]);
+  res.render('staff/giao-hang-dieu-phoi', {
+    title: 'Điều phối tự động', activePage: 'giao-hang', tq, khu, nhaHang,
+    duocSua: !!(res.locals.coQuyen && res.locals.coQuyen('giao_hang.phan_cong')) || !!req.session.adminlogin,
+  });
+}));
+
+router.get('/api/giao-hang/dieu-phoi', canXem, bat(async (req, res) => {
+  res.json({ ok: true, ...(await require('../services/phanCongGiaoService').tongQuan()) });
+}));
+
+router.post('/staff/giao-hang/dieu-phoi/cau-hinh', canPhan, bat(async (req, res) => {
+  const pc = require('../services/phanCongGiaoService');
+  const b = req.body || {};
+  await pc.luuThamSo({
+    tu_dong: b.tu_dong === undefined ? undefined : !!b.tu_dong,
+    chi_trong_khu_vuc: b.chi_trong_khu_vuc === undefined ? undefined : !!b.chi_trong_khu_vuc,
+    tieu_chi: b.tieu_chi, phut_xac_nhan: b.phut_xac_nhan,
+  });
+  let kq = null;
+  if (b.tu_dong) kq = await pc.phanHangCho();   // vua bat lai -> phan ngay don dang cho
+  realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+  res.json({ ok: true, ...(kq || {}) });
+}));
+
+router.post('/staff/giao-hang/dieu-phoi/chay', canPhan, bat(async (req, res) => {
+  const pc = require('../services/phanCongGiaoService');
+  await pc.quetHetHan();
+  const kq = await pc.phanHangCho();
+  realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+  res.json({ ok: true, ...kq });
+}));
+
+router.post('/staff/giao-hang/khu-vuc/:id', laSo, canPhan, bat(async (req, res) => {
+  const kv = require('../services/khuVucGiaoService');
+  const b = req.body || {};
+  try {
+    if (b.bat !== undefined) await kv.batTat(Number(req.params.id), !!b.bat);
+    if (b.da_giac) await kv.suaDaGiac(Number(req.params.id), b.da_giac);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+
+/** Vung giao hang dang bat - CONG KHAI (trang dat hang ve len ban do cho khach). */
+router.get('/api/giao-hang/khu-vuc', bat(async (req, res) => {
+  const kv = require('../services/khuVucGiaoService');
+  const ds = await kv.dsKhuVuc({ chiBat: true });
+  res.json({ ok: true, mo_ta: await kv.moTaVung(), khu: ds.map((k) => ({ ma: k.ma, ten: k.ten, mau: k.mau, da_giac: k.da_giac })) });
+}));
+
 router.post('/staff/giao-hang/tao', canPhan, bat(async (req, res) => {
   const b = req.body || {};
   try {
@@ -252,13 +310,20 @@ router.get('/staff/giao-hang/:id', laSo, canXem, bat(async (req, res) => {
   if (!don) return res.status(404).render('error', {
     title: 'Không tìm thấy', message: 'Đơn giao hàng này không tồn tại.', statusCode: 404,
   });
-  const [mon, lichSu, dsSp, vet] = await Promise.all([
+  const chinhSach = require('../services/chinhSachGiaoService');
+  const [mon, lichSu, dsSp, vet, lichSuHoan, daTra, cs] = await Promise.all([
     vc.monCuaDon(don.sesis), vc.nhatKy(don.id_giao), vc.dsShipper(), vc.vetCuaDon(don.id_giao),
+    chinhSach.lichSuHoan(don.id_giao), chinhSach.tienDaTra(don.sesis), chinhSach.docThamSo(),
   ]);
+  const daHoanTien = lichSuHoan.reduce((t, h) => t + Number(h.so_tien || 0), 0);
   res.render('staff/giao-hang-chi-tiet', {
     title: `Đơn giao ${don.ma_giao}`,
     activePage: 'giao-hang',
     don, mon, lichSu, dsSp, vet, TT: vc.TT,
+    LY_DO_HUY: chinhSach.LY_DO_HUY,
+    lichSuHoan, daTraTien: daTra.tien, daTraDiem: daTra.diem,
+    conHoanDuoc: Math.max(0, daTra.tien - daHoanTien),
+    giaTri1Diem: cs.gia_tri_1_diem, tyLeHoan: cs.ty_le_hoan_diem,
     nhaHang: await vc.toaDoNhaHang(),
     msg: req.query.msg || null,
     msgType: req.query.msgType || 'success',
@@ -269,6 +334,7 @@ router.post('/staff/giao-hang/:id/phan', laSo, canPhan, bat(async (req, res) => 
   const id = Number(req.params.id);
   try {
     const don = await vc.phanShipper(id, Number((req.body || {}).id_shipper), nguoiDung(req));
+    await require('../services/phanCongGiaoService').ghiPhanTay(id, Number((req.body || {}).id_shipper));
     realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
     realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
     veDieuPhoi(res, req.get('referer') && req.get('referer').includes('/ban-do')
@@ -297,12 +363,41 @@ router.post('/staff/giao-hang/:id/trang-thai', laSo, canPhan, bat(async (req, re
   try {
     // `laDieuPhoi` cho phep dong vao don cua NGUOI KHAC. Dieu phoi phai xu ly
     // duoc don cua shipper da tat may hay het pin giua duong.
-    const don = await vc.doiTrangThai(id, String(b.trang_thai), nguoiDung(req), {
-      laDieuPhoi: true, ly_do: b.ly_do, ghi_chu: b.ghi_chu,
-    });
+    let don;
+    let thongBao = '';
+    if (String(b.trang_thai) === 'huy') {
+      // Huy LUON di qua chinh sach: chon ly do -> biet ai co loi -> hoan diem hay khong.
+      const kq = await require('../services/chinhSachGiaoService').huyDon(id, {
+        ma_ly_do: b.ma_ly_do, ghi_chu: b.ly_do, nguoi: nguoiDung(req),
+      });
+      don = kq.don;
+      const h = kq.chinh_sach || {};
+      thongBao = h.ben_loi === 'nha_hang'
+        ? ` Lỗi nhà hàng — đã hoàn ${h.diem_hoan || 0} điểm${h.diem_tra_lai ? ` và trả lại ${h.diem_tra_lai} điểm đã dùng` : ''} cho khách.`
+        : ' Lỗi do khách — theo chính sách không hoàn tiền/điểm.';
+    } else {
+      don = await vc.doiTrangThai(id, String(b.trang_thai), nguoiDung(req), {
+        laDieuPhoi: true, ly_do: b.ly_do, ghi_chu: b.ghi_chu,
+      });
+    }
     realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
     realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
-    veDieuPhoi(res, `/staff/giao-hang/${id}`, `Đơn ${don.ma_giao}: ${don.tt.nhan}.`);
+    veDieuPhoi(res, `/staff/giao-hang/${id}`, `Đơn ${don.ma_giao}: ${don.tt.nhan}.${thongBao}`);
+  } catch (e) {
+    veDieuPhoi(res, `/staff/giao-hang/${id}`, e.message, 'danger');
+  }
+}));
+
+/** Hoan diem MOT PHAN (giao thieu / sai mon, mon hu...) - chi loi nha hang. */
+router.post('/staff/giao-hang/:id/hoan-diem', laSo, canPhan, bat(async (req, res) => {
+  const id = Number(req.params.id);
+  const b = req.body || {};
+  try {
+    const kq = await require('../services/chinhSachGiaoService').hoanDiemMotPhan(id, {
+      so_tien: b.so_tien, ma_ly_do: b.ma_ly_do, ghi_chu: b.ghi_chu, nguoi: nguoiDung(req),
+    });
+    veDieuPhoi(res, `/staff/giao-hang/${id}`,
+      `Đã hoàn ${kq.so_diem} điểm (tương đương ${kq.so_tien.toLocaleString('vi-VN')}đ) vào ví khách.`);
   } catch (e) {
     veDieuPhoi(res, `/staff/giao-hang/${id}`, e.message, 'danger');
   }
@@ -399,6 +494,7 @@ function laAnToan(req) {
 /** Don dang cam cua chinh minh - ung dung goi lai sau moi thao tac. */
 router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
   const don = await vc.dsDonGiao({ idShipper: req.shipper.id_shipper, dangChay: true });
+  const phutXN = (await require('../services/phanCongGiaoService').thamSo()).phut_xac_nhan;
   const [[lai]] = await require('../config/db').query(
     `SELECT COUNT(*) AS n, COALESCE(SUM(phi_giao),0) AS phi FROM don_giao_hang
      WHERE id_shipper = ? AND trang_thai = 'da_giao' AND DATE(hoan_tat_luc) = CURDATE()`,
@@ -417,6 +513,10 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
       tien_hang: g.tien_hang, tien_thu_ho: g.tien_thu_ho, tong_thu: g.tong_thu,
       so_mon: g.so_mon, ghi_chu: g.ghi_chu, bep_da_xong: g.bep_da_xong,
       du_kien_luc: g.du_kien_luc,
+      // Don phan tu dong, shipper chua bam "Nhan don": hien nut Nhan / Tu choi + dong ho.
+      cho_xac_nhan: g.trang_thai === 'da_phan' && !!g.phan_tu_dong && !g.xac_nhan_luc,
+      han_xac_nhan: g.phan_luc ? new Date(new Date(g.phan_luc).getTime() + phutXN * 60000).toISOString() : null,
+      ma_khu_vuc: g.ma_khu_vuc || null,
     })),
     hom_nay: { so_don: Number(lai.n || 0), tien_phi: Number(lai.phi || 0) },
   });
@@ -476,6 +576,21 @@ router.post('/api/shipper/don/:id/trang-thai', laSo, canShipper, bat(async (req,
   } catch (e) {
     res.status(400).json({ ok: false, thong_bao: e.message });
   }
+}));
+
+/** Shipper xac nhan / tu choi don duoc PHAN TU DONG. */
+router.post('/api/shipper/don/:id/xac-nhan', laSo, canShipper, bat(async (req, res) => {
+  try {
+    await require('../services/phanCongGiaoService').xacNhan(Number(req.params.id), req.shipper.id_shipper);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+router.post('/api/shipper/don/:id/tu-choi', laSo, canShipper, bat(async (req, res) => {
+  try {
+    const kq = await require('../services/phanCongGiaoService').tuChoi(Number(req.params.id), req.shipper.id_shipper,
+      (req.body || {}).ly_do, { id_nv: req.shipper.id_nv, ten: String(req.session.staffName || req.shipper.ten || '').trim() });
+    res.json({ ok: true, chuyen_cho: kq && kq.phan ? kq.ten : null });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
 }));
 
 /** Shipper tu bat / tat ca truc. */
@@ -708,6 +823,25 @@ router.get('/theo-doi', (req, res) => {
   res.redirect('/cart');
 });
 
+router.post('/theo-doi/:ma/huy', bat(async (req, res) => {
+  const ma = String(req.params.ma || '').trim().toUpperCase();
+  const don = await vc.donGiaoTheoMa(ma);
+  if (!don) return res.redirect('/cart');
+  const [[hd]] = await db.query('SELECT id_user FROM hopdong WHERE sesis = ? LIMIT 1', [don.sesis]);
+  if (!req.session.userId || !hd || Number(hd.id_user) !== Number(req.session.userId)) {
+    return res.redirect(`/theo-doi/${ma}?loi=` + encodeURIComponent('Hãy đăng nhập đúng tài khoản đã đặt đơn để hủy.'));
+  }
+  try {
+    await require('../services/chinhSachGiaoService').huyDon(don.id_giao, {
+      laKhach: true, nguoi: { ten: req.session.username || 'Khách hàng' },
+    });
+    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+    res.redirect(`/theo-doi/${ma}`);
+  } catch (e) {
+    res.redirect(`/theo-doi/${ma}?loi=` + encodeURIComponent(e.message));
+  }
+}));
+
 router.get('/theo-doi/:ma', bat(async (req, res) => {
   const ma = String(req.params.ma || '').trim().toUpperCase();
   const don = await vc.donGiaoTheoMa(ma);
@@ -715,9 +849,13 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
     return res.redirect('/cart');
   }
 
-  const [mon, lichSu, goc] = await Promise.all([
+  const chinhSach = require('../services/chinhSachGiaoService');
+  const [mon, lichSu, goc, daTra, lichSuHoan, [[chu]]] = await Promise.all([
     vc.monCuaDon(don.sesis), vc.nhatKy(don.id_giao), vc.toaDoNhaHang(),
+    chinhSach.tienDaTra(don.sesis), chinhSach.lichSuHoan(don.id_giao),
+    db.query('SELECT id_user FROM hopdong WHERE sesis = ? LIMIT 1', [don.sesis]),
   ]);
+  const laChuDon = !!(req.session.userId && chu && Number(chu.id_user) === Number(req.session.userId));
 
   res.render('theo-doi-giao-hang', {
     layout: false,
@@ -751,6 +889,18 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
     mon,
     lichSu: lichSu.map((n) => ({ nhan: n.tt.nhan, mau: n.tt.mau, icon: n.tt.icon, luc: n.luc, ghi_chu: n.ghi_chu })),
     nhaHang: goc,
+    // Chinh sach: khach biet minh da tra bao nhieu, co duoc hoan diem khong.
+    chinhSach: {
+      da_tra: daTra.tien,
+      ben_loi: don.ben_loi || null,
+      ly_do_huy: don.trang_thai === 'huy' ? (don.ly_do || null) : null,
+      diem_hoan: lichSuHoan.reduce((t, h) => t + Number(h.so_diem || 0), 0),
+      tien_hoan: lichSuHoan.reduce((t, h) => t + Number(h.so_tien || 0), 0),
+      la_chu_don: laChuDon,
+      huy_duoc: laChuDon && chinhSach.KHACH_HUY_DUOC.includes(don.trang_thai),
+      sesis: laChuDon ? don.sesis : null,
+    },
+    loi: req.query.loi || null,
   });
 }));
 

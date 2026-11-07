@@ -234,6 +234,20 @@
     .footer-actions a:hover { color:#fef08a; text-decoration:underline; }
   </style>
 </head>
+<style>
+  .cs-hop { border-radius:14px; padding:14px 16px; font-size:13.8px; line-height:1.6; margin-bottom:16px; }
+  .cs-hop--vang { background:rgba(234,179,8,.14); border:1px solid rgba(234,179,8,.4); color:#fde68a; }
+  .cs-hop--xanh { background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.4); color:#a7f3d0; }
+  .cs-hop--xam  { background:rgba(148,163,184,.14); border:1px solid rgba(148,163,184,.35); color:#e2e8f0; }
+  .cs-hop--do   { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.35); color:#fca5a5; }
+  .cs-nut { display:inline-flex; gap:6px; align-items:center; margin-top:10px; padding:8px 14px; border-radius:10px;
+            background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#fff; font-weight:700; text-decoration:none; }
+  .cs-nut--vang { background:#d4af37; border-color:#d4af37; color:#2c1810; }
+  .cs-huy { text-align:center; margin:-4px 0 16px; font-size:12.5px; color:#94a3b8; }
+  .cs-huy button { background:transparent; border:1px solid rgba(239,68,68,.5); color:#fca5a5; padding:9px 18px;
+                   border-radius:10px; font-weight:700; cursor:pointer; margin-bottom:6px; font-family:inherit; }
+  .cs-huy a { color:#d4af37; }
+</style>
 <body>
 <div class="boc">
 
@@ -262,12 +276,49 @@
     </p>
   </div>
 
-  <% if (hong) { %>
+  <%
+    var cs = (typeof chinhSach !== 'undefined' && chinhSach) ? chinhSach : {};
+    var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  %>
+  <% if (typeof loi !== 'undefined' && loi) { %>
+    <div class="cs-hop cs-hop--do"><i class="fas fa-circle-exclamation"></i> <%= loi %></div>
+  <% } %>
+
+  <% if (don.trang_thai === 'cho_thanh_toan') { %>
+    <div class="cs-hop cs-hop--vang">
+      <strong><i class="fas fa-wallet"></i> Đơn đang chờ thanh toán</strong><br>
+      Nhà hàng chỉ bắt đầu nấu sau khi nhận đủ <b><%= vnd(don.tong_thu) %></b> (món + ship). Đơn tự hủy nếu quá thời gian giữ đơn.
+      <% if (cs.la_chu_don && cs.sesis) { %>
+        <a class="cs-nut cs-nut--vang" href="/thanh-toan/don-hang/<%= cs.sesis %>"><i class="fas fa-qrcode"></i> Thanh toán ngay</a>
+      <% } %>
+    </div>
+  <% } %>
+
+  <% if (don.trang_thai === 'huy') { %>
+    <div class="cs-hop <%= cs.ben_loi === 'nha_hang' ? 'cs-hop--xanh' : 'cs-hop--xam' %>">
+      <strong><i class="fas fa-ban"></i> Đơn đã hủy</strong><% if (cs.ly_do_huy) { %> — <%= cs.ly_do_huy %><% } %><br>
+      <% if (cs.ben_loi === 'nha_hang') { %>
+        Lỗi thuộc về nhà hàng, rất xin lỗi quý khách. Đã hoàn <b><%= Number(cs.diem_hoan).toLocaleString('vi-VN') %> điểm</b>
+        (tương đương <%= vnd(cs.tien_hoan) %>) vào ví thành viên. Dùng cho đơn sau hoặc trừ vào hóa đơn khi ăn tại nhà hàng.
+        <a class="cs-nut" href="/thanh-vien"><i class="fas fa-coins"></i> Xem ví điểm</a>
+      <% } else if (cs.da_tra > 0) { %>
+        Hủy do phía khách hàng. Theo <a href="/chinh-sach-giao-hang" style="color:inherit">chính sách giao hàng</a>, số tiền đã thanh toán không được hoàn tiền hay hoàn điểm.
+      <% } else { %>
+        Đơn chưa thanh toán nên quý khách không mất phí.
+      <% } %>
+    </div>
+  <% } else if (cs.diem_hoan > 0) { %>
+    <div class="cs-hop cs-hop--xanh">
+      <i class="fas fa-hand-holding-heart"></i> Nhà hàng đã bù <b><%= Number(cs.diem_hoan).toLocaleString('vi-VN') %> điểm</b> (<%= vnd(cs.tien_hoan) %>) cho sự cố của đơn này.
+    </div>
+  <% } %>
+
+  <% if (don.trang_thai === 'that_bai') { %>
     <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; border-radius:14px; padding:16px; font-size:14px; line-height:1.6; margin-bottom:16px;">
       <strong style="font-size:15px;"><i class="fas fa-triangle-exclamation"></i> <%= t('theo_doi.that_bai') %></strong><br>
       <%= t('theo_doi.that_bai_mo_ta') %>
     </div>
-  <% } else { %>
+  <% } else if (!hong) { %>
     <!-- Stepper Indicator -->
     <div class="stepper">
       <% BUOC.forEach(function (b, i) { %>
@@ -348,8 +399,23 @@
       <p style="margin:8px 0 0; font-size:12.5px; color:#cbd5e1; text-align:right;">
         <i class="fas fa-money-bill-wave" style="color:#10b981;"></i> <%= t('theo_doi.tra_tien_mat') %>
       </p>
+    <% } else if (cs.da_tra > 0) { %>
+      <p style="margin:8px 0 0; font-size:12.5px; color:#86efac; text-align:right;">
+        <i class="fas fa-circle-check"></i> Đã thanh toán trước <%= vnd(cs.da_tra) %>
+      </p>
     <% } %>
   </div>
+
+  <% if (cs.huy_duoc) { %>
+    <form method="POST" action="/theo-doi/<%= don.ma_giao %>/huy" class="cs-huy"
+          onsubmit="return confirm(<%= JSON.stringify(cs.da_tra > 0
+            ? 'Đơn đã thanh toán. Theo chính sách, khách tự hủy sẽ KHÔNG được hoàn tiền hay hoàn điểm. Bạn vẫn muốn hủy?'
+            : 'Hủy đơn này? Đơn chưa thanh toán nên bạn không mất phí.') %>)">
+      <button type="submit"><i class="fas fa-ban"></i> Hủy đơn</button>
+      <div><%= cs.da_tra > 0 ? 'Đã thanh toán: tự hủy không được hoàn tiền/điểm.' : 'Chưa thanh toán: hủy miễn phí.' %>
+        <a href="/chinh-sach-giao-hang">Chính sách</a></div>
+    </form>
+  <% } %>
 
   <!-- Timeline Log -->
   <div class="card">

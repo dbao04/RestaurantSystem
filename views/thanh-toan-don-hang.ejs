@@ -235,6 +235,16 @@
     color: var(--spf-orange);
   }
 
+  .spf-diem-box {
+    background:#fffbeb; border:1px solid #fde68a; border-radius:12px;
+    padding:14px; margin-top:16px;
+  }
+  .spf-chinh-sach {
+    margin-top:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;
+    padding:14px 16px; font-size:13px; color:#334155; line-height:1.55;
+  }
+  .spf-chinh-sach ul { margin:0 0 8px; padding-left:18px; }
+  .spf-chinh-sach a { color:#b45309; font-weight:700; text-decoration:none; }
   .spf-sim-box {
     background: #fdf8eb;
     border: 1px dashed var(--spf-gold);
@@ -268,8 +278,8 @@
         </div>
 
         <div class="spf-qr-box">
-          <div class="spf-timer-pill">
-            <i class="fas fa-clock"></i> Đang chờ chuyển khoản (Mã tự duyệt tức thì)
+          <div class="spf-timer-pill" id="spf-dem-nguoc" data-giay="<%= (typeof conLaiGiay !== 'undefined' && conLaiGiay !== null) ? conLaiGiay : '' %>">
+            <i class="fas fa-clock"></i> <span id="spf-dem-nguoc-chu">Đang chờ chuyển khoản (Mã tự duyệt tức thì)</span>
           </div>
 
           <div class="spf-qr-image-wrapper">
@@ -325,6 +335,28 @@
             </span>
           </div>
         </div>
+
+        <% if (diemDangCo > 0) { %>
+          <!-- Dùng điểm tích lũy / điểm hoàn -->
+          <form method="GET" class="spf-diem-box">
+            <div style="font-weight:700; font-size:13.5px; margin-bottom:6px;">
+              <i class="fas fa-coins" style="color:var(--spf-gold);"></i>
+              Bạn đang có <b><%= Number(diemDangCo).toLocaleString('vi-VN') %> điểm</b>
+              (1 điểm = <%= Number(giaTri1Diem).toLocaleString('vi-VN') %>₫)
+            </div>
+            <div style="font-size:12.5px; color:#6b7280; margin-bottom:8px;">
+              Dùng tối đa <b><%= Number(diemToiDa).toLocaleString('vi-VN') %> điểm</b> cho đơn này. Điểm chỉ trừ vào tiền món, không trừ phí ship.
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="number" name="diem" min="0" max="<%= diemToiDa %>" value="<%= diemDung || '' %>"
+                     placeholder="Số điểm muốn dùng" class="nh-input" style="flex:1; min-width:140px;">
+              <button type="submit" class="nh-btn nh-btn--gold nh-btn--sm">Áp dụng</button>
+              <% if (diemToiDa > 0) { %>
+                <button type="submit" name="diem" value="<%= diemToiDa %>" class="nh-btn nh-btn--sm" style="background:#fff;border:1px solid var(--spf-gold);">Dùng tối đa</button>
+              <% } %>
+            </div>
+          </form>
+        <% } %>
 
         <div class="spf-live-status" id="spf-box-status">
           <div class="spf-dot-spin"></div>
@@ -383,22 +415,40 @@
         <div class="spf-total-summary">
           <div class="spf-sum-row">
             <span>Tiền món ăn</span>
-            <b><%= Math.round((tongThanhToan - phiShip)).toLocaleString('vi-VN') %> ₫</b>
+            <b><%= Math.round(tienMon).toLocaleString('vi-VN') %> ₫</b>
           </div>
           <div class="spf-sum-row">
-            <span>Phí giao hàng</span>
+            <span>Phí giao hàng<% if (donGiao && donGiao.khoang_cach_km) { %> (<%= donGiao.khoang_cach_km %> km)<% } %></span>
             <b><%= phiShip > 0 ? (Math.round(phiShip).toLocaleString('vi-VN') + ' ₫') : 'Miễn phí' %></b>
           </div>
+          <% if (tienTuDiem > 0) { %>
+            <div class="spf-sum-row" style="color:#15803d;">
+              <span>Trừ <%= Number(diemDung).toLocaleString('vi-VN') %> điểm</span>
+              <b>− <%= Math.round(tienTuDiem).toLocaleString('vi-VN') %> ₫</b>
+            </div>
+          <% } %>
           <div class="spf-sum-final">
-            <span>Tổng thanh toán</span>
+            <span>Cần thanh toán trước</span>
             <span><%= Math.round(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
           </div>
         </div>
 
+        <!-- Tóm tắt chính sách -->
+        <div class="spf-chinh-sach">
+          <div style="font-weight:800; margin-bottom:6px;"><i class="fas fa-file-shield"></i> Chính sách đơn giao hàng</div>
+          <ul>
+            <li>Thanh toán trước <b>100%</b> tiền món + phí ship. Bếp chỉ bắt đầu nấu khi nhà hàng đã nhận đủ tiền.</li>
+            <li>Chưa thanh toán trong thời gian giữ đơn, đơn sẽ <b>tự hủy</b>.</li>
+            <li>Khách tự hủy, không nghe máy, sai địa chỉ, từ chối nhận: <b>không hoàn tiền, không hoàn điểm</b>.</li>
+            <li>Lỗi do nhà hàng (hết món, giao trễ, sai/thiếu món...): <b>hoàn 100% bằng điểm</b>, không hoàn tiền mặt. Điểm dùng cho đơn sau hoặc trừ vào hóa đơn khi ăn tại nhà hàng.</li>
+          </ul>
+          <a href="/chinh-sach-giao-hang" target="_blank">Xem chính sách đầy đủ <i class="fas fa-arrow-up-right-from-square"></i></a>
+        </div>
+
         <div style="margin-top: 18px; text-align: center;">
-          <a href="/cart" style="color: #6b7280; font-size: 13.5px; text-decoration: none; font-weight: 600;">
-            <i class="fas fa-arrow-left"></i> Quay lại Giỏ hàng &amp; Đổi món
-          </a>
+          <button type="button" id="nut-huy-don-spf" style="background:none;border:0;color:#b91c1c;font-size:13.5px;font-weight:700;cursor:pointer;">
+            <i class="fas fa-ban"></i> Hủy đơn (chưa thanh toán nên không mất phí)
+          </button>
         </div>
       </div>
     </div>
@@ -439,6 +489,44 @@ function showToast(msg) {
   var SESIS = '<%= hoaDon.sesis %>';
   var MA_GIAO = '<%= donGiao ? donGiao.ma_giao : "" %>';
   var TONG_TIEN = <%= tongThanhToan %>;
+  var DIEM_DUNG = <%= Number(diemDung) || 0 %>;
+
+  // Dem nguoc thoi gian giu don. Het gio thi don tu huy phia server (vong quet
+  // 60s); o day chi bao cho khach va tai lai de thay trang thai moi.
+  var demEl = document.getElementById('spf-dem-nguoc');
+  var demChu = document.getElementById('spf-dem-nguoc-chu');
+  var conGiay = demEl && demEl.getAttribute('data-giay') !== '' ? Number(demEl.getAttribute('data-giay')) : null;
+  if (conGiay !== null && !isNaN(conGiay)) {
+    var demTimer = null;
+    var veDem = function () {
+      if (conGiay <= 0) {
+        demChu.textContent = 'Hết thời gian giữ đơn — đơn sẽ tự hủy';
+        demEl.style.background = '#fee2e2'; demEl.style.color = '#b91c1c';
+        if (demTimer) clearInterval(demTimer);
+        setTimeout(function () { location.reload(); }, 65000);
+        return;
+      }
+      var p = Math.floor(conGiay / 60), g = conGiay % 60;
+      demChu.textContent = 'Giữ đơn trong ' + p + ':' + (g < 10 ? '0' : '') + g + ' — chuyển khoản trước khi hết giờ';
+      conGiay--;
+    };
+    veDem();
+    demTimer = setInterval(veDem, 1000);
+  }
+
+  var nutHuy = document.getElementById('nut-huy-don-spf');
+  if (nutHuy) {
+    nutHuy.onclick = function () {
+      if (!confirm('Hủy đơn này? Đơn chưa thanh toán nên bạn không mất phí.')) return;
+      nutHuy.disabled = true;
+      fetch('/thanh-toan/don-hang/' + SESIS + '/huy', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (kq) {
+          if (kq && kq.thanhCong) { location.href = '/theo-doi/' + kq.ma_giao; }
+          else { alert((kq && kq.loi) || 'Không hủy được đơn.'); nutHuy.disabled = false; }
+        });
+    };
+  }
   var paymentId = <%= (payment && payment.id) ? payment.id : "null" %>;
 
   var socket = typeof io !== 'undefined' ? io() : null;
@@ -487,7 +575,7 @@ function showToast(msg) {
       fetch('/thanh-toan/don-hang/' + SESIS + '/gia-lap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ so_tien: TONG_TIEN })
+        body: JSON.stringify({ diem_dung: DIEM_DUNG })
       })
       .then(function(r) { return r.json(); })
       .then(function(res) {

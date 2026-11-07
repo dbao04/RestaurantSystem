@@ -33,6 +33,23 @@
     <i class="fas fa-check-circle"></i> <strong>Hóa đơn này đã thu đủ tiền.</strong>
     Tổng thu <%= formatMoney(t.da_thanh_toan) %>đ.
   </div>
+<% } else if (t.du_tien_coc) { %>
+  <div class="alert alert-warning shadow-sm d-flex align-items-center justify-content-between flex-wrap" style="gap: 10px;">
+    <div>
+      <i class="fas fa-wallet"></i>
+      <% if (t.tien_hoan_coc_thua > 0) { %>
+        <strong>Khách dùng món thực tế thấp hơn tiền đã đặt cọc!</strong><br>
+        Đã cọc: <b><%= formatMoney(t.da_thanh_toan) %>đ</b> · Thực dùng: <b><%= formatMoney(t.tong_cong) %>đ</b>
+        → Cần hoàn trả lại cho khách: <strong class="text-danger"><%= formatMoney(t.tien_hoan_coc_thua) %>đ</strong>.
+      <% } else { %>
+        <strong>Tiền đặt cọc / trả trước (<%= formatMoney(t.da_thanh_toan) %>đ) đã đủ chi trả toàn bộ hóa đơn.</strong>
+      <% } %>
+    </div>
+    <button type="button" class="btn btn-success font-weight-bold" id="nut-hoan-tat-coc">
+      <i class="fas fa-check-double"></i>
+      <%= t.tien_hoan_coc_thua > 0 ? 'Xác nhận hoàn trả ' + formatMoney(t.tien_hoan_coc_thua) + 'đ & Đóng hóa đơn' : 'Xác nhận hoàn tất hóa đơn' %>
+    </button>
+  </div>
 <% } %>
 
 <div class="row">
@@ -115,6 +132,9 @@
           <tr><td class="text-muted">Tạm tính</td><td class="text-right" id="o-tam-tinh"><%= formatMoney(t.tam_tinh) %></td></tr>
           <tr class="d-none" id="hang-giam-gia"><td class="text-success">Giảm giá <span id="o-ten-ma"></span></td><td class="text-right text-success" id="o-giam-gia">0</td></tr>
           <tr class="d-none" id="hang-diem"><td class="text-success">Trừ bằng điểm</td><td class="text-right text-success" id="o-tien-diem">0</td></tr>
+          <% if (t.phi_giao > 0) { %>
+            <tr><td class="text-muted"><i class="fas fa-motorcycle"></i> Phí giao hàng</td><td class="text-right"><%= formatMoney(t.phi_giao) %></td></tr>
+          <% } %>
           <% if (hoaDon.tyLe.phi_phuc_vu > 0) { %>
             <tr><td class="text-muted">Phí phục vụ <%= hoaDon.tyLe.phi_phuc_vu %>%</td><td class="text-right" id="o-phi"><%= formatMoney(t.phi_phuc_vu) %></td></tr>
           <% } %>
@@ -122,7 +142,13 @@
             <tr><td class="text-muted">VAT <%= hoaDon.tyLe.thue_vat %>%</td><td class="text-right" id="o-vat"><%= formatMoney(t.thue_vat) %></td></tr>
           <% } %>
           <% if (t.da_thanh_toan > 0) { %>
-            <tr><td class="text-info">Đã thu trước đó (<%= t.so_lan_da_tra %> lần)</td><td class="text-right text-info">− <%= formatMoney(t.da_thanh_toan) %></td></tr>
+            <tr><td class="text-info">Đã thu trước đó / Đặt cọc (<%= t.so_lan_da_tra %> lần)</td><td class="text-right text-info">− <%= formatMoney(t.da_thanh_toan) %></td></tr>
+          <% } %>
+          <% if (t.tien_hoan_coc_thua > 0) { %>
+            <tr class="table-warning">
+              <td class="font-weight-bold text-danger"><i class="fas fa-undo-alt"></i> Tiền cọc dư hoàn lại khách</td>
+              <td class="text-right h5 mb-0 font-weight-bold text-danger"><%= formatMoney(t.tien_hoan_coc_thua) %>đ</td>
+            </tr>
           <% } %>
           <tr class="border-top">
             <td class="h5 mb-0 font-weight-bold">Còn phải trả</td>
@@ -719,6 +745,33 @@
   $('nut-chep-link').onclick = function () {
     chep(location.origin + $('link-khach').value, this);
   };
+
+  var nutHoanTatCoc = $('nut-hoan-tat-coc');
+  if (nutHoanTatCoc) {
+    nutHoanTatCoc.onclick = function () {
+      var tienHoan = <%= Number(t.tien_hoan_coc_thua || 0) %>;
+      Swal.fire({
+        title: tienHoan > 0 ? 'Xác nhận hoàn tiền cọc dư & Đóng hóa đơn?' : 'Xác nhận hoàn tất hóa đơn?',
+        html: tienHoan > 0
+          ? 'Vui lòng hoàn trả lại <b>' + tien(tienHoan) + 'đ</b> tiền cọc dư cho khách hàng (do thực dùng thấp hơn mức cọc bàn tiệc 150.000đ/người).'
+          : 'Khoản đặt cọc / trả trước đã đủ thanh toán hóa đơn này.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Xác nhận & Hoàn tất',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#1cc88a'
+      }).then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/staff/thanh-toan/' + encodeURIComponent(SESIS) + '/hoan-tat-coc', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }
+        }).then(function (x) { return x.json(); })
+          .then(function (kq) {
+            if (kq.thanhCong) location.reload();
+            else Swal.fire('Lỗi', kq.loi || 'Không thể hoàn tất', 'error');
+          });
+      });
+    };
+  }
 
   /* --------------------------------------------------- thời gian thực --- */
   if (window.RT && RT.socket) {

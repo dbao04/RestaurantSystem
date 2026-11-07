@@ -8,10 +8,15 @@ const db = require('../config/db');
 
 const engagementService = {
   // ============ CHAT / MESSAGING OPERATIONS ============
-  sendMessage: async (id_kh, id_nv, noi_dung, nguoi_gui) => {
+  sendMessage: async (id_kh, id_nv, noi_dung, nguoi_gui, tep = null) => {
+    const loai_file = tep && tep.loai_file ? tep.loai_file : null;
+    const duong_dan_file = tep && tep.duong_dan_file ? tep.duong_dan_file : null;
+    const ten_file = tep && tep.ten_file ? tep.ten_file : null;
+    const kich_thuoc_file = tep && tep.kich_thuoc_file ? Number(tep.kich_thuoc_file) : null;
     const [result] = await db.query(
-      'INSERT INTO chat (id_kh, id_nv, noi_dung, nguoi_gui) VALUES (?, ?, ?, ?)',
-      [id_kh, id_nv || null, noi_dung, nguoi_gui]
+      `INSERT INTO chat (id_kh, id_nv, noi_dung, nguoi_gui, loai_file, duong_dan_file, ten_file, kich_thuoc_file)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id_kh, id_nv || null, noi_dung || '', nguoi_gui, loai_file, duong_dan_file, ten_file, kich_thuoc_file]
     );
     return result.insertId;
   },
@@ -53,8 +58,14 @@ const engagementService = {
   getChatCustomers: async () => {
     const [rows] = await db.query(
       `SELECT k.id, k.ten, k.sodienthoai,
-        (SELECT noi_dung FROM chat WHERE id_kh = k.id ORDER BY thoigian DESC LIMIT 1) AS last_msg,
-        (SELECT thoigian FROM chat WHERE id_kh = k.id ORDER BY thoigian DESC LIMIT 1) AS last_time,
+        (SELECT CASE
+            WHEN noi_dung IS NOT NULL AND noi_dung <> '' THEN noi_dung
+            WHEN loai_file = 'image' THEN CONCAT('📷 [Hình ảnh] ', COALESCE(ten_file, ''))
+            WHEN loai_file IS NOT NULL THEN CONCAT('📎 [Tệp] ', COALESCE(ten_file, ''))
+            ELSE ''
+          END
+         FROM chat WHERE id_kh = k.id ORDER BY thoigian DESC, id_chat DESC LIMIT 1) AS last_msg,
+        (SELECT thoigian FROM chat WHERE id_kh = k.id ORDER BY thoigian DESC, id_chat DESC LIMIT 1) AS last_time,
         (SELECT COUNT(*) FROM chat WHERE id_kh = k.id AND nguoi_gui = 'khach' AND da_doc = 0) AS unread
        FROM khach_hang k
        WHERE EXISTS (SELECT 1 FROM chat WHERE id_kh = k.id)

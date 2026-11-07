@@ -56,6 +56,8 @@ module.exports = {
   'dieu_huong.gioi_thieu': 'About Us',
   'dieu_huong.mon_an': 'Dishes',
   'dieu_huong.thuc_don': 'Combos & Set Menus',
+  'dieu_huong.khong_gian': 'Spaces',
+  'dieu_huong.dat_tiec': 'Parties & Events',
   'dieu_huong.tin_tuc': 'News',
   'dieu_huong.don_cua_toi': 'My Orders',
   'dieu_huong.gio_hang': 'Cart',

@@ -117,10 +117,16 @@ async function tongHopCa(idNv, { tienDauCa = 0 } = {}) {
             COALESCE(SUM(p.tien_tip), 0) AS tip,
             COUNT(*) AS so_phien
      FROM payments p JOIN payment_methods pm ON p.payment_method_id = pm.id
-     WHERE pm.type = 'cash' AND p.status = 'success'
+     WHERE pm.type = 'cash' AND p.status IN ('success', 'refunded')
        AND p.processed_by = ? AND ${trongCa('p.thanh_cong_luc')}`,
     [idNv, tu, den]
   );
+  /*
+   * `refunded` PHAI duoc dem o day. Truoc day chi dem `success`: phien bi hoan
+   * vua bi loai khoi tien thu VUA bi tru them o khoan hoan ben duoi - tru hai
+   * lan. Khach tra 100.000d roi duoc hoan, ket thuc te khong doi, nhung bien
+   * ban lai bao thieu 100.000d. Thu va hoan la hai dong tien rieng.
+   */
 
   const [[hoan]] = await db.query(
     `SELECT COALESCE(SUM(p.amount), 0) AS tong, COUNT(*) AS so_phien
@@ -172,6 +178,10 @@ async function tongHopCa(idNv, { tienDauCa = 0 } = {}) {
     [idNv, tu, den]
   );
 
+  // Phieu thu / chi TIEN MAT thu ngan lap trong ca (mua da, gas, tam ung...).
+  // Khong tinh vao thi ket luon "thieu" dung bang so tien da chi ra.
+  const phieu = await require('./thuChiService').phieuTienMatTrongCa(idNv, tu, den, tiepNoiCaTruoc);
+
   const tienMatThu = Number(tienMat.tong) || 0;
   const tienMatHoan = Number(hoan.tong) || 0;
   const quy = Math.round(Number(tienDauCa) || 0);
@@ -184,7 +194,7 @@ async function tongHopCa(idNv, { tienDauCa = 0 } = {}) {
     .reduce((t, r) => t + Number(r.tong), 0);
   const tipKhongTienMat = khongTienMat.reduce((t, r) => t + Number(r.tip), 0);
 
-  const tienMatHeThong = quy + tienMatThu - tienMatHoan;
+  const tienMatHeThong = quy + tienMatThu - tienMatHoan + phieu.thu - phieu.chi;
 
   return {
     tu,
@@ -194,6 +204,9 @@ async function tongHopCa(idNv, { tienDauCa = 0 } = {}) {
     tien_mat_thu: tienMatThu,
     tien_mat_hoan: tienMatHoan,
     tien_mat_he_thong: tienMatHeThong,
+    phieu_thu_tien_mat: phieu.thu,
+    phieu_chi_tien_mat: phieu.chi,
+    so_phieu_thu_chi: phieu.so,
     tien_chuyen_khoan: chuyenKhoan,
     tien_the: the,
     tien_tip: Number(tienMat.tip || 0) + tipKhongTienMat,
@@ -263,8 +276,8 @@ async function chotCa(idNv, duLieu = {}) {
         ly_do_chenh_lech, bang_menh_gia,
         tien_chuyen_khoan, tien_the, tien_tip, tien_hoan, tien_dat_coc,
         tien_khach_tu_tra, so_phien_cho,
-        cash_in, cash_out, notes, status, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'closed', NOW())`,
+        cash_in, cash_out, total_expenses, notes, status, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'closed', NOW())`,
     [
       idNv, ngayCa, th.tu, th.den, tenCa || th.tenCaGoiY,
       th.so_hoa_don, th.tong_doanh_thu,
@@ -272,7 +285,7 @@ async function chotCa(idNv, duLieu = {}) {
       lyDoChenhLech || null, bangMenhGia ? JSON.stringify(bangMenhGia) : null,
       th.tien_chuyen_khoan, th.tien_the, th.tien_tip, th.tien_mat_hoan, th.tien_dat_coc,
       th.tien_khach_tu_tra, th.so_phien_cho,
-      th.tien_mat_thu, th.tien_mat_hoan, ghiChu || null,
+      th.tien_mat_thu + th.phieu_thu_tien_mat, th.tien_mat_hoan + th.phieu_chi_tien_mat, th.phieu_chi_tien_mat, ghiChu || null,
     ]
   );
 

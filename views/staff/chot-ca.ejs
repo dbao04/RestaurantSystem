@@ -52,6 +52,18 @@
                 <td class="text-right text-danger">− <span id="ht-hoan"><%= formatMoney(tongHop.tien_mat_hoan) %></span>đ</td>
               </tr>
             <% } %>
+            <% if (tongHop.phieu_thu_tien_mat > 0) { %>
+              <tr>
+                <td class="text-muted">Phiếu thu tiền mặt <a href="/staff/thu-chi" class="small">(xem)</a></td>
+                <td class="text-right text-success">+ <%= formatMoney(tongHop.phieu_thu_tien_mat) %>đ</td>
+              </tr>
+            <% } %>
+            <% if (tongHop.phieu_chi_tien_mat > 0) { %>
+              <tr>
+                <td class="text-muted">Phiếu chi tiền mặt <a href="/staff/thu-chi" class="small">(xem)</a></td>
+                <td class="text-right text-danger">− <%= formatMoney(tongHop.phieu_chi_tien_mat) %>đ</td>
+              </tr>
+            <% } %>
             <tr class="border-top">
               <th>Két phải có</th>
               <th class="text-right h5 mb-0 text-primary"><span id="ht-ket"><%= formatMoney(tongHop.tien_mat_he_thong) %></span>đ</th>

@@ -1,0 +1,85 @@
+/* =====================================================================
+   KHU BEP: thong ke, xuat nhap kho, mua hang NVL (layout staff, Bootstrap 4)
+   ===================================================================== */
+.kb-dau { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .75rem; margin-bottom: 1rem; }
+.kb-dau h1 { margin: 0; }
+.kb-dau .kb-phu { color: #6b5f54; font-size: .85rem; margin-top: .25rem; }
+.kb-nut { display: flex; flex-wrap: wrap; gap: .45rem; }
+
+.kb-loc { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
+.kb-moc { border: 1px solid #e7ded0; background: #fff; color: #4e342e; border-radius: 999px; padding: .32rem .85rem; font-size: .83rem; font-weight: 600; text-decoration: none !important; white-space: nowrap; }
+.kb-moc:hover { border-color: #c8a24b; color: #8a6a22; }
+.kb-moc.is-on { background: #2b1a12; color: #f3dfa6; border-color: #2b1a12; }
+
+.kb-kpi { position: relative; overflow: hidden; height: 100%; padding: 1rem 1.1rem; border-radius: 16px; background: #fff; border: 1px solid #e7ded0; }
+.kb-kpi::after { content: ''; position: absolute; right: -26px; top: -26px; width: 86px; height: 86px; border-radius: 50%; background: var(--m, #c8a24b); opacity: .12; }
+.kb-kpi__n { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: #6b5f54; font-weight: 700; }
+.kb-kpi__v { font-family: var(--qt-serif, Georgia, serif); font-size: 1.55rem; font-weight: 700; color: var(--m, #241d18); line-height: 1.25; margin: .2rem 0; word-break: break-word; }
+.kb-kpi__s { font-size: .76rem; color: #8a7d70; }
+.kb-tang { color: #1f7a4a; font-weight: 700; } .kb-giam { color: #b3352c; font-weight: 700; }
+
+.kb-the { background: #fff; border: 1px solid #e7ded0; border-radius: 16px; padding: 1.05rem 1.15rem; height: 100%; }
+.kb-the h6 { font-family: var(--qt-serif, Georgia, serif); font-weight: 700; color: #241d18; margin: 0 0 .85rem; display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+.kb-the h6 i { color: #c8a24b; }
+.kb-the h6 small { font-family: var(--qt-sans, sans-serif); font-weight: 500; color: #8a7d70; }
+.kb-rong { color: #8a7d70; font-size: .88rem; padding: 1.2rem 0; text-align: center; }
+
+.kb-thanh { margin-bottom: .62rem; }
+.kb-thanh__d { display: flex; justify-content: space-between; gap: .6rem; font-size: .86rem; }
+.kb-thanh__d span:first-child { color: #3b2a14; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-thanh__d b { white-space: nowrap; }
+.kb-thanh__n { height: 7px; border-radius: 4px; background: #f3ece1; margin-top: .28rem; overflow: hidden; }
+.kb-thanh__n i { display: block; height: 100%; border-radius: 4px; background: var(--m, #c8a24b); }
+
+.kb-bang td, .kb-bang th { font-size: .86rem; vertical-align: middle; }
+.kb-bang .so { text-align: right; white-space: nowrap; }
+.kb-nhan { display: inline-block; font-size: .7rem; font-weight: 700; padding: .15rem .5rem; border-radius: 6px; white-space: nowrap; }
+.kb-nhan.nhap { background: #e7f4ec; color: #1f7a4a; } .kb-nhan.xuat { background: #fbe9e7; color: #b3352c; }
+.kb-nhan.do { background: #fbe9e7; color: #b3352c; } .kb-nhan.cam { background: #fff1dc; color: #b45309; }
+.kb-nhan.xanh { background: #e7f4ec; color: #1f7a4a; } .kb-nhan.xam { background: #f1ede7; color: #6b5f54; }
+.kb-nhan.lam { background: #e5eff8; color: #2b5f8a; }
+.kb-ma { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; color: #4e342e; white-space: nowrap; }
+
+.kb-canh { display: flex; gap: .75rem; align-items: flex-start; padding: .75rem .9rem; border-radius: 12px; margin-bottom: .55rem; border: 1px solid; }
+.kb-canh i { margin-top: .15rem; }
+.kb-canh.do { background: #fdf0ee; border-color: #f2c9c3; color: #8f2a22; }
+.kb-canh.cam { background: #fff6e8; border-color: #f4d9ad; color: #8a4b08; }
+
+/* Bang nhap lieu nhieu dong (phieu nhap / xuat / don mua) */
+.kb-dong td { vertical-align: top; }
+.kb-dong input, .kb-dong select { min-width: 0; }
+.kb-tong { font-family: var(--qt-serif, Georgia, serif); font-size: 1.45rem; font-weight: 700; color: #241d18; }
+.kb-chon-nl { position: relative; }
+.kb-chon-nl__ds { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid #e7ded0; border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.15); }
+.kb-chon-nl__ds[hidden] { display: none; }
+.kb-chon-nl__ds button { display: flex; justify-content: space-between; gap: .5rem; width: 100%; text-align: left; border: 0; background: none; padding: .5rem .75rem; font-size: .88rem; }
+.kb-chon-nl__ds button:hover, .kb-chon-nl__ds button.is-on { background: #faf3e4; }
+.kb-chon-nl__ds small { color: #8a7d70; white-space: nowrap; }
+
+.kb-tab { display: flex; gap: .35rem; flex-wrap: wrap; border-bottom: 2px solid #efe7da; margin-bottom: 1rem; }
+.kb-tab a { padding: .55rem 1rem; font-weight: 700; font-size: .9rem; color: #6b5f54; text-decoration: none !important; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.kb-tab a.is-on { color: #2b1a12; border-bottom-color: #c8a24b; }
+
+.kb-buoc { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.kb-buoc span { font-size: .75rem; padding: .25rem .6rem; border-radius: 999px; background: #f1ede7; color: #8a7d70; font-weight: 600; }
+.kb-buoc span.xong { background: #e7f4ec; color: #1f7a4a; }
+.kb-buoc span.dang { background: #2b1a12; color: #f3dfa6; }
+.kb-buoc i { color: #c9bfb2; font-size: .65rem; }
+
+.kb-hop { position: fixed; inset: 0; z-index: 2000; background: rgba(36,26,20,.55); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.kb-hop[hidden] { display: none; }
+.kb-hop__k { background: #fff; border-radius: 18px; width: 100%; max-width: 440px; padding: 1.3rem; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
+
+@media print {
+  #accordionSidebar, .topbar, .kb-khong-in, footer, #nut-bao-viec, .scroll-to-top { display: none !important; }
+  #content-wrapper { width: 100% !important; } .container-fluid { padding: 0 !important; }
+  .kb-the, .kb-kpi, .card { box-shadow: none !important; break-inside: avoid; }
+}
+@media (max-width: 575.98px) {
+  .kb-kpi__v { font-size: 1.25rem; }
+  .kb-dong thead { display: none; }
+  .kb-dong tr { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; padding: .7rem 0; border-bottom: 1px solid #efe7da; }
+  .kb-dong td { border: 0 !important; padding: 0 !important; }
+  .kb-dong td.kb-dong__nl { grid-column: 1 / -1; }
+  .kb-dong td[data-nhan]::before { content: attr(data-nhan); display: block; font-size: .7rem; color: #8a7d70; font-weight: 700; text-transform: uppercase; }
+}

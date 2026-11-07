@@ -279,7 +279,7 @@ function chamDiem(dsBan, soKhach, { soThich = [], laVip = false, chungKhu = true
  */
 function timToHop(dsBan, soKhach, {
   choGhep = true, toiDaBan = 4, chungKhuThoi = true, soThich = [], laVip = false, toiDaKetQua = 6,
-  laCaoDiem = false,
+  laCaoDiem = false, hopLe = null,
 } = {}) {
   const ungVien = [...dsBan].sort((a, b) => b.so_cho - a.so_cho || a.ten.localeCompare(b.ten));
   const ketQua = [];
@@ -300,6 +300,8 @@ function timToHop(dsBan, soKhach, {
       if (!chungNhom(daChon)) return;
       const ktr = qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem);
       if (!ktr.hopLe) return;
+      // Rang buoc quy mo ban (2 khach chi 1 ban <= 4 cho, doan dong khong thua qua nhieu ghe).
+      if (hopLe && !hopLe(daChon)) return;
       const chungKhu = daChon.every((b) => b.khu_vuc_id === daChon[0].khu_vuc_id);
       ketQua.push({
         ban: [...daChon],
@@ -321,7 +323,7 @@ function timToHop(dsBan, soKhach, {
       if (daChon.length && !ban.co_the_ghep) continue;
       if (daChon.length === 0 && !choGhep) {
         // Khong cho ghep: chi xet phuong an mot ban.
-        if (ban.so_cho >= soKhach) {
+        if (ban.so_cho >= soKhach && (!hopLe || hopLe([ban]))) {
           const ktr = qt.kiemTraSucChuaHopLe(ban.so_cho, soKhach, laCaoDiem);
           if (ktr.hopLe) {
             ketQua.push({
@@ -365,7 +367,7 @@ function timToHop(dsBan, soKhach, {
  */
 async function goiYXepBan(khung, {
   soKhach, areaId = null, dsThe = [], loaiKhach = 'REGULAR', boQuaId = null,
-  banChiDinh = null, client = db, laCaoDiem: optCaoDiem = undefined,
+  banChiDinh = null, client = db, laCaoDiem: optCaoDiem = undefined, boQuaQuyMo = false,
 } = {}) {
   const ch = await qt.docCauHinh();
   const gioCheck = khung.gio || (khung.batDau ? qt.gioNgan(khung.batDau) : '19:00');
@@ -398,6 +400,12 @@ async function goiYXepBan(khung, {
     if (chon.length > 1 && ch.allow_table_combination === 0) {
       throw new LoiDatBan('Nhà hàng hiện không nhận ghép bàn', 'NO_COMBINATION');
     }
+    // Rang buoc quy mo ban. Nhan vien (boQuaQuyMo) duoc xep ngoai le - vi du
+    // ghep ban cho khach quen, hay khach xin ngoi ban rong hon luc vang khach.
+    if (!boQuaQuyMo) {
+      const loi = qt.kiemTraQuyMoBan(chon.map((b) => b.so_cho), soKhach, ch);
+      if (loi) throw new LoiDatBan(loi.thong_bao, loi.ma);
+    }
     const chungKhu = chon.every((b) => b.khu_vuc_id === chon[0].khu_vuc_id);
     return {
       chon: {
@@ -429,6 +437,7 @@ async function goiYXepBan(khung, {
     soThich,
     laVip: loaiKhach === 'VIP',
     laCaoDiem,
+    hopLe: boQuaQuyMo ? null : (ds) => !qt.kiemTraQuyMoBan(ds.map((b) => b.so_cho), soKhach, ch),
   });
 
   return {

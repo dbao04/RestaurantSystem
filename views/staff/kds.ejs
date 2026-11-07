@@ -241,6 +241,62 @@
     }
     .the button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+    /* --- Phan quyen & xac nhan len mon --- */
+    .che-do {
+      font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .che-do.bep  { background: rgba(56, 189, 248, .15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, .4); }
+    .che-do.pv   { background: rgba(16, 185, 129, .15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, .4); }
+    .che-do.full { background: rgba(200, 162, 75, .15); color: var(--gold-light); border: 1px solid var(--vien-dam); }
+    .che-do.xem  { background: rgba(168, 162, 158, .15); color: #d6d3d1; border: 1px solid rgba(168, 162, 158, .4); }
+    .the .trang-thai-nho {
+      margin-top: 12px; padding: 8px 10px; border-radius: 8px; text-align: center;
+      font-size: 12.5px; font-weight: 600; color: var(--mo);
+      background: rgba(0, 0, 0, .22); border: 1px dashed var(--vien);
+    }
+    .the button.b-len {
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      font-size: 14.5px; padding: 12px 14px;
+    }
+    .the.moi-xong { animation: cb-moi-xong 1.1s ease-in-out 4; }
+    @keyframes cb-moi-xong {
+      0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, .3); }
+      50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, .85), 0 0 28px rgba(16, 185, 129, .6); }
+    }
+    .the .da-len { margin-top: 6px; font-size: 12px; color: #6ee7b7; font-weight: 600; }
+    .cot.khoa h2::after {
+      content: '\f023'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+      font-size: 11px; margin-left: 6px; color: var(--mo); opacity: .7;
+    }
+
+    .hop-xn {
+      position: fixed; inset: 0; z-index: 200; background: rgba(5, 3, 2, .72);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+      backdrop-filter: blur(3px);
+    }
+    .hop-xn[hidden] { display: none; }
+    .hop-xn__khung {
+      width: 100%; max-width: 420px; background: #1f140d; border: 1px solid var(--vien-dam);
+      border-radius: 18px; padding: 22px; box-shadow: 0 30px 70px rgba(0, 0, 0, .7);
+    }
+    .hop-xn__khung h3 { margin: 0 0 4px; font-family: var(--font-serif); font-size: 21px; color: #fff; }
+    .hop-xn__khung > p { margin: 0 0 14px; color: var(--mo); font-size: 13px; }
+    .hop-xn__mon {
+      background: var(--the); border: 1px solid var(--vien); border-left: 4px solid var(--xong);
+      border-radius: 12px; padding: 14px; margin-bottom: 16px;
+    }
+    .hop-xn__mon .ten { font-size: 18px; font-weight: 800; color: #fff; }
+    .hop-xn__mon .ban { margin-top: 6px; font-size: 15px; color: var(--gold-light); font-weight: 700; }
+    .hop-xn__nut { display: flex; gap: 10px; }
+    .hop-xn__nut button {
+      flex: 1; padding: 12px; border-radius: 10px; border: 0; font-weight: 800; font-size: 14px;
+      cursor: pointer; font-family: inherit;
+    }
+    .hop-xn__nut .huy { background: rgba(255, 255, 255, .08); color: var(--chu); border: 1px solid var(--vien); }
+    .hop-xn__nut .dong-y { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: #fff; }
+    .hop-xn__nut button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
+
     .rong {
       color: var(--mo); font-size: 13px; text-align: center; padding: 40px 12px;
       background: rgba(0, 0, 0, 0.12); border-radius: 10px; border: 1px dashed var(--vien);
@@ -262,7 +318,16 @@
       <div class="sub">
         <span class="cham" id="chamKN"></span><span id="ttKetNoi">Đang kết nối...</span>
         &nbsp;|&nbsp; <%= tenNguoiDung %><%= vaiTro ? ' (' + vaiTro + ')' : '' %>
-        &nbsp;&middot;&nbsp; <span class="goi-y-keo"><i class="fas fa-hand-pointer"></i> Kéo thả thẻ món sang cột kế tiếp hoặc bấm nút</span>
+        &nbsp;&middot;&nbsp;
+        <% if (quyen.bep && quyen.phucVu) { %>
+          <span class="che-do full"><i class="fas fa-user-shield"></i> Toàn quyền: chế biến &amp; xác nhận lên món</span>
+        <% } else if (quyen.bep) { %>
+          <span class="che-do bep"><i class="fas fa-fire-burner"></i> Bếp: nhận món, báo hoàn thành (kéo thả được)</span>
+        <% } else if (quyen.phucVu) { %>
+          <span class="che-do pv"><i class="fas fa-bell-concierge"></i> Phục vụ: chỉ xem, xác nhận khi đã mang món ra bàn</span>
+        <% } else { %>
+          <span class="che-do xem"><i class="fas fa-eye"></i> Chế độ chỉ xem</span>
+        <% } %>
       </div>
     </div>
     <nav>
@@ -296,8 +361,27 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="hop-xn" id="hopXn" hidden role="dialog" aria-modal="true" aria-labelledby="hopXnTieuDe">
+    <div class="hop-xn__khung">
+      <h3 id="hopXnTieuDe">Xác nhận đã lên món</h3>
+      <p>Chỉ bấm xác nhận sau khi món đã được đặt lên bàn khách.</p>
+      <div class="hop-xn__mon" id="hopXnMon"></div>
+      <div class="hop-xn__nut">
+        <button type="button" class="huy" id="hopXnHuy">Chưa, quay lại</button>
+        <button type="button" class="dong-y" id="hopXnDongY"><i class="fas fa-check-double"></i> <span>Đã mang ra bàn</span></button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const $ = (id) => document.getElementById(id);
+// Quyen do may chu tinh (routes/kds.js quyenKds). Chi dung de AN nut / tat keo
+// tha - may chu van tu chan tung buoc, nen sua bien nay trong DevTools cung vo ich.
+const QUYEN = <%- JSON.stringify(quyen) %>;
+/** Ai duoc keo the o cot nao. */
+const KEO_DUOC = { cho: QUYEN.bep, lam: QUYEN.bep, xong: QUYEN.phucVu };
+/** Du lieu mon dang hien, de hop xac nhan doc ten/ban ma khong phai doc DOM. */
+const MON = new Map();
 
 function baoNho(chu) {
   const t = $('toast');
@@ -324,11 +408,20 @@ function veThe(m, loai) {
   const ban = m.number_ban
     ? `Bàn <b>${m.number_ban}</b>`
     : `<span style="background:rgba(212,175,55,0.18);color:#dfb962;padding:2px 7px;border-radius:6px;font-weight:700;"><i class="fas fa-truck-fast"></i> ${m.ma_giao || 'Giao hàng'}</span>`;
+  MON.set(m.id, m);
+  // Nut theo QUYEN: nguoi khong co quyen thay dong trang thai thay cho nut.
   const nut = {
-    cho:  `<button class="b-lam"  onclick="doi(${m.id},'bat-dau',this)"><i class="fas fa-play"></i> Bắt đầu chế biến</button>`,
-    lam:  `<button class="b-xong" onclick="doi(${m.id},'hoan-thanh',this)"><i class="fas fa-check"></i> Hoàn thành món</button>`,
-    xong: `<button class="b-pv"   onclick="doi(${m.id},'da-phuc-vu',this)"><i class="fas ${laGiao ? 'fa-box' : 'fa-bell'}"></i> ${laGiao ? 'Sẵn sàng giao' : 'Đã mang ra bàn'}</button>`,
+    cho: QUYEN.bep
+      ? `<button class="b-lam"  onclick="doi(${m.id},'bat-dau',this)"><i class="fas fa-play"></i> Bắt đầu chế biến</button>`
+      : `<div class="trang-thai-nho"><i class="fas fa-hourglass-half"></i> Chờ bếp nhận món</div>`,
+    lam: QUYEN.bep
+      ? `<button class="b-xong" onclick="doi(${m.id},'hoan-thanh',this)"><i class="fas fa-check"></i> Hoàn thành món</button>`
+      : `<div class="trang-thai-nho"><i class="fas fa-fire"></i> Bếp đang chế biến</div>`,
+    xong: QUYEN.phucVu
+      ? `<button class="b-len" onclick="hoiLenMon(${m.id})"><i class="fas ${laGiao ? 'fa-box' : 'fa-bell-concierge'}"></i> ${laGiao ? 'Xác nhận đã đóng gói giao' : 'Xác nhận đã lên món'}</button>`
+      : `<div class="trang-thai-nho"><i class="fas fa-person-walking"></i> Chờ phục vụ mang ra ${laGiao ? 'quầy giao' : 'bàn'}</div>`,
   }[loai] || '';
+  const keoDuoc = !!KEO_DUOC[loai];
 
   // Ghi chu khach go tren dien thoai -> phai thoat truoc khi do vao innerHTML.
   const ghiChu = m.ghi_chu_mon
@@ -336,14 +429,14 @@ function veThe(m, loai) {
     : '';
 
   return `
-    <div class="the ${tre ? 'tre' : loai}" draggable="true" data-id="${m.id}" data-loai="${loai}" title="Kéo thả sang cột khác để chuyển trạng thái">
+    <div class="the ${tre ? 'tre' : loai}${MOI_XONG.has(m.id) ? ' moi-xong' : ''}" draggable="${keoDuoc}" data-id="${m.id}" data-loai="${loai}"${keoDuoc ? ' title="Kéo thả sang cột kế tiếp để chuyển trạng thái"' : ''}>
       <div class="dong1">
-        <div class="ten"><i class="fas fa-grip-vertical grip-icon"></i>${String(m.name_mon).trim()}</div>
+        <div class="ten">${keoDuoc ? '<i class="fas fa-grip-vertical grip-icon"></i>' : ''}${thoat(String(m.name_mon).trim())}</div>
         <div class="sl">x${m.soluong}</div>
       </div>
       ${ghiChu}
       <div class="meta">
-        ${ban} &middot; <b>${m.ten_khach || 'Khách lẻ'}</b><br>
+        ${ban} &middot; <b>${thoat(m.ten_khach || 'Khách lẻ')}</b><br>
         Giờ order: <b>${m.tg || '—'}</b>
         ${m.cho_phut !== null && m.cho_phut !== undefined && Number(m.cho_phut) > 0
           ? ` &middot; <span class="${tre ? 'cho-lau' : ''}">chờ ${choPhut} phút${tre ? ' ⚠' : ''}</span>`
@@ -352,6 +445,15 @@ function veThe(m, loai) {
       ${nut}
     </div>`;
 }
+
+document.querySelectorAll('.cot[data-col]').forEach((c) => {
+  const col = c.dataset.col;
+  const coQuyen = col === 'pv' ? QUYEN.phucVu : col === 'xong' ? (QUYEN.bep || QUYEN.phucVu) : QUYEN.bep;
+  c.classList.toggle('khoa', !coQuyen);
+});
+
+/** Mon vua hoan thanh - nhay sang vai giay de phuc vu de thay. */
+const MOI_XONG = new Set();
 
 async function tai() {
   let d;
@@ -390,6 +492,7 @@ async function tai() {
             <div class="sl" style="font-size:13px">x${m.soluong}</div>
           </div>
           <div class="meta">${m.number_ban ? 'Bàn <b>' + m.number_ban + '</b>' : 'Mang về'}</div>
+          ${m.gio_len_mon ? `<div class="da-len"><i class="fas fa-check-double"></i> ${m.gio_len_mon} · ${thoat(m.nguoi_len_mon || '')}</div>` : ''}
         </div>`).join('')
     : '<div class="rong">Chưa phục vụ món nào hôm nay</div>';
 }
@@ -416,12 +519,49 @@ async function doi(id, buoc, nut) {
   }
 }
 
+// --- Xác nhận lên món ---
+let monChoXacNhan = null;
+function hoiLenMon(id) {
+  const m = MON.get(id);
+  if (!m || !QUYEN.phucVu) return;
+  monChoXacNhan = id;
+  const laGiao = m.loai_don === 'giao_hang' || !m.number_ban;
+  $('hopXnTieuDe').textContent = laGiao ? 'Xác nhận đã đóng gói giao' : 'Xác nhận đã lên món';
+  $('hopXnDongY').querySelector('span').textContent = laGiao ? 'Đã đóng gói xong' : 'Đã mang ra bàn';
+  $('hopXnMon').innerHTML = `
+    <div class="ten">${thoat(String(m.name_mon).trim())} <span style="color:var(--gold-light)">×${m.soluong}</span></div>
+    <div class="ban">${m.number_ban ? '<i class="fas fa-chair"></i> Bàn ' + thoat(m.number_ban) : '<i class="fas fa-truck-fast"></i> ' + thoat(m.ma_giao || 'Giao hàng / mang về')}</div>
+    ${m.ghi_chu_mon ? `<div class="ghi-chu" style="margin-top:8px;color:#fef08a;font-size:13px">📝 ${thoat(m.ghi_chu_mon)}</div>` : ''}`;
+  $('hopXn').hidden = false;
+  $('hopXnDongY').disabled = false;
+  $('hopXnDongY').focus();
+}
+function dongHopXn() { $('hopXn').hidden = true; monChoXacNhan = null; tai(); }
+$('hopXnHuy').addEventListener('click', dongHopXn);
+$('hopXn').addEventListener('click', (e) => { if (e.target === $('hopXn')) dongHopXn(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('hopXn').hidden) dongHopXn(); });
+$('hopXnDongY').addEventListener('click', async () => {
+  if (!monChoXacNhan) return;
+  const id = monChoXacNhan;
+  $('hopXnDongY').disabled = true;
+  try {
+    const r = await fetch(`/kds/api/da-phuc-vu/${id}`, { method: 'POST' });
+    const kq = await r.json();
+    if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    MOI_XONG.delete(id);
+    baoNho('Đã xác nhận lên món');
+  } catch (e) {
+    alert('Không xác nhận được: ' + e.message);
+  }
+  dongHopXn();
+});
+
 // --- Kéo thả (Drag & Drop) Kanban giữa 4 cột ---
 let theDangKeo = null;
 
 document.addEventListener('dragstart', (e) => {
   const the = e.target.closest('.the[draggable="true"]');
-  if (!the) return;
+  if (!the || !KEO_DUOC[the.dataset.loai]) return;
   theDangKeo = {
     id: Number(the.dataset.id),
     tuCot: the.dataset.loai,
@@ -445,11 +585,13 @@ document.querySelectorAll('.cot[data-col]').forEach((cot) => {
     if (!theDangKeo) return;
     const denCot = cot.dataset.col;
     if (denCot === theDangKeo.tuCot) return;
-    // Cho phép kéo tiến (cho -> lam -> xong -> pv) hoặc kéo lùi (lam -> cho)
+    // Bep: cho <-> lam -> xong. Phuc vu: xong -> pv (qua hop xac nhan).
+    // Khong cho nhay coc tu cho/lam sang "da phuc vu": mon phai duoc bep bao
+    // hoan thanh truoc thi phuc vu moi mang ra.
     const hopLe =
-      (theDangKeo.tuCot === 'cho' && ['lam', 'xong', 'pv'].includes(denCot)) ||
-      (theDangKeo.tuCot === 'lam' && ['cho', 'xong', 'pv'].includes(denCot)) ||
-      (theDangKeo.tuCot === 'xong' && denCot === 'pv');
+      (QUYEN.bep && theDangKeo.tuCot === 'cho' && ['lam', 'xong'].includes(denCot)) ||
+      (QUYEN.bep && theDangKeo.tuCot === 'lam' && ['cho', 'xong'].includes(denCot)) ||
+      (QUYEN.phucVu && theDangKeo.tuCot === 'xong' && denCot === 'pv');
     if (!hopLe) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -473,14 +615,17 @@ document.querySelectorAll('.cot[data-col]').forEach((cot) => {
     if (!id || tuCot === denCot) return;
 
     // Xác định danh sách bước API cần gọi để đảm bảo đúng quy trình & trừ kho FIFO
+    // Keo sang "da phuc vu" khong goi API ngay: mo hop xac nhan nhu khi bam nut.
+    if (tuCot === 'xong' && denCot === 'pv') {
+      if (QUYEN.phucVu) hoiLenMon(id);
+      return;
+    }
     let cacBuoc = [];
+    if (!QUYEN.bep) return;
     if (tuCot === 'cho' && denCot === 'lam') cacBuoc = ['bat-dau'];
     else if (tuCot === 'cho' && denCot === 'xong') cacBuoc = ['hoan-thanh'];
-    else if (tuCot === 'cho' && denCot === 'pv') cacBuoc = ['hoan-thanh', 'da-phuc-vu'];
     else if (tuCot === 'lam' && denCot === 'cho') cacBuoc = ['tra-lai-cho'];
     else if (tuCot === 'lam' && denCot === 'xong') cacBuoc = ['hoan-thanh'];
-    else if (tuCot === 'lam' && denCot === 'pv') cacBuoc = ['hoan-thanh', 'da-phuc-vu'];
-    else if (tuCot === 'xong' && denCot === 'pv') cacBuoc = ['da-phuc-vu'];
 
     if (!cacBuoc.length) return;
 
@@ -509,8 +654,6 @@ document.querySelectorAll('.cot[data-col]').forEach((cot) => {
         baoNho('Đã hoàn thành món & tự động trừ kho theo công thức');
       } else if (denCot === 'lam') {
         baoNho('Đã bắt đầu chế biến món');
-      } else if (denCot === 'pv') {
-        baoNho('Đã đánh dấu phục vụ món');
       } else if (denCot === 'cho') {
         baoNho('Đã chuyển món về lại hàng chờ');
       }
@@ -535,7 +678,34 @@ socket.on('disconnect', () => {
   $('chamKN').classList.add('tat');
 });
 socket.on('new-order-to-kitchen', () => { baoNho('Có order mới!'); tai(); });
-socket.on('kds-cap-nhat', tai);
+socket.on('kds-cap-nhat', (d) => {
+  // Mon vua hoan thanh: phuc vu can biet ngay de mang ra ban.
+  if (d && d.buoc === 'hoan-thanh' && d.mon && QUYEN.phucVu) {
+    MOI_XONG.add(d.mon.id);
+    setTimeout(() => MOI_XONG.delete(d.mon.id), 6000);
+    keu();
+    baoNho(`🔔 Món đã xong: ${String(d.mon.name_mon || '').trim()} ×${d.mon.soluong}` +
+      (d.mon.number_ban ? ` — mang ra bàn ${d.mon.number_ban}` : ' — chuẩn bị giao'));
+  }
+  tai();
+});
+
+/** Tieng "ting" ngan bao mon xong - tao bang WebAudio, khong can file am thanh. */
+let amThanh = null;
+function keu() {
+  try {
+    amThanh = amThanh || new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.18].forEach((tre, i) => {
+      const o = amThanh.createOscillator(), g = amThanh.createGain();
+      o.frequency.value = i ? 1320 : 880;
+      g.gain.setValueAtTime(0.0001, amThanh.currentTime + tre);
+      g.gain.exponentialRampToValueAtTime(0.25, amThanh.currentTime + tre + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, amThanh.currentTime + tre + 0.35);
+      o.connect(g).connect(amThanh.destination);
+      o.start(amThanh.currentTime + tre); o.stop(amThanh.currentTime + tre + 0.4);
+    });
+  } catch (_) { /* trinh duyet chan am thanh khi chua tuong tac - bo qua */ }
+}
 
 tai();
 // Luoi an toan: neu socket co van de thi van tu lam moi.

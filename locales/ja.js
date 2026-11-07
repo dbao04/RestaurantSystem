@@ -65,6 +65,8 @@ module.exports = {
   'dieu_huong.gioi_thieu': '当店について',
   'dieu_huong.mon_an': 'お料理',
   'dieu_huong.thuc_don': 'セットメニュー',
+  'dieu_huong.khong_gian': '店内空間',
+  'dieu_huong.dat_tiec': '宴会予約',
   'dieu_huong.tin_tuc': 'お知らせ',
   'dieu_huong.don_cua_toi': '注文履歴',
   'dieu_huong.gio_hang': 'カート',

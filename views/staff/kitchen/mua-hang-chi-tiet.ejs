@@ -1,0 +1,126 @@
+<%
+  var activePage = 'mua-hang';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 3 }); };
+  var tgVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear() + (d.length === 10 ? '' : ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2)); };
+  var BUOC = ['cho_duyet', 'da_duyet', 'da_dat', 'da_nhan'];
+  var TEN = { cho_duyet: 'Chờ duyệt', da_duyet: 'Đã duyệt', da_dat: 'Đã đặt NCC', da_nhan: 'Đã nhận đủ' };
+  var hienTai = don.trang_thai === 'nhan_mot_phan' ? 'da_dat' : don.trang_thai;
+  var viTri = BUOC.indexOf(hienTai);
+  var laNguoiTao = idNv && Number(don.id_nv_tao) === Number(idNv);
+  var tongNhan = don.dong.reduce(function (s, d) { return s + d.so_luong_da_nhan * d.don_gia; }, 0);
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-file-invoice text-warning"></i> Đơn mua <span class="kb-ma" style="font-size:1.2rem"><%= don.ma_don %></span></h1>
+    <div class="kb-phu">Tạo bởi <b><%= don.nguoi_tao || '—' %></b> lúc <%= tgVN(don.created_at) %><%= don.nguoi_duyet ? ' · duyệt bởi ' + don.nguoi_duyet + ' lúc ' + tgVN(don.duyet_luc) : '' %></div>
+  </div>
+  <div class="kb-nut kb-khong-in">
+    <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Danh sách</a>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print"></i> In đơn</button>
+  </div>
+</div>
+
+<div class="kb-the mb-3">
+  <% if (don.trang_thai === 'huy') { %>
+    <div class="kb-canh do mb-0"><i class="fas fa-ban"></i><div><b>Đơn đã hủy.</b> Lý do: <%= don.ly_do_huy || '—' %></div></div>
+  <% } else { %>
+    <div class="kb-buoc mb-3">
+      <% BUOC.forEach(function (b, i) { %>
+        <% if (i) { %><i class="fas fa-chevron-right"></i><% } %>
+        <span class="<%= i < viTri || hienTai === 'da_nhan' ? 'xong' : i === viTri ? 'dang' : '' %>"><%= i < viTri || hienTai === 'da_nhan' ? '✓ ' : '' %><%= TEN[b] %></span>
+      <% }) %>
+      <% if (don.trang_thai === 'nhan_mot_phan') { %><span class="kb-nhan cam ml-2">Đã nhận một phần</span><% } %>
+    </div>
+    <div class="d-flex flex-wrap kb-khong-in" style="gap:.5rem">
+      <% if (don.trang_thai === 'cho_duyet') { %>
+        <% if (duocDuyet && !laNguoiTao) { %>
+          <button class="btn btn-success btn-sm" data-buoc="duyet"><i class="fas fa-check-double"></i> Duyệt đơn</button>
+        <% } else if (duocDuyet && laNguoiTao) { %>
+          <span class="small text-muted align-self-center"><i class="fas fa-circle-info"></i> Bạn là người lập đơn – cần một người duyệt khác (bếp trưởng / quản lý).</span>
+        <% } else { %>
+          <span class="small text-muted align-self-center"><i class="fas fa-hourglass-half"></i> Đang chờ bếp trưởng / quản lý duyệt.</span>
+        <% } %>
+      <% } %>
+      <% if (don.trang_thai === 'da_duyet') { %><button class="btn btn-primary btn-sm" data-buoc="dat_hang"><i class="fas fa-phone"></i> Đã đặt hàng với NCC</button><% } %>
+      <% if (['da_duyet', 'da_dat', 'nhan_mot_phan'].indexOf(don.trang_thai) >= 0) { %>
+        <a class="btn btn-warning btn-sm font-weight-bold" href="/staff/kitchen/kho/nhap/moi?don=<%= don.id_dmh %>"><i class="fas fa-truck-ramp-box"></i> Nhận hàng → lập phiếu nhập</a>
+      <% } %>
+      <% if (['nhap', 'cho_duyet', 'da_duyet', 'da_dat'].indexOf(don.trang_thai) >= 0) { %>
+        <button class="btn btn-outline-danger btn-sm" id="moHuy"><i class="fas fa-ban"></i> Hủy đơn</button>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<div class="row">
+  <div class="col-lg-4 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-store"></i> Nhà cung cấp</h6>
+    <div><b><%= don.ten_ncc || 'Chưa chọn' %></b></div>
+    <% if (don.sodienthoai) { %><div class="small">ĐT: <%= don.sodienthoai %></div><% } %>
+    <% if (don.diachi) { %><div class="small text-muted"><%= don.diachi %></div><% } %>
+    <hr>
+    <div class="small">Giao dự kiến: <b><%= don.ngay_giao_du_kien ? tgVN(String(don.ngay_giao_du_kien).slice(0, 10)) : '—' %></b></div>
+    <div class="small">Ghi chú: <%= don.ghi_chu || '—' %></div>
+  </div></div>
+  <div class="col-lg-8 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-list"></i> Nguyên liệu đặt mua</h6>
+    <div class="table-responsive"><table class="table table-sm kb-bang mb-0">
+      <thead class="thead-light"><tr><th>Nguyên liệu</th><th class="so">Đặt</th><th class="so">Đã nhận</th><th class="so">Đơn giá</th><th class="so">Thành tiền</th></tr></thead>
+      <tbody>
+        <% don.dong.forEach(function (d) { var du = d.so_luong_da_nhan >= d.so_luong; %>
+          <tr><td><%= d.ten_nl %></td>
+            <td class="so"><%= soVN(d.so_luong) %> <span class="small text-muted"><%= d.ten_dvt %></span></td>
+            <td class="so"><span class="kb-nhan <%= du ? 'xanh' : d.so_luong_da_nhan > 0 ? 'cam' : 'xam' %>"><%= soVN(d.so_luong_da_nhan) %></span></td>
+            <td class="so"><%= vnd(d.don_gia) %></td>
+            <td class="so"><%= vnd(d.so_luong * d.don_gia) %></td></tr>
+        <% }) %>
+      </tbody>
+      <tfoot><tr class="font-weight-bold"><td colspan="4" class="text-right">Tổng dự kiến</td><td class="so"><%= vnd(don.tong_tien) %></td></tr>
+        <% if (tongNhan) { %><tr><td colspan="4" class="text-right text-muted">Giá trị đã nhận (theo giá dự kiến)</td><td class="so"><%= vnd(tongNhan) %></td></tr><% } %></tfoot>
+    </table></div>
+  </div></div>
+</div>
+
+<div class="kb-hop" id="hopHuy" hidden role="dialog" aria-modal="true" aria-labelledby="tdHuy">
+  <form class="kb-hop__k" id="formHuy">
+    <h5 id="tdHuy">Hủy đơn <%= don.ma_don %></h5>
+    <label for="lyDoHuy" class="small font-weight-bold">Lý do hủy *</label>
+    <textarea id="lyDoHuy" class="form-control" rows="2" maxlength="300" required placeholder="VD: NCC hết hàng, đặt lại đơn khác"></textarea>
+    <div class="alert alert-danger mt-2 mb-0 py-2 small" id="loiHuy" hidden></div>
+    <div class="d-flex justify-content-end mt-3" style="gap:.5rem"><button type="button" class="btn btn-light" id="dongHuy">Quay lại</button><button class="btn btn-danger">Xác nhận hủy</button></div>
+  </form>
+</div>
+
+<script>
+(function () {
+  var ID = <%= don.id_dmh %>;
+  async function goi(buoc, body) {
+    var r = await fetch('/api/kitchen/mua-hang/' + ID + '/' + buoc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    var j = await r.json();
+    if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+  }
+  document.querySelectorAll('[data-buoc]').forEach(function (b) {
+    b.addEventListener('click', async function () {
+      b.disabled = true;
+      try { await goi(b.getAttribute('data-buoc')); location.reload(); }
+      catch (e) { alert(e.message); b.disabled = false; }
+    });
+  });
+  var hop = document.getElementById('hopHuy');
+  var mo = document.getElementById('moHuy');
+  if (mo) mo.addEventListener('click', function () { hop.hidden = false; document.getElementById('lyDoHuy').focus(); });
+  document.getElementById('dongHuy').addEventListener('click', function () { hop.hidden = true; });
+  hop.addEventListener('click', function (e) { if (e.target === hop) hop.hidden = true; });
+  document.getElementById('formHuy').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    try { await goi('huy', { ly_do: document.getElementById('lyDoHuy').value }); location.reload(); }
+    catch (err) { var l = document.getElementById('loiHuy'); l.textContent = err.message; l.hidden = false; }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

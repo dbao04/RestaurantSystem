@@ -1,0 +1,170 @@
+<%- include('partials/header', { title: 'Chính sách giao hàng' }) %>
+<%
+/*
+  CHINH SACH GIAO HANG.
+
+  Moi con so tren trang nay (bang gia ship, bac giam, nguong mien phi, thoi gian
+  giu don, ty le hoan diem) doc tu cau hinh dang chay qua
+  chinhSachGiaoService.docChinhSach() - quan tri doi bang gia o /admin/van-chuyen
+  la trang nay doi theo, khong bao gio lech voi so tien khach bi tinh that.
+*/
+var cs = chinhSach;
+var tien = function (n) { return formatMoney(n) + '₫'; };
+%>
+<style>
+  .cs-wrap { max-width: 980px; margin: 0 auto; padding: 36px 16px 56px; color: #3b3027; }
+  .cs-hero { background: linear-gradient(135deg, #2c1810, #4a2a1c); color: #f8ecd6; border-radius: 18px; padding: 28px 26px; margin-bottom: 24px; }
+  .cs-hero h1 { margin: 0 0 8px; font-family: var(--nh-serif, serif); font-size: 28px; color: #e9c46a; }
+  .cs-hero p { margin: 0; opacity: .9; line-height: 1.6; }
+  .cs-tom-tat { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 18px; }
+  .cs-tom-tat > div { background: rgba(255,255,255,.08); border: 1px solid rgba(233,196,106,.35); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5; }
+  .cs-tom-tat b { color: #e9c46a; display: block; font-size: 15px; margin-bottom: 2px; }
+  .cs-muc { background: #fff; border: 1.5px solid #e8decb; border-radius: 16px; padding: 22px 24px; margin-bottom: 18px; box-shadow: 0 4px 18px rgba(34,23,17,.05); }
+  .cs-muc h2 { margin: 0 0 12px; font-size: 19px; color: #2c1810; display: flex; gap: 10px; align-items: center; }
+  .cs-muc h2 .so { background: #c8a24b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .cs-muc p, .cs-muc li { line-height: 1.65; font-size: 14.5px; }
+  .cs-muc ul { padding-left: 20px; margin: 6px 0; }
+  .cs-bang { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0; }
+  .cs-bang th, .cs-bang td { border: 1px solid #ece3d3; padding: 8px 10px; text-align: left; }
+  .cs-bang th { background: #faf5ea; color: #4a3a2c; }
+  .cs-bang td.so { text-align: right; font-weight: 700; white-space: nowrap; }
+  .cs-cuon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cs-the { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .cs-the--giam { background: #dcfce7; color: #166534; }
+  .cs-hai-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .cs-hai-cot { grid-template-columns: 1fr; } .cs-hero h1 { font-size: 23px; } }
+  .cs-o { border-radius: 12px; padding: 14px 16px; }
+  .cs-o h3 { margin: 0 0 8px; font-size: 15.5px; }
+  .cs-o--khach { background: #fef2f2; border: 1px solid #fecaca; }
+  .cs-o--khach h3 { color: #b91c1c; }
+  .cs-o--nh { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .cs-o--nh h3 { color: #15803d; }
+  .cs-vd { background: #faf7f1; border-left: 3px solid #c8a24b; padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13.8px; margin-top: 10px; }
+  .cs-hanh-trinh { counter-reset: b; list-style: none; padding: 0 !important; }
+  .cs-hanh-trinh li { counter-increment: b; position: relative; padding-left: 40px; margin-bottom: 10px; }
+  .cs-hanh-trinh li::before { content: counter(b); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: #2c1810; color: #e9c46a; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+</style>
+
+<section class="cs-wrap">
+  <div class="cs-hero">
+    <h1><i class="fas fa-file-shield"></i> Chính sách giao hàng</h1>
+    <p>Áp dụng cho mọi đơn đặt giao tận nơi trên website. Vui lòng đọc kỹ trước khi đặt đơn, vì khi bấm đặt là quý khách đã đồng ý các điều khoản dưới đây.</p>
+    <div class="cs-tom-tat">
+      <div><b>Thanh toán trước 100%</b>Trả đủ tiền món và phí ship qua VietQR. Bếp nấu khi đã nhận đủ tiền.</div>
+      <div><b>Ship theo km, xa thì giảm giá/km</b>Mấy km đầu tính trọn gói, đi xa hơn thì đơn giá mỗi km thấp dần.</div>
+      <div><b>Lỗi khách: không hoàn</b>Tự hủy sau khi trả tiền, không nghe máy, sai địa chỉ, từ chối nhận.</div>
+      <div><b>Lỗi nhà hàng: hoàn điểm</b>Hoàn <%= cs.ty_le_hoan_diem %>% số tiền đã trả bằng điểm, không hoàn tiền mặt.</div>
+    </div>
+  </div>
+
+  <!-- 1. THANH TOAN -->
+  <div class="cs-muc">
+    <h2><span class="so">1</span> Thanh toán</h2>
+    <ul>
+      <li>Đơn giao hàng <b>phải thanh toán trước 100%</b>, gồm tiền món ăn và phí giao hàng, bằng chuyển khoản <b>VietQR</b>. Nhà hàng <b>không nhận COD</b> (trả tiền khi nhận hàng).</li>
+      <li>Sau khi bấm đặt, đơn được giữ <b><%= cs.phut_giu_thanh_toan %> phút</b> để quý khách chuyển khoản. Quá thời gian này mà nhà hàng chưa nhận đủ tiền, đơn <b>tự hủy</b>, quý khách không mất phí.</li>
+      <li>Bếp chỉ bắt đầu chế biến và hệ thống mới điều shipper sau khi nhà hàng đã nhận <b>đủ</b> số tiền.</li>
+      <li>Quý khách có thể dùng <b>điểm tích lũy / điểm hoàn</b> để trừ vào tiền món (1 điểm = <%= tien(cs.gia_tri_1_diem) %>, tối đa <%= cs.toi_da_diem_moi_don %>% tiền món mỗi đơn). Điểm không trừ vào phí ship.</li>
+      <li>Nếu tiền chuyển khoản về <b>sau</b> khi đơn đã tự hủy vì quá hạn, nhà hàng hoàn lại toàn bộ số tiền đó bằng điểm.</li>
+    </ul>
+  </div>
+
+  <!-- 2. PHI SHIP -->
+  <div class="cs-muc">
+    <h2><span class="so">2</span> Phí giao hàng</h2>
+    <p>Phí ship tính theo <b>khoảng cách từ nhà hàng tới địa chỉ nhận</b>, phần lẻ làm tròn lên từng 0,5 km. Phí <b>tính theo bậc</b>: mấy km đầu trọn gói, mỗi km tiếp theo có đơn giá, và <b>càng đi xa thì đơn giá mỗi km càng giảm</b>. Tổng phí làm tròn lên bội số 1.000₫.</p>
+    <% if (cs.mien_phi_tu > 0) { %>
+      <p><span class="cs-the cs-the--giam"><i class="fas fa-gift"></i> Miễn phí ship</span> cho đơn có tiền món từ <b><%= tien(cs.mien_phi_tu) %></b>.</p>
+    <% } %>
+
+    <% cs.bang_gia.forEach(function (dv) { %>
+      <h3 style="font-size:15.5px; margin:16px 0 4px;"><i class="fas fa-motorcycle" style="color:#c8a24b"></i> <%= dv.ten_dv %> <span style="font-weight:400; color:#7a6b5c; font-size:13px;">— giao trong bán kính <%= dv.ban_kinh_km %> km</span></h3>
+      <div class="cs-cuon">
+        <table class="cs-bang">
+          <tr><th>Quãng đường</th><th>Đơn giá</th></tr>
+          <tr><td><%= dv.so_km_dau %> km đầu</td><td class="so"><%= tien(dv.phi_co_ban) %> (trọn gói)</td></tr>
+          <% dv.bac.forEach(function (b, i) { var den = dv.bac[i + 1] ? dv.bac[i + 1].tu_km : null; %>
+            <tr>
+              <td><%= den ? ('Từ km ' + b.tu_km + ' đến km ' + den) : ('Từ km ' + b.tu_km + ' trở đi') %>
+                <% if (b.giam > 0) { %> <span class="cs-the cs-the--giam">giảm <%= b.giam %>%</span><% } %></td>
+              <td class="so"><%= tien(b.don_gia) %> / km</td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+      <div class="cs-cuon">
+        <table class="cs-bang">
+          <tr><th>Ví dụ khoảng cách</th><% dv.vi_du.forEach(function (v) { %><th style="text-align:right"><%= v.km %> km</th><% }) %></tr>
+          <tr><td>Phí ship</td><% dv.vi_du.forEach(function (v) { %><td class="so"><%= tien(v.phi) %></td><% }) %></tr>
+        </table>
+      </div>
+    <% }) %>
+    <% var dv0 = cs.bang_gia[0]; if (dv0 && dv0.bac.length > 1) { %>
+      <div class="cs-vd">
+        <b>Cách tính, ví dụ địa chỉ cách 6,3 km</b> (đội giao của nhà hàng, làm tròn thành 6,5 km):<br>
+        <%= dv0.so_km_dau %> km đầu <%= tien(dv0.phi_co_ban) %>
+        <% var kmTinh = 6.5; dv0.bac.forEach(function (b, i) {
+             var den = dv0.bac[i + 1] ? dv0.bac[i + 1].tu_km : Infinity;
+             var soKm = Math.max(0, Math.min(kmTinh, den) - b.tu_km);
+             if (soKm > 0) { %> + <%= String(soKm).replace('.', ',') %> km × <%= tien(b.don_gia) %><% } }) %>
+        . Hệ thống tự tính, quý khách thấy phí ship chính xác ngay khi ghim địa chỉ trên bản đồ.
+      </div>
+    <% } %>
+  </div>
+
+  <!-- 3. HUY DON -->
+  <div class="cs-muc">
+    <h2><span class="so">3</span> Hủy đơn và hoàn điểm</h2>
+    <ul>
+      <li><b>Chưa thanh toán:</b> hủy thoải mái, không mất phí.</li>
+      <li><b>Đã thanh toán:</b> quý khách tự hủy được khi shipper <b>chưa tới lấy hàng</b>. Hủy lúc này được tính là <b>lỗi do khách</b>, theo mục bên dưới. Khi shipper đã lấy hàng thì đơn không hủy được nữa.</li>
+    </ul>
+
+    <div class="cs-hai-cot" style="margin-top:12px;">
+      <div class="cs-o cs-o--khach">
+        <h3><i class="fas fa-user-xmark"></i> Lỗi do khách: KHÔNG hoàn</h3>
+        <ul>
+          <% cs.ly_do_khach.forEach(function (l) { %><li><%= l.nhan %></li><% }) %>
+        </ul>
+        <p style="margin:8px 0 0; font-size:13.5px;">Món đã chế biến, shipper đã chạy nên nhà hàng <b>không hoàn tiền, không hoàn điểm</b>. Điểm đã dùng cho đơn cũng không được trả lại, và đơn hủy không được tích điểm.</p>
+      </div>
+      <div class="cs-o cs-o--nh">
+        <h3><i class="fas fa-store-slash"></i> Lỗi do nhà hàng: HOÀN ĐIỂM</h3>
+        <ul>
+          <% cs.ly_do_nha_hang.forEach(function (l) { %><li><%= l.nhan %></li><% }) %>
+        </ul>
+        <p style="margin:8px 0 0; font-size:13.5px;">Nhà hàng <b>không hoàn tiền mặt</b> mà hoàn <b><%= cs.ty_le_hoan_diem %>% số tiền đã thanh toán</b> (món + ship) <b>bằng điểm</b>, và trả lại nguyên số điểm quý khách đã dùng cho đơn.</p>
+      </div>
+    </div>
+
+    <div class="cs-vd">
+      <b>Quy đổi:</b> 1 điểm = <%= tien(cs.gia_tri_1_diem) %>. Ví dụ đơn đã trả 250.000₫ bị hủy vì nhà hàng hết món thì quý khách nhận <b><%= Math.ceil(250000 * cs.ty_le_hoan_diem / 100 / cs.gia_tri_1_diem) %> điểm</b>.<br>
+      <b>Giao thiếu hoặc sai một vài món</b> (đơn vẫn giao): nhà hàng hoàn điểm <b>đúng giá trị phần bị thiếu/sai</b>.
+    </div>
+  </div>
+
+  <!-- 4. DUNG DIEM -->
+  <div class="cs-muc">
+    <h2><span class="so">4</span> Dùng điểm hoàn</h2>
+    <ul>
+      <li>Điểm vào ví thành viên ngay khi nhà hàng xác nhận hủy hoặc bù, quý khách xem tại <a href="/thanh-vien">Thành viên</a>.</li>
+      <li><b>Đặt giao hàng lần sau:</b> nhập số điểm muốn dùng ở bước thanh toán.</li>
+      <li><b>Ăn tại nhà hàng:</b> báo thu ngân dùng điểm, điểm được trừ thẳng vào hóa đơn như voucher.</li>
+      <li>Mỗi đơn dùng điểm tối đa <%= cs.toi_da_diem_moi_don %>% giá trị món. Điểm không đổi ra tiền mặt.</li>
+    </ul>
+  </div>
+
+  <!-- 5. HANH TRINH -->
+  <div class="cs-muc">
+    <h2><span class="so">5</span> Hành trình một đơn</h2>
+    <ol class="cs-hanh-trinh">
+      <li>Chọn món, ghim địa chỉ: hệ thống báo khoảng cách và phí ship ngay.</li>
+      <li>Đồng ý chính sách, bấm <b>Đặt đơn &amp; Thanh toán</b>. Đơn được giữ <%= cs.phut_giu_thanh_toan %> phút.</li>
+      <li>Quét VietQR (có thể trừ bằng điểm). Nhà hàng nhận đủ tiền thì đơn tự chuyển xuống bếp.</li>
+      <li>Bếp nấu xong, shipper nhận đơn và giao. Quý khách theo dõi vị trí shipper trực tiếp bằng mã đơn.</li>
+      <li>Nhận hàng. Nếu có sự cố do nhà hàng, liên hệ hotline để được hoàn điểm.</li>
+    </ol>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -301,9 +301,9 @@ const CAU_HINH = [
   ['slot_step_minutes', '15'],
   ['auto_confirm_online', '0'],
   ['auto_confirm_member', '1'],
-  ['deposit_due_minutes', '120'],
+  ['deposit_due_minutes', '60'],
   ['peak_hours', '18:00-21:00'],
-  ['large_group_threshold', '10'],
+  ['large_group_threshold', '15'],
   ['max_guests_online', '30'],
   ['no_show_block_threshold', '3'],
   ['allow_customer_pick_table', '1'],
@@ -315,17 +315,18 @@ const CAU_HINH = [
 
 const CHINH_SACH_HUY = [
   ['Hủy trước 24 giờ - hoàn 100%', 24, 100, 'ALL'],
-  ['Hủy trước 6 giờ - hoàn 50%', 6, 50, 'ALL'],
-  ['Hủy dưới 2 giờ - không hoàn', 2, 0, 'ALL'],
+  ['Đoàn tiệc (≥ 15 khách) hủy từ 6h đến dưới 24h - hoàn 50%', 6, 50, 'LARGE_GROUP'],
+  ['Bàn thường hủy từ 6h đến dưới 24h - hoàn 70%', 6, 70, 'ALL'],
+  ['Đoàn tiệc (≥ 15 khách) hủy dưới 6 giờ - không hoàn', 2, 0, 'LARGE_GROUP'],
+  ['Bàn thường hủy từ 2h đến dưới 6h - hoàn 50%', 2, 50, 'ALL'],
 ];
 
 const QUY_TAC_COC = [
   // ten, ap_dung, min_khach, tu_gio, den_gio, kieu, so_tien, uu_tien
-  ['Nhóm đông từ 10 khách', 'LARGE_GROUP', 10, null, null, 'PER_GUEST', 100000, 10],
-  ['Khách VIP', 'VIP', 1, null, null, 'FIXED', 500000, 20],
-  ['Khách doanh nghiệp', 'CORPORATE', 1, null, null, 'PER_GUEST', 150000, 20],
-  ['Giờ cao điểm 18:00-21:00', 'PEAK_HOUR', 6, '18:00:00', '21:00:00', 'FIXED', 300000, 50],
-  ['Khách thường - không cần cọc', 'ALL', 1, null, null, 'NONE', 0, 900],
+  ['Đặt tiệc từ 15 khách trở lên (hoàn tiền thừa lúc thanh toán nếu dùng ít hơn)', 'LARGE_GROUP', 15, null, null, 'PER_GUEST', 150000, 10],
+  ['Giờ cao điểm 18:00-21:00 (không đặt món trước)', 'PEAK_HOUR', 1, '18:00:00', '21:00:00', 'PER_GUEST', 100000, 20],
+  ['Bàn từ 6 khách trở lên (ngoài giờ cao điểm)', 'ALL', 6, null, null, 'PER_GUEST', 100000, 30],
+  ['Bàn dưới 6 khách (ngoài giờ cao điểm) - Miễn đặt cọc', 'ALL', 1, null, null, 'NONE', 0, 900],
 ];
 
 // ---------------------------------------------------------------- backfill

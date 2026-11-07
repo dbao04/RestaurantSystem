@@ -19,68 +19,188 @@
   function monTT(i) { return dsTrangTri.length ? dsTrangTri[i % dsTrangTri.length] : null; }
 %>
 
-<!-- ================= HERO ================= -->
-<header class="nh-hero">
+<!-- ================= HERO (SLIDER) ================= -->
+<%
+  /*
+    BANNER DANG SLIDE. Slide 1 (chao mung) luon co; cac slide sau chi hien khi
+    co du lieu that: ma giam gia dang chay (discount_codes), mon ban chay
+    (hopdong), va slide dat tiec / Sanh Gala.
+
+    Moi slide la mot o luoi chong len nhau (grid-area 1/1) chu khong
+    position:absolute - hero cao theo slide cao nhat, khong cat chu tren dien
+    thoai. Hoa van/anh cua tung slide la phan tu absolute bam vao .nh-hero.
+  */
+  var dsKM = (typeof khuyenMai !== 'undefined' && khuyenMai) ? khuyenMai : [];
+  var dsBC = (typeof banChay !== 'undefined' && banChay) ? banChay : [];
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var giaTriKM = function (k) {
+    return k.discount_type === 'percentage'
+      ? Number(k.discount_value) + '%'
+      : (Number(k.discount_value) >= 1000 ? Math.round(Number(k.discount_value) / 1000) + 'K' : vnd(k.discount_value));
+  };
+  var tenGon = function (m) {
+    var t = String(tenMon(m).chinh || m.name_mon || '').replace(/^[A-Z]{0,4}\d{1,3}\s*-\s*/, '').trim();
+    return t.toLowerCase().replace(/(^|\s)(\S)/g, function (x, a, c) { return a + c.toUpperCase(); });
+  };
+  var soSlide = 1 + dsKM.length + (dsBC.length ? 1 : 0) + 1;
+  var stt = 0;
+%>
+<header class="nh-hero nh-hero--slider" aria-roledescription="carousel" aria-label="Ưu đãi và nổi bật">
   <div class="nh-hero__bg nh-wa-song"></div>
   <div class="nh-hero__veil"></div>
-  <%
-    var heroDishes = [];
-    for (var hIdx = 0; hIdx < 4; hIdx++) {
-      var dItem = monTT(hIdx);
-      if (dItem) heroDishes.push(dItem);
-    }
-  %>
-  <% if (heroDishes.length > 0) { %>
-    <svg class="nh-hero__enso" viewBox="0 0 200 200" aria-hidden="true">
-      <circle cx="100" cy="100" r="84" fill="none"
-              stroke="url(#nh-enso-mau)" stroke-width="5.5" stroke-linecap="round"
-              stroke-dasharray="455 73" transform="rotate(34 100 100)"/>
-      <defs>
-        <linearGradient id="nh-enso-mau" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0"   stop-color="#c8a24b" stop-opacity=".85"/>
-          <stop offset="0.6" stop-color="#c8a24b" stop-opacity=".35"/>
-          <stop offset="1"   stop-color="#c8a24b" stop-opacity=".05"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="nh-hero__quang" aria-hidden="true"></div>
 
-    <!-- Khối 4 món ăn Hero -->
-    <div class="nh-hero__showcase">
-      <div class="nh-hero__dishes">
-        <% heroDishes.forEach(function(m, idx) { %>
-          <div class="nh-hero__dish-item <%= idx === 0 ? 'is-active' : '' %>" id="heroDish_<%= idx %>">
-            <img class="nh-hero__mon" src="/food/<%= m.images %>"
-                 alt="<%= tenMon(m).chinh %>" loading="<%= idx === 0 ? 'eager' : 'lazy' %>">
-            <div class="nh-hero__dish-tag">
-              <span class="nh-hero__dish-price"><i class="fas fa-tag" style="font-size:0.8rem;margin-right:4px;"></i><%= Number(m.gia_mon || 0).toLocaleString('vi-VN') %> ₫</span>
+  <div class="nh-slides" id="nhSlides">
+
+    <!-- ---------- SLIDE 1: CHAO MUNG ---------- -->
+    <div class="nh-slide is-active" data-slide="<%= stt++ %>" role="group" aria-roledescription="slide" aria-label="1 / <%= soSlide %>">
+    <%
+      var heroDishes = [];
+      for (var hIdx = 0; hIdx < 4; hIdx++) {
+        var dItem = monTT(hIdx);
+        if (dItem) heroDishes.push(dItem);
+      }
+    %>
+    <% if (heroDishes.length > 0) { %>
+      <svg class="nh-hero__enso" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="84" fill="none"
+                stroke="url(#nh-enso-mau)" stroke-width="5.5" stroke-linecap="round"
+                stroke-dasharray="455 73" transform="rotate(34 100 100)"/>
+        <defs>
+          <linearGradient id="nh-enso-mau" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0"   stop-color="#c8a24b" stop-opacity=".85"/>
+            <stop offset="0.6" stop-color="#c8a24b" stop-opacity=".35"/>
+            <stop offset="1"   stop-color="#c8a24b" stop-opacity=".05"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="nh-hero__quang" aria-hidden="true"></div>
+
+      <!-- Khối 4 món ăn Hero -->
+      <div class="nh-hero__showcase">
+        <div class="nh-hero__dishes">
+          <% heroDishes.forEach(function(m, idx) { %>
+            <div class="nh-hero__dish-item <%= idx === 0 ? 'is-active' : '' %>" id="heroDish_<%= idx %>">
+              <img class="nh-hero__mon" src="/food/<%= m.images %>"
+                   alt="<%= tenMon(m).chinh %>" loading="<%= idx === 0 ? 'eager' : 'lazy' %>">
+              <div class="nh-hero__dish-tag">
+                <span class="nh-hero__dish-price"><i class="fas fa-tag" style="font-size:0.8rem;margin-right:4px;"></i><%= Number(m.gia_mon || 0).toLocaleString('vi-VN') %> ₫</span>
+              </div>
             </div>
-          </div>
-        <% }) %>
-      </div>
+          <% }) %>
+        </div>
 
-      <!-- 4 Nút thumbnail chọn nhanh món -->
-      <div class="nh-hero__thumbs">
-        <% heroDishes.forEach(function(m, idx) { %>
-          <button type="button" class="nh-hero__thumb-btn <%= idx === 0 ? 'is-active' : '' %>"
-                  data-index="<%= idx %>" title="<%= tenMon(m).chinh %>">
-            <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>">
-          </button>
-        <% }) %>
+        <!-- 4 Nút thumbnail chọn nhanh món -->
+        <div class="nh-hero__thumbs">
+          <% heroDishes.forEach(function(m, idx) { %>
+            <button type="button" class="nh-hero__thumb-btn <%= idx === 0 ? 'is-active' : '' %>"
+                    data-index="<%= idx %>" title="<%= tenMon(m).chinh %>">
+              <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>">
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+      <div class="nh-container">
+        <div class="nh-hero__inner">
+          <span class="nh-eyebrow"><%= t('trang_chu.eyebrow') %></span>
+          <h1><%= t('trang_chu.tieu_de_1') %> <span><%= t('trang_chu.tieu_de_nhan') %></span><br><%= t('trang_chu.tieu_de_2') %></h1>
+          <p><%= t('trang_chu.mo_ta') %></p>
+          <div class="nh-hero__actions">
+            <a href="/datban" class="nh-btn nh-btn--gold" style="font-weight:700;"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
+            <a href="/menu" class="nh-btn nh-btn--ghost"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
+            <a href="/giao-hang" class="nh-btn nh-btn--ghost"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+          </div>
+        </div>
       </div>
     </div>
-  <% } %>
-  <div class="nh-container">
-    <div class="nh-hero__inner">
-      <span class="nh-eyebrow"><%= t('trang_chu.eyebrow') %></span>
-      <h1><%= t('trang_chu.tieu_de_1') %> <span><%= t('trang_chu.tieu_de_nhan') %></span><br><%= t('trang_chu.tieu_de_2') %></h1>
-      <p><%= t('trang_chu.mo_ta') %></p>
-      <div class="nh-hero__actions">
-        <a href="/giao-hang" class="nh-btn nh-btn--gold" style="font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
-        <a href="/menu" class="nh-btn nh-btn--ghost"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
-        <a href="/datban" class="nh-btn nh-btn--ghost"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
+
+    <!-- ---------- SLIDE KHUYEN MAI (moi ma mot slide) ---------- -->
+    <% dsKM.forEach(function (k) { %>
+    <div class="nh-slide nh-slide--km" data-slide="<%= stt %>" role="group" aria-roledescription="slide" aria-label="<%= ++stt %> / <%= soSlide %>" aria-hidden="true">
+      <div class="nh-km-ve" aria-hidden="true">
+        <div class="nh-km-ve__trai">
+          <span class="nh-km-ve__nhan">Giảm</span>
+          <b class="nh-km-ve__so"><%= giaTriKM(k) %></b>
+          <% if (k.max_discount_amount && k.discount_type === 'percentage') { %><span class="nh-km-ve__phu">tối đa <%= vnd(k.max_discount_amount) %></span><% } %>
+        </div>
+        <div class="nh-km-ve__phai">
+          <span>Mã ưu đãi</span>
+          <b><%= k.code %></b>
+          <small>HSD: <%= k.han %></small>
+        </div>
+      </div>
+      <div class="nh-container">
+        <div class="nh-hero__inner">
+          <span class="nh-eyebrow">Ưu đãi đặc biệt</span>
+          <h1>Giảm ngay <span><%= giaTriKM(k) %></span><br>cho hóa đơn</h1>
+          <p><% if (k.min_order_value) { %>Áp dụng cho đơn từ <%= vnd(k.min_order_value) %><% if (k.max_discount_amount && k.discount_type === 'percentage') { %>, giảm tối đa <%= vnd(k.max_discount_amount) %><% } %>. <% } %>Nhập mã khi thanh toán đơn giao tận nơi hoặc tại quầy – hạn dùng đến <%= k.han %>.</p>
+          <div class="nh-hero__actions">
+            <button type="button" class="nh-btn nh-btn--gold nh-km-copy" data-ma="<%= k.code %>"><i class="fas fa-copy"></i> <span>Sao chép mã <%= k.code %></span></button>
+            <a href="/giao-hang" class="nh-btn nh-btn--ghost"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
+          </div>
+        </div>
       </div>
     </div>
+    <% }) %>
+
+    <!-- ---------- SLIDE BAN CHAY ---------- -->
+    <% if (dsBC.length) { var top = dsBC[0]; %>
+    <div class="nh-slide nh-slide--bc" data-slide="<%= stt %>" role="group" aria-roledescription="slide" aria-label="<%= ++stt %> / <%= soSlide %>" aria-hidden="true">
+      <div class="nh-hero__quang" aria-hidden="true"></div>
+      <div class="nh-bc-mon">
+        <img src="/food/<%= top.images %>" alt="<%= tenGon(top) %>" loading="lazy">
+        <span class="nh-bc-mon__huy"><i class="fas fa-crown"></i> #1 Best Seller</span>
+      </div>
+      <div class="nh-container">
+        <div class="nh-hero__inner">
+          <span class="nh-eyebrow">Best Seller</span>
+          <h1>Món bán chạy <span>nhất</span><br>tại Bảo Đoàn</h1>
+          <ol class="nh-bc-ds">
+            <% dsBC.forEach(function (m, i) { %>
+              <li>
+                <a href="/detail?monid=<%= m.id_mon %>">
+                  <span class="nh-bc-ds__hang">#<%= i + 1 %></span>
+                  <img src="/food/<%= m.images %>" alt="" loading="lazy">
+                  <span class="nh-bc-ds__ten"><%= tenGon(m) %><small><%= m.da_ban.toLocaleString('vi-VN') %> phần đã bán</small></span>
+                  <span class="nh-bc-ds__gia"><%= vnd(m.gia_mon) %></span>
+                </a>
+              </li>
+            <% }) %>
+          </ol>
+          <div class="nh-hero__actions">
+            <a href="/detail?monid=<%= top.id_mon %>" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Gọi món #1 ngay</a>
+            <a href="/menu" class="nh-btn nh-btn--ghost"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ---------- SLIDE DAT TIEC ---------- -->
+    <div class="nh-slide nh-slide--tiec" data-slide="<%= stt %>" role="group" aria-roledescription="slide" aria-label="<%= ++stt %> / <%= soSlide %>" aria-hidden="true">
+      <div class="nh-slide__anh" style="background-image:url('/images/khong-gian/gala-1.jpg')" aria-hidden="true"></div>
+      <div class="nh-container">
+        <div class="nh-hero__inner">
+          <span class="nh-eyebrow">Sảnh Gala mới</span>
+          <h1>Tiệc cưới · Sinh nhật<br><span>Party</span> trọn gói</h1>
+          <p>Sảnh tiệc 50–300 khách với sân khấu, đèn chùm và 12 thực đơn Nhật Bản soạn riêng cho từng dịp – chỉ từ 2.790.000đ/bàn 10 khách.</p>
+          <div class="nh-hero__actions">
+            <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> Xem thực đơn tiệc</a>
+            <a href="/khong-gian" class="nh-btn nh-btn--ghost"><i class="fas fa-images"></i> Xem không gian</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nh-slider-nav">
+    <button type="button" class="nh-slider-nav__nut" data-slider="truoc" aria-label="Slide trước"><i class="fas fa-chevron-left"></i></button>
+    <div class="nh-slider-nav__cham">
+      <% for (var c = 0; c < soSlide; c++) { %>
+        <button type="button" data-den="<%= c %>" class="<%= c === 0 ? 'is-active' : '' %>" aria-label="Đến slide <%= c + 1 %>" aria-current="<%= c === 0 %>"><span><i></i></span></button>
+      <% } %>
+    </div>
+    <button type="button" class="nh-slider-nav__nut" data-slider="sau" aria-label="Slide sau"><i class="fas fa-chevron-right"></i></button>
   </div>
   <div class="nh-hero__scroll"><%= t('trang_chu.cuon_xuong') %><span></span></div>
 </header>
@@ -253,6 +373,70 @@
     <a href="/datban" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> <%= t('chung.dat_ban_ngay') %></a>
   </div>
 </section>
+
+<script>
+  // SLIDER BANNER: tu chuyen DEU 5 giay, KE CA khi re chuot vao (theo yeu cau chu quan).
+  // Bam chuyen tay thi dem lai 5 giay tu dau.
+  // Nguoi bat "giam chuyen dong" (Windows: tat Animation effects) van duoc tu
+  // chuyen nhung cham hon (8 giay) va chi mo dan - CSS bo het truot, phong to.
+  (function () {
+    var slides = document.querySelectorAll('#nhSlides .nh-slide');
+    var cham = document.querySelectorAll('.nh-slider-nav__cham [data-den]');
+    var hero = document.querySelector('.nh-hero--slider');
+    if (slides.length < 2 || !hero) return;
+    var cur = 0, timer = null;
+    var KHOANG = 5000;
+
+    function den(i) {
+      cur = (i + slides.length) % slides.length;
+      slides.forEach(function (s, k) {
+        var on = k === cur;
+        s.classList.toggle('is-active', on);
+        s.setAttribute('aria-hidden', on ? 'false' : 'true');
+        s.querySelectorAll('a, button').forEach(function (el) { el.tabIndex = on ? 0 : -1; });
+      });
+      cham.forEach(function (c, k) {
+        c.classList.toggle('is-active', k === cur);
+        c.setAttribute('aria-current', k === cur ? 'true' : 'false');
+      });
+      hero.style.setProperty('--nh-slide-time', KHOANG + 'ms');
+    }
+    function chay() {
+      clearInterval(timer);
+      timer = setInterval(function () { den(cur + 1); }, KHOANG);
+      // Chay lai thanh tien trinh tu dau cho khop voi bo dem vua dat lai
+      var thanh = document.querySelector('.nh-slider-nav__cham .is-active i');
+      if (thanh) { thanh.style.animation = 'none'; void thanh.offsetWidth; thanh.style.animation = ''; }
+    }
+    document.querySelectorAll('[data-slider]').forEach(function (b) {
+      b.addEventListener('click', function () { den(cur + (b.getAttribute('data-slider') === 'sau' ? 1 : -1)); chay(); });
+    });
+    cham.forEach(function (c) {
+      c.addEventListener('click', function () { den(Number(c.getAttribute('data-den'))); chay(); });
+    });
+
+    // Vuot tren dien thoai
+    var x0 = null;
+    hero.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 50) { den(cur + (dx < 0 ? 1 : -1)); chay(); }
+    });
+
+    // Nut sao chep ma giam gia
+    document.querySelectorAll('.nh-km-copy').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var ma = b.getAttribute('data-ma'), nhan = b.querySelector('span'), cu = nhan.textContent;
+        var xong = function () { nhan.textContent = 'Đã sao chép ' + ma; setTimeout(function () { nhan.textContent = cu; }, 2000); };
+        if (navigator.clipboard) navigator.clipboard.writeText(ma).then(xong, xong); else xong();
+      });
+    });
+
+    den(0);
+    chay();
+  })();
+</script>
 
 <script>
   // Chuyển đổi 4 món ăn ở Hero Banner

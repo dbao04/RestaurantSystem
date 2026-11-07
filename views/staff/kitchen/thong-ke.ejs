@@ -1,0 +1,251 @@
+<%
+  var activePage = 'thong-ke-bep';
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n, k) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: k == null ? 0 : k }); };
+  var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var gon = function (t) { return String(t || '').replace(/^[A-Z]{0,4}\d{0,3}\s*-\s*/, ''); };
+  var f = function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+  var h0 = new Date(homNay + 'T00:00:00');
+  var lui = function (n) { var d = new Date(h0); d.setDate(d.getDate() - n); return f(d); };
+  var moc = [
+    { ten: 'Hôm nay', tu: homNay, den: homNay }, { ten: '7 ngày', tu: lui(6), den: homNay },
+    { ten: '30 ngày', tu: lui(29), den: homNay }, { ten: 'Tháng này', tu: f(new Date(h0.getFullYear(), h0.getMonth(), 1)), den: homNay },
+    { ten: 'Tháng trước', tu: f(new Date(h0.getFullYear(), h0.getMonth() - 1, 1)), den: f(new Date(h0.getFullYear(), h0.getMonth(), 0)) },
+    { ten: '90 ngày', tu: lui(89), den: homNay },
+  ];
+  var doi = function (v) { return v == null ? '' : '<span class="' + (v >= 0 ? 'kb-tang' : 'kb-giam') + '">' + (v >= 0 ? '▲ ' : '▼ ') + Math.abs(v) + '%</span> so với kỳ trước'; };
+  var maxOf = function (a, k) { return Math.max.apply(null, [1].concat(a.map(function (x) { return x[k]; }))); };
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-chart-pie text-warning"></i> Thống kê bếp</h1>
+    <div class="kb-phu"><%= tu === den ? 'Ngày ' + ngayVN(tu) : ngayVN(tu) + ' → ' + ngayVN(den) %><% if (bc) { %> · <%= bc.so_ngay %> ngày, so sánh với <%= ngayVN(bc.ky_truoc.tu) %> → <%= ngayVN(bc.ky_truoc.den) %><% } %></div>
+  </div>
+  <div class="kb-nut kb-khong-in">
+    <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-heart-crack"></i> Báo hư hỏng</a>
+    <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cart-flatbed"></i> Mua hàng</a>
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print"></i> In</button>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3 kb-khong-in"><div class="card-body py-3">
+  <form class="kb-loc" method="get">
+    <% moc.forEach(function (m) { %><a class="kb-moc <%= m.tu === tu && m.den === den ? 'is-on' : '' %>" href="?tu=<%= m.tu %>&den=<%= m.den %>"><%= m.ten %></a><% }) %>
+    <input type="date" name="tu" value="<%= tu %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+    <span class="text-muted">→</span>
+    <input type="date" name="den" value="<%= den %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
+    <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Xem</button>
+  </form>
+</div></div>
+
+<% if (loi) { %><div class="alert alert-warning"><%= loi %></div><% } else { var t = bc.tong; %>
+<% if (goiYKhoang) { %>
+  <div class="kb-canh cam"><i class="fas fa-circle-info"></i><div>Khoảng thời gian này có rất ít món được bán (<%= bc.tong.so_mon %> phần). Dữ liệu bán hàng gần nhất đến ngày <b><%= ngayVN(goiYKhoang.den) %></b> –
+    <a href="?tu=<%= goiYKhoang.tu %>&den=<%= goiYKhoang.den %>" class="font-weight-bold">xem 30 ngày tính đến ngày đó →</a></div></div>
+<% } %>
+
+<!-- ============ CANH BAO ============ -->
+<% if (bc.kho.lo_canh_bao.length || bc.kho.duoi_dinh_muc) { %>
+  <div class="row"><div class="col-12 mb-2">
+    <% var daHet = bc.kho.lo_canh_bao.filter(function (l) { return l.con_ngay < 0; }); var sapHet = bc.kho.lo_canh_bao.filter(function (l) { return l.con_ngay >= 0; }); %>
+    <% if (daHet.length) { %><div class="kb-canh do"><i class="fas fa-skull-crossbones"></i><div><b><%= daHet.length %> lô đã quá hạn sử dụng vẫn còn trong kho</b> — cần kiểm tra và xuất hủy ngay. <a href="/staff/kitchen/kho?tab=lo" class="kb-khong-in">Xem lô hàng →</a></div></div><% } %>
+    <% if (sapHet.length) { %><div class="kb-canh cam"><i class="fas fa-hourglass-half"></i><div><b><%= sapHet.length %> lô sắp hết hạn trong 3 ngày</b>: <%= sapHet.slice(0, 5).map(function (l) { return l.ten_nl + ' (' + (l.con_ngay === 0 ? 'hôm nay' : 'còn ' + l.con_ngay + ' ngày') + ')'; }).join(', ') %><%= sapHet.length > 5 ? '…' : '' %> — ưu tiên dùng trước.</div></div><% } %>
+    <% if (bc.kho.duoi_dinh_muc) { %><div class="kb-canh cam"><i class="fas fa-boxes-stacked"></i><div><b><%= bc.kho.duoi_dinh_muc %> nguyên liệu dưới định mức tối thiểu</b><%= bc.kho.het ? ', trong đó ' + bc.kho.het + ' đã hết' : '' %>. <a href="/staff/kitchen/mua-hang" class="kb-khong-in">Tạo đơn mua →</a></div></div><% } %>
+  </div></div>
+<% } %>
+
+<!-- ============ KPI ============ -->
+<div class="row">
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#2b5f8a"><div class="kb-kpi__n">Món đã bán</div><div class="kb-kpi__v"><%= soVN(t.so_mon) %> phần</div><div class="kb-kpi__s"><%- doi(t.doi_so_mon) || '~' + soVN(t.so_mon_ngay) + ' phần/ngày' %></div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#1f7a4a"><div class="kb-kpi__n">Doanh thu món</div><div class="kb-kpi__v"><%= vnd(t.doanh_thu) %></div><div class="kb-kpi__s"><%- doi(t.doi_doanh_thu) || soVN(t.so_don) + ' đơn' %></div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#8a6a22"><div class="kb-kpi__n">Giá vốn NVL / Food cost</div><div class="kb-kpi__v"><%= t.food_cost == null ? '—' : t.food_cost + '%' %></div><div class="kb-kpi__s"><%= vnd(t.gia_tri_nvl_dung) %> NVL đã dùng · chuẩn ngành 28–35%</div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#b3352c"><div class="kb-kpi__n">Hư hỏng & hao hụt</div><div class="kb-kpi__v"><%= vnd(t.hao_hut) %></div><div class="kb-kpi__s">Tỷ lệ hao hụt <b><%= t.ty_le_hao_hut %>%</b> giá trị NVL</div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#6b4bb5"><div class="kb-kpi__n">Thời gian chế biến TB</div><div class="kb-kpi__v"><%= bc.che_bien.tb == null ? '—' : bc.che_bien.tb + ' phút' %></div><div class="kb-kpi__s"><%= bc.che_bien.so ? soVN(bc.che_bien.so) + ' món có bấm giờ KDS · ' + bc.che_bien.tre + ' món quá 20 phút' : 'Chưa có dữ liệu bấm giờ từ KDS' %></div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#0f766e"><div class="kb-kpi__n">Số món khác nhau đã bán</div><div class="kb-kpi__v"><%= soVN(t.so_loai_mon) %> món</div><div class="kb-kpi__s"><%= soVN(t.so_don) %> đơn có gọi món</div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#475569"><div class="kb-kpi__n">Giá trị tồn kho</div><div class="kb-kpi__v"><%= vnd(bc.kho.gia_tri) %></div><div class="kb-kpi__s"><%= bc.kho.so_nvl %> nguyên liệu</div></div></div>
+  <div class="col-6 col-xl-3 mb-3"><div class="kb-kpi" style="--m:#c2410c"><div class="kb-kpi__n">Cần mua bổ sung</div><div class="kb-kpi__v"><%= bc.kho.can_mua %> NVL</div><div class="kb-kpi__s"><%= bc.kho.het %> đã hết · <%= bc.kho.duoi_dinh_muc %> dưới định mức</div></div></div>
+</div>
+
+<!-- ============ XU HUONG ============ -->
+<div class="row">
+  <div class="col-xl-8 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-chart-line"></i> Số món bán theo ngày</h6>
+    <div style="position:relative;height:270px"><canvas id="bdNgay" role="img" aria-label="Biểu đồ số món bán theo ngày"></canvas></div>
+  </div></div>
+  <div class="col-xl-4 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-clock"></i> Giờ cao điểm của bếp <small>(phần món theo giờ gọi)</small></h6>
+    <div style="position:relative;height:270px"><canvas id="bdGio" role="img" aria-label="Biểu đồ số món theo giờ"></canvas></div>
+  </div></div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-layer-group"></i> Bán theo nhóm món</h6>
+    <% if (!bc.theo_loai.length) { %><div class="kb-rong">Không có món nào được bán trong khoảng này.</div><% } %>
+    <% var mxL = maxOf(bc.theo_loai, 'sl'); bc.theo_loai.forEach(function (x) { %>
+      <div class="kb-thanh"><div class="kb-thanh__d"><span><%= x.ten %></span><b><%= soVN(x.sl) %> phần · <span class="text-muted font-weight-normal"><%= vnd(x.dt) %></span></b></div>
+        <div class="kb-thanh__n"><i style="width:<%= Math.max(2, x.sl / mxL * 100) %>%;--m:#2b5f8a"></i></div></div>
+    <% }) %>
+  </div></div>
+  <div class="col-lg-6 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-calendar-week"></i> Trung bình theo thứ trong tuần <small>(phần/ngày)</small></h6>
+    <div style="position:relative;height:250px"><canvas id="bdThu" role="img" aria-label="Biểu đồ trung bình theo thứ"></canvas></div>
+  </div></div>
+</div>
+
+<!-- ============ MON ============ -->
+<div class="row">
+  <div class="col-xl-5 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-trophy"></i> Top 15 món bán chạy <small>(món bếp, không gồm đồ uống)</small></h6>
+    <input type="search" class="form-control form-control-sm mb-2 kb-khong-in" data-tim-kiem="#bangTop" placeholder="Tìm món..." style="max-width:260px" aria-label="Tìm món bán chạy">
+    <div class="table-responsive"><table class="table table-sm kb-bang mb-0" id="bangTop">
+      <thead><tr><th>#</th><th>Món</th><th>Nhóm</th><th class="so">Số phần</th><th class="so">Doanh thu</th></tr></thead>
+      <tbody>
+        <% bc.top_mon.forEach(function (m, i) { %>
+          <tr><td><b><%= i + 1 %></b></td><td><%= gon(m.name_mon) %></td><td class="text-muted small"><%= String(m.name_loai || '').replace(/^\d+\.\s*/, '') %></td><td class="so"><b><%= soVN(m.sl) %></b></td><td class="so"><%= vnd(m.dt) %></td></tr>
+        <% }) %>
+        <% if (!bc.top_mon.length) { %><tr><td colspan="5" class="kb-rong">Chưa có dữ liệu.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div></div>
+  <div class="col-xl-3 col-md-6 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-martini-glass"></i> Top đồ uống <small>(quầy bar)</small></h6>
+    <% if (!bc.top_do_uong.length) { %><div class="kb-rong">Chưa có dữ liệu.</div><% } %>
+    <% var mxD = maxOf(bc.top_do_uong, 'sl'); bc.top_do_uong.forEach(function (m) { %>
+      <div class="kb-thanh"><div class="kb-thanh__d"><span><%= gon(m.name_mon) %></span><b><%= soVN(m.sl) %></b></div>
+        <div class="kb-thanh__n"><i style="width:<%= Math.max(2, m.sl / mxD * 100) %>%;--m:#0f766e"></i></div></div>
+    <% }) %>
+  </div></div>
+  <div class="col-xl-4 col-md-6 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-snowflake"></i> 10 món bán chậm nhất <small>(cân nhắc giảm lượng chuẩn bị)</small></h6>
+    <table class="table table-sm kb-bang mb-0 no-cuon">
+      <thead><tr><th>Món</th><th class="so">Số phần</th></tr></thead>
+      <tbody>
+        <% bc.ban_cham.forEach(function (m) { %>
+          <tr><td><%= gon(m.name_mon) %> <span class="text-muted small">· <%= String(m.name_loai || '').replace(/^\d+\.\s*/, '') %></span></td><td class="so"><% if (!m.sl) { %><span class="kb-nhan do">Không bán được</span><% } else { %><%= soVN(m.sl) %><% } %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div></div>
+</div>
+
+<!-- ============ CHE BIEN ============ -->
+<div class="row">
+  <div class="col-lg-5 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-stopwatch"></i> Món chế biến lâu nhất <small>(theo KDS)</small></h6>
+    <% if (!bc.che_bien.mon_cham.length) { %>
+      <div class="kb-rong">Chưa có món nào được bấm giờ trên màn hình bếp (KDS) trong khoảng này.<br>Dữ liệu sẽ có khi bếp dùng nút <b>Bắt đầu</b> / <b>Hoàn thành</b> trên KDS.</div>
+    <% } else { var mxC = maxOf(bc.che_bien.mon_cham, 'tb'); bc.che_bien.mon_cham.forEach(function (m) { %>
+      <div class="kb-thanh"><div class="kb-thanh__d"><span><%= gon(m.ten) %> <small class="text-muted">(<%= m.so %> lần)</small></span><b class="<%= m.tb > 20 ? 'text-danger' : '' %>"><%= m.tb %> phút</b></div>
+        <div class="kb-thanh__n"><i style="width:<%= Math.max(2, m.tb / mxC * 100) %>%;--m:<%= m.tb > 20 ? '#b3352c' : '#6b4bb5' %>"></i></div></div>
+    <% }) } %>
+  </div></div>
+  <div class="col-lg-7 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-carrot"></i> Nguyên liệu tiêu hao nhiều nhất <small>(theo giá trị)</small></h6>
+    <div class="table-responsive"><table class="table table-sm kb-bang mb-0">
+      <thead><tr><th>Nguyên liệu</th><th class="so">Số lượng</th><th class="so">Giá trị</th><th class="so">% NVL</th></tr></thead>
+      <tbody>
+        <% bc.tieu_hao.forEach(function (x) { %>
+          <tr><td><%= x.ten_nl %></td><td class="so"><%= soVN(x.sl, 2) %> <span class="text-muted small"><%= x.ten_dvt %></span></td><td class="so"><%= vnd(x.gt) %></td><td class="so text-muted"><%= t.gia_tri_nvl_dung ? Math.round(x.gt / t.gia_tri_nvl_dung * 1000) / 10 : 0 %>%</td></tr>
+        <% }) %>
+        <% if (!bc.tieu_hao.length) { %><tr><td colspan="4" class="kb-rong">Chưa có dữ liệu tiêu hao.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div></div>
+</div>
+
+<!-- ============ HAO HUT ============ -->
+<div class="row">
+  <div class="col-lg-4 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-trash-can"></i> Xuất ngoài bán hàng theo lý do</h6>
+    <% if (!bc.hao_hut_ly_do.length) { %>
+      <div class="kb-rong">Không có phiếu hư hỏng / hao hụt nào. <br><a href="/staff/kitchen/kho/xuat/moi" class="kb-khong-in">Lập phiếu xuất hủy →</a></div>
+    <% } else { var mxH = maxOf(bc.hao_hut_ly_do, 'gt'); bc.hao_hut_ly_do.forEach(function (x) { %>
+      <div class="kb-thanh"><div class="kb-thanh__d"><span><i class="fas <%= x.icon %>" style="color:<%= x.mau %>"></i> <%= x.ten %> <small class="text-muted">(<%= x.so_phieu %> phiếu)</small></span><b><%= vnd(x.gt) %></b></div>
+        <div class="kb-thanh__n"><i style="width:<%= Math.max(2, x.gt / mxH * 100) %>%;--m:<%= x.mau %>"></i></div></div>
+    <% }) } %>
+  </div></div>
+  <div class="col-lg-4 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-heart-crack"></i> Nguyên liệu hư / hao hụt nhiều nhất</h6>
+    <% if (!bc.hao_hut_nvl.length) { %><div class="kb-rong">Chưa ghi nhận nguyên liệu hư hỏng.</div><% } %>
+    <% bc.hao_hut_nvl.forEach(function (x) { %>
+      <div class="d-flex justify-content-between border-bottom py-2 small" style="gap:.5rem">
+        <span><b><%= x.ten_nl %></b><br><span class="text-muted"><%= soVN(x.sl, 2) %> <%= x.ten_dvt %> · <%= x.ly_do %></span></span>
+        <b class="text-danger text-nowrap"><%= vnd(x.gt) %></b>
+      </div>
+    <% }) %>
+  </div></div>
+  <div class="col-lg-4 mb-3"><div class="kb-the">
+    <h6><i class="fas fa-file-circle-xmark"></i> Phiếu hư hỏng gần đây</h6>
+    <% if (!bc.phieu_hao_hut.length) { %><div class="kb-rong">Chưa có phiếu nào.</div><% } %>
+    <% bc.phieu_hao_hut.forEach(function (p) { %>
+      <a href="/staff/kitchen/kho/phieu/xuat/<%= p.id_px %>" target="_blank" class="d-block border-bottom py-2 small text-decoration-none" style="color:inherit">
+        <span class="kb-ma"><%= p.ma_phieu %></span> <span class="kb-nhan do"><%= p.ten_ly_do %></span>
+        <b class="float-right text-danger"><%= vnd(p.tong_gia_tri) %></b><br>
+        <span class="text-muted"><%= new Date(p.thoi_diem).toLocaleString('vi-VN') %> · <%= p.nguoi || '—' %> · <%= p.ghi_chu || '' %></span>
+      </a>
+    <% }) %>
+  </div></div>
+</div>
+
+<!-- ============ GOI Y MUA ============ -->
+<% if (bc.kho.goi_y.length) { %>
+<div class="kb-the mb-4">
+  <h6><i class="fas fa-cart-shopping"></i> Nguyên liệu cần mua bổ sung <small>(tồn dưới điểm đặt hàng)</small>
+    <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-warning ml-auto kb-khong-in">Tạo đơn mua (<%= bc.kho.can_mua %>)</a></h6>
+  <div class="table-responsive"><table class="table table-sm kb-bang mb-0">
+    <thead><tr><th>Nguyên liệu</th><th class="so">Tồn</th><th class="so">Định mức</th><th class="so">Tiêu hao/ngày</th><th class="so">Đủ dùng</th><th class="so">Đề xuất mua</th></tr></thead>
+    <tbody>
+      <% bc.kho.goi_y.forEach(function (g) { %>
+        <tr><td><%= g.ten_nl %> <% if (g.muc_do === 'het') { %><span class="kb-nhan do">Hết</span><% } else if (g.muc_do === 'duoi_dinh_muc') { %><span class="kb-nhan cam">Dưới định mức</span><% } %></td>
+          <td class="so"><%= soVN(g.so_luong, 2) %> <%= g.ten_dvt %></td><td class="so"><%= soVN(g.dinh_muc_min, 2) %></td>
+          <td class="so"><%= soVN(g.tieu_hao_ngay, 2) %></td><td class="so"><%= g.con_du_ngay == null ? '—' : g.con_du_ngay + ' ngày' %></td>
+          <td class="so"><b><%= soVN(g.de_xuat, 1) %> <%= g.ten_dvt %></b></td></tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+</div>
+<% } %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (!window.Chart) return;
+  var NGAY = <%- JSON.stringify(bc.theo_ngay) %>, GIO = <%- JSON.stringify(bc.theo_gio) %>, THU = <%- JSON.stringify(bc.theo_thu) %>;
+  var nho = function (v) { return v >= 1e6 ? (v / 1e6).toLocaleString('vi-VN') + 'tr' : v >= 1e3 ? (v / 1e3).toLocaleString('vi-VN') + 'k' : v; };
+  Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+  // Ve ngay, khong hieu ung: bieu do bao cao can doc / in duoc ngay khi mo trang.
+  Chart.defaults.animation = false;
+  new Chart(document.getElementById('bdNgay'), {
+    data: {
+      labels: NGAY.map(function (d) { var x = d.ngay.split('-'); return x[2] + '/' + x[1]; }),
+      datasets: [
+        { type: 'bar', label: 'Số phần', data: NGAY.map(function (d) { return d.sl; }), backgroundColor: 'rgba(43,95,138,.75)', borderRadius: 3, yAxisID: 'y' },
+        { type: 'line', label: 'Doanh thu', data: NGAY.map(function (d) { return d.dt; }), borderColor: '#c8a24b', backgroundColor: '#c8a24b', tension: .3, pointRadius: NGAY.length > 40 ? 0 : 2, yAxisID: 'y1' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + Number(c.raw).toLocaleString('vi-VN') + (c.dataset.yAxisID === 'y1' ? 'đ' : ' phần'); } } } },
+      scales: { y: { beginAtZero: true, title: { display: true, text: 'phần' } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: nho } } } }
+  });
+  var dayGio = []; for (var g = 8; g <= 23; g++) { var x = GIO.filter(function (r) { return r.gio === g; })[0]; dayGio.push({ gio: g, sl: x ? x.sl : 0 }); }
+  var maxG = Math.max.apply(null, dayGio.map(function (d) { return d.sl; }));
+  new Chart(document.getElementById('bdGio'), {
+    type: 'bar',
+    data: { labels: dayGio.map(function (d) { return d.gio + 'h'; }), datasets: [{ label: 'Số phần', data: dayGio.map(function (d) { return d.sl; }), borderRadius: 3,
+      backgroundColor: dayGio.map(function (d) { return d.sl >= maxG * .75 && d.sl > 0 ? '#b3352c' : 'rgba(200,162,75,.75)'; }) }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+  new Chart(document.getElementById('bdThu'), {
+    type: 'bar',
+    data: { labels: THU.map(function (d) { return d.thu; }), datasets: [{ label: 'Phần / ngày', data: THU.map(function (d) { return d.tb; }), backgroundColor: 'rgba(31,122,74,.7)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+})();
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

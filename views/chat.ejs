@@ -148,27 +148,116 @@
   .ct-xuong:hover { transform: translateY(-2px); }
   .ct-xuong.hien { display: flex; }
 
-  /* ---- O nhap ---- */
-  .ct-chan { padding: 14px 16px; background: #fff; border-top: 1px solid var(--nh-line, rgba(0,0,0,.08)); }
-  .ct-hang { display: flex; align-items: flex-end; gap: 10px; }
+  /* ---- O nhap & Dinh kem anh / file ---- */
+  .ct-chan { padding: 12px 16px 14px; background: #fff; border-top: 1px solid var(--nh-line, rgba(0,0,0,.08)); }
+  .ct-xem-truoc {
+    display: none; align-items: center; gap: 10px;
+    padding: 8px 12px; margin-bottom: 10px;
+    background: var(--nh-cream, #faf6ef);
+    border: 1px dashed var(--nh-gold, #c8a24b);
+    border-radius: 12px;
+  }
+  .ct-xem-truoc.hien { display: flex; }
+  .ct-xem-truoc__thumb {
+    width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+    border: 1px solid rgba(0,0,0,.1); flex-shrink: 0; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--nh-gold, #c8a24b); font-size: 20px;
+  }
+  .ct-xem-truoc__info { flex: 1; min-width: 0; }
+  .ct-xem-truoc__ten {
+    font-size: 13px; font-weight: 600; color: var(--nh-ink, #241d18);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ct-xem-truoc__co { font-size: 11px; color: var(--nh-muted, #5c5148); }
+  .ct-xem-truoc__xoa {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(179,69,58,.12); color: #b3453a; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ct-xem-truoc__xoa:hover { background: #b3453a; color: #fff; }
+
+  .ct-hang { display: flex; align-items: flex-end; gap: 8px; }
+  .ct-cong-cu { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .ct-nut-tep {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--nh-line, rgba(0,0,0,.12));
+    background: var(--nh-cream, #faf6ef); color: var(--nh-brown, #4e342e);
+    font-size: 16px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .18s var(--nh-ease, ease);
+  }
+  .ct-nut-tep:hover {
+    border-color: var(--nh-gold, #c8a24b);
+    background: rgba(200,162,75,.15);
+    color: var(--nh-espresso, #2b1a12);
+    transform: translateY(-1px);
+  }
   .ct-nhap {
     flex: 1; resize: none; border: 1px solid var(--nh-line, rgba(0,0,0,.12));
-    border-radius: 22px; padding: 11px 18px; font-size: 14.5px; line-height: 1.5;
+    border-radius: 22px; padding: 10px 16px; font-size: 14.5px; line-height: 1.5;
     max-height: 132px; outline: none; font-family: inherit;
     background: var(--nh-cream, #faf6ef); color: var(--nh-ink, #241d18);
     transition: border-color .18s, background .18s;
   }
   .ct-nhap:focus { border-color: var(--nh-gold, #c8a24b); background: #fff; }
   .ct-gui {
-    width: 46px; height: 46px; border-radius: 50%; border: none; flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 50%; border: none; flex-shrink: 0;
     background: linear-gradient(135deg, var(--nh-gold, #c8a24b), #b8923f);
-    color: #fff; font-size: 17px; cursor: pointer;
+    color: #fff; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: transform .18s var(--nh-ease, ease), opacity .18s;
   }
   .ct-gui:hover:not(:disabled) { transform: scale(1.07); }
   .ct-gui:disabled { opacity: .4; cursor: default; }
   .ct-meo { font-size: 11px; color: var(--nh-muted, #5c5148); opacity: .8; margin: 8px 0 0 6px; }
+
+  /* Hien thi anh va file trong bong bong chat */
+  .ct-anh-dinh-kem {
+    display: block; max-width: 260px; max-height: 240px; width: auto; height: auto;
+    border-radius: 10px; margin-bottom: 6px; cursor: zoom-in;
+    object-fit: cover; border: 1px solid rgba(0,0,0,.08); background: #f8f5f0;
+  }
+  .ct-tep-dinh-kem {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 10px; margin-bottom: 6px;
+    background: rgba(0,0,0,.06); text-decoration: none !important;
+    color: inherit !important; border: 1px solid rgba(0,0,0,.08);
+    transition: background .15s;
+  }
+  .ct-dong--toi .ct-tep-dinh-kem {
+    background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); color: #fff !important;
+  }
+  .ct-tep-dinh-kem:hover { background: rgba(0,0,0,.1); }
+  .ct-dong--toi .ct-tep-dinh-kem:hover { background: rgba(255,255,255,.26); }
+  .ct-tep-dinh-kem__icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(200,162,75,.2); color: var(--nh-espresso, #2b1a12);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .ct-dong--toi .ct-tep-dinh-kem__icon { background: rgba(255,255,255,.25); color: #fff; }
+  .ct-tep-dinh-kem__meta { flex: 1; min-width: 0; }
+  .ct-tep-dinh-kem__ten {
+    font-size: 13px; font-weight: 600; display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;
+  }
+  .ct-tep-dinh-kem__co { font-size: 11px; opacity: .78; display: block; }
+
+  /* Lightbox xem anh phong to */
+  .ct-lightbox {
+    position: fixed; inset: 0; z-index: 9999; background: rgba(18,12,9,.88);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .ct-lightbox.hien { display: flex; }
+  .ct-lightbox img {
+    max-width: 92vw; max-height: 88vh; border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6); object-fit: contain;
+  }
+  .ct-lightbox__dong {
+    position: absolute; top: 20px; right: 24px; width: 42px; height: 42px;
+    border-radius: 50%; border: none; background: rgba(255,255,255,.16);
+    color: #fff; font-size: 20px; cursor: pointer;
+  }
 
   /* An nut tro ly ao noi tren chinh trang nay. Khach dang o day la dang muon
      noi chuyen voi NGUOI THAT; de hai khung chat chong len nhau vua roi vua
@@ -193,7 +282,10 @@
           <div class="ct-dau__ten"><%= t('chat.ho_tro') %></div>
           <div class="ct-dau__phu"><%= t('chat.gio_lam') %></div>
         </div>
-        <span class="ct-song"><i></i><%= t('chat.dang_hoat_dong') %></span>
+        <a href="tel:0825297297" style="margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:999px; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 3px 10px rgba(22,163,74,.35);" title="Gọi ngay Hotline 0825 297 297">
+          <i class="fas fa-phone-alt"></i> 0825 297 297
+        </a>
+        <span class="ct-song" style="margin-left:8px;"><i></i><%= t('chat.dang_hoat_dong') %></span>
       </div>
 
       <div class="ct-than" id="ct-than">
@@ -222,7 +314,25 @@
               <% if (!toi) { %>
                 <div class="ct-anh-nv <%= tiep ? 'ct-anh-nv--an' : '' %>"><%= (m.ten_nv || t('chat.nhan_vien')).charAt(0).toUpperCase() %></div>
               <% } %>
-              <div class="ct-bong"><% if (!toi && !tiep) { %><div class="ct-ten-nv"><%= m.ten_nv || t('chat.nhan_vien') %></div><% } %><div class="ct-loi"><%= m.noi_dung %></div><span class="ct-gio" title="<%= d.toLocaleString('vi-VN') %>"><%= d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }) %></span></div>
+              <div class="ct-bong">
+                <% if (!toi && !tiep) { %><div class="ct-ten-nv"><%= m.ten_nv || t('chat.nhan_vien') %></div><% } %>
+                <% if (m.duong_dan_file) { %>
+                  <% if (m.loai_file === 'image') { %>
+                    <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" class="ct-anh-dinh-kem" onclick="moLightboxAnh(this.src)" loading="lazy">
+                  <% } else { %>
+                    <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="ct-tep-dinh-kem">
+                      <span class="ct-tep-dinh-kem__icon"><i class="fas fa-file-alt"></i></span>
+                      <span class="ct-tep-dinh-kem__meta">
+                        <span class="ct-tep-dinh-kem__ten"><%= m.ten_file || 'Tệp đính kèm' %></span>
+                        <% if (m.kich_thuoc_file) { %><span class="ct-tep-dinh-kem__co"><%= (m.kich_thuoc_file / 1024).toFixed(1) %> KB · Nhấn để tải</span><% } %>
+                      </span>
+                      <i class="fas fa-download" style="font-size:13px;opacity:.75"></i>
+                    </a>
+                  <% } %>
+                <% } %>
+                <% if (m.noi_dung) { %><div class="ct-loi"><%= m.noi_dung %></div><% } %>
+                <span class="ct-gio" title="<%= d.toLocaleString('vi-VN') %>"><%= d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }) %></span>
+              </div>
             </div>
           <% }) %>
         <% } else { %>
@@ -238,22 +348,64 @@
       </div>
 
       <div class="ct-chan">
-        <form action="/chat/send" method="POST" class="ct-hang" id="ct-form">
+        <!-- Thanh xem trước ảnh / tệp đính kèm -->
+        <div class="ct-xem-truoc" id="ct-xem-truoc">
+          <div class="ct-xem-truoc__thumb" id="ct-xem-truoc-thumb"><i class="fas fa-file-alt"></i></div>
+          <div class="ct-xem-truoc__info">
+            <div class="ct-xem-truoc__ten" id="ct-xem-truoc-ten"></div>
+            <div class="ct-xem-truoc__co" id="ct-xem-truoc-co"></div>
+          </div>
+          <button type="button" class="ct-xem-truoc__xoa" id="ct-xoa-tep" title="Gỡ tệp đính kèm">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form action="/chat/send" method="POST" enctype="multipart/form-data" class="ct-hang" id="ct-form">
+          <input type="file" id="ct-input-anh" accept="image/*" style="display:none">
+          <input type="file" id="ct-input-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,image/*" style="display:none">
+          <div class="ct-cong-cu">
+            <button type="button" class="ct-nut-tep" id="ct-chon-anh" title="Gửi hình ảnh">
+              <i class="fas fa-image"></i>
+            </button>
+            <button type="button" class="ct-nut-tep" id="ct-chon-file" title="Đính kèm tệp / tài liệu">
+              <i class="fas fa-paperclip"></i>
+            </button>
+          </div>
           <textarea class="ct-nhap" id="ct-nhap" name="noi_dung" rows="1"
-                    placeholder="<%= t('chat.nhap_tin') %>" autocomplete="off" required></textarea>
+                    placeholder="<%= t('chat.nhap_tin') %> (hoặc dán ảnh Ctrl+V)" autocomplete="off"></textarea>
           <button type="submit" class="ct-gui" id="ct-gui" title="<%= t('chung.gui') %>" disabled>
             <i class="fas fa-paper-plane"></i>
           </button>
         </form>
-        <div class="ct-meo"><%= t('chat.goi_y_enter') %></div>
+        <div class="ct-meo"><%= t('chat.goi_y_enter') %> · Hỗ trợ gửi ảnh & tệp đính kèm (tối đa 15MB)</div>
       </div>
 
     </div>
   </div>
 </section>
 
+<!-- Lightbox xem ảnh lớn -->
+<div class="ct-lightbox" id="ct-lightbox" onclick="dongLightboxAnh(event)">
+  <button type="button" class="ct-lightbox__dong" onclick="dongLightboxAnh(event)" aria-label="Đóng"><i class="fas fa-times"></i></button>
+  <img id="ct-lightbox-img" src="" alt="Xem ảnh phóng to">
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
+function moLightboxAnh(src) {
+  var lb = document.getElementById('ct-lightbox');
+  var img = document.getElementById('ct-lightbox-img');
+  if (lb && img && src) {
+    img.src = src;
+    lb.classList.add('hien');
+  }
+}
+function dongLightboxAnh(e) {
+  if (e && e.target && e.target.id === 'ct-lightbox-img') return;
+  var lb = document.getElementById('ct-lightbox');
+  if (lb) lb.classList.remove('hien');
+}
+
 (function () {
   var NHAN = {
     nhanVien: <%- JSON.stringify(t('chat.nhan_vien')) %>,
@@ -269,21 +421,96 @@
   var nhap  = document.getElementById('ct-nhap');
   var nutGui = document.getElementById('ct-gui');
   var nutXuong = document.getElementById('ct-xuong');
+  var inputAnh = document.getElementById('ct-input-anh');
+  var inputFile = document.getElementById('ct-input-file');
+  var nutChonAnh = document.getElementById('ct-chon-anh');
+  var nutChonFile = document.getElementById('ct-chon-file');
+  var khungXemTruoc = document.getElementById('ct-xem-truoc');
+  var thumbXemTruoc = document.getElementById('ct-xem-truoc-thumb');
+  var tenXemTruoc = document.getElementById('ct-xem-truoc-ten');
+  var coXemTruoc = document.getElementById('ct-xem-truoc-co');
+  var nutXoaTep = document.getElementById('ct-xoa-tep');
   var userId = '<%= session.userId %>';
+
+  var tepDangChon = null; // File object hiện tại
 
   var socket = io();
   if (userId) socket.emit('join-room', userId);
 
-  /* Noi dung tin nhan do NGUOI DUNG go ra, khong bao gio duoc ghep thang vao
-     innerHTML. Ban truoc dung template string nen mot tin nhan chua the <img
-     onerror=...> se chay ngay tren trinh duyet nguoi doi thoai. Moi cho hien
-     noi dung o day deu di qua textContent. */
   function el(the, lop, chu) {
     var e = document.createElement(the);
     if (lop) e.className = lop;
     if (chu !== undefined) e.textContent = chu;
     return e;
   }
+
+  function dinhDangDungLuong(bytes) {
+    var b = Number(bytes || 0);
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function chonTep(file) {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Kích thước tệp vượt quá giới hạn 15MB. Vui lòng chọn tệp nhỏ hơn.');
+      return;
+    }
+    tepDangChon = file;
+    tenXemTruoc.textContent = file.name || 'tep_dinh_kem';
+    var laAnh = (file.type && file.type.indexOf('image/') === 0) || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(file.name || '');
+    coXemTruoc.textContent = (laAnh ? 'Hình ảnh · ' : 'Tệp đính kèm · ') + dinhDangDungLuong(file.size);
+    thumbXemTruoc.innerHTML = '';
+    if (laAnh) {
+      var img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:7px;';
+      img.src = URL.createObjectURL(file);
+      thumbXemTruoc.appendChild(img);
+    } else {
+      var ic = document.createElement('i');
+      ic.className = 'fas fa-file-alt';
+      thumbXemTruoc.appendChild(ic);
+    }
+    khungXemTruoc.classList.add('hien');
+    chinhCao();
+    nhap.focus();
+  }
+
+  function xoaTepDangChon() {
+    tepDangChon = null;
+    if (inputAnh) inputAnh.value = '';
+    if (inputFile) inputFile.value = '';
+    if (khungXemTruoc) khungXemTruoc.classList.remove('hien');
+    chinhCao();
+  }
+
+  if (nutChonAnh && inputAnh) {
+    nutChonAnh.onclick = function () { inputAnh.click(); };
+    inputAnh.onchange = function () { if (this.files && this.files[0]) chonTep(this.files[0]); };
+  }
+  if (nutChonFile && inputFile) {
+    nutChonFile.onclick = function () { inputFile.click(); };
+    inputFile.onchange = function () { if (this.files && this.files[0]) chonTep(this.files[0]); };
+  }
+  if (nutXoaTep) {
+    nutXoaTep.onclick = xoaTepDangChon;
+  }
+
+  // Hỗ trợ dán ảnh trực tiếp từ Clipboard (Ctrl+V)
+  nhap.addEventListener('paste', function (e) {
+    var items = (e.clipboardData || window.clipboardData || {}).items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file') {
+        var f = items[i].getAsFile();
+        if (f) {
+          chonTep(f);
+          break;
+        }
+      }
+    }
+  });
 
   var dinhDangGio = new Intl.DateTimeFormat(NN, { hour: '2-digit', minute: '2-digit' });
   var dinhDangNgay = new Intl.DateTimeFormat(NN, { weekday: 'long', day: '2-digit', month: '2-digit' });
@@ -308,14 +535,44 @@
     return ds.length ? ds[ds.length - 1] : null;
   }
 
-  /**
-   * Chen mot tin nhan vao cuoi khung.
-   *
-   * `tam` = bong bong lac quan: hien ngay luc bam Gui de nguoi dung thay phan
-   * hoi tuc thi, roi duoc thay bang ban that khi may chu doi lai qua socket.
-   * Khong chen thang ban that luc gui vi may chu van phat lai tin do ve phong,
-   * lam moi tin hien hai lan.
-   */
+  function chenPhanTepVaoBong(bong, tin) {
+    if (!tin.duong_dan_file) return;
+    if (tin.loai_file === 'image') {
+      var img = document.createElement('img');
+      img.className = 'ct-anh-dinh-kem';
+      img.src = tin.duong_dan_file;
+      img.alt = tin.ten_file || 'Hình ảnh';
+      img.onclick = function () { moLightboxAnh(img.src); };
+      bong.appendChild(img);
+    } else {
+      var a = document.createElement('a');
+      a.className = 'ct-tep-dinh-kem';
+      a.href = tin.duong_dan_file;
+      a.target = '_blank';
+      a.setAttribute('download', tin.ten_file || 'tep_dinh_kem');
+
+      var iconWrap = el('span', 'ct-tep-dinh-kem__icon');
+      var ic = document.createElement('i');
+      ic.className = 'fas fa-file-alt';
+      iconWrap.appendChild(ic);
+      a.appendChild(iconWrap);
+
+      var meta = el('span', 'ct-tep-dinh-kem__meta');
+      meta.appendChild(el('span', 'ct-tep-dinh-kem__ten', tin.ten_file || 'Tệp đính kèm'));
+      if (tin.kich_thuoc_file) {
+        meta.appendChild(el('span', 'ct-tep-dinh-kem__co', dinhDangDungLuong(tin.kich_thuoc_file) + ' · Nhấn để tải'));
+      }
+      a.appendChild(meta);
+
+      var dlIcon = document.createElement('i');
+      dlIcon.className = 'fas fa-download';
+      dlIcon.style.cssText = 'font-size:13px;opacity:.75';
+      a.appendChild(dlIcon);
+
+      bong.appendChild(a);
+    }
+  }
+
   function chen(tin, tam) {
     var rong = document.getElementById('ct-rong');
     if (rong) rong.remove();
@@ -347,7 +604,10 @@
 
     var bong = el('div', 'ct-bong' + (tam ? ' ct-bong--cho' : ''));
     if (!toi && !tiep) bong.appendChild(el('div', 'ct-ten-nv', tin.ten_nv || NHAN.nhanVien));
-    bong.appendChild(el('div', 'ct-loi', tin.noi_dung));
+    chenPhanTepVaoBong(bong, tin);
+    if (tin.noi_dung) {
+      bong.appendChild(el('div', 'ct-loi', tin.noi_dung));
+    }
     var gio = el('span', 'ct-gio', tam ? NHAN.dangGui : dinhDangGio.format(d));
     gio.title = d.toLocaleString(NN);
     bong.appendChild(gio);
@@ -370,12 +630,10 @@
   function chinhCao() {
     nhap.style.height = 'auto';
     nhap.style.height = Math.min(nhap.scrollHeight, 132) + 'px';
-    nutGui.disabled = !nhap.value.trim();
+    nutGui.disabled = (!nhap.value.trim() && !tepDangChon);
   }
   nhap.addEventListener('input', chinhCao);
   nhap.addEventListener('keydown', function (e) {
-    // Enter gui, Shift + Enter xuong dong. Tren dien thoai ban phim ao khong co
-    // Shift nen giu nguyen hanh vi xuong dong mac dinh.
     if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(min-width: 576px)').matches) {
       e.preventDefault();
       form.requestSubmit();
@@ -388,18 +646,34 @@
   form.onsubmit = async function (e) {
     e.preventDefault();
     var noiDung = nhap.value.trim();
-    if (!noiDung) return;
+    var tepGui = tepDangChon;
+    if (!noiDung && !tepGui) return;
 
-    nhap.value = ''; chinhCao();
-    var bongTam = chen({ noi_dung: noiDung, nguoi_gui: 'khach' }, true);
-    hangCho.push({ noiDung: noiDung, dong: bongTam });
+    nhap.value = '';
+    xoaTepDangChon();
+
+    var laAnhTam = tepGui && ((tepGui.type && tepGui.type.indexOf('image/') === 0) || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(tepGui.name || ''));
+    var tinTam = {
+      noi_dung: noiDung,
+      nguoi_gui: 'khach',
+      loai_file: tepGui ? (laAnhTam ? 'image' : 'file') : null,
+      duong_dan_file: tepGui && laAnhTam ? URL.createObjectURL(tepGui) : (tepGui ? '#' : null),
+      ten_file: tepGui ? tepGui.name : null,
+      kich_thuoc_file: tepGui ? tepGui.size : null
+    };
+    var bongTam = chen(tinTam, true);
+    hangCho.push({ noiDung: noiDung, coTep: !!tepGui, dong: bongTam });
     xuongCuoi(true);
 
     try {
+      var fd = new FormData();
+      fd.append('noi_dung', noiDung);
+      if (tepGui) fd.append('tep_dinh_kem', tepGui);
+
       var res = await fetch('/chat/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-        body: new URLSearchParams({ noi_dung: noiDung })
+        headers: { 'Accept': 'application/json' },
+        body: fd
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
     } catch (err) {
@@ -417,14 +691,18 @@
   /* ---------- nhan tin ---------- */
   socket.on('new-message', function (data) {
     if (data.nguoi_gui === 'khach') {
-      // Tin cua chinh minh do may chu phat lai: thay bong bong tam thay vi them
-      // mot bong bong nua. Khop theo noi dung cua phan tu dau hang doi - du
-      // dung vi mot nguoi khong the gui hai tin cung luc.
-      var i = hangCho.findIndex(function (x) { return x.noiDung === data.noi_dung; });
+      var i = hangCho.findIndex(function (x) {
+        return x.noiDung === (data.noi_dung || '') && x.coTep === !!data.duong_dan_file;
+      });
       if (i > -1) {
         var muc = hangCho.splice(i, 1)[0];
         var b = muc.dong.querySelector('.ct-bong');
         b.classList.remove('ct-bong--cho');
+        // Cap nhat link file that tu server neu co
+        var linkTep = b.querySelector('a.ct-tep-dinh-kem');
+        if (linkTep && data.duong_dan_file) linkTep.href = data.duong_dan_file;
+        var anhTep = b.querySelector('img.ct-anh-dinh-kem');
+        if (anhTep && data.duong_dan_file) anhTep.src = data.duong_dan_file;
         var g = b.querySelector('.ct-gio');
         var d = new Date(data.thoigian || Date.now());
         g.textContent = dinhDangGio.format(d);

@@ -347,7 +347,7 @@
       margin-bottom: 20px;
     }
     .nh-g2 {
-      grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr));
     }
 
     .nh-card {
@@ -501,7 +501,8 @@
     @media (max-width: 768px) {
       .nh-wrap { padding: 16px; }
       header.nh-topbar { padding: 14px 16px; }
-      .nh-g2 { grid-template-columns: 1fr; }
+      .nh-g2 { grid-template-columns: minmax(0, 1fr); }
+      .nh-grid > * { min-width: 0; }
     }
   </style>
 </head>

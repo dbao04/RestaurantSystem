@@ -219,6 +219,29 @@
             <p class="text-muted mb-0">Đơn đã kết thúc, không chuyển tiếp được.</p>
           <% } %>
           <% don.chuyen_duoc.forEach(function (tt) { %>
+            <% if (tt === 'huy') { %>
+              <!-- Hủy theo chính sách: lý do quyết định có hoàn điểm hay không -->
+              <form action="/staff/giao-hang/<%= don.id_giao %>/trang-thai" method="POST" class="mb-2 border rounded p-2"
+                    onsubmit="return xacNhanHuy(this)">
+                <input type="hidden" name="trang_thai" value="huy">
+                <label class="small font-weight-bold mb-1">Hủy đơn — lý do (bắt buộc)</label>
+                <select name="ma_ly_do" class="form-control form-control-sm mb-1" required>
+                  <option value="">— Chọn lý do —</option>
+                  <optgroup label="Lỗi do khách → KHÔNG hoàn">
+                    <% Object.keys(LY_DO_HUY).forEach(function (ma) { var l = LY_DO_HUY[ma]; if (l.ben_loi === 'khach' && !l.heThong) { %>
+                      <option value="<%= ma %>" data-ben="khach"><%= l.nhan %></option>
+                    <% } }) %>
+                  </optgroup>
+                  <optgroup label="Lỗi do nhà hàng → HOÀN ĐIỂM">
+                    <% Object.keys(LY_DO_HUY).forEach(function (ma) { var l = LY_DO_HUY[ma]; if (l.ben_loi === 'nha_hang') { %>
+                      <option value="<%= ma %>" data-ben="nha_hang"><%= l.nhan %></option>
+                    <% } }) %>
+                  </optgroup>
+                </select>
+                <input type="text" name="ly_do" class="form-control form-control-sm mb-1" maxlength="200" placeholder="Ghi chú thêm (không bắt buộc)">
+                <button class="btn btn-sm btn-outline-danger btn-block" type="submit"><i class="fas fa-ban"></i> Hủy đơn giao</button>
+              </form>
+              <% return; } %>
             <%
               var n = NUT[tt] || { nhan: tt, lop: 'btn-outline-secondary', icon: 'fa-circle' };
               var canLyDo = (tt === 'that_bai' || tt === 'huy');
@@ -235,6 +258,54 @@
         </div>
       </div>
     <% } %>
+
+    <!-- Thanh toán & hoàn điểm theo chính sách -->
+    <div class="card shadow mb-3">
+      <div class="card-header py-2">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-coins"></i> Thanh toán &amp; hoàn điểm</h6>
+      </div>
+      <div class="card-body small">
+        <div class="d-flex justify-content-between"><span>Khách đã trả trước</span><b><%= Math.round(daTraTien).toLocaleString('vi-VN') %>đ</b></div>
+        <% if (daTraDiem > 0) { %>
+          <div class="d-flex justify-content-between"><span>Điểm khách đã dùng</span><b><%= daTraDiem %> điểm</b></div>
+        <% } %>
+        <% if (don.trang_thai === 'cho_thanh_toan') { %>
+          <div class="alert alert-warning py-1 px-2 mt-2 mb-0">Khách chưa thanh toán — bếp chưa nấu, chưa phân shipper. Hết hạn giữ đơn sẽ tự hủy.</div>
+        <% } %>
+        <% if (don.trang_thai === 'huy' && don.ben_loi) { %>
+          <div class="alert <%= don.ben_loi === 'nha_hang' ? 'alert-success' : 'alert-secondary' %> py-1 px-2 mt-2 mb-0">
+            Đã hủy — <b><%= don.ben_loi === 'nha_hang' ? 'lỗi nhà hàng (đã hoàn điểm)' : 'lỗi do khách (không hoàn)' %></b>
+          </div>
+        <% } %>
+        <% if (lichSuHoan.length) { %>
+          <div class="mt-2 font-weight-bold">Lịch sử hoàn điểm</div>
+          <% lichSuHoan.forEach(function (h) { %>
+            <div class="border-bottom py-1">
+              +<b><%= h.so_diem %> điểm</b> (<%= Math.round(h.so_tien).toLocaleString('vi-VN') %>đ, <%= h.loai === 'toan_phan' ? 'toàn phần' : 'một phần' %>)
+              <br><span class="text-muted"><%= new Date(h.tao_luc).toLocaleString('vi-VN') %> · <%= h.ten_nguoi || '' %> · <%= h.ly_do || '' %></span>
+            </div>
+          <% }) %>
+        <% } %>
+        <% if (conHoanDuoc > 0 && don.trang_thai !== 'huy') { %>
+          <form action="/staff/giao-hang/<%= don.id_giao %>/hoan-diem" method="POST" class="mt-2 border rounded p-2"
+                onsubmit="return confirm('Hoàn điểm cho khách? Thao tác không hoàn tác được.')">
+            <label class="font-weight-bold mb-1">Hoàn điểm một phần (giao thiếu / sai món...)</label>
+            <select name="ma_ly_do" class="form-control form-control-sm mb-1" required>
+              <% Object.keys(LY_DO_HUY).forEach(function (ma) { var l = LY_DO_HUY[ma]; if (l.ben_loi === 'nha_hang') { %>
+                <option value="<%= ma %>" <%= ma === 'sai_thieu_mon' ? 'selected' : '' %>><%= l.nhan %></option>
+              <% } }) %>
+            </select>
+            <div class="input-group input-group-sm mb-1">
+              <input type="number" name="so_tien" class="form-control" min="1000" step="1000" max="<%= conHoanDuoc %>" required placeholder="Giá trị phần bị lỗi (đ)">
+              <div class="input-group-append"><span class="input-group-text">đ</span></div>
+            </div>
+            <input type="text" name="ghi_chu" class="form-control form-control-sm mb-1" maxlength="200" placeholder="VD: thiếu 1 phần gà nướng">
+            <div class="text-muted mb-1">Tối đa <%= Math.round(conHoanDuoc).toLocaleString('vi-VN') %>đ. Quy đổi <%= tyLeHoan %>% → 1 điểm = <%= Number(giaTri1Diem).toLocaleString('vi-VN') %>đ.</div>
+            <button class="btn btn-sm btn-outline-success btn-block" type="submit"><i class="fas fa-hand-holding-heart"></i> Hoàn điểm</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
 
     <div class="card shadow mb-3">
       <div class="card-header py-2">
@@ -265,6 +336,15 @@
 </div>
 
 <script>
+function xacNhanHuy(form) {
+  var opt = form.ma_ly_do.options[form.ma_ly_do.selectedIndex];
+  if (!opt || !opt.value) { alert('Hãy chọn lý do hủy.'); return false; }
+  var ben = opt.getAttribute('data-ben');
+  return confirm(ben === 'nha_hang'
+    ? 'Hủy do LỖI NHÀ HÀNG: khách sẽ được hoàn điểm toàn bộ số tiền đã trả. Tiếp tục?'
+    : 'Hủy do LỖI KHÁCH: theo chính sách khách KHÔNG được hoàn tiền/điểm. Tiếp tục?');
+}
+
 function xinLyDo(form) {
   var ly = prompt('Lý do (khách không nghe máy, sai địa chỉ, khách hủy…):');
   if (ly === null) return false;
