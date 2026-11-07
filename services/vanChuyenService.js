@@ -41,6 +41,7 @@ const db = require('../config/db');
 
 /** Nhan tieng Viet + mau, dung chung cho moi man hinh de khong noi hai giong. */
 const TT = {
+  cho_thanh_toan: { nhan: 'Chờ khách thanh toán', mau: '#b8860b', icon: 'fa-wallet' },
   cho_phan:  { nhan: 'Chờ phân shipper', mau: '#6c757d', icon: 'fa-hourglass-half' },
   da_phan:   { nhan: 'Đã phân shipper',  mau: '#0d6efd', icon: 'fa-user-check' },
   dang_lay:  { nhan: 'Đang lấy hàng',    mau: '#6f42c1', icon: 'fa-box-open' },
@@ -58,6 +59,9 @@ const TT = {
  * lich su va mat lien ket voi don goc.
  */
 const CHUYEN_DUOC = {
+  // Chua tra tien: chi huy duoc. Sang 'cho_phan' CHI do chinhSachGiaoService
+  // .sauKhiThanhToan() khi tien da ve du - khong ai bam tay bo qua buoc tra truoc.
+  cho_thanh_toan: ['huy'],
   cho_phan:  ['da_phan', 'huy'],
   da_phan:   ['dang_lay', 'cho_phan', 'huy'],
   dang_lay:  ['dang_giao', 'da_phan', 'huy'],
@@ -196,6 +200,27 @@ async function tinhPhi(viDo, kinhDo, tienHang = 0, idDv = null) {
     };
   }
 
+  /*
+   * KHU VUC GIAO HANG (theo quan). Khi bat, vung giao duoc la cac da giac quan
+   * dang bat - THAY CHO ban kinh: nha hang chi phuc vu Go Vap, Binh Thanh,
+   * Quan 12 thi mot dia chi Quan 1 cach 4 km cung khong nhan, con mot dia chi
+   * cuoi Quan 12 cach 7 km van nhan. Phi van tinh theo km nhu cu.
+   */
+  let khuVuc = null;
+  const kvSv = require('./khuVucGiaoService');
+  const [[batKv]] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'giao_hang.chi_trong_khu_vuc'");
+  const theoKhuVuc = !batKv || batKv.gia_tri !== '0';
+  if (theoKhuVuc && (await kvSv.dsKhuVuc({ chiBat: true })).length) {
+    khuVuc = await kvSv.khuVucCuaDiem(viDo, kinhDo);
+    if (!khuVuc) {
+      return {
+        giao_duoc: false,
+        ly_do: `Hiện nhà hàng chỉ giao hàng trong khu vực ${await kvSv.moTaVung()}. Địa chỉ của bạn nằm ngoài khu vực này.`,
+        khoang_cach_km: km, phi: 0, id_dv: null, don_vi: null, mien_phi: false, khu_vuc: null,
+      };
+    }
+  }
+
   // Chon don vi: uu tien don vi duoc chi dinh; khong thi lay don vi RE NHAT
   // trong so nhung don vi con voi toi dia chi nay. Sap theo thu_tu de khi hai
   // don vi bang gia thi doi nha (thu_tu = 1) duoc uu tien - ho theo doi GPS duoc.
@@ -205,7 +230,8 @@ async function tinhPhi(viDo, kinhDo, tienHang = 0, idDv = null) {
      ORDER BY thu_tu, id_dv`,
     idDv ? [idDv] : []
   );
-  const trongTam = dsDv.filter((d) => km <= Number(d.ban_kinh_km));
+  // Da kiem tra theo quan thi bo qua ban kinh tung don vi.
+  const trongTam = khuVuc ? dsDv : dsDv.filter((d) => km <= Number(d.ban_kinh_km));
 
   if (!trongTam.length) {
     const xa = dsDv.length ? Math.max(...dsDv.map((d) => Number(d.ban_kinh_km))) : ts.ban_kinh_km;
@@ -216,16 +242,13 @@ async function tinhPhi(viDo, kinhDo, tienHang = 0, idDv = null) {
     };
   }
 
-  const tinhCho = (dv) => {
-    const kmVuot = Math.max(0, km - Number(dv.so_km_dau));
-    // Lam tron len tung 0.5 km: nhay tung km lam phi vot len 5000d chi vi lech
-    // 50m, con tinh tung met thi con so le loi nhu 17.340d.
-    const buoc = Math.ceil(kmVuot * 2) / 2;
-    return Math.round(Number(dv.phi_co_ban) + buoc * Number(dv.phi_moi_km));
-  };
+  // Phi BAC THANG: km dau tron goi, sau do cang xa don gia/km cang giam.
+  // Cong thuc nam o chinhSachGiaoService.tinhPhiDonVi - mot noi de sua.
+  const chinhSach = require('./chinhSachGiaoService');
+  const { bac_giam_km: bac } = await chinhSach.docThamSo();
 
   const chon = trongTam
-    .map((dv) => ({ dv, phi: tinhCho(dv) }))
+    .map((dv) => ({ dv, ...chinhSach.tinhPhiDonVi(km, dv, bac) }))
     .sort((a, b) => a.phi - b.phi || a.dv.thu_tu - b.dv.thu_tu)[0];
 
   const mienPhi = ts.mien_phi_tu > 0 && Number(tienHang) >= ts.mien_phi_tu;
@@ -234,8 +257,11 @@ async function tinhPhi(viDo, kinhDo, tienHang = 0, idDv = null) {
     giao_duoc: true,
     ly_do: null,
     khoang_cach_km: km,
+    khu_vuc: khuVuc ? { ma: khuVuc.ma, ten: khuVuc.ten } : null,
     phi: mienPhi ? 0 : chon.phi,
     phi_goc: chon.phi,
+    km_tinh_phi: chon.km_tinh_phi,
+    chi_tiet_phi: chon.chi_tiet,
     mien_phi: mienPhi,
     mien_phi_tu: ts.mien_phi_tu,
     id_dv: chon.dv.id_dv,
@@ -489,6 +515,9 @@ const doiCaShipper = async (idShipper, trangThai) => {
     }
   }
   await db.query('UPDATE shipper SET trang_thai = ? WHERE id_shipper = ?', [trangThai, idShipper]);
+  if (trangThai === 'san_sang') {
+    setImmediate(() => require('./phanCongGiaoService').phanHangCho().catch(() => {}));
+  }
 };
 
 const xoaShipper = async (idShipper) => {
@@ -584,6 +613,13 @@ const taoDonGiao = async (sesis, d = {}) => {
 
   const camKet = bao.don_vi ? Number(bao.don_vi.thoi_gian_cam_ket_phut) : 45;
 
+  // Khach dat tren web: phai thanh toan truoc 100% (mon + ship). Don nam o
+  // 'cho_thanh_toan' - bep chua nau, shipper chua duoc phan - toi khi tien ve.
+  const choThanhToan = !!d.choThanhToan;
+  const trangThaiDau = choThanhToan ? 'cho_thanh_toan' : 'cho_phan';
+  const phutGiu = choThanhToan
+    ? (await require('./chinhSachGiaoService').docThamSo()).phut_giu_thanh_toan : null;
+
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
@@ -604,17 +640,19 @@ const taoDonGiao = async (sesis, d = {}) => {
           `INSERT INTO don_giao_hang
              (sesis, ma_giao, id_dv, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao,
               vi_do, kinh_do, khoang_cach_km, phi_giao, tien_thu_ho, ghi_chu,
-              du_kien_luc, trang_thai)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, DATE_ADD(NOW(), INTERVAL ? MINUTE), 'cho_phan')`,
+              du_kien_luc, trang_thai, ma_khu_vuc, han_thanh_toan)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?, ?,
+                   ${choThanhToan ? 'DATE_ADD(NOW(), INTERVAL ? MINUTE)' : 'NULL'})`,
           [sesis, maGiao, bao.id_dv,
            String(d.ten_nguoi_nhan || don.ten || '').trim() || 'Khách hàng',
            String(d.sdt_nguoi_nhan || don.sodienthoai || '').trim(),
            String(d.dia_chi_giao || don.diachi || '').trim(),
            coToaDo ? viDo : null, coToaDo ? kinhDo : null,
            bao.khoang_cach_km, bao.phi,
-           Number(d.tien_thu_ho) || 0,
+           choThanhToan ? 0 : (Number(d.tien_thu_ho) || 0),
            String(d.ghi_chu || '').trim() || null,
-           camKet]
+           camKet + (phutGiu || 0), trangThaiDau, bao.khu_vuc ? bao.khu_vuc.ma : null,
+           ...(choThanhToan ? [phutGiu] : [])]
         );
         break;
       } catch (e) {
@@ -631,13 +669,20 @@ const taoDonGiao = async (sesis, d = {}) => {
 
     await conn.query(
       `INSERT INTO nhat_ky_giao_hang (id_giao, tu_trang_thai, den_trang_thai, id_nv, ten_nguoi, ghi_chu)
-       VALUES (?, NULL, 'cho_phan', ?, ?, ?)`,
-      [kq.insertId, d.id_nv || null, d.ten_nguoi || 'Hệ thống',
-       bao.khoang_cach_km !== null ? `Tạo đơn, cách nhà hàng ${bao.khoang_cach_km} km` : 'Tạo đơn (chưa có tọa độ)']
+       VALUES (?, NULL, ?, ?, ?, ?)`,
+      [kq.insertId, trangThaiDau, d.id_nv || null, d.ten_nguoi || 'Hệ thống',
+       (bao.khoang_cach_km !== null ? `Tạo đơn, cách nhà hàng ${bao.khoang_cach_km} km` : 'Tạo đơn (chưa có tọa độ)')
+         + (choThanhToan ? ` — chờ khách thanh toán trước trong ${phutGiu} phút` : '')]
     );
 
     await conn.commit();
     const [[moi]] = await db.query('SELECT * FROM don_giao_hang WHERE id_giao = ?', [kq.insertId]);
+    // Tu dong phan shipper (neu dang bat). Chay sau khi tra ve de trang dat hang
+    // khong phai cho; require tre de tranh vong phu thuoc giua hai module.
+    if (!choThanhToan) {
+      setImmediate(() => require('./phanCongGiaoService').tuDongPhan(moi.id_giao)
+        .catch((e) => console.error('[giao-hang] tự động phân lỗi:', e.message)));
+    }
     return moi;
   } catch (e) {
     await conn.rollback();
@@ -651,24 +696,31 @@ const taoDonGiao = async (sesis, d = {}) => {
   }
 };
 
-/** Cau SELECT dung chung cho moi man hinh xem don - mot noi de sua. */
+/**
+ * Cau SELECT dung chung cho moi man hinh xem don - mot noi de sua.
+ *
+ * CONVERT(g.sesis USING utf8): don_giao_hang.sesis la utf8mb4, hopdong.sesis la
+ * utf8. So sanh thang hai bang ma khac nhau thi MySQL KHONG dung duoc chi muc
+ * idx_hopdong_sesis va quet ca 110 nghin dong cho MOI truy van con (~0.4s mot
+ * don). sesis chi gom ky tu ASCII nen doi ve utf8 khong mat gi.
+ */
 const CHON_DON = `
   SELECT g.*,
          dv.ten_dv, dv.ma_dv, dv.loai AS loai_dv, dv.mau_sac,
          s.ten AS ten_shipper_luu, s.sdt AS sdt_shipper, s.bien_so, s.loai_xe, s.id_nv AS id_nv_shipper,
          nv.ten AS ten_nv_shipper,
          k.ten AS ten_khach, k.sodienthoai AS sdt_khach,
-         (SELECT SUM(h.thanhtien) FROM hopdong h WHERE h.sesis = g.sesis) AS tien_hang,
-         (SELECT COUNT(*) FROM hopdong h WHERE h.sesis = g.sesis) AS so_mon,
-         (SELECT MIN(h.tinhtrang) FROM hopdong h WHERE h.sesis = g.sesis) AS tinhtrang_don,
-         (SELECT MIN(h.trangthai_bep) FROM hopdong h WHERE h.sesis = g.sesis) AS bep_xong,
+         (SELECT SUM(h.thanhtien) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS tien_hang,
+         (SELECT COUNT(*) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS so_mon,
+         (SELECT MIN(h.tinhtrang) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS tinhtrang_don,
+         (SELECT MIN(h.trangthai_bep) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS bep_xong,
          v.vi_do AS shipper_vi_do, v.kinh_do AS shipper_kinh_do, v.luc AS shipper_luc,
          TIMESTAMPDIFF(MINUTE, v.luc, NOW()) AS shipper_phut_truoc
   FROM don_giao_hang g
   LEFT JOIN don_vi_van_chuyen dv ON dv.id_dv = g.id_dv
   LEFT JOIN shipper s  ON s.id_shipper = g.id_shipper
   LEFT JOIN nhan_vien nv ON nv.id_nv = s.id_nv
-  LEFT JOIN hopdong h1 ON h1.id = (SELECT MIN(id) FROM hopdong WHERE sesis = g.sesis)
+  LEFT JOIN hopdong h1 ON h1.id = (SELECT MIN(id) FROM hopdong WHERE sesis = CONVERT(g.sesis USING utf8))
   LEFT JOIN khach_hang k ON k.id = h1.id_user
   LEFT JOIN vi_tri_shipper_moi_nhat v ON v.id_shipper = g.id_shipper
 `;
@@ -729,7 +781,7 @@ const dsDonGiao = async ({ trangThai = null, idShipper = null, idDv = null,
 
   const [rows] = await db.query(
     `${CHON_DON} ${dk.length ? 'WHERE ' + dk.join(' AND ') : ''}
-     ORDER BY FIELD(g.trang_thai,'cho_phan','dang_giao','dang_lay','da_phan','that_bai','da_giao','huy'),
+     ORDER BY FIELD(g.trang_thai,'cho_thanh_toan','cho_phan','dang_giao','dang_lay','da_phan','that_bai','da_giao','huy'),
               g.tao_luc DESC
      LIMIT ?`,
     [...bien, Math.min(500, Number(gioiHan) || 200)]
@@ -774,6 +826,7 @@ const phanShipper = async (idGiao, idShipper, nguoi = {}) => {
   const don = await donGiao(idGiao);
   if (!don) throw new Error('Không tìm thấy đơn giao hàng.');
   if (DA_XONG.includes(don.trang_thai)) throw new Error(`Đơn đã ${TT[don.trang_thai].nhan.toLowerCase()}, không phân lại được.`);
+  if (don.trang_thai === 'cho_thanh_toan') throw new Error('Khách chưa thanh toán đơn này — chưa phân shipper được.');
 
   const sp = await shipper(idShipper);
   if (!sp) throw new Error('Không tìm thấy shipper.');
@@ -844,6 +897,11 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
       Number(don.id_shipper) !== Number(nguoi.id_shipper)) {
     throw new Error('Đơn này không phải của bạn.');
   }
+  // Huy phai noi ro AI CO LOI - quyet dinh co hoan diem hay khong. Moi loi huy
+  // di qua chinhSachGiaoService.huyDon(), noi gan ma_ly_do + ben_loi.
+  if (moi === 'huy' && !tuyChon.ma_ly_do) {
+    throw new Error('Hãy chọn lý do hủy (lỗi do khách hay lỗi do nhà hàng) để áp dụng chính sách hoàn điểm.');
+  }
   if (moi === 'that_bai' && !String(tuyChon.ly_do || '').trim()) {
     throw new Error('Phải ghi lý do giao thất bại (khách không nghe máy, sai địa chỉ...).');
   }
@@ -857,6 +915,10 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   if (['da_giao', 'that_bai', 'huy'].includes(moi)) dat.push('hoan_tat_luc = NOW()');
   if (moi === 'da_giao' && Number(don.tien_thu_ho) > 0) dat.push('da_thu_ho = 1');
   if (['that_bai', 'huy'].includes(moi)) { dat.push('ly_do = ?'); bien.push(String(tuyChon.ly_do || '').trim() || null); }
+  if (moi === 'huy') {
+    dat.push('ma_ly_do = ?', 'ben_loi = ?', 'han_thanh_toan = NULL');
+    bien.push(tuyChon.ma_ly_do, tuyChon.ben_loi || null);
+  }
 
   bien.push(idGiao);
   await db.query(`UPDATE don_giao_hang SET ${dat.join(', ')} WHERE id_giao = ?`, bien);
@@ -879,8 +941,21 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   await ghiNhatKy(idGiao, cu, moi, nguoi, tuyChon.ly_do || tuyChon.ghi_chu || null,
                   tuyChon.vi_do, tuyChon.kinh_do);
   if (don.id_shipper) await capNhatCaShipper(don.id_shipper);
+  let ketQuaHuy = null;
+  if (moi === 'huy') {
+    ketQuaHuy = await require('./chinhSachGiaoService').sauKhiHuy(idGiao, nguoi);
+  }
+  if (moi === 'huy') {
+    await db.query("UPDATE phan_cong_giao SET ket_qua = 'bi_go', ly_do_ket_thuc = 'Đơn bị hủy', phan_hoi_luc = NOW() WHERE id_giao = ? AND ket_qua = 'cho_xac_nhan'", [idGiao]);
+  }
+  // Shipper vua xong mot don -> con suc chua -> phan tiep don dang cho.
+  if (['da_giao', 'that_bai', 'huy'].includes(moi)) {
+    setImmediate(() => require('./phanCongGiaoService').phanHangCho().catch(() => {}));
+  }
 
-  return donGiao(idGiao);
+  const sau = await donGiao(idGiao);
+  if (ketQuaHuy) sau.ket_qua_huy = ketQuaHuy;
+  return sau;
 };
 
 /**
@@ -1101,7 +1176,7 @@ module.exports = {
   dsShipper, shipper, shipperCuaNhanVien, themShipper, suaShipper,
   doiCaShipper, xoaShipper, nhanVienChuaLaShipper,
   taoDonGiao, donGiao, donGiaoTheoSesis, donGiaoTheoMa, dsDonGiao, monCuaDon, nhatKy,
-  phanShipper, goShipper, doiTrangThai,
+  phanShipper, goShipper, doiTrangThai, ghiNhatKy,
   ghiViTri, banDo, vetCuaDon, donVetCu,
   thongKe,
 };

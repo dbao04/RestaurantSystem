@@ -1,5 +1,7 @@
 <%- include('partials/header', { title: dish ? tenMon(dish).chinh : t('chi_tiet.tieu_de'), activeNav: 'menu' }) %>
 
+<link rel="stylesheet" href="/chi-tiet-mon.css">
+
 <section class="nh-subhero nh-subhero--sm">
   <div class="nh-subhero__bg nh-wa-koshi"></div>
   <div class="nh-subhero__veil"></div>
@@ -34,51 +36,21 @@
           </p>
 
           <%
-            /* Nguyên liệu nào đã đẩy món vào một nhóm dị ứng thì đánh dấu ngay
-               trong danh sách, để khách dò tên món ăn được là thấy luôn chỗ
-               cần chú ý, không phải đối chiếu hai khối với nhau. */
-            var nlCanhBao = new Set();
-            (diUng && diUng.nhom || []).forEach(function (n) {
-              n.nguyen_lieu.forEach(function (x) { nlCanhBao.add(x); });
-            });
+            /* Luu y nhanh: mot hang the ngan ngay duoi gia, bam vao nhay xuong
+               khoi chi tiet. Khach co di ung nhin la biet co can doc tiep khong. */
+            var dsLuuY = (typeof luuY !== 'undefined' && luuY) ? luuY : [];
+            var tenDiUng = function (k) { var x = t('di_ung.' + k); return x === 'di_ung.' + k ? k : x; };
           %>
-          <div class="nh-nl">
-            <% if (nguyenLieu && nguyenLieu.length) { %>
-              <% if (diUng.co_canh_bao) { %>
-                <div class="nh-diung">
-                  <p class="nh-diung__dau">
-                    <i class="fas fa-exclamation-triangle"></i> <%= t('chi_tiet.di_ung_tieu_de') %>
-                  </p>
-                  <ul class="nh-diung__nhom">
-                    <% diUng.nhom.forEach(function (n) { %>
-                      <li>
-                        <b><%= t('di_ung.' + n.khoa) %></b>
-                        <span><%= n.nguyen_lieu.map(tenNguyenLieu).join(' · ') %></span>
-                      </li>
-                    <% }); %>
-                  </ul>
-                </div>
-              <% } else { %>
-                <p class="nh-diung__trong">
-                  <i class="fas fa-check-circle"></i> <%= t('chi_tiet.di_ung_khong_thay') %>
-                </p>
-              <% } %>
-
-              <h3 class="nh-nl__ten"><%= t('chi_tiet.nguyen_lieu') %></h3>
-              <ul class="nh-nl__ds">
-                <% nguyenLieu.forEach(function (nl) { %>
-                  <li class="<%= nlCanhBao.has(nl) ? 'la-di-ung' : '' %>"><%= tenNguyenLieu(nl) %></li>
-                <% }); %>
-              </ul>
-            <% } else { %>
-              <p class="nh-nl__chua-co"><%= t('chi_tiet.nguyen_lieu_chua_co') %></p>
-            <% } %>
-
-            <p class="nh-note nh-nl__luu-y">
-              <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
-              <%= t('chi_tiet.di_ung_luu_y') %>
-            </p>
-          </div>
+          <% if ((diUng && diUng.co_canh_bao) || dsLuuY.length) { %>
+            <a href="#luu-y" class="ct-nhanh" aria-label="Xem lưu ý chi tiết">
+              <span class="ct-nhanh__dau"><i class="fas fa-triangle-exclamation"></i> Lưu ý trước khi gọi</span>
+              <span class="ct-nhanh__ds">
+                <% (diUng.nhom || []).forEach(function (n) { %><span class="ct-the ct-the--diung"><%= tenDiUng(n.khoa) %></span><% }) %>
+                <% dsLuuY.forEach(function (l) { %><span class="ct-the ct-the--<%= l.muc %>"><i class="fas <%= l.icon %>"></i> <%= l.tieu_de %></span><% }) %>
+              </span>
+              <span class="ct-nhanh__xem">Xem chi tiết <i class="fas fa-arrow-down"></i></span>
+            </a>
+          <% } %>
 
           <form action="/add-to-cart" method="post" class="nh-detail__buy">
             <input type="hidden" name="monid" value="<%= dish.id_mon %>">
@@ -101,6 +73,120 @@
           </p>
         </div>
       </div>
+
+      <% if (typeof anKem !== 'undefined' && anKem.length) { %>
+      <!-- ================= GOI KEM CHO TRON BUA ================= -->
+      <div class="ct-kem" id="an-kem">
+        <div class="ct-kem__dau">
+          <div>
+            <span class="nh-eyebrow nh-eyebrow--sm">Gợi ý từ bếp &amp; thói quen của thực khách</span>
+            <h3>Gọi kèm cho trọn bữa</h3>
+            <p>Chọn thêm món ăn chung, hệ thống sẽ thêm cùng lúc với <b><%= tenMon(dish).chinh %></b> vào giỏ hàng.</p>
+          </div>
+        </div>
+        <div class="ct-kem__luoi">
+          <% anKem.forEach(function (m) { %>
+            <label class="ct-mon">
+              <input type="checkbox" class="ct-mon__chon" value="<%= m.id_mon %>" data-gia="<%= m.gia_mon %>" data-ten="<%= tenMon(m).chinh %>">
+              <span class="ct-mon__vitri"><%= m.nhan %></span>
+              <span class="ct-mon__tick" aria-hidden="true"><i class="fas fa-check"></i></span>
+              <span class="ct-mon__anh">
+                <img src="<%= m.images ? '/food/' + m.images : '/mon-thay-the.svg' %>" alt="" loading="lazy" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+              </span>
+              <span class="ct-mon__than">
+                <span class="ct-mon__ten"><%= tenMon(m).chinh %></span>
+                <span class="ct-mon__gia"><%= formatMoney(m.gia_mon) %> ₫</span>
+                <span class="ct-mon__lydo">
+                  <% if (m.ly_do === 'du_lieu') { %>
+                    <% if (m.ti_le >= 10) { %>
+                      <i class="fas fa-chart-line"></i> <%= m.ti_le %>% khách gọi món này cũng gọi món này
+                    <% } else { %>
+                      <i class="fas fa-chart-line"></i> Hay được gọi cùng – gấp <%= String(m.lift).replace('.', ',') %> lần bình thường
+                    <% } %>
+                  <% } else { %>
+                    <i class="fas fa-hat-chef"></i> Bếp trưởng gợi ý
+                  <% } %>
+                </span>
+              </span>
+              <a class="ct-mon__xem" href="/detail?monid=<%= m.id_mon %>" onclick="event.stopPropagation()">Xem món</a>
+            </label>
+          <% }) %>
+        </div>
+        <div class="ct-kem__tong" id="ctTong">
+          <div class="ct-kem__tong-chu">
+            <span id="ctTongDong">Chưa chọn món ăn kèm</span>
+            <b id="ctTongTien"></b>
+          </div>
+          <button type="button" class="nh-btn nh-btn--gold" id="ctThemTatCa" disabled>
+            <i class="fas fa-cart-plus"></i> <span>Thêm tất cả vào giỏ</span>
+          </button>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- ================= THANH PHAN, DI UNG & LUU Y ================= -->
+      <%
+        var nlCanhBao = new Set();
+        (diUng && diUng.nhom || []).forEach(function (n) { n.nguyen_lieu.forEach(function (x) { nlCanhBao.add(x); }); });
+        var nhanMuc = { quan_trong: 'Quan trọng', chu_y: 'Chú ý', thong_tin: 'Thông tin' };
+      %>
+      <div class="ct-luuy" id="luu-y">
+        <div class="ct-luuy__cot">
+          <h3><i class="fas fa-shield-virus"></i> Thành phần &amp; dị ứng</h3>
+          <% if (nguyenLieu && nguyenLieu.length) { %>
+            <% if (diUng.co_canh_bao) { %>
+              <p class="ct-luuy__mo">Món có chứa <b><%= diUng.nhom.length %></b> nhóm thành phần thường gây dị ứng:</p>
+              <% diUng.nhom.forEach(function (n) { %>
+                <details class="ct-du" <%= ['giap_xac','nhuyen_the','dau_phong','kieu_mach'].indexOf(n.khoa) >= 0 ? 'open' : '' %>>
+                  <summary>
+                    <span class="ct-du__ten"><%= tenDiUng(n.khoa) %></span>
+                    <span class="ct-du__nl"><%= n.nguyen_lieu.map(tenNguyenLieu).join(' · ') %></span>
+                    <i class="fas fa-chevron-down ct-du__mui"></i>
+                  </summary>
+                  <p><%= (moTaDiUng && moTaDiUng[n.khoa]) || '' %></p>
+                </details>
+              <% }) %>
+            <% } else { %>
+              <p class="nh-diung__trong"><i class="fas fa-check-circle"></i> <%= t('chi_tiet.di_ung_khong_thay') %></p>
+            <% } %>
+            <h4 class="ct-luuy__phu"><%= t('chi_tiet.nguyen_lieu') %></h4>
+            <ul class="nh-nl__ds">
+              <% nguyenLieu.forEach(function (nl) { %>
+                <li class="<%= nlCanhBao.has(nl) ? 'la-di-ung' : '' %>"><%= tenNguyenLieu(nl) %></li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <p class="nh-nl__chua-co"><%= t('chi_tiet.nguyen_lieu_chua_co') %></p>
+          <% } %>
+        </div>
+
+        <div class="ct-luuy__cot">
+          <h3><i class="fas fa-circle-exclamation"></i> Lưu ý khi dùng món</h3>
+          <% if (dsLuuY.length) { %>
+            <% dsLuuY.forEach(function (l) { %>
+              <div class="ct-ly ct-ly--<%= l.muc %>">
+                <div class="ct-ly__icon"><i class="fas <%= l.icon %>"></i></div>
+                <div class="ct-ly__than">
+                  <div class="ct-ly__dau"><b><%= l.tieu_de %></b><span class="ct-ly__muc"><%= nhanMuc[l.muc] %></span></div>
+                  <p><%= l.noi_dung %></p>
+                  <% if (l.doi_tuong.length) { %>
+                    <div class="ct-ly__dt"><span>Cần cân nhắc:</span><% l.doi_tuong.forEach(function (d) { %><em><%= d %></em><% }) %></div>
+                  <% } %>
+                  <% if (l.dieu_chinh) { %>
+                    <div class="ct-ly__dc"><i class="fas fa-wand-magic-sparkles"></i> <%= l.dieu_chinh %> Ghi vào phần ghi chú khi đặt món hoặc báo nhân viên.</div>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="nh-diung__trong"><i class="fas fa-check-circle"></i> Món dễ ăn, không có lưu ý đặc biệt về cách dùng.</p>
+          <% } %>
+          <p class="nh-note ct-luuy__chan">
+            <i class="fas fa-circle-info" style="color:var(--nh-gold)"></i>
+            <%= t('chi_tiet.di_ung_luu_y') %> Thông tin trên mang tính tham khảo, không thay thế tư vấn y tế.
+          </p>
+        </div>
+      </div>
     <% } else { %>
       <div class="nh-empty">
         <i class="fas fa-utensils"></i>
@@ -113,6 +199,63 @@
 </section>
 
 <script>
+  // GOI KEM: tong tien + them mon chinh va cac mon da chon vao gio trong mot lan.
+  (function () {
+    var chon = document.querySelectorAll('.ct-mon__chon');
+    var nut = document.getElementById('ctThemTatCa');
+    var formMua = document.querySelector('.nh-detail__buy');
+    if (!chon.length || !formMua) return;
+    var giaChinh = <%= dish ? Number(dish.gia_mon) : 0 %>;
+    var idChinh = <%= dish ? Number(dish.id_mon) : 0 %>;
+    var vnd = function (n) { return Number(n).toLocaleString('vi-VN') + ' ₫'; };
+    var sl = function () { return Math.min(100, Math.max(1, parseInt(document.getElementById('sl').value, 10) || 1)); };
+    var daChon = function () { return Array.prototype.filter.call(chon, function (c) { return c.checked; }); };
+
+    function veTong() {
+      var ds = daChon();
+      var tien = giaChinh * sl() + ds.reduce(function (s, c) { return s + Number(c.getAttribute('data-gia')); }, 0);
+      document.getElementById('ctTong').classList.toggle('is-on', ds.length > 0);
+      document.getElementById('ctTongDong').textContent = ds.length
+        ? 'Món này ×' + sl() + ' + ' + ds.length + ' món ăn kèm'
+        : 'Chưa chọn món ăn kèm';
+      document.getElementById('ctTongTien').textContent = ds.length ? vnd(tien) : '';
+      nut.disabled = !ds.length;
+      var nutChinh = formMua.querySelector('button[type=submit]');
+      if (nutChinh && !nutChinh.dataset.goc) nutChinh.dataset.goc = nutChinh.innerHTML;
+      if (nutChinh) nutChinh.innerHTML = ds.length
+        ? '<i class="fas fa-shopping-bag"></i> Thêm ' + (ds.length + 1) + ' món vào giỏ'
+        : nutChinh.dataset.goc;
+    }
+
+    async function themTatCa() {
+      var items = [{ monid: idChinh, soluong: sl() }].concat(daChon().map(function (c) { return { monid: c.value, soluong: 1 }; }));
+      nut.disabled = true;
+      nut.querySelector('span').textContent = 'Đang thêm...';
+      try {
+        var r = await fetch('/api/gio-hang/them-nhieu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items }) });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Không thêm được món');
+        location.href = '/cart';
+      } catch (e) {
+        nut.disabled = false;
+        nut.querySelector('span').textContent = e.message;
+        setTimeout(function () { nut.querySelector('span').textContent = 'Thêm tất cả vào giỏ'; }, 2500);
+      }
+    }
+
+    chon.forEach(function (c) { c.addEventListener('change', veTong); });
+    document.getElementById('sl').addEventListener('input', veTong);
+    document.querySelectorAll('.nh-qty [data-buoc]').forEach(function (n) { n.addEventListener('click', function () { setTimeout(veTong, 0); }); });
+    nut.addEventListener('click', themTatCa);
+    // Nut "Them vao gio" chinh: neu da chon mon an kem thi them ca bo.
+    formMua.addEventListener('submit', function (e) {
+      if (!daChon().length) return;
+      e.preventDefault();
+      themTatCa();
+    });
+    veTong();
+  })();
+
   // Bộ tăng giảm số phần. Gõ tay vẫn được, nút chỉ là lối đi nhanh hơn.
   (function () {
     var o = document.getElementById('sl');
@@ -126,5 +269,4 @@
   })();
 </script>
 
-<%- include('partials/goi-y-mon') %>
 <%- include('partials/footer') %>

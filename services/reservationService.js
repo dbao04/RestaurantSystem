@@ -561,10 +561,12 @@ async function kiemTraKhaDung(input, { laOnline = true, boQuaId = null } = {}) {
     boQuaId,
   });
 
+  const tongTienMonKhaDung = Number(input.preorder_total) || 0;
   const coc = await qt.tinhTienCoc({
     soKhach: khach.soKhach,
     gioBatDau: khung.batDau,
     loaiKhach: khach.loaiKhach,
+    tongTienMon: tongTienMonKhaDung,
   });
 
   const kq = {
@@ -677,7 +679,14 @@ async function taoLuotDat(input, ctx = {}) {
     throw new LoiDatBan('Nhà hàng đang tự sắp xếp bàn cho khách', 'PICK_DISABLED');
   }
 
-  const coc = await qt.tinhTienCoc({ soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach });
+  const dsMonTruoc = Array.isArray(input.items) ? input.items : [];
+  const tongTienMon = dsMonTruoc.reduce((sum, item) => {
+    const price = Number(item.price || item.gia_mon) || 0;
+    const qty = Math.max(1, Number(item.quantity || item.soluong) || 1);
+    return sum + (price * qty);
+  }, 0);
+
+  const coc = await qt.tinhTienCoc({ soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach, tongTienMon });
 
   /*
     VONG THU LAI KHI MAT BAN DO DUA.
@@ -707,6 +716,7 @@ async function taoLuotDat(input, ctx = {}) {
           dsThe,
           loaiKhach,
           banChiDinh,
+          boQuaQuyMo: laNhanVien,
         });
       } catch (e) {
         // Ban khach chon vua bi lay mat: van cho phep vao danh sach cho neu duoc yeu cau.
@@ -992,6 +1002,7 @@ async function capNhat(id, input, ctx = {}) {
       const goi = await xb.goiYXepBan(khung, {
         soKhach: khach.soKhach, areaId: gop.area_id || null, dsThe,
         loaiKhach: khach.loaiKhach, banChiDinh, boQuaId: id, client: conn,
+        boQuaQuyMo: laNhanVien,
       });
       banMoi = goi.chon.ban;
     } else {
@@ -1026,8 +1037,15 @@ async function capNhat(id, input, ctx = {}) {
     let soTienCoc = Number(hienTai.deposit_amount) || 0;
     let trangThaiCoc = hienTai.deposit_status;
     if (trangThaiCoc !== 'PAID' && trangThaiCoc !== 'REFUNDED') {
+      const [[monRow]] = await conn.query(
+        'SELECT COALESCE(SUM(price * quantity), 0) AS tong_mon FROM reservation_preorders WHERE reservation_id = ?',
+        [id]
+      ).catch(() => [[{ tong_mon: 0 }]]);
       const coc = await qt.tinhTienCoc({
-        soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach: khach.loaiKhach,
+        soKhach: khach.soKhach,
+        gioBatDau: khung.batDau,
+        loaiKhach: khach.loaiKhach,
+        tongTienMon: Number(monRow && monRow.tong_mon) || 0,
       });
       soTienCoc = coc.soTien;
       trangThaiCoc = coc.soTien > 0 ? 'UNPAID' : 'NOT_REQUIRED';
@@ -1139,6 +1157,7 @@ async function ganBan(id, dsBanId, ctx = {}) {
       banChiDinh: ds,
       boQuaId: id,
       client: conn,
+      boQuaQuyMo: !!ctx.laNhanVien,
     });
 
     const [banCu] = await conn.query(
@@ -1255,6 +1274,11 @@ async function doiTrangThai(id, trangThaiMoi, ctx = {}) {
         toan se phai di tim khoan chenh do vao cuoi thang.
       */
       const daThu = r.deposit_status === 'PAID' ? Number(r.deposit_amount) || 0 : 0;
+      const [[monDatTruocRow]] = await conn.query(
+        'SELECT COUNT(*) AS so_mon FROM reservation_preorders WHERE reservation_id = ?',
+        [id]
+      ).catch(() => [[{ so_mon: 0 }]]);
+      const coMonDatTruoc = Number(monDatTruocRow && monDatTruocRow.so_mon) > 0;
       hoan = den === 'NO_SHOW'
         ? qt.hoanTienKhiNoShow(daThu)
         : await qt.tinhHoanTien({
@@ -1263,6 +1287,7 @@ async function doiTrangThai(id, trangThaiMoi, ctx = {}) {
           loaiKhach: r.customer_type,
           soKhach: r.guest_count,
           laCaoDiem: qt.laGioCaoDiem(String(r.start_time), ch),
+          coMonDatTruoc,
         });
       dat.push('refund_percent = ?', 'refund_amount = ?');
       gt.push(hoan.phanTram, hoan.soTien);
@@ -1358,6 +1383,11 @@ async function xemTruocHuy(id) {
   }
   const ch = await qt.docCauHinh();
   const mocBatDau = qt.ghepMoc(qt.ngayChuoi(r.reservation_date), String(r.start_time));
+  const [[monDatTruocRow]] = await db.query(
+    'SELECT COUNT(*) AS so_mon FROM reservation_preorders WHERE reservation_id = ?',
+    [id]
+  ).catch(() => [[{ so_mon: 0 }]]);
+  const coMonDatTruoc = Number(monDatTruocRow && monDatTruocRow.so_mon) > 0;
   const hoan = await qt.tinhHoanTien({
     mocBatDau,
     // Da hoan roi thi khong con gi de hoan nua.
@@ -1365,6 +1395,7 @@ async function xemTruocHuy(id) {
     loaiKhach: r.customer_type,
     soKhach: r.guest_count,
     laCaoDiem: qt.laGioCaoDiem(String(r.start_time), ch),
+    coMonDatTruoc,
   });
   return {
     ...hoan,

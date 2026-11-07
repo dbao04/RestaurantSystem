@@ -31,11 +31,16 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Tồn kho hiện tại</h6>
-        <a href="/staff/kitchen/stock-history" class="btn btn-sm btn-outline-info">Xem lịch sử nhập kho</a>
+        <div class="d-flex flex-wrap" style="gap:.4rem">
+            <a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Phiếu nhập</a>
+            <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Xuất hủy / hao hụt</a>
+            <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-info">Sổ xuất nhập kho</a>
+        </div>
     </div>
+    <div class="px-3 pt-3 d-flex align-items-center flex-wrap"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#bangTonKho" data-tim-dem="#demTonKho" placeholder="Tìm nguyên liệu, đơn vị..." aria-label="Tìm nguyên liệu, đơn vị..."></div><small class="text-muted ml-2" id="demTonKho"></small></div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
+            <table class="table table-bordered" id="bangTonKho" width="100%" cellspacing="0">
                 <thead>
                     <tr>
                         <th>Tên nguyên liệu</th>

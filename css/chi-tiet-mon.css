@@ -1,0 +1,134 @@
+/* =====================================================================
+   TRANG CHI TIET MON: luu y nhanh, goi kem cho tron bua, luu y chi tiet
+   ===================================================================== */
+:root {
+  --ct-surface: #fff;
+  --ct-surface-2: #fffaf1;
+  --ct-border: rgba(78, 52, 46, .13);
+  --ct-do: #b42318;
+  --ct-do-nen: #fdecea;
+  --ct-cam: #b45309;
+  --ct-cam-nen: #fef3e2;
+  --ct-xanh: #1d6fa5;
+  --ct-xanh-nen: #e8f2fa;
+}
+[data-theme="dark"] {
+  --ct-surface: #1c1510;
+  --ct-surface-2: #241c16;
+  --ct-border: rgba(200, 162, 75, .22);
+  --ct-do: #f2877c;
+  --ct-do-nen: rgba(242, 135, 124, .12);
+  --ct-cam: #f5b45c;
+  --ct-cam-nen: rgba(245, 180, 92, .12);
+  --ct-xanh: #7cbfe8;
+  --ct-xanh-nen: rgba(124, 191, 232, .12);
+}
+
+/* ---------- Luu y nhanh (cot phai, duoi gia) ---------- */
+.ct-nhanh {
+  display: block; margin: 1.2rem 0 1.4rem; padding: .9rem 1rem; border-radius: 14px;
+  background: var(--ct-cam-nen); border: 1px solid rgba(180, 83, 9, .25); text-decoration: none !important; color: inherit;
+  transition: transform .2s, box-shadow .2s;
+}
+.ct-nhanh:hover { transform: translateY(-2px); box-shadow: var(--nh-shadow-sm); }
+.ct-nhanh__dau { display: block; font-weight: 700; font-size: .85rem; color: var(--ct-cam); margin-bottom: .55rem; letter-spacing: .02em; }
+.ct-nhanh__ds { display: flex; flex-wrap: wrap; gap: .4rem; }
+.ct-nhanh__xem { display: block; margin-top: .6rem; font-size: .8rem; font-weight: 600; color: var(--nh-muted); }
+.ct-the { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; font-weight: 600; padding: .28rem .65rem; border-radius: 999px; line-height: 1.3; }
+.ct-the--diung { background: var(--ct-do-nen); color: var(--ct-do); border: 1px solid rgba(180, 35, 24, .2); }
+.ct-the--quan_trong { background: var(--ct-do-nen); color: var(--ct-do); }
+.ct-the--chu_y { background: var(--ct-surface); color: var(--ct-cam); border: 1px solid rgba(180, 83, 9, .25); }
+.ct-the--thong_tin { background: var(--ct-xanh-nen); color: var(--ct-xanh); }
+
+/* ---------- Goi kem cho tron bua ---------- */
+.ct-kem { margin-top: 3rem; padding: 1.8rem; border-radius: 22px; background: var(--ct-surface); border: 1px solid var(--ct-border); box-shadow: var(--nh-shadow-sm); scroll-margin-top: 90px; }
+.ct-kem__dau h3 { font-family: var(--nh-serif); font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: .2rem 0 .35rem; color: var(--nh-espresso); }
+.ct-kem__dau p { margin: 0 0 1.4rem; color: var(--nh-muted); }
+.ct-kem__luoi { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+.ct-mon {
+  position: relative; display: flex; flex-direction: column; margin: 0; cursor: pointer;
+  border: 2px solid var(--ct-border); border-radius: 16px; overflow: hidden; background: var(--ct-surface-2);
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+.ct-mon:hover { transform: translateY(-3px); box-shadow: var(--nh-shadow-sm); }
+.ct-mon__chon { position: absolute; opacity: 0; width: 1px; height: 1px; left: 0; top: 0; pointer-events: none; }
+.ct-mon:has(.ct-mon__chon:checked) { border-color: var(--nh-gold); box-shadow: 0 0 0 4px rgba(200, 162, 75, .18); }
+.ct-mon:has(.ct-mon__chon:focus-visible) { outline: 2px solid var(--nh-gold); outline-offset: 2px; }
+.ct-mon__vitri {
+  position: absolute; top: 10px; left: 10px; z-index: 1; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: .25rem .6rem; border-radius: 999px; background: rgba(43, 26, 18, .82); color: var(--nh-gold-soft);
+  max-width: calc(100% - 56px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ct-mon__tick {
+  position: absolute; top: 10px; right: 10px; z-index: 1; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font-size: .8rem; border: 2px solid #fff; background: rgba(255, 255, 255, .7); color: transparent;
+  transition: all .2s;
+}
+.ct-mon:has(.ct-mon__chon:checked) .ct-mon__tick { background: var(--nh-gold); border-color: var(--nh-gold); color: #2b1a12; }
+.ct-mon__anh { display: block; aspect-ratio: 4 / 3; background: radial-gradient(circle, rgba(200, 162, 75, .16), transparent 70%), var(--nh-cream-2); }
+.ct-mon__anh img { width: 100%; height: 100%; object-fit: contain; padding: .5rem; display: block; }
+.ct-mon__than { display: flex; flex-direction: column; gap: .3rem; padding: .8rem .9rem .6rem; flex: 1; }
+.ct-mon__ten { font-weight: 700; font-size: .92rem; line-height: 1.35; color: var(--nh-espresso); }
+.ct-mon__gia { font-weight: 800; color: var(--ct-do); }
+.ct-mon__lydo { font-size: .74rem; line-height: 1.45; color: var(--nh-muted); margin-top: auto; }
+.ct-mon__lydo i { color: var(--nh-gold); margin-right: .2rem; }
+.ct-mon__xem { display: block; text-align: center; font-size: .78rem; font-weight: 600; padding: .5rem; border-top: 1px dashed var(--ct-border); color: var(--nh-muted); }
+.ct-mon__xem:hover { color: var(--nh-gold); }
+
+.ct-kem__tong {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  margin-top: 1.3rem; padding: 1rem 1.2rem; border-radius: 14px; background: var(--ct-surface-2); border: 1px dashed var(--ct-border);
+  transition: all .25s;
+}
+.ct-kem__tong.is-on { border-style: solid; border-color: var(--nh-gold); background: rgba(200, 162, 75, .1); }
+.ct-kem__tong-chu { display: flex; flex-direction: column; }
+.ct-kem__tong-chu span { color: var(--nh-muted); font-size: .9rem; }
+.ct-kem__tong-chu b { font-family: var(--nh-serif); font-size: 1.5rem; color: var(--ct-do); }
+.ct-kem__tong .nh-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Thanh phan, di ung & luu y ---------- */
+.ct-luuy { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; scroll-margin-top: 90px; }
+.ct-luuy__cot { padding: 1.6rem; border-radius: 22px; background: var(--ct-surface); border: 1px solid var(--ct-border); box-shadow: var(--nh-shadow-sm); }
+.ct-luuy__cot h3 { font-family: var(--nh-serif); font-size: 1.35rem; color: var(--nh-espresso); margin: 0 0 1rem; display: flex; align-items: center; gap: .55rem; }
+.ct-luuy__cot h3 i { color: var(--nh-gold); }
+.ct-luuy__mo { color: var(--nh-muted); margin-bottom: .8rem; }
+.ct-luuy__phu { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--nh-gold); margin: 1.4rem 0 .6rem; font-weight: 700; }
+.ct-luuy__chan { margin-top: 1.2rem; font-size: .82rem; }
+
+.ct-du { border: 1px solid rgba(180, 35, 24, .22); background: var(--ct-do-nen); border-radius: 12px; margin-bottom: .6rem; overflow: hidden; }
+.ct-du summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: .15rem .8rem; padding: .75rem 1rem; }
+.ct-du summary::-webkit-details-marker { display: none; }
+.ct-du__ten { font-weight: 700; color: var(--ct-do); }
+.ct-du__nl { grid-column: 1; font-size: .82rem; color: var(--nh-ink); opacity: .85; }
+.ct-du__mui { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--ct-do); transition: transform .2s; }
+.ct-du[open] .ct-du__mui { transform: rotate(180deg); }
+.ct-du p { margin: 0; padding: 0 1rem .9rem; font-size: .88rem; line-height: 1.6; color: var(--nh-ink); }
+.ct-du summary:focus-visible { outline: 2px solid var(--nh-gold); outline-offset: -2px; }
+
+.ct-ly { display: flex; gap: .9rem; padding: .95rem 1rem; border-radius: 14px; margin-bottom: .7rem; border: 1px solid var(--ct-border); background: var(--ct-surface-2); }
+.ct-ly__icon { flex: 0 0 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1rem; }
+.ct-ly--quan_trong { border-color: rgba(180, 35, 24, .25); }
+.ct-ly--quan_trong .ct-ly__icon { background: var(--ct-do-nen); color: var(--ct-do); }
+.ct-ly--chu_y .ct-ly__icon { background: var(--ct-cam-nen); color: var(--ct-cam); }
+.ct-ly--thong_tin .ct-ly__icon { background: var(--ct-xanh-nen); color: var(--ct-xanh); }
+.ct-ly__than { flex: 1; min-width: 0; }
+.ct-ly__dau { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.ct-ly__dau b { color: var(--nh-espresso); }
+.ct-ly__muc { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .15rem .5rem; border-radius: 6px; }
+.ct-ly--quan_trong .ct-ly__muc { background: var(--ct-do-nen); color: var(--ct-do); }
+.ct-ly--chu_y .ct-ly__muc { background: var(--ct-cam-nen); color: var(--ct-cam); }
+.ct-ly--thong_tin .ct-ly__muc { background: var(--ct-xanh-nen); color: var(--ct-xanh); }
+.ct-ly p { margin: .3rem 0 .4rem; font-size: .88rem; line-height: 1.6; color: var(--nh-ink); }
+.ct-ly__dt { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; font-size: .76rem; }
+.ct-ly__dt span { color: var(--nh-muted); font-weight: 600; }
+.ct-ly__dt em { font-style: normal; padding: .15rem .5rem; border-radius: 6px; background: var(--ct-surface); border: 1px solid var(--ct-border); color: var(--nh-ink); }
+.ct-ly__dc { margin-top: .5rem; font-size: .8rem; color: var(--ct-xanh); font-weight: 600; line-height: 1.5; }
+
+@media (max-width: 1100px) { .ct-kem__luoi { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 860px) { .ct-luuy { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .ct-kem, .ct-luuy__cot { padding: 1.1rem; }
+  .ct-kem__luoi { grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  .ct-kem__tong { position: sticky; bottom: 10px; z-index: 5; box-shadow: var(--nh-shadow); }
+  .ct-kem__tong .nh-btn { width: 100%; justify-content: center; }
+}

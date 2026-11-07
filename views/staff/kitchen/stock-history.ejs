@@ -17,8 +17,11 @@
 
 <div class="card shadow mb-4 border-left-success">
     <div class="card-body">
+        <div class="d-flex align-items-center flex-wrap mb-3"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#bangLichSuNhap" data-tim-dem="#demLichSu" placeholder="Tìm nguyên liệu, ngày nhập..." aria-label="Tìm nguyên liệu, ngày nhập..."></div><small class="text-muted ml-2" id="demLichSu"></small>
+            <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-primary ml-auto"><i class="fas fa-book"></i> Sổ xuất nhập kho (theo phiếu)</a>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover table-striped" width="100%" cellspacing="0">
+            <table class="table table-hover table-striped" id="bangLichSuNhap" width="100%" cellspacing="0">
                 <thead class="bg-light">
                     <tr>
                         <th>Ngày nhập</th>

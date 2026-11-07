@@ -1,0 +1,452 @@
+<%
+  var activePage = 'thu-chi';
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var gio = function (t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
+  var ngayGio = function (t) { var d = new Date(t); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' + gio(t); };
+  var qs = function (o) {
+    var x = Object.assign({ tu: loc.tu, den: loc.den, pham_vi: loc.phamVi }, o || {});
+    return Object.keys(x).map(function (k) { return k + '=' + encodeURIComponent(x[k]); }).join('&');
+  };
+  // Cac moc nhanh tinh tren may chu de khong lech mui gio voi trinh duyet.
+  var d0 = new Date(homNay + 'T00:00:00');
+  var fmt = function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+  var cong = function (n) { var d = new Date(d0); d.setDate(d.getDate() + n); return fmt(d); };
+  var dauThang = fmt(new Date(d0.getFullYear(), d0.getMonth(), 1));
+  var dauThangTruoc = fmt(new Date(d0.getFullYear(), d0.getMonth() - 1, 1));
+  var cuoiThangTruoc = fmt(new Date(d0.getFullYear(), d0.getMonth(), 0));
+  var moc = [
+    { ten: 'Hôm nay', tu: homNay, den: homNay },
+    { ten: 'Hôm qua', tu: cong(-1), den: cong(-1) },
+    { ten: '7 ngày', tu: cong(-6), den: homNay },
+    { ten: 'Tháng này', tu: dauThang, den: homNay },
+    { ten: 'Tháng trước', tu: dauThangTruoc, den: cuoiThangTruoc },
+  ];
+  var maxNguon = bc ? Math.max.apply(null, [1].concat(bc.thu_theo_nguon.map(function (x) { return x.tien; }))) : 1;
+  var maxChi = bc ? Math.max.apply(null, [1].concat(bc.chi_theo_danh_muc.map(function (x) { return x.tien; }))) : 1;
+%>
+<%- include('partials/header') %>
+
+<style>
+  .tc-loc { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .tc-moc { border: 1px solid #e7ded0; background: #fff; color: #4e342e; border-radius: 999px; padding: .35rem .9rem; font-size: .85rem; font-weight: 600; text-decoration: none !important; }
+  .tc-moc:hover { border-color: #c8a24b; color: #8a6a22; }
+  .tc-moc.is-on { background: #2b1a12; color: #f3dfa6; border-color: #2b1a12; }
+  .tc-pv { display: inline-flex; border: 1px solid #e7ded0; border-radius: 999px; overflow: hidden; background: #fff; }
+  .tc-pv a { padding: .35rem .9rem; font-size: .85rem; font-weight: 600; color: #6b5f54; text-decoration: none !important; }
+  .tc-pv a.is-on { background: #c8a24b; color: #2b1a12; }
+
+  .tc-kpi { border-radius: 16px; padding: 1.1rem 1.2rem; background: #fff; border: 1px solid #e7ded0; height: 100%; position: relative; overflow: hidden; }
+  .tc-kpi::after { content: ''; position: absolute; right: -24px; top: -24px; width: 90px; height: 90px; border-radius: 50%; opacity: .12; background: var(--mau, #c8a24b); }
+  .tc-kpi__nhan { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: #6b5f54; font-weight: 700; }
+  .tc-kpi__so { font-family: var(--qt-serif, Georgia, serif); font-size: 1.65rem; font-weight: 700; color: var(--mau, #241d18); margin: .25rem 0 .15rem; line-height: 1.2; word-break: break-word; }
+  .tc-kpi__phu { font-size: .78rem; color: #8a7d70; }
+  .tc-thu { --mau: #1f7a4a; } .tc-chi { --mau: #b3352c; } .tc-lech { --mau: #8a6a22; } .tc-ket { --mau: #2b5f8a; }
+
+  .tc-the { background: #fff; border: 1px solid #e7ded0; border-radius: 16px; padding: 1.1rem 1.2rem; height: 100%; }
+  .tc-the h6 { font-family: var(--qt-serif, Georgia, serif); font-weight: 700; color: #241d18; margin-bottom: .9rem; }
+  .tc-thanh { margin-bottom: .75rem; }
+  .tc-thanh__dau { display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; }
+  .tc-thanh__dau span:first-child { color: #4e342e; }
+  .tc-thanh__dau b { white-space: nowrap; }
+  .tc-thanh__nen { height: 7px; border-radius: 4px; background: #f3ece1; margin-top: .3rem; overflow: hidden; }
+  .tc-thanh__nen i { display: block; height: 100%; border-radius: 4px; }
+
+  .tc-pt td, .tc-pt th { padding: .5rem .4rem; font-size: .88rem; }
+  .tc-sq td { font-size: .86rem; vertical-align: middle; }
+  .tc-sq .ma { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; color: #6b5f54; white-space: nowrap; }
+  .tc-sq .tien { text-align: right; white-space: nowrap; font-weight: 700; }
+  .tc-sq tr.da-huy td { color: #a8a29e !important; text-decoration: line-through; }
+  .tc-sq tr.da-huy td.thao-tac { text-decoration: none; }
+  .tc-nhan { font-size: .7rem; font-weight: 700; padding: .15rem .5rem; border-radius: 6px; white-space: nowrap; }
+  .tc-nhan.thu { background: #e7f4ec; color: #1f7a4a; } .tc-nhan.chi { background: #fbe9e7; color: #b3352c; }
+  .tc-tab { display: inline-flex; gap: .3rem; }
+  .tc-tab button { border: 1px solid #e7ded0; background: #fff; border-radius: 8px; padding: .3rem .8rem; font-size: .82rem; font-weight: 600; color: #6b5f54; }
+  .tc-tab button.is-on { background: #2b1a12; color: #f3dfa6; border-color: #2b1a12; }
+
+  /* Hop thoai */
+  .tc-hop { position: fixed; inset: 0; z-index: 2000; background: rgba(36, 26, 20, .55); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .tc-hop[hidden] { display: none; }
+  .tc-hop__khung { background: #fff; border-radius: 18px; width: 100%; max-width: 520px; max-height: 92vh; overflow: auto; box-shadow: 0 30px 70px rgba(0, 0, 0, .35); }
+  .tc-hop__dau { padding: 1.1rem 1.3rem; border-bottom: 1px solid #efe7da; display: flex; justify-content: space-between; align-items: center; }
+  .tc-hop__dau h5 { margin: 0; }
+  .tc-hop__than { padding: 1.2rem 1.3rem; }
+  .tc-hop__chan { padding: .9rem 1.3rem; border-top: 1px solid #efe7da; display: flex; gap: .6rem; justify-content: flex-end; }
+  .tc-loai { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: 1rem; }
+  .tc-loai label { margin: 0; cursor: pointer; }
+  .tc-loai input { position: absolute; opacity: 0; }
+  .tc-loai span { display: block; text-align: center; padding: .7rem; border-radius: 12px; border: 2px solid #e7ded0; font-weight: 700; }
+  .tc-loai input:checked + span.thu { border-color: #1f7a4a; background: #e7f4ec; color: #1f7a4a; }
+  .tc-loai input:checked + span.chi { border-color: #b3352c; background: #fbe9e7; color: #b3352c; }
+  .tc-loai input:focus-visible + span { outline: 2px solid #c8a24b; outline-offset: 2px; }
+  .tc-nhanh { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+  .tc-nhanh button { border: 1px solid #e7ded0; background: #faf6ef; border-radius: 8px; font-size: .78rem; padding: .25rem .6rem; }
+  .tc-so-tien { font-size: 1.4rem !important; font-weight: 700; text-align: right; }
+
+  @media print {
+    #accordionSidebar, .topbar, .tc-khong-in, .sticky-footer, footer, #nut-bao-viec, .scroll-to-top { display: none !important; }
+    #content-wrapper { width: 100% !important; }
+    .container-fluid { padding: 0 !important; }
+    .tc-the, .tc-kpi, .card { box-shadow: none !important; break-inside: avoid; }
+    body { background: #fff !important; }
+  }
+  @media (max-width: 575.98px) {
+    .tc-kpi__so { font-size: 1.3rem; }
+    .tc-hop__khung { max-height: 96vh; }
+  }
+</style>
+
+<div class="d-sm-flex align-items-start justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-book text-warning"></i> Sổ quỹ thu chi</h1>
+    <div class="text-muted small">
+      <%= loc.tu === loc.den ? 'Ngày ' + ngayVN(loc.tu) : 'Từ ' + ngayVN(loc.tu) + ' đến ' + ngayVN(loc.den) %>
+      · <%= loc.phamVi === 'toi' ? 'Sổ quỹ của tôi' : 'Toàn nhà hàng' %>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap tc-khong-in mt-2 mt-sm-0" style="gap:.5rem">
+    <% if (duocLap) { %>
+      <button type="button" class="btn btn-success btn-sm" data-lap="thu"><i class="fas fa-plus"></i> Phiếu thu</button>
+      <button type="button" class="btn btn-danger btn-sm" data-lap="chi"><i class="fas fa-minus"></i> Phiếu chi</button>
+    <% } %>
+    <a class="btn btn-outline-secondary btn-sm" href="/staff/thu-chi/excel?<%= qs() %>"><i class="fas fa-file-excel"></i> Excel</a>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> In</button>
+  </div>
+</div>
+
+<!-- Bo loc -->
+<div class="card shadow-sm mb-3 tc-khong-in">
+  <div class="card-body py-3">
+    <form class="tc-loc" method="get">
+      <% moc.forEach(function (m) { %>
+        <a class="tc-moc <%= m.tu === loc.tu && m.den === loc.den ? 'is-on' : '' %>" href="?<%= qs({ tu: m.tu, den: m.den }) %>"><%= m.ten %></a>
+      <% }) %>
+      <span class="mx-1 text-muted d-none d-md-inline">|</span>
+      <input type="date" name="tu" value="<%= loc.tu %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+      <span class="text-muted">→</span>
+      <input type="date" name="den" value="<%= loc.den %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
+      <input type="hidden" name="pham_vi" value="<%= loc.phamVi %>">
+      <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Xem</button>
+      <span class="tc-pv ml-md-auto">
+        <a href="?<%= qs({ pham_vi: 'toi' }) %>" class="<%= loc.phamVi === 'toi' ? 'is-on' : '' %>">Của tôi</a>
+        <a href="?<%= qs({ pham_vi: 'tat_ca' }) %>" class="<%= loc.phamVi === 'tat_ca' ? 'is-on' : '' %>">Toàn nhà hàng</a>
+      </span>
+    </form>
+  </div>
+</div>
+
+<% if (loi) { %>
+  <div class="alert alert-warning"><%= loi %></div>
+<% } else { %>
+
+<!-- KPI -->
+<div class="row">
+  <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-thu"><div class="tc-kpi__nhan">Tổng thu</div><div class="tc-kpi__so"><%= vnd(bc.tong_thu) %></div><div class="tc-kpi__phu"><%= bc.so_quy.filter(function (d) { return d.loai === 'thu' && !d.huy; }).length %> khoản thu</div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-chi"><div class="tc-kpi__nhan">Tổng chi</div><div class="tc-kpi__so"><%= vnd(bc.tong_chi) %></div><div class="tc-kpi__phu"><%= bc.so_quy.filter(function (d) { return d.loai === 'chi' && !d.huy; }).length %> khoản chi</div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-lech"><div class="tc-kpi__nhan">Chênh lệch thu − chi</div><div class="tc-kpi__so"><%= (bc.chenh_lech < 0 ? '−' : '') + vnd(Math.abs(bc.chenh_lech)) %></div><div class="tc-kpi__phu"><%= bc.tong_thu ? Math.round(bc.tong_chi / bc.tong_thu * 100) + '% thu đã chi ra' : '—' %></div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-ket"><div class="tc-kpi__nhan">Tiền mặt thuần (két)</div><div class="tc-kpi__so"><%= (bc.theo_phuong_thuc.tien_mat.thuan < 0 ? '−' : '') + vnd(Math.abs(bc.theo_phuong_thuc.tien_mat.thuan)) %></div><div class="tc-kpi__phu">Tip giữ hộ: <%= vnd(bc.tien_tip) %></div></div></div>
+</div>
+
+<!-- Bieu do + phuong thuc -->
+<div class="row">
+  <div class="col-lg-8 mb-3">
+    <div class="tc-the">
+      <h6><i class="fas fa-chart-column text-warning"></i> Thu chi theo ngày</h6>
+      <div style="position:relative;height:260px"><canvas id="bdNgay" aria-label="Biểu đồ thu chi theo ngày" role="img"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4 mb-3">
+    <div class="tc-the">
+      <h6><i class="fas fa-wallet text-warning"></i> Theo phương thức</h6>
+      <table class="table table-sm tc-pt mb-0 no-cuon">
+        <thead><tr><th></th><th class="text-right">Thu</th><th class="text-right">Chi</th><th class="text-right">Thuần</th></tr></thead>
+        <tbody>
+          <% Object.keys(bc.theo_phuong_thuc).forEach(function (k) { var p = bc.theo_phuong_thuc[k]; %>
+            <tr>
+              <td><b><%= p.ten %></b></td>
+              <td class="text-right text-success"><%= vnd(p.thu) %></td>
+              <td class="text-right text-danger"><%= vnd(p.chi) %></td>
+              <td class="text-right font-weight-bold"><%= vnd(p.thuan) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <p class="small text-muted mt-3 mb-0"><i class="fas fa-circle-info"></i> "Tiền mặt thuần" là số tiền mặt vào két trừ số đã chi ra, chưa gồm quỹ lẻ đầu ca. Đối chiếu két ở màn hình <a href="/staff/chot-ca">Chốt ca</a>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Co cau thu / chi -->
+<div class="row">
+  <div class="col-md-6 mb-3">
+    <div class="tc-the">
+      <h6><i class="fas fa-arrow-down text-success"></i> Cơ cấu khoản thu</h6>
+      <% if (!bc.thu_theo_nguon.length) { %><p class="text-muted small mb-0">Chưa có khoản thu nào.</p><% } %>
+      <% bc.thu_theo_nguon.forEach(function (x) { %>
+        <div class="tc-thanh">
+          <div class="tc-thanh__dau"><span><%= x.ten %> <small class="text-muted">(<%= x.so %>)</small></span><b class="text-success"><%= vnd(x.tien) %></b></div>
+          <div class="tc-thanh__nen"><i style="width:<%= Math.max(2, x.tien / maxNguon * 100) %>%;background:#1f7a4a"></i></div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+  <div class="col-md-6 mb-3">
+    <div class="tc-the">
+      <h6><i class="fas fa-arrow-up text-danger"></i> Cơ cấu khoản chi</h6>
+      <% if (!bc.chi_theo_danh_muc.length) { %><p class="text-muted small mb-0">Chưa có khoản chi nào.</p><% } %>
+      <% bc.chi_theo_danh_muc.forEach(function (x) { %>
+        <div class="tc-thanh">
+          <div class="tc-thanh__dau"><span><%= x.ten %> <small class="text-muted">(<%= x.so %>)</small></span><b class="text-danger"><%= vnd(x.tien) %></b></div>
+          <div class="tc-thanh__nen"><i style="width:<%= Math.max(2, x.tien / maxChi * 100) %>%;background:#b3352c"></i></div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<!-- So quy chi tiet -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold"><i class="fas fa-list-ol text-warning"></i> Sổ quỹ chi tiết <small class="text-muted">(<%= bc.so_quy.length %> dòng<%= bc.so_phieu_huy ? ', ' + bc.so_phieu_huy + ' phiếu đã hủy' : '' %>)</small></h6>
+    <div class="tc-tab tc-khong-in" role="group" aria-label="Lọc sổ quỹ">
+      <button type="button" class="is-on" data-loc-sq="">Tất cả</button>
+      <button type="button" data-loc-sq="thu">Thu</button>
+      <button type="button" data-loc-sq="chi">Chi</button>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if (!bc.so_quy.length) { %>
+      <p class="text-muted text-center py-5 mb-0"><i class="fas fa-inbox fa-2x d-block mb-2"></i>Không có giao dịch nào trong khoảng thời gian này.</p>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 tc-sq">
+        <thead class="thead-light">
+          <tr><th>Thời điểm</th><th>Chứng từ</th><th>Danh mục / Nội dung</th><th>PT</th><th>Người thực hiện</th><th class="text-right">Thu</th><th class="text-right">Chi</th><th class="text-right">Số dư</th><th class="tc-khong-in"></th></tr>
+        </thead>
+        <tbody>
+          <% bc.so_quy.forEach(function (d) { %>
+            <tr class="<%= d.huy ? 'da-huy' : '' %>" data-loai="<%= d.loai %>">
+              <td style="white-space:nowrap"><%= loc.tu === loc.den ? gio(d.thoi_diem) : ngayGio(d.thoi_diem) %></td>
+              <td><span class="ma"><%= d.ma %></span><br><span class="tc-nhan <%= d.loai %>"><%= d.loai === 'thu' ? 'THU' : 'CHI' %></span></td>
+              <td style="min-width:220px"><b><%= d.ten_danh_muc %></b><br><span class="text-muted small"><%= d.noi_dung %></span>
+                <% if (d.huy) { %><br><span class="small text-danger" style="text-decoration:none">Đã hủy: <%= d.ly_do_huy %><%= d.nguoi_huy ? ' (' + d.nguoi_huy + ')' : '' %></span><% } %></td>
+              <td style="white-space:nowrap"><%= d.ten_phuong_thuc %></td>
+              <td><%= d.nguoi %></td>
+              <td class="tien text-success"><%= d.loai === 'thu' ? vnd(d.so_tien) : '' %></td>
+              <td class="tien text-danger"><%= d.loai === 'chi' ? vnd(d.so_tien) : '' %></td>
+              <td class="tien"><%= vnd(d.so_du) %></td>
+              <td class="thao-tac tc-khong-in" style="white-space:nowrap">
+                <% if (d.nguon === 'phieu') { %>
+                  <a class="btn btn-sm btn-light" href="/staff/thu-chi/phieu/<%= d.id %>/in" target="_blank" title="In phiếu" aria-label="In phiếu <%= d.ma %>"><i class="fas fa-print"></i></a>
+                  <% if (!d.huy && (laQuanLy || Number(d.id_nv) === Number(idNv))) { %>
+                    <button type="button" class="btn btn-sm btn-light text-danger" data-huy="<%= d.id %>" data-ma="<%= d.ma %>" title="Hủy phiếu" aria-label="Hủy phiếu <%= d.ma %>"><i class="fas fa-ban"></i></button>
+                  <% } %>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr class="font-weight-bold" style="background:#faf6ef">
+            <td colspan="5" class="text-right">Cộng phát sinh</td>
+            <td class="tien text-success"><%= vnd(bc.tong_thu) %></td>
+            <td class="tien text-danger"><%= vnd(bc.tong_chi) %></td>
+            <td class="tien"><%= vnd(bc.chenh_lech) %></td>
+            <td class="tc-khong-in"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+<% } %>
+
+<!-- ======================= Hop lap phieu ======================= -->
+<% if (duocLap) { %>
+<div class="tc-hop" id="hopLap" hidden role="dialog" aria-modal="true" aria-labelledby="hopLapTieuDe">
+  <form class="tc-hop__khung" id="formLap" novalidate>
+    <div class="tc-hop__dau">
+      <h5 id="hopLapTieuDe">Lập phiếu</h5>
+      <button type="button" class="btn btn-sm btn-light" data-dong aria-label="Đóng"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="tc-hop__than">
+      <div class="tc-loai">
+        <label><input type="radio" name="loai" value="thu"><span class="thu"><i class="fas fa-arrow-down"></i> Phiếu thu</span></label>
+        <label><input type="radio" name="loai" value="chi"><span class="chi"><i class="fas fa-arrow-up"></i> Phiếu chi</span></label>
+      </div>
+      <div class="form-group">
+        <label for="fDanhMuc" class="small font-weight-bold">Danh mục *</label>
+        <select id="fDanhMuc" name="danh_muc" class="form-control" required></select>
+      </div>
+      <div class="form-group">
+        <label for="fSoTien" class="small font-weight-bold">Số tiền (đ) *</label>
+        <input id="fSoTien" name="so_tien" class="form-control tc-so-tien" inputmode="numeric" autocomplete="off" placeholder="0" required>
+        <div class="tc-nhanh">
+          <% [50000, 100000, 200000, 500000, 1000000].forEach(function (n) { %><button type="button" data-tien="<%= n %>"><%= n >= 1000000 ? (n / 1000000) + 'tr' : (n / 1000) + 'k' %></button><% }) %>
+        </div>
+      </div>
+      <div class="form-group">
+        <span class="small font-weight-bold d-block mb-1">Phương thức *</span>
+        <div class="btn-group btn-group-toggle w-100" role="radiogroup">
+          <label class="btn btn-outline-secondary btn-sm"><input type="radio" name="phuong_thuc" value="tien_mat" checked> <i class="fas fa-money-bill-wave"></i> Tiền mặt (két)</label>
+          <label class="btn btn-outline-secondary btn-sm"><input type="radio" name="phuong_thuc" value="chuyen_khoan"> <i class="fas fa-building-columns"></i> Chuyển khoản</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="fDoiTuong" class="small font-weight-bold" id="fDoiTuongNhan">Người nhận</label>
+        <input id="fDoiTuong" name="doi_tuong" class="form-control" maxlength="150">
+      </div>
+      <div class="form-group">
+        <label for="fNoiDung" class="small font-weight-bold">Nội dung *</label>
+        <textarea id="fNoiDung" name="noi_dung" class="form-control" rows="2" maxlength="500" required></textarea>
+      </div>
+      <div class="form-group mb-0">
+        <label for="fChungTu" class="small font-weight-bold">Số hóa đơn / chứng từ kèm theo</label>
+        <input id="fChungTu" name="so_chung_tu" class="form-control" maxlength="60" placeholder="VD: HĐ 0001234">
+      </div>
+      <div class="alert alert-danger mt-3 mb-0 py-2 small" id="lapLoi" hidden></div>
+    </div>
+    <div class="tc-hop__chan">
+      <button type="button" class="btn btn-light" data-dong>Hủy</button>
+      <button type="submit" class="btn btn-warning font-weight-bold" id="lapNut"><i class="fas fa-check"></i> Lưu phiếu</button>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<!-- ======================= Hop huy phieu ======================= -->
+<div class="tc-hop" id="hopHuy" hidden role="dialog" aria-modal="true" aria-labelledby="hopHuyTieuDe">
+  <form class="tc-hop__khung" id="formHuy" style="max-width:420px">
+    <div class="tc-hop__dau"><h5 id="hopHuyTieuDe">Hủy phiếu <span id="huyMa"></span></h5><button type="button" class="btn btn-sm btn-light" data-dong aria-label="Đóng"><i class="fas fa-times"></i></button></div>
+    <div class="tc-hop__than">
+      <p class="small text-muted">Phiếu đã hủy vẫn hiện trong sổ quỹ (gạch ngang) để kế toán đối chiếu, nhưng không còn tính vào tổng thu chi.</p>
+      <label for="fLyDo" class="small font-weight-bold">Lý do hủy *</label>
+      <textarea id="fLyDo" class="form-control" rows="2" maxlength="300" required placeholder="VD: Nhập sai số tiền, lập lại phiếu PC...-002"></textarea>
+      <div class="alert alert-danger mt-3 mb-0 py-2 small" id="huyLoi" hidden></div>
+    </div>
+    <div class="tc-hop__chan"><button type="button" class="btn btn-light" data-dong>Quay lại</button><button type="submit" class="btn btn-danger" id="huyNut">Xác nhận hủy</button></div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var DM = <%- JSON.stringify(danhMuc).replace(/</g, '\\u003c') %>;
+  var DM_LAP = <%- JSON.stringify(danhMucLap).replace(/</g, '\\u003c') %>;
+
+  // ---------------------------------------------------- bieu do
+  <% if (bc) { %>
+  var NGAY = <%- JSON.stringify(bc.theo_ngay) %>;
+  if (window.Chart && $('bdNgay')) {
+    new Chart($('bdNgay'), {
+      type: 'bar',
+      data: {
+        labels: NGAY.map(function (d) { var x = d.ngay.split('-'); return x[2] + '/' + x[1]; }),
+        datasets: [
+          { label: 'Thu', data: NGAY.map(function (d) { return d.thu; }), backgroundColor: '#2f8f5b', borderRadius: 4, maxBarThickness: 34 },
+          { label: 'Chi', data: NGAY.map(function (d) { return d.chi; }), backgroundColor: '#c0463b', borderRadius: 4, maxBarThickness: 34 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + Number(c.raw).toLocaleString('vi-VN') + 'đ'; } } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return v >= 1e6 ? (v / 1e6) + 'tr' : v >= 1e3 ? (v / 1e3) + 'k' : v; } } } }
+      }
+    });
+  }
+  <% } %>
+
+  // ---------------------------------------------------- loc so quy
+  document.querySelectorAll('[data-loc-sq]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var l = b.getAttribute('data-loc-sq');
+      document.querySelectorAll('[data-loc-sq]').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+      document.querySelectorAll('.tc-sq tbody tr').forEach(function (tr) { tr.hidden = !!l && tr.getAttribute('data-loai') !== l; });
+    });
+  });
+
+  // ---------------------------------------------------- hop thoai chung
+  function mo(id, focusEl) { $(id).hidden = false; document.body.style.overflow = 'hidden'; if (focusEl) setTimeout(function () { focusEl.focus(); }, 30); }
+  function dong(el) { el.hidden = true; document.body.style.overflow = ''; }
+  document.querySelectorAll('.tc-hop').forEach(function (h) {
+    h.addEventListener('click', function (e) { if (e.target === h || e.target.closest('[data-dong]')) dong(h); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.querySelectorAll('.tc-hop:not([hidden])').forEach(dong);
+  });
+
+  // ---------------------------------------------------- lap phieu
+  var form = $('formLap');
+  if (form) {
+    var dinhDang = function (v) { var n = String(v).replace(/[^\d]/g, ''); return n ? Number(n).toLocaleString('vi-VN') : ''; };
+    var datLoai = function (loai) {
+      form.querySelector('input[name=loai][value=' + loai + ']').checked = true;
+      $('hopLapTieuDe').textContent = loai === 'thu' ? 'Lập phiếu thu' : 'Lập phiếu chi';
+      $('fDanhMuc').innerHTML = DM_LAP[loai].map(function (k) { return '<option value="' + k + '">' + DM[loai][k] + '</option>'; }).join('');
+      $('fDoiTuongNhan').textContent = loai === 'thu' ? 'Người nộp tiền' : 'Người nhận tiền / nơi mua';
+      $('fNoiDung').placeholder = loai === 'thu' ? 'VD: Thu tiền bán 3 thùng vỏ chai bia' : 'VD: Mua 10 bao đá viên cho quầy bar';
+      $('lapNut').className = 'btn font-weight-bold ' + (loai === 'thu' ? 'btn-success' : 'btn-danger');
+    };
+    document.querySelectorAll('[data-lap]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        form.reset(); $('lapLoi').hidden = true;
+        datLoai(b.getAttribute('data-lap'));
+        mo('hopLap', $('fSoTien'));
+      });
+    });
+    form.querySelectorAll('input[name=loai]').forEach(function (r) { r.addEventListener('change', function () { datLoai(r.value); }); });
+    $('fSoTien').addEventListener('input', function () { this.value = dinhDang(this.value); });
+    form.querySelectorAll('[data-tien]').forEach(function (b) {
+      b.addEventListener('click', function () { $('fSoTien').value = dinhDang(b.getAttribute('data-tien')); $('fNoiDung').focus(); });
+    });
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var loi = $('lapLoi'); loi.hidden = true;
+      var duLieu = {
+        loai: form.loai.value, danh_muc: $('fDanhMuc').value, so_tien: $('fSoTien').value.replace(/[^\d]/g, ''),
+        phuong_thuc: form.phuong_thuc.value, doi_tuong: $('fDoiTuong').value, noi_dung: $('fNoiDung').value, so_chung_tu: $('fChungTu').value
+      };
+      $('lapNut').disabled = true;
+      try {
+        var r = await fetch('/api/staff/thu-chi/phieu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(duLieu) });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Không lưu được phiếu');
+        window.open('/staff/thu-chi/phieu/' + j.id + '/in', '_blank');
+        location.reload();
+      } catch (err) {
+        loi.textContent = err.message; loi.hidden = false;
+      } finally { $('lapNut').disabled = false; }
+    });
+  }
+
+  // ---------------------------------------------------- huy phieu
+  var idHuy = null;
+  document.querySelectorAll('[data-huy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      idHuy = b.getAttribute('data-huy');
+      $('huyMa').textContent = b.getAttribute('data-ma');
+      $('fLyDo').value = ''; $('huyLoi').hidden = true;
+      mo('hopHuy', $('fLyDo'));
+    });
+  });
+  $('formHuy').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    $('huyNut').disabled = true;
+    try {
+      var r = await fetch('/api/staff/thu-chi/phieu/' + idHuy + '/huy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ly_do: $('fLyDo').value }) });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không hủy được');
+      location.reload();
+    } catch (err) {
+      $('huyLoi').textContent = err.message; $('huyLoi').hidden = false;
+    } finally { $('huyNut').disabled = false; }
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

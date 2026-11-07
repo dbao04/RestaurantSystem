@@ -279,6 +279,7 @@ function chamDiem(dsBan, soKhach, { soThich = [], laVip = false, chungKhu = true
  */
 function timToHop(dsBan, soKhach, {
   choGhep = true, toiDaBan = 4, chungKhuThoi = true, soThich = [], laVip = false, toiDaKetQua = 6,
+  hopLe = null,
 } = {}) {
   const ungVien = [...dsBan].sort((a, b) => b.so_cho - a.so_cho || a.ten.localeCompare(b.ten));
   const ketQua = [];
@@ -297,6 +298,8 @@ function timToHop(dsBan, soKhach, {
     if (soNut > 40000) return;
     if (tongCho >= soKhach) {
       if (!chungNhom(daChon)) return;
+      // Rang buoc quy mo ban (2 khach chi 1 ban <= 4 cho, doan dong khong thua qua nhieu ghe).
+      if (hopLe && !hopLe(daChon)) return;
       const chungKhu = daChon.every((b) => b.khu_vuc_id === daChon[0].khu_vuc_id);
       ketQua.push({
         ban: [...daChon],
@@ -318,7 +321,7 @@ function timToHop(dsBan, soKhach, {
       if (daChon.length && !ban.co_the_ghep) continue;
       if (daChon.length === 0 && !choGhep) {
         // Khong cho ghep: chi xet phuong an mot ban.
-        if (ban.so_cho >= soKhach) {
+        if (ban.so_cho >= soKhach && (!hopLe || hopLe([ban]))) {
           ketQua.push({
             ban: [ban],
             tong_cho: ban.so_cho,
@@ -359,7 +362,7 @@ function timToHop(dsBan, soKhach, {
  */
 async function goiYXepBan(khung, {
   soKhach, areaId = null, dsThe = [], loaiKhach = 'REGULAR', boQuaId = null,
-  banChiDinh = null, client = db,
+  banChiDinh = null, client = db, boQuaQuyMo = false,
 } = {}) {
   const ch = await qt.docCauHinh();
   const { trong, kem, tatCa } = await banKhaDung(khung, { areaId, boQuaId, client });
@@ -384,6 +387,12 @@ async function goiYXepBan(khung, {
     }
     if (chon.length > 1 && ch.allow_table_combination === 0) {
       throw new LoiDatBan('Nhà hàng hiện không nhận ghép bàn', 'NO_COMBINATION');
+    }
+    // Rang buoc quy mo ban. Nhan vien (boQuaQuyMo) duoc xep ngoai le - vi du
+    // ghep ban cho khach quen, hay khach xin ngoi ban rong hon luc vang khach.
+    if (!boQuaQuyMo) {
+      const loi = qt.kiemTraQuyMoBan(chon.map((b) => b.so_cho), soKhach, ch);
+      if (loi) throw new LoiDatBan(loi.thong_bao, loi.ma);
     }
     const chungKhu = chon.every((b) => b.khu_vuc_id === chon[0].khu_vuc_id);
     return {
@@ -415,6 +424,7 @@ async function goiYXepBan(khung, {
     chungKhuThoi: Number(ch.combine_same_area_only) === 1,
     soThich,
     laVip: loaiKhach === 'VIP',
+    hopLe: (ds) => !qt.kiemTraQuyMoBan(ds.map((b) => b.so_cho), soKhach, ch),
   });
 
   return {

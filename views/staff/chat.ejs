@@ -61,14 +61,48 @@
                 <div class="d-flex justify-content-start mb-3">
                   <div class="p-2 px-3 rounded" style="background:#fff;border:1px solid #ddd;max-width:75%;">
                     <small class="text-muted d-block"><strong><%= m.ten_kh %></strong></small>
-                    <div><%= m.noi_dung %></div>
+                    <% if (m.duong_dan_file) { %>
+                      <% if (m.loai_file === 'image') { %>
+                        <div class="my-1">
+                          <a href="<%= m.duong_dan_file %>" target="_blank">
+                            <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" style="max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid #eee;">
+                          </a>
+                        </div>
+                      <% } else { %>
+                        <div class="my-1">
+                          <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="d-inline-flex align-items-center p-2 rounded text-decoration-none" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;">
+                            <i class="fas fa-file-alt mr-2 text-primary"></i>
+                            <span style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;"><%= m.ten_file || 'Tệp đính kèm' %></span>
+                            <i class="fas fa-download ml-2 text-muted" style="font-size:12px;"></i>
+                          </a>
+                        </div>
+                      <% } %>
+                    <% } %>
+                    <% if (m.noi_dung) { %><div style="white-space:pre-wrap;word-break:break-word;"><%= m.noi_dung %></div><% } %>
                     <small style="color:#999;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
                   </div>
                 </div>
               <% } else { %>
                 <div class="d-flex justify-content-end mb-3">
                   <div class="p-2 px-3 rounded" style="background:#4e342e;color:#fff;max-width:75%;">
-                    <div><%= m.noi_dung %></div>
+                    <% if (m.duong_dan_file) { %>
+                      <% if (m.loai_file === 'image') { %>
+                        <div class="my-1">
+                          <a href="<%= m.duong_dan_file %>" target="_blank">
+                            <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" style="max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.2);">
+                          </a>
+                        </div>
+                      <% } else { %>
+                        <div class="my-1">
+                          <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="d-inline-flex align-items-center p-2 rounded text-decoration-none" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;">
+                            <i class="fas fa-file-alt mr-2"></i>
+                            <span style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;"><%= m.ten_file || 'Tệp đính kèm' %></span>
+                            <i class="fas fa-download ml-2" style="font-size:12px;"></i>
+                          </a>
+                        </div>
+                      <% } %>
+                    <% } %>
+                    <% if (m.noi_dung) { %><div style="white-space:pre-wrap;word-break:break-word;"><%= m.noi_dung %></div><% } %>
                     <small style="opacity:.7;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
                   </div>
                 </div>
@@ -82,9 +116,25 @@
           <% } %>
         </div>
         <div class="card-footer">
-          <form action="/staff/chat/send" method="POST" class="d-flex">
+          <div id="staff-file-preview" class="align-items-center justify-content-between p-2 mb-2 rounded" style="display:none;background:#fffbeb;border:1px dashed #d97706;">
+            <div class="d-flex align-items-center overflow-hidden">
+              <i class="fas fa-paperclip text-warning mr-2"></i>
+              <span id="staff-file-name" class="text-truncate font-weight-bold" style="max-width:280px;font-size:13px;"></span>
+              <small id="staff-file-size" class="text-muted ml-2"></small>
+            </div>
+            <button type="button" id="staff-file-remove" class="btn btn-sm btn-outline-danger py-0 px-2" title="Gỡ tệp">&times;</button>
+          </div>
+          <form action="/staff/chat/send" method="POST" enctype="multipart/form-data" class="d-flex align-items-center">
             <input type="hidden" name="id_kh" value="<%= selectedCustomer.id %>">
-            <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập phản hồi..." required autocomplete="off">
+            <input type="file" id="staff-input-img" accept="image/*" style="display:none">
+            <input type="file" id="staff-input-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,image/*" style="display:none">
+            <button type="button" id="staff-btn-img" class="btn btn-outline-secondary mr-1" title="Gửi hình ảnh">
+              <i class="fas fa-image"></i>
+            </button>
+            <button type="button" id="staff-btn-file" class="btn btn-outline-secondary mr-2" title="Đính kèm tệp / tài liệu">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập phản hồi hoặc dán ảnh (Ctrl+V)..." autocomplete="off">
             <button type="submit" class="btn btn-primary px-4">Gửi</button>
           </form>
         </div>
@@ -117,23 +167,81 @@
   }
   scrollToBottom();
 
-  // Xử lý gửi tin nhắn qua AJAX
+  // Xử lý đính kèm ảnh / file và gửi tin nhắn qua AJAX
+  let staffSelectedFile = null;
+  const staffPreview = document.getElementById('staff-file-preview');
+  const staffFileName = document.getElementById('staff-file-name');
+  const staffFileSize = document.getElementById('staff-file-size');
+  const staffFileRemove = document.getElementById('staff-file-remove');
+  const staffInputImg = document.getElementById('staff-input-img');
+  const staffInputFile = document.getElementById('staff-input-file');
+  const staffBtnImg = document.getElementById('staff-btn-img');
+  const staffBtnFile = document.getElementById('staff-btn-file');
+
+  function chonTepNhanVien(file) {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Kích thước tệp vượt quá giới hạn 15MB.');
+      return;
+    }
+    staffSelectedFile = file;
+    if (staffFileName) staffFileName.textContent = file.name;
+    if (staffFileSize) staffFileSize.textContent = '(' + (file.size / 1024).toFixed(1) + ' KB)';
+    if (staffPreview) staffPreview.style.display = 'flex';
+  }
+
+  function xoaTepNhanVien() {
+    staffSelectedFile = null;
+    if (staffInputImg) staffInputImg.value = '';
+    if (staffInputFile) staffInputFile.value = '';
+    if (staffPreview) staffPreview.style.display = 'none';
+  }
+
+  if (staffBtnImg && staffInputImg) {
+    staffBtnImg.onclick = () => staffInputImg.click();
+    staffInputImg.onchange = function() { if (this.files && this.files[0]) chonTepNhanVien(this.files[0]); };
+  }
+  if (staffBtnFile && staffInputFile) {
+    staffBtnFile.onclick = () => staffInputFile.click();
+    staffInputFile.onchange = function() { if (this.files && this.files[0]) chonTepNhanVien(this.files[0]); };
+  }
+  if (staffFileRemove) staffFileRemove.onclick = xoaTepNhanVien;
+
   if (chatForm) {
+    const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
+    if (inputMsg) {
+      inputMsg.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || {}).items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].kind === 'file') {
+            const f = items[i].getAsFile();
+            if (f) { chonTepNhanVien(f); break; }
+          }
+        }
+      });
+    }
+
     chatForm.onsubmit = async (e) => {
       e.preventDefault();
-      const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
       const idKh = chatForm.querySelector('input[name="id_kh"]').value;
-      const content = inputMsg.value.trim();
-      if (!content) return;
+      const content = inputMsg ? inputMsg.value.trim() : '';
+      if (!content && !staffSelectedFile) return;
 
       try {
+        const fd = new FormData();
+        fd.append('id_kh', idKh);
+        fd.append('noi_dung', content);
+        if (staffSelectedFile) fd.append('tep_dinh_kem', staffSelectedFile);
+
         const response = await fetch('/staff/chat/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-          body: new URLSearchParams({ 'id_kh': idKh, 'noi_dung': content })
+          headers: { 'Accept': 'application/json' },
+          body: fd
         });
         if (response.ok) {
-          inputMsg.value = '';
+          if (inputMsg) inputMsg.value = '';
+          xoaTepNhanVien();
         }
       } catch (err) {
         console.error('Lỗi gửi tin nhắn (Nhân viên):', err);
@@ -141,14 +249,6 @@
     };
   }
 
-  /*
-    Dung DOM thay vi ghep chuoi HTML.
-
-    Ban truoc nhet thang `${data.noi_dung}` vao insertAdjacentHTML. Noi dung do
-    la chu KHACH go ra, nen mot tin nhan kieu <img src=x onerror=...> se chay
-    ngay tren trinh duyet cua nhan vien dang truc - keo theo ca phien dang nhap
-    cua ho. Moi cho hien noi dung o day deu di qua textContent.
-  */
   function taoThe(the, lop, chu) {
     const e = document.createElement(the);
     if (lop) e.className = lop;
@@ -157,8 +257,6 @@
   }
 
   socket.on('new-message', (data) => {
-    // Chi hien neu tin nhan thuoc ve khach dang chat: da join room_${selectedId}
-    // nen socket chi nhan tin tu phong do.
     if (!chatBox) return;
 
     const isMe = data.nguoi_gui === 'nhanvien';
@@ -175,7 +273,45 @@
       nhan.appendChild(taoThe('strong', null, data.ten_kh || 'Khách hàng'));
       bong.appendChild(nhan);
     }
-    bong.appendChild(taoThe('div', null, data.noi_dung));
+
+    if (data.duong_dan_file) {
+      const wrap = taoThe('div', 'my-1');
+      if (data.loai_file === 'image') {
+        const a = taoThe('a');
+        a.href = data.duong_dan_file;
+        a.target = '_blank';
+        const img = taoThe('img');
+        img.src = data.duong_dan_file;
+        img.alt = data.ten_file || 'Hình ảnh';
+        img.style.cssText = 'max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid rgba(0,0,0,.1);';
+        a.appendChild(img);
+        wrap.appendChild(a);
+      } else {
+        const a = taoThe('a', 'd-inline-flex align-items-center p-2 rounded text-decoration-none');
+        a.href = data.duong_dan_file;
+        a.target = '_blank';
+        a.setAttribute('download', data.ten_file || 'tep_dinh_kem');
+        a.style.cssText = isMe
+          ? 'background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;'
+          : 'background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;';
+        const ic = taoThe('i', 'fas fa-file-alt mr-2');
+        a.appendChild(ic);
+        const sp = taoThe('span', null, data.ten_file || 'Tệp đính kèm');
+        sp.style.cssText = 'max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;';
+        a.appendChild(sp);
+        const dl = taoThe('i', 'fas fa-download ml-2');
+        dl.style.fontSize = '12px';
+        a.appendChild(dl);
+        wrap.appendChild(a);
+      }
+      bong.appendChild(wrap);
+    }
+
+    if (data.noi_dung) {
+      const dNoiDung = taoThe('div', null, data.noi_dung);
+      dNoiDung.style.cssText = 'white-space:pre-wrap;word-break:break-word;';
+      bong.appendChild(dNoiDung);
+    }
 
     const nhanGio = taoThe('small', null, gio.toLocaleTimeString('vi-VN'));
     nhanGio.style.cssText = isMe ? 'opacity:.7;font-size:11px;' : 'color:#999;font-size:11px;';

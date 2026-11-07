@@ -1,0 +1,239 @@
+<%
+  var ts = tq.ts;
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var thoiLuong = function (p) { p = Number(p); return p < 60 ? p + ' phút' : p < 1440 ? Math.floor(p / 60) + ' giờ' : Math.floor(p / 1440) + ' ngày'; };
+  var gio = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); };
+  var maxTai = Math.max.apply(null, [1].concat(tq.bang.map(function (s) { return s.tai; })));
+  var thuTu = {}; tq.thu_tu_tiep.forEach(function (id, i) { thuTu[id] = i + 1; });
+  var KQ = { cho_xac_nhan: ['Chờ xác nhận', 'warning'], da_nhan: ['Đã nhận', 'success'], tu_choi: ['Từ chối', 'danger'], het_han: ['Hết giờ', 'secondary'], bi_go: ['Bị gỡ', 'dark'] };
+%>
+<%- include('partials/header') %>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  .dp-o { border-radius: 14px; background: #fff; border: 1px solid #e7ded0; padding: .9rem 1rem; height: 100%; }
+  .dp-o b { display: block; font-size: 1.6rem; font-family: var(--qt-serif, Georgia, serif); color: #241d18; line-height: 1.2; }
+  .dp-o span { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #6b5f54; font-weight: 700; }
+  .dp-o small { color: #8a7d70; }
+  .dp-cong { position: relative; display: inline-block; width: 52px; height: 28px; vertical-align: middle; }
+  .dp-cong input { opacity: 0; width: 0; height: 0; }
+  .dp-cong i { position: absolute; inset: 0; border-radius: 999px; background: #cfc6ba; transition: .2s; cursor: pointer; }
+  .dp-cong i::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .dp-cong input:checked + i { background: #1f7a4a; }
+  .dp-cong input:checked + i::before { transform: translateX(24px); }
+  .dp-cong input:focus-visible + i { outline: 2px solid #c8a24b; outline-offset: 2px; }
+  .dp-tai { height: 8px; border-radius: 4px; background: #f3ece1; overflow: hidden; min-width: 80px; }
+  .dp-tai i { display: block; height: 100%; background: #c8a24b; border-radius: 4px; }
+  .dp-ke { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #2b1a12; color: #f3dfa6; font-weight: 800; font-size: .8rem; }
+  .dp-cham { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+  #banDoVung { height: 380px; border-radius: 12px; border: 1px solid #e7ded0; }
+  .dp-quy li { margin-bottom: .35rem; }
+</style>
+
+<div class="d-sm-flex align-items-start justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-robot text-warning"></i> Điều phối tự động</h1>
+    <div class="small text-muted">Đơn mới được tự giao cho shipper theo nguyên tắc <b>chia đều</b>. Shipper có <%= ts.phut_xac_nhan %> phút để bấm Nhận đơn.</div>
+  </div>
+  <div class="d-flex flex-wrap mt-2 mt-sm-0" style="gap:.4rem">
+    <a href="/staff/giao-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-list"></i> Bảng đơn</a>
+    <a href="/staff/giao-hang/ban-do" class="btn btn-sm btn-outline-secondary"><i class="fas fa-map-location-dot"></i> Bản đồ</a>
+    <% if (duocSua) { %><button class="btn btn-sm btn-warning font-weight-bold" id="chayNgay"><i class="fas fa-bolt"></i> Phân hàng chờ ngay</button><% } %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Tự động phân</span>
+    <div class="mt-2 d-flex align-items-center" style="gap:.6rem">
+      <label class="dp-cong mb-0"><input type="checkbox" id="cTuDong" <%= ts.tu_dong ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Bật tự động phân đơn"><i></i></label>
+      <b style="font-size:1.1rem;display:inline" id="nhanTuDong"><%= ts.tu_dong ? 'Đang bật' : 'Đang tắt' %></b>
+    </div></div></div>
+  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Đơn chờ phân</span><b class="<%= tq.cho_phan ? 'text-danger' : '' %>"><%= tq.cho_phan %></b><small><%= tq.cho_phan ? 'chưa có shipper rảnh' : 'không có đơn tồn' %></small></div></div>
+  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Chờ shipper nhận</span><b><%= tq.cho_xac_nhan %></b><small>quá <%= ts.phut_xac_nhan %> phút tự chuyển</small></div></div>
+  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Đơn đang chạy</span><b><%= tq.dang_chay %></b><small>đã phân, đang lấy / giao</small></div></div>
+  <div class="col-12 col-lg mb-3"><div class="dp-o"><span>Chênh lệch tải hôm nay</span><b class="<%= tq.chenh_lech > (ts.tieu_chi === 'thu_nhap' ? 50000 : 2) ? 'text-warning' : 'text-success' %>"><%= ts.tieu_chi === 'thu_nhap' ? vnd(tq.chenh_lech) : tq.chenh_lech + ' đơn' %></b><small>giữa shipper nhiều nhất và ít nhất (đang trong ca)</small></div></div>
+</div>
+
+<!-- ============ BANG CHIA DEU ============ -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold"><i class="fas fa-scale-balanced text-warning"></i> Bảng chia đều hôm nay</h6>
+    <span class="small text-muted">Tiêu chí: <b><%= ts.tieu_chi === 'thu_nhap' ? 'tổng phí ship' : 'số đơn' %></b> · cột "Lượt kế" là thứ tự người sẽ nhận đơn tiếp theo</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="thead-light"><tr><th class="text-center">Lượt kế</th><th>Shipper</th><th>Ca / tín hiệu</th><th class="text-center">Đang cầm</th><th class="text-right">Đơn hôm nay</th><th class="text-right">Đã giao</th><th class="text-right">Phí ship</th><th style="min-width:130px">Tải</th><th class="text-center">Từ chối / hết giờ</th><th>Lần nhận gần nhất</th></tr></thead>
+        <tbody>
+          <% tq.bang.forEach(function (s) { %>
+            <tr class="<%= !s.trong_ca ? 'text-muted' : '' %>">
+              <td class="text-center"><% if (thuTu[s.id_shipper]) { %><span class="dp-ke"><%= thuTu[s.id_shipper] %></span><% } else { %>—<% } %></td>
+              <td><b><%= s.ten %></b><br><small class="text-muted"><%= s.bien_so || '' %></small></td>
+              <td class="small">
+                <% if (!s.trong_ca) { %><span class="badge badge-secondary">Nghỉ ca</span>
+                <% } else if (!s.con_suc_chua) { %><span class="badge badge-warning">Đầy đơn</span>
+                <% } else { %><span class="badge badge-success">Sẵn sàng</span><% } %><br>
+                <span class="dp-cham" style="background:<%= s.online ? '#1f7a4a' : '#b3352c' %>"></span><%= s.online ? 'GPS ' + thoiLuong(s.phut_gps) + ' trước' : (s.phut_gps == null ? 'chưa mở app' : 'mất tín hiệu ' + thoiLuong(s.phut_gps)) %>
+              </td>
+              <td class="text-center"><%= s.dang_cam %>/<%= s.so_don_toi_da %></td>
+              <td class="text-right font-weight-bold"><%= s.don_hom_nay %></td>
+              <td class="text-right"><%= s.da_giao_hom_nay %></td>
+              <td class="text-right"><%= vnd(s.phi_hom_nay) %></td>
+              <td><div class="dp-tai" title="<%= s.tai %>"><i style="width:<%= Math.max(3, s.tai / maxTai * 100) %>%"></i></div></td>
+              <td class="text-center small"><%= s.tu_choi_hom_nay %> / <%= s.het_han_hom_nay %></td>
+              <td class="small"><%= gio(s.phan_gan_nhat) %></td>
+            </tr>
+          <% }) %>
+          <% if (!tq.bang.length) { %><tr><td colspan="10" class="text-center text-muted py-4">Chưa có shipper nào thuộc đội giao hàng nội bộ. Thêm ở Quản trị → Đơn vị vận chuyển → Shipper.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- ============ CAU HINH ============ -->
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h6 class="font-weight-bold mb-3"><i class="fas fa-sliders text-warning"></i> Cấu hình chia đơn</h6>
+      <div class="form-group">
+        <label for="cTieuChi" class="small font-weight-bold">Chia đều theo</label>
+        <select id="cTieuChi" class="form-control form-control-sm" <%= duocSua ? '' : 'disabled' %>>
+          <option value="so_don" <%= ts.tieu_chi === 'so_don' ? 'selected' : '' %>>Số đơn trong ngày (mỗi người số chuyến ngang nhau)</option>
+          <option value="thu_nhap" <%= ts.tieu_chi === 'thu_nhap' ? 'selected' : '' %>>Tổng phí ship trong ngày (thu nhập ngang nhau)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="cPhut" class="small font-weight-bold">Thời gian chờ shipper xác nhận (phút)</label>
+        <input type="number" id="cPhut" class="form-control form-control-sm" min="1" max="30" value="<%= ts.phut_xac_nhan %>" <%= duocSua ? '' : 'disabled' %>>
+      </div>
+      <div class="form-group d-flex align-items-center" style="gap:.6rem">
+        <label class="dp-cong mb-0"><input type="checkbox" id="cKhuVuc" <%= ts.chi_trong_khu_vuc ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Chỉ nhận đơn trong khu vực"><i></i></label>
+        <span class="small">Chỉ nhận đơn có địa chỉ trong khu vực giao hàng (bên phải)</span>
+      </div>
+      <% if (duocSua) { %><button class="btn btn-sm btn-primary" id="luuCauHinh"><i class="fas fa-save"></i> Lưu cấu hình</button> <small class="ml-2" id="kqLuu"></small><% } %>
+      <hr>
+      <h6 class="font-weight-bold small text-uppercase text-muted">Quy tắc chọn shipper</h6>
+      <ol class="small dp-quy pl-3 mb-0">
+        <li><b>Đủ điều kiện:</b> đang trong ca, chưa đầy số đơn tối đa, chưa từ chối / bỏ lỡ đơn này.</li>
+        <li><b>Ít tải nhất hôm nay</b> (số đơn hoặc phí ship) → chia đều.</li>
+        <li>Đang cầm ít đơn hơn → đơn tới tay khách nhanh hơn.</li>
+        <li>Đang online (GPS mới) trước người mất tín hiệu.</li>
+        <li>Chờ lâu nhất kể từ lần nhận đơn trước → xoay vòng khi bằng tải.</li>
+        <li>Gần nhà hàng hơn.</li>
+      </ol>
+      <p class="small text-muted mt-2 mb-0">Đơn bị từ chối hoặc hết giờ <b>không tính</b> vào tải của shipper đó và tự chuyển cho người kế tiếp. Điều phối vẫn phân tay được ở Bảng đơn.</p>
+    </div></div>
+  </div>
+
+  <!-- ============ VUNG GIAO ============ -->
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h6 class="font-weight-bold mb-2"><i class="fas fa-draw-polygon text-warning"></i> Khu vực giao hàng</h6>
+      <div class="d-flex flex-wrap mb-2" style="gap:.8rem">
+        <% khu.forEach(function (k) { %>
+          <label class="d-flex align-items-center mb-0" style="gap:.4rem">
+            <span class="dp-cong" style="transform:scale(.8)"><input type="checkbox" data-khu="<%= k.id_kv %>" <%= k.bat ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Bật giao hàng <%= k.ten %>"><i></i></span>
+            <span class="dp-cham" style="background:<%= k.mau %>"></span><b><%= k.ten %></b>
+          </label>
+        <% }) %>
+      </div>
+      <div id="banDoVung" role="img" aria-label="Bản đồ khu vực giao hàng"></div>
+      <p class="small text-muted mt-2 mb-0"><i class="fas fa-circle-info"></i> Ranh giới quận là <b>gần đúng</b>, đủ để phân vùng giao hàng. Địa chỉ sát ranh giới vài trăm mét có thể lệch – khi đó điều phối tạo đơn tay ở Bảng đơn.
+        <% if (!nhaHang) { %><br><span class="text-danger">Nhà hàng chưa khai tọa độ – phí ship chưa tính được.</span><% } %></p>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ NHAT KY ============ -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold"><i class="fas fa-clock-rotate-left text-warning"></i> Nhật ký phân công hôm nay</h6>
+    <input type="search" class="form-control form-control-sm" style="max-width:240px" data-tim-kiem="#bangNhatKy" placeholder="Tìm mã đơn, shipper..." aria-label="Tìm trong nhật ký">
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0" id="bangNhatKy">
+        <thead class="thead-light"><tr><th>Giờ</th><th>Đơn</th><th>Khu</th><th>Shipper</th><th>Kiểu</th><th>Kết quả</th><th>Lý do chọn / kết thúc</th></tr></thead>
+        <tbody>
+          <% tq.nhat_ky.forEach(function (n) { var k = KQ[n.ket_qua] || [n.ket_qua, 'light']; %>
+            <tr>
+              <td class="small text-nowrap"><%= gio(n.tao_luc) %></td>
+              <td><a href="/staff/giao-hang/<%= n.id_giao %>" class="font-weight-bold"><%= n.ma_giao %></a></td>
+              <td class="small"><%= n.ma_khu_vuc || '—' %></td>
+              <td><%= n.ten_shipper %></td>
+              <td class="small"><%= n.kieu === 'tu_dong' ? 'Tự động' : 'Điều phối' %></td>
+              <td><span class="badge badge-<%= k[1] %>"><%= k[0] %></span></td>
+              <td class="small text-muted"><%= n.ly_do_chon || '' %><%= n.ly_do_ket_thuc ? ' → ' + n.ly_do_ket_thuc : '' %></td>
+            </tr>
+          <% }) %>
+          <% if (!tq.nhat_ky.length) { %><tr data-tim-bo-qua><td colspan="7" class="text-center text-muted py-4">Hôm nay chưa có lượt phân công nào.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function () {
+  var KHU = <%- JSON.stringify(khu.map(function (k) { return { id: k.id_kv, ten: k.ten, mau: k.mau, bat: k.bat, da_giac: k.da_giac }; })).replace(/</g, '\\u003c') %>;
+  var NH = <%- JSON.stringify(nhaHang) %>;
+  var $ = function (id) { return document.getElementById(id); };
+  async function goi(url, body) {
+    var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    var j = await r.json();
+    if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+    return j;
+  }
+
+  // Ban do vung
+  if (window.L && $('banDoVung')) {
+    var bd = L.map('banDoVung', { scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(bd);
+    var nhom = [];
+    KHU.forEach(function (k) {
+      if (!k.da_giac.length) return;
+      var pg = L.polygon(k.da_giac, { color: k.mau, weight: 2, fillOpacity: k.bat ? .22 : .04, dashArray: k.bat ? null : '6 6' })
+        .bindTooltip(k.ten + (k.bat ? '' : ' (tạm tắt)'), { sticky: true }).addTo(bd);
+      nhom.push(pg);
+    });
+    if (NH) L.marker([NH.vi_do, NH.kinh_do]).bindPopup('Nhà hàng (tọa độ đang lưu)').addTo(bd);
+    if (nhom.length) bd.fitBounds(L.featureGroup(nhom).getBounds().pad(0.08)); else bd.setView([10.83, 106.68], 12);
+  }
+
+  // Cau hinh
+  var cTuDong = $('cTuDong');
+  if (cTuDong) cTuDong.addEventListener('change', async function () {
+    try {
+      var j = await goi('/staff/giao-hang/dieu-phoi/cau-hinh', { tu_dong: cTuDong.checked });
+      $('nhanTuDong').textContent = cTuDong.checked ? 'Đang bật' : 'Đang tắt';
+      if (cTuDong.checked && j.da_phan) setTimeout(function () { location.reload(); }, 600);
+    } catch (e) { alert(e.message); cTuDong.checked = !cTuDong.checked; }
+  });
+  if ($('luuCauHinh')) $('luuCauHinh').addEventListener('click', async function () {
+    try {
+      await goi('/staff/giao-hang/dieu-phoi/cau-hinh', { tieu_chi: $('cTieuChi').value, phut_xac_nhan: Number($('cPhut').value), chi_trong_khu_vuc: $('cKhuVuc').checked });
+      $('kqLuu').className = 'ml-2 text-success'; $('kqLuu').textContent = 'Đã lưu';
+      setTimeout(function () { location.reload(); }, 700);
+    } catch (e) { $('kqLuu').className = 'ml-2 text-danger'; $('kqLuu').textContent = e.message; }
+  });
+  document.querySelectorAll('[data-khu]').forEach(function (c) {
+    c.addEventListener('change', async function () {
+      try { await goi('/staff/giao-hang/khu-vuc/' + c.getAttribute('data-khu'), { bat: c.checked }); location.reload(); }
+      catch (e) { alert(e.message); c.checked = !c.checked; }
+    });
+  });
+  if ($('chayNgay')) $('chayNgay').addEventListener('click', async function () {
+    this.disabled = true;
+    try { var j = await goi('/staff/giao-hang/dieu-phoi/chay'); alert('Đã phân ' + (j.da_phan || 0) + ' đơn' + (j.con_cho ? ', còn ' + j.con_cho + ' đơn chờ (chưa có shipper rảnh).' : '.')); location.reload(); }
+    catch (e) { alert(e.message); this.disabled = false; }
+  });
+
+  // Tu lam moi khi co don / shipper doi trang thai (khong lam khi dang go o cau hinh)
+  function lamMoi() { if (!/INPUT|SELECT|TEXTAREA/.test((document.activeElement || {}).tagName || '')) location.reload(); }
+  if (window.RT && RT.khi) { RT.khi('giao-hang:doi', function () { setTimeout(lamMoi, 800); }); RT.khi('giao-hang:doi-trang-thai', function () { setTimeout(lamMoi, 800); }); }
+  setInterval(lamMoi, 30000);
+})();
+</script>
+
+<%- include('partials/footer') %>

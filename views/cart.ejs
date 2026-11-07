@@ -21,13 +21,25 @@
   /* ------------------------------------------------------------- SHOPEEFOOD CHECKOUT STYLES */
   .gh-cart-layout {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     gap: 24px;
     align-items: flex-start;
   }
   @media (max-width: 992px) {
-    .gh-cart-layout { grid-template-columns: 1fr; }
+    .gh-cart-layout { grid-template-columns: minmax(0, 1fr); }
   }
+
+  .gh-phi-chi-tiet { margin:0 0 10px 10px; padding-left:10px; border-left:2px solid #efe6d4; font-size:12.5px; color:#6b5e50; }
+  .gh-phi-chi-tiet > div { display:flex; justify-content:space-between; gap:8px; padding:2px 0; }
+  .gh-phi-chi-tiet em { color:#2e7d32; font-style:normal; font-weight:700; }
+  .gh-phi-mien { color:#2e7d32; font-weight:700; }
+  .gh-phi-goi-y { font-size:12.5px; color:#92400e; background:#fffbeb; border:1px dashed #fcd34d; border-radius:8px; padding:6px 10px; margin-bottom:10px; }
+  .gh-chinh-sach { margin-top:16px; background:#faf7f1; border:1px solid #e8decb; border-radius:12px; padding:12px 14px; font-size:12.8px; color:#4a3f35; line-height:1.55; }
+  .gh-chinh-sach__tieu-de { font-weight:800; color:var(--nh-espresso); margin-bottom:4px; }
+  .gh-chinh-sach ul { margin:0 0 10px; padding-left:18px; }
+  .gh-chinh-sach__dong-y { display:flex; gap:8px; align-items:flex-start; font-weight:600; cursor:pointer; }
+  .gh-chinh-sach__dong-y input { margin-top:3px; width:16px; height:16px; flex-shrink:0; }
+  .gh-chinh-sach__dong-y a { color:#b45309; }
 
   .gh-box {
     background: #ffffff;
@@ -355,6 +367,7 @@
 
 <%
   var TT_GIAO = {
+    cho_thanh_toan: { nhan: 'Chờ thanh toán', mau: '#92400e', bg: '#fef3c7', icon: 'fa-wallet' },
     cho_phan:  { nhan: 'Chờ phân shipper', mau: '#b45309', bg: '#fef3c7', icon: 'fa-hourglass-half' },
     da_phan:   { nhan: 'Đã phân shipper',  mau: '#1d4ed8', bg: '#dbeafe', icon: 'fa-user-check' },
     dang_lay:  { nhan: 'Đang lấy món',    mau: '#6d28d9', bg: '#ede9fe', icon: 'fa-box-open' },
@@ -364,7 +377,7 @@
     huy:       { nhan: 'Đã hủy',           mau: '#4b5563', bg: '#f3f4f6', icon: 'fa-ban' }
   };
   var dsDonGiao = (typeof donGiaoList !== 'undefined' && donGiaoList) ? donGiaoList : [];
-  var donDangXuLy = dsDonGiao.filter(function(d) { return ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) >= 0; });
+  var donDangXuLy = dsDonGiao.filter(function(d) { return ['cho_thanh_toan', 'cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) >= 0; });
 %>
 
 <section class="nh-section nh-section--cream">
@@ -542,52 +555,65 @@
                 <b><%= formatMoney(subtotal) %> ₫</b>
               </div>
 
-              <div class="nh-summary__row" style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14.5px;">
+              <div class="nh-summary__row" style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14.5px;">
                 <span>Phí giao hàng</span>
                 <b id="gh-txt-phi" style="color:var(--nh-gold);"><%= phiShip > 0 ? formatMoney(phiShip) + ' ₫' : 'Miễn phí' %></b>
               </div>
+              <!-- Chi tiết phí ship từng chặng (bậc thang: càng xa đơn giá/km càng giảm) -->
+              <div id="gh-chi-tiet-phi" class="gh-phi-chi-tiet">
+                <% if (bg && bg.chi_tiet_phi) { bg.chi_tiet_phi.forEach(function (c) { %>
+                  <div><span><%= c.nhan %><% if (c.don_gia) { %>: <%= c.so_km %> km × <%= formatMoney(c.don_gia) %>₫<% if (c.giam_phan_tram > 0) { %> <em>(−<%= c.giam_phan_tram %>%)</em><% } %><% } %></span><span><%= formatMoney(c.tien) %>₫</span></div>
+                <% }); if (bg.mien_phi) { %>
+                  <div class="gh-phi-mien"><span>Miễn phí ship (đơn từ <%= formatMoney(bg.mien_phi_tu) %>₫)</span><span>−<%= formatMoney(bg.phi_goc) %>₫</span></div>
+                <% } } %>
+              </div>
+              <% var mienPhiTu = (chinhSach && chinhSach.mien_phi_tu) || 0; %>
+              <% if (mienPhiTu > 0 && Number(subtotal) < mienPhiTu) { %>
+                <div class="gh-phi-goi-y"><i class="fas fa-gift"></i> Mua thêm <b><%= formatMoney(mienPhiTu - Number(subtotal)) %>₫</b> để được miễn phí ship</div>
+              <% } %>
 
               <div style="border-top:1.5px dashed #e8decb; padding-top:12px; margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:16px; font-weight:700;">Tổng thanh toán</span>
                 <b id="gh-txt-tong" style="font-size:22px; font-weight:800; color:var(--nh-espresso);"><%= formatMoney(tongTien) %> ₫</b>
               </div>
 
-              <!-- Phương thức thanh toán -->
+              <!-- Thanh toán: bắt buộc trả trước 100% qua VietQR -->
               <div style="margin-top:18px;">
                 <label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:8px;">
                   Phương thức thanh toán:
                 </label>
-                
-                <div class="gh-pay-options">
-                  <label class="gh-pay-card active" id="pay-card-cod" onclick="chonPhuongThucTT('tien_mat')">
-                    <input type="radio" name="phuong_thuc_tt" value="tien_mat" checked>
-                    <div class="gh-pay-card__icon"><i class="fas fa-money-bill-wave"></i></div>
-                    <div>
-                      <div class="gh-pay-card__text">Tiền mặt (COD)</div>
-                      <div style="font-size:11.5px; color:#777; font-weight:normal;">Nhận hàng trả tiền</div>
-                    </div>
-                  </label>
-
-                  <label class="gh-pay-card" id="pay-card-qr" onclick="chonPhuongThucTT('vietqr')">
-                    <input type="radio" name="phuong_thuc_tt" value="vietqr">
+                <div class="gh-pay-options" style="grid-template-columns:1fr;">
+                  <label class="gh-pay-card active" id="pay-card-qr">
+                    <input type="radio" name="phuong_thuc_tt" value="vietqr" checked>
                     <div class="gh-pay-card__icon"><i class="fas fa-qrcode"></i></div>
                     <div>
-                      <div class="gh-pay-card__text">Chuyển khoản VietQR</div>
-                      <div style="font-size:11.5px; color:#777; font-weight:normal;">Quét mã nhận ngay</div>
+                      <div class="gh-pay-card__text">Chuyển khoản VietQR — thanh toán trước 100%</div>
+                      <div style="font-size:11.5px; color:#777; font-weight:normal;">Trả đủ tiền món + phí ship. Có thể trừ bằng điểm tích lũy ở bước sau.</div>
                     </div>
                   </label>
                 </div>
               </div>
 
-              <!-- Nút Đặt Hàng -->
-              <div style="margin-top:20px;">
-                <button type="submit" class="nh-btn nh-btn--gold" id="nut-dat-hang" style="width:100%; justify-content:center; padding:14px; font-size:16px; border-radius:12px;">
-                  <i class="fas fa-bag-shopping" id="icon-nut-dat"></i> <span id="txt-nut-dat">ĐẶT ĐƠN HÀNG NGAY</span>
-                </button>
+              <!-- Tóm tắt chính sách + đồng ý -->
+              <div class="gh-chinh-sach">
+                <div class="gh-chinh-sach__tieu-de"><i class="fas fa-file-shield"></i> Chính sách giao hàng</div>
+                <ul>
+                  <li>Bếp chỉ nấu khi nhà hàng <b>đã nhận đủ tiền</b>. Đơn chưa thanh toán sau <b><%= (chinhSach && chinhSach.phut_giu_thanh_toan) || 15 %> phút</b> sẽ tự hủy.</li>
+                  <li>Phí ship theo km: km đầu trọn gói, càng xa đơn giá mỗi km càng giảm<% if (mienPhiTu > 0) { %>; miễn phí ship cho đơn từ <b><%= formatMoney(mienPhiTu) %>₫</b><% } %>.</li>
+                  <li><b>Lỗi do khách</b> (tự hủy sau khi thanh toán, không nghe máy, sai địa chỉ, từ chối nhận): <b>không hoàn tiền, không hoàn điểm</b>.</li>
+                  <li><b>Lỗi do nhà hàng</b> (hết món, giao trễ, sai/thiếu món...): <b>hoàn 100% bằng điểm</b> (không hoàn tiền mặt), dùng cho đơn sau hoặc trừ vào hóa đơn khi ăn tại nhà hàng.</li>
+                </ul>
+                <label class="gh-chinh-sach__dong-y">
+                  <input type="checkbox" name="dong_y_chinh_sach" value="1" id="o-dong-y-cs" required>
+                  <span>Tôi đã đọc và đồng ý <a href="/chinh-sach-giao-hang" target="_blank">Chính sách giao hàng, thanh toán &amp; hủy đơn</a></span>
+                </label>
               </div>
 
-              <div style="margin-top:12px; font-size:12.5px; color:#888; text-align:center; line-height:1.5;">
-                <i class="fas fa-shield-halved"></i> Đơn hàng được chuyển trực tiếp xuống bếp KDS và điều phối Shipper giao tận nơi nhanh chóng.
+              <!-- Nút Đặt Hàng -->
+              <div style="margin-top:16px;">
+                <button type="submit" class="nh-btn nh-btn--gold" id="nut-dat-hang" style="width:100%; justify-content:center; padding:14px; font-size:16px; border-radius:12px;">
+                  <i class="fas fa-qrcode" id="icon-nut-dat"></i> <span id="txt-nut-dat">ĐẶT ĐƠN &amp; THANH TOÁN</span>
+                </button>
               </div>
             </div>
           </aside>
@@ -608,8 +634,8 @@
           </div>
           <h3 class="gh-modal-title">Xác nhận đặt món &amp; Giao tận nơi</h3>
           <p class="gh-modal-desc">
-            Quý khách có chắc chắn muốn xác nhận đơn hàng này không?<br>
-            Bếp nhà hàng sẽ tiếp nhận và chuẩn bị món ăn tươi nóng ngay sau khi quý khách xác nhận.
+            Quý khách sẽ được chuyển sang trang thanh toán VietQR.<br>
+            Bếp nhà hàng bắt đầu chuẩn bị món ngay khi nhận đủ tiền.
           </p>
           
           <div class="gh-modal-summary" id="modal-tom-tat">
@@ -623,7 +649,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
               <span style="color:#666;">Phương thức:</span>
-              <strong style="color:#241a14;" id="modal-pt-tt">Tiền mặt (COD)</strong>
+              <strong style="color:#241a14;" id="modal-pt-tt">Chuyển khoản VietQR (trả trước)</strong>
             </div>
             <div style="display:flex; justify-content:space-between; border-top:1px dashed #e2d9cd; padding-top:8px; margin-top:6px;">
               <span style="font-weight:700; color:#241a14;">Tổng thanh toán:</span>
@@ -644,7 +670,7 @@
 
       <!-- Lịch sử đơn hàng trước đây (nếu có) -->
       <% if (dsDonGiao.length > 0) { 
-           var donHoanTat = dsDonGiao.filter(function(d) { return ['cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) === -1; });
+           var donHoanTat = dsDonGiao.filter(function(d) { return ['cho_thanh_toan', 'cho_phan', 'da_phan', 'dang_lay', 'dang_giao'].indexOf(d.trang_thai) === -1; });
       %>
         <div style="background:#ffffff; border:1.5px solid #e8decb; border-radius:18px; padding:26px 28px; margin-top:28px; margin-bottom:24px; box-shadow:0 6px 24px rgba(34,23,17,0.06);">
           <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; border-bottom:1px solid #f2ece1; padding-bottom:16px;">
@@ -1013,6 +1039,22 @@
     }, 150);
   }
 
+  // Bảng chi tiết phí ship từng chặng (lấy từ server, không tự tính ở trình duyệt)
+  var oChiTietPhi = document.getElementById('gh-chi-tiet-phi');
+  function veChiTietPhi(d) {
+    if (!oChiTietPhi) return;
+    if (!d || !d.chi_tiet_phi) { oChiTietPhi.innerHTML = ''; return; }
+    var html = d.chi_tiet_phi.map(function (c) {
+      var nhan = c.nhan + (c.don_gia ? (': ' + c.so_km + ' km × ' + tien(c.don_gia) + '₫' +
+        (c.giam_phan_tram > 0 ? ' <em>(−' + c.giam_phan_tram + '%)</em>' : '')) : '');
+      return '<div><span>' + nhan + '</span><span>' + tien(c.tien) + '₫</span></div>';
+    }).join('');
+    if (d.mien_phi) {
+      html += '<div class="gh-phi-mien"><span>Miễn phí ship (đơn từ ' + tien(d.mien_phi_tu) + '₫)</span><span>−' + tien(d.phi_goc) + '₫</span></div>';
+    }
+    oChiTietPhi.innerHTML = html;
+  }
+
   // Báo giá cước phí theo tọa độ
   var henPhi = null;
   function tinhPhiGiaoHang(lat, lng) {
@@ -1030,10 +1072,12 @@
             txtDv.style.color = '#b91c1c';
             txtDv.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Ngoài bán kính phục vụ';
             txtTong.textContent = tien(subtotal) + ' ₫';
+            veChiTietPhi(null);
             return;
           }
           var km = parseFloat(d.khoang_cach_km) || 1.5;
           var fee = Number(d.phi || 0);
+          veChiTietPhi(d);
           txtKm.textContent = km + ' km';
           txtPhi.textContent = fee > 0 ? (tien(fee) + ' ₫') : 'Miễn phí';
           txtDv.style.color = '#2e7d32';
@@ -1225,9 +1269,11 @@
     var dcFull = chiTiet ? (chiTiet + ', ' + oDiaChi.value.trim()) : oDiaChi.value.trim();
     if (modalDiaChi) modalDiaChi.textContent = dcFull;
 
-    var pt = document.querySelector('input[name="phuong_thuc_tt"]:checked');
-    if (modalPtTt) {
-      modalPtTt.textContent = (pt && pt.value === 'vietqr') ? 'Chuyển khoản VietQR' : 'Tiền mặt khi nhận hàng (COD)';
+    var dongY = document.getElementById('o-dong-y-cs');
+    if (dongY && !dongY.checked) {
+      alert('Quý khách vui lòng đọc và tick đồng ý Chính sách giao hàng trước khi đặt đơn.');
+      dongY.focus();
+      return false;
     }
 
     if (modalTongTien && txtTong) {

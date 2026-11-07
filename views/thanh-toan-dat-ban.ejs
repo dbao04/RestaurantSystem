@@ -399,11 +399,11 @@
         <div class="spf-total-summary">
           <% if (tongTienMon > 0) { %>
             <div class="spf-sum-row">
-              <span><%= t('tt_dat_ban.tong_tien_mon') %></span>
+              <span><%= t('tt_dat_ban.tong_tien_mon') %> (Thanh toán 100%)</span>
               <span><%= Number(tongTienMon).toLocaleString('vi-VN') %> ₫</span>
             </div>
           <% } %>
-          <% if (tienCoc > 0) { %>
+          <% if (tienCoc > 0 && (tongTienMon === 0 || tienCoc > tongTienMon)) { %>
             <div class="spf-sum-row">
               <span><%= t('tt_dat_ban.tien_coc_giu_ban') %></span>
               <span><%= Number(tienCoc).toLocaleString('vi-VN') %> ₫</span>
@@ -413,9 +413,22 @@
             <span><%= t('tt_dat_ban.tong_thanh_toan') %></span>
             <span><%= Number(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
           </div>
+          <% if (Number(r.guest_count || 0) >= 15) { %>
+            <div style="margin-top:10px; padding:10px 12px; border-radius:8px; background:#f0fdf4; border:1px solid #86efac; color:#14532d; font-size:12.5px; line-height:1.5;">
+              <i class="fas fa-hand-holding-usd" style="color:#16a34a"></i>
+              <strong>Cam kết hoàn tiền cọc dư (Đoàn tiệc <%= r.guest_count %> khách):</strong>
+              Trường hợp quý khách dùng món thực tế thấp hơn tổng mức cọc 150.000đ/người (<%= Number(Number(r.guest_count) * 150000).toLocaleString('vi-VN') %> ₫), nhà hàng sẽ <strong>hoàn trả lại phần tiền thừa</strong> ngay lúc thanh toán.
+            </div>
+          <% } %>
         </div>
 
-        <div style="margin-top:16px; text-align:center;">
+        <div style="margin-top:12px; text-align:center;">
+          <a href="/chinh-sach-dat-ban.pdf" target="_blank" style="font-size:12.5px; color:var(--spf-orange); font-weight:600; text-decoration:underline;">
+            <i class="fas fa-file-alt"></i> Xem chi tiết Chính sách Đặt bàn, Đặt cọc & Hoàn hủy
+          </a>
+        </div>
+
+        <div style="margin-top:12px; text-align:center;">
           <a href="/my-orders" class="nh-btn nh-btn--outline nh-btn--sm" style="width:100%; border-radius:8px;">
             <i class="fas fa-arrow-left"></i> <%= t('tt_dat_ban.xem_lai_don') %>
           </a>

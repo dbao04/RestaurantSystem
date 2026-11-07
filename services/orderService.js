@@ -446,6 +446,17 @@ const orderService = {
   },
 
   requestCancelOrder: async (sesis, userId) => {
+    // Don giao hang: di theo chinh sach huy (khach huy = loi khach, khong hoan;
+    // chi huy duoc truoc khi shipper toi lay hang).
+    const [[dg]] = await db.query(
+      'SELECT g.id_giao FROM don_giao_hang g JOIN hopdong h ON h.sesis = g.sesis WHERE g.sesis = ? AND h.id_user = ? LIMIT 1',
+      [sesis, userId]
+    );
+    if (dg) {
+      return require('./chinhSachGiaoService').huyDon(dg.id_giao, {
+        laKhach: true, nguoi: { ten: 'Khách hàng' },
+      });
+    }
     // Check if order belongs to user and is in pending state (0)
     const [rows] = await db.query('SELECT * FROM hopdong WHERE sesis = ? AND id_user = ? AND tinhtrang = 0', [sesis, userId]);
     if (rows.length === 0) throw new Error('Không thể hủy đơn hàng này');

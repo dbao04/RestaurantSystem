@@ -231,7 +231,9 @@ body.qt-body {
 .qt-card__body { padding: 1.4rem; }
 .qt-card__body--flush { padding: 0; }
 
-.qt-grid { display: grid; gap: 1.5rem; }
+.qt-grid { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
+/* O luoi duoc co nho hon noi dung (bang, form rong) - neu khong mot bang 650px se day ca trang tran ngang */
+.qt-grid > * { min-width: 0; }
 @media (min-width: 1100px) {
   .qt-grid--2 { grid-template-columns: 1fr 1fr; }
   .qt-grid--1-2 { grid-template-columns: 1fr 2fr; }
@@ -707,6 +709,17 @@ table.qt-table thead th.sorting_desc::after { content: '\f0dd'; color: var(--qt-
   .qt-top__burger { display: grid; place-items: center; }
   .qt-shell.is-open .qt-side { transform: none; }
   .qt-shell.is-open .qt-backdrop { opacity: 1; pointer-events: auto; }
+}
+/* Bang rong tren man hep: cuon ngang trong khung (xem js/bang-cuon-ngang.js) */
+@media (max-width: 900px) {
+  .qt-cuon-ngang { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .qt-cuon-ngang > table { min-width: 620px; }
+  .qt-content { overflow-x: hidden; }
+  .qt-content .dataTables_wrapper { overflow-x: auto; }
+}
+@media (max-width: 767.98px) {
+  /* Chu o nhap toi thieu 16px - iOS tu phong to ca trang khi cham o nho hon */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; }
 }
 @media (max-width: 620px) {
   .qt-content { padding: 1.1rem; }

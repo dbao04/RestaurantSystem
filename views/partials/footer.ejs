@@ -147,7 +147,7 @@
             notifSound.play().catch(e=>console.log(e));
             Swal.fire({
               title: "Tin nhắn mới!",
-              text: data.noi_dung,
+              text: data.noi_dung || (data.loai_file === 'image' ? '📷 Nhân viên đã gửi một hình ảnh' : '📎 Nhân viên đã gửi một tệp đính kèm'),
               icon: 'info',
               toast: true,
               position: 'bottom-end',

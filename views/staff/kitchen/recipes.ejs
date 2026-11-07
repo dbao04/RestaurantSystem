@@ -20,7 +20,12 @@
             <div class="card-header py-3 bg-dark text-white">
                 <h6 class="m-0 font-weight-bold">Chọn món ăn</h6>
             </div>
-            <div class="card-body p-0">
+            <div class="p-2 border-bottom bg-light">
+                <input type="search" class="form-control form-control-sm" data-tim-kiem="#dishList" data-tim-dem="#demMonCT"
+                       placeholder="Tìm món (vd: sashimi, ca hoi, K13)..." aria-label="Tìm món ăn">
+                <small class="text-muted" id="demMonCT"></small>
+            </div>
+            <div class="card-body p-0" style="max-height:70vh;overflow-y:auto">
                 <div class="list-group list-group-flush" id="dishList">
                     <% dishes.forEach(d => { %>
                         <a href="javascript:void(0)" class="list-group-item list-group-item-action dish-item" 
@@ -43,8 +48,10 @@
                 </div>
             </div>
             <div class="card-body">
+                <input type="search" class="form-control form-control-sm mb-2" data-tim-kiem="#bangCongThuc"
+                       placeholder="Tìm nguyên liệu trong công thức..." aria-label="Tìm nguyên liệu trong công thức" style="max-width:320px">
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-bordered" id="bangCongThuc">
                         <thead class="bg-light">
                             <tr>
                                 <th>Tên Nguyên liệu</th>
@@ -84,8 +91,9 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Nguyên liệu</label>
-            <select name="id_nl" class="form-control" required>
+            <label for="selNguyenLieu">Nguyên liệu</label>
+            <input type="search" class="form-control form-control-sm mb-1" id="locNguyenLieu" placeholder="Gõ để lọc 135 nguyên liệu (vd: ca hoi, nuoc tuong)..." aria-label="Lọc nguyên liệu">
+            <select name="id_nl" id="selNguyenLieu" class="form-control" required size="6">
                 <% ingredients.forEach(i => { %>
                     <option value="<%= i.id_nl %>"><%= i.ten_nl %> (<%= i.ten_dvt %>)</option>
                 <% }) %>
@@ -130,15 +138,34 @@
                                 <td>${item.so_luong_tieu_hao}</td>
                                 <td>${item.ten_dvt || 'N/A'}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    <a class="btn btn-sm btn-outline-danger" href="/staff/kitchen/recipe/delete/${item.id_ct}"
+                                       onclick="return confirm('Xóa ${String(item.ten_nl).replace(/'/g, '')} khỏi công thức món này?')"
+                                       title="Xóa khỏi công thức" aria-label="Xóa ${String(item.ten_nl).replace(/"/g, '')} khỏi công thức"><i class="fas fa-trash"></i></a>
                                 </td>
                             </tr>
                         `;
                     });
                 }
+                if (window.timKiemLaiBang) window.timKiemLaiBang();
             })
             .catch(err => console.error(err));
     }
+
+    // Loc danh sach nguyen lieu trong hop "Them thanh phan" - khong dau, nhieu tu.
+    (function () {
+        var o = document.getElementById('locNguyenLieu'), sel = document.getElementById('selNguyenLieu');
+        if (!o || !sel) return;
+        var bo = function (x) { return String(x).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); };
+        o.addEventListener('input', function () {
+            var tu = bo(o.value).trim().split(/\s+/).filter(Boolean), dau = null;
+            Array.prototype.forEach.call(sel.options, function (op) {
+                var khop = tu.every(function (t) { return bo(op.text).indexOf(t) >= 0; });
+                op.hidden = !khop;
+                if (khop && !dau) dau = op;
+            });
+            if (dau && (!sel.selectedOptions[0] || sel.selectedOptions[0].hidden)) sel.value = dau.value;
+        });
+    })();
 
     function showAddModal() {
         $('#addRecipeModal').modal('show');

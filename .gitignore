@@ -45,3 +45,6 @@ _test_server.js
 _xem.js
 _e2e_chotca.js
 cap_nhat_bai_viet.js
+
+# File khach/nhan vien tai len khi chay (anh chat...) - server tu tao thu muc
+public/uploads/

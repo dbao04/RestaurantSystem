@@ -377,6 +377,11 @@ body::-webkit-scrollbar {
 .nh-burger { display: none; background: none; border: 0; color: #fff; font-size: 1.5rem; cursor: pointer; margin-left: auto; }
 
 /* Responsive adjustments */
+/* Menu co 11 muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
+   1481-2000px de van vua mot hang, ke ca khi da dang nhap (co ten nguoi dung). */
+@media (min-width: 1481px) and (max-width: 2000px) {
+  .nh-nav__links a { padding: .36rem .48rem; font-size: .8rem; }
+}
 @media (max-width: 1480px) {
   .nh-nav__inner { gap: 1rem; }
   .nh-nav__links a { font-size: .86rem; padding: .45rem .85rem; }
@@ -2987,3 +2992,149 @@ body.nh,
 
 
 
+
+/* ==========================================================================
+   HERO TRANG CHU DANG SLIDER (views/index.ejs)
+   ==========================================================================
+   Cac slide chong len nhau trong MOT o luoi (grid-area 1/1) thay vi absolute:
+   hero cao theo slide cao nhat nen chu khong bi cat tren dien thoai. Slide
+   KHONG dat position, nen anh/hoa van absolute ben trong van bam theo .nh-hero
+   nhu bo cuc cu, va opacity cua slide van lam mo ca chung.
+   ========================================================================== */
+.nh-hero--slider { align-items: stretch; }
+.nh-slides { display: grid; width: 100%; }
+.nh-slide {
+  grid-area: 1 / 1; display: flex; align-items: center; min-width: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity .9s var(--nh-ease), visibility .9s;
+}
+.nh-slide.is-active { opacity: 1; visibility: visible; }
+.nh-slide .nh-hero__inner { transform: translateY(26px); transition: transform 1s var(--nh-ease); }
+.nh-slide.is-active .nh-hero__inner { transform: none; }
+.nh-hero--slider .nh-hero__inner { padding-bottom: 120px; }
+/* Chu slide khuyen mai / ban chay khong duoc lan sang ve giam gia, anh mon ben phai */
+@media (min-width: 1001px) {
+  .nh-slide--km .nh-hero__inner, .nh-slide--bc .nh-hero__inner { max-width: min(760px, 50vw); }
+}
+
+/* --- Anh nen rieng cua slide (slide dat tiec) --- */
+.nh-slide__anh { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.08); transition: transform 7s ease-out; }
+.nh-slide.is-active .nh-slide__anh { transform: scale(1); }
+.nh-slide__anh::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, rgba(20, 12, 8, .93) 0%, rgba(20, 12, 8, .66) 48%, rgba(20, 12, 8, .28) 100%); }
+
+/* --- Ve giam gia (slide khuyen mai) --- */
+.nh-km-ve {
+  position: absolute; right: 5%; top: 50%; z-index: 1; display: flex;
+  width: min(38vw, 540px); border-radius: 24px; overflow: hidden;
+  transform: translateY(-46%) rotate(-4deg);
+  box-shadow: 0 34px 80px -10px rgba(0, 0, 0, .75), 0 0 0 1px rgba(200, 162, 75, .4);
+}
+.nh-km-ve__trai {
+  flex: 1.35; padding: 2.6rem 1.6rem; text-align: center; color: #2b1a12;
+  background: radial-gradient(circle at 30% 20%, #f3dfa6 0%, #d9bd7e 35%, #c8a24b 70%, #a8822f 100%);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.nh-km-ve__nhan { font-size: .95rem; font-weight: 800; letter-spacing: .35em; text-transform: uppercase; }
+.nh-km-ve__so { display: block; font-family: var(--nh-serif); font-size: clamp(4.2rem, 7.5vw, 7.4rem); line-height: 1; margin: .3rem 0; text-shadow: 0 3px 0 rgba(255, 255, 255, .35); }
+.nh-km-ve__phu { font-size: .95rem; font-weight: 600; }
+.nh-km-ve__phai {
+  flex: 1; position: relative; padding: 2rem 1.3rem; background: #1f130d; color: #f3ebdd;
+  border-left: 3px dashed rgba(200, 162, 75, .65);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; text-align: center;
+}
+.nh-km-ve__phai::before, .nh-km-ve__phai::after {
+  content: ''; position: absolute; left: -16px; width: 30px; height: 30px; border-radius: 50%; background: #140c08;
+}
+.nh-km-ve__phai::before { top: -15px; }
+.nh-km-ve__phai::after { bottom: -15px; }
+.nh-km-ve__phai span { font-size: .75rem; letter-spacing: .25em; text-transform: uppercase; color: rgba(255, 255, 255, .65); }
+.nh-km-ve__phai b { font-family: 'Courier New', monospace; font-size: clamp(1.1rem, 1.7vw, 1.55rem); color: var(--nh-gold); letter-spacing: .08em; padding: .45rem .8rem; border: 1.5px dashed var(--nh-gold); border-radius: 10px; word-break: break-all; }
+.nh-km-ve__phai small { font-size: .78rem; color: rgba(255, 255, 255, .6); }
+
+/* --- Mon ban chay --- */
+.nh-bc-mon { position: absolute; right: 5%; top: 50%; z-index: 1; width: min(44vw, 620px); transform: translateY(-48%); }
+.nh-bc-mon img { display: block; width: 100%; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .85)); animation: nh-troi 5.5s ease-in-out infinite; }
+.nh-bc-mon__huy {
+  position: absolute; top: 6%; right: 4%; z-index: 2; display: inline-flex; align-items: center; gap: .5rem;
+  padding: .7rem 1.4rem; border-radius: 999px; font-weight: 800; font-size: 1.05rem; letter-spacing: .5px;
+  color: #2b1a12; background: linear-gradient(135deg, #f3dfa6, var(--nh-gold));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6), 0 0 26px rgba(200, 162, 75, .55);
+}
+.nh-bc-ds { list-style: none; padding: 0; margin: 0 0 2.4rem; display: grid; gap: .65rem; max-width: 600px; }
+.nh-bc-ds a {
+  display: flex; align-items: center; gap: .9rem; padding: .55rem 1.1rem .55rem .7rem; border-radius: 16px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(200, 162, 75, .28); color: #fff; text-decoration: none;
+  backdrop-filter: blur(6px); transition: all .25s var(--nh-ease);
+}
+.nh-bc-ds a:hover { background: rgba(200, 162, 75, .16); border-color: var(--nh-gold); transform: translateX(6px); color: #fff; }
+.nh-bc-ds__hang { font-family: var(--nh-serif); font-size: 1.35rem; color: var(--nh-gold); width: 2.2rem; text-align: center; }
+.nh-bc-ds img { width: 54px; height: 54px; object-fit: contain; border-radius: 12px; background: rgba(0, 0, 0, .25); }
+.nh-bc-ds__ten { flex: 1; font-weight: 700; font-size: 1.02rem; line-height: 1.3; }
+.nh-bc-ds__ten small { display: block; font-weight: 500; font-size: .8rem; color: rgba(255, 255, 255, .65); margin-top: .15rem; }
+.nh-bc-ds__gia { font-weight: 800; color: var(--nh-gold-soft); white-space: nowrap; }
+
+/* --- Dieu huong slider --- */
+.nh-slider-nav {
+  position: absolute; z-index: 6; bottom: 34px; left: clamp(1.5rem, 3.5vw, 3.5rem);
+  display: flex; align-items: center; gap: .9rem;
+}
+.nh-slider-nav__nut {
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  color: #fff; background: rgba(24, 14, 9, .55); border: 1px solid rgba(200, 162, 75, .45);
+  backdrop-filter: blur(8px); transition: all .2s var(--nh-ease);
+}
+.nh-slider-nav__nut:hover { background: var(--nh-gold); color: #2b1a12; border-color: var(--nh-gold); }
+.nh-slider-nav__nut:focus-visible, .nh-slider-nav__cham button:focus-visible { outline: 2px solid var(--nh-gold); outline-offset: 3px; }
+.nh-slider-nav__cham { display: flex; align-items: center; gap: .15rem; }
+.nh-slider-nav__cham button { background: none; border: 0; padding: 12px 5px; cursor: pointer; }
+.nh-slider-nav__cham span { display: block; position: relative; width: 26px; height: 4px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, .35); transition: width .35s var(--nh-ease); }
+.nh-slider-nav__cham button:hover span { background: rgba(255, 255, 255, .6); }
+.nh-slider-nav__cham .is-active span { width: 56px; }
+.nh-slider-nav__cham i { position: absolute; inset: 0; background: var(--nh-gold); transform: scaleX(0); transform-origin: left; }
+.nh-slider-nav__cham .is-active i { animation: nh-slide-tien var(--nh-slide-time, 6000ms) linear forwards; }
+.nh-hero--slider.is-paused .nh-slider-nav__cham .is-active i { animation-play-state: paused; }
+@keyframes nh-slide-tien { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Giu hieu ung mo dan (khong phai chuyen dong), bo truot va phong to */
+  .nh-slide .nh-hero__inner, .nh-slide__anh { transition: none; transform: none; }
+  .nh-bc-mon img { animation: none; }
+}
+@media (max-width: 1000px) {
+  .nh-km-ve, .nh-bc-mon { display: none; }
+  /* Anh mon / ve giam gia da an: cot chu duoc dung het be ngang thay vi 58vw */
+  .nh-hero--slider .nh-hero__inner { max-width: 100%; }
+}
+@media (max-height: 740px) {
+  .nh-hero--slider .nh-hero__inner { padding-bottom: 96px; }
+}
+@media (max-width: 640px) {
+  .nh-hero--slider .nh-hero__inner { padding-bottom: 90px; }
+  .nh-slider-nav { bottom: 22px; left: 50%; transform: translateX(-50%); }
+  /* Dien thoai: vuot hoac bam cham de chuyen; mui ten se bi bong bong chat che */
+  .nh-slider-nav__nut, .nh-hero--slider .nh-hero__scroll { display: none; }
+  .nh-hero--slider .nh-hero__actions { gap: .8rem; }
+  .nh-hero--slider .nh-hero__actions .nh-btn { width: 100%; justify-content: center; padding: 1rem 1.2rem; letter-spacing: 1px; font-size: .95rem; }
+  .nh-bc-ds { margin-bottom: 1.6rem; }
+  .nh-bc-ds a { padding: .45rem .7rem .45rem .5rem; gap: .6rem; }
+  .nh-bc-ds img { width: 44px; height: 44px; }
+  .nh-bc-ds__ten { font-size: .9rem; }
+}
+
+/* ==========================================================================
+   O NHAP TREN DIEN THOAI: toi thieu 16px
+   ==========================================================================
+   iOS Safari tu phong to CA TRANG khi cham vao o nhap co chu nho hon 16px, va
+   khong tu thu nho lai sau khi go xong - khach phai tu chum ngon tay. */
+@media (max-width: 767.98px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]), select, textarea { font-size: 16px !important; }
+}
+
+/* Vung cham toi thieu tren dien thoai (~40-44px): nut "Dat mon" tren the mon
+   chi cao 19px, cham troi vao the ben canh. Mo rong vung cham bang padding,
+   khong doi kich thuoc chu. */
+@media (max-width: 767.98px) {
+  .nh-dish__cta { min-height: 40px; padding: .5rem .9rem .5rem 0; margin-bottom: -.4rem; }
+  .nh-slider-nav__cham button { padding: 18px 5px; }
+  .nh-crumbs a { display: inline-block; padding: .35rem 0; }
+}

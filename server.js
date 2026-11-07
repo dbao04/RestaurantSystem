@@ -56,6 +56,55 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Multer setup cho gửi ảnh / file trong Chat giữa khách hàng và nhân viên
+const chatUploadDir = path.join(__dirname, 'public', 'uploads', 'chat');
+if (!fs.existsSync(chatUploadDir)) {
+  fs.mkdirSync(chatUploadDir, { recursive: true });
+}
+const chatStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    if (!fs.existsSync(chatUploadDir)) {
+      fs.mkdirSync(chatUploadDir, { recursive: true });
+    }
+    cb(null, chatUploadDir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname || '').toLowerCase().replace(/[^.a-z0-9]/g, '');
+    const safeRand = Math.random().toString(36).slice(2, 8);
+    cb(null, `${Date.now()}_${safeRand}${ext}`);
+  }
+});
+const uploadChat = multer({
+  storage: chatStorage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  fileFilter: function (req, file, cb) {
+    const blockedExt = /\.(exe|bat|cmd|sh|php|jsp|asp|aspx|dll|msi|vbs|js)$/i;
+    if (blockedExt.test(file.originalname || '')) {
+      return cb(new Error('Định dạng tệp không được phép tải lên'));
+    }
+    cb(null, true);
+  }
+});
+
+function layThongTinTepChat(file) {
+  if (!file) return null;
+  let tenGoc = file.originalname || 'tep_dinh_kem';
+  try {
+    // Khắc phục lỗi tên file tiếng Việt bị mã hóa latin1 trong multipart header
+    const decoded = Buffer.from(tenGoc, 'latin1').toString('utf8');
+    if (!decoded.includes('\ufffd')) tenGoc = decoded;
+  } catch (_) {}
+  const mime = String(file.mimetype || '').toLowerCase();
+  const ext = path.extname(tenGoc).toLowerCase();
+  const laAnh = mime.startsWith('image/') || /^\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(ext);
+  return {
+    loai_file: laAnh ? 'image' : 'file',
+    duong_dan_file: `/uploads/chat/${file.filename}`,
+    ten_file: tenGoc.slice(0, 250),
+    kich_thuoc_file: file.size || 0
+  };
+}
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -254,6 +303,12 @@ app.use('/', require('./routes/vanChuyen'));
 // Dat ban: trang khach (/dat-ban, /dat-ban/tra-cuu), trung tam nhan vien
 // (/staff/dat-ban) va cau hinh cua quan ly (/admin/dat-ban).
 app.use('/', require('./routes/datBan'));
+// Khong gian nha hang + dat tiec (cuoi, sinh nhat, party) - routes/datTiec.js
+app.use('/', require('./routes/datTiec'));
+// Bao cao thu chi / so quy thu ngan - routes/thuChi.js
+app.use('/', require('./routes/thuChi'));
+// Bep: thong ke, xuat nhap kho, mua hang NVL - routes/khoBep.js
+app.use('/', require('./routes/khoBep'));
 
 // Bao cao cuoi ngay cua Phuc vu & Sanh (/staff/phuc-vu/bao-cao)
 app.use('/', require('./routes/baoCaoPhucVu'));
@@ -273,6 +328,10 @@ realtime.khoiTao(io);
   thanh mot tien trinh cron rieng.
 */
 require('./services/reservationJobs').batDau();
+// Don giao qua han thanh toan truoc -> tu huy (loi khach, khong hoan).
+require('./services/chinhSachGiaoService').batVongQuet();
+// Tu dong phan don giao hang: quet don qua han xac nhan + hang cho moi 30 giay.
+require('./services/phanCongGiaoService').batDau();
 
 // --- Frontend Routes ---
 app.get('/', async (req, res) => {
@@ -364,7 +423,48 @@ app.get('/', async (req, res) => {
   } catch (err) {
     console.error('Không lấy được dữ liệu trang chủ:', err.message);
   }
-  res.render('index', { title: res.locals.t('dieu_huong.trang_chu'), mons, monTrangTri, thongKe });
+
+  /*
+    Du lieu cho SLIDER BANNER. Moi khoi bat loi rieng: thieu khuyen mai hay
+    thieu so lieu ban chay thi chi mat slide do, banner van chay voi cac slide
+    con lai (slide chao mung luon co).
+  */
+  let khuyenMai = [];
+  let banChay = [];
+  try {
+    // Ma giam gia dang chay, cho phep hien cho khach, con luot dung.
+    const [km] = await db.query(`
+      SELECT code, ten, description, discount_type, discount_value, min_order_value,
+             max_discount_amount, DATE_FORMAT(valid_until, '%d/%m/%Y') AS han
+        FROM discount_codes
+       WHERE is_active = 1 AND hien_thi_khach = 1
+         AND NOW() BETWEEN valid_from AND valid_until
+         AND (max_usage IS NULL OR current_usage < max_usage)
+       ORDER BY do_uu_tien DESC, discount_value DESC
+       LIMIT 3`);
+    khuyenMai = km;
+  } catch (err) {
+    console.error('Không lấy được khuyến mãi cho banner:', err.message);
+  }
+  try {
+    // Ban chay THAT (khong ngau nhien): 3 mon an co anh ban nhieu nhat.
+    const [bc] = await db.query(`
+      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon, SUM(h.soluong) AS da_ban
+        FROM hopdong h
+        JOIN monan m ON m.id_mon = h.id_mon
+       WHERE h.tinhtrang = 3 AND m.tinhtrang = 1 AND m.images IS NOT NULL AND m.images <> ''
+         AND m.id_loai NOT IN (SELECT id_loai FROM loai_mon
+             WHERE name_loai LIKE '%uống%' OR name_loai LIKE '%drink%'
+                OR name_loai LIKE '%sake%' OR name_loai LIKE '%beer%')
+       GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
+       ORDER BY da_ban DESC
+       LIMIT 3`);
+    banChay = bc.map((r) => ({ ...r, da_ban: Number(r.da_ban) }));
+  } catch (err) {
+    console.error('Không lấy được món bán chạy cho banner:', err.message);
+  }
+
+  res.render('index', { title: res.locals.t('dieu_huong.trang_chu'), mons, monTrangTri, thongKe, khuyenMai, banChay });
 });
 
 app.get('/about', async (req, res) => {
@@ -636,16 +736,67 @@ app.get('/detail', async (req, res) => {
     // Nguyen lieu de khach tu doi chieu di ung. Mon chua co cong thuc thi tra
     // ve mang rong - trang tu noi la chua cap nhat, khong duoc de trong khong.
     const nguyenLieu = dish ? await menuService.getDishIngredients(dish.id_mon) : [];
+    const diUng = diUngService.phanTich(nguyenLieu);
+
+    // Ten danh muc - de suy luu y (do song, cay...) va vai tro mon khi goi y an kem.
+    let tenLoai = '';
+    if (dish) {
+      const [[l]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [dish.id_loai]);
+      tenLoai = l ? l.name_loai : '';
+    }
+    // Goi y an kem la phan phu: loi o day khong duoc lam hong trang chi tiet.
+    const anKem = dish
+      ? await require('./services/goiYAnKemService').goiY(dish.id_mon, 5).catch((e) => {
+        console.error('Không tính được gợi ý ăn kèm:', e.message);
+        return [];
+      })
+      : [];
+    const luuYMon = require('./services/luuYMonService');
+
     res.render('detail', {
       title: dish ? dish.name_mon : res.locals.t('chi_tiet.tieu_de'),
       dish,
       nguyenLieu,
-      diUng: diUngService.phanTich(nguyenLieu),
+      diUng,
+      moTaDiUng: luuYMon.MO_TA_DI_UNG,
+      luuY: dish ? luuYMon.luuY({ ...dish, name_loai: tenLoai }, nguyenLieu, diUng) : [],
+      anKem,
       thongTinGiao: req.session.thongTinGiao || null
     });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
+  }
+});
+
+/*
+  Them NHIEU mon vao gio mot lan - trang chi tiet mon dung khi khach chon them
+  mon an kem. Tra JSON (khong redirect) de trang tu quyet dinh di tiep dau.
+  Chi nhan mon dang ban; so luong ep ve 1..50 de mot request la khong lam
+  phinh gio hang.
+*/
+app.post('/api/gio-hang/them-nhieu', async (req, res) => {
+  const items = Array.isArray(req.body && req.body.items) ? req.body.items.slice(0, 20) : [];
+  if (!items.length) return res.status(400).json({ ok: false, thong_bao: 'Chưa chọn món nào.' });
+  try {
+    const ids = items.map((x) => Number(x.monid)).filter((n) => Number.isInteger(n) && n > 0);
+    const [dangBan] = ids.length
+      ? await db.query('SELECT id_mon FROM monan WHERE tinhtrang = 1 AND id_mon IN (?)', [ids])
+      : [[]];
+    const hopLe = new Set(dangBan.map((r) => Number(r.id_mon)));
+    let soMon = 0;
+    for (const x of items) {
+      const id = Number(x.monid);
+      if (!hopLe.has(id)) continue;
+      const sl = Math.min(50, Math.max(1, parseInt(x.soluong, 10) || 1));
+      await orderService.addToCart(req.sessionID, id, sl);
+      soMon++;
+    }
+    if (!soMon) return res.status(400).json({ ok: false, thong_bao: 'Món đã chọn hiện không còn phục vụ.' });
+    res.json({ ok: true, so_mon: soMon });
+  } catch (err) {
+    console.error('Lỗi thêm nhiều món vào giỏ:', err);
+    res.status(500).json({ ok: false, thong_bao: 'Hệ thống đang bận, vui lòng thử lại.' });
   }
 });
 
@@ -663,12 +814,13 @@ app.post('/add-to-cart', async (req, res) => {
 app.get('/cart', async (req, res) => {
   try {
     const vanChuyen = require('./services/vanChuyenService');
-    const [cartItems, subtotal, thamSoGiao, nhaHangToaDo, khachHang] = await Promise.all([
+    const [cartItems, subtotal, thamSoGiao, nhaHangToaDo, khachHang, chinhSach] = await Promise.all([
       orderService.getCart(req.sessionID),
       orderService.getCartTotal(req.sessionID),
       vanChuyen.thamSo().catch(() => ({ bat: true, ban_kinh_km: 10, mien_phi_tu: 500000 })),
       vanChuyen.toaDoNhaHang().catch(() => null),
       req.session.userId ? orderService.getUserById(req.session.userId).catch(() => null) : null,
+      require('./services/chinhSachGiaoService').docChinhSach().catch(() => null),
     ]);
 
     const thongTinGiao = req.session.thongTinGiao || null;
@@ -715,6 +867,7 @@ app.get('/cart', async (req, res) => {
         nha_hang: nhaHangToaDo,
       },
       khach: khachHang || null,
+      chinhSach,
     });
   } catch (err) {
     console.error(err);
@@ -884,6 +1037,11 @@ app.post('/datban', requireLogin, async (req, res) => {
           `<script>alert(${JSON.stringify(baoGia.ly_do || 'Không giao được tới địa chỉ này.')}); history.back();</script>`
         );
       }
+      // Chinh sach giao hang: khach phai doc va dong y (thanh toan truoc 100%,
+      // huy do khach khong hoan, loi nha hang hoan diem).
+      if (!req.body.dong_y_chinh_sach) {
+        return res.send('<script>alert("Vui lòng đọc và đồng ý Chính sách giao hàng trước khi đặt đơn."); history.back();</script>');
+      }
     }
 
     // createOrderFromCart giờ trả về uniqueSesis để redirect đúng đơn vừa đặt
@@ -904,7 +1062,10 @@ app.post('/datban', requireLogin, async (req, res) => {
         return res.redirect(`/contract?sesis=${uniqueSesis}`);
       }
 
-      const donGiao = await vanChuyen.taoDonGiao(uniqueSesis, {
+      // CHINH SACH: don giao phai THANH TOAN TRUOC 100% (mon + ship) qua
+      // VietQR. Don nam o 'cho_thanh_toan' - bep chua nau, chua phan shipper -
+      // toi khi tien ve; qua han giu don thi tu huy. Khong con COD.
+      await vanChuyen.taoDonGiao(uniqueSesis, {
         ten_nguoi_nhan: tenNguoiNhan,
         sdt_nguoi_nhan: sdtNguoiNhan,
         dia_chi_giao: diaChiDayDu,
@@ -912,20 +1073,12 @@ app.post('/datban', requireLogin, async (req, res) => {
         kinh_do: kinhDo,
         ghi_chu: ghiChuGiao,
         batBuocTrongVung: true,
+        choThanhToan: true,
         ten_nguoi: req.session.username,
       });
 
       realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
-
-      // Xoa thong tin tam sau khi dat don thanh cong
-      const phuongThucTT = String(req.body.phuong_thuc_tt || 'tien_mat').toLowerCase();
-
-      // Nếu chọn chuyển khoản VietQR thì chuyển tới trang thanh toán QR trước
-      if (phuongThucTT === 'vietqr') {
-        return res.redirect(`/thanh-toan/don-hang/${uniqueSesis}`);
-      }
-
-      return res.redirect(`/theo-doi/${donGiao.ma_giao}`);
+      return res.redirect(`/thanh-toan/don-hang/${uniqueSesis}`);
     }
 
     res.redirect(`/contract?sesis=${uniqueSesis}`);
@@ -944,6 +1097,18 @@ app.post('/datban', requireLogin, async (req, res) => {
   trong mot ma QR da in ra giay - nhung thu khong thu hoi lai duoc.
 */
 app.get('/reservation', (req, res) => res.redirect(301, '/dat-ban'));
+
+// Chinh sach giao hang: phi ship bac thang, thanh toan truoc, huy & hoan diem.
+// Doc thang tu cau hinh nen doi bang gia o quan tri la trang nay doi theo.
+app.get('/chinh-sach-giao-hang', async (req, res) => {
+  try {
+    const chinhSach = await require('./services/chinhSachGiaoService').docChinhSach();
+    res.render('chinh-sach-giao-hang', { title: 'Chính sách giao hàng', chinhSach });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
 app.get('/reservation/tra-cuu', (req, res) => res.redirect(301, '/dat-ban/tra-cuu'));
 
 app.get('/contract', requireLogin, async (req, res) => {
@@ -2023,26 +2188,53 @@ app.get('/chat', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/chat/send', requireLogin, async (req, res) => {
-  const { noi_dung } = req.body;
+app.post('/chat/send', requireLogin, (req, res, next) => {
+  uploadChat.single('tep_dinh_kem')(req, res, (err) => {
+    if (err) {
+      if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+        return res.status(400).json({ success: false, message: err.message || 'Lỗi tải tệp lên' });
+      }
+      return res.redirect('/chat');
+    }
+    next();
+  });
+}, async (req, res) => {
+  const noi_dung = String((req.body && req.body.noi_dung) || '').trim();
+  const tep = layThongTinTepChat(req.file);
+  if (!noi_dung && !tep) {
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(400).json({ success: false, message: 'Tin nhắn trống' });
+    }
+    return res.redirect('/chat');
+  }
   try {
     const userId = req.session.userId;
-    const msg = await engagementService.sendMessage(userId, null, noi_dung, 'khach');
+    const msgId = await engagementService.sendMessage(userId, null, noi_dung, 'khach', tep);
 
-    // Emit real-time message
-    io.to(`room_${userId}`).emit('new-message', {
+    const payload = {
+      id_chat: msgId,
       noi_dung: noi_dung,
       nguoi_gui: 'khach',
       thoigian: new Date(),
-      ten_kh: req.session.username
-    });
+      ten_kh: req.session.username,
+      loai_file: tep ? tep.loai_file : null,
+      duong_dan_file: tep ? tep.duong_dan_file : null,
+      ten_file: tep ? tep.ten_file : null,
+      kich_thuoc_file: tep ? tep.kich_thuoc_file : null
+    };
 
-    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-      return res.json({ success: true });
+    // Emit real-time message
+    io.to(`room_${userId}`).emit('new-message', payload);
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: payload });
     }
     res.redirect('/chat');
   } catch (err) {
     console.error(err);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    }
     res.redirect('/chat');
   }
 });
@@ -3180,25 +3372,53 @@ app.get('/staff/chat/:id_kh', requireRole(['Quay', 'Phuc vu', 'Quan ly']), async
   }
 });
 
-app.post('/staff/chat/send', requireStaff, async (req, res) => {
-  const { id_kh, noi_dung } = req.body;
+app.post('/staff/chat/send', requireStaff, (req, res, next) => {
+  uploadChat.single('tep_dinh_kem')(req, res, (err) => {
+    if (err) {
+      if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+        return res.status(400).json({ success: false, message: err.message || 'Lỗi tải tệp lên' });
+      }
+      return res.redirect('/staff/chat');
+    }
+    next();
+  });
+}, async (req, res) => {
+  const id_kh = req.body && req.body.id_kh;
+  const noi_dung = String((req.body && req.body.noi_dung) || '').trim();
+  const tep = layThongTinTepChat(req.file);
+  if (!id_kh || (!noi_dung && !tep)) {
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(400).json({ success: false, message: 'Thiếu nội dung hoặc tệp đính kèm' });
+    }
+    return res.redirect('/staff/chat/' + (id_kh || ''));
+  }
   try {
-    await engagementService.sendMessage(id_kh, req.session.staffId, noi_dung, 'nhanvien');
+    const msgId = await engagementService.sendMessage(id_kh, req.session.staffId, noi_dung, 'nhanvien', tep);
 
-    // Emit real-time message to the specific customer room
-    io.to(`room_${id_kh}`).emit('new-message', {
+    const payload = {
+      id_chat: msgId,
       noi_dung: noi_dung,
       nguoi_gui: 'nhanvien',
       thoigian: new Date(),
-      ten_nv: req.session.staffName
-    });
+      ten_nv: req.session.staffName,
+      loai_file: tep ? tep.loai_file : null,
+      duong_dan_file: tep ? tep.duong_dan_file : null,
+      ten_file: tep ? tep.ten_file : null,
+      kich_thuoc_file: tep ? tep.kich_thuoc_file : null
+    };
 
-    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-      return res.json({ success: true });
+    // Emit real-time message to the specific customer room
+    io.to(`room_${id_kh}`).emit('new-message', payload);
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: payload });
     }
     res.redirect('/staff/chat/' + id_kh);
   } catch (err) {
     console.error(err);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
+    }
     res.redirect('/staff/chat');
   }
 });

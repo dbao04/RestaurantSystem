@@ -491,6 +491,21 @@ module.exports = function (io) {
     res.json({ thanhCong: true, ...daXacNhan });
   }));
 
+  // Hoàn tất hóa đơn đã đủ tiền từ tiền đặt cọc (và hoàn trả tiền cọc dư nếu khách dùng ít hơn mức cọc)
+  router.post('/staff/thanh-toan/:sesis/hoan-tat-coc', requireThuNgan, batJson(async (req, res) => {
+    const kq = await tt.hoanTatBangTienCoc(req.params.sesis, {
+      nhanVienId: req.session.staffId || null,
+    });
+    await ghiNhatKy(req, 'hoan_tat_bang_tien_coc', 0, { sesis: req.params.sesis, ...kq });
+    phat(req.params.sesis, 'tt:da-thanh-toan', {
+      sesis: req.params.sesis,
+      soTien: 0,
+      donDaTraDu: true,
+      tienHoanCocThua: kq.tienHoanCocThua,
+    });
+    res.json({ thanhCong: true, ...kq });
+  }));
+
   /* ======================================================================== */
   /* KHACH TU THANH TOAN TAI BAN (quet QR, khong can dang nhap)              */
   /* ======================================================================== */
@@ -665,7 +680,7 @@ module.exports = function (io) {
     const preorders = r.mon_dat_truoc || [];
     const tongTienMon = preorders.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
     const tienCoc = Number(r.deposit_amount) || 0;
-    const tongThanhToan = tienCoc > 0 ? tienCoc : (tongTienMon > 0 ? tongTienMon : 0);
+    const tongThanhToan = Math.max(tienCoc, tongTienMon);
 
     // Nếu không cần cọc và không có món gọi trước hoặc đã thanh toán cọc
     if (tongThanhToan <= 0 || r.deposit_status === 'PAID') {
@@ -710,7 +725,7 @@ module.exports = function (io) {
     const preorders = await db.query('SELECT price, quantity FROM reservation_preorders WHERE reservation_id = ?', [r.id]).then(([rows]) => rows).catch(() => []);
     const tongTienMon = preorders.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
     const tienCoc = Number(r.deposit_amount) || 0;
-    const tongThanhToan = tienCoc > 0 ? tienCoc : (tongTienMon > 0 ? tongTienMon : 0);
+    const tongThanhToan = Math.max(tienCoc, tongTienMon);
 
     // Xác nhận cọc và chuyển trạng thái sang CONFIRMED
     await dv.luuCoc(r.id, {
@@ -734,89 +749,102 @@ module.exports = function (io) {
   /* THANH TOAN TRUC TUYEN / GIAO HANG VIETQR TRUOC KHI XAC NHAN             */
   /* ======================================================================== */
 
-  router.get('/thanh-toan/don-hang/:sesis', requireKhachDangNhap, bat(async (req, res) => {
-    const sesis = req.params.sesis;
+  /*
+   * CHINH SACH: don giao phai tra truoc 100% (mon + ship). So tien LUON do
+   * server tinh tu hoa don (layHoaDon da cong phi ship), khong nhan tu trinh
+   * duyet - khach sua so trong DevTools cung chi tao duoc phien dung gia.
+   * Khach co the tru bang diem tich luy / diem hoan (toi da theo cau hinh
+   * `toi_da_diem_moi_don` % tien mon).
+   */
+  async function donGiaoCuaKhach(req, sesis) {
     const [[don]] = await db.query(
       'SELECT sesis, id_user, tinhtrang, loai_don FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]
     );
-    if (!don) return res.status(404).render('error', { title: 'Không tìm thấy', message: 'Đơn hàng không tồn tại.', statusCode: 404 });
-    if (don.id_user !== req.session.userId) {
-      return res.status(403).render('error', { title: 'Không có quyền', message: 'Đơn này không thuộc tài khoản của bạn.', statusCode: 403 });
-    }
-
+    if (!don) return { loi: 404, thongBao: 'Đơn hàng không tồn tại.' };
+    if (don.id_user !== req.session.userId) return { loi: 403, thongBao: 'Đơn này không thuộc tài khoản của bạn.' };
     const [[dg]] = await db.query('SELECT * FROM don_giao_hang WHERE sesis = ? LIMIT 1', [sesis]);
-    const hoaDon = await tt.layHoaDon(sesis, { goiY: false });
-    const phiShip = dg ? Number(dg.phi_giao || 0) : 0;
-    const [tienMonRow] = await db.query('SELECT SUM(thanhtien) AS tong_mon FROM hopdong WHERE sesis = ?', [sesis]);
-    const tienMon = Number(tienMonRow[0] && tienMonRow[0].tong_mon) || 0;
-    const tongThanhToan = tienMon + phiShip;
+    return { don, dg };
+  }
 
-    // Nếu đã thanh toán đủ rồi thì chuyển luôn tới trang theo dõi
-    if (hoaDon.tien.da_tra_du && dg && dg.ma_giao) {
-      return res.redirect(`/theo-doi/${dg.ma_giao}`);
+  router.get('/thanh-toan/don-hang/:sesis', requireKhachDangNhap, bat(async (req, res) => {
+    const sesis = req.params.sesis;
+    const kt = await donGiaoCuaKhach(req, sesis);
+    if (kt.loi) {
+      return res.status(kt.loi).render('error', { title: 'Không xem được đơn', message: kt.thongBao, statusCode: kt.loi });
     }
+    const dg = kt.dg;
+    // Da tra xong / da huy / don cu khong qua buoc tra truoc -> sang trang theo doi.
+    if (dg && dg.trang_thai !== 'cho_thanh_toan') return res.redirect(`/theo-doi/${dg.ma_giao}`);
 
-    // Tự động tạo phiên và sinh mã QR ngay trên server
+    const diemDung = Math.max(0, parseInt(req.query.diem, 10) || 0);
+    const hoaDon = await tt.layHoaDon(sesis, { goiY: false, diemDung });
+    const t = hoaDon.tien;
+    if (t.con_phai_tra <= 0 && dg) return res.redirect(`/theo-doi/${dg.ma_giao}`);
+
     let phienMoi = null;
     try {
       phienMoi = await tt.taoPhien({
-        sesis: sesis,
-        soTien: tongThanhToan,
-        maPhuongThuc: 'vietqr',
-        loai: 'thanh_toan',
-        nguon: 'web',
+        sesis, soTien: t.con_phai_tra, diemDung: t.diem_dung,
+        maPhuongThuc: 'vietqr', loai: 'thanh_toan', nguon: 'web',
+        ghiChu: 'Khách thanh toán trước đơn giao hàng',
       });
-      phat(sesis, 'tt:phien-moi', { paymentId: phienMoi.payment.id, sesis: sesis, tuKhach: true });
+      phat(sesis, 'tt:phien-moi', { paymentId: phienMoi.payment.id, sesis, tuKhach: true });
     } catch (e) {
-      console.warn('[thanh-toan-don-hang] Lỗi tạo phiên trước:', e.message);
+      console.warn('[thanh-toan-don-hang] Lỗi tạo phiên:', e.message);
     }
 
+    const [[hanCon]] = dg
+      ? await db.query('SELECT GREATEST(0, TIMESTAMPDIFF(SECOND, NOW(), han_thanh_toan)) AS giay FROM don_giao_hang WHERE id_giao = ?', [dg.id_giao])
+      : [[{ giay: null }]];
+
     res.render('thanh-toan-don-hang', {
-      title: 'Thanh toán chuyển khoản VietQR',
+      title: 'Thanh toán đơn giao hàng',
       hoaDon,
       mon: hoaDon.mon || [],
       donGiao: dg || null,
-      phiShip,
-      tongThanhToan,
+      phiShip: t.phi_giao,
+      tienMon: t.tam_tinh,
+      tienTuDiem: t.tien_tu_diem,
+      diemDung: t.diem_dung,
+      diemDangCo: t.diem_dang_co,
+      diemToiDa: t.diem_toi_da_dung,
+      giaTri1Diem: hoaDon.tyLe ? hoaDon.tyLe.gia_tri_1_diem : 1000,
+      tongThanhToan: t.con_phai_tra,
+      conLaiGiay: hanCon ? hanCon.giay : null,
       qr: phienMoi ? phienMoi.qr : null,
       payment: phienMoi ? phienMoi.payment : null,
       choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
     });
   }));
 
-  router.post('/thanh-toan/don-hang/:sesis/tao-phien', requireKhachDangNhap, batJson(async (req, res) => {
-    const [[don]] = await db.query('SELECT id_user FROM hopdong WHERE sesis = ? LIMIT 1', [req.params.sesis]);
-    if (!don || don.id_user !== req.session.userId) {
-      return res.status(403).json({ loi: 'Đơn này không thuộc tài khoản của bạn.' });
-    }
-    const kq = await tt.taoPhien({
-      sesis: req.params.sesis,
-      soTien: req.body.so_tien,
-      maPhuongThuc: 'vietqr',
-      loai: 'thanh_toan',
-      nguon: 'web',
-      maGiamGia: req.body.ma_giam_gia || null,
+  // Khach chua tra tien doi y: huy mien phi (chua mat dong nao).
+  router.post('/thanh-toan/don-hang/:sesis/huy', requireKhachDangNhap, batJson(async (req, res) => {
+    const kt = await donGiaoCuaKhach(req, req.params.sesis);
+    if (kt.loi) return res.status(kt.loi).json({ loi: kt.thongBao });
+    if (!kt.dg) return res.status(400).json({ loi: 'Đơn này không phải đơn giao hàng.' });
+    const kq = await require('../services/chinhSachGiaoService').huyDon(kt.dg.id_giao, {
+      laKhach: true, nguoi: { ten: req.session.username || 'Khách hàng' },
     });
-    phat(req.params.sesis, 'tt:phien-moi', { paymentId: kq.payment.id, sesis: req.params.sesis, tuKhach: true });
-    res.json({ thanhCong: true, ...kq });
+    res.json({ thanhCong: true, ma_giao: kt.dg.ma_giao, chinh_sach: kq.chinh_sach });
   }));
 
   router.post('/thanh-toan/don-hang/:sesis/gia-lap', requireKhachDangNhap, batJson(async (req, res) => {
     if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
       return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
     }
-    const [[don]] = await db.query('SELECT id_user FROM hopdong WHERE sesis = ? LIMIT 1', [req.params.sesis]);
-    if (!don || don.id_user !== req.session.userId) {
-      return res.status(403).json({ loi: 'Đơn này không thuộc tài khoản của bạn.' });
+    const sesis = req.params.sesis;
+    const kt = await donGiaoCuaKhach(req, sesis);
+    if (kt.loi) return res.status(kt.loi).json({ loi: kt.thongBao });
+    if (kt.dg && kt.dg.trang_thai !== 'cho_thanh_toan') {
+      return res.status(400).json({ loi: 'Đơn này không còn chờ thanh toán (đã trả hoặc đã hủy).' });
     }
 
+    const diemDung = Math.max(0, parseInt((req.body || {}).diem_dung, 10) || 0);
+    const hoaDon = await tt.layHoaDon(sesis, { goiY: false, diemDung });
     const kq = await tt.taoPhien({
-      sesis: req.params.sesis,
-      soTien: req.body.so_tien,
-      maPhuongThuc: 'vietqr',
-      loai: 'thanh_toan',
-      nguon: 'web',
-      ghiChu: 'Khách thanh toán chuyển khoản đơn giao hàng',
+      sesis, soTien: hoaDon.tien.con_phai_tra, diemDung: hoaDon.tien.diem_dung,
+      maPhuongThuc: 'vietqr', loai: 'thanh_toan', nguon: 'web',
+      ghiChu: 'Khách thanh toán trước đơn giao hàng (giả lập)',
     });
     const daXacNhan = await tt.xacNhan(kq.payment.id, {
       maGiaoDich: 'SIM-DON-' + Date.now(),
@@ -824,11 +852,8 @@ module.exports = function (io) {
     });
     await ghiNhatKy(req, 'khach_thanh_toan_giao_hang', daXacNhan.payment.id, daXacNhan.payment);
 
-    // Cập nhật trạng thái đơn giao hàng
-    await db.query("UPDATE don_giao_hang SET tien_thu_ho = 0 WHERE sesis = ?", [req.params.sesis]);
-
-    phat(req.params.sesis, 'tt:da-thanh-toan', {
-      paymentId: daXacNhan.payment.id, sesis: req.params.sesis,
+    phat(sesis, 'tt:da-thanh-toan', {
+      paymentId: daXacNhan.payment.id, sesis,
       soTien: Number(daXacNhan.payment.amount), tuKhach: true,
       donDaTraDu: !!daXacNhan.donDaTraDu,
     });

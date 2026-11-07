@@ -15,11 +15,12 @@
 
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Danh sách các loại món hiện có</h6>
+        <h6 class="m-0 font-weight-bold text-primary mb-2">Danh sách các loại món hiện có</h6>
+        <div class="d-flex align-items-center flex-wrap"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#bangLoaiMon" data-tim-dem="#demLoaiMon" placeholder="Tìm loại món..." aria-label="Tìm loại món..."></div><small class="text-muted ml-2" id="demLoaiMon"></small></div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
+            <table class="table table-bordered" id="bangLoaiMon" width="100%" cellspacing="0">
                 <thead>
                     <tr>
                         <th>ID</th>

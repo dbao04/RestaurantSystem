@@ -1,0 +1,76 @@
+<%
+  var p = ct.p, laNhap = ct.loai === 'nhap';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN'); };
+  var soVN = function (n) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 3 }); };
+  var ngay = function (d) { if (!d) return ''; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var t = new Date(p.thoi_diem || p.ngay_nhap);
+  var tong = laNhap ? Number(p.tong_tien) : Number(p.tong_gia_tri);
+%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= laNhap ? 'Phiếu nhập kho' : 'Phiếu xuất kho' %> <%= p.ma_phieu %></title>
+  <style>
+    @page { size: A4; margin: 12mm; }
+    body { font-family: "Times New Roman", Times, serif; color: #111; background: #eee; margin: 0; font-size: 14px; }
+    .to { background: #fff; max-width: 900px; margin: 16px auto; padding: 24px 30px; box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+    .dau { display: flex; justify-content: space-between; gap: 12px; }
+    .dau .mau { text-align: center; font-size: 12px; }
+    h1 { text-align: center; margin: 14px 0 2px; font-size: 24px; letter-spacing: 1px; }
+    .ngay { text-align: center; font-style: italic; }
+    .so { text-align: center; margin: 4px 0 14px; font-size: 13px; }
+    .dong { margin: 5px 0; } .dong b { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    th, td { border: 1px solid #555; padding: 5px 7px; }
+    th { background: #f2f2f2; } td.s { text-align: right; white-space: nowrap; }
+    .ky { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; margin-top: 26px; font-size: 13px; }
+    .ky b { display: block; } .ky i { font-size: 11.5px; } .ky .ten { margin-top: 58px; font-weight: 600; }
+    .nut { text-align: center; margin: 14px; font-family: system-ui, sans-serif; }
+    .nut button { padding: 10px 22px; border: 0; border-radius: 8px; background: #2b1a12; color: #f3dfa6; font-size: 15px; cursor: pointer; margin: 0 4px; }
+    .bang-cuon { overflow-x: auto; }
+    @media print { body { background: #fff; } .to { box-shadow: none; margin: 0; max-width: none; } .nut { display: none; } }
+    @media (max-width: 600px) { .to { padding: 14px; } .ky { grid-template-columns: 1fr 1fr; row-gap: 12px; } table { min-width: 560px; } }
+  </style>
+</head>
+<body>
+  <div class="nut"><button type="button" onclick="window.print()">🖨 In phiếu</button><button type="button" onclick="window.close()">Đóng</button></div>
+  <div class="to">
+    <div class="dau">
+      <div><b>NHÀ HÀNG BẢO ĐOÀN</b><br><span style="font-size:12.5px">Bộ phận: Bếp &amp; Kho</span></div>
+      <div class="mau"><b>Mẫu số <%= laNhap ? '01-VT' : '02-VT' %></b><br><i>(Ban hành theo TT 133/2016/TT-BTC)</i></div>
+    </div>
+    <h1><%= laNhap ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO' %></h1>
+    <div class="ngay">Ngày <%= t.getDate() %> tháng <%= t.getMonth() + 1 %> năm <%= t.getFullYear() %></div>
+    <div class="so">Số: <b><%= p.ma_phieu %></b><%= p.ma_don ? ' · Theo đơn mua ' + p.ma_don : '' %></div>
+
+    <% if (laNhap) { %>
+      <div class="dong">Nhà cung cấp: <b><%= p.ten_ncc || 'Mua lẻ' %></b><%= p.sodienthoai ? ' – ĐT: ' + p.sodienthoai : '' %></div>
+    <% } else { %>
+      <div class="dong">Lý do xuất: <b><%= p.ten_ly_do %></b></div>
+    <% } %>
+    <div class="dong">Ghi chú: <b><%= p.ghi_chu || '' %></b></div>
+    <div class="dong">Người lập: <b><%= p.nguoi || '' %></b></div>
+
+    <div class="bang-cuon"><table>
+      <thead><tr><th>STT</th><th>Tên nguyên liệu</th><th>ĐVT</th><% if (laNhap) { %><th>Số lô</th><th>Hạn dùng</th><% } else { %><th>Ghi chú</th><% } %><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+      <tbody>
+        <% ct.dong.forEach(function (d, i) { var sl = Number(d.so_luong); var dg = laNhap ? Number(d.gia_nhap) : (sl ? Number(d.gia_tri) / sl : 0); %>
+          <tr><td class="s"><%= i + 1 %></td><td><%= d.ten_nl %></td><td><%= d.ten_dvt || '' %></td>
+            <% if (laNhap) { %><td><%= d.so_lo || '' %></td><td><%= ngay(d.han_su_dung) %></td><% } else { %><td><%= d.ghi_chu || '' %></td><% } %>
+            <td class="s"><%= soVN(sl) %></td><td class="s"><%= vnd(dg) %></td><td class="s"><%= vnd(laNhap ? d.thanh_tien : d.gia_tri) %></td></tr>
+        <% }) %>
+        <tr><td colspan="<%= laNhap ? 7 : 6 %>" style="text-align:right"><b>Cộng</b></td><td class="s"><b><%= vnd(tong) %></b></td></tr>
+      </tbody>
+    </table></div>
+    <div class="dong" style="margin-top:10px">Tổng số tiền: <b><%= vnd(tong) %> đồng</b></div>
+
+    <div class="ky">
+      <div><b>Người lập phiếu</b><i>(Ký, họ tên)</i><div class="ten"><%= p.nguoi || '' %></div></div>
+      <div><b><%= laNhap ? 'Người giao hàng' : 'Người nhận / chứng kiến' %></b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
+      <div><b>Thủ kho</b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
+      <div><b>Bếp trưởng</b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
+    </div>
+  </div>
+</body>
+</html>

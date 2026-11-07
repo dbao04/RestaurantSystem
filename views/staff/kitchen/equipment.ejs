@@ -15,11 +15,12 @@
 
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Danh sách tài sản & công cụ dụng cụ</h6>
+        <h6 class="m-0 font-weight-bold text-primary mb-2">Danh sách tài sản & công cụ dụng cụ</h6>
+        <div class="d-flex align-items-center flex-wrap"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#bangThietBi" data-tim-dem="#demThietBi" placeholder="Tìm thiết bị, tình trạng..." aria-label="Tìm thiết bị, tình trạng..."></div><small class="text-muted ml-2" id="demThietBi"></small></div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+            <table class="table table-bordered table-hover" id="bangThietBi" width="100%" cellspacing="0">
                 <thead>
                     <tr>
                         <th>Tên thiết bị</th>

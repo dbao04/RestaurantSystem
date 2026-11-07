@@ -174,6 +174,15 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
 
   const tamTinh = mon.reduce((t, m) => t + Number(m.thanhtien || 0), 0);
 
+  // Don giao hang: phi ship la mot phan cua hoa don khach phai tra truoc. Cong
+  // thang vao tong, KHONG chiu phi phuc vu / VAT va khong duoc giam bang ma hay
+  // diem (ma giam gia va tran diem chi tinh tren tien mon).
+  const [[dongGiao]] = await db.query(
+    'SELECT phi_giao FROM don_giao_hang WHERE sesis = ? LIMIT 1', [sesis]
+  ).catch(() => [[null]]);
+  const phiGiao = dongGiao ? Math.round(Number(dongGiao.phi_giao) || 0) : 0;
+  const laDonGiao = !!dongGiao;
+
   // --- Ho so khach: diem tich luy + hang thanh vien ---
   // Khach vang lai tu QR (sodienthoai dang 'QR_xxx') khong co tai khoan that
   // nen khong cho dung diem - neu khong moi ban se chung mot vi diem.
@@ -274,18 +283,24 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
   // Phan mon khach da thanh toan truoc khi dat ban (tienDaCoc) da chot gia luc
   // dat ban, khong tinh thue VAT hay lam tron chong len phan da tra do nua.
   const phanChuaTraTruoc = Math.max(0, tamTinh - tienDaCoc);
-  const phiPhucVu = Math.round(phanChuaTraTruoc * Number(ch.phi_phuc_vu) / 100);
+  // Giao hang khong co phuc vu tai ban -> khong thu phi phuc vu.
+  const phiPhucVu = laDonGiao ? 0 : Math.round(phanChuaTraTruoc * Number(ch.phi_phuc_vu) / 100);
   const thueVat = Math.round((phanChuaTraTruoc + phiPhucVu) * Number(ch.thue_vat) / 100);
 
-  const tongTruocLamTron = tamTinh + phiPhucVu + thueVat;
-  const tongCong = phanChuaTraTruoc > 0
+  const tongTruocLamTron = tamTinh + phiPhucVu + thueVat + phiGiao;
+  const tongCong = (phanChuaTraTruoc > 0
     ? tienDaCoc + lamTronLen(phanChuaTraTruoc + phiPhucVu + thueVat, Number(ch.lam_tron))
-    : tamTinh;
+    : tamTinh) + phiGiao;
   const tienLamTron = Math.max(0, tongCong - tongTruocLamTron);
 
   // Giam gia / diem cua phien DANG DUNG (chua ghi vao payments) tru them.
   const conPhaiTra = Math.max(0, tongCong - daThuTien - daGiamTruocDo - giamGia - tienTuDiem);
   const daThanhToan = daThuTien;
+  // Truong hop khach dat tiec (>= 15 nguoi coc 150k/nguoi) nhung dung mon thuc te thap hon tien da coc:
+  // tinh so tien coc du can hoan lai cho khach luc thanh toan.
+  const tienHoanCocThua = tongCong > 0 && tienDaCoc > tongCong
+    ? Math.max(0, daThuTien - tongCong)
+    : 0;
 
   // --- Phien dang cho (QR chua quet) ---
   const [dangCho] = await db.query(
@@ -327,6 +342,8 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
       tien_tu_diem: tienTuDiem,
       phi_phuc_vu: phiPhucVu,
       thue_vat: thueVat,
+      phi_giao: phiGiao,
+      la_don_giao: laDonGiao,
       tien_lam_tron: tienLamTron,
       tong_cong: tongCong,
       da_thanh_toan: daThanhToan,
@@ -334,7 +351,10 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
       da_giam_truoc_do: daGiamTruocDo,
       so_lan_da_tra: Number(daTra.so_lan || 0),
       con_phai_tra: conPhaiTra,
-      da_tra_du: conPhaiTra <= 0 && tongCong > 0,
+      tien_hoan_coc_thua: tienHoanCocThua,
+      // Don giao da tra du van chua "xong" (tinhtrang 3 chi dat khi giao toi noi).
+      da_tra_du: conPhaiTra <= 0 && tongCong > 0 && (laDonGiao || Number(thongTin.tinhtrang) === 3),
+      du_tien_coc: conPhaiTra <= 0 && tongCong > 0 && Number(thongTin.tinhtrang) !== 3,
     },
     khuyenMai: khuyenMaiGoiY,
     tyLe: {
@@ -619,7 +639,13 @@ async function hauKyThanhToan(paymentId, { maGiamGia = null, diemDung = 0 } = {}
   // Dat coc KHONG dong don: khach moi tra truoc mot phan, van con phai den an.
   if (p.loai === 'thanh_toan') {
     const hoaDon = await layHoaDon(p.sesis);
-    if (hoaDon.tien.con_phai_tra <= 0) {
+    if (hoaDon.tien.la_don_giao) {
+      // Don giao: KHONG dong don (tinhtrang 3) o day - bep con phai nau, shipper
+      // con phai giao. Chinh sach giao hang quyet dinh buoc tiep theo.
+      await require('./chinhSachGiaoService').sauKhiThanhToan(p.sesis, hoaDon.tien.con_phai_tra)
+        .catch((e) => console.error('[thanhToan] chinh sach giao hang:', e.message));
+      ketQua.donDaTraDu = hoaDon.tien.con_phai_tra <= 0;
+    } else if (hoaDon.tien.con_phai_tra <= 0) {
       await db.query("UPDATE hopdong SET tinhtrang = 3 WHERE sesis = ?", [p.sesis]);
       await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [p.sesis]);
       // Tra ban ve trang thai "can don" de tap vu biet ban vua trong.
@@ -1010,13 +1036,66 @@ async function tongHopTheoPhuongThuc({ tuNgay = null, denNgay = null } = {}) {
   return rows;
 }
 
+/**
+ * Hoàn tất hóa đơn đã đủ tiền từ khoản đặt cọc / trả trước, và hoàn trả phần
+ * tiền cọc dư (nếu khách dùng món thực tế thấp hơn tổng tiền đã cọc).
+ */
+async function hoanTatBangTienCoc(sesis, { nhanVienId = null } = {}) {
+  const hoaDon = await layHoaDon(sesis, { goiY: false });
+  if (hoaDon.tien.con_phai_tra > 0) {
+    throw new Error('Hóa đơn vẫn còn ' + hoaDon.tien.con_phai_tra.toLocaleString('vi-VN') + 'đ chưa thanh toán');
+  }
+  const tienHoan = Number(hoaDon.tien.tien_hoan_coc_thua) || 0;
+
+  await db.query("UPDATE hopdong SET tinhtrang = 3 WHERE sesis = ?", [sesis]);
+  await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
+  if (hoaDon.thongTin && hoaDon.thongTin.id_ban) {
+    await db.query('UPDATE ban SET trangthai = 3, sesis_hien_tai = NULL WHERE Id_ban = ?', [hoaDon.thongTin.id_ban]);
+  }
+
+  // Đồng bộ trạng thái lượt đặt bàn sang COMPLETED và lưu số tiền hoàn cọc thừa (nếu có)
+  const [[rsv]] = await db.query('SELECT id, status FROM reservations WHERE reservation_code = ? LIMIT 1', [sesis]).catch(() => [[]]);
+  if (rsv) {
+    if (tienHoan > 0) {
+      await db.query(
+        'UPDATE reservations SET refund_amount = COALESCE(refund_amount, 0) + ?, updated_at = NOW() WHERE id = ?',
+        [tienHoan, rsv.id]
+      ).catch(() => {});
+      await db.query(
+        `INSERT INTO reservation_deposits (reservation_id, amount, status, refunded_at)
+         VALUES (?, ?, 'REFUNDED', NOW())`,
+        [rsv.id, tienHoan]
+      ).catch(() => {});
+      await db.query(
+        `UPDATE payments
+            SET amount = ?,
+                notes = CONCAT(COALESCE(notes, ''), ' | Hoàn tiền cọc dư lúc thanh toán: ', ?, 'đ')
+          WHERE sesis = ? AND loai = 'dat_coc' AND status = 'success'
+          LIMIT 1`,
+        [hoaDon.tien.tong_cong, tienHoan.toLocaleString('vi-VN'), sesis]
+      ).catch(() => {});
+    }
+    if (rsv.status === 'SEATED') {
+      const reservationService = require('./reservationService');
+      await reservationService.doiTrangThai(rsv.id, 'COMPLETED', {
+        nhanVienId,
+        ghiChu: tienHoan > 0
+          ? `Hoàn tất thanh toán — đã hoàn lại tiền cọc dư ${tienHoan.toLocaleString('vi-VN')}đ cho khách`
+          : 'Hoàn tất thanh toán bằng tiền đặt cọc / trả trước',
+      }).catch(() => {});
+    }
+  }
+
+  return { donDaTraDu: true, tienHoanCocThua: tienHoan };
+}
+
 module.exports = {
   // cau hinh
   layCauHinh, luuCauHinh, layTaiKhoanNhan, luuTaiKhoanNhan,
   // hoa don
   layHoaDon, danhSachPhuongThuc, danhSachCanThanhToan,
   // phien
-  taoPhien, xacNhan, huyPhien, trangThaiPhien, donPhienHetHan, hoanTien,
+  taoPhien, xacNhan, huyPhien, trangThaiPhien, donPhienHetHan, hoanTien, hoanTatBangTienCoc,
   // doi soat
   ghiNhanGiaoDichNganHang, danhSachGiaoDichNganHang, doiSoatThuCong, rutMaDoiSoat,
   // bao cao

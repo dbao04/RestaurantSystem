@@ -142,24 +142,38 @@ function bao(suKien, duLieu) {
  * phai san sang ngay - khong phai sau ba vong quay.
  */
 router.get('/dat-ban', bat(async (req, res) => {
-  const [khuVuc, danhMuc, cauHinh, danhMucMon, dsMonAn] = await Promise.all([
+  const [khuVuc, danhMuc, cauHinh, danhMucMon, dsMonAn, chinhSach, quyTacCoc] = await Promise.all([
     xb.docKhuVuc(),
     ch.docDanhMuc(),
     qt.docCauHinh(),
     menuService.getAllCategories().catch(() => []),
     menuService.getAllDishes().catch(() => []),
+    ch.docChinhSachHuy().catch(() => []),
+    ch.docQuyTacCoc().catch(() => []),
   ]);
   const dsMon = (dsMonAn || []).filter((m) => Number(m.tinhtrang) === 1);
   res.render('reservation', {
     title: 'Đặt bàn',
     activeNav: 'datban',
+    khuVucChon: String(req.query.khu_vuc || ''),
     nhan: nhanGiaoDien(res.locals.t),
     homNay: ngayCucBo(),
     khuVuc,
     theYeuCau: danhMuc.the_yeu_cau,
     danhMucMon: danhMucMon || [],
     dsMonAn: dsMon || [],
+    chinhSachHuy: (chinhSach || []).filter((c) => c.is_active),
+    quyTacCoc: (quyTacCoc || []).filter((q) => q.is_active),
     cauHinh: {
+      // Rang buoc quy mo ban - trang tu kiem truoc cho khach thay loi ngay,
+      // server van kiem lai (reservationRules.kiemTraQuyMoBan).
+      quy_mo_ban: {
+        single_table_max_guests: Number(cauHinh.single_table_max_guests),
+        max_extra_seats_single: Number(cauHinh.max_extra_seats_single),
+        max_extra_seats_group: Number(cauHinh.max_extra_seats_group),
+        max_extra_seats_percent: Number(cauHinh.max_extra_seats_percent),
+        max_tables_per_reservation: Number(cauHinh.max_tables_per_reservation) || 4,
+      },
       buoc_gio: Number(cauHinh.slot_step_minutes) || 15,
       toi_da_khach: Number(cauHinh.max_guests_online) || 30,
       toi_da_ngay: Number(cauHinh.max_advance_days) || 90,
@@ -167,9 +181,28 @@ router.get('/dat-ban', bat(async (req, res) => {
       cho_ghep_ban: Number(cauHinh.allow_table_combination) === 1,
       giu_ban_phut: Number(cauHinh.grace_period_minutes) || 15,
       dat_truoc_phut: Number(cauHinh.minimum_lead_minutes) || 30,
+      gio_cao_diem: cauHinh.peak_hours || '18:00-21:00',
+      nguong_tiec: Number(cauHinh.large_group_threshold) || 15,
+      han_coc_phut: Number(cauHinh.deposit_due_minutes) || 60,
     },
   });
 }));
+
+/** Tải Chính sách đặt bàn dạng PDF (sinh bằng: npm run chinhsach:pdf) */
+router.get('/chinh-sach-dat-ban.pdf', (req, res) => {
+  const path = require('path');
+  const tai = req.query.tai === '1';
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${tai ? 'attachment' : 'inline'}; filename="CHINH_SACH_DAT_BAN.pdf"`);
+  res.sendFile(path.join(__dirname, '..', 'public', 'files', 'CHINH_SACH_DAT_BAN.pdf'));
+});
+
+/** Tải văn bản Chính sách đặt bàn dạng file .txt */
+router.get('/chinh-sach-dat-ban.txt', (req, res) => {
+  const path = require('path');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.sendFile(path.join(__dirname, '..', 'CHINH_SACH_DAT_BAN.txt'));
+});
 
 /** Trang xac nhan sau khi dat xong. */
 router.get('/dat-ban/xong', bat(async (req, res) => {

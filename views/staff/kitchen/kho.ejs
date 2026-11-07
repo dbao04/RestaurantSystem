@@ -1,0 +1,148 @@
+<%
+  var activePage = 'kho-bep';
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n, k) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: k == null ? 2 : k }); };
+  var ngayVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var tgVN = function (d) { var x = new Date(d); return ngayVN(d) + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); };
+  var qs = function (o) { var x = Object.assign({ tu: tu, den: den, loai: loai, ly_do: lyDo }, o || {}); return Object.keys(x).filter(function (k) { return x[k]; }).map(function (k) { return k + '=' + encodeURIComponent(x[k]); }).join('&'); };
+  var tongNhap = soKho.filter(function (p) { return p.loai === 'nhap'; }).reduce(function (s, p) { return s + p.gia_tri; }, 0);
+  var tongXuat = soKho.filter(function (p) { return p.loai === 'xuat'; }).reduce(function (s, p) { return s + p.gia_tri; }, 0);
+  var loHet = lo.filter(function (l) { return l.con_ngay != null && l.con_ngay < 0; }).length;
+  var loSap = lo.filter(function (l) { return l.con_ngay != null && l.con_ngay >= 0 && l.con_ngay <= 3; }).length;
+  var giaTriTon = nvl.reduce(function (s, n) { return s + Math.max(0, n.so_luong) * n.gia_von; }, 0);
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-right-left text-warning"></i> Xuất nhập kho bếp</h1>
+    <div class="kb-phu">Phiếu nhập theo lô & hạn dùng, phiếu xuất hư hỏng / hao hụt / nội bộ, theo dõi lô sắp hết hạn.</div>
+  </div>
+  <div class="kb-nut">
+    <a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Lập phiếu nhập</a>
+    <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Lập phiếu xuất</a>
+    <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cart-flatbed"></i> Mua hàng</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#1f7a4a"><div class="kb-kpi__n">Nhập trong kỳ</div><div class="kb-kpi__v"><%= vnd(tongNhap) %></div><div class="kb-kpi__s"><%= soKho.filter(function (p) { return p.loai === 'nhap'; }).length %> phiếu nhập</div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#b3352c"><div class="kb-kpi__n">Xuất ngoài bán hàng</div><div class="kb-kpi__v"><%= vnd(tongXuat) %></div><div class="kb-kpi__s"><%= soKho.filter(function (p) { return p.loai === 'xuat'; }).length %> phiếu xuất</div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#475569"><div class="kb-kpi__n">Giá trị tồn kho</div><div class="kb-kpi__v"><%= vnd(giaTriTon) %></div><div class="kb-kpi__s"><%= nvl.length %> nguyên liệu</div></div></div>
+  <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#c2410c"><div class="kb-kpi__n">Lô cần chú ý</div><div class="kb-kpi__v"><%= loHet + loSap %> lô</div><div class="kb-kpi__s"><%= loHet %> quá hạn · <%= loSap %> còn ≤ 3 ngày</div></div></div>
+</div>
+
+<div class="kb-tab">
+  <a href="?<%= qs({ tab: '' }) %>" class="<%= tab === 'so' ? 'is-on' : '' %>"><i class="fas fa-book"></i> Sổ xuất nhập</a>
+  <a href="?<%= qs({ tab: 'lo' }) %>" class="<%= tab === 'lo' ? 'is-on' : '' %>"><i class="fas fa-hourglass-half"></i> Lô hàng & hạn dùng <% if (loHet + loSap) { %><span class="badge badge-danger"><%= loHet + loSap %></span><% } %></a>
+  <a href="?<%= qs({ tab: 'ton' }) %>" class="<%= tab === 'ton' ? 'is-on' : '' %>" onclick="event.preventDefault();document.getElementById('khoiTon').scrollIntoView({behavior:'smooth'})"><i class="fas fa-boxes-stacked"></i> Thẻ kho (tồn hiện tại)</a>
+</div>
+
+<% if (tab === 'so') { %>
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form class="kb-loc mb-3" method="get">
+      <input type="date" name="tu" value="<%= tu %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+      <span class="text-muted">→</span>
+      <input type="date" name="den" value="<%= den %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
+      <select name="loai" class="form-control form-control-sm" style="width:auto" aria-label="Loại phiếu">
+        <option value="">Nhập & xuất</option><option value="nhap" <%= loai === 'nhap' ? 'selected' : '' %>>Chỉ phiếu nhập</option><option value="xuat" <%= loai === 'xuat' ? 'selected' : '' %>>Chỉ phiếu xuất</option>
+      </select>
+      <select name="ly_do" class="form-control form-control-sm" style="width:auto" aria-label="Lý do xuất">
+        <option value="">Mọi lý do xuất</option>
+        <% Object.keys(lyDoXuat).forEach(function (k) { %><option value="<%= k %>" <%= lyDo === k ? 'selected' : '' %>><%= lyDoXuat[k].ten %></option><% }) %>
+      </select>
+      <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Lọc</button>
+      <input type="search" class="form-control form-control-sm ml-md-auto" style="max-width:260px" data-tim-kiem="#bangSoKho" data-tim-dem="#demSoKho" placeholder="Tìm mã phiếu, NCC, ghi chú..." aria-label="Tìm trong sổ kho">
+      <small class="text-muted" id="demSoKho"></small>
+    </form>
+    <div class="table-responsive">
+      <table class="table table-hover kb-bang mb-0" id="bangSoKho">
+        <thead class="thead-light"><tr><th>Thời điểm</th><th>Mã phiếu</th><th>Loại / lý do</th><th>Đối tác / ghi chú</th><th>Người lập</th><th class="so">Số dòng</th><th class="so">Giá trị</th><th></th></tr></thead>
+        <tbody>
+          <% soKho.forEach(function (p) { %>
+            <tr>
+              <td class="text-nowrap"><%= tgVN(p.thoi_diem) %></td>
+              <td><span class="kb-ma"><%= p.ma_phieu %></span><% if (p.ma_don) { %><br><small class="text-muted">từ đơn <%= p.ma_don %></small><% } %></td>
+              <td><span class="kb-nhan <%= p.loai %>"><%= p.loai === 'nhap' ? 'NHẬP' : 'XUẤT' %></span> <% if (p.loai === 'xuat') { %><small><%= p.ten_loai %></small><% } %></td>
+              <td class="small"><%= p.ten_ncc || '' %><%= p.ten_ncc && p.ghi_chu ? ' · ' : '' %><span class="text-muted"><%= p.ghi_chu || '' %></span></td>
+              <td class="small"><%= p.nguoi || '—' %></td>
+              <td class="so"><%= p.so_dong %></td>
+              <td class="so font-weight-bold <%= p.loai === 'nhap' ? 'text-success' : 'text-danger' %>"><%= vnd(p.gia_tri) %></td>
+              <td><a class="btn btn-sm btn-light" href="/staff/kitchen/kho/phieu/<%= p.loai %>/<%= p.id %>" target="_blank" title="Xem / in phiếu" aria-label="Xem phiếu <%= p.ma_phieu %>"><i class="fas fa-print"></i></a></td>
+            </tr>
+          <% }) %>
+          <% if (!soKho.length) { %><tr data-tim-bo-qua><td colspan="8" class="kb-rong">Không có phiếu nào trong khoảng này.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } else if (tab === 'lo') { %>
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center mb-3" style="gap:.5rem">
+      <input type="search" class="form-control form-control-sm" style="max-width:300px" data-tim-kiem="#bangLo" data-tim-dem="#demLo" placeholder="Tìm nguyên liệu, số lô, NCC..." aria-label="Tìm lô hàng">
+      <small class="text-muted" id="demLo"></small>
+      <span class="ml-auto small text-muted">Bếp trừ lô theo nguyên tắc <b>hết hạn trước – xuất trước</b> mỗi khi hoàn thành món trên KDS.</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover kb-bang mb-0" id="bangLo">
+        <thead class="thead-light"><tr><th>Nguyên liệu</th><th>Số lô / phiếu</th><th>Nhà cung cấp</th><th>Ngày nhập</th><th>Hạn dùng</th><th class="so">Còn lại</th><th class="so">Giá trị</th><th></th></tr></thead>
+        <tbody>
+          <% lo.forEach(function (l) { var het = l.con_ngay != null && l.con_ngay < 0, sap = l.con_ngay != null && l.con_ngay >= 0 && l.con_ngay <= 3; %>
+            <tr class="<%= het ? 'table-danger' : sap ? 'table-warning' : '' %>">
+              <td><b><%= l.ten_nl %></b></td>
+              <td class="small"><span class="kb-ma"><%= l.so_lo %></span><br><span class="text-muted"><%= l.ma_phieu %></span></td>
+              <td class="small"><%= l.ten_ncc || '—' %></td>
+              <td class="small"><%= ngayVN(l.ngay_nhap) %></td>
+              <td class="text-nowrap"><%= ngayVN(l.han_su_dung) %><br>
+                <% if (het) { %><span class="kb-nhan do">Quá hạn <%= -l.con_ngay %> ngày</span><% } else if (sap) { %><span class="kb-nhan cam"><%= l.con_ngay === 0 ? 'Hết hạn hôm nay' : 'Còn ' + l.con_ngay + ' ngày' %></span><% } else if (l.con_ngay != null) { %><span class="kb-nhan xanh">Còn <%= l.con_ngay %> ngày</span><% } %></td>
+              <td class="so"><b><%= soVN(l.so_luong_con_lai) %></b> <span class="text-muted small"><%= l.ten_dvt %></span></td>
+              <td class="so"><%= vnd(l.so_luong_con_lai * l.gia_nhap) %></td>
+              <td><% if (het || sap) { %><a class="btn btn-sm btn-outline-danger text-nowrap" href="/staff/kitchen/kho/xuat/moi?nl=<%= l.id_nl %>&ly_do=<%= het ? 'het_han' : 'hu_hong' %>&sl=<%= l.so_luong_con_lai %>"><i class="fas fa-trash"></i> Xuất hủy</a><% } %></td>
+            </tr>
+          <% }) %>
+          <% if (!lo.length) { %><tr data-tim-bo-qua><td colspan="8" class="kb-rong">Chưa có lô hàng nào còn tồn. Lô được tạo khi lập <a href="/staff/kitchen/kho/nhap/moi">phiếu nhập</a> (có số lô và hạn dùng).</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- The kho: ton hien tai tung NVL -->
+<div class="card shadow-sm mb-4" id="khoiTon">
+  <div class="card-header bg-white d-flex flex-wrap align-items-center" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold"><i class="fas fa-boxes-stacked text-warning"></i> Thẻ kho – tồn hiện tại</h6>
+    <input type="search" class="form-control form-control-sm ml-md-auto" style="max-width:280px" data-tim-kiem="#bangTon" data-tim-dem="#demTon" placeholder="Tìm nguyên liệu..." aria-label="Tìm nguyên liệu tồn kho">
+    <small class="text-muted" id="demTon"></small>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover kb-bang mb-0" id="bangTon">
+        <thead class="thead-light"><tr><th>Nguyên liệu</th><th class="so">Tồn</th><th class="so">Định mức</th><th class="so">Theo lô</th><th>HSD gần nhất</th><th class="so">Giá vốn</th><th class="so">Giá trị tồn</th><th></th></tr></thead>
+        <tbody>
+          <% nvl.forEach(function (n) { var thap = n.so_luong < n.dinh_muc_min; %>
+            <tr>
+              <td><b><%= n.ten_nl %></b> <% if (n.so_luong <= 0) { %><span class="kb-nhan do">Hết</span><% } else if (thap) { %><span class="kb-nhan cam">Dưới định mức</span><% } %></td>
+              <td class="so <%= thap ? 'text-danger font-weight-bold' : '' %>"><%= soVN(n.so_luong) %> <span class="text-muted small"><%= n.ten_dvt %></span></td>
+              <td class="so text-muted"><%= soVN(n.dinh_muc_min) %></td>
+              <td class="so"><%= soVN(n.ton_theo_lo) %></td>
+              <td class="small"><%= n.hsd_gan_nhat ? ngayVN(n.hsd_gan_nhat) : '—' %></td>
+              <td class="so"><%= vnd(n.gia_von) %></td>
+              <td class="so"><%= vnd(Math.max(0, n.so_luong) * n.gia_von) %></td>
+              <td class="text-nowrap">
+                <a class="btn btn-sm btn-light" href="/staff/kitchen/kho/nhap/moi?nl=<%= n.id_nl %>" title="Nhập thêm" aria-label="Nhập thêm <%= n.ten_nl %>"><i class="fas fa-plus text-success"></i></a>
+                <a class="btn btn-sm btn-light" href="/staff/kitchen/kho/xuat/moi?nl=<%= n.id_nl %>" title="Xuất hủy / hao hụt" aria-label="Xuất <%= n.ten_nl %>"><i class="fas fa-minus text-danger"></i></a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

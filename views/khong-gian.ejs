@@ -1,0 +1,193 @@
+<%- include('partials/header', { title: 'Không gian nhà hàng' }) %>
+<%
+/*
+  KHONG GIAN NHA HANG - anh, suc chua va tien ich tung khu.
+  Du lieu: services/datTiecService.docKhongGian() (bang vitri + ban).
+  Sanh tiec (la_sanh_tiec) duoc dua len dau, nen toi, nut dan sang /dat-tiec.
+*/
+var sanh = khongGian.filter(function (k) { return k.la_sanh_tiec; });
+var khuThuong = khongGian.filter(function (k) { return !k.la_sanh_tiec; });
+var nhanKhu = function (k) {
+  if (k.la_sanh_tiec) return { icon: 'fa-crown', chu: 'Sảnh tiệc', lop: 'kg-tag--gala' };
+  if (k.la_vip) return { icon: 'fa-door-closed', chu: 'Phòng riêng', lop: '' };
+  if (k.ngoai_troi) return { icon: 'fa-leaf', chu: 'Ngoài trời', lop: '' };
+  return { icon: 'fa-utensils', chu: 'Khu chung', lop: '' };
+};
+var anhCua = function (k) {
+  return (k.thu_vien_anh && k.thu_vien_anh.length) ? k.thu_vien_anh : ['/images/khong-gian/sanh-chinh-1.jpg'];
+};
+var veKhu = function (k, dao) {
+  var n = nhanKhu(k), ds = anhCua(k);
+  var html = '';
+  html += '<article class="kg-khu' + (dao ? ' kg-khu--dao' : '') + '" id="khu-' + k.id + '">';
+  html += '<div class="kg-gallery" data-gallery data-ten="' + escapeHtml(k.ten) + '" data-anh="' + escapeHtml(JSON.stringify(ds)) + '">';
+  html += '<button type="button" class="kg-gallery__main" data-mo="0" aria-label="Xem ảnh lớn ' + escapeHtml(k.ten) + '">';
+  html += '<img src="' + ds[0] + '" alt="' + escapeHtml(k.ten) + '" loading="lazy">';
+  html += '<span class="kg-gallery__count"><i class="fas fa-images"></i> ' + ds.length + ' ảnh</span></button>';
+  if (ds.length > 1) {
+    html += '<div class="kg-gallery__thumbs">';
+    ds.forEach(function (a, i) {
+      html += '<button type="button" data-thumb="' + i + '"' + (i === 0 ? ' class="is-active"' : '') + ' aria-label="Ảnh ' + (i + 1) + '"><img src="' + a + '" alt="" loading="lazy"></button>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="kg-info">';
+  html += '<span class="kg-tag ' + n.lop + '"><i class="fas ' + n.icon + '"></i> ' + n.chu + '</span>';
+  html += '<h3>' + escapeHtml(k.ten) + '</h3>';
+  if (k.mo_ta) html += '<div class="kg-ngan">' + escapeHtml(k.mo_ta) + '</div>';
+  if (k.mo_ta_dai) html += '<p class="kg-dai">' + escapeHtml(k.mo_ta_dai) + '</p>';
+  html += '<div class="kg-stats">';
+  html += '<div class="kg-stat"><b>' + k.so_ban + '</b><span>' + (k.la_vip ? 'Phòng' : 'Bàn') + '</span></div>';
+  html += '<div class="kg-stat"><b>' + (k.la_sanh_tiec ? k.tiec_toi_da : k.tong_cho) + '</b><span>Sức chứa</span></div>';
+  html += '<div class="kg-stat"><b>' + (k.cho_min === k.cho_max ? k.cho_max : k.cho_min + '–' + k.cho_max) + '</b><span>Khách / bàn</span></div>';
+  html += '</div>';
+  if (k.tien_ich && k.tien_ich.length) {
+    html += '<div class="kg-chips">';
+    k.tien_ich.forEach(function (t) { html += '<span><i class="fas fa-check"></i> ' + escapeHtml(t) + '</span>'; });
+    html += '</div>';
+  }
+  html += '<div class="kg-actions">';
+  if (k.cho_dat_truoc) {
+    html += '<a href="/dat-ban?khu_vuc=' + k.id + '" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn tại ' + escapeHtml(k.ten) + '</a>';
+  }
+  if (k.tiec_toi_da > 0) {
+    html += '<a href="/dat-tiec?sanh=' + k.id + '#form-dat-tiec" class="nh-btn ' + (k.cho_dat_truoc ? 'nh-btn--outline' : 'nh-btn--gold') + '"><i class="fas fa-glass-cheers"></i> Đặt tiệc (' + k.tiec_toi_thieu + '–' + k.tiec_toi_da + ' khách)</a>';
+  }
+  html += '</div></div></article>';
+  return html;
+};
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+%>
+<link rel="stylesheet" href="/su-kien.css">
+
+<section class="nh-subhero">
+  <div class="nh-subhero__bg" style="background-image:url('/images/khong-gian/sanh-chinh-1.jpg')"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow">Không gian Bảo Đoàn</span>
+    <h1>Phòng &amp; Khu vực</h1>
+    <div class="nh-crumbs">
+      <a href="/">Trang chủ</a> &nbsp;/&nbsp; <span>Không gian nhà hàng</span>
+    </div>
+  </div>
+</section>
+
+<div class="sk">
+  <section class="sk-section sk-section--cream" style="padding-bottom:1.5rem">
+    <div class="nh-container">
+      <div class="sk-head" style="margin-bottom:0">
+        <span class="sk-eyebrow">Chọn chỗ ngồi ưng ý</span>
+        <h2>Mỗi khu vực, một trải nghiệm</h2>
+        <p>Từ quầy sushi sôi động, sân vườn xanh mát, phòng riêng kín đáo đến sảnh Gala cho những dịp trọng đại – xem ảnh thực tế và chọn nơi phù hợp trước khi đặt bàn.</p>
+        <nav class="sk-jump" aria-label="Các khu vực">
+          <% khongGian.forEach(function (k) { var n = nhanKhu(k); %>
+            <a href="#khu-<%= k.id %>"><i class="fas <%= n.icon %>"></i> <%= k.ten %></a>
+          <% }) %>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <section class="sk-section sk-section--cream" style="padding-top:0">
+    <div class="nh-container">
+      <% khuThuong.forEach(function (k, i) { %><%- veKhu(k, i % 2 === 1) %><% }) %>
+    </div>
+  </section>
+
+  <% if (sanh.length) { %>
+  <section class="sk-section kg-gala-wrap">
+    <div class="nh-container">
+      <div class="sk-head" style="margin-bottom:0">
+        <span class="sk-eyebrow">Dành cho dịp trọng đại</span>
+        <h2>Sảnh tiệc Gala</h2>
+        <p>Tiệc cưới, sinh nhật, Year End Party hay hội nghị khách hàng – không gian lộng lẫy, thực đơn Nhật Bản tinh tế và đội ngũ tổ chức trọn gói.</p>
+      </div>
+      <% sanh.forEach(function (k, i) { %><%- veKhu(k, i % 2 === 1) %><% }) %>
+    </div>
+  </section>
+  <% } %>
+
+  <section class="sk-section sk-section--cream">
+    <div class="nh-container">
+      <div class="sk-cta">
+        <div class="sk-cta__bg" style="background-image:url('/images/khong-gian/tiec-cuoi-2.jpg')"></div>
+        <span class="sk-eyebrow">Tiệc cưới · Sinh nhật · Party</span>
+        <h2>Tổ chức tiệc riêng tại Bảo Đoàn</h2>
+        <p>12 thực đơn tiệc soạn riêng theo từng dịp, từ 2.790.000đ/bàn 10 khách. Gửi yêu cầu trực tuyến, chuyên viên sẽ gọi tư vấn trong vòng 2 giờ.</p>
+        <div class="kg-actions" style="justify-content:center">
+          <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> Xem thực đơn &amp; đặt tiệc</a>
+          <a href="/dat-ban" class="nh-btn nh-btn--outline" style="color:#fff;border-color:rgba(255,255,255,.6)"><i class="fas fa-utensils"></i> Đặt bàn thường</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="sk-lightbox" id="skLightbox" hidden role="dialog" aria-modal="true" aria-label="Xem ảnh">
+  <button type="button" class="sk-lightbox__btn sk-lightbox__close" data-lb="dong" aria-label="Đóng"><i class="fas fa-times"></i></button>
+  <button type="button" class="sk-lightbox__btn sk-lightbox__prev" data-lb="truoc" aria-label="Ảnh trước"><i class="fas fa-chevron-left"></i></button>
+  <img id="skLbImg" src="" alt="">
+  <button type="button" class="sk-lightbox__btn sk-lightbox__next" data-lb="sau" aria-label="Ảnh sau"><i class="fas fa-chevron-right"></i></button>
+  <div class="sk-lightbox__cap" id="skLbCap"></div>
+</div>
+
+<script>
+(function () {
+  var lb = document.getElementById('skLightbox');
+  var lbImg = document.getElementById('skLbImg');
+  var lbCap = document.getElementById('skLbCap');
+  var ds = [], ten = '', vt = 0;
+
+  function ve() {
+    lbImg.src = ds[vt];
+    lbImg.alt = ten;
+    lbCap.textContent = ten + ' — ' + (vt + 1) + ' / ' + ds.length;
+  }
+  function mo(g, i) {
+    ds = JSON.parse(g.getAttribute('data-anh'));
+    ten = g.getAttribute('data-ten');
+    vt = i; ve();
+    lb.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function dong() { lb.hidden = true; document.body.style.overflow = ''; }
+  function buoc(d) { vt = (vt + d + ds.length) % ds.length; ve(); }
+
+  document.querySelectorAll('[data-gallery]').forEach(function (g) {
+    var anh = JSON.parse(g.getAttribute('data-anh'));
+    var main = g.querySelector('.kg-gallery__main');
+    var hien = 0;
+    main.addEventListener('click', function () { mo(g, hien); });
+    g.querySelectorAll('[data-thumb]').forEach(function (t) {
+      t.addEventListener('click', function () {
+        hien = Number(t.getAttribute('data-thumb'));
+        main.querySelector('img').src = anh[hien];
+        g.querySelectorAll('[data-thumb]').forEach(function (x) { x.classList.toggle('is-active', x === t); });
+      });
+    });
+  });
+
+  lb.addEventListener('click', function (e) {
+    var nut = e.target.closest('[data-lb]');
+    if (nut) {
+      var h = nut.getAttribute('data-lb');
+      if (h === 'dong') dong(); else buoc(h === 'sau' ? 1 : -1);
+      return;
+    }
+    if (e.target === lb) dong();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') dong();
+    if (e.key === 'ArrowRight') buoc(1);
+    if (e.key === 'ArrowLeft') buoc(-1);
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

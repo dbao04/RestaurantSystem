@@ -13,9 +13,10 @@
     </div>
 </div>
 
-<div class="row">
+<div class="d-flex align-items-center flex-wrap mb-3"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#luoiCombo" data-tim-dem="#demCombo" placeholder="Tìm combo, món trong combo..." aria-label="Tìm combo, món trong combo..."></div><small class="text-muted ml-2" id="demCombo"></small></div>
+<div class="row" id="luoiCombo">
     <% combos.forEach(c => { %>
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-3 col-md-6 mb-4" data-tim-muc>
             <div class="card shadow h-100 py-2 border-left-info">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">

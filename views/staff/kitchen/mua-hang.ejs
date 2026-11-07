@@ -1,0 +1,233 @@
+<%
+  var activePage = 'mua-hang';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n, k) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: k == null ? 2 : k }); };
+  var ngayVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var mauTT = { nhap: 'xam', cho_duyet: 'cam', da_duyet: 'lam', da_dat: 'lam', nhan_mot_phan: 'cam', da_nhan: 'xanh', huy: 'do' };
+  var NVL = nvl.map(function (n) { return { id: n.id_nl, ten: n.ten_nl, dvt: n.ten_dvt || '', ton: n.so_luong, gia: n.gia_von, ncc: n.ncc_gan_nhat }; });
+  var tenNcc = {}; ncc.forEach(function (n) { tenNcc[n.id_ncc] = n.ten_ncc; });
+  var demTT = {}; don.forEach(function (d) { demTT[d.trang_thai] = (demTT[d.trang_thai] || 0) + 1; });
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-cart-flatbed text-warning"></i> Mua hàng nguyên liệu</h1>
+    <div class="kb-phu">Đề xuất → <b>Duyệt</b> (bếp trưởng / quản lý) → <b>Đặt với NCC</b> → <b>Nhận hàng</b> (tự tạo phiếu nhập kho theo lô).</div>
+  </div>
+  <div class="kb-nut">
+    <button type="button" class="btn btn-sm btn-warning font-weight-bold" id="moFormTrong"><i class="fas fa-plus"></i> Tạo đơn mua</button>
+    <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-right-left"></i> Xuất nhập kho</a>
+  </div>
+</div>
+
+<!-- ================= GOI Y ================= -->
+<div class="kb-the mb-3">
+  <h6><i class="fas fa-lightbulb"></i> Gợi ý cần mua <small>– tồn dưới điểm đặt hàng = max(định mức, 3 ngày tiêu hao); đề xuất đủ dùng 7 ngày, đã trừ hàng đang về</small></h6>
+  <% if (!goiY.length) { %>
+    <div class="kb-rong"><i class="fas fa-circle-check text-success"></i> Tồn kho đang đủ – chưa có nguyên liệu nào cần mua thêm.</div>
+  <% } else { %>
+    <div class="d-flex flex-wrap align-items-center mb-2" style="gap:.5rem">
+      <input type="search" class="form-control form-control-sm" style="max-width:260px" data-tim-kiem="#bangGoiY" data-tim-dem="#demGoiY" placeholder="Tìm nguyên liệu, NCC..." aria-label="Tìm gợi ý mua">
+      <small class="text-muted" id="demGoiY"></small>
+      <label class="small mb-0 ml-auto"><input type="checkbox" id="chonHet"> Chọn tất cả</label>
+      <button type="button" class="btn btn-sm btn-primary" id="taoTuGoiY" disabled><i class="fas fa-file-circle-plus"></i> Tạo đơn từ <span id="soChon">0</span> dòng</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover kb-bang mb-0" id="bangGoiY">
+        <thead class="thead-light"><tr><th></th><th>Nguyên liệu</th><th>NCC gần nhất</th><th class="so">Tồn</th><th class="so">Định mức</th><th class="so">Tiêu hao/ngày</th><th class="so">Đủ dùng</th><th class="so">Đang về</th><th class="so">Đề xuất</th><th class="so">Ước tính</th></tr></thead>
+        <tbody>
+          <% goiY.forEach(function (g) { %>
+            <tr data-tim-text="<%= tenNcc[g.ncc_gan_nhat] || '' %>">
+              <td><input type="checkbox" class="chon-goi-y" value="<%= g.id_nl %>" data-sl="<%= g.de_xuat %>" data-gia="<%= g.gia_von %>" data-ncc="<%= g.ncc_gan_nhat || '' %>" aria-label="Chọn <%= g.ten_nl %>"></td>
+              <td><b><%= g.ten_nl %></b> <% if (g.muc_do === 'het') { %><span class="kb-nhan do">Hết</span><% } else if (g.muc_do === 'duoi_dinh_muc') { %><span class="kb-nhan cam">Dưới ĐM</span><% } else { %><span class="kb-nhan xam">Sắp hết</span><% } %></td>
+              <td class="small"><%= tenNcc[g.ncc_gan_nhat] || '—' %></td>
+              <td class="so <%= g.so_luong < g.dinh_muc_min ? 'text-danger font-weight-bold' : '' %>"><%= soVN(g.so_luong) %> <span class="text-muted small"><%= g.ten_dvt %></span></td>
+              <td class="so text-muted"><%= soVN(g.dinh_muc_min) %></td>
+              <td class="so"><%= soVN(g.tieu_hao_ngay) %></td>
+              <td class="so"><%= g.con_du_ngay == null ? '—' : g.con_du_ngay + ' ngày' %></td>
+              <td class="so text-muted"><%= g.dang_ve ? soVN(g.dang_ve) : '—' %></td>
+              <td class="so"><b><%= soVN(g.de_xuat, 1) %></b> <span class="small text-muted"><%= g.ten_dvt %></span></td>
+              <td class="so"><%= vnd(g.de_xuat * g.gia_von) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<!-- ================= FORM TAO DON ================= -->
+<form class="kb-the mb-3" id="formDon" hidden novalidate>
+  <h6><i class="fas fa-file-pen"></i> Đơn mua mới <button type="button" class="btn btn-sm btn-light ml-auto" id="dongForm" aria-label="Đóng form"><i class="fas fa-times"></i></button></h6>
+  <div class="form-row">
+    <div class="form-group col-md-5">
+      <label for="dNcc" class="small font-weight-bold">Nhà cung cấp</label>
+      <select id="dNcc" class="form-control form-control-sm"><option value="">— Chưa chọn —</option><% ncc.forEach(function (n) { %><option value="<%= n.id_ncc %>"><%= n.ten_ncc %><%= n.sodienthoai ? ' · ' + n.sodienthoai : '' %></option><% }) %></select>
+    </div>
+    <div class="form-group col-md-3">
+      <label for="dNgay" class="small font-weight-bold">Ngày giao dự kiến</label>
+      <input type="date" id="dNgay" class="form-control form-control-sm" min="<%= homNay %>">
+    </div>
+    <div class="form-group col-md-4">
+      <label for="dGhiChu" class="small font-weight-bold">Ghi chú</label>
+      <input id="dGhiChu" class="form-control form-control-sm" maxlength="500" placeholder="VD: Giao trước 9h sáng">
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table kb-dong mb-2 no-cuon">
+      <thead class="thead-light"><tr><th style="min-width:240px">Nguyên liệu</th><th style="width:150px">Số lượng đặt</th><th style="width:150px">Đơn giá dự kiến</th><th class="text-right" style="width:140px">Thành tiền</th><th style="width:46px"></th></tr></thead>
+      <tbody id="dsDongDon"></tbody>
+    </table>
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-primary" id="themDongDon"><i class="fas fa-plus"></i> Thêm dòng</button>
+  <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-3 border-top" style="gap:1rem">
+    <div><span class="text-muted">Tổng dự kiến:</span> <span class="kb-tong" id="tongDon">0đ</span></div>
+    <button type="submit" class="btn btn-warning font-weight-bold" id="luuDon"><i class="fas fa-paper-plane"></i> Gửi đơn chờ duyệt</button>
+  </div>
+  <div class="alert alert-danger mt-3 mb-0" id="loiDon" hidden></div>
+</form>
+
+<!-- ================= DANH SACH DON ================= -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white">
+    <div class="kb-loc">
+      <a class="kb-moc <%= !trangThai ? 'is-on' : '' %>" href="?">Tất cả</a>
+      <% Object.keys(tenTrangThai).forEach(function (k) { %><a class="kb-moc <%= trangThai === k ? 'is-on' : '' %>" href="?trang_thai=<%= k %>"><%= tenTrangThai[k] %><%= !trangThai && demTT[k] ? ' (' + demTT[k] + ')' : '' %></a><% }) %>
+      <input type="search" class="form-control form-control-sm ml-md-auto" style="max-width:240px" data-tim-kiem="#bangDon" placeholder="Tìm mã đơn, NCC..." aria-label="Tìm đơn mua">
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover kb-bang mb-0" id="bangDon">
+        <thead class="thead-light"><tr><th>Mã đơn</th><th>Ngày tạo</th><th>Nhà cung cấp</th><th>Giao dự kiến</th><th class="so">Số dòng</th><th class="so">Tổng tiền</th><th>Trạng thái</th><th>Người tạo / duyệt</th><th></th></tr></thead>
+        <tbody>
+          <% don.forEach(function (d) { %>
+            <tr>
+              <td><a href="/staff/kitchen/mua-hang/<%= d.id_dmh %>" class="kb-ma font-weight-bold"><%= d.ma_don %></a></td>
+              <td class="small"><%= ngayVN(d.created_at) %></td>
+              <td><%= d.ten_ncc || '—' %></td>
+              <td class="small"><%= ngayVN(d.ngay_giao_du_kien) %></td>
+              <td class="so"><%= d.so_dong %></td>
+              <td class="so font-weight-bold"><%= vnd(d.tong_tien) %></td>
+              <td><span class="kb-nhan <%= mauTT[d.trang_thai] %>"><%= d.ten_trang_thai %></span></td>
+              <td class="small"><%= d.nguoi_tao || '—' %><%= d.nguoi_duyet ? ' / ' + d.nguoi_duyet : '' %></td>
+              <td><a class="btn btn-sm btn-light" href="/staff/kitchen/mua-hang/<%= d.id_dmh %>" aria-label="Mở đơn <%= d.ma_don %>"><i class="fas fa-chevron-right"></i></a></td>
+            </tr>
+          <% }) %>
+          <% if (!don.length) { %><tr data-tim-bo-qua><td colspan="9" class="kb-rong">Chưa có đơn mua nào<%= trangThai ? ' ở trạng thái này' : '' %>.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var NVL = <%- JSON.stringify(NVL).replace(/</g, '\\u003c') %>;
+  var $ = function (id) { return document.getElementById(id); };
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var bo = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); };
+  var timNVL = function (id) { return NVL.filter(function (n) { return n.id === Number(id); })[0]; };
+  var so = function (v) { return Number(String(v || '').replace(/\./g, '').replace(',', '.')) || 0; };
+
+  function dong(dl) {
+    dl = dl || {};
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="kb-dong__nl"><div class="kb-chon-nl"><input type="search" class="form-control form-control-sm o-nl" placeholder="Gõ tên nguyên liệu..." autocomplete="off" aria-label="Nguyên liệu"><input type="hidden" class="id-nl"><div class="kb-chon-nl__ds" hidden></div><small class="text-muted tt"></small></div></td>' +
+      '<td data-nhan="Số lượng"><div class="input-group input-group-sm"><input class="form-control o-sl" inputmode="decimal" aria-label="Số lượng"><div class="input-group-append"><span class="input-group-text dvt">–</span></div></div></td>' +
+      '<td data-nhan="Đơn giá"><input class="form-control form-control-sm o-gia" inputmode="numeric" aria-label="Đơn giá dự kiến"></td>' +
+      '<td data-nhan="Thành tiền" class="text-right font-weight-bold tt-tien">0đ</td>' +
+      '<td><button type="button" class="btn btn-sm btn-light text-danger xoa" aria-label="Xóa dòng"><i class="fas fa-times"></i></button></td>';
+    $('dsDongDon').appendChild(tr);
+    var o = tr.querySelector('.o-nl'), ds = tr.querySelector('.kb-chon-nl__ds');
+    function chon(n) {
+      tr.querySelector('.id-nl').value = n.id; o.value = n.ten;
+      tr.querySelector('.dvt').textContent = n.dvt || '–';
+      tr.querySelector('.tt').textContent = 'Tồn ' + (+n.ton).toLocaleString('vi-VN') + ' ' + n.dvt;
+      if (!tr.querySelector('.o-gia').value) tr.querySelector('.o-gia').value = Math.round(n.gia) || '';
+      ds.hidden = true; tinh();
+    }
+    function ve() {
+      var tu = bo(o.value).trim().split(/\s+/).filter(Boolean);
+      var kq = NVL.filter(function (n) { return tu.every(function (t) { return bo(n.ten).indexOf(t) >= 0; }); }).slice(0, 40);
+      ds.innerHTML = kq.length ? kq.map(function (n) { return '<button type="button" data-id="' + n.id + '"><span>' + esc(n.ten) + '</span><small>tồn ' + (+n.ton).toLocaleString('vi-VN') + ' ' + esc(n.dvt) + '</small></button>'; }).join('') : '<div class="p-2 small text-muted">Không có nguyên liệu phù hợp</div>';
+      ds.hidden = false;
+    }
+    o.addEventListener('focus', ve);
+    o.addEventListener('input', function () { tr.querySelector('.id-nl').value = ''; ve(); });
+    o.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var b = ds.querySelector('button'); if (b) chon(timNVL(b.getAttribute('data-id'))); } if (e.key === 'Escape') ds.hidden = true; });
+    ds.addEventListener('mousedown', function (e) { var b = e.target.closest('button'); if (b) { e.preventDefault(); chon(timNVL(b.getAttribute('data-id'))); tr.querySelector('.o-sl').focus(); } });
+    o.addEventListener('blur', function () { setTimeout(function () { ds.hidden = true; }, 150); });
+    tr.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', tinh); });
+    tr.querySelector('.xoa').addEventListener('click', function () { tr.remove(); if (!$('dsDongDon').children.length) dong(); tinh(); });
+    if (dl.id && timNVL(dl.id)) chon(timNVL(dl.id));
+    if (dl.sl) tr.querySelector('.o-sl').value = dl.sl;
+    if (dl.gia) tr.querySelector('.o-gia').value = Math.round(dl.gia);
+    tinh();
+    return tr;
+  }
+  function tinh() {
+    var tong = 0;
+    $('dsDongDon').querySelectorAll('tr').forEach(function (tr) {
+      var tt = (Number(String(tr.querySelector('.o-sl').value).replace(',', '.')) || 0) * so(tr.querySelector('.o-gia').value);
+      tr.querySelector('.tt-tien').textContent = vnd(tt); tong += tt;
+    });
+    $('tongDon').textContent = vnd(tong);
+  }
+  function moForm(dsDong, ncc) {
+    $('dsDongDon').innerHTML = '';
+    (dsDong && dsDong.length ? dsDong : [{}]).forEach(dong);
+    if (ncc) $('dNcc').value = ncc;
+    $('loiDon').hidden = true;
+    $('formDon').hidden = false;
+    $('formDon').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('moFormTrong').addEventListener('click', function () { moForm(); });
+  $('dongForm').addEventListener('click', function () { $('formDon').hidden = true; });
+  $('themDongDon').addEventListener('click', function () { dong().querySelector('.o-nl').focus(); });
+
+  // Chon tu goi y
+  var hop = document.querySelectorAll('.chon-goi-y');
+  function demChon() {
+    var n = Array.prototype.filter.call(hop, function (c) { return c.checked; }).length;
+    if ($('soChon')) $('soChon').textContent = n;
+    if ($('taoTuGoiY')) $('taoTuGoiY').disabled = !n;
+  }
+  hop.forEach(function (c) { c.addEventListener('change', demChon); });
+  if ($('chonHet')) $('chonHet').addEventListener('change', function () { var on = this.checked; hop.forEach(function (c) { if (!c.closest('tr').hidden) c.checked = on; }); demChon(); });
+  if ($('taoTuGoiY')) $('taoTuGoiY').addEventListener('click', function () {
+    var chon = Array.prototype.filter.call(hop, function (c) { return c.checked; });
+    // NCC pho bien nhat trong cac dong da chon - thuong la mot nha cung cap.
+    var dem = {}; chon.forEach(function (c) { var k = c.getAttribute('data-ncc'); if (k) dem[k] = (dem[k] || 0) + 1; });
+    var ncc = Object.keys(dem).sort(function (a, b) { return dem[b] - dem[a]; })[0] || '';
+    moForm(chon.map(function (c) { return { id: c.value, sl: c.getAttribute('data-sl'), gia: c.getAttribute('data-gia') }; }), ncc);
+  });
+
+  $('formDon').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    $('loiDon').hidden = true;
+    var ds = [], loi = null;
+    $('dsDongDon').querySelectorAll('tr').forEach(function (tr, i) {
+      var id = tr.querySelector('.id-nl').value, sl = tr.querySelector('.o-sl').value;
+      if (!id && !sl) return;
+      if (!id) { loi = loi || 'Dòng ' + (i + 1) + ': chọn nguyên liệu từ danh sách gợi ý.'; return; }
+      ds.push({ id_nl: id, so_luong: String(sl).replace(',', '.'), don_gia: so(tr.querySelector('.o-gia').value) });
+    });
+    if (!loi && !ds.length) loi = 'Chưa có dòng nguyên liệu nào.';
+    if (loi) { $('loiDon').textContent = loi; $('loiDon').hidden = false; return; }
+    $('luuDon').disabled = true;
+    try {
+      var r = await fetch('/api/kitchen/mua-hang', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_ncc: $('dNcc').value, ngay_giao_du_kien: $('dNgay').value, ghi_chu: $('dGhiChu').value, dong: ds }) });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không tạo được đơn');
+      location.href = '/staff/kitchen/mua-hang/' + j.id;
+    } catch (err) { $('loiDon').textContent = err.message; $('loiDon').hidden = false; $('luuDon').disabled = false; }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

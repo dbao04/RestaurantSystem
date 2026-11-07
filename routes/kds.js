@@ -7,6 +7,40 @@
  */
 const express = require('express');
 const kds = require('../services/kdsService');
+const phanQuyen = require('../services/phanQuyenService');
+
+/**
+ * QUYEN TREN MAN HINH BEP - tach theo NGHIEP VU, khong theo cap bac.
+ *
+ *   bep     : nhan mon, tra lai hang cho, hoan thanh mon
+ *   phucVu  : xac nhan da mang mon ra ban (chi khi mon da hoan thanh)
+ *   con lai : chi xem
+ *
+ * Khong dung vai tro tuong duong 'Quan ly' lam "toan quyen": chuc danh Giam sat
+ * thu ngan, Ke toan truong cung tuong duong 'Quan ly' nhung khong co ly do gi
+ * bam "nau xong" thay bep. Quan ly nha hang (QLNH) van du ca hai quyen vi
+ * chuc danh do tuong duong ca 'Bep' lan 'Phuc vu'. Vai tro CU 'Quan ly' (ghi
+ * trong nhan_vien.chucvu) duoc ca hai quyen nhu truoc.
+ */
+function quyenKds(req) {
+  const phien = req.session || {};
+  if (phien.adminlogin) return { bep: true, phucVu: true };
+  if (!phien.stafflogin) return { bep: false, phucVu: false };
+  const co = (ds) => ds.includes(phien.staffRole) || phanQuyen.dongVaiDuoc(req.hoSo, ds);
+  const quanLyCu = phien.staffRole === 'Quan ly';
+  return {
+    bep: quanLyCu || co(['Bep']),
+    phucVu: quanLyCu || co(['Phuc vu', 'Quay', 'letan']),
+  };
+}
+
+/** Buoc nao can quyen nao. */
+const QUYEN_BUOC = {
+  'bat-dau': 'bep',
+  'tra-lai-cho': 'bep',
+  'hoan-thanh': 'bep',
+  'da-phuc-vu': 'phucVu',
+};
 
 module.exports = function (io) {
   const router = express.Router();
@@ -18,19 +52,29 @@ module.exports = function (io) {
     return res.redirect('/staff/login');
   }
 
-  /** Bep va Phuc vu / Quan ly deu thao tac duoc theo phan quyen tung buoc. */
-  function requireBepHoacPhucVu(req, res, next) {
-    if (req.session.adminlogin) return next();
-    const vaiTro = (req.session.staffRole || '').toLowerCase();
-    if (req.session.stafflogin && /bep|phuc vu|phucvu|quay|quan ly|quanly/.test(vaiTro)) return next();
-    return res.status(403).json({ loi: 'Bạn không có quyền thực hiện thao tác này.' });
+  /**
+   * Kiem tra quyen THEO TUNG BUOC. Truoc day mot middleware chung cho ca bep,
+   * phuc vu, quay, quan ly lam MOI buoc - phuc vu goi thang API van chuyen duoc
+   * mon sang "hoan thanh" (va kich hoat tru kho). An nut tren giao dien khong du:
+   * may chu phai tu chan.
+   */
+  function requireQuyenBuoc(req, res, next) {
+    const can = QUYEN_BUOC[req.params.buoc];
+    if (!can) return res.status(404).json({ loi: 'Bước không hợp lệ.' });
+    if (quyenKds(req)[can]) return next();
+    return res.status(403).json({
+      loi: can === 'bep'
+        ? 'Chỉ bộ phận Bếp được nhận món, trả món hoặc báo hoàn thành món.'
+        : 'Chỉ nhân viên Phục vụ / Quầy được xác nhận đã lên món.',
+    });
   }
 
   // ---------------------------------------------------------------- KDS
   router.get(['/kds', '/staff/kds', '/staff/kitchen'], requireNhanSu, bat(async (req, res) => {
     res.render('staff/kds', {
-      tenNguoiDung: req.session.adminname || req.session.staffname || 'Nhân viên',
+      tenNguoiDung: req.session.adminname || req.session.staffName || 'Nhân viên',
       vaiTro: req.session.staffRole || (req.session.adminlogin ? 'Admin' : ''),
+      quyen: quyenKds(req),
     });
   }));
 
@@ -51,11 +95,13 @@ module.exports = function (io) {
     'da-phuc-vu': kds.danhDauDaPhucVu,
   };
 
-  router.post(['/kds/api/:buoc/:id', '/staff/kitchen/api/:buoc/:id'], requireBepHoacPhucVu, bat(async (req, res) => {
+  router.post(['/kds/api/:buoc/:id', '/staff/kitchen/api/:buoc/:id'], requireNhanSu, requireQuyenBuoc, bat(async (req, res) => {
     const ham = BUOC[req.params.buoc];
     if (!ham) return res.status(404).json({ loi: 'Bước không hợp lệ.' });
+    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ loi: 'Món không hợp lệ.' });
     try {
-      const mon = await ham(Number(req.params.id));
+      // Buoc len mon ghi lai nguoi xac nhan; cac buoc bep bo qua tham so thu hai.
+      const mon = await ham(Number(req.params.id), req.session.staffId || null);
       // Bao cho ca bep lan phuc vu biet de man hinh tu cap nhat.
       io.to('kitchen_room').emit('kds-cap-nhat', { buoc: req.params.buoc, mon });
       io.to('staff_room').emit('kds-cap-nhat', { buoc: req.params.buoc, mon });
@@ -75,7 +121,7 @@ module.exports = function (io) {
     res.render('staff/so-do-ban', {
       title: 'Sơ đồ bàn thời gian thực',
       activePage: 'sodoban',
-      tenNguoiDung: req.session.adminname || req.session.staffname || 'Nhân viên',
+      tenNguoiDung: req.session.adminname || req.session.staffName || 'Nhân viên',
       choPhepKeoTha: Boolean(req.session.adminlogin) ||
         /quan ly|quanly/.test((req.session.staffRole || '').toLowerCase()),
     });

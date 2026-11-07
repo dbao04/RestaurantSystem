@@ -119,14 +119,22 @@ const MAC_DINH = {
   allow_table_combination: 1,
   combine_same_area_only: 1,
   max_tables_per_reservation: 4,
+  // RANG BUOC QUY MO BAN (xem kiemTraQuyMoBan):
+  // - Nhom tu bay nhieu khach tro xuong chi duoc ngoi MOT ban.
+  single_table_max_guests: 4,
+  // - Mot ban: so cho toi da = max(so khach + X, nguong tren). 2 khach -> ban <= 4.
+  max_extra_seats_single: 2,
+  // - Nhieu ban: ghe thua toi da = max(X, Y% so khach). 30 khach -> <= 36 cho.
+  max_extra_seats_group: 3,
+  max_extra_seats_percent: 20,
   minimum_lead_minutes: 30,
   max_advance_days: 90,
   slot_step_minutes: 15,
   auto_confirm_online: 0,
   auto_confirm_member: 1,
-  deposit_due_minutes: 120,
+  deposit_due_minutes: 60,
   peak_hours: '18:00-21:00',
-  large_group_threshold: 10,
+  large_group_threshold: 15,
   max_guests_online: 30,
   no_show_block_threshold: 3,
   allow_customer_pick_table: 1,
@@ -140,6 +148,73 @@ const MAC_DINH = {
 function xoaDemCauHinh() {
   demCauHinh = null;
   demHetHan = 0;
+}
+
+/**
+ * RANG BUOC QUY MO BAN - mot to hop ban co hop voi so khach khong.
+ *
+ * Bon dieu, kiem theo thu tu:
+ *   1. Du cho (tong cho >= so khach).
+ *   2. Nhom nho (<= single_table_max_guests) chi duoc MOT ban:
+ *      2 khach khong duoc chiem hai ban.
+ *   3. Khong thua ban: bo bat ky ban nao ma van du cho -> ban do thua.
+ *   4. Khong thua qua nhieu ghe:
+ *      - mot ban:  so cho <= max(so khach + max_extra_seats_single, single_table_max_guests)
+ *                  -> 1-2 khach ban <= 4 cho, 5 khach ban <= 7 (tuc ban 6)...
+ *      - nhieu ban: tong cho <= so khach + max(max_extra_seats_group,
+ *                  ceil(so khach x max_extra_seats_percent%))  -> 30 khach <= 36 cho.
+ *
+ * Ham THUAN (khong doc CSDL) de dung chung cho server va de kiem thu.
+ * @param {number[]} dsSoCho  so cho cua tung ban trong to hop
+ * @returns {null | {ma, thong_bao, toi_da_cho}}  null = hop le
+ */
+function kiemTraQuyMoBan(dsSoCho, soKhach, ch = MAC_DINH) {
+  const k = Number(soKhach) || 0;
+  const cho = dsSoCho.map(Number);
+  const n = cho.length;
+  const tong = cho.reduce((s, c) => s + c, 0);
+  const nguongMotBan = Number(ch.single_table_max_guests ?? MAC_DINH.single_table_max_guests);
+  const toiDaCho = gioiHanCho(k, n, ch);
+
+  if (!n) return { ma: 'NO_TABLE', thong_bao: 'Vui lòng chọn ít nhất một bàn.', toi_da_cho: toiDaCho };
+  if (tong < k) {
+    return { ma: 'NOT_ENOUGH_SEATS', thong_bao: `Bàn đã chọn có ${tong} chỗ, chưa đủ cho ${k} khách.`, toi_da_cho: toiDaCho };
+  }
+  if (n > 1 && k <= nguongMotBan) {
+    return {
+      ma: 'ONE_TABLE_ONLY',
+      thong_bao: `Nhóm ${k} khách chỉ được đặt 1 bàn (bàn tối đa ${gioiHanCho(k, 1, ch)} chỗ).`,
+      toi_da_cho: gioiHanCho(k, 1, ch),
+    };
+  }
+  if (n > 1) {
+    const thua = cho.find((c) => tong - c >= k);
+    if (thua !== undefined) {
+      return {
+        ma: 'EXTRA_TABLE',
+        thong_bao: `Bạn đã chọn thừa bàn: bỏ bớt bàn ${thua} chỗ vẫn đủ cho ${k} khách.`,
+        toi_da_cho: toiDaCho,
+      };
+    }
+  }
+  if (tong > toiDaCho) {
+    return {
+      ma: 'TOO_MANY_SEATS',
+      thong_bao: n === 1
+        ? `Bàn ${tong} chỗ quá lớn cho ${k} khách — chỉ được chọn bàn tối đa ${toiDaCho} chỗ.`
+        : `Tổng ${tong} chỗ quá nhiều cho ${k} khách — tổng số chỗ các bàn chỉ được từ ${k} đến ${toiDaCho}.`,
+      toi_da_cho: toiDaCho,
+    };
+  }
+  return null;
+}
+
+/** So cho TOI DA cho phep cua mot to hop `soBan` ban danh cho `soKhach` khach. */
+function gioiHanCho(soKhach, soBan, ch = MAC_DINH) {
+  const k = Number(soKhach) || 0;
+  const g = (khoa) => Number(ch[khoa] ?? MAC_DINH[khoa]);
+  if (soBan <= 1) return Math.max(k + g('max_extra_seats_single'), g('single_table_max_guests'));
+  return k + Math.max(g('max_extra_seats_group'), Math.ceil(k * g('max_extra_seats_percent') / 100));
 }
 
 async function docCauHinh() {
@@ -482,12 +557,35 @@ function laGioCaoDiem(gio, ch) {
  *
  * Tra ve { soTien, quyTac, lyDo }. soTien = 0 nghia la khong yeu cau coc.
  */
-async function tinhTienCoc({ soKhach, gioBatDau, loaiKhach }) {
+async function tinhTienCoc({ soKhach, gioBatDau, loaiKhach, tongTienMon = 0 }) {
   const ch = await docCauHinh();
+  const nguong = Number(ch.large_group_threshold) || 15;
+  const tienMon = Math.round(Number(tongTienMon) || 0);
+
+  // Trường hợp khách có đặt trước món ăn: thanh toán trước 100% tiền món.
+  // Riêng bàn đặt tiệc từ 15 người trở lên phải đảm bảo tối thiểu 150.000đ/người
+  // (hoàn tiền thừa lúc thanh toán nếu dùng món thực tế thấp hơn).
+  if (tienMon > 0) {
+    if (soKhach >= nguong && tienMon < 150000 * soKhach) {
+      const mucTiec = 150000 * soKhach;
+      return {
+        soTien: mucTiec,
+        quyTac: 'Đặt tiệc từ 15 khách trở lên (kèm đặt món trước)',
+        lyDo: `Đặt tiệc từ ${nguong} khách trở lên (tối thiểu 150.000đ/khách, hoàn tiền thừa lúc thanh toán nếu dùng ít hơn): 150.000đ × ${soKhach} khách`,
+        hoanTienNeuDungThapHon: true,
+      };
+    }
+    return {
+      soTien: tienMon,
+      quyTac: 'Đặt món trước — Thanh toán 100% tiền món',
+      lyDo: `Đặt món trước — thanh toán 100% tiền món (${tienMon.toLocaleString('vi-VN')}đ)`,
+      hoanTienNeuDungThapHon: soKhach >= nguong,
+    };
+  }
+
   const [rows] = await db.query(
     'SELECT * FROM reservation_deposit_rules WHERE is_active = 1 ORDER BY priority ASC, id ASC');
 
-  const nguong = Number(ch.large_group_threshold) || 10;
   const caoDiem = laGioCaoDiem(gioBatDau, ch);
 
   for (const qt of rows) {
@@ -519,6 +617,7 @@ async function tinhTienCoc({ soKhach, gioBatDau, loaiKhach }) {
       lyDo: qt.amount_type === 'PER_GUEST'
         ? `${qt.name}: ${Number(qt.amount).toLocaleString('vi-VN')}đ × ${soKhach} khách`
         : `${qt.name}: ${Number(qt.amount).toLocaleString('vi-VN')}đ`,
+      hoanTienNeuDungThapHon: soKhach >= nguong,
     };
   }
   return { soTien: 0, quyTac: null, lyDo: 'Không yêu cầu đặt cọc' };
@@ -529,18 +628,21 @@ async function tinhTienCoc({ soKhach, gioBatDau, loaiKhach }) {
  *
  * Quy tac: lay chinh sach co `hours_before` LON NHAT ma khach van con dap ung.
  * Huy truoc 30 gio thi thoa ca ba moc 24/6/2 -> lay moc 24 gio, hoan 100%.
- * Huy truoc 3 gio thi chi thoa moc 2 gio -> hoan 0%.
+ * Huy truoc 3 gio thi chi thoa moc 2 gio -> hoan 50% (ban thuong) hoac 0% (tiec / co dat mon truoc).
  *
  * `applies_to` cho phep uu dai rieng: chinh sach 'VIP' chi ap cho khach VIP,
  * va duoc uu tien hon chinh sach 'ALL' cung moc gio.
  */
-async function tinhHoanTien({ mocBatDau, soTienCoc, loaiKhach, soKhach, laCaoDiem, luc = new Date() }) {
+async function tinhHoanTien({ mocBatDau, soTienCoc, loaiKhach, soKhach, laCaoDiem, coMonDatTruoc = false, luc = new Date() }) {
   const tien = Number(soTienCoc) || 0;
   if (tien <= 0) return { phanTram: 0, soTien: 0, chinhSach: null, moTa: 'Lượt đặt này không có tiền cọc' };
 
   const ch = await docCauHinh();
   const gioConLai = (new Date(mocBatDau).getTime() - new Date(luc).getTime()) / 3600000;
-  const nguong = Number(ch.large_group_threshold) || 10;
+  const nguong = Number(ch.large_group_threshold) || 15;
+
+  // Đơn có đặt món trước hủy dưới 24h xử lý tương đương đoàn tiệc (vì bếp đã chuẩn bị nguyên liệu)
+  const laDoanLonHoacDatMon = Number(soKhach) >= nguong || !!coMonDatTruoc;
 
   const [rows] = await db.query(
     'SELECT * FROM cancellation_policies WHERE is_active = 1 ORDER BY hours_before DESC');
@@ -548,7 +650,7 @@ async function tinhHoanTien({ mocBatDau, soTienCoc, loaiKhach, soKhach, laCaoDie
   const apDuoc = (cs) => ({
     ALL: true,
     VIP: loaiKhach === 'VIP',
-    LARGE_GROUP: Number(soKhach) >= nguong,
+    LARGE_GROUP: laDoanLonHoacDatMon,
     PEAK_HOUR: !!laCaoDiem,
   }[cs.applies_to] ?? false);
 
@@ -648,6 +750,7 @@ module.exports = {
   LoiDatBan,
 
   docCauHinh,
+  kiemTraQuyMoBan, gioiHanCho,
   xoaDemCauHinh,
 
   phutTuChuoi,

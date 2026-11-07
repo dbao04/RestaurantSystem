@@ -1,0 +1,209 @@
+<%
+  var activePage = 'kho-bep';
+  var NVL = nvl.map(function (n) { return { id: n.id_nl, ten: n.ten_nl, dvt: n.ten_dvt || '', ton: n.so_luong, gia: n.gia_von, hsd: n.han_su_dung_ngay || 30, ncc: n.ncc_gan_nhat }; });
+  var dongDau = [];
+  if (don) dongDau = don.dong.filter(function (d) { return d.so_luong_da_nhan < d.so_luong; })
+    .map(function (d) { return { id: d.id_nl, sl: Math.round((d.so_luong - d.so_luong_da_nhan) * 1000) / 1000, gia: d.don_gia }; });
+  else if (chon.nl) dongDau = [{ id: chon.nl, sl: chon.sl || '' }];
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas <%= laNhap ? 'fa-file-import text-success' : 'fa-file-export text-danger' %>"></i> <%= laNhap ? (don ? 'Nhận hàng – đơn ' + don.ma_don : 'Lập phiếu nhập kho') : 'Lập phiếu xuất kho' %></h1>
+    <div class="kb-phu"><%= laNhap ? 'Mỗi dòng tạo một lô hàng có hạn dùng. Giá vốn được tính lại theo bình quân gia quyền.' : 'Dùng cho hàng hư hỏng, hết hạn, hao hụt, dùng nội bộ, trả nhà cung cấp hoặc điều chỉnh kiểm kê. Tồn kho và lô hàng bị trừ ngay.' %></div>
+  </div>
+  <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Sổ xuất nhập</a>
+</div>
+
+<form id="formPhieu" class="card shadow-sm mb-4" novalidate>
+  <div class="card-body">
+    <div class="form-row">
+      <% if (laNhap) { %>
+        <div class="form-group col-md-5">
+          <label for="fNcc" class="small font-weight-bold">Nhà cung cấp</label>
+          <select id="fNcc" class="form-control">
+            <option value="">— Mua lẻ / không xác định —</option>
+            <% ncc.forEach(function (n) { %><option value="<%= n.id_ncc %>" <%= don && don.id_ncc === n.id_ncc ? 'selected' : '' %>><%= n.ten_ncc %></option><% }) %>
+          </select>
+        </div>
+      <% } else { %>
+        <div class="form-group col-md-5">
+          <label for="fLyDo" class="small font-weight-bold">Lý do xuất *</label>
+          <select id="fLyDo" class="form-control" required>
+            <option value="">— Chọn lý do —</option>
+            <% Object.keys(lyDoXuat).forEach(function (k) { %><option value="<%= k %>" <%= chon.ly_do === k ? 'selected' : '' %>><%= lyDoXuat[k].ten %></option><% }) %>
+          </select>
+        </div>
+      <% } %>
+      <div class="form-group col-md-7">
+        <label for="fGhiChu" class="small font-weight-bold"><%= laNhap ? 'Ghi chú' : 'Nguyên nhân / ghi chú' %> <span id="batBuocGhiChu" class="text-danger" hidden>*</span></label>
+        <input id="fGhiChu" class="form-control" maxlength="500" value="<%= don ? 'Nhận hàng theo đơn ' + don.ma_don : '' %>"
+               placeholder="<%= laNhap ? 'VD: Hóa đơn GTGT số 0001234' : 'VD: Tủ mát hỏng qua đêm, cá hồi có mùi' %>">
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table kb-dong mb-2 no-cuon">
+        <thead class="thead-light"><tr>
+          <th style="min-width:240px">Nguyên liệu</th><th style="width:130px">Số lượng</th>
+          <% if (laNhap) { %><th style="width:140px">Đơn giá (đ)</th><th style="width:130px">Số lô</th><th style="width:155px">Hạn dùng</th><th class="text-right" style="width:130px">Thành tiền</th>
+          <% } else { %><th style="width:120px" class="text-right">Tồn hiện có</th><th>Ghi chú dòng</th><th class="text-right" style="width:130px">Giá trị</th><% } %>
+          <th style="width:46px"></th></tr></thead>
+        <tbody id="dsDong"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" id="themDong"><i class="fas fa-plus"></i> Thêm dòng</button>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top" style="gap:1rem">
+      <div><span class="text-muted">Tổng <%= laNhap ? 'tiền nhập' : 'giá trị xuất (theo giá vốn)' %>:</span> <span class="kb-tong" id="tongTien">0đ</span></div>
+      <div class="d-flex" style="gap:.5rem">
+        <a href="/staff/kitchen/kho" class="btn btn-light">Hủy</a>
+        <button type="submit" class="btn <%= laNhap ? 'btn-success' : 'btn-danger' %> font-weight-bold" id="nutLuu"><i class="fas fa-check"></i> <%= laNhap ? 'Lưu phiếu nhập' : 'Lưu phiếu xuất' %></button>
+      </div>
+    </div>
+    <div class="alert alert-danger mt-3 mb-0" id="loi" hidden></div>
+  </div>
+</form>
+
+<script>
+(function () {
+  var LA_NHAP = <%= laNhap ? 'true' : 'false' %>;
+  var NVL = <%- JSON.stringify(NVL).replace(/</g, '\\u003c') %>;
+  var DAU = <%- JSON.stringify(dongDau) %>;
+  var ID_DON = <%= don ? don.id_dmh : 'null' %>;
+  var LY_DO_HAO_HUT = <%- JSON.stringify(Object.keys(lyDoXuat).filter(function (k) { return lyDoXuat[k].la_hao_hut; })) %>;
+  var $ = function (id) { return document.getElementById(id); };
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var bo = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); };
+  var timNVL = function (id) { return NVL.filter(function (n) { return n.id === Number(id); })[0]; };
+  var cong = function (n) { var d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+
+  function dongMoi(dl) {
+    dl = dl || {};
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="kb-dong__nl"><div class="kb-chon-nl">' +
+        '<input type="search" class="form-control form-control-sm o-nl" placeholder="Gõ tên nguyên liệu..." autocomplete="off" aria-label="Nguyên liệu">' +
+        '<input type="hidden" class="id-nl"><div class="kb-chon-nl__ds" hidden role="listbox"></div>' +
+        '<small class="text-muted thong-tin-nl"></small></div></td>' +
+      '<td data-nhan="Số lượng"><div class="input-group input-group-sm"><input class="form-control o-sl" inputmode="decimal" aria-label="Số lượng"><div class="input-group-append"><span class="input-group-text dvt">–</span></div></div></td>' +
+      (LA_NHAP
+        ? '<td data-nhan="Đơn giá"><input class="form-control form-control-sm o-gia" inputmode="numeric" aria-label="Đơn giá"></td>' +
+          '<td data-nhan="Số lô"><input class="form-control form-control-sm o-lo" maxlength="50" placeholder="Tự sinh" aria-label="Số lô"></td>' +
+          '<td data-nhan="Hạn dùng"><input type="date" class="form-control form-control-sm o-hsd" aria-label="Hạn sử dụng"></td>' +
+          '<td data-nhan="Thành tiền" class="text-right font-weight-bold thanh-tien">0đ</td>'
+        : '<td data-nhan="Tồn hiện có" class="text-right ton">–</td>' +
+          '<td data-nhan="Ghi chú"><input class="form-control form-control-sm o-gc" maxlength="255" aria-label="Ghi chú dòng"></td>' +
+          '<td data-nhan="Giá trị" class="text-right font-weight-bold thanh-tien">0đ</td>') +
+      '<td><button type="button" class="btn btn-sm btn-light text-danger xoa" aria-label="Xóa dòng"><i class="fas fa-times"></i></button></td>';
+    $('dsDong').appendChild(tr);
+
+    var o = tr.querySelector('.o-nl'), ds = tr.querySelector('.kb-chon-nl__ds'), chiSo = -1;
+    function chon(n) {
+      tr.querySelector('.id-nl').value = n.id;
+      o.value = n.ten;
+      tr.querySelector('.dvt').textContent = n.dvt || '–';
+      tr.querySelector('.thong-tin-nl').textContent = 'Tồn ' + (+n.ton).toLocaleString('vi-VN') + ' ' + n.dvt + ' · giá vốn ' + vnd(n.gia);
+      if (LA_NHAP) {
+        if (!tr.querySelector('.o-gia').value) tr.querySelector('.o-gia').value = Math.round(n.gia) || '';
+        if (!tr.querySelector('.o-hsd').value) tr.querySelector('.o-hsd').value = cong(n.hsd);
+        if (!$('fNcc').value && n.ncc) $('fNcc').value = n.ncc;
+      } else {
+        tr.querySelector('.ton').textContent = (+n.ton).toLocaleString('vi-VN') + ' ' + n.dvt;
+      }
+      ds.hidden = true;
+      tinh();
+    }
+    function ve() {
+      var tu = bo(o.value).trim().split(/\s+/).filter(Boolean);
+      var kq = NVL.filter(function (n) { return tu.every(function (t) { return bo(n.ten).indexOf(t) >= 0; }); }).slice(0, 40);
+      chiSo = -1;
+      ds.innerHTML = kq.length ? kq.map(function (n) {
+        return '<button type="button" data-id="' + n.id + '" role="option"><span>' + esc(n.ten) + '</span><small>tồn ' + (+n.ton).toLocaleString('vi-VN') + ' ' + esc(n.dvt) + '</small></button>';
+      }).join('') : '<div class="p-2 small text-muted">Không có nguyên liệu phù hợp</div>';
+      ds.hidden = false;
+    }
+    o.addEventListener('focus', ve);
+    o.addEventListener('input', function () { tr.querySelector('.id-nl').value = ''; ve(); });
+    o.addEventListener('keydown', function (e) {
+      var nut = ds.querySelectorAll('button');
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); if (!nut.length) return;
+        chiSo = (chiSo + (e.key === 'ArrowDown' ? 1 : -1) + nut.length) % nut.length;
+        nut.forEach(function (b, i) { b.classList.toggle('is-on', i === chiSo); });
+        nut[chiSo].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault(); var b = nut[chiSo >= 0 ? chiSo : 0]; if (b) chon(timNVL(b.getAttribute('data-id')));
+        tr.querySelector('.o-sl').focus();
+      } else if (e.key === 'Escape') { ds.hidden = true; }
+    });
+    ds.addEventListener('mousedown', function (e) { var b = e.target.closest('button'); if (b) { e.preventDefault(); chon(timNVL(b.getAttribute('data-id'))); tr.querySelector('.o-sl').focus(); } });
+    o.addEventListener('blur', function () { setTimeout(function () { ds.hidden = true; }, 150); });
+    tr.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', tinh); });
+    tr.querySelector('.xoa').addEventListener('click', function () { tr.remove(); if (!$('dsDong').children.length) dongMoi(); tinh(); });
+
+    if (dl.id && timNVL(dl.id)) chon(timNVL(dl.id));
+    if (dl.sl) tr.querySelector('.o-sl').value = dl.sl;
+    if (LA_NHAP && dl.gia) tr.querySelector('.o-gia').value = Math.round(dl.gia);
+    tinh();
+    return tr;
+  }
+
+  var so = function (v) { return Number(String(v || '').replace(/\./g, '').replace(',', '.')) || 0; };
+  function tinh() {
+    var tong = 0;
+    $('dsDong').querySelectorAll('tr').forEach(function (tr) {
+      var n = timNVL(tr.querySelector('.id-nl').value);
+      var sl = Number(String(tr.querySelector('.o-sl').value).replace(',', '.')) || 0;
+      var gia = LA_NHAP ? so(tr.querySelector('.o-gia').value) : (n ? n.gia : 0);
+      var tt = sl * gia; tong += tt;
+      tr.querySelector('.thanh-tien').textContent = vnd(tt);
+      if (!LA_NHAP && n) tr.querySelector('.o-sl').classList.toggle('is-invalid', sl > n.ton);
+    });
+    $('tongTien').textContent = vnd(tong);
+  }
+
+  $('themDong').addEventListener('click', function () { dongMoi().querySelector('.o-nl').focus(); });
+  (DAU.length ? DAU : [{}]).forEach(dongMoi);
+  if (!LA_NHAP) {
+    var capNhatBatBuoc = function () { $('batBuocGhiChu').hidden = LY_DO_HAO_HUT.indexOf($('fLyDo').value) < 0; };
+    $('fLyDo').addEventListener('change', capNhatBatBuoc); capNhatBatBuoc();
+  }
+
+  $('formPhieu').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    $('loi').hidden = true;
+    var dong = [];
+    var loi = null;
+    $('dsDong').querySelectorAll('tr').forEach(function (tr, i) {
+      var id = tr.querySelector('.id-nl').value, sl = tr.querySelector('.o-sl').value;
+      if (!id && !sl) return;
+      if (!id) { loi = loi || 'Dòng ' + (i + 1) + ': chọn nguyên liệu từ danh sách gợi ý.'; return; }
+      var d = { id_nl: id, so_luong: String(sl).replace(',', '.') };
+      if (LA_NHAP) { d.don_gia = so(tr.querySelector('.o-gia').value); d.so_lo = tr.querySelector('.o-lo').value; d.han_su_dung = tr.querySelector('.o-hsd').value; }
+      else d.ghi_chu = tr.querySelector('.o-gc').value;
+      dong.push(d);
+    });
+    if (!loi && !dong.length) loi = 'Chưa có dòng nguyên liệu nào.';
+    if (loi) { $('loi').textContent = loi; $('loi').hidden = false; return; }
+    var body = { dong: dong, ghi_chu: $('fGhiChu').value };
+    if (LA_NHAP) { body.id_ncc = $('fNcc').value; if (ID_DON) body.id_dmh = ID_DON; } else body.ly_do = $('fLyDo').value;
+    $('nutLuu').disabled = true;
+    try {
+      var r = await fetch('/api/kitchen/kho/' + (LA_NHAP ? 'nhap' : 'xuat'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không lưu được phiếu');
+      window.open('/staff/kitchen/kho/phieu/' + (LA_NHAP ? 'nhap' : 'xuat') + '/' + j.id, '_blank');
+      location.href = ID_DON ? '/staff/kitchen/mua-hang/' + ID_DON : '/staff/kitchen/kho';
+    } catch (err) {
+      $('loi').textContent = err.message; $('loi').hidden = false;
+      $('nutLuu').disabled = false;
+    }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

@@ -59,6 +59,8 @@ module.exports = {
   'dieu_huong.gioi_thieu': 'Về Chúng Tôi',
   'dieu_huong.mon_an': 'Món Ăn',
   'dieu_huong.thuc_don': 'Thực Đơn',
+  'dieu_huong.khong_gian': 'Không Gian',
+  'dieu_huong.dat_tiec': 'Đặt Tiệc',
   'dieu_huong.tin_tuc': 'Tin Tức',
   'dieu_huong.thanh_vien': 'Thành Viên',
   'dieu_huong.huong_dan_dat_ban': 'Hướng Dẫn Đặt Bàn',

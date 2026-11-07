@@ -231,6 +231,38 @@ var tenMonDich = function (m) {
   .db-xemlai dd { margin: 0; color: var(--nh-espresso); font-weight: 600; }
   @media (max-width: 560px) { .db-xemlai { grid-template-columns: 1fr; gap: .1rem .5rem; }
     .db-xemlai dd { margin-bottom: .7rem; } }
+
+  /* ---------- Chinh sach dat ban (Buoc Mo Dau + Modal) ---------- */
+  .db-cs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .95rem; margin-bottom: 1.4rem; }
+  .db-cs-card { background: #fffdf8; border: 1.5px solid rgba(200, 162, 75, 0.35); border-radius: 14px; padding: 1.05rem 1.15rem; position: relative; transition: all .2s var(--nh-ease); }
+  .db-cs-card:hover { border-color: var(--nh-gold); box-shadow: 0 6px 18px rgba(200, 162, 75, 0.14); transform: translateY(-2px); }
+  .db-cs-card--highlight { background: linear-gradient(135deg, #fffdf4 0%, #fcf3dc 100%); border-color: var(--nh-gold); }
+  .db-cs-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: .22rem .65rem; border-radius: 999px; margin-bottom: .55rem; background: rgba(200, 162, 75, 0.18); color: #854d0e; }
+  .db-cs-badge--green { background: #dcfce7; color: #166534; }
+  .db-cs-badge--gold { background: var(--nh-espresso); color: var(--nh-gold-soft); }
+  .db-cs-card h4 { font-size: 1rem; font-weight: 750; color: var(--nh-espresso); margin: 0 0 .35rem; line-height: 1.35; }
+  .db-cs-price { font-size: 1.18rem; font-weight: 800; color: #b45309; margin-bottom: .35rem; display: block; }
+  .db-cs-price--free { color: #15803d; }
+  .db-cs-card p { font-size: .85rem; color: var(--nh-muted); margin: 0; line-height: 1.5; }
+  .db-cs-note { margin-top: .5rem; padding: .5rem .7rem; border-radius: 8px; background: rgba(255,255,255,0.85); border-left: 3px solid var(--nh-gold); font-size: .81rem; color: #7c2d12; font-weight: 600; }
+
+  .db-cs-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .6rem; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--nh-line); }
+  .db-cs-table th, .db-cs-table td { padding: .65rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
+  .db-cs-table th { background: #f8f5ee; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--nh-espresso); font-weight: 800; }
+  .db-cs-table tr:last-child td { border-bottom: none; }
+
+  .db-cs-agree { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem 1.15rem; border-radius: 12px; background: #f0fdf4; border: 1.5px solid rgba(22, 163, 74, 0.35); margin-top: 1.3rem; cursor: pointer; font-size: .92rem; color: #14532d; font-weight: 600; }
+  .db-cs-agree input { width: 20px; height: 20px; margin-top: 2px; accent-color: #15803d; cursor: pointer; flex-shrink: 0; }
+
+  .db-cs-live { margin-top: 1.1rem; padding: .9rem 1.1rem; border-radius: 12px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1.5px solid rgba(217, 119, 6, 0.35); font-size: .88rem; color: #7c2d12; display: flex; gap: .75rem; align-items: flex-start; }
+  .db-cs-live--free { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: rgba(22, 163, 74, 0.35); color: #14532d; }
+  .db-cs-live i { font-size: 1.1rem; margin-top: .15rem; flex: none; }
+
+  .db-modal-backdrop { position: fixed; inset: 0; background: rgba(24, 17, 13, 0.65); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(3px); }
+  .db-modal-backdrop.hien { display: flex; }
+  .db-modal { background: #fff; border-radius: 18px; max-width: 780px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 1.6rem 1.8rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1.5px solid var(--nh-gold); position: relative; }
+  .db-modal__close { position: sticky; top: 0; float: right; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--nh-line); background: #fff; color: var(--nh-espresso); cursor: pointer; font-size: 1rem; display: grid; place-content: center; }
+  .db-modal__close:hover { background: var(--nh-espresso); color: #fff; }
 </style>
 
 <section class="nh-section nh-section--cream">
@@ -249,8 +281,124 @@ var tenMonDich = function (m) {
 
     <div class="db-luoi">
       <div>
+        <!-- ============================ BƯỚC MỞ ĐẦU: CHÍNH SÁCH ĐẶT BÀN ==================== -->
+        <div class="db-man hien" id="manCs" data-buoc="cs">
+          <div class="nh-panel">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.8rem; margin-bottom:1rem;">
+              <div>
+                <h3 class="nh-panel__title" style="margin-bottom:0.3rem;"><i class="fas fa-shield-alt"></i> Chính sách Đặt bàn, Đặt cọc & Hoàn hủy</h3>
+                <p class="nh-hint" style="margin:0;">Vui lòng xem qua quy định đặt cọc giữ bàn và hoàn hủy trước khi tiến hành đặt bàn.</p>
+              </div>
+              <a href="/chinh-sach-dat-ban.pdf" target="_blank" class="nh-btn nh-btn--outline nh-btn--sm" style="font-size:0.8rem;">
+                <i class="fas fa-file-pdf"></i> Xem / Tải bản PDF
+              </a>
+            </div>
+
+            <h4 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--nh-espresso); margin: 0 0 0.75rem;">
+              <i class="fas fa-coins" style="color:var(--nh-gold); margin-right:0.35rem;"></i> 1. Quy định Đặt cọc bàn & Đặt món trước
+            </h4>
+
+            <div class="db-cs-grid">
+              <!-- Thẻ 1: Giờ thường dưới 6 người -->
+              <div class="db-cs-card">
+                <span class="db-cs-badge db-cs-badge--green"><i class="fas fa-smile"></i> Giờ thường · 1 – 5 khách</span>
+                <h4>Bàn lẻ & Gia đình nhỏ</h4>
+                <span class="db-cs-price db-cs-price--free">Miễn đặt cọc (0đ)</span>
+                <p>Áp dụng ngoài khung giờ cao điểm (ngoài <%= cauHinh.gio_cao_diem || '18:00-21:00' %>) cho bàn từ 1 đến 5 người khi không đặt món trước.</p>
+              </div>
+
+              <!-- Thẻ 2: Giờ cao điểm hoặc >= 6 khách giờ thường -->
+              <div class="db-cs-card">
+                <span class="db-cs-badge"><i class="fas fa-fire"></i> Giờ cao điểm / Đoàn 6–14 khách</span>
+                <h4>Giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) hoặc Bàn ≥ 6 người</h4>
+                <span class="db-cs-price">Cọc 100.000đ / người</span>
+                <p>
+                  • <b>Giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>):</b> Bắt buộc cọc <b>100.000đ/người</b> nếu không đặt trước món ăn.<br>
+                  • <b>Giờ thường:</b> Bàn từ <b>6 – 14 người</b> cọc <b>100.000đ/người</b>.
+                </p>
+              </div>
+
+              <!-- Thẻ 3: Đặt tiệc từ 15 người -->
+              <div class="db-cs-card db-cs-card--highlight">
+                <span class="db-cs-badge db-cs-badge--gold"><i class="fas fa-glass-cheers"></i> Đặt tiệc · Từ <%= cauHinh.nguong_tiec || 15 %> người trở lên</span>
+                <h4>Bàn đặt tiệc đoàn đông (≥ <%= cauHinh.nguong_tiec || 15 %> khách)</h4>
+                <span class="db-cs-price">Cọc 150.000đ / người</span>
+                <p>Áp dụng cho mọi khung giờ đối với đoàn đặt tiệc từ <%= cauHinh.nguong_tiec || 15 %> khách trở lên.</p>
+                <div class="db-cs-note">
+                  <i class="fas fa-hand-holding-usd"></i> <b>Cam kết hoàn tiền thừa:</b> Trường hợp khách dùng món thực tế thấp hơn tổng mức 150.000đ/người sẽ được <b>hoàn lại tiền thừa ngay lúc thanh toán</b>!
+                </div>
+              </div>
+
+              <!-- Thẻ 4: Đặt món trước -->
+              <div class="db-cs-card">
+                <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-utensils"></i> Đặt món trước (Pre-order)</span>
+                <h4>Đặt bàn kèm Chọn món trước</h4>
+                <span class="db-cs-price" style="color:#0369a1;">Thanh toán 100% tiền món</span>
+                <p>Khi chọn món trước, quý khách thanh toán trước <b>100% tiền món ăn</b> và được <b>miễn thu thêm cọc bàn 100.000đ/người</b> (đoàn ≥ 15 người áp dụng mức tối thiểu 150.000đ/người).</p>
+              </div>
+            </div>
+
+            <h4 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--nh-espresso); margin: 1.3rem 0 0.6rem;">
+              <i class="fas fa-undo-alt" style="color:var(--nh-gold); margin-right:0.35rem;"></i> 2. Chính sách Đổi lịch & Hủy bàn (Hoàn tiền cọc)
+            </h4>
+
+            <table class="db-cs-table">
+              <thead>
+                <tr>
+                  <th>Thời điểm báo hủy (so với giờ hẹn)</th>
+                  <th>Bàn thường (&lt; 15 khách)</th>
+                  <th>Đoàn tiệc (≥ 15 khách) / Có đặt món trước</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Trước từ 24 giờ trở lên</b></td>
+                  <td style="color:#15803d; font-weight:700;">Hoàn 100% tiền cọc</td>
+                  <td style="color:#15803d; font-weight:700;">Hoàn 100% tiền cọc / tiền món</td>
+                </tr>
+                <tr>
+                  <td><b>Từ 6 giờ đến dưới 24 giờ</b></td>
+                  <td style="color:#b45309; font-weight:700;">Hoàn 70% tiền cọc</td>
+                  <td style="color:#b45309; font-weight:700;">Hoàn 50% tiền cọc / tiền món</td>
+                </tr>
+                <tr>
+                  <td><b>Từ 2 giờ đến dưới 6 giờ</b></td>
+                  <td style="color:#b45309; font-weight:700;">Hoàn 50% tiền cọc</td>
+                  <td style="color:#b91c1c; font-weight:700;">Không hoàn (0%) <small style="font-weight:normal;">(Bếp đã sơ chế)</small></td>
+                </tr>
+                <tr>
+                  <td><b>Dưới 2 giờ (Sát giờ) / Không đến (No-show)</b></td>
+                  <td style="color:#b91c1c; font-weight:700;">Không hoàn tiền (0%)</td>
+                  <td style="color:#b91c1c; font-weight:700;">Không hoàn tiền (0%)</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="db-bao db-bao--nhac" style="margin-top:1rem; margin-bottom:0;">
+              <i class="fas fa-clock"></i>
+              <div style="font-size:0.86rem; line-height:1.55;">
+                <b>Quy định giữ bàn & Đổi lịch:</b> Nhà hàng giữ bàn tối đa <b><%= cauHinh.giu_ban_phut %> phút</b> kể từ giờ hẹn (nếu đến trễ vui lòng gọi báo trước để gia hạn). Quý khách được <b>miễn phí đổi giờ/ngày (bảo lưu 100% tiền cọc)</b> khi báo trước ít nhất <b>4 giờ</b> (bàn thường) hoặc <b>12 giờ</b> (bàn tiệc / đặt món trước).
+              </div>
+            </div>
+
+            <label class="db-cs-agree" for="dbDongYChinhSach">
+              <input type="checkbox" id="dbDongYChinhSach" checked>
+              <span>Tôi đã đọc, hiểu rõ và đồng ý với Chính sách đặt bàn, đặt cọc (100k/người giờ cao điểm hoặc ≥ 6 người; 150k/người cho tiệc ≥ 15 người; 100% tiền món đặt trước) và Chính sách hoàn hủy của Nhà hàng Bảo Đoàn.</span>
+            </label>
+
+            <div class="db-dieuhuong">
+              <a href="/huong-dan-dat-ban" class="nh-btn nh-btn--outline">
+                <i class="fas fa-book-open"></i> Xem hướng dẫn chi tiết
+              </a>
+              <button type="button" class="nh-btn nh-btn--gold" id="dbBatDauDatBan">
+                Đồng ý & Bắt đầu đặt bàn <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- ============================ BƯỚC 1: THỜI GIAN ==================== -->
-        <div class="db-man hien" id="man1" data-buoc="1">
+        <div class="db-man" id="man1" data-buoc="1">
           <div class="nh-panel">
             <h3 class="nh-panel__title"><i class="fas fa-calendar-day"></i> <%= t('dat_ban_moi.b1_tieu_de') %></h3>
 
@@ -261,7 +409,7 @@ var tenMonDich = function (m) {
               </div>
               <div class="nh-field">
                 <label for="dbSoKhach"><%= t('dat_ban_moi.so_khach') %> <span class="req">*</span></label>
-                <input type="number" id="dbSoKhach" class="nh-input" value="2" min="1" max="<%= cauHinh.toi_da_khach %>">
+                <input type="number" id="dbSoKhach" class="nh-input" value="0" min="0" max="<%= cauHinh.toi_da_khach %>">
                 <span class="nh-hint"><%= t('dat_ban_moi.toi_da_online').replace('{n}', cauHinh.toi_da_khach) %></span>
               </div>
               <div class="nh-field nh-field--full">
@@ -273,7 +421,7 @@ var tenMonDich = function (m) {
                 <select id="dbKhuVuc" class="nh-select">
                   <option value=""><%= t('dat_ban_moi.khu_bat_ky') %></option>
                   <% khuVuc.forEach(function (k) { %>
-                    <option value="<%= k.id %>"><%= k.la_vip ? '★ ' : '' %><%= tenKhuVucDich(k) %> — <%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %><%= k.mo_ta ? ' · ' + k.mo_ta : '' %></option>
+                    <option value="<%= k.id %>" <%= (typeof khuVucChon !== 'undefined' && String(khuVucChon) === String(k.id)) ? 'selected' : '' %>><%= k.la_vip ? '★ ' : '' %><%= tenKhuVucDich(k) %> — <%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %><%= k.mo_ta ? ' · ' + k.mo_ta : '' %></option>
                   <% }); %>
                 </select>
               </div>
@@ -287,10 +435,13 @@ var tenMonDich = function (m) {
               </label>
               <div id="dbBaoGio"></div>
               <div class="db-gio" id="dbGio" role="radiogroup" aria-label="<%= t('dat_ban_moi.gio_den') %>"></div>
+              <div id="dbChinhSachApDung"></div>
             </div>
 
             <div class="db-dieuhuong">
-              <span></span>
+              <button type="button" class="nh-btn nh-btn--outline" data-lui="1">
+                <i class="fas fa-shield-alt"></i> Xem lại Chính sách
+              </button>
               <button type="button" class="nh-btn nh-btn--gold" id="dbTiep1" disabled>
                 <%= t('dat_ban_moi.tiep_tuc') %> <i class="fas fa-arrow-right"></i>
               </button>
@@ -491,16 +642,72 @@ var tenMonDich = function (m) {
         <h3 class="nh-panel__title"><i class="fas fa-receipt"></i> <%= t('dat_ban_moi.tom_tat') %></h3>
         <div id="dbTomTat"></div>
         <div id="dbTomTatCoc"></div>
-        <p class="nh-hint" style="margin-top:1.2rem">
+        <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" id="dbMoModalChinhSach" style="margin-top:1rem;width:100%;justify-content:center;border-color:var(--nh-gold);color:var(--nh-espresso);white-space:normal;line-height:1.35;padding:.55rem .75rem;height:auto;text-align:center;">
+          <i class="fas fa-shield-alt" style="color:var(--nh-gold);flex-shrink:0"></i> <span>Xem Chính sách đặt bàn & hoàn hủy</span>
+        </button>
+        <p class="nh-hint" style="margin-top:1rem">
           <i class="fas fa-phone"></i> <%= t('dat_ban_moi.can_ho_tro') %>
         </p>
-        <a href="/my-orders" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:.8rem;width:100%;justify-content:center">
+        <a href="/my-orders" class="nh-btn nh-btn--outline nh-btn--sm" style="margin-top:.6rem;width:100%;justify-content:center">
           <i class="fas fa-history"></i> <%= t('dieu_huong.don_cua_toi') %>
         </a>
       </aside>
     </div>
   </div>
 </section>
+
+<!-- Modal xem nhanh Chính sách Đặt bàn ở mọi bước -->
+<div class="db-modal-backdrop" id="dbModalChinhSach" role="dialog" aria-modal="true" aria-labelledby="dbModalTitle">
+  <div class="db-modal">
+    <button type="button" class="db-modal__close" id="dbDongModalChinhSach" aria-label="Đóng"><i class="fas fa-times"></i></button>
+    <h3 id="dbModalTitle" style="font-size:1.25rem; color:var(--nh-espresso); margin:0 0 0.9rem; display:flex; align-items:center; gap:0.55rem;">
+      <i class="fas fa-shield-alt" style="color:var(--nh-gold)"></i> Chính sách Đặt bàn, Đặt cọc & Hoàn hủy
+    </h3>
+    <div class="db-cs-grid" style="margin-bottom:1rem;">
+      <div class="db-cs-card">
+        <span class="db-cs-badge db-cs-badge--green">Giờ thường · 1 – 5 khách</span>
+        <h4>Miễn đặt cọc (0đ)</h4>
+        <p>Ngoài khung giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) cho bàn dưới 6 khách không đặt món trước.</p>
+      </div>
+      <div class="db-cs-card">
+        <span class="db-cs-badge">Giờ cao điểm / Bàn 6–14 khách</span>
+        <h4>Cọc 100.000đ / người</h4>
+        <p>Áp dụng trong giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) nếu không đặt món trước, hoặc bàn từ 6–14 khách ở giờ thường.</p>
+      </div>
+      <div class="db-cs-card db-cs-card--highlight">
+        <span class="db-cs-badge db-cs-badge--gold">Đặt tiệc ≥ <%= cauHinh.nguong_tiec || 15 %> khách</span>
+        <h4>Cọc 150.000đ / người</h4>
+        <p>Bắt buộc mọi khung giờ. <b>Nếu dùng món thực tế thấp hơn tổng mức 150.000đ/người sẽ được hoàn lại tiền thừa ngay lúc thanh toán.</b></p>
+      </div>
+      <div class="db-cs-card">
+        <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;">Đặt trước món ăn</span>
+        <h4>Thanh toán 100% tiền món</h4>
+        <p>Thanh toán trước 100% tiền món đã chọn (miễn thu thêm cọc bàn 100k/người; đoàn tiệc ≥ 15 người tối thiểu 150k/người).</p>
+      </div>
+    </div>
+    <table class="db-cs-table">
+      <thead>
+        <tr>
+          <th>Mốc thời gian hủy (trước giờ hẹn)</th>
+          <th>Bàn thường (&lt; 15 khách)</th>
+          <th>Đoàn tiệc (≥ 15 khách) / Có đặt món trước</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Trước ≥ 24 giờ</b></td><td style="color:#15803d;font-weight:700;">Hoàn 100%</td><td style="color:#15803d;font-weight:700;">Hoàn 100%</td></tr>
+        <tr><td><b>Từ 6h đến dưới 24h</b></td><td style="color:#b45309;font-weight:700;">Hoàn 70%</td><td style="color:#b45309;font-weight:700;">Hoàn 50%</td></tr>
+        <tr><td><b>Từ 2h đến dưới 6h</b></td><td style="color:#b45309;font-weight:700;">Hoàn 50%</td><td style="color:#b91c1c;font-weight:700;">Không hoàn (0%)</td></tr>
+        <tr><td><b>Dưới 2 giờ / Không đến (No-show)</b></td><td style="color:#b91c1c;font-weight:700;">Không hoàn (0%)</td><td style="color:#b91c1c;font-weight:700;">Không hoàn (0%)</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-top:1.1rem;">
+      <a href="/chinh-sach-dat-ban.pdf?tai=1" class="nh-btn nh-btn--outline nh-btn--sm">
+        <i class="fas fa-file-pdf"></i> Tải file Chính sách (PDF)
+      </a>
+      <button type="button" class="nh-btn nh-btn--gold nh-btn--sm" id="dbDongModalChinhSachBtn">Đã hiểu</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -533,10 +740,10 @@ var tenMonDich = function (m) {
     su that - vi du so khach hien tren tom tat lech voi so khach thuc su gui len.
   */
   var S = {
-    buoc: 1,
+    buoc: 'cs',
     ngay: document.getElementById('dbNgay').value,
-    soKhach: 2,
-    khuVuc: '',
+    soKhach: 0,
+    khuVuc: document.getElementById('dbKhuVuc').value, // co the duoc chon san qua ?khu_vuc= (trang /khong-gian)
     gio: '',
     thoiLuong: null,
     ban: [],        // id ban khach tu chon; rong = de nha hang xep
@@ -547,9 +754,10 @@ var tenMonDich = function (m) {
     mon: {}         // { id_mon: { id_mon, name_mon, gia_mon, soluong } }
   };
 
-  // Buoc 2 chi ton tai khi quan ly cho phep khach tu chon ban.
-  var BUOC = CF.cho_chon_ban ? [1, 2, 'mon', 3, 4] : [1, 'mon', 3, 4];
+  // Buoc 'cs' (Xem chinh sach dat ban) luon nam dau tien. Buoc 2 chi ton tai khi cho phep tu chon ban.
+  var BUOC = CF.cho_chon_ban ? ['cs', 1, 2, 'mon', 3, 4] : ['cs', 1, 'mon', 3, 4];
   var TEN_BUOC = {
+    'cs': 'Chính sách',
     1: T['dat_ban_moi.b1_ngan'] || 'Thời gian',
     2: T['dat_ban_moi.b2_ngan'] || 'Chọn bàn',
     'mon': T['dat_ban_moi.b_mon_ngan'] || 'Gọi món',
@@ -560,6 +768,12 @@ var tenMonDich = function (m) {
   var $ = function (id) { return document.getElementById(id); };
   var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
   var ngayVN = function (s) { return String(s || '').split('-').reverse().join('/'); };
+
+  function tinhTongTienMonDaChon() {
+    return Object.values(S.mon || {}).reduce(function (s, m) {
+      return s + (Number(m.soluong || 0) * Number(m.gia_mon || 0));
+    }, 0);
+  }
 
   /** Chen van ban an toan - khong bao gio dung innerHTML voi du lieu tu API. */
   function chu(the, lop, noiDung) {
@@ -591,7 +805,13 @@ var tenMonDich = function (m) {
     BUOC.forEach(function (b, i) {
       var li = chu('li', 'db-buoc__o');
       if (b === S.buoc) li.setAttribute('aria-current', 'step');
-      if (BUOC.indexOf(S.buoc) > i) li.setAttribute('data-xong', '1');
+      var daQua = BUOC.indexOf(S.buoc) > i;
+      if (daQua) {
+        li.setAttribute('data-xong', '1');
+        li.style.cursor = 'pointer';
+        li.title = 'Quay lại bước ' + TEN_BUOC[b];
+        li.addEventListener('click', function () { den(b); });
+      }
       li.appendChild(chu('span', 'db-buoc__so', String(i + 1)));
       li.appendChild(document.createTextNode(TEN_BUOC[b]));
       ol.appendChild(li);
@@ -600,7 +820,7 @@ var tenMonDich = function (m) {
 
   function den(buoc) {
     S.buoc = buoc;
-    [1, 2, 'Mon', 3, 4].forEach(function (b) {
+    ['Cs', 1, 2, 'Mon', 3, 4].forEach(function (b) {
       var m = $('man' + b);
       if (m) m.classList.toggle('hien', String(b).toLowerCase() === String(buoc).toLowerCase());
     });
@@ -622,20 +842,131 @@ var tenMonDich = function (m) {
     return BUOC[i - 1] || buoc;
   }
 
+  // -------------------------------------------------------------- bước CS: CHÍNH SÁCH ĐẶT BÀN
+
+  var chkDongY = $('dbDongYChinhSach');
+  var btnBatDau = $('dbBatDauDatBan');
+  if (chkDongY && btnBatDau) {
+    chkDongY.addEventListener('change', function () {
+      btnBatDau.disabled = !chkDongY.checked;
+    });
+    btnBatDau.addEventListener('click', function () {
+      if (!chkDongY.checked) return;
+      den(1);
+    });
+  }
+
+  var modalCs = $('dbModalChinhSach');
+  var btnMoModalCs = $('dbMoModalChinhSach');
+  var btnDongModalCs = $('dbDongModalChinhSach');
+  var btnDongModalCs2 = $('dbDongModalChinhSachBtn');
+  function moModalChinhSach() {
+    if (modalCs) modalCs.classList.add('hien');
+  }
+  function dongModalChinhSach() {
+    if (modalCs) modalCs.classList.remove('hien');
+  }
+  if (btnMoModalCs) btnMoModalCs.addEventListener('click', moModalChinhSach);
+  if (btnDongModalCs) btnDongModalCs.addEventListener('click', dongModalChinhSach);
+  if (btnDongModalCs2) btnDongModalCs2.addEventListener('click', dongModalChinhSach);
+  if (modalCs) {
+    modalCs.addEventListener('click', function (e) {
+      if (e.target === modalCs) dongModalChinhSach();
+    });
+  }
+
+  function laKhungGioCaoDiem(gioStr) {
+    if (!gioStr) return false;
+    var p = String(gioStr).split(':');
+    var phut = (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0);
+    var ds = String(CF.gio_cao_diem || '18:00-21:00').split(',');
+    for (var i = 0; i < ds.length; i++) {
+      var cap = ds[i].trim().split('-');
+      if (cap.length === 2) {
+        var d = cap[0].split(':'), c = cap[1].split(':');
+        var tu = (Number(d[0]) || 0) * 60 + (Number(d[1]) || 0);
+        var denP = (Number(c[0]) || 0) * 60 + (Number(c[1]) || 0);
+        if (phut >= tu && phut <= denP) return true;
+      }
+    }
+    return false;
+  }
+
+  function veChinhSachApDung() {
+    var hop = $('dbChinhSachApDung');
+    if (!hop) return;
+    var soK = Number(S.soKhach || 0);
+    var nguongTiec = Number(CF.nguong_tiec || 15);
+    var caoDiem = laKhungGioCaoDiem(S.gio);
+    var tongMon = tinhTongTienMonDaChon();
+
+    hop.className = 'db-live-policy';
+    if (soK <= 0) {
+      hop.innerHTML = '<i class="fas fa-user-friends"></i><div>'
+        + 'Vui lòng <b>nhập hoặc chọn số lượng khách</b> để hệ thống hiển thị khung giờ trống và chính sách đặt cọc tương ứng.'
+        + '</div>';
+      return;
+    }
+    if (soK >= nguongTiec) {
+      var cocTiec = soK * 150000;
+      hop.innerHTML = '<i class="fas fa-crown"></i><div>'
+        + '<b>Chính sách áp dụng cho đoàn tiệc ' + soK + ' khách:</b> Bắt buộc đặt cọc <b>150.000đ/người</b> (tạm tính <b>' + tien(cocTiec) + '</b>).'
+        + '<br><span style="color:#15803d;font-weight:600;"><i class="fas fa-hand-holding-usd"></i> Cam kết: Nếu khi dùng bữa thực tế tổng tiền món thấp hơn ' + tien(cocTiec) + ', nhà hàng sẽ hoàn lại phần tiền thừa ngay lúc thanh toán.</span>'
+        + '</div>';
+      return;
+    }
+
+    if (tongMon > 0) {
+      hop.innerHTML = '<i class="fas fa-utensils"></i><div>'
+        + '<b>Chính sách đặt món trước (' + soK + ' khách):</b> Thanh toán trước <b>100% tiền món đã chọn (' + tien(tongMon) + ')</b> — được miễn thu thêm cọc bàn 100.000đ/người.'
+        + '</div>';
+      return;
+    }
+
+    if (!S.gio) {
+      if (soK >= 6) {
+        hop.innerHTML = '<i class="fas fa-info-circle"></i><div>'
+          + '<b>Chính sách áp dụng cho bàn ' + soK + ' khách:</b> Đặt cọc giữ bàn <b>100.000đ/người (' + tien(soK * 100000) + ')</b> (hoặc thanh toán 100% tiền món nếu quý khách chọn đặt món trước ở bước tiếp theo).'
+          + '</div>';
+      } else {
+        hop.innerHTML = '<i class="fas fa-info-circle"></i><div>'
+          + '<b>Chính sách áp dụng cho bàn ' + soK + ' khách:</b> <b>Miễn đặt cọc (0đ)</b> nếu chọn khung giờ thường; <b>cọc 100.000đ/người (' + tien(soK * 100000) + ')</b> nếu chọn khung giờ cao điểm (' + (CF.gio_cao_diem || '18:00-21:00') + ') mà không đặt trước món ăn.'
+          + '</div>';
+      }
+      return;
+    }
+
+    if (caoDiem) {
+      hop.innerHTML = '<i class="fas fa-fire" style="color:#d97706"></i><div>'
+        + '<b>Khung giờ cao điểm (' + S.gio + ') · ' + soK + ' khách:</b> Bắt buộc đặt cọc bàn <b>100.000đ/người (' + tien(soK * 100000) + ')</b> nếu không đặt trước món ăn (nếu đặt món trước ở bước sau sẽ thanh toán 100% tiền món, miễn cọc bàn).'
+        + '</div>';
+    } else if (soK >= 6) {
+      hop.innerHTML = '<i class="fas fa-users"></i><div>'
+        + '<b>Khung giờ thường (' + S.gio + ') · Bàn từ 6 khách (' + soK + ' khách):</b> Đặt cọc giữ bàn <b>100.000đ/người (' + tien(soK * 100000) + ')</b> nếu không đặt trước món ăn.'
+        + '</div>';
+    } else {
+      hop.className = 'db-live-policy db-live-policy--free';
+      hop.innerHTML = '<i class="fas fa-check-circle"></i><div>'
+        + '<b>Khung giờ thường (' + S.gio + ') · ' + soK + ' khách:</b> <b>Miễn đặt cọc giữ bàn (0đ)</b> (trừ khi quý khách chủ động chọn đặt món trước ở bước tiếp theo).'
+        + '</div>';
+    }
+  }
+
   // -------------------------------------------------------------- bước 1
 
   // Chon nhanh so khach: cham mot lan thay vi go so - nhanh hon han tren dien thoai.
   (function veNhanhKhach() {
     var khung = $('dbNhanhKhach');
-    [2, 4, 6, 8, 10, 12].forEach(function (n) {
+    [2, 4, 6, 8, 10, 12, 15, 20].forEach(function (n) {
       if (n > CF.toi_da_khach) return;
       var l = chu('label', 'nh-chip');
       var o = document.createElement('input');
       o.type = 'radio'; o.name = 'dbNhanh'; o.value = String(n);
-      if (n === 2) o.checked = true;
       o.addEventListener('change', function () {
         $('dbSoKhach').value = n;
         S.soKhach = n;
+        veChinhSachApDung();
+        veTomTat();
         taiKhungGio();
       });
       l.appendChild(o);
@@ -655,8 +986,17 @@ var tenMonDich = function (m) {
     var baoKhung = $('dbBaoGio');
     khung.innerHTML = '';
     S.gio = '';
+    S.thoiLuong = null;
+    S.coc = null;
     $('dbTiep1').disabled = true;
     baoKhung.innerHTML = '';
+
+    if (!S.soKhach || S.soKhach <= 0) {
+      bao(baoKhung, 'nhac', 'Vui lòng chọn hoặc nhập số lượng khách (từ 1 khách trở lên) để xem các khung giờ còn bàn.');
+      veChinhSachApDung();
+      veTomTat();
+      return;
+    }
 
     var tai = chu('p', 'nh-hint');
     tai.appendChild(chu('span', 'db-tai'));
@@ -690,6 +1030,7 @@ var tenMonDich = function (m) {
           S.gio = k.gio;
           S.ban = [];
           $('dbTiep1').disabled = false;
+          veChinhSachApDung();
           veTomTat();
           taiCoc();
         });
@@ -707,6 +1048,7 @@ var tenMonDich = function (m) {
       if (!conBan) {
         bao(baoKhung, 'nhac', T['dat_ban_moi.kin_ban_ngay']);
       }
+      veChinhSachApDung();
     } catch (e) {
       khung.innerHTML = '';
       bao(baoKhung, 'loi', T['dat_ban_moi.loi_mang']);
@@ -718,11 +1060,13 @@ var tenMonDich = function (m) {
     taiKhungGioHoan();
   });
   $('dbSoKhach').addEventListener('input', function () {
-    var n = Math.max(1, Math.min(CF.toi_da_khach, Number(this.value) || 1));
+    var raw = Number(this.value);
+    var n = (!raw || raw <= 0) ? 0 : Math.min(CF.toi_da_khach, Math.floor(raw));
     S.soKhach = n;
     document.querySelectorAll('input[name="dbNhanh"]').forEach(function (o) {
-      o.checked = Number(o.value) === n;
+      o.checked = n > 0 && Number(o.value) === n;
     });
+    veChinhSachApDung();
     veTomTat();
     taiKhungGioHoan();
   });
@@ -740,26 +1084,52 @@ var tenMonDich = function (m) {
   var dieuKhienSoDo = null;
   var chiHienBanPhuHop = true;
 
+  /*
+    RÀNG BUỘC QUY MÔ BÀN — bản sao phía trình duyệt của
+    reservationRules.kiemTraQuyMoBan() để khách thấy lỗi NGAY khi bấm chọn bàn.
+    Server vẫn kiểm lại; sửa quy tắc thì sửa cả hai nơi.
+  */
+  var QM = <%- JSON.stringify(cauHinh.quy_mo_ban || {}) %>;
+  function gioiHanCho(k, soBan) {
+    if (soBan <= 1) return Math.max(k + (QM.max_extra_seats_single || 2), QM.single_table_max_guests || 4);
+    return k + Math.max(QM.max_extra_seats_group || 3, Math.ceil(k * (QM.max_extra_seats_percent || 20) / 100));
+  }
+  function kiemTraQuyMoBan(dsSoCho, k) {
+    var n = dsSoCho.length;
+    var tong = dsSoCho.reduce(function (s, c) { return s + c; }, 0);
+    if (!n) return null;
+    if (tong < k) return null; // "thiếu chỗ" đã có thông báo riêng
+    if (n > 1 && k <= (QM.single_table_max_guests || 4)) {
+      return 'Nhóm ' + k + ' khách chỉ được đặt 1 bàn (bàn tối đa ' + gioiHanCho(k, 1) + ' chỗ).';
+    }
+    if (n > 1) {
+      for (var i = 0; i < n; i++) {
+        if (tong - dsSoCho[i] >= k) return 'Bạn đã chọn thừa bàn: bỏ bớt bàn ' + dsSoCho[i] + ' chỗ vẫn đủ cho ' + k + ' khách.';
+      }
+    }
+    var toiDa = gioiHanCho(k, n);
+    if (tong > toiDa) {
+      return n === 1
+        ? 'Bàn ' + tong + ' chỗ quá lớn cho ' + k + ' khách — chỉ được chọn bàn tối đa ' + toiDa + ' chỗ.'
+        : 'Tổng ' + tong + ' chỗ quá nhiều cho ' + k + ' khách — tổng số chỗ chỉ được từ ' + k + ' đến ' + toiDa + '.';
+    }
+    if (QM.max_tables_per_reservation && n > QM.max_tables_per_reservation) {
+      return 'Mỗi lượt đặt tối đa ' + QM.max_tables_per_reservation + ' bàn.';
+    }
+    return null;
+  }
+
   function laBanPhuHop(b, soKhach) {
     var k = Number(soKhach) || 2;
     var c = Number(b.so_cho) || 4;
-    // Bàn phải đủ chỗ cho khách và phù hợp quy mô đoàn
-    if (k <= 2) return c >= 2 && c <= 4;
-    if (k <= 4) return c >= 4 && c <= 6;
-    if (k <= 6) return c >= 6 && c <= 8;
-    if (k <= 8) return c >= 8 && c <= 10;
-    if (k <= 10) return c >= 10 && c <= 12;
-    return c >= k;
+    // Nhóm ngồi vừa MỘT bàn: chỉ hiện bàn đủ chỗ và không quá rộng.
+    // Đoàn đông không vừa bàn nào thì bộ lọc tự hiện mọi bàn để ghép.
+    return c >= k && c <= gioiHanCho(k, 1);
   }
 
   function layMotaKhoangCho(soKhach) {
     var k = Number(soKhach) || 2;
-    if (k <= 2) return '2 – 4';
-    if (k <= 4) return '4 – 6';
-    if (k <= 6) return '6 – 8';
-    if (k <= 8) return '8 – 10';
-    if (k <= 10) return '10 – 12';
-    return k + '+';
+    return Math.max(k, 2) + ' – ' + gioiHanCho(k, 1);
   }
 
   function locDanhSachBan(dsBan, soKhach, batBuocPhuHop) {
@@ -812,6 +1182,8 @@ var tenMonDich = function (m) {
       var tatCa = await q(S.khuVuc);
       if (!tatCa.ok) { bao($('dbTomTatBan'), 'loi', tatCa.thong_bao); return; }
 
+      S.soChoTheoBan = {};
+      (tatCa.ban || []).forEach(function (b) { S.soChoTheoBan[Number(b.id)] = Number(b.so_cho) || 0; });
       var banHienThi = locDanhSachBan(tatCa.ban || [], S.soKhach, chiHienBanPhuHop);
       var tatCaDaLoc = Object.assign({}, tatCa, { ban: banHienThi });
 
@@ -867,6 +1239,8 @@ var tenMonDich = function (m) {
     }
 
     var du = tongCho >= S.soKhach;
+    var loiQuyMo = du ? kiemTraQuyMoBan(S.ban.map(function (id) { return (S.soChoTheoBan || {})[Number(id)] || 0; }), Number(S.soKhach)) : null;
+    if (loiQuyMo) du = false;
     o.classList.add(du ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu');
     var m = chu('span');
     m.appendChild(document.createTextNode(T['dat_ban_moi.da_chon'] + ' '));
@@ -874,9 +1248,9 @@ var tenMonDich = function (m) {
     b.textContent = S.ban.length + ' ' + T['dat_ban_moi.ban_dv'] + ' · ' + tongCho + ' ' + T['dat_ban_moi.cho'];
     m.appendChild(b);
     o.appendChild(m);
-    o.appendChild(chu('span', null, du
+    o.appendChild(chu('span', null, loiQuyMo ? loiQuyMo : (du
       ? T['dat_ban_moi.du_cho']
-      : T['dat_ban_moi.thieu_cho'].replace('{n}', S.soKhach - tongCho)));
+      : T['dat_ban_moi.thieu_cho'].replace('{n}', S.soKhach - tongCho))));
 
     $('dbTiep2').disabled = !du;
   }
@@ -1394,7 +1768,12 @@ var tenMonDich = function (m) {
       });
       tongTienEl.textContent = tien(tongTien);
     }
-    veTomTat();
+    veChinhSachApDung();
+    if (S.gio) {
+      taiCoc();
+    } else {
+      veTomTat();
+    }
   }
 
   // Loc loai mon
@@ -1464,8 +1843,9 @@ var tenMonDich = function (m) {
 
   async function taiCoc() {
     if (!S.gio) { S.coc = null; veTomTat(); return; }
+    var tongMon = tinhTongTienMonDaChon();
     var q = new URLSearchParams({
-      reservation_date: S.ngay, start_time: S.gio, guest_count: S.soKhach
+      reservation_date: S.ngay, start_time: S.gio, guest_count: S.soKhach, preorder_total: tongMon
     });
     if (S.khuVuc) q.set('area_id', S.khuVuc);
     if (S.the.length) q.set('tags', S.the.join(','));
@@ -1535,8 +1915,20 @@ var tenMonDich = function (m) {
       b.textContent = tien(S.coc.soTien);
       hop.appendChild(b);
       hop.appendChild(chu('div', null, S.coc.lyDo));
+      if (S.coc.hoanTienNeuDungThapHon) {
+        var camKet = chu('div', null, '✓ Cam kết: Nếu dùng món thực tế thấp hơn ' + tien(S.coc.soTien) + ', nhà hàng hoàn lại tiền thừa lúc thanh toán.');
+        camKet.style.color = '#15803d';
+        camKet.style.fontWeight = '700';
+        camKet.style.marginTop = '4px';
+        hop.appendChild(camKet);
+      }
       hop.appendChild(chu('div', null, T['dat_ban_moi.coc_ghi_chu']));
       c.appendChild(hop);
+    } else if (S.gio) {
+      var hopFree = chu('div', 'db-live-policy db-live-policy--free');
+      hopFree.style.marginTop = '1rem';
+      hopFree.innerHTML = '<i class="fas fa-check-circle"></i><div><b>Miễn đặt cọc giữ bàn (0đ)</b><br><span style="font-size:0.8rem">Khung giờ thường dưới 6 khách & chưa chọn món đặt trước.</span></div>';
+      c.appendChild(hopFree);
     }
   }
 
@@ -1676,6 +2068,7 @@ var tenMonDich = function (m) {
 
   // -------------------------------------------------------------- khởi động
   veThanhBuoc();
+  veChinhSachApDung();
   veTomTat();
   taiKhungGio();
 })();
