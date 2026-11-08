@@ -339,7 +339,7 @@ async function runFullStaffAutomation() {
     { path: '/api/to-chuc/ho-so', name: 'API Hồ sơ phân quyền người đăng nhập', cookie: waiterCookie },
     { path: '/api/reservations/dashboard', name: 'API Dashboard KPI Đặt bàn', cookie: receptionCookie },
     { path: '/api/reservations/timeline?date=2026-10-07', name: 'API Timeline danh sách đặt bàn theo ngày', cookie: receptionCookie },
-    { path: '/api/tables/availability?reservation_date=2026-10-08&start_time=19:00&guest_count=4', name: 'API Kiểm tra bàn trống khả dụng theo giờ & số khách', cookie: receptionCookie },
+    { path: `/api/tables/availability?reservation_date=${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)}&start_time=19:00&guest_count=4`, name: 'API Kiểm tra bàn trống khả dụng theo giờ & số khách', cookie: receptionCookie },
     { path: '/api/tables/floor-plan?ngay=2026-10-07', name: 'API Tọa độ & trạng thái 40 bàn trên sơ đồ', cookie: receptionCookie },
     { path: '/api/cham-cong/cua-toi', name: 'API Lịch sử chấm công của nhân viên', cookie: waiterCookie },
     { path: '/api/khuon-mat/trang-thai', name: 'API Kiểm tra trạng thái AI nhận diện khuôn mặt', cookie: mgrCookie },

@@ -129,6 +129,8 @@ const MAC_DINH = {
   max_extra_seats_percent: 20,
   minimum_lead_minutes: 30,
   max_advance_days: 90,
+  // Doi mon da dat truoc toi thieu bao nhieu ngay truoc gio dat (0 = khong gioi han).
+  dish_edit_cutoff_days: 1,
   slot_step_minutes: 15,
   auto_confirm_online: 0,
   auto_confirm_member: 1,
@@ -444,6 +446,26 @@ function kiemTraDatQuaXa(khung, ch) {
   han.setDate(han.getDate() + toiDa);
   if (khung.mocBatDau > han) {
     throw new LoiDatBan(`Chỉ nhận đặt bàn trước tối đa ${toiDa} ngày`, 'TOO_FAR');
+  }
+}
+
+/**
+ * Han doi danh sach mon da dat truoc (`dish_edit_cutoff_days`, mac dinh 1 ngay).
+ *
+ * Qua han nay thi bep co the da mua/so che nguyen lieu theo don cu - doi mon
+ * luc do de lam thua/thieu hang. `boQua` danh cho nhan vien: ho goi dien xac
+ * nhan truc tiep voi bep truoc khi sua gium khach, kenh online thi KHONG duoc
+ * bo qua.
+ */
+function kiemTraHanSuaMon(khung, ch, { boQua = false } = {}) {
+  if (boQua) return;
+  const soNgay = Number(ch.dish_edit_cutoff_days ?? MAC_DINH.dish_edit_cutoff_days);
+  if (!Number.isFinite(soNgay) || soNgay <= 0) return;
+  const han = new Date(khung.mocBatDau.getTime() - soNgay * 86400000);
+  if (Date.now() > han.getTime()) {
+    throw new LoiDatBan(
+      `Chỉ có thể đổi món đã đặt trước tối thiểu ${soNgay} ngày so với giờ đặt bàn. `
+      + 'Vui lòng gọi trực tiếp cho nhà hàng nếu cần đổi món gấp.', 'DISH_EDIT_TOO_LATE');
   }
 }
 
@@ -840,6 +862,7 @@ module.exports = {
   kiemTraThongTinKhach,
   kiemTraDatSatGio,
   kiemTraDatQuaXa,
+  kiemTraHanSuaMon,
   kiemTraQuaKhu,
   lichMoCua,
   kiemTraGioMoCua,

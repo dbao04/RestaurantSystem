@@ -67,7 +67,8 @@ function doTrang() {
     .filter((x) => x.cao > 0 && x.cao < 44);
   const ten = q('.nh-brand__name');
   const luoi = q('.nh-grid');
-  const cats = q('.nh-cats');
+  // Thanh danh muc moi (.nh-thanh-mon): mot dai cuon ngang o MOI kich thuoc man hinh.
+  const cats = q('.nh-thanh-mon__dai') || q('.nh-cats');
   return {
     tran: document.documentElement.scrollWidth > window.innerWidth + 1,
     rong: document.documentElement.scrollWidth,
@@ -134,6 +135,7 @@ async function main() {
   await new Promise((r) => setTimeout(r, 600));
   const nk = await t.evaluate(() => {
     const l = document.querySelector('.nh-nav__links');
+    l.scrollTop = l.scrollHeight; // ngan keo dai hon man hinh thi phai cuon toi duoc muc cuoi
     const r = l.getBoundingClientRect();
     const cuoi = [...l.querySelectorAll('a')].pop();
     return { cao: Math.round(r.height), khung: window.innerHeight,
@@ -141,7 +143,7 @@ async function main() {
              nen: getComputedStyle(l).backgroundColor };
   });
   dat(`ngan keo cao ${nk.cao}px = het man hinh ${nk.khung}px`, nk.cao >= nk.khung - 1, nk);
-  dat('muc menu cuoi cung nam trong nen sam', nk.mucCuoiTrongNgan === true, nk);
+  dat('muc menu cuoi cung cuon toi duoc, nam trong nen sam', nk.mucCuoiTrongNgan === true, nk);
   // Da tung thieu: "Dat ban" va "Dang nhap" o hang cong cu deu mang
   // .d-none-mobile (an duoi 760px) ma ngan keo khong co muc thay the, nen tren
   // dien thoai khong con loi vao dang nhap nao.
@@ -170,8 +172,8 @@ async function main() {
   await mo(TRANG[0]);
   const dMT = await t.evaluate(doTrang);
   dat(`hero van cao (${dMT.hero}px >= 400px)`, dMT.hero >= 400, dMT.hero);
-  dat('danh muc van xuong dong', dMT.catsWrap === 'wrap', dMT.catsWrap);
-  dat(`luoi mon van 3 cot (${dMT.cot})`, dMT.cot === 3, dMT.cot);
+  dat('danh muc van la mot dai cuon ngang (nowrap)', dMT.catsWrap === 'nowrap', dMT.catsWrap);
+  dat(`luoi mon >= 3 cot (${dMT.cot}, auto-fill 300px)`, dMT.cot >= 3, dMT.cot);
   dat('khong tran ngang', !dMT.tran);
   await cuon(1400);
   dat('nut tro ly ao KHONG an tren may tinh', (await anKhong()) === false);

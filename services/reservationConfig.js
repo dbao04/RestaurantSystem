@@ -38,6 +38,7 @@ const KHOA_CHO_PHEP = {
   max_tables_per_reservation: { kieu: 'so', min: 1, max: 10, nhan: 'Số bàn tối đa mỗi lượt đặt' },
   minimum_lead_minutes: { kieu: 'so', min: 0, max: 1440, nhan: 'Đặt trước tối thiểu (phút)' },
   max_advance_days: { kieu: 'so', min: 1, max: 365, nhan: 'Đặt trước tối đa (ngày)' },
+  dish_edit_cutoff_days: { kieu: 'so', min: 0, max: 30, nhan: 'Đổi món đã đặt trước tối thiểu (ngày trước giờ đặt, 0 = không giới hạn)' },
   slot_step_minutes: { kieu: 'chon', chon: [15, 30], nhan: 'Bước chọn giờ (phút)' },
   auto_confirm_online: { kieu: 'bool', nhan: 'Tự động xác nhận đơn online' },
   auto_confirm_member: { kieu: 'bool', nhan: 'Tự động xác nhận khách thành viên/VIP' },

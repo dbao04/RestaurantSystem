@@ -1124,7 +1124,7 @@ app.get('/contract', requireLogin, async (req, res) => {
 
 app.get('/my-orders', requireLogin, async (req, res) => {
   try {
-    const [kq, reservations, khuVuc, cauHinh] = await Promise.all([
+    const [kq, reservations, khuVuc, cauHinh, dsMonAn] = await Promise.all([
       orderService.getUserOrders(req.session.userId, { trang: req.query.trang }),
       reservationService.lichSuKhachTheoTaiKhoan(req.session.userId, req.session.usersdt, { gioiHan: 50 }).catch((err) => {
         console.error('Fetch reservations error:', err);
@@ -1132,6 +1132,7 @@ app.get('/my-orders', requireLogin, async (req, res) => {
       }),
       require('./services/reservationTables').docKhuVuc().catch(() => []),
       require('./services/reservationRules').docCauHinh().catch(() => ({})),
+      menuService.getAllDishes().catch(() => []),
     ]);
 
     // /cancel-order chuyen ve day kem ?msg=... - phai truyen vao view thi khach
@@ -1143,6 +1144,9 @@ app.get('/my-orders', requireLogin, async (req, res) => {
       reservations: reservations || [],
       khuVuc: khuVuc || [],
       cauHinh: cauHinh || {},
+      dsMonAn: (dsMonAn || [])
+        .filter((m) => Number(m.tinhtrang) === 1)
+        .map((m) => ({ id_mon: m.id_mon, name_mon: m.name_mon, gia_mon: m.gia_mon, images: m.images || '' })),
       phanTrang: kq,
       userPhone: req.session.usersdt || '',
       msg: req.query.msg || null,

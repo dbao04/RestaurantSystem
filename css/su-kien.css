@@ -172,8 +172,16 @@
   display: flex; flex-direction: column; box-shadow: var(--nh-shadow-sm); transition: transform .25s var(--nh-ease), box-shadow .25s;
 }
 .dt-menu:hover { transform: translateY(-4px); box-shadow: var(--nh-shadow); }
-.dt-menu.is-active { outline: 3px solid var(--nh-gold); outline-offset: -3px; }
-.dt-menu--hot { border-color: var(--nh-gold); }
+/* Vien "dang chon" ve bang lop phu nam TREN anh, bo theo goc the - outline
+   am bi anh de len / khong bo goc deu tren moi trinh duyet. The "duoc chon
+   nhieu nhat" chi danh dau bang ruy bang, khong vien vang rieng de khong bi
+   nham la cung dang duoc chon. */
+.dt-menu::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+  border: 3px solid transparent; transition: border-color .2s;
+}
+.dt-menu.is-active { border-color: var(--nh-gold); }
+.dt-menu.is-active::after { border-color: var(--nh-gold); }
 .dt-menu__ribbon {
   position: absolute; top: 14px; left: 14px; z-index: 1; background: var(--sk-wine); color: #fff; font-size: .72rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; padding: .35rem .7rem; border-radius: 999px;

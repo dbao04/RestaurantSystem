@@ -1,4 +1,5 @@
 <%- include('partials/header', { title: t('dat_ban_moi.tieu_de') }) %>
+<% var NT = Number(cauHinh && cauHinh.nguong_tiec) || 15; %>
 <%
 /*
   TRANG DAT BAN CUA KHACH - bon buoc.
@@ -234,17 +235,18 @@ var tenMonDich = function (m) {
 
   /* ---------- Chinh sach dat ban (Buoc Mo Dau + Modal) ---------- */
   .db-cs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .95rem; margin-bottom: 1.4rem; }
-  .db-cs-card { background: #fffdf8; border: 1.5px solid rgba(200, 162, 75, 0.35); border-radius: 14px; padding: 1.05rem 1.15rem; position: relative; transition: all .2s var(--nh-ease); }
+  .db-cs-card { background: #fffdf8; border: 1px solid rgba(200, 162, 75, 0.4); border-radius: 14px; padding: 1.05rem 1.15rem; position: relative; transition: all .2s var(--nh-ease); }
   .db-cs-card:hover { border-color: var(--nh-gold); box-shadow: 0 6px 18px rgba(200, 162, 75, 0.14); transform: translateY(-2px); }
-  .db-cs-card--highlight { background: linear-gradient(135deg, #fffdf4 0%, #fcf3dc 100%); border-color: var(--nh-gold); }
-  .db-cs-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: .22rem .65rem; border-radius: 999px; margin-bottom: .55rem; background: rgba(200, 162, 75, 0.18); color: #854d0e; }
+  .db-cs-card--highlight { background: linear-gradient(135deg, #fffdf4 0%, #fcf3dc 100%); border-color: var(--nh-gold); box-shadow: inset 0 0 0 1px var(--nh-gold); }
+  .db-cs-card--highlight:hover { box-shadow: inset 0 0 0 1px var(--nh-gold), 0 6px 18px rgba(200, 162, 75, 0.14); }
+  .db-cs-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: .3rem .7rem; border-radius: 10px; line-height: 1.35; margin-bottom: .55rem; background: rgba(200, 162, 75, 0.18); color: #854d0e; }
   .db-cs-badge--green { background: #dcfce7; color: #166534; }
   .db-cs-badge--gold { background: var(--nh-espresso); color: var(--nh-gold-soft); }
   .db-cs-card h4 { font-size: 1rem; font-weight: 750; color: var(--nh-espresso); margin: 0 0 .35rem; line-height: 1.35; }
   .db-cs-price { font-size: 1.18rem; font-weight: 800; color: #b45309; margin-bottom: .35rem; display: block; }
   .db-cs-price--free { color: #15803d; }
   .db-cs-card p { font-size: .85rem; color: var(--nh-muted); margin: 0; line-height: 1.5; }
-  .db-cs-note { margin-top: .5rem; padding: .5rem .7rem; border-radius: 8px; background: rgba(255,255,255,0.85); border-left: 3px solid var(--nh-gold); font-size: .81rem; color: #7c2d12; font-weight: 600; }
+  .db-cs-note { margin-top: .5rem; padding: .5rem .7rem; border-radius: 0 8px 8px 0; background: rgba(255,255,255,0.85); border-left: 3px solid var(--nh-gold); font-size: .81rem; color: #7c2d12; font-weight: 600; }
 
   .db-cs-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .6rem; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--nh-line); }
   .db-cs-table th, .db-cs-table td { padding: .65rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
@@ -309,21 +311,21 @@ var tenMonDich = function (m) {
 
               <!-- Thẻ 2: Giờ cao điểm hoặc >= 6 khách giờ thường -->
               <div class="db-cs-card">
-                <span class="db-cs-badge"><i class="fas fa-fire"></i> Giờ cao điểm / Đoàn 6–14 khách</span>
+                <span class="db-cs-badge"><i class="fas fa-fire"></i> Giờ cao điểm / Đoàn 6–<%= NT - 1 %> khách</span>
                 <h4>Giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) hoặc Bàn ≥ 6 người</h4>
                 <span class="db-cs-price">Cọc 100.000đ / người</span>
                 <p>
                   • <b>Giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>):</b> Bắt buộc cọc <b>100.000đ/người</b> nếu không đặt trước món ăn.<br>
-                  • <b>Giờ thường:</b> Bàn từ <b>6 – 14 người</b> cọc <b>100.000đ/người</b>.
+                  • <b>Giờ thường:</b> Bàn từ <b>6 – <%= NT - 1 %> người</b> cọc <b>100.000đ/người</b>.
                 </p>
               </div>
 
-              <!-- Thẻ 3: Đặt tiệc từ 15 người -->
+              <!-- Thẻ 3: Đặt tiệc từ NT (large_group_threshold) người -->
               <div class="db-cs-card db-cs-card--highlight">
-                <span class="db-cs-badge db-cs-badge--gold"><i class="fas fa-glass-cheers"></i> Đặt tiệc · Từ <%= cauHinh.nguong_tiec || 15 %> người trở lên</span>
-                <h4>Bàn đặt tiệc đoàn đông (≥ <%= cauHinh.nguong_tiec || 15 %> khách)</h4>
+                <span class="db-cs-badge db-cs-badge--gold"><i class="fas fa-glass-cheers"></i> Đặt tiệc · Từ <%= NT %> người trở lên</span>
+                <h4>Bàn đặt tiệc đoàn đông (≥ <%= NT %> khách)</h4>
                 <span class="db-cs-price">Cọc 150.000đ / người</span>
-                <p>Áp dụng cho mọi khung giờ đối với đoàn đặt tiệc từ <%= cauHinh.nguong_tiec || 15 %> khách trở lên.</p>
+                <p>Áp dụng cho mọi khung giờ đối với đoàn đặt tiệc từ <%= NT %> khách trở lên.</p>
                 <div class="db-cs-note">
                   <i class="fas fa-hand-holding-usd"></i> <b>Cam kết hoàn tiền thừa:</b> Trường hợp khách dùng món thực tế thấp hơn tổng mức 150.000đ/người sẽ được <b>hoàn lại tiền thừa ngay lúc thanh toán</b>!
                 </div>
@@ -334,7 +336,7 @@ var tenMonDich = function (m) {
                 <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-utensils"></i> Đặt món trước (Pre-order)</span>
                 <h4>Đặt bàn kèm Chọn món trước</h4>
                 <span class="db-cs-price" style="color:#0369a1;">Thanh toán 100% tiền món</span>
-                <p>Khi chọn món trước, quý khách thanh toán trước <b>100% tiền món ăn</b> và được <b>miễn thu thêm cọc bàn 100.000đ/người</b> (đoàn ≥ 15 người áp dụng mức tối thiểu 150.000đ/người).</p>
+                <p>Khi chọn món trước, quý khách thanh toán trước <b>100% tiền món ăn</b> và được <b>miễn thu thêm cọc bàn 100.000đ/người</b> (đoàn ≥ <%= NT %> người áp dụng mức tối thiểu 150.000đ/người).</p>
               </div>
             </div>
 
@@ -346,8 +348,8 @@ var tenMonDich = function (m) {
               <thead>
                 <tr>
                   <th>Thời điểm báo hủy (so với giờ hẹn)</th>
-                  <th>Bàn thường (&lt; 15 khách)</th>
-                  <th>Đoàn tiệc (≥ 15 khách) / Có đặt món trước</th>
+                  <th>Bàn thường (&lt; <%= NT %> khách)</th>
+                  <th>Đoàn tiệc (≥ <%= NT %> khách) / Có đặt món trước</th>
                 </tr>
               </thead>
               <tbody>
@@ -383,7 +385,7 @@ var tenMonDich = function (m) {
 
             <label class="db-cs-agree" for="dbDongYChinhSach">
               <input type="checkbox" id="dbDongYChinhSach" checked>
-              <span>Tôi đã đọc, hiểu rõ và đồng ý với Chính sách đặt bàn, đặt cọc (100k/người giờ cao điểm hoặc ≥ 6 người; 150k/người cho tiệc ≥ 15 người; 100% tiền món đặt trước) và Chính sách hoàn hủy của Nhà hàng Bảo Đoàn.</span>
+              <span>Tôi đã đọc, hiểu rõ và đồng ý với Chính sách đặt bàn, đặt cọc (100k/người giờ cao điểm hoặc ≥ 6 người; 150k/người cho tiệc ≥ <%= NT %> người; 100% tiền món đặt trước) và Chính sách hoàn hủy của Nhà hàng Bảo Đoàn.</span>
             </label>
 
             <div class="db-dieuhuong">
@@ -661,27 +663,27 @@ var tenMonDich = function (m) {
         <p>Ngoài khung giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) cho bàn dưới 6 khách không đặt món trước.</p>
       </div>
       <div class="db-cs-card">
-        <span class="db-cs-badge">Giờ cao điểm / Bàn 6–14 khách</span>
+        <span class="db-cs-badge">Giờ cao điểm / Bàn 6–<%= NT - 1 %> khách</span>
         <h4>Cọc 100.000đ / người</h4>
-        <p>Áp dụng trong giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) nếu không đặt món trước, hoặc bàn từ 6–14 khách ở giờ thường.</p>
+        <p>Áp dụng trong giờ cao điểm (<%= cauHinh.gio_cao_diem || '18:00-21:00' %>) nếu không đặt món trước, hoặc bàn từ 6–<%= NT - 1 %> khách ở giờ thường.</p>
       </div>
       <div class="db-cs-card db-cs-card--highlight">
-        <span class="db-cs-badge db-cs-badge--gold">Đặt tiệc ≥ <%= cauHinh.nguong_tiec || 15 %> khách</span>
+        <span class="db-cs-badge db-cs-badge--gold">Đặt tiệc ≥ <%= NT %> khách</span>
         <h4>Cọc 150.000đ / người</h4>
         <p>Bắt buộc mọi khung giờ. <b>Nếu dùng món thực tế thấp hơn tổng mức 150.000đ/người sẽ được hoàn lại tiền thừa ngay lúc thanh toán.</b></p>
       </div>
       <div class="db-cs-card">
         <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;">Đặt trước món ăn</span>
         <h4>Thanh toán 100% tiền món</h4>
-        <p>Thanh toán trước 100% tiền món đã chọn (miễn thu thêm cọc bàn 100k/người; đoàn tiệc ≥ 15 người tối thiểu 150k/người).</p>
+        <p>Thanh toán trước 100% tiền món đã chọn (miễn thu thêm cọc bàn 100k/người; đoàn tiệc ≥ <%= NT %> người tối thiểu 150k/người).</p>
       </div>
     </div>
     <table class="db-cs-table">
       <thead>
         <tr>
           <th>Mốc thời gian hủy (trước giờ hẹn)</th>
-          <th>Bàn thường (&lt; 15 khách)</th>
-          <th>Đoàn tiệc (≥ 15 khách) / Có đặt món trước</th>
+          <th>Bàn thường (&lt; <%= NT %> khách)</th>
+          <th>Đoàn tiệc (≥ <%= NT %> khách) / Có đặt món trước</th>
         </tr>
       </thead>
       <tbody>

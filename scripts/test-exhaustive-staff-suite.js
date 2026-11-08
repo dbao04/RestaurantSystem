@@ -322,7 +322,7 @@ async function runExhaustiveSuite() {
     { name: 'API Dashboard / KPI Đặt bàn', path: '/api/reservations/dashboard' },
     { name: 'API Phân tích Đặt bàn (Analytics)', path: '/api/reservations/analytics' },
     { name: 'API Timeline Đặt bàn', path: '/api/reservations/timeline' },
-    { name: 'API Kiểm tra Bàn trống', path: '/api/tables/availability?reservation_date=2026-10-15&start_time=19:00&guest_count=4' },
+    { name: 'API Kiểm tra Bàn trống', path: `/api/tables/availability?reservation_date=${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)}&start_time=19:00&guest_count=4` },
     { name: 'API Sơ đồ 40 Bàn Realtime', path: '/api/tables/floor-plan' },
     { name: 'API Khung giờ đặt bàn khả dụng', path: '/api/dat-ban/khung-gio' },
     { name: 'API Dữ liệu Chấm công theo ngày', path: '/api/cham-cong/ngay' },

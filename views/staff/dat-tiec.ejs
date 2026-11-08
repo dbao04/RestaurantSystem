@@ -22,6 +22,19 @@
   .tc-kv--tien > span:first-child { flex: 1 1 auto; }
   .tc-kv--tien > span:last-child { white-space: nowrap; text-align: right; }
   .tc-kv--tien small { display: block; color: #8a7a6a; }
+  .tc-coc-bar { height: 8px; border-radius: 99px; background: #f1e7d4; overflow: hidden; margin: .35rem 0 .55rem; }
+  .tc-coc-bar > div { height: 100%; background: #16a34a; }
+  .tc-timeline { list-style: none; padding-left: 0; margin: 0; font-size: .82rem; }
+  .tc-timeline li { padding: .4rem 0 .4rem .9rem; border-left: 2px solid #eadfcf; position: relative; }
+  .tc-timeline li:last-child { border-left-color: transparent; }
+  .tc-timeline li::before { content: ''; position: absolute; left: -5px; top: .55rem; width: 8px; height: 8px; border-radius: 50%; background: #c8a24b; }
+  .tc-timeline b { color: #4e342e; }
+  .tc-timeline small { color: #8a7a6a; display: block; }
+  .tc-sua-form { background: #fff; border: 1px dashed #eadfcf; border-radius: 10px; padding: .9rem; margin-top: .6rem; display: none; }
+  .tc-sua-form.hien { display: block; }
+  .tc-dv-check { display: flex; align-items: center; gap: .4rem; font-size: .85rem; margin-bottom: .25rem; }
+  .tc-huy-fields { display: none; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: .6rem; margin-bottom: .5rem; }
+  .tc-huy-fields.hien { display: block; }
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">
@@ -58,7 +71,7 @@
     <div class="table-responsive">
       <table class="table table-sm mb-0">
         <thead class="thead-light">
-          <tr><th>Mã</th><th>Khách</th><th>Loại tiệc</th><th>Ngày / buổi</th><th>Sảnh</th><th class="text-right">Khách / bàn</th><th class="text-right">Dự toán</th><th>Trạng thái</th></tr>
+          <tr><th>Mã</th><th>Khách</th><th>Loại tiệc</th><th>Ngày / buổi</th><th>Sảnh</th><th class="text-right">Khách / bàn</th><th class="text-right">Dự toán</th><th class="text-right">Cọc</th><th>Phụ trách</th><th>Trạng thái</th></tr>
         </thead>
         <tbody>
         <% ds.forEach(function (d) { %>
@@ -70,10 +83,16 @@
             <td><%= d.ten_sanh %></td>
             <td class="text-right"><%= d.so_khach %> / <%= d.so_ban %></td>
             <td class="text-right"><b><%= vnd(d.tong_du_toan) %></b></td>
+            <td class="text-right">
+              <% if (d.tien_coc > 0) { %>
+                <span class="<%= d.da_coc >= d.tien_coc ? 'text-success' : 'text-muted' %>"><%= vnd(d.da_coc) %> / <%= vnd(d.tien_coc) %></span>
+              <% } else { %><span class="text-muted">—</span><% } %>
+            </td>
+            <td><%= d.ten_nhan_vien_xu_ly || '—' %></td>
             <td><span class="badge badge-<%= mauTT[d.trang_thai] %>"><%= d.ten_trang_thai %></span></td>
           </tr>
           <tr class="tc-detail" data-chi-tiet="<%= d.id %>" hidden>
-            <td colspan="8">
+            <td colspan="10">
               <div class="row py-2">
                 <div class="col-md-4 mb-3">
                   <h6>Liên hệ</h6>
@@ -82,7 +101,31 @@
                   <div class="tc-kv"><span>Email</span><span><%= d.email || '—' %></span></div>
                   <div class="tc-kv"><span>Gửi lúc</span><span><%= new Date(d.created_at).toLocaleString('vi-VN') %></span></div>
                   <% if (d.ghi_chu) { %><div class="tc-kv mt-2"><span>Yêu cầu thêm</span><span><%= d.ghi_chu %></span></div><% } %>
+                  <% if (d.trang_thai === 'HUY') { %>
+                    <div class="tc-kv mt-2"><span>Lý do hủy</span><span class="text-danger"><%= d.ly_do_huy || '—' %></span></div>
+                    <div class="tc-kv"><span>Người hủy</span><span><%= d.nguoi_huy === 'NHA_HANG' ? 'Nhà hàng chủ động' : 'Khách yêu cầu' %></span></div>
+                    <% if (d.so_tien_hoan != null) { %><div class="tc-kv"><span>Hoàn cọc</span><span><b><%= vnd(d.so_tien_hoan) %></b></span></div><% } %>
+                  <% } %>
+
+                  <h6 class="mt-3">Phụ trách</h6>
+                  <form data-gan-nv="<%= d.id %>" class="form-inline" style="gap:.4rem">
+                    <select name="nhan_vien_id" class="form-control form-control-sm">
+                      <option value="">— Chưa phân công —</option>
+                      <% nhanVien.forEach(function (nv) { %>
+                        <option value="<%= nv.id %>" <%= Number(d.nhan_vien_xu_ly) === Number(nv.id) ? 'selected' : '' %>><%= nv.ten %></option>
+                      <% }) %>
+                    </select>
+                    <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-user-check"></i></button>
+                    <small data-kq></small>
+                  </form>
+
+                  <h6 class="mt-3">Lịch sử thay đổi</h6>
+                  <button type="button" class="btn btn-sm btn-link p-0 mb-1" data-toggle-lich-su="<%= d.id %>">Xem lịch sử</button>
+                  <ul class="tc-timeline" data-lich-su-body="<%= d.id %>" hidden>
+                    <li class="text-muted">Đang tải...</li>
+                  </ul>
                 </div>
+
                 <div class="col-md-4 mb-3">
                   <h6>Dự toán</h6>
                   <div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div>
@@ -90,18 +133,121 @@
                     <div class="tc-kv tc-kv--tien"><span><%= v.ten %><small><%= vnd(v.don_gia) %> × <%= v.so_luong %> <%= donVi[v.don_vi] %></small></span><span><%= vnd(v.thanh_tien) %></span></div>
                   <% }) %>
                   <div class="tc-kv tc-kv--tien mt-2 pt-2 border-top"><span>Tổng (chưa VAT)</span><span><b class="text-danger"><%= vnd(d.tong_du_toan) %></b></span></div>
-                  <div class="tc-kv tc-kv--tien"><span>Cọc 30%</span><span><%= vnd(Math.round(d.tong_du_toan * 0.3)) %></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Tiền cọc yêu cầu</span><span><%= vnd(d.tien_coc) %></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Đã thu</span><span class="<%= d.da_coc >= d.tien_coc && d.tien_coc > 0 ? 'text-success' : '' %>"><%= vnd(d.da_coc) %></span></div>
+                  <div class="tc-coc-bar"><div style="width:<%= d.tien_coc > 0 ? Math.min(100, Math.round(d.da_coc / d.tien_coc * 100)) : 0 %>%"></div></div>
+
+                  <% if (!['HOAN_THANH', 'HUY'].includes(d.trang_thai)) { %>
+                    <form data-thu-tien="<%= d.id %>" class="mt-2">
+                      <div class="form-row">
+                        <div class="col-6"><input type="number" name="so_tien" class="form-control form-control-sm" placeholder="Số tiền thu" min="1000" step="1000" required></div>
+                        <div class="col-6">
+                          <select name="phuong_thuc" class="form-control form-control-sm">
+                            <% Object.keys(phuongThucThanhToan).forEach(function (k) { %><option value="<%= k %>"><%= phuongThucThanhToan[k] %></option><% }) %>
+                          </select>
+                        </div>
+                      </div>
+                      <input type="text" name="ma_giao_dich" class="form-control form-control-sm mt-1" placeholder="Mã giao dịch (nếu có)">
+                      <button class="btn btn-sm btn-success mt-2"><i class="fas fa-coins"></i> Ghi nhận thu tiền</button>
+                      <small class="ml-2" data-kq></small>
+                    </form>
+                  <% } %>
                 </div>
+
                 <div class="col-md-4 mb-3">
-                  <h6>Xử lý</h6>
+                  <h6>Xử lý trạng thái</h6>
                   <form data-cap-nhat="<%= d.id %>">
-                    <select name="trang_thai" class="form-control form-control-sm mb-2">
-                      <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= d.trang_thai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
+                    <select name="trang_thai" class="form-control form-control-sm mb-2" data-chon-trang-thai="<%= d.id %>">
+                      <option value="<%= d.trang_thai %>"><%= trangThai[d.trang_thai] %> (hiện tại)</option>
+                      <% (chuyenTrangThai[d.trang_thai] || []).forEach(function (k) { %>
+                        <option value="<%= k %>">→ <%= trangThai[k] %></option>
+                      <% }) %>
                     </select>
-                    <textarea name="ghi_chu_noi_bo" rows="3" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
+
+                    <div class="tc-huy-fields" data-huy-fields="<%= d.id %>">
+                      <div class="form-group mb-2">
+                        <label class="small mb-1">Lý do hủy <span class="text-danger">*</span></label>
+                        <textarea name="ly_do_huy" rows="2" class="form-control form-control-sm" placeholder="Vì sao hủy đơn tiệc này?"></textarea>
+                      </div>
+                      <div class="form-group mb-0">
+                        <label class="small mb-1 d-block">Ai chủ động hủy?</label>
+                        <label class="mr-3"><input type="radio" name="nguoi_huy" value="KHACH" checked> Khách yêu cầu</label>
+                        <label><input type="radio" name="nguoi_huy" value="NHA_HANG"> Nhà hàng (hoàn 100%)</label>
+                      </div>
+                    </div>
+
+                    <textarea name="ghi_chu_noi_bo" rows="2" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
                     <button class="btn btn-sm btn-warning"><i class="fas fa-save"></i> Lưu</button>
                     <small class="ml-2" data-kq></small>
                   </form>
+
+                  <% if (!['HOAN_THANH', 'HUY'].includes(d.trang_thai)) { %>
+                    <button type="button" class="btn btn-sm btn-outline-dark mt-3" data-toggle-sua="<%= d.id %>">
+                      <i class="fas fa-edit"></i> Sửa thông tin đơn
+                    </button>
+                    <div class="tc-sua-form" data-sua-form="<%= d.id %>">
+                      <form data-luu-sua="<%= d.id %>">
+                        <div class="form-row">
+                          <div class="col-6 form-group mb-2">
+                            <label class="small mb-1">Ngày tổ chức</label>
+                            <input type="date" name="ngay_to_chuc" class="form-control form-control-sm" value="<%= d.ngay %>" required>
+                          </div>
+                          <div class="col-6 form-group mb-2">
+                            <label class="small mb-1">Buổi</label>
+                            <select name="buoi" class="form-control form-control-sm" data-buoi-sel="<%= d.id %>">
+                              <% Object.keys(buoi).forEach(function (b) { %><option value="<%= b %>" <%= d.buoi === b ? 'selected' : '' %>><%= buoi[b].ten %></option><% }) %>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-group mb-2">
+                          <label class="small mb-1">Giờ bắt đầu</label>
+                          <select name="gio_bat_dau" class="form-control form-control-sm" data-gio-sel="<%= d.id %>">
+                            <% Object.keys(buoi).forEach(function (b) { %>
+                              <% buoi[b].gio.forEach(function (g) { %>
+                                <option value="<%= g %>" data-buoi="<%= b %>" <%= d.buoi === b && d.gio === g ? 'selected' : '' %>><%= g %> (<%= buoi[b].ten %>)</option>
+                              <% }) %>
+                            <% }) %>
+                          </select>
+                        </div>
+                        <div class="form-row">
+                          <div class="col-6 form-group mb-2">
+                            <label class="small mb-1">Số khách</label>
+                            <input type="number" name="so_khach" class="form-control form-control-sm" value="<%= d.so_khach %>" min="1" required>
+                          </div>
+                          <div class="col-6 form-group mb-2">
+                            <label class="small mb-1">Sảnh</label>
+                            <select name="khu_vuc_id" class="form-control form-control-sm">
+                              <% sanh.forEach(function (s) { %><option value="<%= s.id %>" <%= Number(d.khu_vuc_id) === Number(s.id) ? 'selected' : '' %>><%= s.ten %> (<%= s.tiec_toi_thieu %>-<%= s.tiec_toi_da %> khách)</option><% }) %>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-group mb-2">
+                          <label class="small mb-1">Thực đơn</label>
+                          <select name="thuc_don_id" class="form-control form-control-sm">
+                            <% thucDon.forEach(function (t) { %><option value="<%= t.id %>" <%= Number(d.thuc_don_id) === Number(t.id) ? 'selected' : '' %>><%= t.ten %> (<%= vnd(t.gia_ban) %>/bàn)</option><% }) %>
+                          </select>
+                        </div>
+                        <div class="form-group mb-2">
+                          <label class="small mb-1 d-block">Dịch vụ thêm</label>
+                          <% var dvChon = (d.dich_vu || []).map(function (v) { return Number(v.id); }); %>
+                          <% dichVu.forEach(function (v) { %>
+                            <label class="tc-dv-check">
+                              <input type="checkbox" name="dich_vu" value="<%= v.id %>" <%= dvChon.indexOf(Number(v.id)) > -1 ? 'checked' : '' %>>
+                              <%= v.ten %> <span class="text-muted">(<%= vnd(v.gia) %>/<%= donVi[v.don_vi] %>)</span>
+                            </label>
+                          <% }) %>
+                        </div>
+                        <input type="hidden" name="ho_ten" value="<%= d.ho_ten %>">
+                        <input type="hidden" name="so_dien_thoai" value="<%= d.so_dien_thoai %>">
+                        <input type="hidden" name="email" value="<%= d.email || '' %>">
+                        <input type="hidden" name="loai_tiec" value="<%= d.loai_tiec %>">
+                        <input type="hidden" name="ten_nhan_vat" value="<%= d.ten_nhan_vat || '' %>">
+                        <input type="hidden" name="ghi_chu" value="<%= d.ghi_chu || '' %>">
+                        <button class="btn btn-sm btn-dark"><i class="fas fa-save"></i> Lưu thay đổi đơn</button>
+                        <small class="ml-2" data-kq></small>
+                      </form>
+                    </div>
+                  <% } %>
                 </div>
               </div>
             </td>
@@ -122,15 +268,161 @@
       if (ct) ct.hidden = !ct.hidden;
     });
   });
+
+  // -------------------------------------------------- xu ly trang thai (huy can ly do)
+  document.querySelectorAll('[data-chon-trang-thai]').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      var id = sel.getAttribute('data-chon-trang-thai');
+      var huy = document.querySelector('[data-huy-fields="' + id + '"]');
+      if (huy) huy.classList.toggle('hien', sel.value === 'HUY');
+    });
+  });
+
   document.querySelectorAll('[data-cap-nhat]').forEach(function (f) {
     f.addEventListener('submit', async function (e) {
       e.preventDefault();
+      var id = f.getAttribute('data-cap-nhat');
+      var kq = f.querySelector('[data-kq]');
+      var trangThaiMoi = f.trang_thai.value;
+      var than = { trang_thai: trangThaiMoi, ghi_chu_noi_bo: f.ghi_chu_noi_bo.value };
+      if (trangThaiMoi === 'HUY') {
+        than.ly_do_huy = f.ly_do_huy.value.trim();
+        than.nguoi_huy = f.querySelector('[name="nguoi_huy"]:checked').value;
+        if (!than.ly_do_huy) { kq.className = 'ml-2 text-danger'; kq.textContent = 'Vui lòng nhập lý do hủy'; return; }
+      }
+      kq.className = 'ml-2 text-muted'; kq.textContent = 'Đang lưu...';
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + id + '/trang-thai', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(than)
+        });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+        kq.className = 'ml-2 text-success'; kq.textContent = 'Đã lưu';
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (err) {
+        kq.className = 'ml-2 text-danger'; kq.textContent = err.message;
+      }
+    });
+  });
+
+  // -------------------------------------------------- ghi nhan thu tien
+  document.querySelectorAll('[data-thu-tien]').forEach(function (f) {
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var id = f.getAttribute('data-thu-tien');
       var kq = f.querySelector('[data-kq]');
       kq.className = 'ml-2 text-muted'; kq.textContent = 'Đang lưu...';
       try {
-        var r = await fetch('/api/staff/dat-tiec/' + f.getAttribute('data-cap-nhat') + '/trang-thai', {
+        var r = await fetch('/api/staff/dat-tiec/' + id + '/thanh-toan', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trang_thai: f.trang_thai.value, ghi_chu_noi_bo: f.ghi_chu_noi_bo.value })
+          body: JSON.stringify({ so_tien: Number(f.so_tien.value), phuong_thuc: f.phuong_thuc.value, ma_giao_dich: f.ma_giao_dich.value })
+        });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+        kq.className = 'ml-2 text-success'; kq.textContent = 'Đã ghi nhận';
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (err) {
+        kq.className = 'ml-2 text-danger'; kq.textContent = err.message;
+      }
+    });
+  });
+
+  // -------------------------------------------------- gan nhan vien
+  document.querySelectorAll('[data-gan-nv]').forEach(function (f) {
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var id = f.getAttribute('data-gan-nv');
+      var kq = f.querySelector('[data-kq]');
+      kq.className = 'text-muted ml-1'; kq.textContent = 'Đang lưu...';
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + id + '/nhan-vien', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nhan_vien_id: f.nhan_vien_id.value || null })
+        });
+        var j = await r.json();
+        if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+        kq.className = 'text-success ml-1'; kq.textContent = 'Đã lưu';
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (err) {
+        kq.className = 'text-danger ml-1'; kq.textContent = err.message;
+      }
+    });
+  });
+
+  // -------------------------------------------------- lich su (tai khi bam xem)
+  document.querySelectorAll('[data-toggle-lich-su]').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      var id = btn.getAttribute('data-toggle-lich-su');
+      var ul = document.querySelector('[data-lich-su-body="' + id + '"]');
+      if (!ul) return;
+      if (!ul.hidden) { ul.hidden = true; return; }
+      ul.hidden = false;
+      if (ul.getAttribute('data-da-tai') === '1') return;
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + id);
+        var j = await r.json();
+        ul.innerHTML = '';
+        if (!j.ok || !j.d.lich_su.length) {
+          ul.innerHTML = '<li class="text-muted">Chưa có lịch sử.</li>';
+        } else {
+          j.d.lich_su.forEach(function (h) {
+            var li = document.createElement('li');
+            var tu = h.ten_tu_trang_thai ? (h.ten_tu_trang_thai + ' → ') : '';
+            li.innerHTML = '<b>' + tu + h.ten_den_trang_thai + '</b>'
+              + (h.ghi_chu ? '<div>' + h.ghi_chu + '</div>' : '')
+              + '<small>' + new Date(h.created_at).toLocaleString('vi-VN') + (h.ten_nguoi_doi ? ' · ' + h.ten_nguoi_doi : '') + '</small>';
+            ul.appendChild(li);
+          });
+        }
+        ul.setAttribute('data-da-tai', '1');
+      } catch (err) {
+        ul.innerHTML = '<li class="text-danger">Không tải được lịch sử.</li>';
+      }
+    });
+  });
+
+  // -------------------------------------------------- sua thong tin don
+  document.querySelectorAll('[data-toggle-sua]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-toggle-sua');
+      var form = document.querySelector('[data-sua-form="' + id + '"]');
+      if (form) form.classList.toggle('hien');
+    });
+  });
+
+  // Loc gio theo buoi da chon trong form sua.
+  document.querySelectorAll('[data-buoi-sel]').forEach(function (selBuoi) {
+    var id = selBuoi.getAttribute('data-buoi-sel');
+    var selGio = document.querySelector('[data-gio-sel="' + id + '"]');
+    if (!selGio) return;
+    selBuoi.addEventListener('change', function () {
+      Array.prototype.forEach.call(selGio.options, function (o) {
+        o.hidden = o.getAttribute('data-buoi') !== selBuoi.value;
+      });
+      var hopLe = Array.prototype.find.call(selGio.options, function (o) { return !o.hidden; });
+      if (hopLe && selGio.options[selGio.selectedIndex].hidden) selGio.value = hopLe.value;
+    });
+    selBuoi.dispatchEvent(new Event('change'));
+  });
+
+  document.querySelectorAll('[data-luu-sua]').forEach(function (f) {
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var id = f.getAttribute('data-luu-sua');
+      var kq = f.querySelector('[data-kq]');
+      kq.className = 'ml-2 text-muted'; kq.textContent = 'Đang lưu...';
+      var dichVuChon = Array.prototype.filter.call(f.querySelectorAll('[name="dich_vu"]:checked'), function () { return true; })
+        .map(function (c) { return c.value; });
+      var than = {
+        ho_ten: f.ho_ten.value, so_dien_thoai: f.so_dien_thoai.value, email: f.email.value,
+        loai_tiec: f.loai_tiec.value, ten_nhan_vat: f.ten_nhan_vat.value, ghi_chu: f.ghi_chu.value,
+        ngay_to_chuc: f.ngay_to_chuc.value, buoi: f.buoi.value, gio_bat_dau: f.gio_bat_dau.value,
+        so_khach: Number(f.so_khach.value), khu_vuc_id: Number(f.khu_vuc_id.value), thuc_don_id: Number(f.thuc_don_id.value),
+        dich_vu: dichVuChon,
+      };
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + id, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(than)
         });
         var j = await r.json();
         if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');

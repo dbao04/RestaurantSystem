@@ -403,6 +403,37 @@ async function danhSach(loc = {}) {
   return rows.map(lamGiau);
 }
 
+/**
+ * Chuan hoa danh sach mon goi truoc tu client.
+ *
+ * Client CHI duoc quyet dinh mon nao (dish_id), bao nhieu (quantity) va ghi chu.
+ * Ten va GIA luon doc lai tu bang `monan`: tin gia client gui len thi ai cung sua
+ * duoc request thanh 1d/mon - gia do di thang vao tien coc va hoa don POS (hopdong).
+ * Mon khong ton tai hoac dang ngung ban bi bo qua.
+ */
+const SO_LUONG_TOI_DA_MOI_MON = 99;
+async function chuanHoaMonDatTruoc(items, conn = db) {
+  const ds = (Array.isArray(items) ? items : [])
+    .map((item) => ({
+      dishId: Number(item && (item.dish_id || item.id_mon)) || 0,
+      qty: Math.min(SO_LUONG_TOI_DA_MOI_MON, Math.max(1, Math.floor(Number(item && (item.quantity || item.soluong)) || 1))),
+      note: String((item && (item.note || item.ghichu)) || '').trim().slice(0, 255) || null,
+    }))
+    .filter((m) => m.dishId > 0);
+  if (!ds.length) return [];
+
+  const [rows] = await conn.query(
+    'SELECT id_mon, name_mon, gia_mon FROM monan WHERE id_mon IN (?) AND tinhtrang = 1',
+    [[...new Set(ds.map((m) => m.dishId))]]);
+  const theoId = new Map(rows.map((r) => [Number(r.id_mon), r]));
+  return ds
+    .filter((m) => theoId.has(m.dishId))
+    .map((m) => {
+      const mon = theoId.get(m.dishId);
+      return { ...m, dishName: mon.name_mon, price: Number(mon.gia_mon) || 0 };
+    });
+}
+
 async function chiTiet(id) {
   const ds = await danhSach({ id, gioi_han: 1 });
   if (!ds.length) return null;
@@ -519,6 +550,17 @@ async function lichSuKhachTheoTaiKhoan(userId, phone, { gioiHan = 50 } = {}) {
     });
   }
 
+  const ch = await qt.docCauHinh();
+  const coSuaMonDuoc = (r) => {
+    if (!['PENDING', 'WAITLIST', 'CONFIRMED'].includes(r.status)) return false;
+    try {
+      qt.kiemTraHanSuaMon({ mocBatDau: qt.ghepMoc(qt.ngayChuoi(r.reservation_date), String(r.start_time)) }, ch);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   return rows.map((r) => ({
     ...r,
     reservation_date: qt.ngayChuoi(r.reservation_date),
@@ -527,6 +569,7 @@ async function lichSuKhachTheoTaiKhoan(userId, phone, { gioiHan = 50 } = {}) {
     ban: r.table_names ? String(r.table_names).split(', ') : [],
     nhan_trang_thai: qt.NHAN_TRANG_THAI[r.status] || r.status,
     mon_dat_truoc: preordersByRsv[r.id] || [],
+    sua_mon_duoc: coSuaMonDuoc(r),
   }));
 }
 
@@ -679,12 +722,9 @@ async function taoLuotDat(input, ctx = {}) {
     throw new LoiDatBan('Nhà hàng đang tự sắp xếp bàn cho khách', 'PICK_DISABLED');
   }
 
-  const dsMonTruoc = Array.isArray(input.items) ? input.items : [];
-  const tongTienMon = dsMonTruoc.reduce((sum, item) => {
-    const price = Number(item.price || item.gia_mon) || 0;
-    const qty = Math.max(1, Number(item.quantity || item.soluong) || 1);
-    return sum + (price * qty);
-  }, 0);
+  // Gia mon doc tu thuc don, khong tin gia client gui (xem chuanHoaMonDatTruoc).
+  const dsMonTruoc = await chuanHoaMonDatTruoc(input.items);
+  const tongTienMon = dsMonTruoc.reduce((sum, m) => sum + m.price * m.qty, 0);
 
   const coc = await qt.tinhTienCoc({ soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach, tongTienMon });
 
@@ -801,22 +841,13 @@ async function taoLuotDat(input, ctx = {}) {
         }
 
         // Luu danh sach mon goi truoc (neu co)
-        const dsMon = Array.isArray(input.items) ? input.items : [];
-        if (dsMon.length > 0) {
-          for (const item of dsMon) {
-            const dishId = Number(item.dish_id || item.id_mon) || 0;
-            const dishName = String(item.dish_name || item.name_mon || '').trim();
-            const price = Number(item.price || item.gia_mon) || 0;
-            const qty = Math.max(1, Number(item.quantity || item.soluong) || 1);
-            const note = String(item.note || item.ghichu || '').trim() || null;
-            if (dishId > 0 && dishName) {
-              await conn.query(
-                `INSERT INTO reservation_preorders (reservation_id, dish_id, dish_name, price, quantity, note)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [id, dishId, dishName, price, qty, note]
-              );
-            }
-          }
+        const dsMon = dsMonTruoc;
+        for (const m of dsMon) {
+          await conn.query(
+            `INSERT INTO reservation_preorders (reservation_id, dish_id, dish_name, price, quantity, note)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, m.dishId, m.dishName, m.price, m.qty, m.note]
+          );
         }
 
         await ghiNhatKy(conn, id, null, trangThai,
@@ -1113,6 +1144,90 @@ async function capNhat(id, input, ctx = {}) {
 
     await conn.commit();
     return chiTiet(id);
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
+/**
+ * Doi danh sach mon da dat truoc cho mot luot dat con dang giu cho (chua den).
+ *
+ * Gioi han boi `dish_edit_cutoff_days` (xem kiemTraHanSuaMon): qua han thi bep
+ * da co the mua/so che nguyen lieu theo don cu, doi mon luc do se lam thua/
+ * thieu hang. Nhan vien duoc bo qua han nay vi ho xac nhan truc tiep voi bep
+ * truoc khi sua gium khach.
+ *
+ * `items` thay THE CHO toan bo danh sach cu (khong phai patch tung mon) - giong
+ * cach `taoLuotDat` nhan `input.items`, de client gui len y het gio hang hien
+ * tai cua ho sau khi them/bot/sua so luong.
+ */
+async function capNhatMonDatTruoc(id, items, ctx = {}) {
+  const ch = await qt.docCauHinh();
+  const laNhanVien = !!ctx.laNhanVien;
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [[hienTai]] = await conn.query('SELECT * FROM reservations WHERE id = ? FOR UPDATE', [id]);
+    if (!hienTai) throw new LoiDatBan('Không tìm thấy lượt đặt bàn', 'NOT_FOUND');
+    if (!['PENDING', 'WAITLIST', 'CONFIRMED'].includes(hienTai.status)) {
+      throw new LoiDatBan(
+        `Lượt đặt đang ở trạng thái "${qt.NHAN_TRANG_THAI[hienTai.status]}", không thể đổi món`,
+        'CLOSED_RESERVATION');
+    }
+
+    const khung = { mocBatDau: qt.ghepMoc(qt.ngayChuoi(hienTai.reservation_date), String(hienTai.start_time)) };
+    qt.kiemTraHanSuaMon(khung, ch, { boQua: laNhanVien });
+
+    // Ten & gia doc tu thuc don, khong tin client (xem chuanHoaMonDatTruoc).
+    const chuanBi = await chuanHoaMonDatTruoc(items, conn);
+
+    await conn.query('DELETE FROM reservation_preorders WHERE reservation_id = ?', [id]);
+    for (const m of chuanBi) {
+      await conn.query(
+        `INSERT INTO reservation_preorders (reservation_id, dish_id, dish_name, price, quantity, note)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, m.dishId, m.dishName, m.price, m.qty, m.note]
+      );
+    }
+
+    // Tinh lai tien coc theo mon moi - cung cong thuc voi capNhat(). Da thu/da
+    // hoan roi thi khong dong vao nua, do la viec cua ke toan.
+    if (hienTai.deposit_status !== 'PAID' && hienTai.deposit_status !== 'REFUNDED') {
+      const tongTienMon = chuanBi.reduce((s, m) => s + m.price * m.qty, 0);
+      const coc = await qt.tinhTienCoc({
+        soKhach: hienTai.guest_count,
+        gioBatDau: String(hienTai.start_time),
+        loaiKhach: hienTai.customer_type,
+        tongTienMon,
+      });
+      await conn.query(
+        'UPDATE reservations SET deposit_amount = ?, deposit_status = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
+        [coc.soTien, coc.soTien > 0 ? 'UNPAID' : 'NOT_REQUIRED', ctx.nhanVienId || null, id]
+      );
+    }
+
+    // Dong bo lai hopdong (man hinh bep/POS) voi danh sach mon moi: xoa snapshot
+    // cu roi goi lai dongBoHopDong - no tu tao snapshot moi tu reservation_preorders
+    // y het luc tao don, nen khong can viet lai logic chen hopdong o day.
+    await conn.query('DELETE FROM hopdong WHERE sesis = ?', [hienTai.reservation_code]);
+    await dongBoHopDong(conn, id);
+
+    await ghiNhatKy(conn, id, hienTai.status, hienTai.status,
+      `Đổi món đặt trước — còn ${chuanBi.length} món`, ctx.nhanVienId);
+
+    await conn.commit();
+    const ketQua = await chiTiet(id);
+    // `chiTiet` (dung chung cho moi man hinh) khong kem mon dat truoc - gan
+    // thang danh sach vua luu, khoi phai truy van lai reservation_preorders.
+    ketQua.mon_dat_truoc = chuanBi.map((m) => ({
+      dish_id: m.dishId, dish_name: m.dishName, price: m.price, quantity: m.qty, note: m.note,
+    }));
+    return ketQua;
   } catch (e) {
     await conn.rollback();
     throw e;
@@ -1724,6 +1839,7 @@ module.exports = {
   taoWalkIn,
   taoLichLap,
   capNhat,
+  capNhatMonDatTruoc,
   ganBan,
   giuThem,
   doiTrangThai,

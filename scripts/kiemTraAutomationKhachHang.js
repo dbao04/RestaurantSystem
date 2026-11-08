@@ -301,11 +301,12 @@ async function runAllCustomerTests() {
       path: '/giao-hang',
       method: 'POST'
     }, {
-      dia_chi_giao: 'Tòa nhà Bitexco, 2 Hải Triều, Bến Nghé, Quận 1, TP.HCM',
+      // Chinh sach giao hang: chi giao Go Vap / Binh Thanh / Quan 12
+      dia_chi_giao: '1 Nguyễn Văn Bảo, Phường 4, Gò Vấp, TP.HCM',
       ten_nguoi_nhan: testUser.ten,
       sdt_nguoi_nhan: testUser.sodienthoai,
-      vi_do: '10.771663',
-      kinh_do: '106.704384',
+      vi_do: '10.830000',
+      kinh_do: '106.688000',
       ghi_chu_giao: 'Giao giờ hành chính'
     }, userCookie);
     userCookie = pSaveGiao.cookie || userCookie;
@@ -318,17 +319,22 @@ async function runAllCustomerTests() {
       method: 'POST'
     }, {
       hinh_thuc: 'giao_hang',
-      dia_chi_giao: 'Tòa nhà Bitexco, 2 Hải Triều, Q1',
-      vi_do: '10.771663',
-      kinh_do: '106.704384',
+      dia_chi_giao: '1 Nguyễn Văn Bảo, Phường 4, Gò Vấp',
+      vi_do: '10.830000',
+      kinh_do: '106.688000',
       datebook: ngayMai,
-      timebook: '12:00'
+      timebook: '12:00',
+      dong_y_chinh_sach: '1'
     }, userCookie);
 
-    if (pPostDatDon.headers && pPostDatDon.headers.location && pPostDatDon.headers.location.includes('/theo-doi/')) {
-      maDonGiao = pPostDatDon.headers.location.split('/theo-doi/')[1];
+    // Chinh sach moi: don giao phai thanh toan truoc 100% -> chuyen sang trang thanh toan
+    const viTri = (pPostDatDon.headers && pPostDatDon.headers.location) || '';
+    const mThanhToan = /\/thanh-toan\/don-hang\/([^/?#]+)/.exec(viTri);
+    if (mThanhToan) {
+      const [[dg]] = await db.query('SELECT ma_giao FROM don_giao_hang WHERE sesis = ? LIMIT 1', [decodeURIComponent(mThanhToan[1])]);
+      if (dg) maDonGiao = dg.ma_giao;
     }
-    ok('Chốt đơn giao hàng tận nơi (POST /datban)', pPostDatDon.statusCode === 302, `Redirect: ${pPostDatDon.headers.location}`);
+    ok('Chốt đơn giao hàng tận nơi → trang thanh toán trước (POST /datban)', pPostDatDon.statusCode === 302 && !!mThanhToan, `Redirect: ${viTri}`);
 
     if (maDonGiao) {
       // Khách xem bản đồ và trạng thái giao hàng thời gian thực

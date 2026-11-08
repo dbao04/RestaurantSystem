@@ -416,7 +416,14 @@ body::-webkit-scrollbar {
     z-index: 20; border-radius: 0; border: 0;
   }
   .nh-nav__links.is-open { transform: none; }
-  .nh-nav__links a { font-size: 1.05rem; width: 100%; border-radius: 8px; }
+  /* 16 muc > chieu cao man hinh dien thoai: cho cuon trong ngan keo, neu khong
+     cac muc cuoi (Dat ban, Dang nhap) nam ngoai man hinh va khong bam duoc. */
+  .nh-nav__links { overflow-y: auto; overscroll-behavior: contain; flex-wrap: nowrap; }
+  .nh-nav__links a { font-size: 1.05rem; width: 100%; border-radius: 8px; flex-shrink: 0; }
+  /* KHONG de backdrop-filter khi co ngan keo: no bien .nh-nav thanh khoi chua
+     cua .nh-nav__links (position: fixed) -> ngan keo bi cat con ~128px thay vi
+     phu het man hinh (xem commit 895cf9b, scripts/kiemTraDienThoai.js muc 7). */
+  .nh-nav.is-solid { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .nh-nav__inner > .nh-nav__actions { margin-left: auto; }
 }
 @media (max-width: 760px) {
@@ -1820,6 +1827,11 @@ section.nh-wa-song, section.nh-wa-koshi, section.nh-wa-shippo { position: relati
   position: relative;
   outline: none;
   flex-shrink: 0;
+}
+/* Dien thoai: ngan keo da co muc "Che do toi" (#nh-theme-toggle-mobile), an nut
+   tron tren thanh dieu huong de ten nha hang khong bi cat "Nha Hang Bao..." o 390px. */
+@media (max-width: 520px) {
+  .nh-nav__actions .nh-theme-btn { display: none; }
 }
 .nh-theme-btn:hover {
   background: rgba(200, 162, 75, 0.2);

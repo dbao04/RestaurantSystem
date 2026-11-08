@@ -246,6 +246,15 @@
                       data-requests="<%= r.special_requests || '' %>">
                       <i class="fas fa-edit"></i> <%= t('don.sua_dat_ban') %>
                     </button>
+                    <% if (r.sua_mon_duoc) { %>
+                      <button type="button" class="nh-btn nh-btn--outline nh-btn--sm btn-mo-sua-mon"
+                        onclick="moModalSuaMon(this)"
+                        data-code="<%= r.reservation_code %>"
+                        data-phone="<%= r.phone || userPhone || '' %>"
+                        data-dishes="<%= JSON.stringify((r.mon_dat_truoc || []).map(function(m){ return { id_mon: m.dish_id, name_mon: m.dish_name, gia_mon: m.price, soluong: m.quantity }; })) %>">
+                        <i class="fas fa-utensils"></i> <%= t('don.sua_mon_dat_truoc') %>
+                      </button>
+                    <% } %>
                     <button type="button" class="nh-btn nh-btn--outline nh-btn--sm btn-mo-huy" style="color:#ef4444; border-color:#fca5a5;"
                       onclick="moModalHuyDatBan(this)"
                       data-code="<%= r.reservation_code %>"
@@ -403,6 +412,56 @@
   </div>
 </div>
 
+<!-- MODAL SỬA MÓN ĐÃ ĐẶT TRƯỚC -->
+<div class="nh-modal-overlay" id="modalSuaMon" onclick="if(event.target===this) dongSuaMon()">
+  <div class="nh-modal-box" style="max-width:560px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chung.ten_nha_hang') %></span>
+        <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
+          <i class="fas fa-utensils" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('don.sua_mon_tieu_de') %>
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          <%= t('don.ma') %>: <strong id="monMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <button type="button" onclick="dongSuaMon()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--nh-muted);">&times;</button>
+    </div>
+
+    <div style="margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 0.85rem; line-height: 1.5;">
+      <i class="fas fa-clock" style="margin-right:0.3rem;"></i>
+      <%= t('don.sua_mon_han_mo_ta', { ngay: (typeof cauHinh !== 'undefined' && cauHinh.dish_edit_cutoff_days) || 1 }) %>
+    </div>
+
+    <div id="monBaoLoi" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:8px; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; font-size:0.85rem;"></div>
+
+    <div class="nh-field" style="position:relative;">
+      <label for="monTim"><%= t('don.tim_mon_them') %></label>
+      <input type="text" id="monTim" class="nh-input" placeholder="<%= t('don.tim_mon_them') %>" autocomplete="off">
+      <div id="monGoiY" style="display:none; position:absolute; left:0; right:0; top:100%; margin-top:4px; background:#fff;
+        border:1px solid var(--nh-line); border-radius:10px; box-shadow:0 14px 30px -10px rgba(0,0,0,.25); max-height:260px;
+        overflow-y:auto; z-index:20;"></div>
+    </div>
+
+    <div id="monGioHang" style="margin-top:1.1rem; display:flex; flex-direction:column; gap:.55rem;"></div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:.8rem;
+      border-top:1px solid var(--nh-line); font-weight:700; color:var(--nh-espresso);">
+      <span><%= t('don.tong_tien_mon') %></span>
+      <span id="monTongTien">0 ₫</span>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.5rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+      <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" onclick="dongSuaMon()">
+        <%= t('don.huy_bo') %>
+      </button>
+      <button type="button" id="monBtnLuu" class="nh-btn nh-btn--gold nh-btn--sm" onclick="xuLyLuuMon()">
+        <i class="fas fa-save"></i> <%= t('don.luu_mon') %>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL HỦY ĐẶT BÀN -->
 <div class="nh-modal-overlay" id="modalHuyDatBan" onclick="if(event.target===this) dongHuyDatBan()">
   <div class="nh-modal-box">
@@ -462,6 +521,15 @@ var TXT_XAC_NHAN_HUY = "<%= t('don.xac_nhan_huy_ban') %>";
 var TXT_CAP_NHAT_OK = "<%= t('don.cap_nhat_thanh_cong') %>";
 var TXT_HUY_OK = "<%= t('don.huy_thanh_cong_msg') %>";
 var TXT_LOI_MANG = "<%= t('don.loi_ket_noi') %>";
+var TXT_GIO_MON_TRONG = "<%= t('don.gio_mon_trong') %>";
+var TXT_CAP_NHAT_MON_OK = "<%= t('don.cap_nhat_mon_thanh_cong') %>";
+var DS_MON_AN = <%- JSON.stringify(typeof dsMonAn !== 'undefined' ? dsMonAn : []).replace(/</g, '\\u003c') %>;
+var ANH_MON_MAP = {};
+DS_MON_AN.forEach(function (m) { ANH_MON_MAP[m.id_mon] = m.images; });
+function anhMon(idMon) {
+  var f = ANH_MON_MAP[idMon];
+  return f ? ('/food/' + f) : '/mon-thay-the.svg';
+}
 
 function moModalSuaDatBan(btn) {
   var d = btn.dataset;
@@ -575,6 +643,19 @@ document.addEventListener('click', function(e) {
     return;
   }
 
+  var btnSuaMon = e.target.closest('.btn-mo-sua-mon');
+  if (btnSuaMon) {
+    e.preventDefault();
+    moModalSuaMon(btnSuaMon);
+    return;
+  }
+
+  // Dong goi y tim mon khi bam ra ngoai.
+  if (!e.target.closest('#monTim, #monGoiY')) {
+    var goiY = document.getElementById('monGoiY');
+    if (goiY) goiY.style.display = 'none';
+  }
+
   var btnChiTiet = e.target.closest('.btn-mo-chi-tiet');
   if (btnChiTiet) {
     e.preventDefault();
@@ -589,6 +670,216 @@ document.addEventListener('click', function(e) {
     return;
   }
 });
+
+// ----------------------------------------------------- sửa món đã đặt trước
+
+var monState = { ma: '', dienThoai: '', items: [] };
+
+function tien(n) { return Number(n || 0).toLocaleString('vi-VN') + ' ₫'; }
+
+function moModalSuaMon(btn) {
+  var d = btn.dataset;
+  monState.ma = d.code || '';
+  monState.dienThoai = d.phone || '';
+  try {
+    monState.items = JSON.parse(d.dishes || '[]').map(function (m) {
+      return { id_mon: Number(m.id_mon), name_mon: m.name_mon, gia_mon: Number(m.gia_mon) || 0, soluong: Math.max(1, Number(m.soluong) || 1) };
+    });
+  } catch (e) { monState.items = []; }
+
+  document.getElementById('monMa').textContent = monState.ma;
+  document.getElementById('monTim').value = '';
+  document.getElementById('monGoiY').style.display = 'none';
+  var loiBox = document.getElementById('monBaoLoi');
+  if (loiBox) { loiBox.style.display = 'none'; loiBox.textContent = ''; }
+
+  veMonGioHang();
+
+  var modal = document.getElementById('modalSuaMon');
+  if (modal) { modal.classList.add('active'); modal.style.display = 'flex'; }
+}
+
+function dongSuaMon() {
+  var modal = document.getElementById('modalSuaMon');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.removeProperty('display');
+    modal.style.display = 'none';
+  }
+}
+
+function veMonGioHang() {
+  var khung = document.getElementById('monGioHang');
+  khung.innerHTML = '';
+
+  if (!monState.items.length) {
+    var trong = document.createElement('div');
+    trong.style.cssText = 'color:var(--nh-muted); font-size:.88rem; text-align:center; padding:.6rem 0;';
+    trong.textContent = TXT_GIO_MON_TRONG;
+    khung.appendChild(trong);
+  }
+
+  monState.items.forEach(function (m, i) {
+    var dong = document.createElement('div');
+    dong.style.cssText = 'display:flex; align-items:center; gap:.7rem; padding:.5rem .6rem; border:1px solid var(--nh-line); border-radius:10px;';
+
+    var anh = document.createElement('img');
+    anh.src = anhMon(m.id_mon);
+    anh.alt = m.name_mon;
+    anh.loading = 'lazy';
+    anh.style.cssText = 'width:48px; height:48px; border-radius:8px; object-fit:cover; flex:none; background:#f3ece0;';
+    anh.onerror = function () { this.onerror = null; this.src = '/mon-thay-the.svg'; };
+    dong.appendChild(anh);
+
+    var ten = document.createElement('div');
+    ten.style.cssText = 'flex:1; min-width:0;';
+    ten.innerHTML = '<div style="font-weight:600; color:var(--nh-espresso); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'
+      + m.name_mon + '</div><div style="font-size:.78rem; color:var(--nh-muted);">' + tien(m.gia_mon) + '</div>';
+    dong.appendChild(ten);
+
+    var buoc = document.createElement('div');
+    buoc.style.cssText = 'display:flex; align-items:center; gap:.4rem; flex:none;';
+    var nutBot = taoNutSoLuong('−', function () { doiSoLuongMon(i, -1); });
+    var soLuong = document.createElement('span');
+    soLuong.style.cssText = 'min-width:1.6rem; text-align:center; font-weight:600;';
+    soLuong.textContent = m.soluong;
+    var nutThem = taoNutSoLuong('+', function () { doiSoLuongMon(i, 1); });
+    buoc.appendChild(nutBot); buoc.appendChild(soLuong); buoc.appendChild(nutThem);
+    dong.appendChild(buoc);
+
+    var nutXoa = document.createElement('button');
+    nutXoa.type = 'button';
+    nutXoa.title = "<%= t('don.huy_bo') %>";
+    nutXoa.style.cssText = 'flex:none; background:none; border:none; color:#ef4444; cursor:pointer; font-size:1rem; padding:.2rem .4rem;';
+    nutXoa.innerHTML = '<i class="fas fa-trash-alt"></i>';
+    nutXoa.addEventListener('click', function () { xoaMon(i); });
+    dong.appendChild(nutXoa);
+
+    khung.appendChild(dong);
+  });
+
+  var tong = monState.items.reduce(function (s, m) { return s + m.gia_mon * m.soluong; }, 0);
+  document.getElementById('monTongTien').textContent = tien(tong);
+}
+
+function taoNutSoLuong(nhan, onClick) {
+  var nut = document.createElement('button');
+  nut.type = 'button';
+  nut.textContent = nhan;
+  nut.style.cssText = 'width:26px; height:26px; border-radius:50%; border:1px solid var(--nh-line); background:#fff; color:var(--nh-espresso); cursor:pointer; font-weight:700; line-height:1;';
+  nut.addEventListener('click', onClick);
+  return nut;
+}
+
+function doiSoLuongMon(i, delta) {
+  var m = monState.items[i];
+  if (!m) return;
+  m.soluong = Math.max(1, m.soluong + delta);
+  veMonGioHang();
+}
+
+function xoaMon(i) {
+  monState.items.splice(i, 1);
+  veMonGioHang();
+}
+
+function themMon(mon) {
+  var co = monState.items.find(function (m) { return m.id_mon === mon.id_mon; });
+  if (co) { co.soluong += 1; } else {
+    monState.items.push({ id_mon: mon.id_mon, name_mon: mon.name_mon, gia_mon: Number(mon.gia_mon) || 0, soluong: 1 });
+  }
+  veMonGioHang();
+}
+
+(function () {
+  var oTim = document.getElementById('monTim');
+  var hopGoiY = document.getElementById('monGoiY');
+  if (!oTim || !hopGoiY) return;
+
+  // Sap theo ten cho de luot xem khi khach chua go gi ca.
+  var DS_MON_SAP = DS_MON_AN.slice().sort(function (a, b) {
+    return String(a.name_mon || '').localeCompare(String(b.name_mon || ''), 'vi');
+  });
+
+  function veGoiY() {
+    var tu = oTim.value.trim().toLowerCase();
+    hopGoiY.innerHTML = '';
+
+    // Chua go gi: cho xem ca thuc don (cuon duoc) de khach biet co gi ma chon,
+    // khong bat buoc phai go dung ten mon moi thay duoc goi y.
+    var dsGoc = tu
+      ? DS_MON_SAP.filter(function (m) { return String(m.name_mon || '').toLowerCase().indexOf(tu) !== -1; })
+      : DS_MON_SAP;
+
+    if (!dsGoc.length) {
+      var rong = document.createElement('div');
+      rong.style.cssText = 'padding:.6rem .8rem; color:var(--nh-muted); font-size:.85rem;';
+      rong.textContent = "<%= t('don.khong_tim_thay_mon') %>";
+      hopGoiY.appendChild(rong);
+      hopGoiY.style.display = 'block';
+      return;
+    }
+
+    dsGoc.slice(0, 60).forEach(function (m) {
+      var dong = document.createElement('div');
+      dong.style.cssText = 'padding:.45rem .7rem; cursor:pointer; display:flex; align-items:center; gap:.6rem; border-bottom:1px solid var(--nh-line); font-size:.88rem;';
+      dong.innerHTML = '<img src="' + anhMon(m.id_mon) + '" alt="" loading="lazy" '
+        + 'style="width:40px;height:40px;border-radius:6px;object-fit:cover;flex:none;background:#f3ece0;" '
+        + 'onerror="this.onerror=null;this.src=\'/mon-thay-the.svg\'">'
+        + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + m.name_mon + '</span>'
+        + '<span style="color:var(--nh-gold); font-weight:600; flex:none;">' + tien(m.gia_mon) + '</span>';
+      dong.addEventListener('mouseenter', function () { dong.style.background = '#fdf6e8'; });
+      dong.addEventListener('mouseleave', function () { dong.style.background = ''; });
+      dong.addEventListener('click', function () {
+        themMon(m);
+        oTim.value = '';
+        veGoiY();
+        oTim.focus();
+      });
+      hopGoiY.appendChild(dong);
+    });
+    hopGoiY.style.display = 'block';
+  }
+
+  oTim.addEventListener('input', veGoiY);
+  oTim.addEventListener('focus', veGoiY);
+})();
+
+function xuLyLuuMon() {
+  var btn = document.getElementById('monBtnLuu');
+  var loiBox = document.getElementById('monBaoLoi');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + TXT_DANG_LUU;
+  if (loiBox) loiBox.style.display = 'none';
+
+  fetch('/api/dat-ban/tra-cuu/doi-mon', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ma: monState.ma,
+      dien_thoai: monState.dienThoai,
+      items: monState.items.map(function (m) {
+        return { id_mon: m.id_mon, name_mon: m.name_mon, gia_mon: m.gia_mon, soluong: m.soluong };
+      })
+    })
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (res) {
+    if (res.ok) {
+      alert(TXT_CAP_NHAT_MON_OK);
+      window.location.reload();
+    } else {
+      if (loiBox) { loiBox.textContent = res.thong_bao || TXT_LOI_MANG; loiBox.style.display = 'block'; }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> ' + "<%= t('don.luu_mon') %>";
+    }
+  })
+  .catch(function () {
+    if (loiBox) { loiBox.textContent = TXT_LOI_MANG; loiBox.style.display = 'block'; }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> ' + "<%= t('don.luu_mon') %>";
+  });
+}
 
 function dongChiTiet() {
   var modal = document.getElementById('modalChiTietDatBan');

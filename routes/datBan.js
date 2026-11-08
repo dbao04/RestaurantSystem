@@ -405,6 +405,18 @@ router.post('/api/dat-ban/tra-cuu', bat(async (req, res) => {
     const xemTruoc = qt.TRANG_THAI_GIU_CHO.includes(r.status)
       ? await dv.xemTruocHuy(r.id).catch(() => null)
       : null;
+
+    // Con doi mon duoc khi: trang thai chua den VA con trong han dish_edit_cutoff_days.
+    const suaDuocTrangThai = ['PENDING', 'WAITLIST', 'CONFIRMED'].includes(r.status);
+    let suaMonDuoc = false;
+    if (suaDuocTrangThai) {
+      try {
+        const cauHinh = await qt.docCauHinh();
+        qt.kiemTraHanSuaMon({ mocBatDau: qt.ghepMoc(qt.ngayChuoi(r.reservation_date), String(r.start_time)) }, cauHinh);
+        suaMonDuoc = true;
+      } catch (_) { suaMonDuoc = false; }
+    }
+
     // Chi tra ve nhung gi thuoc ve chinh khach - khong kem ghi chu noi bo.
     res.json({
       ok: true,
@@ -415,6 +427,8 @@ router.post('/api/dat-ban/tra-cuu', bat(async (req, res) => {
         ban: r.ban, dip: r.occasion, yeu_cau: r.special_requests, the: r.tags,
         coc: Number(r.deposit_amount) || 0, trang_thai_coc: r.deposit_status,
         doi_duoc: qt.TRANG_THAI_GIU_CHO.includes(r.status),
+        mon_dat_truoc: r.mon_dat_truoc || [],
+        sua_mon_duoc: suaMonDuoc,
       },
       huy: xemTruoc,
     });
@@ -474,6 +488,31 @@ router.post('/api/dat-ban/tra-cuu/doi-lich', bat(async (req, res) => {
       ok: true,
       r: { ma: moi.reservation_code, ngay: moi.reservation_date, gio: moi.gio, so_khach: moi.guest_count, ban: moi.ban },
     });
+  } catch (e) { traLoi(res, e, 409); }
+}));
+
+/**
+ * Khach tu doi mon da dat truoc. Chi duoc lam khi con trong han
+ * `dish_edit_cutoff_days` so voi gio dat - xem qt.kiemTraHanSuaMon().
+ */
+router.post('/api/dat-ban/tra-cuu/doi-mon', bat(async (req, res) => {
+  try {
+    let dt = req.body.dien_thoai;
+    if (!dt && req.session && req.session.usersdt) {
+      dt = req.session.usersdt;
+    }
+    let r = await dv.traCuuChoKhach(req.body.ma, dt);
+    if (!r && req.session && req.session.userId) {
+      // Neu da dang nhap, cho phep tra cuu don thuoc so huu cua user
+      const ds = await dv.danhSach({ ma: req.body.ma, gioi_han: 1 });
+      if (ds.length && (Number(ds[0].customer_id) === Number(req.session.userId) || (req.session.usersdt && ds[0].phone === req.session.usersdt))) {
+        r = ds[0];
+      }
+    }
+    if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
+    const moi = await dv.capNhatMonDatTruoc(r.id, req.body.items, { laNhanVien: false });
+    bao('RESERVATION_UPDATED', { reservation_id: r.id, ma: r.reservation_code });
+    res.json({ ok: true, r: { ma: moi.reservation_code, mon_dat_truoc: moi.mon_dat_truoc, coc: Number(moi.deposit_amount) || 0 } });
   } catch (e) { traLoi(res, e, 409); }
 }));
 
@@ -652,6 +691,15 @@ router.post('/api/reservations/recurring', bat(async (req, res) => {
 router.put('/api/reservations/:id', laSo, bat(async (req, res) => {
   try {
     const r = await dv.capNhat(req.params.id, req.body, nguoiDung(req));
+    bao('RESERVATION_UPDATED', { reservation_id: Number(req.params.id), ma: r.reservation_code });
+    res.json({ ok: true, r });
+  } catch (e) { traLoi(res, e, 409); }
+}));
+
+/** Nhan vien doi mon da dat truoc cho khach - bo qua han dish_edit_cutoff_days. */
+router.put('/api/reservations/:id/mon-dat-truoc', laSo, bat(async (req, res) => {
+  try {
+    const r = await dv.capNhatMonDatTruoc(req.params.id, req.body.items, nguoiDung(req));
     bao('RESERVATION_UPDATED', { reservation_id: Number(req.params.id), ma: r.reservation_code });
     res.json({ ok: true, r });
   } catch (e) { traLoi(res, e, 409); }
