@@ -4,7 +4,7 @@
   var t = hoaDon.tien;
   var coThanhToanGiaLap = typeof choPhepThanhToanGiaLap !== 'undefined'
     ? choPhepThanhToanGiaLap
-    : true;
+    : false;
 %>
 <%- include('partials/header') %>
 
@@ -67,6 +67,7 @@
               <th class="text-center" style="width:70px">SL</th>
               <th class="text-right" style="width:110px">Đơn giá</th>
               <th class="text-right" style="width:120px">Thành tiền</th>
+              <% if (!t.da_tra_du) { %><th style="width:44px"></th><% } %>
             </tr>
           </thead>
           <tbody>
@@ -81,11 +82,52 @@
                 <td class="text-center"><%= m.soluong %></td>
                 <td class="text-right"><%= formatMoney(m.gia) %></td>
                 <td class="text-right font-weight-bold"><%= formatMoney(m.thanhtien) %></td>
+                <% if (!t.da_tra_du) { %>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 nut-huy-mon" title="Hủy / trả món"
+                            data-id="<%= m.id %>" data-ten="<%= m.name_mon %>" data-sl="<%= m.soluong %>" data-bep="<%= m.trangthai_bep %>">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </td>
+                <% } %>
               </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
+      <!-- Mon da huy cua don nay (nap bang JS tu /staff/huy-mon/don/:sesis) -->
+      <div class="card-body border-top py-2" id="khoi-mon-huy" style="display:none">
+        <div class="small font-weight-bold text-uppercase text-muted mb-1">
+          <i class="fas fa-ban"></i> Món đã hủy
+        </div>
+        <ul class="list-unstyled small mb-0" id="ds-mon-huy"></ul>
+      </div>
+
+      <!-- Hop thoai huy mon -->
+      <dialog id="hop-huy-mon" style="border:none;border-radius:10px;padding:0;max-width:420px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.25)">
+        <form method="dialog" id="form-huy-mon" style="padding:20px">
+          <h5 class="mb-1">Hủy món</h5>
+          <div class="text-muted small mb-3" id="huy-ten-mon"></div>
+          <div class="alert alert-warning small py-2" id="huy-canh-bao" style="display:none"></div>
+          <div class="form-group">
+            <label class="small font-weight-bold">Số lượng hủy</label>
+            <input type="number" class="form-control" id="huy-so-luong" min="1" step="1" required>
+          </div>
+          <div class="form-group">
+            <label class="small font-weight-bold">Lý do</label>
+            <select class="form-control" id="huy-ma-ly-do" required></select>
+          </div>
+          <div class="form-group">
+            <label class="small font-weight-bold">Ghi chú <span class="text-muted font-weight-normal">(bắt buộc nếu chọn "Lý do khác")</span></label>
+            <input type="text" class="form-control" id="huy-ghi-chu" maxlength="255">
+          </div>
+          <div class="text-danger small mb-2" id="huy-loi"></div>
+          <div class="d-flex justify-content-end" style="gap:8px">
+            <button type="button" class="btn btn-light" id="huy-dong">Đóng</button>
+            <button type="submit" class="btn btn-danger" id="huy-xac-nhan">Xác nhận hủy</button>
+          </div>
+        </form>
+      </dialog>
 
       <div class="card-body border-top">
         <!-- Mã giảm giá + điểm tích lũy -->
@@ -183,7 +225,7 @@
                   <strong <%= p.status === 'refunded' ? 'style="text-decoration:line-through"' : '' %>><%= formatMoney(p.amount) %>đ</strong>
                   <div>
                     <a href="/staff/thanh-toan/bien-lai/<%= p.id %>" target="_blank" class="small">biên lai</a>
-                    <% if (p.status === 'success') { %>
+                    <% if (p.status === 'success' && typeof coQuyenHoanTien !== 'undefined' && coQuyenHoanTien) { %>
                       · <a href="#" class="small text-danger nut-hoan" data-id="<%= p.id %>">hoàn tiền</a>
                     <% } %>
                   </div>
@@ -369,6 +411,79 @@
   var pollHen = null;        // timer hỏi trạng thái dự phòng
 
   var $ = function (id) { return document.getElementById(id); };
+
+  // ------------------------------------------------------------ Huy mon
+  (function () {
+    var hop = $('hop-huy-mon');
+    if (!hop) return;
+    var dangHuy = null, laQuanLy = false;
+    var TEN_BEP = { 0: 'Chờ chế biến', 1: 'Đang chế biến', 2: 'Hoàn thành', 3: 'Đã phục vụ' };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+
+    fetch('/staff/huy-mon/don/' + encodeURIComponent(SESIS), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success) return;
+        laQuanLy = !!d.la_quan_ly;
+        var sel = $('huy-ma-ly-do');
+        sel.innerHTML = '<option value="">-- Chọn lý do --</option>' + Object.keys(d.ly_do).map(function (k) {
+          return '<option value="' + k + '">' + esc(d.ly_do[k]) + '</option>';
+        }).join('');
+        if (d.lich_su.length) {
+          $('ds-mon-huy').innerHTML = d.lich_su.map(function (h) {
+            return '<li class="mb-1"><b>' + esc(h.name_mon) + '</b> x' + h.so_luong
+              + ' <span class="text-danger">(-' + Number(h.gia_tri).toLocaleString('vi-VN') + 'đ)</span>'
+              + ' · ' + esc(h.ten_ly_do) + (h.ly_do ? ': ' + esc(h.ly_do) : '')
+              + ' <span class="text-muted">· ' + esc(h.ten_nv || '') + ' · ' + esc(h.ten_bep) + '</span></li>';
+          }).join('');
+          $('khoi-mon-huy').style.display = '';
+        }
+      }).catch(function () {});
+
+    document.addEventListener('click', function (e) {
+      var nut = e.target.closest && e.target.closest('.nut-huy-mon');
+      if (!nut) return;
+      var bep = Number(nut.dataset.bep) || 0;
+      dangHuy = { id: nut.dataset.id, sl: Number(nut.dataset.sl) || 1 };
+      $('huy-ten-mon').textContent = nut.dataset.ten + ' · đang có ' + dangHuy.sl + ' phần · ' + TEN_BEP[bep];
+      $('huy-so-luong').max = dangHuy.sl;
+      $('huy-so-luong').value = dangHuy.sl;
+      $('huy-ma-ly-do').value = '';
+      $('huy-ghi-chu').value = '';
+      $('huy-loi').textContent = '';
+      var cb = $('huy-canh-bao');
+      if (bep >= 1) {
+        cb.style.display = '';
+        cb.textContent = laQuanLy
+          ? 'Bếp đã làm món này. Nguyên liệu đã dùng sẽ được ghi nhận là hao hụt, không hoàn lại kho.'
+          : 'Bếp đã làm món này - chỉ Quản lý mới hủy được.';
+        $('huy-xac-nhan').disabled = !laQuanLy;
+      } else {
+        cb.style.display = 'none';
+        $('huy-xac-nhan').disabled = false;
+      }
+      hop.showModal();
+    });
+    $('huy-dong').addEventListener('click', function () { hop.close(); });
+    $('form-huy-mon').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!dangHuy) return;
+      var nutXn = $('huy-xac-nhan');
+      nutXn.disabled = true;
+      fetch('/staff/huy-mon/' + dangHuy.id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          so_luong: $('huy-so-luong').value,
+          ma_ly_do: $('huy-ma-ly-do').value,
+          ly_do: $('huy-ghi-chu').value,
+        }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.success) { $('huy-loi').textContent = d.message || 'Không hủy được món.'; nutXn.disabled = false; return; }
+        window.location.reload();
+      }).catch(function () { $('huy-loi').textContent = 'Lỗi mạng, vui lòng thử lại.'; nutXn.disabled = false; });
+    });
+  })();
   var tien = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
   var docTien = function (el) {
     if (!el) return 0;
@@ -707,16 +822,21 @@
       var id = this.dataset.id;
       Swal.fire({
         title: 'Hoàn tiền phiên này?',
+        text: 'Điểm tích lũy được thu hồi / trả lại và lượt dùng mã giảm giá được hoàn lại cho khách.',
         input: 'text', inputLabel: 'Lý do hoàn tiền', inputPlaceholder: 'VD: khách trả nhầm bàn',
         showCancelButton: true, confirmButtonText: 'Hoàn tiền', confirmButtonColor: '#e74a3b',
-        inputValidator: function (v) { return !v && 'Phải ghi lý do'; },
+        inputValidator: function (v) { return (!v || v.trim().length < 3) && 'Phải ghi lý do (ít nhất 3 ký tự)'; },
       }).then(function (r) {
         if (!r.isConfirmed) return;
         fetch('/staff/thanh-toan/phien/' + id + '/hoan-tien', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({ ly_do: r.value }),
         }).then(function (x) { return x.json(); })
-          .then(function () { location.reload(); });
+          .then(function (d) {
+            if (d && d.thanhCong) return location.reload();
+            Swal.fire({ icon: 'error', title: 'Không hoàn tiền được', text: (d && d.loi) || 'Có lỗi xảy ra.' });
+          })
+          .catch(function () { Swal.fire({ icon: 'error', title: 'Lỗi mạng', text: 'Vui lòng thử lại.' }); });
       });
     };
   });

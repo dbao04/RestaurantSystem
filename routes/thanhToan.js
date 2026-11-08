@@ -24,6 +24,27 @@ const realtime = require('../services/realtime');
 const dv = require('../services/reservationService');
 const db = require('../config/db');
 
+/*
+ * Thanh toan GIA LAP (bam nut la coi nhu tien da ve, khong qua ngan hang).
+ *
+ * Truoc day mac dinh BAT: chi tat khi PAYMENT_SIMULATION=0 hoac
+ * NODE_ENV=production. Ma QR goi mon / trang dat coc la trang cong khai, nen
+ * khi mo he thong ra Internet (scripts/moOnline.js) bat ky ai cung bam duoc
+ * "da thanh toan" cho don cua minh.
+ *
+ * Nay la BAT CHU DONG (opt-in) va tach hai muc:
+ *   - giaLapNhanVien(): nut cua thu ngan.  Can PAYMENT_SIMULATION=1.
+ *   - giaLapKhach():    nut tren trang cua KHACH (QR tai ban, dat coc, don
+ *                       giao). Can them PAYMENT_SIMULATION_KHACH=1.
+ * Ca hai luon tat khi NODE_ENV=production.
+ */
+function giaLapNhanVien() {
+  return process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION === '1';
+}
+function giaLapKhach() {
+  return giaLapNhanVien() && process.env.PAYMENT_SIMULATION_KHACH === '1';
+}
+
 module.exports = function (io) {
   const router = express.Router();
 
@@ -222,7 +243,19 @@ module.exports = function (io) {
     res.json({ thanhCong: true });
   }));
 
-  router.post('/staff/thanh-toan/phien/:id/hoan-tien', requireThuNgan, batJson(async (req, res) => {
+  /*
+   * Hoan tien: CHI Quan ly (vai tro cu hoac chuc danh dong vai Quan ly, vd.
+   * giam sat thu ngan). Truoc day moi thu ngan tu hoan duoc bat ky khoan nao -
+   * mot nguoi vua thu vua tu hoan la lo hong gian lan kinh dien.
+   * Tra JSON (khong phai trang loi) vi nut hoan tien goi bang fetch.
+   */
+  const coQuyenHoanTien = (req) => !!(req.session && (req.session.adminlogin
+    || req.session.staffRole === 'Quan ly' || phanQuyen.dongVaiDuoc(req.hoSo, ['Quan ly'])));
+
+  router.post('/staff/thanh-toan/phien/:id/hoan-tien', requireThuNgan, (req, res, next) => {
+    if (coQuyenHoanTien(req)) return next();
+    return res.status(403).json({ thanhCong: false, loi: 'Hoàn tiền cần Quản lý thực hiện. Vui lòng gọi Quản lý ca.' });
+  }, batJson(async (req, res) => {
     await tt.hoanTien(Number(req.params.id), {
       lyDo: req.body.ly_do || '',
       nhanVienId: req.session.staffId || null,
@@ -413,7 +446,8 @@ module.exports = function (io) {
       activePage: 'thanh-toan',
       staffName: req.session.staffName,
       hoaDon, phuongThuc, taiKhoan,
-      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
+      choPhepThanhToanGiaLap: giaLapNhanVien(),
+      coQuyenHoanTien: coQuyenHoanTien(req),
     });
   }));
 
@@ -461,7 +495,7 @@ module.exports = function (io) {
   // toán (trừ điểm, cộng điểm, cập nhật đơn và nhật ký), nhưng không cần ngân
   // hàng thật. Không mở chức năng này khi chạy production.
   router.post('/staff/thanh-toan/:sesis/gia-lap', requireThuNgan, batJson(async (req, res) => {
-    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+    if (!giaLapNhanVien()) {
       return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
     }
 
@@ -520,15 +554,37 @@ module.exports = function (io) {
    * cac trang dat mon tai ban khac.
    *
    * Khach chi TRA TIEN chu khong sua duoc gi, nen rui ro thap nhat.
+   *
+   * Thuc te truoc day ham nay chi kiem tra "don co ton tai va chua huy". Nay
+   * them:
+   *   - Don GIAO HANG khong di duong nay: no co trang thanh toan rieng, bat
+   *     dang nhap va dung chu don (/thanh-toan/don-hang/:sesis). Khong thi ai
+   *     biet ma don giao cua nguoi khac cung xem duoc hoa don qua /qr/...
+   *   - Xem (GET) don da tra du van duoc - trang hien bien lai cho khach.
+   *     Nhung TAO PHIEN THANH TOAN MOI (POST) cho don da tra xong thi chan,
+   *     xem `chanKhiDaTraXong`.
    */
   async function kiemTraPhienBanMo(req, res, next) {
     const sesis = req.params.sesis;
     const [[don]] = await db.query(
-      'SELECT sesis, tinhtrang FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]
+      'SELECT sesis, tinhtrang, loai_don FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]
     );
-    if (!don) return res.status(404).send('Không tìm thấy đơn hàng này.');
-    if (don.tinhtrang === 4) return res.status(410).send('Đơn hàng đã bị hủy.');
+    const laJson = req.method !== 'GET' || /\/hoa-don$/.test(req.path);
+    const tuChoi = (ma, thongBao) => (laJson
+      ? res.status(ma).json({ loi: thongBao })
+      : res.status(ma).send(thongBao));
+    if (!don) return tuChoi(404, 'Không tìm thấy đơn hàng này.');
+    if (don.loai_don === 'giao_hang') return tuChoi(404, 'Không tìm thấy đơn hàng này.');
+    if (don.tinhtrang === 4) return tuChoi(410, 'Đơn hàng đã bị hủy.');
     req.donHang = don;
+    next();
+  }
+
+  /** Don da thanh toan xong (tinhtrang = 3) thi khong tao them phien tra tien. */
+  async function chanKhiDaTraXong(req, res, next) {
+    if (req.donHang && req.donHang.tinhtrang === 3) {
+      return res.status(409).json({ loi: 'Đơn này đã được thanh toán đầy đủ.' });
+    }
     next();
   }
 
@@ -541,7 +597,7 @@ module.exports = function (io) {
       layout: false,
       title: 'Thanh toán',
       hoaDon,
-      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
+      choPhepThanhToanGiaLap: giaLapKhach(),
       // Khach tai ban chi duoc chon chuyen khoan. Tien mat phai qua thu ngan
       // (khong the tu bam "toi da dua tien mat"), the thi phai co may POS.
       phuongThuc: phuongThuc.filter((p) => p.code === 'vietqr'),
@@ -556,7 +612,7 @@ module.exports = function (io) {
     res.json(hoaDon);
   }));
 
-  router.post('/qr/thanh-toan/:sesis/tao-phien', bat(kiemTraPhienBanMo), batJson(async (req, res) => {
+  router.post('/qr/thanh-toan/:sesis/tao-phien', bat(kiemTraPhienBanMo), bat(chanKhiDaTraXong), batJson(async (req, res) => {
     const kq = await tt.taoPhien({
       sesis: req.params.sesis,
       soTien: req.body.so_tien,
@@ -574,8 +630,8 @@ module.exports = function (io) {
     res.json({ thanhCong: true, ...kq });
   }));
 
-  router.post('/qr/thanh-toan/:sesis/gia-lap', bat(kiemTraPhienBanMo), batJson(async (req, res) => {
-    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+  router.post('/qr/thanh-toan/:sesis/gia-lap', bat(kiemTraPhienBanMo), bat(chanKhiDaTraXong), batJson(async (req, res) => {
+    if (!giaLapKhach()) {
       return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
     }
 
@@ -709,18 +765,25 @@ module.exports = function (io) {
       tongThanhToan,
       taiKhoan,
       qr,
-      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
+      choPhepThanhToanGiaLap: giaLapKhach(),
     });
   }));
 
   router.post('/thanh-toan/dat-ban/:ma/gia-lap', batJson(async (req, res) => {
-    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+    if (!giaLapKhach()) {
       return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
     }
     const ma = req.params.ma;
     const ds = await dv.danhSach({ ma, gioi_han: 1 });
     if (!ds || ds.length === 0) return res.status(404).json({ loi: 'Không tìm thấy lượt đặt bàn.' });
     const r = ds[0];
+    // Bam lai nhieu lan khong duoc ghi them phieu coc PAID va doi trang thai lan nua.
+    if (r.deposit_status === 'PAID') {
+      return res.status(400).json({ loi: 'Lượt đặt bàn này đã thanh toán cọc.' });
+    }
+    if (['CANCELLED', 'REJECTED', 'NO_SHOW', 'COMPLETED'].includes(r.status)) {
+      return res.status(400).json({ loi: 'Lượt đặt bàn đã kết thúc, không thể thanh toán.' });
+    }
 
     const preorders = await db.query('SELECT price, quantity FROM reservation_preorders WHERE reservation_id = ?', [r.id]).then(([rows]) => rows).catch(() => []);
     const tongTienMon = preorders.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
@@ -813,7 +876,7 @@ module.exports = function (io) {
       conLaiGiay: hanCon ? hanCon.giay : null,
       qr: phienMoi ? phienMoi.qr : null,
       payment: phienMoi ? phienMoi.payment : null,
-      choPhepThanhToanGiaLap: process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION !== '0',
+      choPhepThanhToanGiaLap: giaLapKhach(),
     });
   }));
 
@@ -829,7 +892,7 @@ module.exports = function (io) {
   }));
 
   router.post('/thanh-toan/don-hang/:sesis/gia-lap', requireKhachDangNhap, batJson(async (req, res) => {
-    if (process.env.NODE_ENV === 'production' || process.env.PAYMENT_SIMULATION === '0') {
+    if (!giaLapKhach()) {
       return res.status(404).json({ loi: 'Thanh toán giả lập đang tắt.' });
     }
     const sesis = req.params.sesis;

@@ -537,6 +537,17 @@
       <div id="dsMonDaGoiChiTiet" style="display:grid; gap:4px;"></div>
     </div>
 
+    <!-- Chuyen / gop ban: chi hien khi ban dang co khach -->
+    <div id="hopChuyenBan" style="display:none; margin-bottom:14px; padding:10px 12px; background:#f4f7fb; border:1px solid var(--sdb-line); border-radius:10px; font-size:.85rem;">
+      <div style="font-weight:700; color:var(--sdb-dark); margin-bottom:6px;"><i class="fas fa-right-left mr-1"></i> Chuyển / gộp bàn</div>
+      <select id="chonBanDich" style="width:100%; padding:6px 8px; border:1px solid var(--sdb-line); border-radius:8px; margin-bottom:8px;"></select>
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="chuyenGopBan('chuyen-ban')" style="flex:1; padding:7px; border:none; border-radius:8px; background:#2f6fb3; color:#fff; font-weight:600; cursor:pointer;">Chuyển sang bàn này</button>
+        <button type="button" onclick="chuyenGopBan('gop-ban')" style="flex:1; padding:7px; border:none; border-radius:8px; background:#7a4fb3; color:#fff; font-weight:600; cursor:pointer;">Gộp vào bàn này</button>
+      </div>
+      <div id="baoChuyenBan" style="margin-top:6px; font-size:.8rem;"></div>
+    </div>
+
     <div class="nut" id="hopNutThuTien"><a class="thu-tien" id="hopLinkThuTien" href="#"><i class="fas fa-cash-register" style="margin-right: 6px;"></i>Tính tiền bàn này</a></div>
     <div class="nut">
       <button style="background:var(--sdb-trong)"  onclick="doiTrangThai(0)"><span><i class="fas fa-check-circle" style="margin-right: 6px;"></i>Đặt là Trống</span> <i class="fas fa-chevron-right" style="opacity: .6;"></i></button>
@@ -868,6 +879,19 @@ async function moHop(id) {
     $('hopNutThuTien').style.display = 'none';
   }
 
+  // Chuyen / gop ban
+  $('baoChuyenBan').textContent = '';
+  if (b.sesis_hien_tai) {
+    const ds = (duLieu.ban || []).filter(x => x.Id_ban !== b.Id_ban && Number(x.trangthai) !== 2)
+      .sort((p, q) => String(p.number_ban).localeCompare(String(q.number_ban), 'vi', { numeric: true }));
+    $('chonBanDich').innerHTML = '<option value="">-- Chọn bàn đích --</option>' + ds.map(x =>
+      `<option value="${x.Id_ban}">Bàn ${x.number_ban} · ${x.so_cho} chỗ · ${x.sesis_hien_tai ? 'đang có khách (gộp)' : (Number(x.trangthai) === 0 ? 'trống (chuyển)' : x.ten_trang_thai)}</option>`
+    ).join('');
+    $('hopChuyenBan').style.display = 'block';
+  } else {
+    $('hopChuyenBan').style.display = 'none';
+  }
+
   // Tải danh sách món đã gọi
   $('hopDsMon').style.display = 'none';
   $('dsMonDaGoiChiTiet').innerHTML = '';
@@ -906,6 +930,33 @@ async function moHop(id) {
   $('lop').style.display = 'flex';
 }
 function dongHop() { $('lop').style.display = 'none'; banDangChon = null; }
+
+async function chuyenGopBan(loai) {
+  if (!banDangChon) return;
+  const den = Number($('chonBanDich').value);
+  const bao = $('baoChuyenBan');
+  if (!den) { bao.style.color = '#b3352c'; bao.textContent = 'Hãy chọn bàn đích.'; return; }
+  const banDich = (duLieu.ban || []).find(x => x.Id_ban === den);
+  const cau = loai === 'gop-ban'
+    ? `Gộp toàn bộ món của Bàn ${banDangChon.number_ban} vào hóa đơn của Bàn ${banDich ? banDich.number_ban : den}?`
+    : `Chuyển khách từ Bàn ${banDangChon.number_ban} sang Bàn ${banDich ? banDich.number_ban : den}?`;
+  if (!confirm(cau)) return;
+  try {
+    const r = await fetch('/so-do-ban/api/' + loai, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ tu_ban: banDangChon.Id_ban, den_ban: den }),
+    });
+    const d = await r.json();
+    if (!d.ok) { bao.style.color = '#b3352c'; bao.textContent = d.loi || 'Không thực hiện được.'; return; }
+    if (d.canh_bao) alert(d.canh_bao);
+    dongHop();
+    await tai();
+  } catch (e) {
+    bao.style.color = '#b3352c';
+    bao.textContent = 'Lỗi mạng, vui lòng thử lại.';
+  }
+}
 
 // --- GỌI MÓN TRỰC TIẾP ---
 async function taiThucDon() {

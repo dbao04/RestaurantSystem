@@ -149,6 +149,11 @@
       position: relative; display: flex; flex-direction: column;
     }
     .dish-card:active { transform: scale(.985); }
+    /* Het nguyen lieu (services/tonMonService.js): van hien de khach biet mon co
+       trong thuc don, nhung khong goi duoc. */
+    .dish-card.het-mon { opacity: .5; cursor: not-allowed; }
+    .dish-card.het-mon .btn-add { display: none; }
+    .dish-het { display: inline-block; font-size: 12px; font-weight: 700; color: #b3352c; }
     .dish-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(200,129,58,.15); }
     .dish-img, .dish-img-placeholder { width: 100%; height: 180px; object-fit: cover; display: block; }
     .dish-img-placeholder {
@@ -555,8 +560,9 @@
 
 <!-- ===================== Luoi mon ===================== -->
 <div class="menu-grid" id="menuGrid">
-  <% dishes.forEach(d => { %>
-  <div class="dish-card"
+  <% dishes.forEach(d => { var het = typeof hetMon !== 'undefined' && hetMon.includes(Number(d.id_mon)); %>
+  <div class="dish-card<%= het ? ' het-mon' : '' %>"
+       <%= het ? 'data-het=1' : '' %>
        data-id="<%= d.id_mon %>"
        data-category="<%= d.id_loai %>"
        data-name="<%= (d.name_mon || '').toLowerCase() %>"
@@ -576,6 +582,7 @@
       <div class="dish-note"><%= d.ghichu_mon || '' %></div>
       <div class="dish-footer">
         <span class="dish-price"><%= Number(d.gia_mon).toLocaleString('vi-VN') %>đ</span>
+        <% if (het) { %><span class="dish-het">Tạm hết</span><% } %>
         <button class="btn-add" data-them="1" aria-label="<%= t('qr.them_vao_gio_aria', { ten: d.name_mon }) %>">
           <i class="fas fa-plus"></i> <%= t('qr.them') %>
         </button>
@@ -920,6 +927,7 @@
   document.getElementById('menuGrid').addEventListener('click', function (e) {
     var card = e.target.closest('.dish-card');
     if (!card) return;
+    if (card.hasAttribute('data-het')) { showToast('Món này tạm hết, vui lòng chọn món khác.'); return; }
     var mon = docMonTuThe(card);
     // Nut "Them" them nhanh mot phan; bam vao the thi mo chi tiet de chon so
     // luong va ghi chu truoc.

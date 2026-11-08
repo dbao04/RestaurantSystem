@@ -4,7 +4,7 @@
  */
 
 const db = require('../config/db');
-const md5 = require('md5');
+const matKhau = require('../utils/matKhau');
 // Moi don ghi vao `hopdong` phai dien `ngay_dat`/`gio_dat`, xem utils/thoiGian.js.
 const {
   chuanHoaNgay, chuanHoaGio, ngayCucBo, gioCucBo, ngayChoMonThem,
@@ -30,7 +30,31 @@ function laTaiKhoanQR(sdt) {
   return String(sdt || '').startsWith('QR_');
 }
 
+/** Gioi han so luong mot dong mon do khach tu gui (gio hang, QR tai ban). */
+const SO_LUONG_TOI_DA_KHACH = 50;
+/** Nhan vien them mon cho ban tiec/doan dong co the can nhieu hon. */
+const SO_LUONG_TOI_DA_NHAN_VIEN = 200;
+
+/**
+ * So luong hop le: so nguyen trong [1, toiDa]. Tra ve null neu khong hop le.
+ *
+ * Moi cho nhan so luong tu client deu phai qua day. Truoc day `soluong`/`qty`
+ * di thang vao CSDL: gui -5 la ra thanh tien am va keo tong hoa don xuong,
+ * gui 9999 thi man hinh bep ngap mon rac.
+ */
+function chuanHoaSoLuong(giaTri, toiDa = SO_LUONG_TOI_DA_KHACH) {
+  const chuoi = String(giaTri ?? '').trim();
+  if (!/^\d+$/.test(chuoi)) return null;
+  const n = Number(chuoi);
+  if (!Number.isSafeInteger(n) || n < 1 || n > toiDa) return null;
+  return n;
+}
+
 const orderService = {
+  chuanHoaSoLuong,
+  SO_LUONG_TOI_DA_KHACH,
+  SO_LUONG_TOI_DA_NHAN_VIEN,
+
   // ============ CART OPERATIONS ============
   getCart: async (sessionId) => {
     /*
@@ -53,13 +77,17 @@ const orderService = {
   },
 
   addToCart: async (sessionId, dishId, quantity) => {
+    const sl = chuanHoaSoLuong(quantity);
+    if (!sl) throw new Error(`Số lượng phải từ 1 đến ${SO_LUONG_TOI_DA_KHACH}`);
+    quantity = sl;
     const [dishes] = await db.query('SELECT * FROM monan WHERE id_mon = ?', [dishId]);
     if (dishes.length === 0) throw new Error('Không tìm thấy món ăn');
     const dish = dishes[0];
     const [existing] = await db.query('SELECT * FROM cart WHERE sesid = ? AND id_mon = ?', [sessionId, dishId]);
     if (existing.length > 0) {
-      const newQuantity = parseInt(existing[0].soluong) + parseInt(quantity);
-      await db.query('UPDATE cart SET soluong = ? WHERE cart_id = ?', [newQuantity, existing[0].cart_id]);
+      // Cong don van phai nam trong gioi han: bam "them" lien tuc khong vuot tran.
+      const newQuantity = Math.min(SO_LUONG_TOI_DA_KHACH, (parseInt(existing[0].soluong, 10) || 0) + quantity);
+      await db.query('UPDATE cart SET soluong = ? WHERE cart_id = ? AND sesid = ?', [newQuantity, existing[0].cart_id, sessionId]);
     } else {
       await db.query(
         'INSERT INTO cart (id_mon, sesid, name_mon, gia_mon, soluong, images) VALUES (?, ?, ?, ?, ?, ?)',
@@ -70,12 +98,19 @@ const orderService = {
     }
   },
 
-  updateCartQuantity: async (cartId, quantity) => {
-    await db.query('UPDATE cart SET soluong = ? WHERE cart_id = ?', [quantity, cartId]);
+  /*
+    Sua / xoa dong gio hang PHAI kem `sesid` cua nguoi gui. Truoc day chi loc
+    theo `cart_id` (so tu tang, doan duoc) nen ai cung sua/xoa duoc gio hang
+    cua khach khac.
+  */
+  updateCartQuantity: async (sessionId, cartId, quantity) => {
+    const sl = chuanHoaSoLuong(quantity);
+    if (!sl) throw new Error(`Số lượng phải từ 1 đến ${SO_LUONG_TOI_DA_KHACH}`);
+    await db.query('UPDATE cart SET soluong = ? WHERE cart_id = ? AND sesid = ?', [sl, cartId, sessionId]);
   },
 
-  removeFromCart: async (cartId) => {
-    await db.query('DELETE FROM cart WHERE cart_id = ?', [cartId]);
+  removeFromCart: async (sessionId, cartId) => {
+    await db.query('DELETE FROM cart WHERE cart_id = ? AND sesid = ?', [cartId, sessionId]);
   },
 
   clearCart: async (sessionId) => {
@@ -91,9 +126,15 @@ const orderService = {
   createOrderFromCart: async (sessionId, userId, time, date, numPeople, partyType) => {
     const [cartItems] = await db.query('SELECT * FROM cart WHERE sesid = ?', [sessionId]);
     if (cartItems.length === 0) throw new Error('Giỏ hàng của bạn trống');
-    // Tạo một sesis duy nhất cho mỗi đơn hàng (không dùng sessionID vì cố định)
-    const uniqueSesis = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 8);
+    // Ma don ngau nhien bang crypto: sesis con dung lam "link bi mat" o trang
+    // thanh toan, Math.random() khong dung cho muc dich do.
+    const uniqueSesis = require('crypto').randomBytes(12).toString('base64url').replace(/[-_]/g, 'x').slice(0, 19);
     const ngayDat = chuanHoaNgay(date) || ngayCucBo();
+    // Bao het mon: chi chan don nhan trong ngay - don hen ngay khac thi kho con
+    // nhap them truoc khi nau.
+    if (ngayDat === ngayCucBo()) {
+      await require('./tonMonService').kiemTraDatMon(cartItems.map((c) => ({ id_mon: c.id_mon, qty: c.soluong })));
+    }
     const gioDat = chuanHoaGio(time) || chuanHoaGio(gioCucBo());
     const connection = await db.getConnection();
     try {
@@ -165,8 +206,11 @@ const orderService = {
    * luan sai la khach chua tung dat.
    */
   coDonDaXacNhan: async (userId) => {
+    // Da xac nhan (1), dang phuc vu (5), dang dung mon (6) hoac DA THANH TOAN
+    // (3). Truoc day chi tinh 1, nen khach an xong tra tien roi - dung nguoi
+    // nen danh gia nhat - lai bi chan khong cho danh gia.
     const [[r]] = await db.query(
-      'SELECT COUNT(*) AS n FROM hopdong WHERE id_user = ? AND tinhtrang = 1 LIMIT 1', [userId]
+      'SELECT COUNT(*) AS n FROM hopdong WHERE id_user = ? AND tinhtrang IN (1, 3, 5, 6) LIMIT 1', [userId]
     );
     return Number(r.n || 0) > 0;
   },
@@ -198,7 +242,7 @@ const orderService = {
         MAX(h.tinhtrang) as tinhtrang, 
         SUM(h.thanhtien) as tong_tien, 
         COALESCE(MAX(b.number_ban), MAX(q.table_name)) as table_name,
-        COUNT(CASE WHEN h.id_mon > 0 THEN 1 END) as so_mon,
+        COUNT(CASE WHEN h.id_mon > 0 AND h.soluong > 0 THEN 1 END) as so_mon,
         COALESCE(SUM(CASE WHEN h.id_mon > 0 THEN h.soluong ELSE 0 END), 0) as tong_soluong_mon,
         MAX(h.id) as max_id
       FROM hopdong h
@@ -233,7 +277,7 @@ const orderService = {
       if (users.length > 0) {
         userId = users[0].id;
       } else {
-        const [res] = await connection.query('INSERT INTO khach_hang (ten, sodienthoai, passwords) VALUES (?, ?, ?)', [ten, sodienthoai, md5('123456')]);
+        const [res] = await connection.query('INSERT INTO khach_hang (ten, sodienthoai, passwords) VALUES (?, ?, ?)', [ten, sodienthoai, await matKhau.bam('123456')]);
         userId = res.insertId;
       }
       const sesis = Math.random().toString(36).substring(2, 15);
@@ -293,35 +337,7 @@ const orderService = {
     await db.query('UPDATE hopdong SET tinhtrang = ? WHERE sesis = ?', [status, sesis]);
   },
 
-  // ============ KITCHEN OPERATIONS ============
-  getKitchenOrders: async () => {
-    const [rows] = await db.query(`
-      SELECT h.id, h.sesis, h.name_mon, h.soluong, h.tg, h.dates, h.tinhtrang, h.trangthai_bep, k.ten as ten_khach, q.table_name
-      FROM hopdong h
-      JOIN khach_hang k ON h.id_user = k.id
-      LEFT JOIN qr_tables q ON (q.active_sesis = h.sesis) OR (h.sesis LIKE 'QR_%' AND q.table_id = SUBSTRING_INDEX(SUBSTRING_INDEX(h.sesis, '_', 2), '_', -1))
-      WHERE h.tinhtrang IN (1, 5, 6) AND h.id_mon > 0 AND h.soluong > 0
-      ORDER BY h.dates ASC, h.tg ASC
-    `);
-    return rows;
-  },
-
-  markKitchenDone: async (id) => {
-    // Cập nhật trạng thái món ăn trong bếp sang "Đã xong" (1)
-    await db.query('UPDATE hopdong SET trangthai_bep = 1 WHERE id = ?', [id]);
-
-    // Lấy sesis của món ăn
-    const [rows] = await db.query('SELECT sesis, tinhtrang FROM hopdong WHERE id = ? LIMIT 1', [id]);
-    if (rows.length > 0) {
-      const { sesis, tinhtrang } = rows[0];
-      // Kiểm tra xem tất cả các món trong sesis này đã xong chưa
-      const [pending] = await db.query('SELECT COUNT(*) as count FROM hopdong WHERE sesis = ? AND trangthai_bep = 0', [sesis]);
-      if (pending[0].count === 0 && tinhtrang === 5) {
-        // Cập nhật tình trạng đơn thành "Đang dùng món" (6)
-        await db.query('UPDATE hopdong SET tinhtrang = 6 WHERE sesis = ?', [sesis]);
-      }
-    }
-  },
+  // Thao tac bep: xem services/kdsService.js.
 
   // ============ USER/CUSTOMER MANAGEMENT ============
   userLogin: async (sdt, password) => {
@@ -331,17 +347,22 @@ const orderService = {
     // duoc. Xem MAT_KHAU_VO_HIEU o dau tep.
     if (laTaiKhoanQR(sdt)) return null;
 
-    const hashedPassword = md5(password);
     const [rows] = await db.query(
-      'SELECT * FROM khach_hang WHERE sodienthoai = ? AND passwords = ? LIMIT 1',
-      [sdt, hashedPassword]
+      'SELECT * FROM khach_hang WHERE sodienthoai = ? LIMIT 1',
+      [sdt]
     );
-    return rows[0] || null;
+    const kh = rows[0];
+    if (!kh || !(await matKhau.khop(password, kh.passwords))) return null;
+    // Mat khau md5 cu: dang nhap dung thi bam lai bang bcrypt luon.
+    if (matKhau.canBamLai(kh.passwords)) {
+      await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [await matKhau.bam(password), kh.id]);
+    }
+    return kh;
   },
 
   userRegister: async (data) => {
     const { ten, sodienthoai, email, diachi, passwords } = data;
-    const hashedPassword = passwords ? md5(passwords) : null;
+    const hashedPassword = passwords ? await matKhau.bam(passwords) : null;
     const [existing] = await db.query('SELECT * FROM khach_hang WHERE sodienthoai = ?', [sodienthoai]);
     if (existing.length > 0) throw new Error('Số điện thoại này đã được đăng ký!');
     const [result] = await db.query(
@@ -362,10 +383,9 @@ const orderService = {
   },
 
   changePassword: async (id, oldPass, newPass) => {
-    const hashedOld = md5(oldPass);
-    const [rows] = await db.query('SELECT * FROM khach_hang WHERE id = ? AND passwords = ?', [id, hashedOld]);
-    if (!rows[0]) throw new Error('Mật khẩu cũ không đúng!');
-    const hashedNew = md5(newPass);
+    const [rows] = await db.query('SELECT passwords FROM khach_hang WHERE id = ?', [id]);
+    if (!rows[0] || !(await matKhau.khop(oldPass, rows[0].passwords))) throw new Error('Mật khẩu cũ không đúng!');
+    const hashedNew = await matKhau.bam(newPass);
     await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [hashedNew, id]);
   },
 
@@ -390,8 +410,78 @@ const orderService = {
     );
   },
 
+  /**
+   * Xoa khach hang - CHI khi khach chua phat sinh bat ky lich su nao.
+   *
+   * Truoc day xoa thang dong `khach_hang` trong khi don hang, dat ban, dat
+   * tiec, diem tich luy, danh gia... van tro toi id do: lich su doanh thu mat
+   * chu, diem thanh vien mat trang, bao cao no-show sai. Khach da co giao dich
+   * thi giu lai; chi xoa duoc ho so tao nham / trung.
+   *
+   * @returns {{ ok: boolean, lyDo?: string }}
+   */
   deleteCustomer: async (id) => {
-    await db.query('DELETE FROM khach_hang WHERE id = ?', [id]);
+    const idKh = Number(id);
+    if (!Number.isInteger(idKh) || idKh <= 0) return { ok: false, lyDo: 'Mã khách hàng không hợp lệ.' };
+
+    // Bang + cot tro toi khach_hang va ten hien thi khi bi chan.
+    const LICH_SU = [
+      ['hopdong', 'id_user', 'đơn hàng'],
+      ['reservations', 'customer_id', 'lượt đặt bàn'],
+      ['dat_tiec', 'customer_id', 'đơn đặt tiệc'],
+      ['loyalty_transactions', 'id_kh', 'giao dịch điểm thành viên'],
+      ['discount_usages', 'id_kh', 'lần dùng mã giảm giá'],
+      ['danh_gia', 'id_kh', 'đánh giá'],
+      ['order_cancellations', 'id_kh', 'yêu cầu hủy đơn'],
+      ['hoan_diem_giao_hang', 'id_kh', 'lần hoàn điểm giao hàng'],
+      ['chat', 'id_kh', 'tin nhắn hỗ trợ'],
+    ];
+
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [[kh]] = await conn.query('SELECT id, sodienthoai FROM khach_hang WHERE id = ? FOR UPDATE', [idKh]);
+      if (!kh) { await conn.rollback(); return { ok: false, lyDo: 'Không tìm thấy khách hàng.' }; }
+
+      const coLichSu = [];
+      for (const [bang, cot, ten] of LICH_SU) {
+        try {
+          const [[r]] = await conn.query(`SELECT COUNT(*) AS so FROM \`${bang}\` WHERE \`${cot}\` = ?`, [idKh]);
+          if (Number(r.so) > 0) coLichSu.push(`${r.so} ${ten}`);
+        } catch (e) {
+          // Bang chua co (chua chay migration tuong ung) thi bo qua bang do.
+          if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+        }
+      }
+      const [[diem]] = await conn.query(
+        'SELECT COALESCE(SUM(points), 0) AS diem FROM loyalty_points WHERE id_kh = ?', [idKh]
+      );
+      if (Number(diem.diem) > 0) coLichSu.push(`${diem.diem} điểm tích lũy`);
+
+      if (coLichSu.length) {
+        await conn.rollback();
+        return {
+          ok: false,
+          lyDo: `Không thể xóa: khách đã có ${coLichSu.join(', ')}. ` +
+                'Khách đã phát sinh giao dịch phải được giữ lại để không mất lịch sử doanh thu và điểm thành viên.',
+        };
+      }
+
+      // Dong phu khong mang lich su giao dich: xoa kem de khong vuong khoa ngoai.
+      await conn.query('DELETE FROM loyalty_points WHERE id_kh = ?', [idKh]);
+      for (const [bang, cot] of [['customer_preferences', 'customer_id'], ['chatbot_hoi_thoai', 'id_kh']]) {
+        try { await conn.query(`DELETE FROM \`${bang}\` WHERE \`${cot}\` = ?`, [idKh]); }
+        catch (e) { if (e.code !== 'ER_NO_SUCH_TABLE') throw e; }
+      }
+      await conn.query('DELETE FROM khach_hang WHERE id = ?', [idKh]);
+      await conn.commit();
+      return { ok: true };
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   },
 
   // ============ SHIFT & EMAIL OPERATIONS ============
@@ -472,6 +562,9 @@ const orderService = {
    * @param {number} qty - Số lượng
    */
   addDishToOrder: async (sesis, dishId, qty) => {
+    const sl = chuanHoaSoLuong(qty, SO_LUONG_TOI_DA_NHAN_VIEN);
+    if (!sl) throw new Error(`Số lượng phải từ 1 đến ${SO_LUONG_TOI_DA_NHAN_VIEN}`);
+    qty = sl;
     // Lấy thông tin đơn để lấy id_user, dates, tg, noidung, so_user
     // ngay_dat/gio_dat/id_ban lấy theo đơn gốc để món thêm sau nằm cùng ca với đơn.
     const [orderRows] = await db.query(
@@ -489,6 +582,9 @@ const orderService = {
     if (dishes.length === 0) throw new Error('Không tìm thấy món ăn hoặc món đã ngừng phục vụ');
     const dish = dishes[0];
 
+    // Bao het mon: kho (tru phan dang giu cho mon chua nau) phai du.
+    await require('./tonMonService').kiemTraDatMon([{ id_mon: dish.id_mon, qty }]);
+
     const thanhtien = dish.gia_mon * qty;
     await db.query(
       `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, trangthai_bep, ngay_dat, gio_dat, id_ban)
@@ -505,6 +601,16 @@ const orderService = {
    * Thêm nhiều món cùng lúc vào một đơn (dùng cho QR order)
    */
   addMultipleDishesToOrder: async (sesis, items) => {
+    // Kiem tra TOAN BO danh sach truoc khi ghi: mot dong sai thi tu choi ca lan
+    // gui, khong ghi nua voi. `qty` den thang tu JSON cua khach quet QR.
+    if (!Array.isArray(items) || items.length === 0) throw new Error('Giỏ hàng trống!');
+    if (items.length > 30) throw new Error('Mỗi lần gửi tối đa 30 món.');
+    items = items.map((item) => {
+      const qty = chuanHoaSoLuong(item && item.qty);
+      if (!qty) throw new Error(`Số lượng mỗi món phải từ 1 đến ${SO_LUONG_TOI_DA_KHACH}.`);
+      return { ...item, qty };
+    });
+
     const [orderRows] = await db.query(
       'SELECT id_user, dates, tg, noidung, so_user, tinhtrang, ngay_dat, gio_dat, id_ban FROM hopdong WHERE sesis = ? LIMIT 1',
       [sesis]
@@ -514,6 +620,9 @@ const orderService = {
     if (order.tinhtrang === 3 || order.tinhtrang === 4) {
       throw new Error('Đơn hàng này đã hoàn thành hoặc đã hủy');
     }
+
+    // Bao het mon cho ca luot goi (nhieu mon co the dung chung nguyen lieu).
+    await require('./tonMonService').kiemTraDatMon(items.map((it) => ({ id_mon: it.id, qty: it.qty })));
 
     const ngayDat = ngayChoMonThem(order.ngay_dat || order.dates);
     const gioDat = chuanHoaGio(order.gio_dat) || chuanHoaGio(order.tg) || chuanHoaGio(gioCucBo());
@@ -611,7 +720,7 @@ const orderService = {
       `SELECT id, id_mon, name_mon, soluong, gia, thanhtien, images,
               trangthai_bep, ghi_chu_mon, gio_dat
        FROM hopdong
-       WHERE sesis = ? AND id_mon > 0
+       WHERE sesis = ? AND id_mon > 0 AND soluong > 0
        ORDER BY id ASC`,
       [sesis]
     );

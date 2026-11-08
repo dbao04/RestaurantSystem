@@ -50,6 +50,8 @@ const MAC_DINH = {
   dat_coc_phan_tram: 20,
   webhook_api_key: '',
   tu_dong_doi_soat: 1,
+  // Chi hoan tien trong ngan nay gio ke tu luc thanh toan thanh cong.
+  han_hoan_tien_gio: 72,
 };
 
 async function layCauHinh(buocLamMoi = false) {
@@ -706,17 +708,47 @@ async function trangThaiPhien(paymentId) {
 /* HOAN TIEN                                                                   */
 /* ========================================================================== */
 
-async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
+/**
+ * Hoan tien mot phien thanh toan.
+ *
+ * Quy tac (route chi cho Quan ly goi - xem routes/thanhToan.js):
+ *   - Bat buoc co ly do.
+ *   - Chi trong `han_hoan_tien_gio` gio ke tu luc thanh toan thanh cong
+ *     (mac dinh 72 gio, chinh trong cau_hinh_thanh_toan).
+ *   - Doi trang thai success -> refunded bang MOT cau UPDATE co dieu kien:
+ *     bam hai lan / hai may cung luc thi chi mot lan "gianh" duoc phien, lan
+ *     kia bao loi - khong thu hoi diem hai lan. Truoc day kiem tra trang thai
+ *     roi moi UPDATE, hai request song song deu lot qua.
+ *   - Tra lai luot dung ma giam gia cua phien.
+ */
+async function hoanTien(paymentId, { lyDo = '', nhanVienId = null, boQuaHan = false } = {}) {
+  const lyDoSach = String(lyDo || '').trim();
+  if (lyDoSach.length < 3) throw new Error('Phải ghi lý do hoàn tiền (ít nhất 3 ký tự).');
+
   const [[p]] = await db.query('SELECT * FROM payments WHERE id = ? LIMIT 1', [paymentId]);
   if (!p) throw new Error('Không tìm thấy phiên thanh toán');
   if (p.status !== 'success') throw new Error('Chỉ hoàn tiền được phiên đã thanh toán thành công');
 
-  await db.query(
+  const ch0 = await layCauHinh();
+  const hanGio = Number(ch0.han_hoan_tien_gio) || 72;
+  const moc = p.thanh_cong_luc || p.created_at;
+  // boQuaHan: chi danh cho luong noi bo co quy tac rieng (vd. hoan coc tiec -
+  // coc thu truoc ca thang). Route hoan tien cua thu ngan KHONG truyen co nay.
+  if (!boQuaHan && moc && Date.now() - new Date(moc).getTime() > hanGio * 3600 * 1000) {
+    throw new Error(`Đã quá hạn hoàn tiền (${hanGio} giờ kể từ lúc thanh toán). Vui lòng xử lý ngoài hệ thống và ghi phiếu chi.`);
+  }
+
+  const [gianh] = await db.query(
     `UPDATE payments SET status = 'refunded', updated_at = NOW(),
             notes = TRIM(CONCAT(COALESCE(notes,''), ' | HOÀN TIỀN: ', ?))
-     WHERE id = ?`,
-    [lyDo || 'không ghi lý do', paymentId]
+     WHERE id = ? AND status = 'success'`,
+    [lyDoSach, paymentId]
   );
+  if (!gianh.affectedRows) throw new Error('Phiên này vừa được hoàn tiền hoặc đã đổi trạng thái.');
+
+  // Tra lai luot dung ma giam gia (neu phien co dung ma).
+  await discountService.huyGhiNhanSuDung(paymentId)
+    .catch((e) => console.error('[thanhToan] tra luot ma giam gia that bai:', e.message));
 
   /*
    * Tra vi diem cua khach ve dung nhu truoc khi co phien nay.
@@ -756,10 +788,14 @@ async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
     }
   }
 
-  // Don chua chac con "da thanh toan" nua -> tinh lai.
-  const hoaDon = await layHoaDon(p.sesis);
-  if (hoaDon.tien.con_phai_tra > 0) {
-    await db.query("UPDATE hopdong SET tinhtrang = 6 WHERE sesis = ? AND tinhtrang = 3", [p.sesis]);
+  // Don chua chac con "da thanh toan" nua -> tinh lai. Khoan thu khong gan
+  // voi don an (vd. coc tiec: sesis = ma tiec) thi khong co hoa don de tinh.
+  const [[coDon]] = await db.query('SELECT 1 AS co FROM hopdong WHERE sesis = ? LIMIT 1', [p.sesis]);
+  if (coDon) {
+    const hoaDon = await layHoaDon(p.sesis);
+    if (hoaDon.tien.con_phai_tra > 0) {
+      await db.query("UPDATE hopdong SET tinhtrang = 6 WHERE sesis = ? AND tinhtrang = 3", [p.sesis]);
+    }
   }
 
   await db.query(
