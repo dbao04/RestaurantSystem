@@ -1,0 +1,73 @@
+<%- include('partials/header', { title: 'Đặt lại mật khẩu' }) %>
+
+<section class="nh-subhero" style="min-height: 28vh;">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('dieu_huong.tai_khoan') %></span>
+    <h1>Đặt lại mật khẩu</h1>
+    <div class="nh-crumbs">
+      <a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; Đặt lại mật khẩu
+    </div>
+  </div>
+</section>
+
+<section class="nh-section nh-section--cream">
+  <div class="nh-auth-wrapper">
+    <div class="nh-auth-card nh-reveal">
+      <div class="nh-auth-header">
+        <div class="nh-auth-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h2 class="nh-auth-title">Mật khẩu mới</h2>
+        <p class="nh-auth-subtitle">
+          <% if (ten) { %>Xin chào <%= ten %>, <% } %>hãy đặt mật khẩu mới cho tài khoản của bạn.
+        </p>
+      </div>
+
+      <% if (error) { %>
+        <div class="nh-auth-alert nh-auth-alert--danger">
+          <i class="fas fa-circle-exclamation"></i>
+          <span><%= error %></span>
+        </div>
+      <% } %>
+
+      <% if (hopLe) { %>
+        <form action="/dat-lai-mat-khau/<%= encodeURIComponent(token) %>" method="post">
+          <div class="nh-auth-group">
+            <label class="nh-auth-label">Mật khẩu mới</label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-key"></i>
+              <input type="password" name="mat_khau" class="nh-auth-input" minlength="6" maxlength="72"
+                     placeholder="Tối thiểu 6 ký tự" required autofocus autocomplete="new-password">
+            </div>
+          </div>
+          <div class="nh-auth-group">
+            <label class="nh-auth-label">Nhập lại mật khẩu mới</label>
+            <div class="nh-auth-input-wrap">
+              <i class="fas fa-key"></i>
+              <input type="password" name="nhap_lai" class="nh-auth-input" minlength="6" maxlength="72"
+                     placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password">
+            </div>
+          </div>
+          <button type="submit" class="nh-auth-btn">
+            <i class="fas fa-check"></i> Lưu mật khẩu mới
+          </button>
+        </form>
+      <% } else { %>
+        <a href="/forgot-password" class="nh-auth-btn" style="display:block;text-align:center;text-decoration:none">
+          <i class="fas fa-paper-plane"></i> Yêu cầu liên kết mới
+        </a>
+      <% } %>
+
+      <div class="nh-auth-footer">
+        <div>
+          <span><%= t('tai_khoan.quay_lai_trang') %></span>
+          <a href="/login" class="nh-auth-link" style="color: var(--nh-gold);"><%= t('tai_khoan.dang_nhap') %></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

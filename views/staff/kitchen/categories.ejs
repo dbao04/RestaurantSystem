@@ -37,7 +37,7 @@
                         <td><%= c.ghichu %></td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary mr-1" title="Sửa" data-toggle="modal" data-target="#editCatModal<%= c.id_loai %>"><i class="fas fa-edit"></i></button>
-                            <a href="/staff/kitchen/categories/delete/<%= c.id_loai %>" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn có chắc muốn xóa loại món này?')"><i class="fas fa-trash"></i></a>
+                            <a data-post href="/staff/kitchen/categories/delete/<%= c.id_loai %>" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn có chắc muốn xóa loại món này?')"><i class="fas fa-trash"></i></a>
                         </td>
                     </tr>
                     

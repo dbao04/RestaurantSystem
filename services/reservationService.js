@@ -230,10 +230,9 @@ async function dongBoHopDong(conn, reservationId) {
         await conn.query('UPDATE khach_hang SET ten = ? WHERE id = ?', [r.customer_name, userId]);
       }
     } else {
-      const md5 = require('md5');
       const [insKh] = await conn.query(
         'INSERT INTO khach_hang (ten, sodienthoai, email, passwords) VALUES (?, ?, ?, ?)',
-        [r.customer_name || 'Khách đặt bàn', r.phone, r.email || null, md5('123456')]
+        [r.customer_name || 'Khách đặt bàn', r.phone, r.email || null, await require('../utils/matKhau').bam('123456')]
       );
       userId = insKh.insertId;
     }

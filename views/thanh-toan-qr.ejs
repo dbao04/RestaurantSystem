@@ -244,11 +244,11 @@
     <button class="nut" id="nut-tra">
       <%= t('ttqr.chuyen_khoan') %> <span id="nut-so-tien"><%= formatMoney(hoaDon.tien.con_phai_tra) %>đ</span>
     </button>
-    <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+    <% if (typeof choPhepThanhToanGiaLap !== 'undefined' && choPhepThanhToanGiaLap) { %>
       <button class="nut gia-lap" id="nut-gia-lap"><%= t('ttqr.gia_lap') %></button>
     <% } %>
   </div>
-  <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+  <% if (typeof choPhepThanhToanGiaLap !== 'undefined' && choPhepThanhToanGiaLap) { %>
     <div class="boc" style="text-align:center;margin-top:6px">
       <small style="color:var(--text-muted)"><%= t('ttqr.gia_lap_mo_ta') %></small>
     </div>

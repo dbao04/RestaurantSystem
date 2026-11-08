@@ -144,6 +144,25 @@ const sendNewPassword = async (toEmail, newPassword) => {
   });
 };
 
+/** Gui link dat lai mat khau (thay cho gui thang mat khau moi). */
+const sendResetLink = async (toEmail, link, hanPhut) => {
+  return gui({
+    from: nguoiGui(),
+    to: toEmail,
+    subject: 'Đặt lại mật khẩu tài khoản',
+    text: `Chào bạn,\n\nBấm vào liên kết sau để đặt mật khẩu mới (hiệu lực ${hanPhut} phút, dùng được một lần):\n${link}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này - mật khẩu hiện tại vẫn giữ nguyên.\n\nTrân trọng,\nNhà Hàng Bảo Đoàn.`,
+    html: `
+      <h3>Chào bạn,</h3>
+      <p>Hệ thống đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+      <p><a href="${link}" style="display:inline-block;padding:10px 18px;background:#b8860b;color:#fff;border-radius:6px;text-decoration:none">Đặt mật khẩu mới</a></p>
+      <p>Liên kết có hiệu lực trong <strong>${hanPhut} phút</strong> và chỉ dùng được một lần.</p>
+      <p>Nếu bạn không yêu cầu, hãy bỏ qua email này — mật khẩu hiện tại của bạn vẫn giữ nguyên.</p>
+      <br>
+      <p>Trân trọng,<br>Nhà Hàng Bảo Đoàn.</p>
+    `,
+  });
+};
+
 const sendMail = async (toEmail, subject, content) => {
   return gui({
     from: nguoiGui(),
@@ -161,6 +180,7 @@ const sendMail = async (toEmail, subject, content) => {
 
 module.exports = {
   sendNewPassword,
+  sendResetLink,
   sendMail,
   daCauHinh,
 };

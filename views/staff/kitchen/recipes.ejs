@@ -138,7 +138,7 @@
                                 <td>${item.so_luong_tieu_hao}</td>
                                 <td>${item.ten_dvt || 'N/A'}</td>
                                 <td>
-                                    <a class="btn btn-sm btn-outline-danger" href="/staff/kitchen/recipe/delete/${item.id_ct}"
+                                    <a class="btn btn-sm btn-outline-danger" data-post href="/staff/kitchen/recipe/delete/${item.id_ct}"
                                        onclick="return confirm('Xóa ${String(item.ten_nl).replace(/'/g, '')} khỏi công thức món này?')"
                                        title="Xóa khỏi công thức" aria-label="Xóa ${String(item.ten_nl).replace(/"/g, '')} khỏi công thức"><i class="fas fa-trash"></i></a>
                                 </td>

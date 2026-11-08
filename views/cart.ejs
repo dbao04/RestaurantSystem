@@ -437,7 +437,7 @@
 
                     <div class="nh-line__sum" style="font-size:15px; font-weight:700; color:var(--nh-espresso);"><%= formatMoney(item.soluong * item.gia_mon) %> ₫</div>
 
-                    <a class="nh-line__del" href="/del-cart?delid=<%= item.cart_id %>" title="Xóa món"
+                    <a class="nh-line__del" data-post href="/del-cart?delid=<%= item.cart_id %>" title="Xóa món"
                        onclick="return confirm('Bạn muốn xóa món <%= tenMon(item).chinh %> khỏi giỏ?')">
                       <i class="fas fa-times"></i>
                     </a>

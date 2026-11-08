@@ -35,7 +35,7 @@
                                 <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/catedit/<%= cat.id_loai %>">
                                     <i class="fas fa-pen"></i> Sửa
                                 </a>
-                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/catdel/<%= cat.id_loai %>"
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" data-post href="/admin/catdel/<%= cat.id_loai %>"
                                    onclick="return confirm('Xóa loại món &quot;<%= (cat.name_loai || '').trim() %>&quot;?')">
                                     <i class="fas fa-trash"></i> Xóa
                                 </a>

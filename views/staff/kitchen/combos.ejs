@@ -41,7 +41,7 @@
                     <button class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#editComboModal<%= c.id_combo %>">
                         <i class="fas fa-edit mr-1"></i> Sửa
                     </button>
-                    <a href="/staff/kitchen/combo/delete/<%= c.id_combo %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xác nhận xóa combo này?')">
+                    <a data-post href="/staff/kitchen/combo/delete/<%= c.id_combo %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xác nhận xóa combo này?')">
                         <i class="fas fa-trash mr-1"></i> Xóa
                     </a>
                 </div>

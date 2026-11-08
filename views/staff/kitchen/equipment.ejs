@@ -50,7 +50,7 @@
                               data-toggle="modal" data-target="#editEquipModal<%= e.id_ttb %>">
                               <i class="fas fa-edit"></i>
                             </button>
-                            <a href="/staff/kitchen/equipment/delete/<%= e.id_ttb %>" class="btn btn-sm btn-outline-danger"
+                            <a data-post href="/staff/kitchen/equipment/delete/<%= e.id_ttb %>" class="btn btn-sm btn-outline-danger"
                               onclick="return confirm('Xóa thiết bị này?')" title="Xóa">
                               <i class="fas fa-trash"></i>
                             </a>
