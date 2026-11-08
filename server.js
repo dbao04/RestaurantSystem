@@ -15,6 +15,12 @@ require('dotenv').config({ override: true });
 const db = require('./config/db');
 
 const app = express();
+
+// Khi mo ra Internet bang cloudflared (scripts/moOnline.js), moi request deu
+// den tu 127.0.0.1. Tin X-Forwarded-For CHI khi ket noi truc tiep la tu may
+// nay (loopback), de req.ip la IP that cua khach - gioi han dang nhap sai va
+// gioi han dat mon QR moi tinh dung theo tung nguoi.
+app.set('trust proxy', 'loopback');
 const http = require('http');
 const server = http.createServer(app);
 const socketIo = require('socket.io');
@@ -39,7 +45,8 @@ const equipmentService = require('./services/equipmentService');
 const diUngService = require('./services/diUngService');
 const mailer = require('./utils/mailer');
 const diaChiQR = require('./utils/diaChiQR');
-const md5 = require('md5');
+const gioiHanDN = require('./middleware/gioiHanDangNhap');
+const datLaiMK = require('./services/datLaiMatKhauService');
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -106,6 +113,22 @@ function layThongTinTepChat(file) {
 }
 
 // Middleware
+/*
+ * Header bao mat (helmet). Tat ba muc vi he thong hien tai can:
+ *   - contentSecurityPolicy: giao dien dung rat nhieu <script> inline va CDN;
+ *     bat CSP bay gio se lam hong hau het cac trang.
+ *   - hsts: may chay song song http://:3000 va https tu ky :3443; ep HTTPS se
+ *     khien trinh duyet khong vao lai duoc ban http tren may demo.
+ *   - crossOriginEmbedderPolicy: chan anh/font tu CDN.
+ * Cac header con lai (nosniff, chong nhung iframe, an X-Powered-By...) bat.
+ */
+app.use(require('helmet')({
+  contentSecurityPolicy: false,
+  hsts: false,
+  crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -113,6 +136,10 @@ app.set('views', path.join(__dirname, 'views'));
 // webcam (kiosk gui ~12 khung). Mac dinh 100kb se bao loi 413 voi cac request do.
 app.use(bodyParser.urlencoded({ extended: true, limit: '20mb' }));
 app.use(bodyParser.json({ limit: '20mb' }));
+
+// Chong CSRF: moi POST/PUT/PATCH/DELETE tu trinh duyet phai den tu chinh
+// trang cua he thong (xem middleware/chongCsrf.js).
+app.use(require('./middleware/chongCsrf')());
 
 // Public static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -134,7 +161,10 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false }
+  // SameSite=Lax: trinh duyet khong gui cookie phien kem cac POST xuat phat
+  // tu trang khac - lop chong CSRF thu hai, doc lap voi middleware/chongCsrf.
+  // httpOnly: JavaScript tren trang khong doc duoc cookie phien.
+  cookie: { secure: false, sameSite: 'lax', httpOnly: true }
 });
 
 app.use(sessionMiddleware);
@@ -224,6 +254,22 @@ app.use(require('./middleware/ngonNgu')());
 const phanQuyenMw = require('./middleware/phanQuyen');
 app.use(phanQuyenMw.napHoSo());
 
+/*
+ * Khach dang nhap bang mat khau mac dinh phai doi mat khau truoc khi lam gi
+ * khac. Chi chan cac trang HTML (GET); API/JSON, trang QR tai ban va khu nhan
+ * vien/quan tri khong lien quan toi phien khach nen de nguyen.
+ */
+const DUONG_DUOC_KHI_PHAI_DOI_MK = ['/profile', '/logout', '/login', '/forgot-password', '/dat-lai-mat-khau'];
+app.use((req, res, next) => {
+  if (!req.session || !req.session.userlogin || !req.session.phaiDoiMatKhau) return next();
+  if (req.method !== 'GET' || !req.accepts('html') || req.xhr) return next();
+  if (DUONG_DUOC_KHI_PHAI_DOI_MK.some((d) => req.path === d || req.path.startsWith(d + '/'))) return next();
+  if (/^\/(api|qr|staff|admin|kds|socket\.io)(\/|$)/.test(req.path)) return next();
+  return res.redirect('/profile?msg=' + encodeURIComponent(
+    'Vui lòng đổi mật khẩu mặc định trước khi tiếp tục.'
+  ) + '&msgType=danger');
+});
+
 // Auth Middlewares
 const requireLogin = (req, res, next) => {
   if (!req.session.userlogin) {
@@ -307,6 +353,10 @@ app.use('/', require('./routes/datBan'));
 app.use('/', require('./routes/datTiec'));
 // Bao cao thu chi / so quy thu ngan - routes/thuChi.js
 app.use('/', require('./routes/thuChi'));
+// Cong no nha cung cap (phieu nhap -> phieu chi tra NCC)
+app.use('/', require('./routes/congNoNcc'));
+// Duyet nghi phep theo cap tren (thay cho ke toan duyet)
+app.use('/', require('./routes/nghiPhep'));
 // Bep: thong ke, xuat nhap kho, mua hang NVL - routes/khoBep.js
 app.use('/', require('./routes/khoBep'));
 
@@ -802,8 +852,12 @@ app.post('/api/gio-hang/them-nhieu', async (req, res) => {
 
 app.post('/add-to-cart', async (req, res) => {
   const { monid, soluong } = req.body;
+  const sl = orderService.chuanHoaSoLuong(soluong == null || soluong === '' ? 1 : soluong);
+  if (!sl) {
+    return res.status(400).send(`<script>alert("Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}."); history.back();</script>`);
+  }
   try {
-    await orderService.addToCart(req.sessionID, monid, soluong || 1);
+    await orderService.addToCart(req.sessionID, monid, sl);
     res.redirect('/cart');
   } catch (err) {
     console.error(err);
@@ -877,8 +931,11 @@ app.get('/cart', async (req, res) => {
 
 app.post('/update-cart', async (req, res) => {
   const { cartid, soluong } = req.body;
+  if (!orderService.chuanHoaSoLuong(soluong)) {
+    return res.status(400).send(`<script>alert("Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}."); history.back();</script>`);
+  }
   try {
-    await orderService.updateCartQuantity(cartid, soluong);
+    await orderService.updateCartQuantity(req.sessionID, cartid, soluong);
     res.redirect('/cart');
   } catch (err) {
     console.error(err);
@@ -886,10 +943,10 @@ app.post('/update-cart', async (req, res) => {
   }
 });
 
-app.get('/del-cart', async (req, res) => {
+app.post('/del-cart', async (req, res) => {
   const delid = req.query.delid;
   try {
-    await orderService.removeFromCart(delid);
+    await orderService.removeFromCart(req.sessionID, delid);
     res.redirect('/cart');
   } catch (err) {
     console.error(err);
@@ -1083,6 +1140,9 @@ app.post('/datban', requireLogin, async (req, res) => {
 
     res.redirect(`/contract?sesis=${uniqueSesis}`);
   } catch (err) {
+    if (err instanceof require('./services/tonMonService').LoiHetMon) {
+      return res.send(`<script>alert(${JSON.stringify(err.message)}); history.back();</script>`);
+    }
     console.error(err);
     res.status(500).send(err.message || 'Server Error');
   }
@@ -1192,9 +1252,18 @@ app.get('/rate', requireLogin, async (req, res) => {
 });
 
 app.post('/rating', requireLogin, async (req, res) => {
-  const { sao, noi_dung } = req.body;
+  const sao = Number(req.body.sao);
+  const noiDung = String(req.body.noi_dung || '').trim().slice(0, 1000);
   try {
-    await engagementService.addRating(req.session.userId, sao, noi_dung);
+    // Cung dieu kien voi trang /rate: phai co it nhat mot don da xac nhan.
+    // Truoc day POST khong kiem tra, ai dang nhap cung gui duoc danh gia.
+    if (!(await orderService.coDonDaXacNhan(req.session.userId))) {
+      return res.redirect('/rate?msg=' + encodeURIComponent('Bạn cần có ít nhất một đơn đã được xác nhận để gửi đánh giá.') + '&msgType=danger');
+    }
+    if (!Number.isInteger(sao) || sao < 1 || sao > 5) {
+      return res.redirect('/rate?msg=' + encodeURIComponent('Vui lòng chọn từ 1 đến 5 sao.') + '&msgType=danger');
+    }
+    await engagementService.addRating(req.session.userId, sao, noiDung);
     res.redirect('/rate?msg=Cảm+ơn+bạn+đã+đánh+giá!&msgType=success');
   } catch (err) {
     console.error(err);
@@ -1212,19 +1281,28 @@ app.get('/login', (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { sdt, pass } = req.body;
+  const biKhoa = gioiHanDN.soGiayBiKhoa(req, 'khach', sdt);
+  if (biKhoa) {
+    return res.status(429).render('login', { title: res.locals.t('tai_khoan.dang_nhap'), error: gioiHanDN.thongBaoKhoa(biKhoa) });
+  }
   try {
     const user = await orderService.userLogin(sdt, pass);
-    // DEBUG: xem structure thực tế của user object
-    console.log('=== DEBUG LOGIN ===');
-    console.log('user:', JSON.stringify(user));
-    console.log('user.ten:', user ? user.ten : 'null');
-    console.log('typeof user.ten:', user ? typeof user.ten : 'null');
-    console.log('===================');
+    if (!user) gioiHanDN.ghiThatBai(req, 'khach', sdt);
     if (user) {
+      gioiHanDN.xoaDem(req, 'khach', sdt);
       req.session.userlogin = true;
       req.session.userId = user.id;
       req.session.usersdt = user.sodienthoai;
       req.session.username = user.ten;
+      // Dang nhap bang mat khau MAC DINH (tai khoan tao tu dong khi dat ban ho,
+      // dat ban online...): ai biet so dien thoai cung doan duoc -> bat doi
+      // ngay, chan cac trang khac cho toi khi doi xong (middleware ben duoi).
+      if (require('./utils/matKhau').laMacDinh(pass)) {
+        req.session.phaiDoiMatKhau = true;
+        return res.redirect('/profile?msg=' + encodeURIComponent(
+          'Bạn đang dùng mật khẩu mặc định. Vui lòng đổi mật khẩu mới để tiếp tục sử dụng tài khoản.'
+        ) + '&msgType=danger');
+      }
       res.redirect('/');
     } else {
       res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), error: 'Incorrect phone number or password!' });
@@ -1270,32 +1348,69 @@ app.get('/forgot-password', (req, res) => {
 });
 
 app.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
+  const tieuDe = res.locals.t('tai_khoan.quen_mat_khau_tieu_de');
+  const email = String((req.body && req.body.email) || '').trim();
+  // Cau tra loi GIONG NHAU du email co tai khoan hay khong - khong cho do
+  // email nao dang ky o nha hang.
+  const thongBaoChung = 'Nếu email này có tài khoản tại nhà hàng, chúng tôi đã gửi một liên kết đặt lại mật khẩu '
+    + `(hiệu lực ${datLaiMK.HAN_PHUT} phút). Vui lòng kiểm tra hộp thư đến và thư mục rác.`;
+
+  // Moi IP + email chi xin toi da 5 lan / 15 phut (dung chung bo dem dang nhap sai).
+  const biKhoa = gioiHanDN.soGiayBiKhoa(req, 'quen_mk', email);
+  if (biKhoa) return res.status(429).render('forgot-password', { title: tieuDe, error: gioiHanDN.thongBaoKhoa(biKhoa) });
+  gioiHanDN.ghiThatBai(req, 'quen_mk', email);
+
   try {
-    const [rows] = await db.query('SELECT * FROM khach_hang WHERE email = ? LIMIT 1', [email]);
-    if (!rows[0]) {
-      return res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), error: 'Email không tồn tại trong hệ thống!' });
+    const yc = await datLaiMK.taoYeuCau(email, req.ip);
+    if (yc) {
+      // KHONG dung header Host de dung link: ke xau gui Host gia thi link
+      // trong thu se tro ve may cua ho va lo token. Chi dung dia chi do
+      // nguoi van hanh cau hinh (APP_BASE_URL / QR_BASE_URL), tunnel dang mo,
+      // hoac IP LAN cua may chu.
+      const gocCauHinh = String(process.env.APP_BASE_URL || process.env.QR_BASE_URL || '').trim();
+      const gocUrl = (gocCauHinh || diaChiQR.gocTunnel() || `http://${diaChiQR.ipMayChu()}:${PORT}`).replace(/\/+$/, '');
+      await mailer.sendResetLink(yc.khach.email, `${gocUrl}/dat-lai-mat-khau/${yc.token}`, yc.hanPhut);
     }
-
-    // Generate new random password (8 chars)
-    const newPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = require('md5')(newPassword);
-
-    // GUI THU TRUOC, DOI MAT KHAU SAU - thu tu nay quan trong.
-    // Ban truoc ghi mat khau moi vao CSDL roi moi gui thu. Thu gui hong (chua
-    // cau hinh EMAIL_USER, Gmail tu choi, mang chan cong 587...) thi mat khau
-    // cu DA bi ghi de mat roi ma khach khong he nhan duoc mat khau moi - mat
-    // trang tai khoan vi mot loi khong lien quan gi den ho. Doi lai thu tu thi
-    // truong hop xau nhat chi la khach thay bao loi va bam thu lai.
-    await mailer.sendNewPassword(email, newPassword);
-    await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [hashedPassword, rows[0].id]);
-
-    res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), message: 'Mật khẩu mới đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và thư mục rác).' });
+    res.render('forgot-password', { title: tieuDe, message: thongBaoChung });
   } catch (err) {
-    // Chi tiet loi chi ghi ra console cho nguoi van hanh. Day la trang CONG KHAI
-    // nen khong ha ra "chua cau hinh EMAIL_USER trong .env" cho khach doc.
+    // Chi tiet loi chi ghi ra console. Day la trang CONG KHAI.
     console.error('Forgot password error:', err);
-    res.render('forgot-password', { title: res.locals.t('tai_khoan.quen_mat_khau_tieu_de'), error: 'Chưa gửi được email lúc này. Mật khẩu của bạn vẫn giữ nguyên, vui lòng thử lại sau.' });
+    res.render('forgot-password', { title: tieuDe, error: 'Chưa gửi được email lúc này. Mật khẩu của bạn vẫn giữ nguyên, vui lòng thử lại sau.' });
+  }
+});
+
+app.get('/dat-lai-mat-khau/:token', async (req, res) => {
+  try {
+    const yc = await datLaiMK.timYeuCau(req.params.token);
+    res.render('dat-lai-mat-khau', {
+      title: 'Đặt lại mật khẩu',
+      hopLe: !!yc,
+      token: req.params.token,
+      ten: yc ? yc.ten : '',
+      error: yc ? null : 'Liên kết đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu liên kết mới.',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+app.post('/dat-lai-mat-khau/:token', async (req, res) => {
+  const { mat_khau, nhap_lai } = req.body;
+  const veLai = (error) => res.render('dat-lai-mat-khau', {
+    title: 'Đặt lại mật khẩu', hopLe: true, token: req.params.token, ten: '', error,
+  });
+  try {
+    if (String(mat_khau || '') !== String(nhap_lai || '')) return veLai('Mật khẩu nhập lại không khớp.');
+    const kq = await datLaiMK.datMatKhauMoi(req.params.token, mat_khau);
+    if (!kq.ok) return veLai(kq.loi);
+    res.render('login', {
+      title: res.locals.t('tai_khoan.dang_nhap'),
+      message: 'Đặt mật khẩu mới thành công. Vui lòng đăng nhập bằng mật khẩu mới.',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 
@@ -1328,11 +1443,16 @@ app.post('/profile', requireLogin, async (req, res) => {
       if (new_pass !== re_pass) {
         return res.redirect('/profile?msg=Mật+khẩu+xác+nhận+không+khớp!&msgType=danger');
       }
-      const [rows] = await db.query('SELECT passwords FROM khach_hang WHERE id = ?', [req.session.userId]);
-      if (md5(old_pass) !== rows[0].passwords) {
+      const loiMk = require('./utils/matKhau').loiMatKhauMoi(new_pass);
+      if (loiMk) {
+        return res.redirect('/profile?msg=' + encodeURIComponent(loiMk) + '&msgType=danger');
+      }
+      try {
+        await orderService.changePassword(req.session.userId, old_pass, new_pass);
+      } catch (e) {
         return res.redirect('/profile?msg=Mật+khẩu+cũ+không+chính+xác!&msgType=danger');
       }
-      await db.query('UPDATE khach_hang SET passwords = ? WHERE id = ?', [md5(new_pass), req.session.userId]);
+      req.session.phaiDoiMatKhau = false;
       res.redirect('/profile?msg=Đổi+mật+khẩu+thành+công!&msgType=success');
     }
   } catch (err) {
@@ -1347,834 +1467,11 @@ app.get('/logout', (req, res) => {
 });
 
 
-// --- Admin Routes ---
-app.get('/admin/login', (req, res) => {
-  res.render('admin/login', { layout: false });
-});
-
-app.post('/admin/login', async (req, res) => {
-  const { adminuser, adminpass } = req.body;
-  try {
-    const admin = await personnelService.adminLogin(adminuser, adminpass);
-    if (admin) {
-      req.session.adminlogin = true;
-      req.session.idadmin = admin.id_admin;
-      req.session.adminuser = admin.adminuser;
-      req.session.adminname = admin.Name_admin;
-      res.redirect('/admin');
-    } else {
-      res.render('admin/login', { error: 'Incorrect username or password!', layout: false });
-    }
-  } catch (err) {
-    console.error(err);
-    res.render('admin/login', { error: 'Server error occurred.', layout: false });
-  }
-});
-
-app.get('/admin', requireAdmin, async (req, res) => {
-  try {
-    const stats = await personnelService.getDashboardStats();
-    res.render('admin/index', { title: 'Admin Dashboard', stats });
-  } catch (err) {
-    console.error(err);
-    res.render('admin/index', { title: 'Admin Dashboard', stats: { revenue: 0, orders: 0, customers: 0, staff: 0 } });
-  }
-});
-
-app.get('/admin/logout', (req, res) => {
-  req.session.adminlogin = false;
-  res.redirect('/admin/login');
-});
-
-// Category Management
-app.get('/admin/catlist', requireAdmin, async (req, res) => {
-  try {
-    const categories = await personnelService.getAllCategories();
-    res.render('admin/catlist', { categories });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/catadd', requireAdmin, (req, res) => {
-  res.render('admin/catadd');
-});
-
-app.post('/admin/catadd', requireAdmin, async (req, res) => {
-  const { name_loai, ghichu } = req.body;
-  try {
-    await personnelService.addCategory(name_loai, ghichu);
-    res.redirect('/admin/catlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/catedit/:id', requireAdmin, async (req, res) => {
-  try {
-    const category = await personnelService.getCategoryById(req.params.id);
-    if (!category) return res.redirect('/admin/catlist');
-    res.render('admin/catedit', { category });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/catedit/:id', requireAdmin, async (req, res) => {
-  const { name_loai, ghichu } = req.body;
-  try {
-    await personnelService.updateCategory(req.params.id, name_loai, ghichu);
-    res.redirect('/admin/catlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/catdel/:id', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.deleteCategory(req.params.id);
-    res.redirect('/admin/catlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Product Management
-app.get('/admin/productlist', requireAdmin, async (req, res) => {
-  try {
-    const products = await personnelService.getAllProducts();
-    res.render('admin/productlist', { products });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/productadd', requireAdmin, async (req, res) => {
-  try {
-    const categories = await personnelService.getAllCategories();
-    res.render('admin/productadd', { categories });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/productadd', requireAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { gia } = req.body;
-    if (Number(gia) <= 0) {
-      return res.send('<script>alert("Giá món ăn phải lớn hơn 0!"); history.back();</script>');
-    }
-    const productData = {
-      name: req.body.name_mon,
-      categoryId: req.body.loaimon,
-      note: req.body.ghichu,
-      price: req.body.gia,
-      image: req.file ? req.file.filename : null
-    };
-    await personnelService.addProduct(productData);
-    res.redirect('/admin/productlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/productedit/:id', requireAdmin, async (req, res) => {
-  try {
-    const product = await personnelService.getProductById(req.params.id);
-    const categories = await personnelService.getAllCategories();
-    if (!product) return res.redirect('/admin/productlist');
-    res.render('admin/productedit', { product, categories });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/productedit/:id', requireAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { name_mon, loaimon, gia, ghichu, tinhtrang } = req.body;
-    const image = req.file ? req.file.filename : null;
-
-    if (Number(gia) <= 0) {
-      return res.send('<script>alert("Giá món ăn phải lớn hơn 0!"); history.back();</script>');
-    }
-
-    await personnelService.updateProduct(req.params.id, {
-      name: name_mon,
-      categoryId: loaimon,
-      note: ghichu,
-      price: gia,
-      image: image,
-      tinhtrang: tinhtrang
-    });
-    res.redirect('/admin/productlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/productdel/:id', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.deleteProduct(req.params.id);
-    res.redirect('/admin/productlist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-
-
-// --- Admin: Staff Management ---
-app.get('/admin/stafflist', requireAdmin, async (req, res) => {
-  try {
-    const staff = await personnelService.getAllStaff();
-    res.render('admin/stafflist', { staff });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/staffadd', requireAdmin, (req, res) => {
-  res.render('admin/staffadd');
-});
-
-app.post('/admin/staffadd', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.addStaff(req.body);
-    res.redirect('/admin/stafflist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/staffedit/:id', requireAdmin, async (req, res) => {
-  try {
-    const staff = await personnelService.getStaffById(req.params.id);
-    res.render('admin/staffedit', { staff });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/staffedit/:id', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.updateStaff(req.params.id, req.body);
-    res.redirect('/admin/stafflist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/staffdel/:id', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.deleteStaff(req.params.id);
-    res.redirect('/admin/stafflist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// --- Admin: Blog Management ---
-app.get('/admin/bloglist', requireAdmin, async (req, res) => {
-  try {
-    const posts = await personnelService.getAllPosts();
-    res.render('admin/bloglist', { posts });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Middleware for Manager or Admin (Chi Quan ly nha hang hoac Admin moi duoc quan ly / duyet lich)
-const requireManagerOrAdmin = (req, res, next) => {
-  if (req.session && req.session.adminlogin) return next();
-  if (req.session && req.session.stafflogin) {
-    const vaiTro = (req.session.staffRole || '').toLowerCase();
-    if (/quan ly|quanly|manager/.test(vaiTro) || (req.hoSo && req.hoSo.cap_bac <= 2 && !/ke toan|ketoan/.test(vaiTro))) return next();
-  }
-  return res.redirect('/admin/login');
-};
-
-// --- MANAGER: SCHEDULE APPROVAL ---
-app.get('/staff/schedule/approval', requireManagerOrAdmin, async (req, res) => {
-  try {
-    const schedules = await personnelService.getAllSchedules();
-    res.render('staff/schedule-approval', { title: 'Duyệt lịch làm việc', schedules, isStaff: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/schedule/update/:id', requireManagerOrAdmin, async (req, res) => {
-  try {
-    const { status } = req.body;
-    await personnelService.updateScheduleStatus(req.params.id, status);
-    res.redirect('/staff/schedule/approval');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/blogadd', requireAdmin, (req, res) => {
-  res.render('admin/blogadd');
-});
-
-app.post('/admin/blogadd', requireAdmin, upload.single('hinh_anh'), async (req, res) => {
-  const hinh_anh = req.file ? req.file.filename : null;
-  try {
-    await personnelService.addPost({ ...req.body, hinh_anh });
-    res.redirect('/admin/bloglist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/blogedit/:id', requireAdmin, async (req, res) => {
-  try {
-    const post = await personnelService.getPostById(req.params.id);
-    res.render('admin/blogedit', { post });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/blogedit/:id', requireAdmin, upload.single('hinh_anh'), async (req, res) => {
-  const hinh_anh = req.file ? req.file.filename : null;
-  try {
-    await personnelService.updatePost(req.params.id, { ...req.body, hinh_anh });
-    res.redirect('/admin/bloglist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/admin/blogdel/:id', requireAdmin, async (req, res) => {
-  try {
-    await personnelService.deletePost(req.params.id);
-    res.redirect('/admin/bloglist');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-
-
-// --- Admin: Statistics ---
-app.get('/admin/stats', requireAdmin, async (req, res) => {
-  try {
-    const stats = await personnelService.getDashboardStats();
-    const revenueByMonth = await personnelService.getRevenueByMonth();
-    const topDishes = await orderService.getTopDishes();
-    res.render('admin/stats', { stats, revenueByMonth, topDishes });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// --- Admin: Profile & Password ---
-app.get('/admin/profile', requireAdmin, async (req, res) => {
-  try {
-    const admin = await personnelService.getAdminById(req.session.idadmin);
-    res.render('admin/profile', { admin, msg: null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/admin/profile', requireAdmin, async (req, res) => {
-  const { Name_admin, adminuser } = req.body;
-  try {
-    await personnelService.updateAdminProfile(req.session.idadmin, { name: Name_admin, adminuser });
-    // Update session
-    req.session.adminname = Name_admin;
-    req.session.adminuser = adminuser;
-
-    const admin = await personnelService.getAdminById(req.session.idadmin);
-    res.render('admin/profile', { admin, msg: 'Cập nhật thông tin thành công!', msgType: 'success' });
-  } catch (err) {
-    console.error(err);
-    const admin = await personnelService.getAdminById(req.session.idadmin);
-    res.render('admin/profile', { admin, msg: 'Lỗi cập nhật thông tin.', msgType: 'danger' });
-  }
-});
-
-app.get('/admin/changepassword', requireAdmin, (req, res) => {
-  res.render('admin/changepassword', { msg: null });
-});
-
-app.post('/admin/changepassword', requireAdmin, async (req, res) => {
-  const { oldpass, newpass, repass } = req.body;
-  try {
-    if (newpass !== repass) {
-      return res.render('admin/changepassword', { msg: 'Mật khẩu xác nhận không khớp!', msgType: 'danger' });
-    }
-    await personnelService.changeAdminPassword(req.session.idadmin, oldpass, newpass);
-    res.render('admin/changepassword', { msg: 'Đổi mật khẩu thành công!', msgType: 'success' });
-  } catch (err) {
-    res.render('admin/changepassword', { msg: err.message, msgType: 'danger' });
-  }
-});
-
-// --- ACCOUNTANT MANAGEMENT (Role: 'Ke toan') ---
-
-app.get('/staff/accountant/attendance/export', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const rows = await personnelService.getDetailedAttendanceReport(month, year);
-
-    // Format headers for Excel CSV download
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    // Bắt buộc phải có dấu ngoặc kép bọc quanh filename để tránh lỗi trình duyệt cắt chuỗi
-    res.setHeader('Content-Disposition', `attachment; filename="Bao_cao_cham_cong_T${month}_${year}.csv"`);
-
-    // Write UTF-8 BOM để Excel đọc được tiếng Việt có dấu
-    res.write('\uFEFF');
-
-    // Headers
-    res.write('Ngày,Nhân viên,Chức vụ,Giờ vào,Giờ ra,Tổng giờ làm (H)\n');
-
-    rows.forEach(r => {
-      let dateStr = '';
-      if (r.ngay) {
-        const d = new Date(r.ngay);
-        dateStr = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-      }
-      
-      let vaoStr = '';
-      if (r.gio_vao) {
-        const d = new Date(r.gio_vao);
-        vaoStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-      }
-      
-      let raStr = '';
-      if (r.gio_ra) {
-        const d = new Date(r.gio_ra);
-        raStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-      }
-      
-      const tongStr = r.tong_gio != null ? r.tong_gio : '0';
-      
-      // Escape commas and double quotes in strings to prevent CSV format breakage
-      const name = r.ten ? `"${r.ten.replace(/"/g, '""')}"` : '';
-      const role = r.chucvu ? `"${r.chucvu.replace(/"/g, '""')}"` : '';
-
-      res.write(`${dateStr},${name},${role},${vaoStr},${raStr},${tongStr}\n`);
-    });
-
-    res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
-  }
-});
-
-app.get('/staff/accountant/salary', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const [salaryList, staffList, summary, attendanceList] = await Promise.all([
-      personnelService.getSalaryList(month, year),
-      personnelService.getAllStaff(),
-      personnelService.getMonthlySalarySummary(month, year),
-      personnelService.getDetailedAttendanceReport(month, year),
-    ]);
-    
-    res.render('staff/accountant/salary', {
-      title: 'Quản lý Lương',
-      salaryList,
-      staffList,
-      summary,
-      attendanceList,
-      month, year,
-      msg: req.query.msg || null,
-      msgType: req.query.msgType || 'success',
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'salary'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Tự động tính lương toàn bộ nhân viên theo ngày công thực tế
-app.post('/staff/accountant/salary/auto-calculate', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    const { month, year } = req.body;
-    const m = parseInt(month) || new Date().getMonth() + 1;
-    const y = parseInt(year) || new Date().getFullYear();
-    const result = await personnelService.autoCalculateSalary(m, y);
-    res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(`Đã tự động tính lương thành công cho ${result.calculated} nhân viên dựa trên ngày công thực tế!`)}&msgType=success`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
-  }
-});
-
-app.get('/staff/accountant/salary/auto-calculate', (req, res) => res.redirect('/staff/accountant/salary'));
-
-// Gửi duyệt tất cả bảng lương trong tháng
-app.post('/staff/accountant/salary/submit-all', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    const { month, year } = req.body;
-    const m = parseInt(month) || new Date().getMonth() + 1;
-    const y = parseInt(year) || new Date().getFullYear();
-    const count = await personnelService.submitAllSalaries(m, y);
-    res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(`Đã gửi ${count} bảng lương sang Quản trị viên phê duyệt!`)}&msgType=success`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
-  }
-});
-
-app.get('/staff/accountant/salary/submit-all', (req, res) => res.redirect('/staff/accountant/salary'));
-
-// Chi lương hàng loạt cho tất cả nhân viên đã được duyệt trong tháng
-app.post('/staff/accountant/salary/pay-all', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    const { month, year } = req.body;
-    const m = parseInt(month) || new Date().getMonth() + 1;
-    const y = parseInt(year) || new Date().getFullYear();
-    const count = await personnelService.payAllSalaries(m, y);
-    res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(`Đã xác nhận chi trả lương cho ${count} nhân viên!`)}&msgType=success`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error: ' + err.message);
-  }
-});
-
-app.get('/staff/accountant/salary/pay-all', (req, res) => res.redirect('/staff/accountant/salary'));
-
-app.post('/staff/accountant/salary/upsert', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    const { luong_cung, thuong, phu_cap, phat, thang, nam } = req.body;
-    if (Number(luong_cung) < 0 || Number(thuong) < 0 || Number(phu_cap) < 0 || Number(phat || 0) < 0) {
-      return res.send('<script>alert("Các khoản lương, thưởng, phụ cấp không được nhỏ hơn 0!"); history.back();</script>');
-    }
-    await personnelService.upsertSalary(req.body);
-    res.redirect(`/staff/accountant/salary?month=${thang}&year=${nam}&msg=${encodeURIComponent('Đã lưu thông tin bảng lương!')}&msgType=success`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/reports', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const report = await personnelService.getFinancialReport(month, year);
-    
-    res.render('staff/accountant/reports', {
-      title: 'Báo cáo Thu chi',
-      report,
-      month, year,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'reports'
-    });
-  } catch (err) {
-    console.error('CRITICAL ERROR in /staff/accountant/reports:', err);
-    res.status(500).send(`<h1>Lỗi máy chủ</h1><p>Không thể tải báo cáo cho tháng ${req.query.month || (new Date().getMonth()+1)}/${req.query.year || new Date().getFullYear()}.</p><p>Chi tiết: ${err.message}</p><a href="/staff">Quay lại Trang chủ</a>`);
-  }
-});
-
-app.get('/staff/accountant/expenses', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const expenses = await personnelService.getAllExpenses();
-    res.render('staff/accountant/expenses', {
-      title: 'Quản lý Chi phí',
-      expenses,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'reports'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/accountant/expenses/add', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    await personnelService.addExpense(req.body);
-    res.redirect('/staff/accountant/expenses');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/expenses/delete/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    await personnelService.deleteExpense(req.params.id);
-    res.redirect('/staff/accountant/expenses');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/attendance', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const date = req.query.date || new Date().toISOString().slice(0, 10);
-    const logs = await personnelService.getDailyAttendance(date);
-    res.render('staff/accountant/attendance', {
-      title: 'Theo dõi Chấm công',
-      logs, date,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'attendance'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// --- ACCOUNTANT: ATTENDANCE SUMMARY ---
-app.get('/staff/accountant/attendance/summary', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const month = req.query.month || new Date().getMonth() + 1;
-    const year = req.query.year || new Date().getFullYear();
-    const summary = await personnelService.getMonthlyAttendanceSummary(month, year);
-    res.render('staff/accountant/attendance_summary', {
-      title: 'Tổng hợp Chấm công',
-      summary, month, year,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'attendance'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/staff', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const staff = await personnelService.getAllStaff();
-    res.render('staff/accountant/staff_list', {
-      title: 'Quản lý Nhân sự',
-      staff,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'staff-manage'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/accountant/staff/delete/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    await personnelService.deleteStaff(req.params.id);
-    res.redirect('/staff/accountant/staff');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/expenses/delete/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const db = require('./config/db');
-    await db.query('DELETE FROM chi_phi_khac WHERE id_chi = ?', [req.params.id]);
-    res.redirect('/staff/accountant/expenses');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// In Báo cáo Thu chi
-app.get('/staff/accountant/reports/print', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const month = req.query.month || new Date().getMonth() + 1;
-    const year = req.query.year || new Date().getFullYear();
-    const report = await personnelService.getFinancialReport(month, year);
-    const expenses = await personnelService.getAllExpenses();
-    res.render('staff/accountant/report-print', { report, month, year, expenses });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/accountant/leave', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const leaves = await personnelService.getAllLeaveRequests();
-    res.render('staff/accountant/leave', {
-      title: 'Quản lý Nghỉ phép',
-      leaves,
-      msg: req.query.msg || null,
-      msgType: req.query.msgType || 'info',
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'leave-manage'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/accountant/leave/add', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const { ly_do, ngay_bat_dau, ngay_ket_thuc } = req.body;
-    await personnelService.addLeaveRequest(req.session.staffId, ly_do, ngay_bat_dau, ngay_ket_thuc);
-    res.redirect('/staff/accountant/leave');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Kế toán duyệt đơn nghỉ phép
-app.post('/staff/accountant/leave/approve/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    await personnelService.updateLeaveStatus(req.params.id, 1);
-    res.redirect('/staff/accountant/leave?msg=Đã+duyệt+đơn+nghỉ+phép!&msgType=success');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Kế toán từ chối đơn nghỉ phép
-app.post('/staff/accountant/leave/reject/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    await personnelService.updateLeaveStatus(req.params.id, 2);
-    res.redirect('/staff/accountant/leave?msg=Đã+từ+chối+đơn+nghỉ+phép!&msgType=warning');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-
-app.get('/staff/accountant/schedule', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const year = req.query.year || new Date().getFullYear();
-    const month = req.query.month || new Date().getMonth() + 1;
-    const schedules = await personnelService.getSchedule(null, year, month); // All staff schedule
-    res.render('staff/accountant/schedule', {
-      title: 'Quản lý Lịch làm việc',
-      schedules, month, year,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'schedule'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Gửi duyệt lương
-app.post('/staff/accountant/salary/submit/:id', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    await personnelService.submitSalaryForApproval(req.params.id);
-    res.redirect('/staff/accountant/salary');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Chi lương (Thanh toán)
-app.post('/staff/accountant/salary/pay/:id', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
-  try {
-    await personnelService.paySalary(req.params.id);
-    res.redirect('/staff/accountant/salary');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// In Phiếu Lương
-app.get('/staff/accountant/salary/print/:id', requireRole(['Ke toan']), async (req, res) => {
-  try {
-    const [salaryRows] = await db.query(`
-      SELECT l.*, n.ten, n.chucvu 
-      FROM luong l 
-      JOIN nhan_vien n ON l.id_nv = n.id_nv 
-      WHERE l.id_luong = ?
-    `, [req.params.id]);
-
-    if (salaryRows.length === 0) return res.status(404).send('Không tìm thấy bảng lương');
-    res.render('staff/accountant/salary-print', { s: salaryRows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/profile', requireLogin, async (req, res) => {
-  try {
-    const user = await orderService.getUserById(req.session.userId);
-    res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/profile', requireLogin, async (req, res) => {
-  const { action, ten, diachi, old_pass, new_pass, re_pass, email } = req.body;
-  try {
-    if (action === 'update') {
-      await orderService.updateProfile(req.session.userId, { ten, email, diachi });
-      // Cập nhật lại session name nếu cần
-      req.session.username = ten;
-      const user = await orderService.getUserById(req.session.userId);
-      res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Cập nhật thông tin thành công!', msgType: 'success' });
-    } else if (action === 'password') {
-      if (new_pass !== re_pass) {
-        const user = await orderService.getUserById(req.session.userId);
-        return res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Mật khẩu xác nhận không khớp!', msgType: 'danger' });
-      }
-      await orderService.changePassword(req.session.userId, old_pass, new_pass);
-      const user = await orderService.getUserById(req.session.userId);
-      return res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: 'Đổi mật khẩu thành công!', msgType: 'success' });
-    }
-    res.redirect('/profile');
-  } catch (err) {
-    const user = await orderService.getUserById(req.session.userId);
-    res.render('profile', { title: res.locals.t('tai_khoan.thong_tin'), user, msg: err.message, msgType: 'danger' });
-  }
-});
-
-// --- Customer: Cancel Order ---
-app.post('/cancel-order', requireLogin, async (req, res) => {
-  const { sesis } = req.body;
-  try {
-    await orderService.requestCancelOrder(sesis, req.session.userId);
-    res.redirect('/my-orders');
-  } catch (err) {
-    console.error(err);
-    res.redirect('/my-orders');
-  }
-});
+// Khu QUAN TRI (/admin/*) - xem routes/quanTri.js
+app.use(require('./routes/quanTri')({ gioiHanDN, orderService, personnelService, requireAdmin, upload }));
+
+// Khu KE TOAN (/staff/accountant/*) - xem routes/keToan.js
+app.use(require('./routes/keToan')({ db, personnelService, requireRole }));
 
 // --- Customer: Chat ---
 app.get('/chat', requireLogin, async (req, res) => {
@@ -2240,38 +1537,9 @@ app.post('/chat/send', requireLogin, (req, res, next) => {
 });
 
 // --- Customer: Rating ---
-app.get('/rating', requireLogin, async (req, res) => {
-  try {
-    const ratings = await engagementService.getAllRatings();
-    const canRate = await orderService.hasCompletedOrder(req.session.userId);
-    console.log('--- DEBUG GET /rating ---');
-    console.log('userId:', req.session.userId);
-    console.log('canRate:', canRate);
-    console.log('-------------------------');
-    res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: null, canRate });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/rating', requireLogin, async (req, res) => {
-  const { sao, noi_dung } = req.body;
-  try {
-    const canRate = await orderService.hasCompletedOrder(req.session.userId);
-    if (!canRate) {
-      const ratings = await engagementService.getAllRatings();
-      return res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: 'Bạn cần hoàn thành ít nhất 1 đơn đặt bàn để gửi đánh giá.', msgType: 'danger', canRate });
-    }
-
-    await engagementService.addRating(req.session.userId, sao, noi_dung);
-    const ratings = await engagementService.getAllRatings();
-    res.render('rating', { title: res.locals.t('danh_gia.tieu_de'), ratings, msg: 'Cảm ơn bạn đã đánh giá!', msgType: 'success', canRate: true });
-  } catch (err) {
-    console.error(err);
-    res.redirect('/rating');
-  }
-});
+// Trang danh gia chinh la /rate. /rating (GET) cu dung dieu kien khac
+// (hasCompletedOrder) va in log debug - gom ve mot cho cho nhat quan.
+app.get('/rating', (req, res) => res.redirect(301, '/rate'));
 
 // ============================================================
 // --- Staff Routes ---
@@ -2312,9 +1580,15 @@ app.get('/staff/login', (req, res) => {
 app.post('/staff/login', async (req, res) => {
   const { username, password } = req.body;
   const tiep = duongDanTiep(req.body.tiep);
+  const biKhoa = gioiHanDN.soGiayBiKhoa(req, 'nhan_vien', username);
+  if (biKhoa) {
+    return res.status(429).render('staff/login', { error: gioiHanDN.thongBaoKhoa(biKhoa), layout: false, tiep });
+  }
   try {
     const staff = await personnelService.staffLogin(username, password);
+    if (!staff) gioiHanDN.ghiThatBai(req, 'nhan_vien', username);
     if (staff) {
+      gioiHanDN.xoaDem(req, 'nhan_vien', username);
       req.session.stafflogin = true;
       req.session.staffId = staff.id_nv;
       req.session.staffName = staff.ten;
@@ -2408,6 +1682,8 @@ app.get('/staff/bookings', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (r
       title: 'Quản lý Đặt bàn & Gọi món',
       bookings,
       qrCodes,
+      msg: req.query.msg || '',
+      msgType: ['success', 'danger', 'warning', 'info'].includes(req.query.msgType) ? req.query.msgType : 'info',
       unread: await personnelService.countUnread(req.session.staffId),
       activePage: 'bookings'
     });
@@ -2477,34 +1753,67 @@ app.post('/staff/bookings/pay/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly'
   res.redirect(303, '/staff/thanh-toan/' + encodeURIComponent(req.params.sesis));
 });
 
+/*
+ * Xac nhan don: CHI don dang cho (tinhtrang = 0) va KHONG phai don giao hang.
+ *
+ * Truoc day route nay dat thang tinhtrang = 1 cho moi sesis:
+ *   - don da thanh toan (3) / da huy (4) bi "song lai", hien lai tren bep va
+ *     so do ban;
+ *   - don GIAO HANG o tinhtrang 0 nghia la DANG CHO KHACH TRA TIEN TRUOC
+ *     (chinhSachGiaoService chuyen 0 -> 1 khi tien ve). Bam xac nhan o day la
+ *     bo qua buoc thu tien.
+ * Cau UPDATE co dieu kien nen hai nguoi bam cung luc cung chi doi mot lan.
+ */
+const NHAN_TINH_TRANG_DON = { 0: 'chờ xác nhận', 1: 'đã xác nhận', 3: 'đã thanh toán', 4: 'đã hủy', 5: 'đang phục vụ', 6: 'đang dùng món' };
+const veDanhSachDon = (res, msg, loai = 'danger') =>
+  res.redirect('/staff/bookings?msg=' + encodeURIComponent(msg) + '&msgType=' + loai);
+
 app.post('/staff/bookings/confirm/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
+  const sesis = req.params.sesis;
   try {
-    await db.query('UPDATE hopdong SET tinhtrang = 1 WHERE sesis = ?', [req.params.sesis]);
-    res.redirect('/staff/bookings');
+    const [[don]] = await db.query('SELECT tinhtrang, loai_don FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
+    if (!don) return veDanhSachDon(res, 'Không tìm thấy đơn.');
+    if (don.loai_don === 'giao_hang') {
+      return veDanhSachDon(res, 'Đơn giao hàng được xác nhận tự động khi khách thanh toán trước - không xác nhận tay.');
+    }
+    const [kq] = await db.query(
+      "UPDATE hopdong SET tinhtrang = 1 WHERE sesis = ? AND tinhtrang = 0 AND loai_don <> 'giao_hang'", [sesis]);
+    if (!kq.affectedRows) {
+      return veDanhSachDon(res, `Không thể xác nhận: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
+    }
+    veDanhSachDon(res, 'Đã xác nhận đơn.', 'success');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
+/*
+ * Khach den: chi voi don da xac nhan (1) hoac dang phuc vu (5, 6 - gan lai ban).
+ * Truoc day gan ma QR ban cho ca don da thanh toan / da huy.
+ */
 app.post('/staff/bookings/arrive/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
   const { table_id } = req.body;
   const sesis = req.params.sesis;
   try {
-    const [rows] = await db.query('SELECT tinhtrang FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
-    if (rows.length > 0 && rows[0].tinhtrang === 1) {
-      await db.query('UPDATE hopdong SET tinhtrang = 5 WHERE sesis = ?', [sesis]);
+    const [[don]] = await db.query('SELECT tinhtrang, loai_don FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
+    if (!don) return veDanhSachDon(res, 'Không tìm thấy đơn.');
+    if (don.loai_don === 'giao_hang') return veDanhSachDon(res, 'Đơn giao hàng không nhận khách tại bàn.');
+    if (![1, 5, 6].includes(Number(don.tinhtrang))) {
+      return veDanhSachDon(res, `Không thể nhận khách: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
     }
-    
-    // Clear any previous mapping for this sesis in qr_tables
+    if (table_id) {
+      const [[qr]] = await db.query('SELECT table_id FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
+      if (!qr) return veDanhSachDon(res, 'Mã QR bàn không tồn tại.');
+    }
+
+    await db.query('UPDATE hopdong SET tinhtrang = 5 WHERE sesis = ? AND tinhtrang = 1', [sesis]);
+    // Go lien ket QR cu cua don roi gan ban vua chon.
     await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
-    
-    // Link selected table
     if (table_id) {
       await db.query('UPDATE qr_tables SET active_sesis = ? WHERE table_id = ?', [sesis, table_id]);
     }
-    
-    res.redirect('/staff/bookings');
+    veDanhSachDon(res, 'Đã ghi nhận khách đến.', 'success');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -2523,458 +1832,12 @@ app.get('/staff/bookings/print/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly
   }
 });
 
-// --- STAFF KITCHEN ORDERS ---
-app.get('/staff/kitchen', requireRole(['Bep', 'Quan ly', 'Phuc vu']), async (req, res) => {
-  try {
-    let orders = await orderService.getKitchenOrders();
+// Man hinh bep (/staff/kitchen) do KDS phuc vu - xem routes/kds.js. Trang
+// kitchen.ejs cu va POST /staff/kitchen/mark-done da bo: route GET o day khong
+// bao gio chay toi (KDS duoc mount truoc) va mark-done chi trang cu goi.
 
-    // Nếu là nhân viên phục vụ, chỉ xem các món đã làm xong (trangthai_bep = 1)
-    if (req.session.staffRole === 'Phuc vu') {
-      orders = orders.filter(o => o.trangthai_bep === 1);
-    }
-
-    res.render('staff/kitchen', {
-      title: 'Quản lý Đơn bàn (Bếp)',
-      orders,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'kitchen'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/mark-done/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    const dishId = req.params.id;
-    // Sử dụng đúng service và bảng dữ liệu của dự án
-    await orderService.markKitchenDone(dishId);
-
-    // Lấy thông tin món từ bảng hopdong
-    const [dishInfo] = await db.query('SELECT name_mon, sesis, soluong FROM hopdong WHERE id = ?', [dishId]);
-
-    if (dishInfo.length > 0) {
-      io.to('staff_room').emit('dish-ready', {
-        message: `Món [${dishInfo[0].name_mon}] (x${dishInfo[0].soluong}) của đơn ${dishInfo[0].sesis.substring(0, 6).toUpperCase()} đã sẵn sàng!`
-      });
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Lỗi khi báo xong món:', err);
-    res.status(500).json({ success: false, error: 'Lỗi server: ' + err.message });
-  }
-});
-
-// --- KITCHEN MANAGEMENT (Role: 'Bep') ---
-app.get('/staff/kitchen/inventory', requireRole(['Bep']), async (req, res) => {
-  try {
-    const ingredients = await menuService.getAllIngredients();
-    const units = await menuService.getAllUnits();
-    res.render('staff/kitchen/inventory', {
-      title: 'Quản lý Kho',
-      ingredients,
-      units,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'inventory'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/ingredient/add', requireRole(['Bep']), async (req, res) => {
-  try {
-    const data = { ...req.body };
-    if (data.new_dvt && data.new_dvt.trim()) {
-      const ten_new = data.new_dvt.trim();
-      const [existing] = await db.query('SELECT id_dvt FROM don_vi_tinh WHERE LOWER(ten_dvt) = LOWER(?)', [ten_new]);
-      if (existing.length > 0) {
-        data.id_dvt = existing[0].id_dvt;
-      } else {
-        const [result] = await db.query('INSERT INTO don_vi_tinh (ten_dvt) VALUES (?)', [ten_new]);
-        data.id_dvt = result.insertId;
-      }
-    }
-    await menuService.addIngredient(data);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/inventory/stock-in', requireRole(['Bep']), async (req, res) => {
-  try {
-    const { so_luong, gia_nhap } = req.body;
-    if (Number(so_luong) <= 0 || Number(gia_nhap) <= 0) {
-      return res.send('<script>alert("Số lượng và Giá nhập phải lớn hơn 0!"); history.back();</script>');
-    }
-    await menuService.addStockIn(req.body);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/ingredient/edit/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    const data = { ...req.body };
-    if (data.new_dvt && data.new_dvt.trim()) {
-      const ten_new = data.new_dvt.trim();
-      const [existing] = await db.query('SELECT id_dvt FROM don_vi_tinh WHERE LOWER(ten_dvt) = LOWER(?)', [ten_new]);
-      if (existing.length > 0) {
-        data.id_dvt = existing[0].id_dvt;
-      } else {
-        const [result] = await db.query('INSERT INTO don_vi_tinh (ten_dvt) VALUES (?)', [ten_new]);
-        data.id_dvt = result.insertId;
-      }
-    }
-    await menuService.updateIngredient(req.params.id, data);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/ingredient/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.deleteIngredient(req.params.id);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Unit CRUD
-app.post('/staff/kitchen/unit/add', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.addUnit(req.body.ten_dvt);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/unit/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.deleteUnit(req.params.id);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/unit/edit/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.updateUnit(req.params.id, req.body.ten_dvt);
-    res.redirect('/staff/kitchen/inventory');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Recipe delete
-app.get('/staff/kitchen/recipe/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.deleteRecipeItem(req.params.id);
-    res.redirect('/staff/kitchen/recipes');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/stock-history', requireRole(['Bep']), async (req, res) => {
-  try {
-    const history = await menuService.getStockHistory();
-    res.render('staff/kitchen/stock-history', {
-      title: 'Lịch sử Kho',
-      history,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'inventory'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/recipes', requireRole(['Bep']), async (req, res) => {
-  try {
-    const dishes = await personnelService.getAllProducts();
-    const ingredients = await menuService.getAllIngredients();
-    res.render('staff/kitchen/recipes', {
-      title: 'Quản lý Công thức',
-      dishes,
-      ingredients,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'recipes'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/recipe/:dishId', requireRole(['Bep']), async (req, res) => {
-  try {
-    const recipe = await menuService.getRecipeByDish(req.params.dishId);
-    res.json(recipe);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/staff/kitchen/recipe/add', requireRole(['Bep']), async (req, res) => {
-  try {
-    const { id_mon, id_nl, so_luong_tieu_hao } = req.body;
-    await menuService.addRecipeItem(id_mon, id_nl, so_luong_tieu_hao);
-    res.redirect('/staff/kitchen/recipes');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/recipe/edit/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    const { id_mon, id_nl, so_luong } = req.body;
-    await menuService.updateRecipeItem(req.params.id, id_mon, id_nl, so_luong);
-    res.redirect('/staff/kitchen/recipes');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/equipment', requireRole(['Bep']), async (req, res) => {
-  try {
-    const equipment = await equipmentService.getAllEquipment();
-    res.render('staff/kitchen/equipment', {
-      title: 'Quản lý Thiết bị',
-      equipment,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'equipment'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/equipment/add', requireRole(['Bep']), async (req, res) => {
-  try {
-    await equipmentService.addEquipment(req.body);
-    res.redirect('/staff/kitchen/equipment');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/equipment/edit/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await equipmentService.updateEquipment(req.params.id, req.body);
-    res.redirect('/staff/kitchen/equipment');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/equipment/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await equipmentService.deleteEquipment(req.params.id);
-    res.redirect('/staff/kitchen/equipment');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Combo CRUD
-app.post('/staff/kitchen/combo/add', requireRole(['Bep']), upload.single('hinh_anh'), async (req, res) => {
-  try {
-    const hinh_anh = req.file ? req.file.filename : null;
-    await menuService.addCombo({ ...req.body, hinh_anh });
-    res.redirect('/staff/kitchen/combos');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/combo/edit/:id', requireRole(['Bep']), upload.single('hinh_anh'), async (req, res) => {
-  try {
-    const hinh_anh = req.file ? req.file.filename : null;
-    await menuService.updateCombo(req.params.id, { ...req.body, hinh_anh });
-    res.redirect('/staff/kitchen/combos');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/combo/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await menuService.deleteCombo(req.params.id);
-    res.redirect('/staff/kitchen/combos');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Dish manage by Kitchen
-app.post('/staff/kitchen/dish/add', requireRole(['Bep']), upload.single('images'), async (req, res) => {
-  try {
-    const image = req.file ? req.file.filename : null;
-    await personnelService.addProduct({ name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon, price: req.body.gia_mon, image });
-    res.redirect('/staff/kitchen/dishes');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/dish/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await personnelService.deleteProduct(req.params.id);
-    res.redirect('/staff/kitchen/dishes');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Category CRUD by Kitchen
-app.post('/staff/kitchen/categories/add', requireRole(['Bep']), async (req, res) => {
-  try {
-    await personnelService.addCategory(req.body.name_loai, req.body.ghichu);
-    res.redirect('/staff/kitchen/categories');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.post('/staff/kitchen/categories/edit/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await personnelService.updateCategory(req.params.id, req.body.name_loai, req.body.ghichu);
-    res.redirect('/staff/kitchen/categories');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/categories/delete/:id', requireRole(['Bep']), async (req, res) => {
-  try {
-    await personnelService.deleteCategory(req.params.id);
-    res.redirect('/staff/kitchen/categories');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/combos', requireRole(['Bep']), async (req, res) => {
-  try {
-    const combos = await menuService.getAllCombos();
-    res.render('staff/kitchen/combos', {
-      title: 'Quản lý Combo',
-      combos,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'kitchen-menu'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/categories', requireRole(['Bep']), async (req, res) => {
-  try {
-    const categories = await personnelService.getAllCategories();
-    res.render('staff/kitchen/categories', {
-      title: 'Quản lý Loại món',
-      categories,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'kitchen-menu'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/dishes', requireRole(['Bep']), async (req, res) => {
-  try {
-    const dishes = await personnelService.getAllProducts();
-    const categories = await personnelService.getAllCategories();
-    res.render('staff/kitchen/dishes', {
-      title: 'Quản lý Món ăn',
-      dishes,
-      categories,
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'kitchen-menu'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.get('/staff/kitchen/shift', requireRole(['Bep']), async (req, res) => {
-  try {
-    const [history] = await db.query(`
-      SELECT c.*, n.ten as ten_nv 
-      FROM chot_ca c 
-      JOIN nhan_vien n ON c.staff_id = n.id_nv 
-      ORDER BY c.created_at DESC 
-      LIMIT 20
-    `);
-    res.render('staff/kitchen/shift', {
-      title: 'Chốt ca Bếp',
-      history,
-      msg: req.query.msg || null,
-      msgType: req.query.msgType || 'success',
-      unread: await personnelService.countUnread(req.session.staffId),
-      activePage: 'kitchen-shift'
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
-  }
-});
-
-
-// --- KITCHEN SHIFT CLOSE (POST) ---
-app.post('/staff/kitchen/shift/close', requireRole(['Bep']), async (req, res) => {
-  try {
-    const { ngay, ca, tong_tien, ghi_chu } = req.body;
-    if (!ngay || !ca) {
-      return res.send('<script>alert("Vui lòng điền đầy đủ thông tin chốt ca!"); history.back();</script>');
-    }
-    await db.query(
-      'INSERT INTO chot_ca (staff_id, ngay, ca, tong_tien, ghi_chu) VALUES (?, ?, ?, ?, ?)',
-      [req.session.staffId, ngay, ca, tong_tien || 0, ghi_chu || '']
-    );
-    res.redirect('/staff/kitchen/shift?msg=Chốt+ca+thành+công!&msgType=success');
-  } catch (err) {
-    console.error('Lỗi chốt ca bếp:', err);
-    res.status(500).send('Server Error: ' + err.message);
-  }
-});
+// Khu QUAN LY BEP (/staff/kitchen/*) - xem routes/bepQuanLy.js
+app.use(require('./routes/bepQuanLy')({ db, equipmentService, menuService, personnelService, requireRole, upload }));
 
 app.get('/staff/customers', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
@@ -2982,6 +1845,13 @@ app.get('/staff/customers', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async 
     res.render('staff/customers', {
       title: 'Quản lý Khách hàng',
       customers,
+      msg: req.query.msg || '',
+      msgType: req.query.msgType || '',
+      // Cung dieu kien voi requireRole(['Quan ly']) cua route xoa: vai tro cu
+      // hoac chuc danh moi duoc dong vai Quan ly (vd. giam sat).
+      coQuyenXoa: !!(req.session.adminlogin
+        || req.session.staffRole === 'Quan ly'
+        || require('./services/phanQuyenService').dongVaiDuoc(req.hoSo, ['Quan ly'])),
       unread: await personnelService.countUnread(req.session.staffId),
       activePage: 'customers'
     });
@@ -2991,7 +1861,9 @@ app.get('/staff/customers', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async 
   }
 });
 
-app.post('/staff/customers/add', requireStaff, async (req, res) => {
+// Them / sua khach: cung nhom vai tro duoc xem trang khach hang. Truoc day chi
+// can la nhan vien (bep, shipper... deu goi duoc).
+app.post('/staff/customers/add', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
     await orderService.addCustomer(req.body);
     res.redirect('/staff/customers');
@@ -3001,7 +1873,7 @@ app.post('/staff/customers/add', requireStaff, async (req, res) => {
   }
 });
 
-app.post('/staff/customers/edit/:id', requireStaff, async (req, res) => {
+app.post('/staff/customers/edit/:id', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
     await orderService.updateCustomer(req.params.id, req.body);
     res.redirect('/staff/customers');
@@ -3011,10 +1883,13 @@ app.post('/staff/customers/edit/:id', requireStaff, async (req, res) => {
   }
 });
 
-app.post('/staff/customers/delete/:id', requireStaff, async (req, res) => {
+// Xoa khach: chi Quan ly, va chi xoa duoc ho so chua co lich su giao dich
+// (xem orderService.deleteCustomer).
+app.post('/staff/customers/delete/:id', requireRole(['Quan ly']), async (req, res) => {
   try {
-    await orderService.deleteCustomer(req.params.id);
-    res.redirect('/staff/customers');
+    const kq = await orderService.deleteCustomer(req.params.id);
+    const msg = kq.ok ? 'Đã xóa khách hàng.' : kq.lyDo;
+    res.redirect('/staff/customers?msg=' + encodeURIComponent(msg) + '&msgType=' + (kq.ok ? 'success' : 'danger'));
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -3149,7 +2024,7 @@ app.post('/staff/schedule', requireStaff, async (req, res) => {
   }
 });
 
-app.get('/staff/schedule/cancel/:id', requireStaff, async (req, res) => {
+app.post('/staff/schedule/cancel/:id', requireStaff, async (req, res) => {
   try {
     await personnelService.cancelSchedule(req.params.id, req.session.staffId);
     res.redirect(urlLichTuan(req, 'Đã huỷ đăng ký.', 'info'));
@@ -3284,19 +2159,17 @@ app.get('/staff/leave', requireStaff, async (req, res) => {
 
 app.post('/staff/leave/add', requireStaff, async (req, res) => {
   try {
-    const { ly_do, ngay_bat_dau, ngay_ket_thuc } = req.body;
-    const today = new Date().toISOString().split('T')[0];
-
-    // Ràng buộc 1: Ngày bắt đầu không được trong quá khứ
-    if (ngay_bat_dau < today) {
-      return res.send('<script>alert("Ngày bắt đầu không được ở quá khứ!"); history.back();</script>');
+    // Rang buoc (qua khu, thu tu ngay, toi da 30 ngay, trung don) nam trong
+    // services/nghiPhepService.js - dung chung voi form cua ke toan.
+    const nghiPhep = require('./services/nghiPhepService');
+    try {
+      await nghiPhep.taoDon(req.session.staffId, req.body);
+    } catch (e) {
+      if (e instanceof nghiPhep.LoiNghiPhep) {
+        return res.send(`<script>alert(${JSON.stringify(e.message)}); history.back();</script>`);
+      }
+      throw e;
     }
-    // Ràng buộc 2: Ngày kết thúc không được nhỏ hơn ngày bắt đầu
-    if (ngay_ket_thuc < ngay_bat_dau) {
-      return res.send('<script>alert("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!"); history.back();</script>');
-    }
-
-    await personnelService.addLeaveRequest(req.session.staffId, ly_do, ngay_bat_dau, ngay_ket_thuc);
     res.redirect('/staff/leave');
   } catch (err) {
     console.error(err);
@@ -3496,7 +2369,9 @@ app.get('/qr/table/:tableId', async (req, res) => {
       sesis: sesis || '',
       categories,
       dishes: allDishes,
-      nguyenLieuMon
+      nguyenLieuMon,
+      // Mon het nguyen lieu: hien "Tam het", khong cho goi.
+      hetMon: [...(await require('./services/tonMonService').monDaHet().catch(() => new Set()))],
     });
   } catch (err) {
     console.error('QR menu error:', err);
@@ -3579,8 +2454,16 @@ setInterval(() => {
 app.post('/qr/add-dish', async (req, res) => {
   try {
     const { tableId, items } = req.body;
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0) {
       return res.json({ success: false, message: 'Giỏ hàng trống!' });
+    }
+    // Kiem tra so luong TRUOC khi tao phien/khach vang lai, de goi rac khong
+    // de lai don rong. addMultipleDishesToOrder kiem tra lai lan nua.
+    if (items.length > 30 || items.some((it) => !orderService.chuanHoaSoLuong(it && it.qty))) {
+      return res.json({
+        success: false,
+        message: `Số lượng mỗi món phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH} (tối đa 30 món mỗi lần gửi).`,
+      });
     }
 
     // Ma ban phai co that. Truoc day khong kiem tra, nen ma bia dat cung tao
@@ -3692,10 +2575,12 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Quay', 'Qua
   try {
     const sesis = req.params.sesis;
     const { id_mon, soluong } = req.body;
-    const qty = parseInt(soluong) || 1;
+    const qty = orderService.chuanHoaSoLuong(
+      soluong == null || soluong === '' ? 1 : soluong, orderService.SO_LUONG_TOI_DA_NHAN_VIEN
+    );
 
     if (!id_mon) return res.json({ success: false, message: 'Chưa chọn món!' });
-    if (qty < 1) return res.json({ success: false, message: 'Số lượng phải >= 1!' });
+    if (!qty) return res.json({ success: false, message: `Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_NHAN_VIEN}!` });
 
     await orderService.addDishToOrder(sesis, id_mon, qty);
 
@@ -3718,6 +2603,56 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Quay', 'Qua
   }
 });
 
+// --- Huy / tra mon (xem services/huyMonService.js) ---
+// Mon bep chua lam: phuc vu / quay / thu ngan huy duoc. Mon da vao bep: chi
+// Quan ly (vai tro cu hoac chuc danh dong vai Quan ly).
+function laQuanLyPhien(req) {
+  return !!(req.session.adminlogin || req.session.staffRole === 'Quan ly'
+    || require('./services/phanQuyenService').dongVaiDuoc(req.hoSo, ['Quan ly']));
+}
+
+app.post('/staff/huy-mon/:id', requireRole(['Phuc vu', 'Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
+  const huyMonService = require('./services/huyMonService');
+  try {
+    const kq = await huyMonService.huyMon(req.params.id, {
+      soLuong: req.body.so_luong,
+      maLyDo: req.body.ma_ly_do,
+      ghiChu: req.body.ly_do,
+      nhanVien: {
+        id: req.session.staffId || null,
+        ten: req.session.staffName || (req.session.adminlogin ? 'Quản trị' : ''),
+        laQuanLy: laQuanLyPhien(req),
+      },
+    });
+    // Man hinh bep, so do ban, thu ngan tu cap nhat.
+    const mon = { id: kq.id, sesis: kq.sesis, name_mon: kq.name_mon, soluong: kq.con_lai };
+    io.to('kitchen_room').emit('kds-cap-nhat', { buoc: 'huy-mon', mon });
+    io.to('staff_room').emit('kds-cap-nhat', { buoc: 'huy-mon', mon });
+    res.json({ success: true, ...kq });
+  } catch (err) {
+    if (err instanceof huyMonService.LoiHuyMon) {
+      return res.status(err.ma === 'CAN_QUAN_LY' ? 403 : 400).json({ success: false, message: err.message });
+    }
+    console.error('Lỗi hủy món:', err);
+    res.status(500).json({ success: false, message: 'Lỗi hệ thống khi hủy món.' });
+  }
+});
+
+app.get('/staff/huy-mon/don/:sesis', requireRole(['Phuc vu', 'Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
+  try {
+    const huyMonService = require('./services/huyMonService');
+    res.json({
+      success: true,
+      la_quan_ly: laQuanLyPhien(req),
+      ly_do: huyMonService.LY_DO,
+      lich_su: await huyMonService.lichSuCuaDon(req.params.sesis),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // API lấy chi tiết các món của đơn để xem nhanh
 app.get('/staff/bookings/items/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
   try {
@@ -3725,7 +2660,7 @@ app.get('/staff/bookings/items/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly
     const [items] = await db.query(
       `SELECT h.id, h.name_mon, h.soluong, h.gia, h.thanhtien, h.trangthai_bep, h.ghi_chu_mon
        FROM hopdong h
-       WHERE h.sesis = ? AND h.id_mon > 0
+       WHERE h.sesis = ? AND h.id_mon > 0 AND h.soluong > 0
        ORDER BY h.id ASC`,
       [sesis]
     );
