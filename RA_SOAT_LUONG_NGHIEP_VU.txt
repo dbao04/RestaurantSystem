@@ -1,0 +1,421 @@
+RÀ SOÁT LUỒNG NGHIỆP VỤ - HỆ THỐNG QUẢN LÝ NHÀ HÀNG
+Ngày rà soát: 08/11/2026
+
+Kết luận chung: khung nghiệp vụ đã khá đầy đủ và phần lớn hợp lý. Đặt bàn,
+thanh toán và đối soát, chốt ca, bếp (KDS), giao hàng và kho đều có kiểm tra
+trạng thái, transaction và nhật ký. Vẫn còn 7 chỗ chưa logic, phần lớn nằm ở
+chỗ nối giữa các module: kho <-> thu chi, đặt tiệc <-> tiền và bếp,
+giao hàng <-> bếp.
+
+Ký hiệu mức độ: [CAO] cần sửa ngay - [VỪA] nên sửa - [THẤP] cải thiện.
+
+================================================================================
+1. CHỖ CHƯA LOGIC, CẦN SỬA
+================================================================================
+
+*** CẬP NHẬT 08/11/2026: ĐÃ SỬA cả 7 mục (có test tự động trong npm test). ***
+
+[CAO] 1. [ĐÃ SỬA] POST /staff/bookings/confirm/:sesis (server.js) đặt tinhtrang = 1 mà
+   không kiểm tra trạng thái hiện tại.
+   -> Đơn đã thanh toán (3) hoặc đã hủy (4) bị đưa về "đã xác nhận", lại hiện
+      trên bếp và sơ đồ bàn.
+
+[CAO] 2. [ĐÃ SỬA] Hoàn tiền (thanhToanService.hoanTien): thu ngân tự hoàn mà không cần
+   Quản lý duyệt, không giới hạn thời gian, không khóa chống bấm hai lần,
+   không trả lại lượt dùng mã giảm giá.
+   -> Rủi ro gian lận tiền; bấm hai lần thì thu hồi điểm hai lần; khách mất
+      lượt dùng mã.
+
+[VỪA] 3. [ĐÃ SỬA] Giao hàng: shipper chuyển được sang "đang lấy hàng/đang giao" khi
+   bếp chưa nấu xong; đổi trạng thái không khóa (vanChuyenService.doiTrangThai).
+   -> Shipper đi giao khi chưa có hàng; shipper và điều phối bấm cùng lúc thì
+      ghi đè nhau.
+
+[VỪA] 4. [ĐÃ SỬA - đã chạy npm run kho:doisoat] Hai đường nhập kho: nút "Nhập kho" cũ (menuService.addStockIn) chỉ
+   cộng số lượng, không tạo lô, hạn dùng hay giá vốn.
+   -> Tồn kho tổng lệch với tổng các lô; cảnh báo hạn dùng và giá vốn món sai.
+
+[VỪA] 5. [ĐÃ SỬA] Đặt tiệc: "Đã đặt cọc" chỉ là nhãn bấm tay, không ghi tiền; trạng
+   thái nhảy tự do (Hủy -> Hoàn thành).
+   -> Doanh thu và tiền cọc tiệc không có trong báo cáo hay chốt ca.
+
+[THẤP] 6. [ĐÃ SỬA - trang /staff/cong-no-ncc] Phiếu nhập kho không sinh phiếu chi hay công nợ nhà cung cấp trong
+   sổ thu chi.
+   -> Báo cáo lãi lỗ thiếu chi phí nguyên liệu, phải nhập tay hai lần.
+
+[THẤP] 7. [ĐÃ SỬA - trang /staff/duyet-nghi-phep] Duyệt nghỉ phép do Kế toán làm (/staff/accountant/leave/approve).
+   -> Thường cấp trên trực tiếp duyệt, kế toán chỉ ghi nhận để tính lương.
+      Hệ thống đã có sẵn hàm canLaCapTren để dùng.
+
+Giới hạn đã biết từ các lượt sửa trước:
+   - Chuyển bàn chưa cập nhật lịch giữ bàn của lượt đặt (reservation_tables).
+   - Kiểm tra hết món là kiểm tra "mềm": hai lượt gọi cùng lúc vẫn có thể
+     cùng lọt qua.
+   - Tài khoản nhân viên vẫn dùng mật khẩu 123456.
+
+================================================================================
+2. CÁC LUỒNG ĐỂ TEST
+================================================================================
+Mật khẩu mọi tài khoản là 123456. Khách đăng nhập lần đầu sẽ bị bắt đổi mật khẩu.
+
+LUỒNG 1 - Khách ăn tại bàn qua QR (quanly, thungan, daubep)
+  1. Nhân viên mở /staff/qr-codes và mở link QR của một bàn trên điện thoại.
+  2. Gọi 2 món, mỗi món một ghi chú. Kiểm tra món hiện trên /kds kèm số bàn.
+  3. daubep: Bắt đầu nấu -> Hoàn thành. Kiểm tra nguyên liệu bị trừ ở kho bếp.
+  4. Phục vụ bấm "Đã lên món". Trang QR của khách đổi trạng thái theo.
+  5. Gọi thêm món từ cùng QR: món phải vào cùng hóa đơn.
+  6. thungan: tính tiền, áp mã giảm giá và điểm, thanh toán. Bàn chuyển
+     "Đang dọn", QR không còn gắn với đơn cũ.
+  Test lỗi: gửi số lượng âm hoặc 999 (bị chặn); gửi quá 12 lần trong 5 phút
+  (bị chặn); thanh toán lại đơn đã trả (409).
+
+LUỒNG 2 - Phục vụ gọi món trên sơ đồ bàn (phucvu)
+  Mở bàn trống -> gọi món -> bàn chuyển "Đang phục vụ" -> thêm món -> món có
+  mặt ở trang tính tiền.
+
+LUỒNG 3 - Hủy món
+  1. phucvu hủy 1 trong 3 phần của món chưa nấu: tổng tiền giảm, mục
+     "Món đã hủy" hiện ra.
+  2. Bếp bấm "Bắt đầu nấu" -> phucvu hủy tiếp: bị chặn với thông báo cần
+     Quản lý.
+  3. quanly hủy với lý do "Món bị lỗi": hủy được.
+  4. Đơn đã có thanh toán: không hủy được món.
+
+LUỒNG 4 - Chuyển và gộp bàn
+  1. Chuyển bàn A sang bàn B trống: kiểm tra món, bếp và QR của bàn B đều trỏ
+     đúng đơn; bàn A "Đang dọn".
+  2. Chuyển vào bàn đang có khách: bị chặn.
+  3. Gộp A vào B: hóa đơn B gộp đủ món, số khách được cộng.
+  4. Gộp bàn có tiền cọc, hoặc bàn là khách đặt trước vào bàn khác: bị chặn.
+
+LUỒNG 5 - Hết món theo kho
+  Hạ tồn một nguyên liệu (ví dụ nhập kiểm kê thiếu) -> gọi vượt số phần còn
+  lại thì bị chặn kèm tên món; thực đơn QR hiện "Tạm hết".
+  Tắt cau_hinh kho.chan_khi_het_mon = 0 thì gọi được bình thường.
+
+LUỒNG 6 - Đặt bàn online
+  1. Khách đặt /dat-ban cho nhóm đông, hệ thống yêu cầu cọc -> thanh toán cọc
+     -> lượt đặt tự xác nhận.
+  2. letan nhận khách (khách đến) -> gọi món -> tính tiền trừ tiền cọc. Nếu
+     cọc nhiều hơn tiền ăn thì phải có bước hoàn phần cọc dư.
+  3. Không đến đúng giờ -> quá giờ giữ bàn thì thành no-show; số điện thoại
+     no-show nhiều lần bị chặn đặt.
+  4. Hủy trước và sau hạn để kiểm tra chính sách hoàn cọc.
+
+LUỒNG 7 - Giao hàng
+  1. Khách đặt món ở /cart -> nhập địa chỉ ngoài bán kính (bị chặn) -> trong
+     bán kính thì phí ship đúng bậc km -> bắt buộc đồng ý chính sách.
+  2. Đơn ở "Chờ thanh toán": bếp chưa thấy món. Thanh toán xong ->
+     "Chờ phân" -> bếp thấy món.
+  3. Hệ thống tự phân hoặc điều phối phân shipper1 -> lấy hàng -> đang giao
+     -> đã giao: đơn chuyển "đã thanh toán".
+  4. Test hủy: khách hủy khi chưa trả tiền (miễn phí), khi đã phân shipper
+     (theo chính sách), khi đang giao (bị chặn). Không trả tiền quá hạn thì
+     đơn tự hủy.
+  5. Báo giao thất bại mà không ghi lý do: bị chặn.
+
+LUỒNG 8 - Thanh toán và chốt ca (thungan, giamsattn)
+  1. Thu tiền mặt có tiền thối, thanh toán VietQR, thanh toán nhiều lần cho
+     cùng một đơn.
+  2. /staff/chot-ca: nhập tiền đếm được trong két lệch với hệ thống -> bắt
+     buộc ghi giải trình -> giamsattn duyệt.
+  3. Hoàn tiền một phiên: điểm cộng bị thu hồi, điểm đã dùng được trả lại.
+
+LUỒNG 9 - Đặt tiệc
+  Tạo tiệc trước ít hơn số ngày tối thiểu (bị chặn) -> tạo hợp lệ -> xác nhận
+  -> tạo tiệc khác cùng sảnh, cùng buổi (bị chặn trùng lịch).
+
+LUỒNG 10 - Kho và mua hàng (daubep, quanly)
+  Gợi ý mua hàng -> tạo đơn mua -> duyệt -> nhập phiếu kèm lô và hạn dùng
+  (giá vốn được tính bình quân) -> xuất hao hụt -> xem cảnh báo lô sắp hết hạn.
+
+LUỒNG 11 - Nhân sự
+  Xếp ca -> nhân viên đăng ký ca -> chấm công bằng khuôn mặt hoặc điện thoại
+  -> xin nghỉ phép -> tính lương tự động -> gửi duyệt -> chi lương.
+  ketoan xóa một khoản chi phí (lỗi đã sửa).
+
+LUỒNG 12 - Tài khoản và bảo mật
+  1. Khách đăng nhập bằng 123456 -> bị bắt đổi; không được đặt lại 123456.
+  2. Quên mật khẩu với email không tồn tại: cùng thông báo như email có thật.
+     Link đặt lại chỉ dùng được một lần.
+  3. Đăng nhập sai 5 lần -> bị khóa 15 phút.
+  4. Bấm nút xóa -> chọn Hủy ở hộp xác nhận thì không có gì bị xóa.
+
+LUỒNG 21 - Mục dang dở đã xong (phucvu, quanly, thungan)
+  1. Đăng nhập nhân viên bằng 123456 -> bị đưa tới Hồ sơ, mở trang khác vẫn
+     bị đưa về; đổi lại 123456 bị từ chối; đổi mật khẩu mới -> dùng bình
+     thường. (Máy demo muốn tắt: cau_hinh bao_mat.bat_doi_mk_nhan_vien = 0.)
+  2. Sơ đồ bàn -> bấm bàn đang có khách -> "Món đã gọi" có nút X từng món:
+     món chưa nấu phục vụ hủy được; món đã nấu chỉ Quản lý hủy (ghi hao hụt).
+  3. Khách đặt trước đang ngồi bàn A -> chuyển sang bàn B: Quản lý Đặt bàn
+     hiện lượt đó ở bàn B, bàn A trống cho giờ còn lại. Bàn B đã có lượt đặt
+     khác trong giờ còn lại -> báo lỗi, không chuyển.
+
+LUỒNG 20 - Tiệc giữ sảnh + kế hoạch nguyên liệu (letan, quanly, beptruong)
+  1. Quản lý Đặt tiệc: tạo tiệc tối ở Sảnh Gala vài ngày tới -> chuyển "Đã
+     xác nhận".
+  2. Quản lý Đặt bàn / sơ đồ bàn, chọn đúng ngày đó buổi tối: các bàn của
+     sảnh hiện lý do "Sảnh đã giữ cho tiệc TC..." và không xếp khách lẻ vào
+     được; buổi trưa vẫn trống. Hủy tiệc -> sảnh mở lại.
+  3. Mở chi tiết tiệc -> "Kế hoạch nguyên liệu": danh sách món đã ghép với
+     món trong thực đơn (món chưa ghép tô đỏ), bảng Cần / Khả dụng / Thiếu.
+  4. Bếp -> Mua hàng NVL: nguyên liệu thiếu cho tiệc có nhãn "Thiếu cho
+     tiệc" / "Có tiệc", đề xuất đã cộng phần của tiệc.
+
+LUỒNG 19 - Kiểm kê (daubep đếm, beptruong chốt)
+  1. Kiểm kê & hao hụt -> Tạo phiếu kiểm kê (tạo phiếu thứ hai bị chặn).
+  2. Nhập số đếm vài nguyên liệu (thiếu và thừa) -> Lưu; tick "Chỉ dòng lệch".
+  3. daubep bấm Chốt: bị khóa / báo lỗi. beptruong chốt được.
+  4. Kiểm tra: tồn kho đổi đúng chênh lệch; Xuất nhập kho có phiếu xuất
+     "kiểm kê" và phiếu nhập điều chỉnh; báo cáo hao hụt có dòng kiểm kê.
+
+LUỒNG 18 - Báo cáo lãi lỗ (ketoan, quanly)
+  1. Kế toán & Tài chính -> Báo cáo lãi lỗ -> "12 tháng", theo tháng.
+  2. Đối chiếu tổng doanh thu với trang Phân tích thực đơn cùng kỳ (phải khớp).
+  3. Đổi "Theo ngày" với 30 ngày; di chuột lên biểu đồ xem từng ngày.
+  4. Hủy một món đã nấu (Quản lý) -> dòng "Hao hụt" tăng theo giá vốn món.
+  5. Báo cáo Thu chi (tháng) của Kế toán: doanh thu không còn cộng trùng.
+
+LUỒNG 17 - Thời gian chờ món (khách QR, daubep)
+  1. Quét QR một bàn, gọi 3 món -> bước "Bếp chế biến" hiện "còn ~X phút".
+  2. KDS: thẻ món hiện "còn ~X'"; món xếp sau có số phút lớn hơn.
+  3. Bấm "Bắt đầu chế biến" món đầu -> số phút các món sau giảm dần.
+  4. Đặt cau_hinh bep.sla_phut = 5 -> các món chờ hiện "⚠ sắp trễ".
+
+LUỒNG 16 - Mua hàng theo dự báo (daubep, beptruong)
+  1. Mua hàng NVL: xem bảng gợi ý (khả dụng, dự báo/ngày, hết dự kiến).
+  2. "Tạo đơn nháp tự động" -> chuyển sang tab Chờ duyệt, mỗi NCC một đơn.
+  3. Tải lại trang: các nguyên liệu vừa đặt không còn trong gợi ý.
+  4. beptruong duyệt -> đặt NCC -> nhập kho -> công nợ NCC (luồng cũ).
+
+LUỒNG 15 - Dự báo nhân sự (quanly)
+  1. Xếp ca tự động -> "Dự báo nhu cầu": xem bản đồ nhiệt, bảng đề xuất.
+  2. Đổi "Bàn đồng thời / 1 phục vụ" từ 6 xuống 4 -> Lưu: số phục vụ đề xuất tăng.
+  3. Chọn chỉ "Bếp" -> Áp dụng: trang Định mức đổi số Bếp, Phục vụ giữ nguyên.
+  4. Về Xếp ca -> "Xếp tự động" dùng định mức mới.
+
+LUỒNG 14 - Gắn khách tích điểm (phucvu, thungan)
+  1. phucvu mở bàn trống trên Sơ đồ bàn, gọi món.
+  2. thungan mở Thu ngân POS -> bàn đó: trang mở được (trước đây báo lỗi).
+  3. Nhập SĐT mới + tên -> "Gắn khách": tiêu đề đổi sang tên khách.
+  4. Thu tiền mặt -> khách được cộng điểm (Khách hàng & Hạng).
+  5. Đăng ký web bằng đúng SĐT đó -> đăng nhập thấy điểm vừa tích.
+  6. Trang thanh toán QR của bàn: ô "Tích điểm thành viên", tên bị che.
+
+LUỒNG 13 - Phân tích thực đơn (quanly, daubep)
+  /staff/phan-tich-thuc-don, chọn mốc "12 tháng" (dữ liệu mẫu chỉ đến 08/2026).
+  1. Kiểm tra 4 ô tổng quan, biểu đồ 4 góc, di chuột vào chấm thấy chi tiết món.
+  2. Lọc theo một danh mục: ngưỡng và số món theo nhóm tính lại trong danh mục đó.
+  3. Chọn 30 ngày gần nhất: trang báo "chưa đủ dữ liệu".
+  4. Bảng: bấm tiêu đề cột để sắp xếp, lọc theo nhóm, tìm món, tải CSV.
+  5. Đăng nhập phucvu: bị chặn (403).
+
+
+Lệnh "npm test" đã tự động chạy một phần của các luồng 1, 3, 4, 5 và 12.
+
+================================================================================
+3. NGHIỆP VỤ NÊN BỔ SUNG
+================================================================================
+
+Nghiệp vụ vận hành (nên có):
+  - Công nợ và thanh toán nhà cung cấp: phiếu nhập tự sinh công nợ, trả tiền
+    ghi vào sổ chi. Đây là nửa còn thiếu của luồng mua hàng.
+  - Kiểm kê định kỳ: đếm tồn thực tế so với hệ thống, tự sinh phiếu điều
+    chỉnh, báo cáo hao hụt (nối với nhật ký huy_mon).
+  - Tiền cọc và hợp đồng tiệc thật: đi qua payments, sinh danh sách nguyên
+    liệu cần chuẩn bị cho ngày tiệc, khóa bàn hoặc sảnh trong hệ thống đặt bàn.
+  - Phân quyền duyệt theo ngưỡng: hoàn tiền, hủy món đã nấu và giảm giá tay
+    trên một mức nhất định thì Quản lý phải duyệt, có nhật ký.
+  - Báo cáo lãi lỗ theo ngày và theo món: doanh thu - giá vốn nguyên liệu -
+    chi phí. Dữ liệu xuat_kho.gia_tri đã có sẵn.
+
+Tính năng "thông minh" (nên chọn 2-3 cái làm điểm nhấn khóa luận):
+  1. Phân tích thực đơn (menu engineering): xếp món vào 4 nhóm "ngôi sao /
+     ngựa kéo / câu đố / chó" theo mức bán chạy và lãi gộp, từ đó gợi ý nâng
+     giá, đẩy món hoặc bỏ món.
+  2. Dự đoán khả năng no-show: chấm điểm rủi ro từng lượt đặt (lịch sử khách,
+     giờ, số khách, kênh đặt) để tự quyết định có yêu cầu cọc hay đặt dư bàn.
+  3. Phát hiện bất thường: cảnh báo nhân viên hoặc ca có tỷ lệ hủy món, hoàn
+     tiền, giảm giá hay lệch két cao bất thường. Dùng dữ liệu huy_mon,
+     payments, shift_closings đã có.
+  4. Dự báo nhu cầu để xếp ca: từ dự báo lượng khách theo giờ (đã có dự báo
+     nguyên liệu) suy ra số nhân viên cần cho từng ca, nối vào chức năng xếp ca.
+  5. Ước tính thời gian chờ: dựa trên tốc độ bếp và mức độ đông, báo cho khách
+     QR "món khoảng 15 phút nữa", báo cho lễ tân "bàn trống sau khoảng 20 phút".
+  6. Phân khúc khách hàng (RFM): chia khách theo lần đến gần nhất, tần suất và
+     mức chi, rồi gửi khuyến mãi đúng nhóm, ví dụ khách lâu không quay lại.
+
+================================================================================
+4. NHẬT KÝ ĐÃ SỬA (cập nhật 08/11/2026)
+================================================================================
+Đã đẩy lên GitHub nhánh bao (4 commit). Chạy "npm test" để kiểm tra lại toàn bộ.
+Máy khác sau khi pull: npm install, rồi chạy các lệnh migration:
+  npm run taikhoan:setup / vanhanh:setup / kho:doisoat / tiec:tien /
+  congno:setup / nghiphep:setup
+
+a864b7b - BẢO MẬT TÀI KHOẢN
+  - Giỏ hàng: chặn sửa/xóa giỏ của phiên khác, chặn số lượng âm hoặc quá lớn.
+  - QR gọi món: chặn số lượng không hợp lệ.
+  - Mật khẩu MD5 -> bcrypt, tài khoản cũ tự nâng cấp khi đăng nhập.
+  - Khách dùng mật khẩu mặc định 123456 bị bắt đổi ngay.
+  - Quên mật khẩu: gửi link có hạn 30 phút, dùng 1 lần (thay vì gửi mật khẩu mới).
+  - Khóa 15 phút khi đăng nhập sai 5 lần.
+  - Chống CSRF, cookie SameSite, helmet; các nút xóa đổi từ GET sang POST.
+  - Thanh toán giả lập phải bật chủ động; tách công tắc khách / thu ngân.
+    Khi mở online (npm run qr:online) đặt PAYMENT_SIMULATION_KHACH=0.
+
+bcd9987 - NGHIỆP VỤ TẠI BÀN VÀ THU NGÂN
+  - MỚI: hủy/trả món (trang tính tiền). Món chưa nấu: nhân viên hủy;
+    món đã vào bếp: chỉ Quản lý; bắt buộc lý do; có nhật ký.
+  - MỚI: chuyển bàn, gộp bàn (sơ đồ bàn).
+  - MỚI: báo hết món theo tồn kho; QR hiện "Tạm hết".
+    Tắt bằng cau_hinh 'kho.chan_khi_het_mon' = 0.
+  - Bếp cũ dùng chung trạng thái và trừ kho với KDS.
+  - Xóa khách hàng: chỉ Quản lý, chỉ khách chưa có lịch sử.
+  - [Mục 2] Hoàn tiền: chỉ Quản lý, bắt buộc lý do, trong 72 giờ,
+    chống bấm 2 lần, trả lại lượt dùng mã giảm giá.
+  - QR thanh toán: không mở đơn giao hàng, không thanh toán lại đơn đã trả.
+
+ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
+  - [Mục 6] Công nợ nhà cung cấp (/staff/cong-no-ncc). 54 phiếu nhập cũ
+    được coi là đã trả.
+  - [Mục 4] Nhập kho nhanh đi qua phiếu nhập; đã đối soát 135 nguyên liệu
+    (phiếu tồn đầu kỳ PNDK-20261108).
+  - [Mục 5] Đặt tiệc: trạng thái đúng thứ tự, cọc >= 30% và thanh toán là
+    khoản thu thật (vào chốt ca), hoàn cọc chỉ Quản lý.
+  - [Mục 3] Giao hàng: chưa nấu xong không được sang "Đang giao"; chống ghi đè.
+  - [Mục 7] Nghỉ phép: cấp trên trực tiếp duyệt (/staff/duyet-nghi-phep),
+    không tự duyệt, Kế toán chỉ xem, chặn đơn trùng ngày.
+  - Sửa lỗi cũ: nút xóa chi phí của Kế toán chưa từng chạy được (sai cột).
+
+7f6eda7 - TÁCH SERVER.JS VÀ TEST TỰ ĐỘNG
+  - Tách server.js (3.958 -> ~2.800 dòng) thành routes/quanTri.js,
+    routes/keToan.js, routes/bepQuanLy.js.
+  - Xóa route trùng, màn hình bếp cũ và các service không dùng.
+  - Sửa đánh giá: khách chưa có đơn không gửi được; khách đã thanh toán
+    được đánh giá (trước đây bị chặn); số sao 1-5.
+  - [Mục 1] Xác nhận đơn / khách đến kiểm tra trạng thái; đơn giao hàng
+    chờ thanh toán không xác nhận tay được.
+  - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
+
+(chưa commit) - CÁC MỤC DANG DỞ
+  - Nhân viên dùng mật khẩu mặc định 123456 phải đổi trước khi vào các trang
+    nhân viên / KDS / quản trị (API, chấm công không bị chặn); không cho đặt
+    lại 123456. Migration 045 "npm run taikhoan:doimk" thêm khóa cấu hình
+    bao_mat.bat_doi_mk_nhan_vien (1 bật, 0 tắt).
+  - Sơ đồ bàn: nút hủy món ngay trong danh sách "Món đã gọi", dùng chung API
+    và quy tắc với trang thu ngân (lý do bắt buộc, món đã nấu cần quản lý).
+  - Chuyển bàn khách ĐẶT TRƯỚC: các ô giờ còn lại của lượt đặt và
+    reservation_tables chuyển sang bàn mới (ô đã qua giữ lại làm lịch sử);
+    bàn mới đã có lượt đặt khác trong giờ còn lại thì chặn.
+
+(chưa commit) - TIỆC GIỮ SẢNH + KẾ HOẠCH NGUYÊN LIỆU
+  - Tiệc ở trạng thái Đã xác nhận / Đã cọc khóa mọi bàn của sảnh trong khung
+    giờ buổi đó (trưa 10:30-14:00, tối 17:30-22:00) trên đặt bàn và sơ đồ bàn,
+    lý do "EVENT - Sảnh đã giữ cho tiệc ...". Hủy tiệc thì mở lại ngay.
+  - MỚI: nút "Kế hoạch nguyên liệu" ở chi tiết tiệc (API
+    /api/staff/dat-tiec/:id/nguyen-lieu): thực đơn tiệc chỉ lưu tên món nên
+    ghép tên với món ăn (bỏ dấu, bỏ mã món, trùng >= 60% từ; "Set B" không
+    ghép nhầm "Set A"), nhân công thức x số bàn x số phần/món/bàn (cấu hình
+    tiec.phan_moi_mon_moi_ban, mặc định 3). 95/98 món tiệc hiện có ghép được;
+    món tổng hợp (VD "Nigiri tổng hợp") liệt kê để bếp tự tính.
+  - Nhu cầu tiệc được cộng vào DỰ BÁO MUA HÀNG đúng ngày tổ chức và coi là
+    nhu cầu chắc chắn: tiệc sau thời gian giao hàng vẫn kích hoạt đặt ngay
+    (mức "Thiếu cho tiệc"). Sửa luôn: chưa có lịch sử bán vẫn tính nhu cầu tiệc.
+  - Giới hạn: món ghép "A & B" mới ghép được một nửa (lấy món khớp nhất).
+
+(chưa commit) - KIỂM KÊ & HAO HỤT
+  - MỚI: /staff/kitchen/kho/kiem-ke (menu Bếp "Kiểm kê & hao hụt"). Tạo phiếu
+    = chụp tồn sổ sách mọi nguyên liệu; bếp nhập số đếm (lưu nhiều lần, tính
+    chênh lệch ngay khi gõ); chốt: thiếu -> phiếu xuất "kiểm kê" (trừ lô
+    FIFO), thừa -> phiếu nhập điều chỉnh không NCC (không phát sinh công nợ).
+    Chênh tính theo tồn LÚC CHỤP nên vẫn bán hàng trong lúc đếm được.
+    Người lập không tự chốt (trừ Quản lý); mỗi lúc chỉ một phiếu đang đếm.
+  - MỚI: báo cáo hao hụt theo kỳ: theo lý do xuất, nguyên liệu hao hụt nhiều
+    nhất, món đã nấu bị hủy; tỷ lệ hao hụt / giá vốn bán hàng.
+  - Migration 044 "npm run kho:kiemke".
+
+(chưa commit) - BÁO CÁO LÃI LỖ
+  - MỚI: /staff/bao-cao-lai-lo (menu Kế toán & Tài chính): doanh thu (món +
+    tiệc), giá vốn theo công thức, lãi gộp, lương (phân bổ theo ngày), chi phí
+    khác, hao hụt (món đã nấu bị hủy + xuất hao hụt), lợi nhuận; theo ngày /
+    tuần / tháng, theo danh mục, top món lãi nhiều / ít; biểu đồ + bảng số.
+  - SỬA LỖI báo cáo thu chi tháng của Kế toán: doanh thu bị CỘNG TRÙNG với
+    chot_ca.tong_tien; chi phí nguyên liệu bỏ sót phiếu nhập (chỉ đọc bảng
+    nhap_kho cũ). Nay: doanh thu chỉ từ đơn đã trả (theo ngay_dat), nguyên liệu
+    = phiếu nhập (trừ tồn đầu kỳ) + nhap_kho cũ + phiếu chi mua gấp.
+  - Hiệu năng: 12 tháng từ 8,9 giây xuống ~0,5 giây (chỉ mục bao phủ migration
+    043 "npm run baocao:chimuc" + bỏ COUNT DISTINCT trên chuỗi dài).
+  - Lưu ý dữ liệu demo: xuat_kho.gia_tri cũ trống, bảng lương chỉ có tháng
+    10/2026 (= 0đ) nên lợi nhuận hiện = lãi gộp.
+
+(chưa commit) - THỜI GIAN CHỜ MÓN
+  - MỚI: KDS hiện "còn ~X phút" và "⚠ sắp trễ" (đã chờ + dự kiến còn lại >
+    cam kết 30 phút, cau_hinh bep.sla_phut) - cảnh báo TRƯỚC khi trễ thật.
+  - MỚI: trang gọi món QR hiện "còn ~X phút" từng món + "Dự kiến món cuối
+    ra trong khoảng X phút" (đủ 3 ngôn ngữ).
+  - Cách tính: thời gian nấu = trung vị các lần nấu hợp lệ (2-45 phút) của
+    món, thiếu mẫu thì trung vị cả bếp (hiện 16 phút); mô phỏng hàng đợi K
+    đầu bếp đang trong ca (lịch làm việc / định mức).
+  - Lưu ý: dữ liệu KDS demo phần lớn là bấm thử (<2 phút) hoặc quên bấm
+    (>45 phút) nên đã bị loại; số liệu sẽ chính xác dần khi bếp chạy thật.
+
+(chưa commit) - MUA HÀNG THEO DỰ BÁO
+  - Gợi ý mua hàng (/staff/kitchen/mua-hang) đổi sang dự báo: nhu cầu từng
+    ngày = trung bình xuất kho cùng thứ 8 tuần gần nhất x hệ số mùa vụ; khả
+    dụng = tồn - phần giữ cho món đã gọi + hàng đang về; hàng về sau 2 ngày,
+    đặt đủ dùng thêm 7 ngày + định mức an toàn (cau_hinh mua_hang.*).
+    Hiện "Dự báo/ngày", "Hết dự kiến", nhãn "Hết trước khi hàng về".
+  - MỚI: nút "Tạo đơn nháp tự động": gom gợi ý theo NCC gần nhất, đơn giá
+    nhập gần nhất, đơn chờ duyệt. Chạy lại không đặt trùng.
+  - SỬA LỖI: "NCC gần nhất" bị mất vì phiếu tồn đầu kỳ PNDK (không NCC) là
+    phiếu mới nhất - nay bỏ qua phiếu không có NCC.
+
+(chưa commit) - DỰ BÁO NHU CẦU NHÂN SỰ
+  - MỚI: /staff/xep-ca/du-bao (nút "Dự báo nhu cầu" ở trang Xếp ca / Định mức).
+    Nền = trung bình 8 tuần gần nhất có dữ liệu theo thứ x giờ; nhân hệ số mùa
+    vụ theo tháng; tải đồng thời theo thời gian ngồi 90 phút; đổi ra số người
+    theo năng suất (chỉnh được). Bản đồ nhiệt + bảng hiện tại -> đề xuất +
+    giờ công/tuần; "Áp dụng" ghi vào định mức cho chức vụ được chọn.
+  - Kết quả mẫu tuần 09/11/2026: tối thứ 7 cần 3 phục vụ + 4 bếp (định mức
+    cũ 2 + 2). Chưa tính ngày lễ / sự kiện.
+
+(chưa commit) - GẮN KHÁCH VÀO ĐƠN TẠI BÀN (TÍCH ĐIỂM)
+  - MỚI: thu ngân nhập SĐT trên trang tính tiền (ô "Khách hàng tích điểm");
+    khách tự nhập trên trang thanh toán QR (chỉ tích, không dùng điểm; tên
+    bị che; tối đa 5 lần / 15 phút). Khách mới được tạo hồ sơ chưa đăng ký;
+    đăng ký web bằng đúng số đó sẽ nhận lại hồ sơ cùng điểm.
+    (Chưa xác minh SĐT bằng OTP - người biết số có thể nhận hồ sơ trước.)
+  - SỬA LỖI: đơn mở bàn từ sơ đồ bàn gắn khách id 1 không tồn tại -> trang
+    tính tiền báo "không tìm thấy đơn" và tự giải phóng bàn. Nay mỗi bàn có
+    tài khoản vãng lai riêng; thanh toán dùng LEFT JOIN nên cả 10.340 đơn cũ
+    có mã khách không tồn tại cũng tính tiền / đóng đơn được.
+  - SỬA LỖI: trang đăng ký in mật khẩu ra console (đã xóa).
+
+(chưa commit) - PHÂN TÍCH THỰC ĐƠN
+  - MỚI: /staff/phan-tich-thuc-don - xếp 235 món vào 4 nhóm Ngôi sao / Ngựa
+    kéo / Câu đố / Chó (Kasavana & Smith), kèm gợi ý giá và hành động.
+
+================================================================================
+5. LỘ TRÌNH TÍNH NĂNG (trạng thái)
+================================================================================
+Dữ liệu hiện có: 16.803 đơn đã thanh toán (07/2025-08/2026), 258 món có giá
+vốn; nhưng chỉ 13 lượt đặt bàn, 6 đánh giá, 19 khách có tài khoản.
+
+  [ĐÃ LÀM]    1. Phân tích thực đơn (menu engineering).
+  [ĐÃ LÀM]    5. Gắn số điện thoại khách vào đơn tại bàn để tích điểm
+                 (tiền đề cho phân tích khách hàng).
+  [ĐÃ LÀM]    2. Dự báo lượng khách theo giờ -> định mức xếp ca.
+  [ĐÃ LÀM]    3. Tự lập đơn mua hàng nháp từ dự báo nguyên liệu.
+  [ĐÃ LÀM]    4. Ước tính thời gian chờ món (QR + cảnh báo bếp).
+  [ĐÃ LÀM]    6. Báo cáo lãi lỗ theo ngày / theo món.
+  [ĐÃ LÀM]    7. Kiểm kê định kỳ và báo cáo hao hụt.
+  [ĐÃ LÀM]    8. Đặt tiệc giữ sảnh trên sơ đồ bàn + kế hoạch nguyên liệu.
+  [CHỜ - cần tài khoản] 9. Thông báo khách qua Zalo / SMS: cần đăng ký
+               Zalo OA + ZNS (mẫu tin phải được Zalo duyệt) hoặc nhà mạng SMS
+               brandname (eSMS, SpeedSMS...) và API key trả phí. Có tài khoản
+               thì nối vào chỗ đang gửi email (nhắc lịch đặt bàn, xác nhận cọc).
+  [CHỜ - cần thêm dữ liệu] Dự đoán no-show, phát hiện gian lận, phân khúc
+               khách RFM, phân tích cảm xúc đánh giá (làm theo quy tắc trước).
+  [ĐÃ LÀM]    Nút hủy món trên sơ đồ bàn; chuyển bàn khách đặt trước cập
+               nhật reservation_tables; bắt nhân viên đổi mật khẩu 123456.
