@@ -545,59 +545,63 @@ const personnelService = {
   },
 
   // ============ FINANCIAL REPORTS ============
+  /**
+   * Bao cao thu chi THANG (trang ke toan /staff/accountant/reports).
+   *
+   * Sua so voi ban cu:
+   *   - Doanh thu cu = don da thanh toan + chot_ca.tong_tien -> CONG TRUNG (chot
+   *     ca la so tien dem ket / so nhap tay, khong phai doanh thu moi). Nay chi
+   *     tinh don da thanh toan, loc theo cot DATE ngay_dat (khong doan chuoi
+   *     `dates`).
+   *   - Chi phi nguyen lieu cu chi doc bang nhap_kho cu; moi lan nhap kho nay
+   *     di qua phieu_nhap -> bao cao bo sot. Nay = phieu nhap trong thang (tru
+   *     phieu ton dau ky PNDK, khong phai mua that) + nhap_kho cu + phieu chi
+   *     "mua nguyen lieu gap" trong so quy.
+   *   - Chi phi khac = chi_phi_khac + phieu chi trong so quy, tru tra NCC (da
+   *     tinh qua phieu nhap) va nguyen lieu (da tinh o tren).
+   * Day la goc DONG TIEN (mua bao nhieu tinh bay nhieu). Goc LAI LO theo gia
+   * von mon da ban: services/laiLoService.js.
+   */
   getFinancialReport: async (month, year) => {
     try {
-      // 1. Revenue from hopdong (Paid) + chot_ca (Shift Closing)
-      const [revResult] = await db.query(`
-        SELECT SUM(amount) as total FROM (
-          SELECT thanhtien as amount FROM hopdong 
-          WHERE tinhtrang = 3 
-          AND MONTH(COALESCE(
-            STR_TO_DATE(dates, '%Y-%m-%d'), 
-            STR_TO_DATE(dates, '%m/%d/%Y'),
-            STR_TO_DATE(dates, '%c/%e/%Y')
-          )) = ?
-          AND YEAR(COALESCE(
-            STR_TO_DATE(dates, '%Y-%m-%d'), 
-            STR_TO_DATE(dates, '%m/%d/%Y'),
-            STR_TO_DATE(dates, '%c/%e/%Y')
-          )) = ?
-          UNION ALL
-          SELECT tong_tien as amount FROM chot_ca
-          WHERE MONTH(ngay) = ? AND YEAR(ngay) = ?
-        ) as combined_revenue`,
-        [month, year, month, year]
-      );
-      
-      // 2. Inventory Costs from nhap_kho
-      const [invResult] = await db.query(
-        'SELECT SUM(so_luong * gia_nhap) as total FROM nhap_kho WHERE MONTH(ngay_nhap) = ? AND YEAR(ngay_nhap) = ?',
-        [month, year]
-      );
-      
-      // 3. Salary Costs from luong (Processed)
+      const so = (r) => Number((r && r[0] && r[0].total) || 0);
+      const [revResult] = await db.query(
+        `SELECT SUM(thanhtien) AS total FROM hopdong
+          WHERE tinhtrang = 3 AND id_mon > 0 AND MONTH(ngay_dat) = ? AND YEAR(ngay_dat) = ?`,
+        [month, year]);
+      const [pnResult] = await db.query(
+        `SELECT SUM(tong_tien) AS total FROM phieu_nhap
+          WHERE trangthai = 1 AND ma_phieu NOT LIKE 'PNDK%' AND MONTH(ngay_nhap) = ? AND YEAR(ngay_nhap) = ?`,
+        [month, year]);
+      const [nkResult] = await db.query(
+        'SELECT SUM(so_luong * gia_nhap) AS total FROM nhap_kho WHERE MONTH(ngay_nhap) = ? AND YEAR(ngay_nhap) = ?',
+        [month, year]);
+      const [pcNl] = await db.query(
+        `SELECT SUM(so_tien) AS total FROM phieu_thu_chi
+          WHERE loai = 'chi' AND trang_thai = 'hop_le' AND danh_muc = 'nguyen_lieu' AND MONTH(thoi_diem) = ? AND YEAR(thoi_diem) = ?`,
+        [month, year]).catch(() => [[{ total: 0 }]]);
       const [salResult] = await db.query(
-        'SELECT SUM(tong_luong) as total FROM luong WHERE trang_thai >= 2 AND thang = ? AND nam = ?',
-        [month, year]
-      );
-      
-      // 4. Other Expenses from chi_phi_khac
+        'SELECT SUM(tong_luong) AS total FROM luong WHERE trang_thai >= 2 AND thang = ? AND nam = ?',
+        [month, year]);
       const [othResult] = await db.query(
-        'SELECT SUM(so_tien) as total FROM chi_phi_khac WHERE MONTH(ngay) = ? AND YEAR(ngay) = ?',
-        [month, year]
-      );
-      
-      const revenue = Number(revResult[0]?.total || 0);
-      const inventoryCosts = Number(invResult[0]?.total || 0);
-      const salaryCosts = Number(salResult[0]?.total || 0);
-      const otherExpenses = Number(othResult[0]?.total || 0);
-      
+        'SELECT SUM(so_tien) AS total FROM chi_phi_khac WHERE MONTH(ngay) = ? AND YEAR(ngay) = ?',
+        [month, year]);
+      const [pcKhac] = await db.query(
+        `SELECT SUM(so_tien) AS total FROM phieu_thu_chi
+          WHERE loai = 'chi' AND trang_thai = 'hop_le' AND danh_muc NOT IN ('tra_ncc', 'nguyen_lieu', 'hoan_tien')
+            AND MONTH(thoi_diem) = ? AND YEAR(thoi_diem) = ?`,
+        [month, year]).catch(() => [[{ total: 0 }]]);
+
+      const revenue = so(revResult);
+      const inventoryCosts = so(pnResult) + so(nkResult) + so(pcNl);
+      const salaryCosts = so(salResult);
+      const otherExpenses = so(othResult) + so(pcKhac);
       return {
         revenue,
         inventoryCosts,
         salaryCosts,
         otherExpenses,
-        netProfit: revenue - (inventoryCosts + salaryCosts + otherExpenses)
+        netProfit: revenue - (inventoryCosts + salaryCosts + otherExpenses),
       };
     } catch (err) {
       console.error('Error calculating financial report:', err);

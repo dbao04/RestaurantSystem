@@ -461,6 +461,25 @@ module.exports = function (io) {
     res.json(hoaDon);
   }));
 
+  /*
+   * Gan so dien thoai khach vao don tai ban de tich diem (khachTaiBanService).
+   * Thu ngan doi chieu truc tiep voi khach nen nhan du ten + diem, va sau khi
+   * gan thi dung diem duoc ngay tren hoa don.
+   */
+  router.post('/staff/thanh-toan/:sesis/gan-khach', requireThuNgan, batJson(async (req, res) => {
+    const kt = require('../services/khachTaiBanService');
+    try {
+      const kq = await kt.ganKhach(req.params.sesis, { sdt: req.body.sdt, ten: req.body.ten });
+      await ghiNhatKy(req, 'gan_khach_vao_don', 0, { sesis: req.params.sesis, id_kh: kq.id_kh, la_moi: kq.la_moi });
+      res.json({ thanhCong: true, ...kq });
+    } catch (e) {
+      if (e instanceof kt.LoiGanKhach) {
+        return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : 400).json({ thanhCong: false, loi: e.message });
+      }
+      throw e;
+    }
+  }));
+
   router.post('/staff/thanh-toan/:sesis/tao-phien', requireThuNgan, batJson(async (req, res) => {
     const kq = await tt.taoPhien({
       sesis: req.params.sesis,
@@ -610,6 +629,32 @@ module.exports = function (io) {
       kenh: 'khach_qr',
     });
     res.json(hoaDon);
+  }));
+
+  /*
+   * Khach tu nhap so dien thoai tren trang thanh toan QR de tich diem.
+   * Khong xac minh duoc chu so -> chi TICH diem (trang QR khong cho dung diem),
+   * ten tra ve da che, va moi phien chi thu 5 lan / 15 phut de khong do duoc
+   * thong tin khach qua so dien thoai.
+   */
+  router.post('/qr/thanh-toan/:sesis/tich-diem', bat(kiemTraPhienBanMo), bat(chanKhiDaTraXong), batJson(async (req, res) => {
+    const gioiHan = require('../middleware/gioiHanDangNhap');
+    const biKhoa = gioiHan.soGiayBiKhoa(req, 'tich_diem', req.params.sesis);
+    if (biKhoa) return res.status(429).json({ thanhCong: false, loi: gioiHan.thongBaoKhoa(biKhoa) });
+    gioiHan.ghiThatBai(req, 'tich_diem', req.params.sesis);
+
+    const kt = require('../services/khachTaiBanService');
+    try {
+      const kq = await kt.ganKhach(req.params.sesis, { sdt: req.body.sdt, ten: req.body.ten });
+      res.json({ thanhCong: true, ten: kq.ten_an, sdt: kq.sdt_an, la_moi: kq.la_moi });
+    } catch (e) {
+      if (e instanceof kt.LoiGanKhach) {
+        // Khong noi "da gan khach khac" cho nguoi ngoai - chi bao chung.
+        const loi = e.ma === 'CONFLICT' ? 'Đơn này đã được ghi nhận tích điểm.' : e.message;
+        return res.status(e.ma === 'NOT_FOUND' ? 404 : 400).json({ thanhCong: false, loi });
+      }
+      throw e;
+    }
   }));
 
   router.post('/qr/thanh-toan/:sesis/tao-phien', bat(kiemTraPhienBanMo), bat(chanKhiDaTraXong), batJson(async (req, res) => {

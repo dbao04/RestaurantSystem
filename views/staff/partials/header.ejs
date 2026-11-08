@@ -490,6 +490,10 @@
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>" href="/staff/kitchen/recipes" data-match="/staff/kitchen/recipes"><i class="fas fa-scroll"></i><span>Công thức món ăn</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='inventory' ? 'active' : '' %>" href="/staff/kitchen/inventory" data-match="/staff/kitchen/inventory"><i class="fas fa-boxes-stacked"></i><span>Tồn kho nguyên liệu</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kho-bep' ? 'active' : '' %>" href="/staff/kitchen/kho" data-match="/staff/kitchen/kho"><i class="fas fa-right-left"></i><span>Xuất nhập kho</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kiem-ke' ? 'active' : '' %>" href="/staff/kitchen/kho/kiem-ke" data-match="/staff/kitchen/kho/kiem-ke"><i class="fas fa-clipboard-list"></i><span>Kiểm kê &amp; hao hụt</span></a>
+          <% if (!(typeof tuCapBac === 'function' && tuCapBac(2))) { %>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='phan-tich-thuc-don' ? 'active' : '' %>" href="/staff/phan-tich-thuc-don" data-match="/staff/phan-tich-thuc-don"><i class="fas fa-chart-pie"></i><span>Phân tích thực đơn</span></a>
+          <% } %>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='mua-hang' ? 'active' : '' %>" href="/staff/kitchen/mua-hang" data-match="/staff/kitchen/mua-hang"><i class="fas fa-cart-flatbed"></i><span>Mua hàng NVL</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='thong-ke-bep' ? 'active' : '' %>" href="/staff/kitchen/thong-ke" data-match="/staff/kitchen/thong-ke"><i class="fas fa-chart-pie"></i><span>Thống kê bếp</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kitchen-shift' ? 'active' : '' %>" href="/staff/kitchen/shift" data-match="/staff/kitchen/shift"><i class="fas fa-stopwatch"></i><span>Chốt ca Bếp</span></a>
@@ -512,6 +516,7 @@
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='doi-soat' ? 'active' : '' %>" href="/staff/thanh-toan/doi-soat" data-match="/staff/thanh-toan/doi-soat"><i class="fas fa-file-invoice-dollar"></i><span>Đối soát chốt ca</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='cong-no-ncc' ? 'active' : '' %>" href="/staff/cong-no-ncc" data-match="/staff/cong-no-ncc"><i class="fas fa-handshake"></i><span>Công nợ nhà cung cấp</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bao-cao-lai-lo' ? 'active' : '' %>" href="/staff/bao-cao-lai-lo" data-match="/staff/bao-cao-lai-lo"><i class="fas fa-scale-balanced"></i><span>Báo cáo lãi lỗ</span></a>
         </div>
       <% } %>
 
@@ -530,6 +535,7 @@
           <a class="qt-nav__item" href="/staff/analytics" data-match="/staff/analytics,/analytics"><i class="fas fa-chart-pie"></i><span>Dashboard Phân tích</span></a>
           <a class="qt-nav__item" href="/staff/du-bao" data-match="/staff/du-bao,/du-bao"><i class="fas fa-wand-magic-sparkles"></i><span>Dự báo AI</span></a>
           <a class="qt-nav__item" href="/staff/xep-ca" data-match="/staff/xep-ca,/admin/xep-ca"><i class="fas fa-calendar-check"></i><span>Xếp ca tự động</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='phan-tich-thuc-don' ? 'active' : '' %>" href="/staff/phan-tich-thuc-don" data-match="/staff/phan-tich-thuc-don"><i class="fas fa-chart-pie"></i><span>Phân tích thực đơn</span></a>
           <a class="qt-nav__item" href="/staff/schedule/approval" data-match="/staff/schedule/approval,/admin/schedule"><i class="fas fa-calendar-days"></i><span>Duyệt lịch làm việc</span></a>
           <a class="qt-nav__item" href="/staff/khuyen-mai" data-match="/staff/khuyen-mai,/admin/khuyen-mai"><i class="fas fa-ticket"></i><span>Chương trình Khuyến mãi</span></a>
           <a class="qt-nav__item" href="/staff/thanh-vien" data-match="/staff/thanh-vien,/admin/thanh-vien"><i class="fas fa-medal"></i><span>Khách hàng &amp; Hạng</span></a>

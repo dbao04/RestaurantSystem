@@ -128,10 +128,12 @@
                     </div>
                     <textarea name="ghi_chu_noi_bo" rows="3" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
                     <button class="btn btn-sm btn-warning"><i class="fas fa-save"></i> Lưu</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-ke-hoach="<%= d.id %>"><i class="fas fa-carrot"></i> Kế hoạch nguyên liệu</button>
                     <small class="ml-2" data-kq></small>
                   </form>
                 </div>
               </div>
+              <div data-khung-nl="<%= d.id %>" hidden class="pb-2"></div>
             </td>
           </tr>
         <% }) %>
@@ -150,6 +152,39 @@
       if (ct) ct.hidden = !ct.hidden;
     });
   });
+  // Ke hoach nguyen lieu: ghep mon tiec -> mon an -> cong thuc x so ban.
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+  var so = function (n) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 2 }); };
+  document.querySelectorAll('[data-ke-hoach]').forEach(function (nut) {
+    nut.addEventListener('click', async function () {
+      var id = nut.getAttribute('data-ke-hoach');
+      var khung = document.querySelector('[data-khung-nl="' + id + '"]');
+      if (!khung.hidden) { khung.hidden = true; return; }
+      khung.hidden = false; khung.innerHTML = '<span class="text-muted small">Đang tính...</span>';
+      try {
+        var r = await fetch('/api/staff/dat-tiec/' + id + '/nguyen-lieu', { headers: { Accept: 'application/json' } });
+        var d = await r.json();
+        if (!d.ok) throw new Error(d.thong_bao || 'Lỗi');
+        var mon = d.mon.map(function (m) {
+          return '<li>' + esc(m.ten) + (m.id_mon ? ' <span class="text-muted">→ ' + esc(m.ten_mon) + '</span>' : ' <span class="text-danger">(chưa ghép được món)</span>') + '</li>';
+        }).join('');
+        var nl = d.nguyen_lieu.map(function (n) {
+          return '<tr><td>' + esc(n.ten) + '</td><td class="text-right">' + so(n.can) + ' ' + esc(n.dvt || '') + '</td><td class="text-right">' + so(n.kha_dung) + '</td>' +
+            '<td class="text-right ' + (n.thieu > 0 ? 'text-danger font-weight-bold' : 'text-muted') + '">' + (n.thieu > 0 ? so(n.thieu) : '—') + '</td></tr>';
+        }).join('');
+        khung.innerHTML =
+          '<div class="small mb-1"><b>Kế hoạch nguyên liệu</b> · ' + d.tiec.so_ban + ' bàn × ' + d.phan_moi_mon_moi_ban + ' phần/món/bàn · ước tính ' +
+          Math.round(d.tong_gia_tri).toLocaleString('vi-VN') + 'đ giá vốn · <span class="' + (d.so_thieu ? 'text-danger' : 'text-success') + '">' +
+          (d.so_thieu ? d.so_thieu + ' nguyên liệu thiếu' : 'đủ nguyên liệu') + '</span></div>' +
+          '<div class="row"><div class="col-md-4"><ul class="small pl-3 mb-2">' + mon + '</ul></div>' +
+          '<div class="col-md-8"><div class="table-responsive" style="max-height:260px;overflow:auto"><table class="table table-sm mb-0 small">' +
+          '<thead class="thead-light"><tr><th>Nguyên liệu</th><th class="text-right">Cần</th><th class="text-right">Khả dụng</th><th class="text-right">Thiếu</th></tr></thead><tbody>' +
+          (nl || '<tr><td colspan="4" class="text-muted">Chưa ghép được món nào với công thức.</td></tr>') + '</tbody></table></div>' +
+          '<div class="small text-muted mt-1">Nhu cầu này đã được cộng vào gợi ý Mua hàng NVL theo ngày tổ chức (khi tiệc ở trạng thái Đã xác nhận / Đã cọc).</div></div></div>';
+      } catch (e) { khung.innerHTML = '<span class="text-danger small">' + esc(e.message) + '</span>'; }
+    });
+  });
+
   document.querySelectorAll('[data-cap-nhat]').forEach(function (f) {
     var chon = f.querySelector('[data-chon-tt]');
     function hienO() {

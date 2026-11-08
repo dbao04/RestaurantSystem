@@ -162,6 +162,16 @@
       <% }); %>
     </div>
 
+    <% if (hoaDon.thongTin.la_khach_vang_lai && !hoaDon.tien.la_don_giao) { %>
+    <div class="khoi" id="khoi-tich-diem">
+      <h2><%= t('ttqr.tich_diem') %></h2>
+      <div class="o-ma">
+        <input type="tel" id="sdt-tich-diem" placeholder="<%= t('ttqr.nhap_sdt') %>" autocomplete="tel" maxlength="15" style="text-transform:none">
+        <button id="nut-tich-diem"><%= t('ttqr.ghi_nhan') %></button>
+      </div>
+      <div class="bao" id="bao-tich-diem" style="color:var(--text-muted)"><%= t('ttqr.tich_diem_mo_ta') %></div>
+    </div>
+    <% } %>
     <div class="khoi">
       <h2><%= t('ttqr.ma_giam_gia') %></h2>
       <div class="o-ma">
@@ -459,6 +469,27 @@
     $('man-xong').classList.remove('an');
     window.scrollTo(0, 0);
   }
+})();
+</script>
+<script>
+(function () {
+  var nut = document.getElementById('nut-tich-diem');
+  if (!nut) return;
+  var MAU = <%- JSON.stringify(t('ttqr.da_tich_diem')) %>;
+  var SESIS_TD = <%- JSON.stringify(hoaDon.sesis) %>;
+  nut.addEventListener('click', function () {
+    var bao = document.getElementById('bao-tich-diem');
+    nut.disabled = true;
+    fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS_TD) + '/tich-diem', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ sdt: document.getElementById('sdt-tich-diem').value }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.thanhCong) { bao.style.color = '#c0392b'; bao.textContent = d.loi || ''; nut.disabled = false; return; }
+      bao.style.color = '#1e7e34';
+      bao.textContent = MAU.replace('{ten}', d.ten).replace('{sdt}', d.sdt);
+      document.getElementById('sdt-tich-diem').disabled = true;
+    }).catch(function () { nut.disabled = false; });
+  });
 })();
 </script>
 </body>

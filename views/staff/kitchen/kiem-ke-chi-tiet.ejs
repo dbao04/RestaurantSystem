@@ -1,0 +1,134 @@
+<%
+  var activePage = 'kiem-ke';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n, k) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: k == null ? 3 : k }); };
+  var dangDem = ct.trang_thai === 'dang_dem';
+  var tuChot = idNv && Number(ct.id_nv_tao) === Number(idNv) && session.staffRole !== 'Quan ly' && !session.adminlogin;
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+<style>
+  .kk-o { width: 110px; text-align: right; }
+  .kk-thieu { color: #b3352c; font-weight: 700; }
+  .kk-thua { color: #1f7a4a; font-weight: 700; }
+</style>
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-clipboard-list text-warning"></i> Phiếu kiểm kê <%= ct.ma_phieu %></h1>
+    <div class="kb-phu">
+      <% if (dangDem) { %>Tồn sổ sách đã chụp lúc tạo phiếu. Nhập số đếm thực tế (để trống = chưa đếm, không điều chỉnh). Chênh lệch tính so với lúc chụp.
+      <% } else { %>Trạng thái: <b><%= ct.trang_thai === 'da_chot' ? 'Đã chốt' : 'Đã hủy' %></b>
+        <% if (ct.id_px) { %> · <a href="/staff/kitchen/kho/phieu/xuat/<%= ct.id_px %>" target="_blank">phiếu xuất thiếu</a><% } %>
+        <% if (ct.id_pn) { %> · <a href="/staff/kitchen/kho/phieu/nhap/<%= ct.id_pn %>" target="_blank">phiếu nhập thừa</a><% } %>
+      <% } %>
+    </div>
+  </div>
+  <div class="kb-nut"><a href="/staff/kitchen/kho/kiem-ke" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Danh sách</a></div>
+</div>
+
+<div class="kb-the mb-3">
+  <div class="d-flex flex-wrap align-items-center mb-2" style="gap:.5rem">
+    <input type="search" class="form-control form-control-sm" style="max-width:240px" id="tim" placeholder="Tìm nguyên liệu...">
+    <label class="small mb-0"><input type="checkbox" id="chiLech"> Chỉ dòng lệch</label>
+    <span class="small text-muted ml-2" id="tomTat"></span>
+    <% if (dangDem) { %>
+      <button type="button" class="btn btn-sm btn-light ml-auto" id="dienSoSach" title="Điền số đếm = sổ sách cho các dòng còn trống">Điền dòng trống = sổ sách</button>
+      <button type="button" class="btn btn-sm btn-primary" id="luu"><i class="fas fa-save"></i> Lưu số đếm</button>
+      <button type="button" class="btn btn-sm btn-success" id="chot" <%= !duocChot || tuChot ? 'disabled' : '' %>
+        title="<%= !duocChot ? 'Chỉ bếp trưởng / quản lý được chốt' : tuChot ? 'Người lập phiếu không tự chốt' : 'Chốt và sinh phiếu điều chỉnh' %>"><i class="fas fa-lock"></i> Chốt kiểm kê</button>
+      <button type="button" class="btn btn-sm btn-outline-danger" id="huy">Hủy phiếu</button>
+    <% } %>
+  </div>
+  <div class="small mb-2" id="bao"></div>
+  <div class="table-responsive">
+    <table class="table table-sm kb-bang mb-0" id="bang">
+      <thead class="thead-light"><tr><th>Nguyên liệu</th><th class="so">Sổ sách (lúc chụp)</th><th class="so">Thực tế</th><th class="so">Chênh lệch</th><th class="so">Giá trị</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <% ct.dong.forEach(function (d) { %>
+          <tr data-nl="<%= d.id_nl %>" data-ss="<%= d.ton_so_sach %>" data-gv="<%= d.gia_von %>" data-ten="<%= String(d.ten_nl).toLowerCase() %>">
+            <td><b><%= d.ten_nl %></b> <span class="text-muted small"><%= d.ten_dvt %></span></td>
+            <td class="so"><%= soVN(d.ton_so_sach) %></td>
+            <td class="so"><% if (dangDem) { %><input class="form-control form-control-sm kk-o o-dem" inputmode="decimal" value="<%= d.ton_thuc_te == null ? '' : d.ton_thuc_te %>"><% } else { %><%= d.ton_thuc_te == null ? '—' : soVN(d.ton_thuc_te) %><% } %></td>
+            <td class="so o-chenh"></td>
+            <td class="so o-gt"></td>
+            <td><% if (dangDem) { %><input class="form-control form-control-sm o-gc" maxlength="255" value="<%= d.ghi_chu || '' %>" placeholder="VD: hỏng, đổ vỡ"><% } else { %><span class="small"><%= d.ghi_chu || '' %></span><% } %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ID = <%- JSON.stringify(ct.id_kk) %>;
+  var DA_DEM = <%- JSON.stringify(ct.dong.reduce(function (o, d) { o[d.id_nl] = d.ton_thuc_te; return o; }, {})) %>;
+  var dong = Array.prototype.slice.call(document.querySelectorAll('#bang tbody tr'));
+  var so = function (s) { var x = Number(String(s).replace(',', '.')); return s === '' || s == null || !isFinite(x) ? null : x; };
+  var vnd = function (n) { return Math.round(n).toLocaleString('vi-VN') + 'đ'; };
+  function tinh() {
+    var thieu = 0, thua = 0, dem = 0;
+    dong.forEach(function (tr) {
+      var o = tr.querySelector('.o-dem');
+      var tt = o ? so(o.value) : DA_DEM[tr.dataset.nl];
+      var ss = Number(tr.dataset.ss), gv = Number(tr.dataset.gv);
+      var c = tt == null ? null : tt - ss;
+      var oc = tr.querySelector('.o-chenh'), og = tr.querySelector('.o-gt');
+      if (c == null) { oc.textContent = ''; og.textContent = ''; tr.dataset.lech = '0'; return; }
+      dem++;
+      oc.textContent = (c > 0 ? '+' : '') + c.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
+      oc.className = 'so o-chenh ' + (c < -0.0005 ? 'kk-thieu' : c > 0.0005 ? 'kk-thua' : '');
+      og.textContent = Math.abs(c) > 0.0005 ? vnd(c * gv) : '';
+      if (c < -0.0005) thieu += -c * gv; else if (c > 0.0005) thua += c * gv;
+      tr.dataset.lech = Math.abs(c) > 0.0005 ? '1' : '0';
+    });
+    document.getElementById('tomTat').textContent = 'Đã đếm ' + dem + '/' + dong.length + ' · thiếu ' + vnd(thieu) + ' · thừa ' + vnd(thua);
+    loc();
+  }
+  function loc() {
+    var t = document.getElementById('tim').value.trim().toLowerCase(), chi = document.getElementById('chiLech').checked;
+    dong.forEach(function (tr) { tr.hidden = (t && tr.dataset.ten.indexOf(t) < 0) || (chi && tr.dataset.lech !== '1'); });
+  }
+  document.getElementById('tim').addEventListener('input', loc);
+  document.getElementById('chiLech').addEventListener('change', loc);
+  dong.forEach(function (tr) { var o = tr.querySelector('.o-dem'); if (o) o.addEventListener('input', tinh); });
+  tinh();
+
+  var bao = document.getElementById('bao');
+  async function goi(duong, body) {
+    var r = await fetch(duong, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body || {}) });
+    var d = await r.json();
+    if (!d.ok) throw new Error(d.thong_bao || 'Có lỗi xảy ra.');
+    return d;
+  }
+  function soDem() {
+    return dong.map(function (tr) { return { id_nl: tr.dataset.nl, ton_thuc_te: tr.querySelector('.o-dem').value.trim(), ghi_chu: tr.querySelector('.o-gc').value }; });
+  }
+  var nutLuu = document.getElementById('luu');
+  if (!nutLuu) return;
+  document.getElementById('dienSoSach').addEventListener('click', function () {
+    dong.forEach(function (tr) { var o = tr.querySelector('.o-dem'); if (o.value.trim() === '') o.value = tr.dataset.ss; });
+    tinh();
+  });
+  nutLuu.addEventListener('click', async function () {
+    try { await goi('/api/kitchen/kiem-ke/' + ID + '/dem', { dong: soDem() }); bao.className = 'small mb-2 text-success'; bao.textContent = 'Đã lưu số đếm.'; }
+    catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
+  });
+  document.getElementById('chot').addEventListener('click', async function () {
+    if (!confirm('Chốt kiểm kê? Hệ thống sẽ sinh phiếu xuất cho phần thiếu và phiếu nhập điều chỉnh cho phần thừa. Không sửa được sau khi chốt.')) return;
+    try {
+      await goi('/api/kitchen/kiem-ke/' + ID + '/dem', { dong: soDem() });
+      await goi('/api/kitchen/kiem-ke/' + ID + '/chot');
+      location.reload();
+    } catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
+  });
+  document.getElementById('huy').addEventListener('click', async function () {
+    if (!confirm('Hủy phiếu kiểm kê này? Không điều chỉnh tồn kho.')) return;
+    try { await goi('/api/kitchen/kiem-ke/' + ID + '/huy'); location.href = '/staff/kitchen/kho/kiem-ke'; }
+    catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

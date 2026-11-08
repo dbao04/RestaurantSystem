@@ -13,7 +13,7 @@
     <a href="/staff/thanh-toan" class="small text-muted"><i class="fas fa-arrow-left"></i> Về danh sách</a>
     <h1 class="h3 mb-0 text-gray-800">
       <%= hoaDon.thongTin.ten_ban || 'Đơn lẻ' %>
-      <span class="text-muted h6">· <%= hoaDon.thongTin.ten_khach || 'Khách lẻ' %></span>
+      <span class="text-muted h6">· <%= hoaDon.thongTin.la_khach_vang_lai ? 'Khách lẻ' : (hoaDon.thongTin.ten_khach || 'Khách lẻ') %></span>
     </h1>
     <div class="small text-muted">
       Mã đơn <code><%= hoaDon.sesis %></code> ·
@@ -128,6 +128,22 @@
           </div>
         </form>
       </dialog>
+
+      <!-- Khach hang: gan so dien thoai de tich diem (khachTaiBanService) -->
+      <div class="card-body border-top py-2" id="khoi-khach">
+        <% if (hoaDon.thongTin.la_khach_vang_lai && !t.da_tra_du && !t.la_don_giao) { %>
+          <label class="small font-weight-bold text-uppercase text-muted mb-1"><i class="fas fa-user-plus"></i> Khách hàng tích điểm</label>
+          <div class="form-row">
+            <div class="col-5 mb-1"><input type="tel" class="form-control form-control-sm" id="gk-sdt" placeholder="Số điện thoại" maxlength="15"></div>
+            <div class="col-4 mb-1"><input type="text" class="form-control form-control-sm" id="gk-ten" placeholder="Tên (khách mới)" maxlength="100"></div>
+            <div class="col-3 mb-1"><button type="button" class="btn btn-sm btn-outline-primary btn-block" id="gk-nut">Gắn khách</button></div>
+          </div>
+          <small class="form-text" id="gk-bao">Khách đã có tài khoản thì chỉ cần số điện thoại. Khách mới được tạo hồ sơ; đăng ký web bằng số này sẽ giữ nguyên điểm.</small>
+        <% } else if (!hoaDon.thongTin.la_khach_vang_lai) { %>
+          <div class="small"><i class="fas fa-user-check text-success"></i>
+            Khách: <b><%= hoaDon.thongTin.ten_khach %></b> · <%= hoaDon.thongTin.sodienthoai %> · <b><%= t.diem_dang_co %></b> điểm</div>
+        <% } %>
+      </div>
 
       <div class="card-body border-top">
         <!-- Mã giảm giá + điểm tích lũy -->
@@ -411,6 +427,24 @@
   var pollHen = null;        // timer hỏi trạng thái dự phòng
 
   var $ = function (id) { return document.getElementById(id); };
+
+  // ------------------------------------------------------- Gan khach / tich diem
+  (function () {
+    var nut = $('gk-nut');
+    if (!nut) return;
+    nut.addEventListener('click', function () {
+      var bao = $('gk-bao');
+      nut.disabled = true;
+      fetch('/staff/thanh-toan/' + encodeURIComponent(SESIS) + '/gan-khach', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sdt: $('gk-sdt').value, ten: $('gk-ten').value }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.thanhCong) { bao.className = 'form-text text-danger'; bao.textContent = d.loi || 'Không gắn được.'; nut.disabled = false; return; }
+        // Tai lai de hoa don tinh diem dang co / tran diem duoc dung.
+        window.location.reload();
+      }).catch(function () { bao.className = 'form-text text-danger'; bao.textContent = 'Lỗi mạng, vui lòng thử lại.'; nut.disabled = false; });
+    });
+  })();
 
   // ------------------------------------------------------------ Huy mon
   (function () {

@@ -119,6 +119,49 @@ router.get('/staff/kitchen/kho/:loai/moi', bat(async (req, res, next) => {
   });
 }));
 
+// ------------------------------------------------------------------ kiem ke
+// Xem services/kiemKeService.js. Dat TRUOC route /kho/phieu/... va di qua
+// cung bo loc quyen bep (/staff/kitchen/kho, /api/kitchen).
+const kiemKe = require('../services/kiemKeService');
+
+router.get('/staff/kitchen/kho/kiem-ke', bat(async (req, res) => {
+  const { tu, den } = khoangNgay(req, 30);
+  const [ds, haoHut] = await Promise.all([kiemKe.danhSach(), kiemKe.baoCaoHaoHut({ tuNgay: tu, denNgay: den })]);
+  res.render('staff/kitchen/kiem-ke', {
+    title: 'Kiểm kê & hao hụt', activePage: 'kiem-ke', ...(await chung(req)), ds, haoHut, tu, den,
+  });
+}));
+
+router.get('/staff/kitchen/kho/kiem-ke/:id', bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).send('Không tìm thấy phiếu');
+  const ct = await kiemKe.chiTiet(Number(req.params.id));
+  if (!ct) return res.status(404).send('Không tìm thấy phiếu');
+  res.render('staff/kitchen/kiem-ke-chi-tiet', {
+    title: 'Phiếu kiểm kê ' + ct.ma_phieu, activePage: 'kiem-ke', ...(await chung(req)),
+    ct, duocChot: duocDuyet(req), idNv: req.session.staffId || null,
+  });
+}));
+
+router.post('/api/kitchen/kiem-ke', bat(async (req, res) => {
+  try { res.status(201).json({ ok: true, ...(await kiemKe.taoPhieu({ ghiChu: (req.body || {}).ghi_chu }, req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kiem-ke/:id/dem', bat(async (req, res) => {
+  try { res.json({ ok: true, ...(await kiemKe.luuSoDem(Number(req.params.id), (req.body || {}).dong)) }); } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kiem-ke/:id/chot', bat(async (req, res) => {
+  try {
+    if (!duocDuyet(req)) return res.status(403).json({ ok: false, thong_bao: 'Chỉ bếp trưởng, quản lý bếp hoặc quản lý nhà hàng được chốt kiểm kê.' });
+    const laQuanLy = !!(req.session.adminlogin || req.session.staffRole === 'Quan ly');
+    res.json({ ok: true, ...(await kiemKe.chot(Number(req.params.id), { id: req.session.staffId || null, laQuanLy })) });
+  } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kiem-ke/:id/huy', bat(async (req, res) => {
+  try { res.json(await kiemKe.huy(Number(req.params.id))); } catch (e) { traLoi(res, e); }
+}));
+
 router.get('/staff/kitchen/kho/phieu/:loai/:id', bat(async (req, res) => {
   if (!['nhap', 'xuat'].includes(req.params.loai) || !/^\d+$/.test(req.params.id)) return res.status(404).send('Không tìm thấy phiếu');
   const ct = await kho.chiTietPhieu(req.params.loai, Number(req.params.id));
@@ -162,6 +205,11 @@ router.get('/staff/kitchen/mua-hang/:id', bat(async (req, res) => {
     title: `Đơn mua ${don.ma_don}`, activePage: 'mua-hang', ...(await chung(req)),
     don, duocDuyet: duocDuyet(req), idNv: req.session.staffId || null,
   });
+}));
+
+// Tao don mua NHAP tu goi y theo du bao, gom theo nha cung cap (khoBepService.taoDonTuDong).
+router.post('/api/kitchen/mua-hang/tu-dong', bat(async (req, res) => {
+  try { res.status(201).json({ ok: true, ...(await kho.taoDonTuDong(req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
 }));
 
 router.post('/api/kitchen/mua-hang', bat(async (req, res) => {

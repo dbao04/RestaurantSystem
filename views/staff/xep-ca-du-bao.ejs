@@ -1,0 +1,163 @@
+<%- include('partials/header', { activePage: 'xep-ca', staffName: session.staffName || 'Quản lý' }) %>
+<%
+  var THU_HIEN = [1, 2, 3, 4, 5, 6, 0];
+  var GIO = []; for (var g = 7; g <= 21; g++) GIO.push(g);
+  var ngayVN = function (s) { if (!s) return '—'; var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var gioCa = function (ca) { return Number(String(ca.gio_bat_dau).split(':')[0]) + 'h–' + Number(String(ca.gio_ket_thuc).split(':')[0]) + 'h'; };
+  var soGioCa = function (ca) { return Number(String(ca.gio_ket_thuc).split(':')[0]) - Number(String(ca.gio_bat_dau).split(':')[0]); };
+  // Gio cong / tuan cho tung chuc vu: hien tai va de xuat.
+  var gioCong = { hien: {}, de: {} };
+  CHUC_VU.forEach(function (cv) { gioCong.hien[cv] = 0; gioCong.de[cv] = 0; });
+  THU_HIEN.forEach(function (thu) {
+    kq.caList.forEach(function (ca) {
+      CHUC_VU.forEach(function (cv) {
+        gioCong.hien[cv] += (hienTai[thu + '|' + ca.ma_ca + '|' + cv] || 0) * soGioCa(ca);
+        gioCong.de[cv] += (kq.de_xuat[thu][ca.ma_ca].de_xuat[cv] || 0) * soGioCa(ca);
+      });
+    });
+  });
+  // Ban do nhiet: so ban den / gio (da nhan he so mua vu).
+  var giaTri = function (thu, h) { return (kq.don[thu][h] || 0) * kq.heSo; };
+  var maxNhiet = 0;
+  THU_HIEN.forEach(function (thu) { GIO.forEach(function (h) { maxNhiet = Math.max(maxNhiet, giaTri(thu, h)); }); });
+  // Thang tuan tu mot sac xanh (bang mau tham chieu, buoc 100 -> 700).
+  var RAMP = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'];
+  var mauO = function (v) {
+    if (v < 0.05) return '#f4f3ef';
+    var i = Math.min(RAMP.length - 1, Math.floor(v / (maxNhiet || 1) * RAMP.length));
+    return RAMP[i];
+  };
+  var chuTrenO = function (v) { return v / (maxNhiet || 1) >= 0.5 ? '#ffffff' : '#0b0b0b'; };
+%>
+
+<style>
+  .db-ghichu { font-size: 13px; color: #52514e; line-height: 1.6; }
+  .db-kpi { background: #fff; border: 1px solid #e7ded0; border-radius: 12px; padding: .7rem .9rem; height: 100%; }
+  .db-kpi .nhan { font-size: .78rem; color: #52514e; }
+  .db-kpi .so { font-size: 1.25rem; font-weight: 800; color: #0b0b0b; font-variant-numeric: tabular-nums; }
+  .db-nhiet { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
+  .db-nhiet th { color: #898781; font-weight: 600; text-align: center; padding: 2px 4px; white-space: nowrap; }
+  .db-nhiet td.o { width: 44px; height: 30px; text-align: center; border-radius: 4px; font-variant-numeric: tabular-nums; cursor: default; }
+  .db-thang { display: flex; align-items: center; gap: 2px; font-size: 11px; color: #898781; }
+  .db-thang span.o { width: 26px; height: 10px; border-radius: 2px; display: inline-block; }
+  .db-bang { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .db-bang th, .db-bang td { border: 1px solid #e7e4dc; padding: 4px 7px; }
+  .db-bang thead th { background: #faf7f4; text-align: center; }
+  .db-bang td.so { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .db-thieu { color: #b3352c; font-weight: 700; }
+  .db-du { color: #898781; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-2">
+  <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-wand-magic-sparkles mr-2"></i>Dự báo nhu cầu nhân sự</h1>
+  <div>
+    <a class="btn btn-sm btn-outline-secondary" href="/staff/xep-ca/du-bao?tuan=<%= tuanTruoc %>">&larr; Tuần trước</a>
+    <b class="mx-2">Tuần <%= ngayVN(tuan) %></b>
+    <a class="btn btn-sm btn-outline-secondary" href="/staff/xep-ca/du-bao?tuan=<%= tuanSau %>">Tuần sau &rarr;</a>
+    <a class="btn btn-sm btn-outline-primary ml-2" href="/staff/xep-ca/dinh-muc">Định mức</a>
+  </div>
+</div>
+
+<% if (msg) { %><div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %> py-2 small"><%= msg %></div><% } %>
+
+<% if (kq.khongCoDuLieu) { %>
+  <div class="alert alert-warning">Chưa có đủ lịch sử bán hàng trước tuần này để dự báo.</div>
+<% } else { %>
+<p class="db-ghichu">
+  Dự báo dựa trên <b><%= kq.ts.so_tuan_lich_su %> tuần</b> bán hàng gần nhất có dữ liệu (<%= ngayVN(kq.tu) %> – <%= ngayVN(kq.neo) %>),
+  nhân hệ số mùa vụ tháng <%= kq.thangMucTieu %> là <b><%= kq.heSo.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) %></b>
+  (so với các tháng trong lịch sử). Số người = trần(đỉnh tải của ca ÷ năng suất), tối thiểu 1 nếu ca có khách.
+  Chưa tính ngày lễ / sự kiện — hãy cộng thêm khi cần.
+</p>
+
+<div class="row mb-3">
+  <% CHUC_VU.forEach(function (cv) { var chenh = gioCong.de[cv] - gioCong.hien[cv]; %>
+    <div class="col-6 col-lg-3 mb-2"><div class="db-kpi">
+      <div class="nhan">Giờ công / tuần · <%= TEN_CHUC_VU[cv] %></div>
+      <div class="so"><%= gioCong.hien[cv] %> → <%= gioCong.de[cv] %>
+        <small class="<%= chenh > 0 ? 'db-thieu' : 'db-du' %>"><%= chenh > 0 ? '▲ +' + chenh : (chenh < 0 ? '▼ ' + chenh : '=') %></small></div>
+      <div class="nhan">hiện tại → đề xuất</div>
+    </div></div>
+  <% }) %>
+</div>
+
+<div class="card shadow mb-3"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-2" style="gap:.5rem">
+    <b>Số bàn khách đến mỗi giờ (dự báo, ăn tại chỗ)</b>
+    <div class="db-thang" aria-hidden="true">ít
+      <% RAMP.forEach(function (m) { %><span class="o" style="background:<%= m %>"></span><% }) %>
+      nhiều (tối đa <%= maxNhiet.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) %> bàn/giờ)</div>
+  </div>
+  <div class="table-responsive">
+    <table class="db-nhiet" aria-label="Bản đồ nhiệt số bàn khách đến theo thứ và giờ">
+      <thead><tr><th></th><% GIO.forEach(function (h) { %><th><%= h %>h</th><% }) %></tr></thead>
+      <tbody>
+        <% THU_HIEN.forEach(function (thu) { %>
+          <tr>
+            <th style="text-align:right"><%= TEN_THU[thu] %></th>
+            <% GIO.forEach(function (h) { var v = giaTri(thu, h); var nhan = TEN_THU[thu] + ' ' + h + 'h: ' + v.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' bàn'; %>
+              <td class="o" style="background:<%= mauO(v) %>;color:<%= chuTrenO(v) %>" title="<%= nhan %>" aria-label="<%= nhan %>"><%= v >= 0.5 ? Math.round(v) : '' %></td>
+            <% }) %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="small text-muted mt-1">Số trong ô: số bàn đến (làm tròn). Di chuột để xem số chính xác.</div>
+</div></div>
+
+<div class="card shadow mb-3"><div class="card-body">
+  <b>Định mức hiện tại → đề xuất</b>
+  <div class="small text-muted mb-2"><span class="db-thieu">▲</span> đề xuất cần thêm người · <span class="db-du">▼</span> đang dư người so với dự báo</div>
+  <div class="table-responsive">
+    <table class="db-bang">
+      <thead>
+        <tr><th>Thứ</th><th>Ca</th><th>Đỉnh tải</th><% CHUC_VU.forEach(function (cv) { %><th><%= TEN_CHUC_VU[cv] %></th><% }) %></tr>
+      </thead>
+      <tbody>
+        <% THU_HIEN.forEach(function (thu) { kq.caList.forEach(function (ca, i) { var o = kq.de_xuat[thu][ca.ma_ca]; %>
+          <tr>
+            <% if (i === 0) { %><td rowspan="<%= kq.caList.length %>" style="background:#faf7f4;font-weight:600;white-space:nowrap"><%= TEN_THU[thu] %></td><% } %>
+            <td style="white-space:nowrap"><%= ca.ten_ca %> <small class="text-muted"><%= gioCa(ca) %></small></td>
+            <td class="so" title="Bàn đồng thời / phần món mỗi giờ lúc cao điểm của ca"><%= o.dinh_ban.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) %> bàn · <%= Math.round(o.dinh_phan_gio) %> phần/h</td>
+            <% CHUC_VU.forEach(function (cv) { var a = hienTai[thu + '|' + ca.ma_ca + '|' + cv] || 0, b = o.de_xuat[cv] || 0; %>
+              <td class="so"><%= a %> → <b><%= b %></b>
+                <% if (b > a) { %><span class="db-thieu">▲</span><% } else if (b < a) { %><span class="db-du">▼</span><% } %></td>
+            <% }) %>
+          </tr>
+        <% }) }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="/staff/xep-ca/du-bao/ap-dung" class="mt-3 d-flex flex-wrap align-items-center" style="gap:.75rem"
+        onsubmit="return confirm('Ghi đè định mức của các chức vụ đã chọn bằng số đề xuất? Có thể chỉnh lại tay ở trang Định mức.')">
+    <input type="hidden" name="tuan" value="<%= tuan %>">
+    <b>Áp dụng cho:</b>
+    <% CHUC_VU.forEach(function (cv) { %>
+      <label class="mb-0"><input type="checkbox" name="chuc_vu" value="<%= cv %>" <%= cv === 'Bep' || cv === 'Phuc vu' ? 'checked' : '' %>> <%= TEN_CHUC_VU[cv] %></label>
+    <% }) %>
+    <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Áp dụng vào định mức</button>
+  </form>
+  <div class="small text-muted mt-2">
+    Lễ tân và Thu ngân được đề xuất tối thiểu 1 người cho mỗi ca có khách. Nếu nhà hàng cho một người kiêm cả hai việc,
+    hoặc nhân viên phục vụ kiêm thu ngân, thì không cần áp dụng cho hai vị trí này.
+  </div>
+</div></div>
+<% } %>
+
+<div class="card shadow mb-3"><div class="card-body">
+  <b>Giả định năng suất</b>
+  <form method="post" action="/staff/xep-ca/du-bao/tham-so" class="form-row mt-2">
+    <input type="hidden" name="tuan" value="<%= tuan %>">
+    <% Object.keys(NHAN_THAM_SO).forEach(function (k) { %>
+      <div class="col-6 col-md-4 col-lg-2 mb-2">
+        <label class="small text-muted mb-0"><%= NHAN_THAM_SO[k] %></label>
+        <input type="number" name="<%= k %>" value="<%= kq.ts[k] %>" min="1" step="1" class="form-control form-control-sm">
+      </div>
+    <% }) %>
+    <div class="col-12"><button class="btn btn-sm btn-warning"><i class="fas fa-save"></i> Lưu giả định &amp; tính lại</button></div>
+  </form>
+</div></div>
+
+<%- include('partials/footer') %>

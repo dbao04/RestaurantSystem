@@ -126,6 +126,39 @@ function kiemTraHaiBan(idNguon, idDich) {
 }
 
 /** Chuyen khach tu ban A sang ban B dang trong. */
+/**
+ * Phien la LUOT DAT BAN (sesis = reservation_code): khach doi ban thi luot dat
+ * cung phai doi theo, neu khong ban cu van bi giu (reservation_slot_locks) toi
+ * het khung gio va ban moi lai trong de nhan khach khac dat chong len.
+ *  - O gio CON LAI (tu o hien tai) chuyen tu ban cu sang ban moi; o da qua giu
+ *    nguyen lam lich su. Ban moi da co nguoi dat trong gio con lai -> chan.
+ *  - reservation_tables: ban cu -> ban moi (so do / bao cao doc bang nay).
+ */
+async function dongBoDatBan(conn, nguon, dich) {
+  const [[res]] = await conn.query(
+    "SELECT id FROM reservations WHERE reservation_code = ? AND status IN ('CONFIRMED','ARRIVED','SEATED') LIMIT 1",
+    [nguon.sesis]);
+  if (!res) return;
+  const [vuong] = await conn.query(
+    `SELECT DISTINCT r.reservation_code FROM reservation_slot_locks l
+       JOIN reservations r ON r.id = l.reservation_id
+      WHERE l.table_id = ? AND l.reservation_id <> ?
+        AND l.slot_start IN (SELECT slot_start FROM reservation_slot_locks
+                              WHERE reservation_id = ? AND table_id = ? AND slot_start > NOW() - INTERVAL 15 MINUTE)`,
+    [dich.ban.Id_ban, res.id, res.id, nguon.ban.Id_ban]);
+  if (vuong.length) {
+    throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} đã có khách đặt trước (${vuong.map((v) => v.reservation_code).join(', ')}) trong khung giờ còn lại của lượt này.`);
+  }
+  await conn.query(
+    `UPDATE reservation_slot_locks SET table_id = ?
+      WHERE reservation_id = ? AND table_id = ? AND slot_start > NOW() - INTERVAL 15 MINUTE`,
+    [dich.ban.Id_ban, res.id, nguon.ban.Id_ban]);
+  await conn.query('DELETE FROM reservation_tables WHERE reservation_id = ? AND table_id IN (?, ?)',
+    [res.id, nguon.ban.Id_ban, dich.ban.Id_ban]);
+  await conn.query('INSERT INTO reservation_tables (reservation_id, table_id, seats) VALUES (?, ?, ?)',
+    [res.id, dich.ban.Id_ban, Number(dich.ban.so_cho) || 0]);
+}
+
 async function chuyenBan(idNguon, idDich, { nhanVien, lyDo } = {}) {
   const [x, y, dao] = kiemTraHaiBan(idNguon, idDich);
   return chayGiaoDich(async (conn) => {
@@ -137,6 +170,7 @@ async function chuyenBan(idNguon, idDich, { nhanVien, lyDo } = {}) {
     if (dich.sesis) throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} đang có khách - hãy dùng "Gộp bàn".`);
     if (Number(dich.ban.trangthai) === 2) throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} đã được đặt trước.`);
 
+    await dongBoDatBan(conn, nguon, dich);
     await conn.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ?', [dich.ban.Id_ban, nguon.sesis]);
     await conn.query('UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?', [nguon.sesis, dich.ban.Id_ban]);
     await conn.query('UPDATE ban SET trangthai = 3, sesis_hien_tai = NULL WHERE Id_ban = ?', [nguon.ban.Id_ban]);

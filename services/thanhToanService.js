@@ -168,7 +168,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
             h.id_ban, k.ten AS ten_khach, k.sodienthoai,
             (SELECT table_name FROM qr_tables WHERE active_sesis = h.sesis LIMIT 1) AS ten_ban_qr,
             (SELECT number_ban FROM ban WHERE Id_ban = h.id_ban LIMIT 1) AS so_ban
-     FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+     FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`,
     [sesis]
   );
@@ -188,7 +188,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
   // --- Ho so khach: diem tich luy + hang thanh vien ---
   // Khach vang lai tu QR (sodienthoai dang 'QR_xxx') khong co tai khoan that
   // nen khong cho dung diem - neu khong moi ban se chung mot vi diem.
-  const laKhachVangLai = String(thongTin.sodienthoai || '').startsWith('QR_');
+  const laKhachVangLai = !thongTin.sodienthoai || String(thongTin.sodienthoai).startsWith('QR_');
   let diemDangCo = 0;
   let hangKhach = null;
   if (!laKhachVangLai) {
@@ -579,13 +579,15 @@ async function hauKyThanhToan(paymentId, { maGiamGia = null, diemDung = 0 } = {}
   const ch = await layCauHinh();
   const [[don]] = await db.query(
     `SELECT h.id_user, h.tinhtrang, h.id_ban, k.sodienthoai
-     FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+     FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`,
     [p.sesis]
   );
   if (!don) return {};
 
-  const laKhachVangLai = String(don.sodienthoai || '').startsWith('QR_');
+  // LEFT JOIN: don ma id_user khong con khach tuong ung (du lieu cu, hoac don mo
+  // ban truoc day gan id_user = 1) van dong duoc, coi nhu khach vang lai.
+  const laKhachVangLai = !don.sodienthoai || String(don.sodienthoai).startsWith('QR_');
   const ketQua = { diemCong: 0, diemTru: 0, donDaTraDu: false };
 
   // --- 1. Ma giam gia: ghi nhat ky mot luot dung ---
@@ -765,10 +767,10 @@ async function hoanTien(paymentId, { lyDo = '', nhanVienId = null, boQuaHan = fa
    */
   const ch = await layCauHinh();
   const [[don]] = await db.query(
-    `SELECT h.id_user, k.sodienthoai FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+    `SELECT h.id_user, k.sodienthoai FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`, [p.sesis]
   );
-  if (don && !String(don.sodienthoai || '').startsWith('QR_')) {
+  if (don && don.sodienthoai && !String(don.sodienthoai).startsWith('QR_')) {
     if (p.loai === 'thanh_toan') {
       const diemDaCong = Math.floor(Number(p.amount) / Number(ch.ty_le_tich_diem || 10000));
       if (diemDaCong > 0) {

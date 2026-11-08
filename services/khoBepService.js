@@ -51,7 +51,9 @@ async function danhSachNVL() {
     SELECT nl.id_nl, nl.ten_nl, nl.so_luong, nl.dinh_muc_min, nl.gia_von, nl.han_su_dung_ngay, dvt.ten_dvt,
            COALESCE(lo.ton_lo, 0) AS ton_theo_lo, lo.hsd_gan_nhat,
            (SELECT pn.id_ncc FROM chi_tiet_phieu_nhap c JOIN phieu_nhap pn ON pn.id_pn = c.id_pn
-             WHERE c.id_nl = nl.id_nl ORDER BY pn.ngay_nhap DESC, c.id_ct DESC LIMIT 1) AS ncc_gan_nhat
+             WHERE c.id_nl = nl.id_nl AND pn.id_ncc IS NOT NULL ORDER BY pn.ngay_nhap DESC, c.id_ct DESC LIMIT 1) AS ncc_gan_nhat,
+           (SELECT c.gia_nhap FROM chi_tiet_phieu_nhap c JOIN phieu_nhap pn ON pn.id_pn = c.id_pn
+             WHERE c.id_nl = nl.id_nl AND pn.id_ncc IS NOT NULL ORDER BY pn.ngay_nhap DESC, c.id_ct DESC LIMIT 1) AS gia_nhap_gan_nhat
       FROM nguyen_lieu nl
       LEFT JOIN don_vi_tinh dvt ON dvt.id_dvt = nl.id_dvt
       LEFT JOIN (SELECT id_nl, SUM(so_luong_con_lai) AS ton_lo, MIN(han_su_dung) AS hsd_gan_nhat
@@ -288,36 +290,172 @@ async function tieuHaoBinhQuan() {
   return new Map(rows.map((r) => [Number(r.id_nl), Number(r.ngay)]));
 }
 
-/**
- * Goi y mua: NVL co ton duoi DIEM DAT HANG = max(dinh muc, 3 ngay tieu hao).
- * So luong de xuat du cho 7 ngay tieu hao (toi thieu gap doi dinh muc), tru
- * ton hien co va hang da dat chua nhan.
+/*
+ * GOI Y MUA HANG THEO DU BAO (thay cho "trung binh 28 ngay").
+ *
+ *   nhu cau(ngay d) = trung binh xuat kho ban hang cung THU cua d trong
+ *                     SO_TUAN_LICH_SU tuan gan nhat co du lieu x he so mua vu
+ *                     (duBaoNhanSuService.heSoThang - cung mo hinh voi du bao
+ *                     nhan su)
+ *   kha dung        = ton - phan dang giu cho mon da goi chua nau
+ *                     (tonMonService.tonKhaDung) + hang dang ve (don mua mo)
+ *   Hang dat hom nay ve sau L = so_ngay_giao ngay. Can dat neu luc do ton con
+ *   duoi muc an toan (dinh muc toi thieu):
+ *       kha dung - nhu cau(L ngay) < an toan
+ *   So luong = nhu cau(L + C ngay) + an toan - kha dung   (C = so_ngay_du_tru)
+ * Tham so trong cau_hinh: mua_hang.so_ngay_giao, mua_hang.so_ngay_du_tru.
  */
-async function goiYMuaHang() {
-  const [nvl, th] = await Promise.all([danhSachNVL(), tieuHaoBinhQuan()]);
+const SO_TUAN_LICH_SU_MUA = 8;
+const THAM_SO_MUA_MAC_DINH = { so_ngay_giao: 2, so_ngay_du_tru: 7 };
+
+async function thamSoMua() {
+  const ts = { ...THAM_SO_MUA_MAC_DINH };
+  try {
+    const [rows] = await db.query("SELECT khoa, gia_tri FROM cau_hinh WHERE khoa LIKE 'mua_hang.%'");
+    for (const r of rows) {
+      const k = r.khoa.slice('mua_hang.'.length);
+      const v = Math.round(Number(r.gia_tri));
+      if (k in ts && Number.isFinite(v) && v >= 0 && v <= 60) ts[k] = v;
+    }
+  } catch (e) { /* mac dinh */ }
+  return ts;
+}
+
+const ngayCong = (s, n) => {
+  const d = new Date(`${s}T00:00:00`); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Du bao tieu hao tung ngay cho soNgay ngay ke tu tuNgay.
+ * @returns {Promise<{theoNgay: Map<number, number[]>, neo: string|null, heSo: number}>}
+ */
+async function duBaoTieuHao(tuNgay, soNgay) {
+  const [[m]] = await db.query(
+    "SELECT MAX(ngay_xuat) AS cuoi FROM xuat_kho WHERE ly_do IN ('ban_hang','ban_hang_mo_phong') AND ngay_xuat < ?", [tuNgay]);
+  const theoNgay = new Map();
+  // Chua co lich su ban: van cong nhu cau tiec (neu co).
+  if (!m || !m.cuoi) return congTiec(theoNgay, tuNgay, soNgay, { neo: null, heSo: 1 });
+  const d = new Date(m.cuoi);
+  const neo = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const tu = ngayCong(neo, -7 * SO_TUAN_LICH_SU_MUA + 1);
+
+  const [ngayCo] = await db.query(
+    `SELECT DAYOFWEEK(ngay_xuat) - 1 AS thu, COUNT(DISTINCT ngay_xuat) AS so FROM xuat_kho
+      WHERE ly_do IN ('ban_hang','ban_hang_mo_phong') AND ngay_xuat BETWEEN ? AND ? GROUP BY thu`, [tu, neo]);
+  const soNgayThu = Array(7).fill(0);
+  for (const r of ngayCo) soNgayThu[Number(r.thu)] = Number(r.so);
+
+  const [rows] = await db.query(
+    `SELECT id_nl, DAYOFWEEK(ngay_xuat) - 1 AS thu, SUM(so_luong) AS sl FROM xuat_kho
+      WHERE ly_do IN ('ban_hang','ban_hang_mo_phong') AND ngay_xuat BETWEEN ? AND ? GROUP BY id_nl, thu`, [tu, neo]);
+  const tb = new Map(); // id_nl -> [7]
+  for (const r of rows) {
+    const id = Number(r.id_nl);
+    if (!tb.has(id)) tb.set(id, Array(7).fill(0));
+    const n = soNgayThu[Number(r.thu)];
+    if (n) tb.get(id)[Number(r.thu)] = Number(r.sl) / n;
+  }
+
+  const f = await require('./duBaoNhanSuService').heSoThang();
+  const thangDich = new Date(`${ngayCong(tuNgay, Math.floor(soNgay / 2))}T00:00:00`).getMonth() + 1;
+  const thangGoc = new Date(`${ngayCong(neo, -7 * SO_TUAN_LICH_SU_MUA / 2)}T00:00:00`).getMonth() + 1;
+  const heSo = f[thangDich] && f[thangGoc] ? f[thangDich] / f[thangGoc] : 1;
+
+  const thuNgay = [];
+  for (let i = 0; i < soNgay; i++) thuNgay.push(new Date(`${ngayCong(tuNgay, i)}T00:00:00`).getDay());
+  for (const [id, mang] of tb) theoNgay.set(id, thuNgay.map((t) => mang[t] * heSo));
+  return congTiec(theoNgay, tuNgay, soNgay, { neo, heSo });
+}
+
+// Cong nhu cau cua cac tiec da giu cho vao DUNG ngay to chuc (tiecVanHanhService).
+async function congTiec(theoNgay, tuNgay, soNgay, them) {
+  const tiec = await require('./tiecVanHanhService').nhuCauTiecTheoNgay(tuNgay, soNgay).catch(() => new Map());
+  for (const [id, mang] of tiec) {
+    const goc = theoNgay.get(id) || Array(soNgay).fill(0);
+    theoNgay.set(id, goc.map((x, i) => x + (mang[i] || 0)));
+  }
+  return { theoNgay, ...them, tiec };
+}
+
+async function goiYMuaHang({ homNay = null } = {}) {
+  const ngay0 = homNay || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  const ts = await thamSoMua();
+  const L = ts.so_ngay_giao, C = ts.so_ngay_du_tru;
+  const [nvl, du, khaDung] = await Promise.all([
+    danhSachNVL(), duBaoTieuHao(ngay0, L + C + 30), require('./tonMonService').tonKhaDung(),
+  ]);
   const [dangVe] = await db.query(`
     SELECT c.id_nl, SUM(GREATEST(c.so_luong - c.so_luong_da_nhan, 0)) AS sl
       FROM chi_tiet_don_mua c JOIN don_mua_hang d ON d.id_dmh = c.id_dmh
      WHERE d.trang_thai IN ('cho_duyet','da_duyet','da_dat','nhan_mot_phan') GROUP BY c.id_nl`);
   const mapVe = new Map(dangVe.map((r) => [Number(r.id_nl), Number(r.sl)]));
+  const cong = (mang, a, b) => mang.slice(a, b).reduce((s, x) => s + x, 0);
+
   const ra = [];
   for (const n of nvl) {
-    const ngay = th.get(n.id_nl) || 0;
-    const diemDat = Math.max(n.dinh_muc_min, ngay * 3);
+    const ngayDb = du.theoNgay.get(n.id_nl) || Array(L + C + 30).fill(0);
+    const kd = Math.max(0, khaDung.has(n.id_nl) ? khaDung.get(n.id_nl).kha_dung : n.so_luong);
     const ve = mapVe.get(n.id_nl) || 0;
-    if (n.so_luong + ve >= diemDat || diemDat <= 0) continue;
-    const mucTieu = Math.max(n.dinh_muc_min * 2, ngay * 7);
-    const deXuat = Math.max(0, mucTieu - n.so_luong - ve);
+    const canL = cong(ngayDb, 0, L);
+    const canLC = cong(ngayDb, 0, L + C);
+    const choTiec = du.tiec && du.tiec.has(n.id_nl) ? cong(du.tiec.get(n.id_nl), 0, L + C) : 0;
+    // Tiec da giu cho la nhu cau CHAC CHAN: phan roi sau khi hang ve van phai
+    // giu cho tu bay gio, khong cho toi luc vao tam L moi dat (se khong kip).
+    const tiecSauL = du.tiec && du.tiec.has(n.id_nl) ? cong(du.tiec.get(n.id_nl), L, L + C) : 0;
+    const anToan = n.dinh_muc_min;
+    if (kd + ve - canL - tiecSauL >= anToan) continue;
+    const deXuat = Math.max(0, canLC + anToan - kd - ve);
     if (deXuat <= 0) continue;
+    // Ngay du kien het: cong don nhu cau tung ngay toi khi vuot kha dung + dang ve.
+    let conLai = kd + ve, ngayHet = null;
+    for (let i = 0; i < ngayDb.length; i++) {
+      conLai -= ngayDb[i];
+      if (conLai < 0) { ngayHet = ngayCong(ngay0, i); break; }
+    }
+    const tieuHaoNgay = cong(ngayDb, 0, 7) / 7;
     ra.push({
-      ...n, tieu_hao_ngay: lamTron(ngay, 2), dang_ve: lamTron(ve), diem_dat: lamTron(diemDat, 2),
+      ...n, kha_dung: lamTron(kd, 2), tieu_hao_ngay: lamTron(tieuHaoNgay, 2), dang_ve: lamTron(ve),
+      can_truoc_khi_ve: lamTron(canL, 2), can_ky_toi: lamTron(canLC, 2), can_cho_tiec: lamTron(choTiec, 2), diem_dat: lamTron(canL + anToan, 2),
       de_xuat: Math.ceil(deXuat * 10) / 10,
-      con_du_ngay: ngay > 0 ? lamTron(n.so_luong / ngay, 1) : null,
-      muc_do: n.so_luong <= 0 ? 'het' : n.so_luong < n.dinh_muc_min ? 'duoi_dinh_muc' : 'sap_het',
+      con_du_ngay: tieuHaoNgay > 0 ? lamTron(kd / tieuHaoNgay, 1) : null,
+      ngay_het_du_kien: ngayHet,
+      muc_do: kd <= 0 ? 'het' : kd < canL ? 'het_truoc_khi_ve'
+        : tiecSauL > 0 && kd + ve < canL + tiecSauL ? 'thieu_cho_tiec'
+          : kd < anToan ? 'duoi_dinh_muc' : 'sap_het',
     });
   }
-  const thuTu = { het: 0, duoi_dinh_muc: 1, sap_het: 2 };
-  return ra.sort((a, b) => thuTu[a.muc_do] - thuTu[b.muc_do] || (a.con_du_ngay ?? 0) - (b.con_du_ngay ?? 0));
+  const thuTu = { het: 0, het_truoc_khi_ve: 1, thieu_cho_tiec: 2, duoi_dinh_muc: 3, sap_het: 4 };
+  ra.thamSo = { ...ts, neo: du.neo, he_so: du.heSo };
+  return ra.sort((a, b) => thuTu[a.muc_do] - thuTu[b.muc_do] || (a.con_du_ngay ?? 1e9) - (b.con_du_ngay ?? 1e9));
+}
+
+/**
+ * Tao DON MUA NHAP tu goi y: gom theo nha cung cap gan nhat (khong co NCC ->
+ * mot don chua chon NCC), don gia = gia nhap gan nhat (khong co -> gia von).
+ * Don o trang thai cho_duyet, ghi chu "tu dong", ngay giao = hom nay + L.
+ * Chay lai khong dat trung: hang trong don mo da tinh vao "dang ve".
+ */
+async function taoDonTuDong(idNv, { homNay = null } = {}) {
+  const goiY = await goiYMuaHang({ homNay });
+  if (!goiY.length) return { don: [], thong_bao: 'Tồn kho đang đủ theo dự báo - không cần đặt thêm.' };
+  const theoNcc = new Map();
+  for (const g of goiY) {
+    const k = g.ncc_gan_nhat || 0;
+    if (!theoNcc.has(k)) theoNcc.set(k, []);
+    theoNcc.get(k).push({ id_nl: g.id_nl, so_luong: g.de_xuat, don_gia: Number(g.gia_nhap_gan_nhat) || Number(g.gia_von) || 0 });
+  }
+  const ngayGiao = ngayCong(homNay || new Date().toISOString().slice(0, 10), goiY.thamSo.so_ngay_giao);
+  const don = [];
+  for (const [idNcc, dong] of theoNcc) {
+    const kq = await taoDonMua({
+      id_ncc: idNcc || null, dong, ngay_giao_du_kien: ngayGiao,
+      ghi_chu: `Tạo tự động theo dự báo tiêu hao (đủ dùng ${goiY.thamSo.so_ngay_giao + goiY.thamSo.so_ngay_du_tru} ngày)`
+        + (idNcc ? '' : ' - CHƯA CHỌN NCC'),
+    }, idNv);
+    don.push({ ...kq, id_ncc: idNcc || null, so_dong: dong.length });
+  }
+  return { don };
 }
 
 async function danhSachDon({ trangThai = '' } = {}) {
@@ -404,5 +542,5 @@ async function doiTrangThaiDon(id, buoc, { idNv, lyDo } = {}) {
 module.exports = {
   LY_DO_XUAT, LY_DO_BAN_HANG, TRANG_THAI_DON, LoiKho,
   danhSachNVL, danhSachNCC, loHang, truLoFIFO, taoPhieuNhap, taoPhieuXuat, soKho, chiTietPhieu,
-  tieuHaoBinhQuan, goiYMuaHang, danhSachDon, chiTietDon, taoDonMua, doiTrangThaiDon,
+  tieuHaoBinhQuan, goiYMuaHang, thamSoMua, duBaoTieuHao, taoDonTuDong, danhSachDon, chiTietDon, taoDonMua, doiTrangThaiDon,
 };

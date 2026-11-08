@@ -120,6 +120,14 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
   });
 }));
 
+// Ke hoach nguyen lieu cua tiec (services/tiecVanHanhService.js).
+router.get('/api/staff/dat-tiec/:id/nguyen-lieu', bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
+  const kq = await require('../services/tiecVanHanhService').keHoachNguyenLieu(Number(req.params.id));
+  if (!kq) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy tiệc' });
+  res.json({ ok: true, ...kq });
+}));
+
 router.post('/api/staff/dat-tiec/:id/trang-thai', bat(async (req, res) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });

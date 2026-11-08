@@ -783,6 +783,8 @@
     co_the_theo_doi: t('qr.co_the_theo_doi'),
     ban_chua_goi: t('qr.ban_chua_goi'),
     da_phuc_vu: t('qr.da_phuc_vu'),
+    con_khoang: t('qr.con_khoang'),
+    du_kien_xong: t('qr.du_kien_xong'),
     dang_cap_nhat: t('qr.dang_cap_nhat'),
     ban: t('qr.ban'),
     /* Dung chung khoa voi trang chi tiet mon ben khu khach: cung mot cau chu,
@@ -1359,7 +1361,9 @@
           '<div class="ten">' + escHtml(m.ten) + '</div>' +
           (m.ghi_chu ? '<div class="gc"><i class="fas fa-pen"></i> ' + escHtml(m.ghi_chu) + '</div>' : '') +
           '<span class="tt-chip tt-' + m.trang_thai + '">' + bieuTuongTrangThai(m.trang_thai) + ' ' +
-            escHtml(m.ten_trang_thai) + '</span>' +
+            escHtml(m.ten_trang_thai) +
+            ((m.trang_thai === 0 || m.trang_thai === 1) && m.con_phut ? ' · ' + escHtml(tt(T.con_khoang, { phut: m.con_phut })) : '') +
+            '</span>' +
         '</div>' +
         '<span class="tien">' + tien(m.thanh_tien) + '</span>' +
       '</div>';
@@ -1368,7 +1372,12 @@
     var xong = donHienTai.mon.filter(function (m) { return m.trang_thai === 3; }).length;
     var tong = donHienTai.mon.length;
     tienTrinh.style.display = 'block';
-    document.getElementById('donTomTat').textContent = tt(T.da_phuc_vu, { xong: xong, tong: tong });
+    // Du kien mon cuoi: lay mon co con_phut lon nhat trong cac mon chua xong.
+    var conLau = donHienTai.mon.reduce(function (mx, m) {
+      return (m.trang_thai === 0 || m.trang_thai === 1) && m.con_phut > mx ? m.con_phut : mx;
+    }, 0);
+    document.getElementById('donTomTat').textContent = tt(T.da_phuc_vu, { xong: xong, tong: tong }) +
+      (conLau ? ' ' + tt(T.du_kien_xong, { phut: conLau }) : '');
     document.getElementById('donThanh').style.width = Math.round(xong / tong * 100) + '%';
 
     hangTong.style.display = 'flex';

@@ -39,7 +39,10 @@
     "kho:doisoat": "node config/migrations/039_doi_soat_lo_kho.js",
     "tiec:tien": "node config/migrations/040_tien_dat_tiec.js",
     "congno:setup": "node config/migrations/041_cong_no_ncc.js",
-    "nghiphep:setup": "node config/migrations/042_duyet_nghi_phep.js"
+    "nghiphep:setup": "node config/migrations/042_duyet_nghi_phep.js",
+    "baocao:chimuc": "node config/migrations/043_chi_muc_bao_cao.js",
+    "kho:kiemke": "node config/migrations/044_kiem_ke.js",
+    "taikhoan:doimk": "node config/migrations/045_doi_mk_nhan_vien.js"
   },
   "keywords": [],
   "author": "",

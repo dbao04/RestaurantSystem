@@ -1,0 +1,225 @@
+<%
+  var activePage = 'bao-cao-lai-lo';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var gon = function (n) { var x = Number(n || 0), a = Math.abs(x);
+    return a >= 1e9 ? (x / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ'
+         : a >= 1e6 ? (x / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr'
+         : Math.round(x).toLocaleString('vi-VN') + 'đ'; };
+  var pt = function (x) { return (Number(x || 0) * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + '%'; };
+  var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var tenKy = function (k) {
+    if (kq.nhom === 'thang') { var t = k.split('-'); return 'T' + Number(t[1]) + '/' + t[0].slice(2); }
+    var d = k.split('-'); return d[2] + '/' + d[1];
+  };
+  var t = kq.tong;
+  var duLieu = kq.theo_ky.map(function (o) { return { ky: tenKy(o.ky), dt: o.tong_doanh_thu, lg: o.lai_gop, ln: o.loi_nhuan, gv: o.gia_von, don: o.so_don }; });
+%>
+<%- include('partials/header') %>
+
+<style>
+  .ll { --surface: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7;
+        --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; }
+  .ll .moc { border: 1px solid #e7ded0; background: #fff; color: #4e342e; border-radius: 999px; padding: .3rem .85rem; font-size: .85rem; font-weight: 600; text-decoration: none !important; }
+  .ll .moc.is-on { background: #2b1a12; color: #f3dfa6; border-color: #2b1a12; }
+  .ll .kpi { background: var(--surface); border: 1px solid #e7ded0; border-radius: 14px; padding: .9rem 1.1rem; height: 100%; }
+  .ll .kpi .nhan { font-size: .8rem; color: var(--ink-2); }
+  .ll .kpi .so { font-size: 1.45rem; font-weight: 800; color: var(--ink); }
+  .ll .kpi .phu { font-size: .78rem; color: var(--muted); }
+  .ll .bctc td { padding: .35rem .6rem; border-bottom: 1px solid #f0ece4; }
+  .ll .bctc td.so, .ll table td.so, .ll table th.so { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ll .bctc tr.tong td { font-weight: 800; border-top: 2px solid #2b1a12; }
+  .ll .bctc tr.con td:first-child { padding-left: 1.6rem; color: var(--ink-2); }
+  .ll .am { color: #b3352c; }
+  .ll .cham { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .ll .khung-bd { position: relative; }
+  .ll svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .ll .tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid rgba(11,11,11,.12); border-radius: 10px;
+             box-shadow: 0 6px 24px rgba(0,0,0,.12); padding: .55rem .7rem; font-size: .8rem; min-width: 190px; display: none; z-index: 5; }
+  .ll .tip .dong { display: flex; justify-content: space-between; gap: 1rem; color: var(--ink-2); }
+  .ll .tip .dong span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="ll">
+  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-scale-balanced mr-2"></i>Báo cáo lãi lỗ</h1>
+    <a href="/staff/phan-tich-thuc-don?tu=<%= loc.tu %>&den=<%= loc.den %>" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chart-pie"></i> Phân tích thực đơn</a>
+  </div>
+  <p class="text-muted small mb-3">
+    Lãi lỗ theo <b>giá vốn món đã bán</b> (số phần × giá vốn công thức), khác báo cáo thu chi tháng của kế toán (tính tiền <i>mua</i> nguyên liệu trong tháng).
+    Lương phân bổ theo số ngày; hao hụt = món đã nấu bị hủy + xuất kho hao hụt.
+  </p>
+
+  <form class="d-flex flex-wrap align-items-center mb-3" style="gap:.5rem" method="get">
+    <% moc.forEach(function (m) { %>
+      <a class="moc <%= loc.tu === m.tu && loc.den === m.den ? 'is-on' : '' %>" href="?tu=<%= m.tu %>&den=<%= m.den %>"><%= m.ten %></a>
+    <% }) %>
+    <input type="date" name="tu" value="<%= loc.tu %>" class="form-control form-control-sm" style="width:auto">
+    <span class="text-muted">→</span>
+    <input type="date" name="den" value="<%= loc.den %>" class="form-control form-control-sm" style="width:auto">
+    <select name="nhom" class="form-control form-control-sm" style="width:auto">
+      <option value="ngay" <%= loc.nhom === 'ngay' ? 'selected' : '' %>>Theo ngày</option>
+      <option value="tuan" <%= loc.nhom === 'tuan' ? 'selected' : '' %>>Theo tuần</option>
+      <option value="thang" <%= loc.nhom === 'thang' ? 'selected' : '' %>>Theo tháng</option>
+    </select>
+    <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Xem</button>
+  </form>
+
+  <% if (!kq.theo_ky.length) { %>
+    <div class="alert alert-warning">Không có dữ liệu bán hàng trong khoảng <%= ngayVN(loc.tu) %> – <%= ngayVN(loc.den) %>.</div>
+  <% } else { %>
+
+  <div class="row mb-3">
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Doanh thu</div><div class="so"><%= gon(t.tong_doanh_thu) %></div><div class="phu"><%= t.so_don.toLocaleString('vi-VN') %> đơn</div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Lãi gộp</div><div class="so"><%= gon(t.lai_gop) %></div><div class="phu">Biên lãi gộp <%= pt(t.ty_le_gop) %></div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Lợi nhuận</div><div class="so <%= t.loi_nhuan < 0 ? 'am' : '' %>"><%= gon(t.loi_nhuan) %></div><div class="phu">Biên lợi nhuận <%= pt(t.ty_le_loi_nhuan) %></div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Tỷ lệ giá vốn (food cost)</div><div class="so"><%= pt(t.food_cost) %></div><div class="phu">Mục tiêu ngành ≤ 35%</div></div></div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-5 mb-3"><div class="card shadow h-100"><div class="card-body">
+      <b>Kết quả kinh doanh</b> <span class="small text-muted"><%= ngayVN(loc.tu) %> – <%= ngayVN(loc.den) %></span>
+      <table class="bctc w-100 mt-2" style="font-size:.9rem">
+        <tr><td>Doanh thu bán món</td><td class="so"><%= vnd(t.doanh_thu) %></td></tr>
+        <tr><td>Doanh thu tiệc</td><td class="so"><%= vnd(t.doanh_thu_tiec) %></td></tr>
+        <tr class="tong"><td>Tổng doanh thu</td><td class="so"><%= vnd(t.tong_doanh_thu) %></td></tr>
+        <tr class="con"><td>− Giá vốn hàng bán</td><td class="so"><%= vnd(t.gia_von) %></td></tr>
+        <tr class="tong"><td>Lãi gộp</td><td class="so"><%= vnd(t.lai_gop) %></td></tr>
+        <tr class="con"><td>− Lương nhân viên</td><td class="so"><%= vnd(t.luong) %></td></tr>
+        <tr class="con"><td>− Chi phí khác</td><td class="so"><%= vnd(t.chi_phi_khac) %></td></tr>
+        <tr class="con"><td>− Hao hụt (hủy món, xuất hao hụt)</td><td class="so"><%= vnd(t.hao_hut) %></td></tr>
+        <tr class="tong"><td>Lợi nhuận</td><td class="so <%= t.loi_nhuan < 0 ? 'am' : '' %>"><%= vnd(t.loi_nhuan) %></td></tr>
+      </table>
+      <% if (!t.luong) { %><div class="small text-muted mt-2"><i class="fas fa-circle-info"></i> Chưa có bảng lương trong kỳ - lợi nhuận đang chưa trừ lương.</div><% } %>
+    </div></div></div>
+
+    <div class="col-lg-7 mb-3"><div class="card shadow h-100"><div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-1" style="gap:.5rem">
+        <b>Theo <%= kq.nhom === 'thang' ? 'tháng' : kq.nhom === 'tuan' ? 'tuần' : 'ngày' %></b>
+        <div class="small" style="color:var(--ink-2)">
+          <span class="mr-3"><span class="cham" style="background:var(--s1)"></span>Doanh thu</span>
+          <span class="mr-3"><span class="cham" style="background:var(--s2)"></span>Lãi gộp</span>
+          <span><span class="cham" style="background:var(--s3)"></span>Lợi nhuận</span>
+        </div>
+      </div>
+      <div class="khung-bd" id="khung-bd">
+        <svg id="bd" width="100%" height="300" role="img" aria-label="Biểu đồ doanh thu, lãi gộp và lợi nhuận theo kỳ"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+      <% if (kq.theo_ky.every(function (o) { return Math.abs(o.lai_gop - o.loi_nhuan) < 1000; })) { %>
+        <div class="small text-muted mt-1"><i class="fas fa-circle-info"></i> Đường lợi nhuận trùng lãi gộp vì trong kỳ chưa có lương / chi phí / hao hụt đáng kể.</div>
+      <% } %>
+    </div></div></div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mb-3"><div class="card shadow h-100"><div class="card-body">
+      <b>Theo danh mục</b>
+      <div class="table-responsive mt-2" style="max-height:420px;overflow:auto">
+        <table class="table table-sm mb-0" style="font-size:.85rem">
+          <thead class="thead-light"><tr><th>Danh mục</th><th class="so">Doanh thu</th><th class="so">Giá vốn</th><th class="so">Lãi gộp</th><th class="so">Biên</th></tr></thead>
+          <tbody>
+            <% kq.theo_danh_muc.forEach(function (d) { %>
+              <tr><td><%= d.ten %></td><td class="so"><%= gon(d.doanh_thu) %></td><td class="so"><%= gon(d.gia_von) %></td><td class="so"><b><%= gon(d.lai_gop) %></b></td><td class="so"><%= pt(d.ty_le) %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div></div></div>
+    <div class="col-lg-6 mb-3"><div class="card shadow h-100"><div class="card-body">
+      <b>Món đóng góp lãi gộp nhiều nhất / ít nhất</b>
+      <table class="table table-sm mt-2 mb-2" style="font-size:.85rem">
+        <thead class="thead-light"><tr><th>Món</th><th class="so">Đã bán</th><th class="so">Lãi gộp</th><th class="so">Biên</th></tr></thead>
+        <tbody>
+          <% kq.mon_lai_nhat.slice(0, 5).forEach(function (m) { %>
+            <tr><td><%= m.ten %></td><td class="so"><%= m.so_luong.toLocaleString('vi-VN') %></td><td class="so"><b><%= gon(m.lai_gop) %></b></td><td class="so"><%= pt(m.ty_le) %></td></tr>
+          <% }) %>
+          <tr><td colspan="4" class="text-muted small text-center">⋯</td></tr>
+          <% kq.mon_lai_it_nhat.slice(0, 5).forEach(function (m) { %>
+            <tr><td><%= m.ten %></td><td class="so"><%= m.so_luong.toLocaleString('vi-VN') %></td><td class="so <%= m.lai_gop < 0 ? 'am' : '' %>"><%= gon(m.lai_gop) %></td><td class="so"><%= pt(m.ty_le) %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <div class="small text-muted">Xem phân loại đầy đủ và gợi ý giá ở trang Phân tích thực đơn.</div>
+    </div></div></div>
+  </div>
+
+  <div class="card shadow mb-3"><div class="card-body">
+    <b>Bảng số liệu theo kỳ</b>
+    <div class="table-responsive mt-2" style="max-height:360px;overflow:auto">
+      <table class="table table-sm mb-0" style="font-size:.85rem">
+        <thead class="thead-light"><tr><th>Kỳ</th><th class="so">Đơn</th><th class="so">Doanh thu</th><th class="so">Giá vốn</th><th class="so">Lãi gộp</th><th class="so">Lương</th><th class="so">Chi phí khác</th><th class="so">Hao hụt</th><th class="so">Lợi nhuận</th></tr></thead>
+        <tbody>
+          <% kq.theo_ky.forEach(function (o) { %>
+            <tr><td><%= tenKy(o.ky) %></td><td class="so"><%= o.so_don.toLocaleString('vi-VN') %></td><td class="so"><%= gon(o.tong_doanh_thu) %></td><td class="so"><%= gon(o.gia_von) %></td>
+              <td class="so"><%= gon(o.lai_gop) %></td><td class="so"><%= gon(o.luong) %></td><td class="so"><%= gon(o.chi_phi_khac) %></td><td class="so"><%= gon(o.hao_hut) %></td>
+              <td class="so <%= o.loi_nhuan < 0 ? 'am' : '' %>"><b><%= gon(o.loi_nhuan) %></b></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+  <% } %>
+</div>
+
+<script>
+(function () {
+  var DATA = <%- JSON.stringify(duLieu).replace(/</g, '\\u003c') %>;
+  var svg = document.getElementById('bd');
+  if (!svg || !DATA.length) return;
+  var tip = document.getElementById('tip');
+  var root = document.querySelector('.ll');
+  var mau = function (k) { return getComputedStyle(root).getPropertyValue(k).trim(); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var CHUOI = [['dt', '--s1', 'Doanh thu'], ['lg', '--s2', 'Lãi gộp'], ['ln', '--s3', 'Lợi nhuận']];
+  var gon = function (x) { var a = Math.abs(x); return a >= 1e9 ? (x / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : (x / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr'; };
+  function el(ten, tt, cha) { var e = document.createElementNS(NS, ten); for (var k in tt) e.setAttribute(k, tt[k]); (cha || svg).appendChild(e); return e; }
+  function ve() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = svg.clientWidth || 700, H = 300, L = 64, R = 14, T = 12, B = 34;
+    var maxY = 0, minY = 0;
+    DATA.forEach(function (d) { CHUOI.forEach(function (c) { maxY = Math.max(maxY, d[c[0]]); minY = Math.min(minY, d[c[0]]); }); });
+    maxY = maxY * 1.08 || 1;
+    var n = DATA.length;
+    var sx = function (i) { return n === 1 ? (L + W - R) / 2 : L + i / (n - 1) * (W - L - R); };
+    var sy = function (y) { return T + (maxY - y) / (maxY - minY) * (H - T - B); };
+    // Luoi ngang (manh) + nhan truc.
+    var buoc = Math.pow(10, Math.floor(Math.log10(maxY / 4))); var b = maxY / 4 / buoc; buoc *= b <= 1 ? 1 : b <= 2 ? 2 : b <= 5 ? 5 : 10;
+    for (var y = Math.ceil(minY / buoc) * buoc; y <= maxY; y += buoc) {
+      el('line', { x1: L, x2: W - R, y1: sy(y), y2: sy(y), stroke: y === 0 ? mau('--axis') : mau('--grid'), 'stroke-width': 1 });
+      el('text', { x: L - 6, y: sy(y) + 4, 'text-anchor': 'end', 'font-size': 11, fill: mau('--muted') }).textContent = gon(y);
+    }
+    var buocNhan = Math.max(1, Math.ceil(n / 12));
+    DATA.forEach(function (d, i) {
+      if (i % buocNhan) return;
+      el('text', { x: sx(i), y: H - B + 16, 'text-anchor': 'middle', 'font-size': 11, fill: mau('--muted') }).textContent = d.ky;
+    });
+    // Duong 2px + cham ket thuc.
+    CHUOI.forEach(function (c) {
+      var dd = DATA.map(function (d, i) { return (i ? 'L' : 'M') + sx(i) + ' ' + sy(d[c[0]]); }).join(' ');
+      el('path', { d: dd, fill: 'none', stroke: mau(c[1]), 'stroke-width': 2, 'stroke-linejoin': 'round' });
+      var cuoi = DATA[n - 1];
+      el('circle', { cx: sx(n - 1), cy: sy(cuoi[c[0]]), r: 4, fill: mau(c[1]), stroke: mau('--surface'), 'stroke-width': 2 });
+    });
+    // Duong dong + tooltip: vung bat di chuot theo cot.
+    var dong = el('line', { x1: 0, x2: 0, y1: T, y2: H - B, stroke: mau('--axis'), 'stroke-width': 1, visibility: 'hidden' });
+    var w = n === 1 ? W - L - R : (W - L - R) / (n - 1);
+    DATA.forEach(function (d, i) {
+      var vung = el('rect', { x: sx(i) - w / 2, y: T, width: w, height: H - T - B, fill: 'transparent' });
+      vung.addEventListener('mouseenter', function () {
+        dong.setAttribute('x1', sx(i)); dong.setAttribute('x2', sx(i)); dong.setAttribute('visibility', 'visible');
+        tip.innerHTML = '<b>' + d.ky + '</b> · ' + d.don.toLocaleString('vi-VN') + ' đơn' + CHUOI.map(function (c) {
+          return '<div class="dong"><span><span class="cham" style="background:' + mau(c[1]) + '"></span>' + c[2] + '</span><span>' + gon(d[c[0]]) + '</span></div>';
+        }).join('');
+        tip.style.display = 'block';
+        var x = sx(i) + 12; if (x + tip.offsetWidth > svg.clientWidth) x = sx(i) - 12 - tip.offsetWidth;
+        tip.style.left = Math.max(0, x) + 'px'; tip.style.top = '8px';
+      });
+      vung.addEventListener('mouseleave', function () { tip.style.display = 'none'; dong.setAttribute('visibility', 'hidden'); });
+    });
+  }
+  ve();
+  var hen; window.addEventListener('resize', function () { clearTimeout(hen); hen = setTimeout(ve, 150); });
+})();
+</script>
+
+<%- include('partials/footer') %>

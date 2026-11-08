@@ -160,4 +160,52 @@ router.post('/staff/xep-ca/dinh-muc', canQuanLy, bat(async (req, res) => {
   res.redirect(`${goc}?msg=` + encodeURIComponent('Đã lưu định mức.'));
 }));
 
+// ===========================================================================
+// DU BAO NHU CAU NHAN SU -> DE XUAT DINH MUC (services/duBaoNhanSuService.js)
+// ===========================================================================
+
+router.get('/staff/xep-ca/du-bao', canQuanLy, bat(async (req, res) => {
+  const dbns = require('../services/duBaoNhanSuService');
+  // Mac dinh du bao cho TUAN SAU (tuan can xep lich), co the chon tuan khac.
+  let tuan = String(req.query.tuan || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(tuan)) tuan = thuHaiCuaTuan(tuan);
+  else { const d = new Date(thuHaiCuaTuan(ngayISO(new Date())) + 'T00:00:00'); d.setDate(d.getDate() + 7); tuan = ngayISO(d); }
+  const [kq, dinhMuc] = await Promise.all([dbns.duBao({ tuanBatDau: tuan }), svc.dsDinhMuc()]);
+  const hienTai = {};
+  for (const d of dinhMuc) hienTai[`${d.thu}|${d.ma_ca}|${d.chucvu}`] = Number(d.so_luong) || 0;
+  const lui = new Date(tuan + 'T00:00:00'); lui.setDate(lui.getDate() - 7);
+  const toi = new Date(tuan + 'T00:00:00'); toi.setDate(toi.getDate() + 7);
+  res.render('staff/xep-ca-du-bao', {
+    title: 'Dự báo nhu cầu nhân sự',
+    isStaff: true,
+    kq, hienTai, tuan, tuanTruoc: ngayISO(lui), tuanSau: ngayISO(toi),
+    TEN_THU: dbns.TEN_THU, TEN_CHUC_VU: dbns.TEN_CHUC_VU, CHUC_VU: dbns.CHUC_VU_DU_BAO, NHAN_THAM_SO: dbns.NHAN_THAM_SO,
+    msg: req.query.msg || null,
+    msgType: req.query.msgType || 'success',
+  });
+}));
+
+router.post('/staff/xep-ca/du-bao/tham-so', canQuanLy, bat(async (req, res) => {
+  await require('../services/duBaoNhanSuService').luuThamSo(req.body || {});
+  res.redirect('/staff/xep-ca/du-bao?tuan=' + encodeURIComponent(String((req.body || {}).tuan || '')) +
+    '&msg=' + encodeURIComponent('Đã lưu giả định năng suất.'));
+}));
+
+router.post('/staff/xep-ca/du-bao/ap-dung', canQuanLy, bat(async (req, res) => {
+  const dbns = require('../services/duBaoNhanSuService');
+  const tuan = tuanTuQuery(req);
+  let chon = (req.body || {}).chuc_vu || [];
+  if (!Array.isArray(chon)) chon = [chon];
+  try {
+    // Tinh lai tren may chu - khong nhan so lieu de xuat tu trinh duyet.
+    const kq = await dbns.duBao({ tuanBatDau: tuan });
+    await dbns.apDung(kq.de_xuat, chon);
+    realtime.doi(realtime.MIEN.LICH_LAM, { duong_dan: '/staff/xep-ca/dinh-muc' });
+    res.redirect('/staff/xep-ca/dinh-muc?msg=' + encodeURIComponent(
+      'Đã áp dụng đề xuất dự báo cho: ' + chon.map((c) => dbns.TEN_CHUC_VU[c] || c).join(', ') + '.'));
+  } catch (e) {
+    res.redirect('/staff/xep-ca/du-bao?tuan=' + tuan + '&msgType=danger&msg=' + encodeURIComponent(e.message));
+  }
+}));
+
 module.exports = router;

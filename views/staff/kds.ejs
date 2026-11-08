@@ -438,6 +438,12 @@ function veThe(m, loai) {
       <div class="meta">
         ${ban} &middot; <b>${thoat(m.ten_khach || 'Khách lẻ')}</b><br>
         Giờ order: <b>${m.tg || '—'}</b>
+        ${(loai === 'cho' || loai === 'lam') && m.con_phut
+          ? ` &middot; <span title="Dự kiến xong theo hàng đợi bếp">còn ~${Number(m.con_phut)}'</span>`
+          : ''}
+        ${(loai === 'cho' || loai === 'lam') && m.sap_tre && !tre
+          ? ` &middot; <span class="cho-lau" title="Đã chờ + dự kiến còn lại vượt cam kết phục vụ">⚠ sắp trễ</span>`
+          : ''}
         ${m.cho_phut !== null && m.cho_phut !== undefined && Number(m.cho_phut) > 0
           ? ` &middot; <span class="${tre ? 'cho-lau' : ''}">chờ ${choPhut} phút${tre ? ' ⚠' : ''}</span>`
           : ''}

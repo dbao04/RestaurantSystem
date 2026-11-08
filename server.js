@@ -270,6 +270,31 @@ app.use((req, res, next) => {
   ) + '&msgType=danger');
 });
 
+/*
+ * NHAN VIEN dang nhap bang mat khau mac dinh 123456 (tai khoan moi tao / vua
+ * cap lai) cung phai doi truoc khi dung he thong - ai biet ten dang nhap la vao
+ * duoc quyen thu ngan / kho. Chi chan trang HTML (GET) khu nhan vien + KDS;
+ * API/JSON va trang cham cong de nguyen. Tat bang cau_hinh
+ * bao_mat.bat_doi_mk_nhan_vien = 0 (VD may demo).
+ */
+const DUONG_NV_DUOC_KHI_PHAI_DOI_MK = ['/staff/profile', '/staff/logout', '/staff/login'];
+app.use((req, res, next) => {
+  if (!req.session || !req.session.stafflogin || !req.session.nvPhaiDoiMatKhau) return next();
+  if (req.method !== 'GET' || !req.accepts('html') || req.xhr) return next();
+  if (!/^\/(staff|kds|admin)(\/|$)/.test(req.path) || /^\/(staff\/)?api\//.test(req.path)) return next();
+  if (DUONG_NV_DUOC_KHI_PHAI_DOI_MK.some((d) => req.path === d || req.path.startsWith(d + '/'))) return next();
+  return res.redirect('/staff/profile?msg=' + encodeURIComponent(
+    'Tài khoản đang dùng mật khẩu mặc định. Vui lòng đổi mật khẩu trước khi tiếp tục.'
+  ) + '&msgType=danger');
+});
+
+async function batDoiMkNhanVien() {
+  try {
+    const [[r]] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
+    return !(r && String(r.gia_tri).trim() === '0');
+  } catch (e) { return true; }
+}
+
 // Auth Middlewares
 const requireLogin = (req, res, next) => {
   if (!req.session.userlogin) {
@@ -357,6 +382,10 @@ app.use('/', require('./routes/thuChi'));
 app.use('/', require('./routes/congNoNcc'));
 // Duyet nghi phep theo cap tren (thay cho ke toan duyet)
 app.use('/', require('./routes/nghiPhep'));
+// Phan tich thuc don (menu engineering)
+app.use('/', require('./routes/phanTichThucDon'));
+// Bao cao lai lo quan tri
+app.use('/', require('./routes/laiLo'));
 // Bep: thong ke, xuat nhap kho, mua hang NVL - routes/khoBep.js
 app.use('/', require('./routes/khoBep'));
 
@@ -1318,7 +1347,6 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  console.log('Register POST body:', req.body);
   let { ten, sodienthoai, email, diachi, passwords, repass } = req.body;
 
   // Defensive normalization
@@ -1593,6 +1621,7 @@ app.post('/staff/login', async (req, res) => {
       req.session.staffId = staff.id_nv;
       req.session.staffName = staff.ten;
       req.session.staffRole = staff.chucvu; // vai tro cu - giu de cac route cu chay dung
+      req.session.nvPhaiDoiMatKhau = require('./utils/matKhau').laMacDinh(password) && await batDoiMkNhanVien();
 
       // Nap chuc danh, bo phan, cap bac va danh sach quyen theo co cau to chuc.
       // Loi o day khong duoc chan dang nhap: nguoi chua duoc bo nhiem chuc danh
@@ -1608,6 +1637,12 @@ app.post('/staff/login', async (req, res) => {
       // duoi, vi trang /cham-cong/ tu no da co phan dang ky ngay trong trang -
       // chen them mot trang nua vao giua chi khien ho lac duong.
       if (tiep) return res.redirect(tiep);
+
+      if (req.session.nvPhaiDoiMatKhau) {
+        return res.redirect('/staff/profile?msg=' + encodeURIComponent(
+          'Bạn đang dùng mật khẩu mặc định 123456. Vui lòng đổi mật khẩu mới để tiếp tục.'
+        ) + '&msgType=danger');
+      }
 
       // Lan dau dang nhap ma chua co khuon mat -> dua thang toi trang tu dang ky.
       // Chi kiem tra CSDL (nhanh); trang do tu kiem tra dich vu Python va luon co
@@ -2200,7 +2235,10 @@ app.post('/staff/profile', requireStaff, async (req, res) => {
       req.session.staffName = ten;
     } else if (action === 'password') {
       if (new_pass !== re_pass) return res.redirect('/staff/profile?msg=Mật+khẩu+xác+nhận+không+khớp!&msgType=danger');
+      const loiMk = require('./utils/matKhau').loiMatKhauMoi(new_pass);
+      if (loiMk) return res.redirect('/staff/profile?msg=' + encodeURIComponent(loiMk) + '&msgType=danger');
       await personnelService.changeStaffPassword(req.session.staffId, old_pass, new_pass);
+      req.session.nvPhaiDoiMatKhau = false;
     }
     res.redirect('/staff/profile?msg=Cập+nhật+thành+công!&msgType=success');
   } catch (err) {
@@ -2394,6 +2432,8 @@ app.get('/qr/table/:tableId/don', async (req, res) => {
     const ban = await orderService.layBanQR(req.params.tableId);
     if (!ban) return res.status(404).json({ success: false, message: 'Mã bàn không hợp lệ' });
     const don = await orderService.donCuaBanQR(req.params.tableId);
+    // Thoi gian du kien moi mon (services/thoiGianChoService.js).
+    const duKien = don.mon.length ? await require('./services/thoiGianChoService').duKien().catch(() => null) : null;
     res.json({
       success: true,
       sesis: don.sesis,
@@ -2408,6 +2448,7 @@ app.get('/qr/table/:tableId/don', async (req, res) => {
         ghi_chu: m.ghi_chu_mon || '',
         trang_thai: Number(m.trangthai_bep) || 0,
         ten_trang_thai: TEN_TRANG_THAI_BEP[Number(m.trangthai_bep) || 0] || 'Chờ chế biến',
+        con_phut: duKien && duKien.theoId.has(m.id) ? duKien.theoId.get(m.id).con_phut : null,
       })),
     });
   } catch (err) {

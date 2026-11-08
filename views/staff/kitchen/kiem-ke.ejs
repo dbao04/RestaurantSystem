@@ -1,0 +1,108 @@
+<%
+  var activePage = 'kiem-ke';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var soVN = function (n, k) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: k == null ? 2 : k }); };
+  var tgVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear() + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); };
+  var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var TT = { dang_dem: ['Đang đếm', 'cam'], da_chot: ['Đã chốt', 'nhap'], huy: ['Đã hủy', 'xam'] };
+  var dangMo = ds.find(function (p) { return p.trang_thai === 'dang_dem'; });
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-clipboard-list text-warning"></i> Kiểm kê &amp; hao hụt</h1>
+    <div class="kb-phu">Đếm tồn thực tế, chốt để tự sinh phiếu xuất (thiếu) / phiếu nhập điều chỉnh (thừa). Báo cáo hao hụt so với giá vốn bán hàng.</div>
+  </div>
+  <div class="kb-nut">
+    <% if (dangMo) { %>
+      <a href="/staff/kitchen/kho/kiem-ke/<%= dangMo.id_kk %>" class="btn btn-sm btn-warning"><i class="fas fa-pen"></i> Tiếp tục đếm <%= dangMo.ma_phieu %></a>
+    <% } else { %>
+      <button type="button" class="btn btn-sm btn-success" id="taoPhieu"><i class="fas fa-plus"></i> Tạo phiếu kiểm kê</button>
+    <% } %>
+    <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-right-left"></i> Xuất nhập kho</a>
+  </div>
+</div>
+
+<div class="kb-the mb-3">
+  <div class="d-flex flex-wrap align-items-center mb-2" style="gap:.5rem">
+    <h6 class="mb-0"><i class="fas fa-chart-simple"></i> Hao hụt <%= ngayVN(tu) %> – <%= ngayVN(den) %></h6>
+    <form class="d-flex align-items-center ml-auto" style="gap:.4rem" method="get">
+      <input type="date" name="tu" value="<%= tu %>" class="form-control form-control-sm" style="width:auto">
+      <span class="text-muted">→</span>
+      <input type="date" name="den" value="<%= den %>" class="form-control form-control-sm" style="width:auto">
+      <button class="btn btn-sm btn-outline-secondary">Xem</button>
+    </form>
+  </div>
+  <div class="row">
+    <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#b3352c"><div class="kb-kpi__n">Tổng hao hụt</div><div class="kb-kpi__v"><%= vnd(haoHut.tong_hao_hut) %></div><div class="kb-kpi__s">xuất hao hụt + món đã nấu bị hủy</div></div></div>
+    <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#c2410c"><div class="kb-kpi__n">Tỷ lệ hao hụt</div><div class="kb-kpi__v"><%= soVN(haoHut.ty_le * 100, 2) %>%</div><div class="kb-kpi__s">trên giá vốn bán hàng <%= vnd(haoHut.gia_von_ban_hang) %></div></div></div>
+    <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#9333ea"><div class="kb-kpi__n">Món đã nấu bị hủy</div><div class="kb-kpi__v"><%= vnd(haoHut.huy_mon_da_nau) %></div><div class="kb-kpi__s">theo giá vốn công thức</div></div></div>
+    <div class="col-6 col-lg-3 mb-3"><div class="kb-kpi" style="--m:#475569"><div class="kb-kpi__n">Ngưỡng tham khảo</div><div class="kb-kpi__v">≤ 2–4%</div><div class="kb-kpi__s">hao hụt / giá vốn ở nhà hàng vận hành tốt</div></div></div>
+  </div>
+  <div class="row">
+    <div class="col-lg-5">
+      <table class="table table-sm kb-bang mb-2">
+        <thead class="thead-light"><tr><th>Lý do</th><th class="so">Số dòng</th><th class="so">Giá trị</th></tr></thead>
+        <tbody>
+          <% haoHut.theo_ly_do.forEach(function (r) { %><tr><td><%= r.ten %></td><td class="so"><%= r.so_dong %></td><td class="so"><%= vnd(r.gia_tri) %></td></tr><% }) %>
+          <% if (!haoHut.theo_ly_do.length) { %><tr><td colspan="3" class="text-muted text-center">Không có xuất hao hụt trong kỳ.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-7">
+      <table class="table table-sm kb-bang mb-2">
+        <thead class="thead-light"><tr><th>Nguyên liệu hao hụt nhiều nhất</th><th class="so">Số lượng</th><th class="so">Giá trị</th></tr></thead>
+        <tbody>
+          <% haoHut.theo_nguyen_lieu.forEach(function (r) { %><tr><td><%= r.ten_nl %></td><td class="so"><%= soVN(r.so_luong) %> <span class="text-muted small"><%= r.ten_dvt %></span></td><td class="so"><%= vnd(r.gia_tri) %></td></tr><% }) %>
+          <% if (!haoHut.theo_nguyen_lieu.length) { %><tr><td colspan="3" class="text-muted text-center">—</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="kb-the mb-3">
+  <h6><i class="fas fa-list"></i> Phiếu kiểm kê</h6>
+  <% if (!ds.length) { %>
+    <div class="kb-rong">Chưa có phiếu kiểm kê nào. Nên kiểm kê định kỳ hằng tuần hoặc cuối tháng.</div>
+  <% } else { %>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover kb-bang mb-0">
+      <thead class="thead-light"><tr><th>Mã</th><th>Trạng thái</th><th>Lập</th><th>Chốt</th><th class="so">Đã đếm</th><th class="so">Thiếu</th><th class="so">Thừa</th></tr></thead>
+      <tbody>
+        <% ds.forEach(function (p) { %>
+          <tr>
+            <td><a href="/staff/kitchen/kho/kiem-ke/<%= p.id_kk %>"><b><%= p.ma_phieu %></b></a></td>
+            <td><span class="kb-nhan <%= TT[p.trang_thai][1] %>"><%= TT[p.trang_thai][0] %></span></td>
+            <td class="small"><%= tgVN(p.tao_luc) %><br><span class="text-muted"><%= p.ten_nv_tao || '—' %></span></td>
+            <td class="small"><%= p.chot_luc ? tgVN(p.chot_luc) : '—' %><br><span class="text-muted"><%= p.ten_nv_chot || '' %></span></td>
+            <td class="so"><%= p.da_dem %>/<%= p.so_dong %></td>
+            <td class="so text-danger"><%= Number(p.gia_tri_thieu) ? vnd(p.gia_tri_thieu) : '—' %></td>
+            <td class="so"><%= Number(p.gia_tri_thua) ? vnd(p.gia_tri_thua) : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+<script>
+(function () {
+  var nut = document.getElementById('taoPhieu');
+  if (!nut) return;
+  nut.addEventListener('click', async function () {
+    nut.disabled = true;
+    try {
+      var r = await fetch('/api/kitchen/kiem-ke', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: '{}' });
+      var d = await r.json();
+      if (!d.ok) throw new Error(d.thong_bao || 'Không tạo được phiếu.');
+      location.href = '/staff/kitchen/kho/kiem-ke/' + d.id;
+    } catch (e) { alert(e.message); nut.disabled = false; }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

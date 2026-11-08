@@ -337,6 +337,25 @@ const orderService = {
     await db.query('UPDATE hopdong SET tinhtrang = ? WHERE sesis = ?', [status, sesis]);
   },
 
+  /**
+   * Tai khoan "khach vang lai" cua mot ban (tao neu chua co).
+   *
+   * Don mo ban tu so do ban truoc day gan id_user = 1 - mot khach KHONG ton
+   * tai, nen trang tinh tien bao "khong tim thay don" va khong dong duoc ban.
+   * Gan vao tai khoan vang lai rieng cua ban (giong don QR): sodienthoai bat
+   * dau 'QR_' nen khong dang nhap duoc va khong tich diem cho toi khi thu ngan
+   * / khach gan so dien thoai that (services/khachTaiBanService.js).
+   */
+  khachVangLaiCuaBan: async (idBan, tenBan = '') => {
+    const sdt = 'QR_BAN' + Number(idBan);
+    const [[co]] = await db.query('SELECT id FROM khach_hang WHERE sodienthoai = ? LIMIT 1', [sdt]);
+    if (co) return co.id;
+    const [kq] = await db.query(
+      'INSERT INTO khach_hang (ten, sodienthoai, passwords) VALUES (?, ?, ?)',
+      ['Bàn ' + (tenBan || idBan), sdt, MAT_KHAU_VO_HIEU]);
+    return kq.insertId;
+  },
+
   // Thao tac bep: xem services/kdsService.js.
 
   // ============ USER/CUSTOMER MANAGEMENT ============
@@ -364,7 +383,20 @@ const orderService = {
     const { ten, sodienthoai, email, diachi, passwords } = data;
     const hashedPassword = passwords ? await matKhau.bam(passwords) : null;
     const [existing] = await db.query('SELECT * FROM khach_hang WHERE sodienthoai = ?', [sodienthoai]);
-    if (existing.length > 0) throw new Error('Số điện thoại này đã được đăng ký!');
+    if (existing.length > 0) {
+      // Ho so do thu ngan / trang QR tao khi tich diem (chua co mat khau):
+      // khach dang ky bang dung so nay thi NHAN LAI ho so cung diem da tich.
+      // Luu y: khong xac minh so (chua co OTP) - nguoi biet so co the nhan truoc.
+      const { CHUA_DANG_KY } = require('./khachTaiBanService');
+      if (existing[0].passwords === CHUA_DANG_KY && hashedPassword) {
+        await db.query(
+          `UPDATE khach_hang SET ten = COALESCE(NULLIF(?, ''), ten), email = ?, diachi = ?, passwords = ?
+           WHERE id = ? AND passwords = ?`,
+          [ten, email, diachi, hashedPassword, existing[0].id, CHUA_DANG_KY]);
+        return existing[0].id;
+      }
+      throw new Error('Số điện thoại này đã được đăng ký!');
+    }
     const [result] = await db.query(
       'INSERT INTO khach_hang (ten, sodienthoai, email, diachi, passwords) VALUES (?, ?, ?, ?, ?)',
       [ten, sodienthoai, email, diachi, hashedPassword]

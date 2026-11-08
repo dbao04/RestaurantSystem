@@ -204,15 +204,20 @@ async function banKhaDung(khung, {
 } = {}) {
   const ch = await qt.docCauHinh();
   const dsO = qt.dayO(khung.ngay, khung.batDau, khung.ketThuc, khung.demDon);
-  const [dsBan, chiem] = await Promise.all([
+  const [dsBan, chiem, giuTiec] = await Promise.all([
     docBan({ areaId, client, chiChoDat }),
     banBiChiem(dsO, { boQuaId, client }),
+    // Sanh da giu cho tiec (xac nhan / da coc) trong buoi trung khung gio nay.
+    require('./tiecVanHanhService').sanhBiGiu(khung.ngay, khung.batDau, khung.ketThuc).catch(() => new Map()),
   ]);
 
   const kem = [];
   const trong = [];
   for (const ban of dsBan) {
-    const ly = lyDoKhongDung(ban, { biChiem: chiem.get(ban.id), khung, ch, bayGio });
+    const tiec = giuTiec.get(Number(ban.khu_vuc_id));
+    const ly = tiec
+      ? { ma: 'EVENT', mo_ta: `Sảnh đã giữ cho tiệc ${tiec.ma_tiec}` }
+      : lyDoKhongDung(ban, { biChiem: chiem.get(ban.id), khung, ch, bayGio });
     if (ly) kem.push({ ...ban, kha_dung: false, ly_do: ly, reservation_id: chiem.get(ban.id) || null });
     else trong.push({ ...ban, kha_dung: true, ly_do: null, reservation_id: null });
   }
