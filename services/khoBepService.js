@@ -122,6 +122,9 @@ async function taoPhieuNhap(body, idNv) {
   }
   const idNcc = Number(body.id_ncc) || null;
   const idDmh = Number(body.id_dmh) || null;
+  // Them cot cong no TRUOC transaction: ALTER TABLE trong MySQL tu commit ngam.
+  const congNo = require('./congNoNccService');
+  await congNo.damBaoCot();
 
   const conn = await db.getConnection();
   try {
@@ -133,6 +136,8 @@ async function taoPhieuNhap(body, idNv) {
        VALUES (?, ?, ?, CURDATE(), NOW(), ?, ?, 1, ?)`,
       [ma, idNcc, idNv || null, Math.round(tong), String(body.ghi_chu || '').slice(0, 500) || null, idDmh]);
     const idPn = kq.insertId;
+    // Phieu co nha cung cap -> phat sinh cong no, han tra mac dinh.
+    await congNo.datHanTra(conn, idPn, idNcc);
 
     for (const d of dong) {
       const [[nl]] = await conn.query('SELECT so_luong, gia_von, han_su_dung_ngay FROM nguyen_lieu WHERE id_nl = ? FOR UPDATE', [d.id_nl]);

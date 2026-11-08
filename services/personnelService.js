@@ -5,18 +5,20 @@
  */
 
 const db = require('../config/db');
-const md5 = require('md5');
+const matKhau = require('../utils/matKhau');
 
 const personnelService = {
   // ============ ADMIN LOGIN & PROFILE ============
   adminLogin: async (adminuser, adminpass) => {
     if (!adminuser || !adminpass) return null;
-    const hashedPass = md5(String(adminpass));
-    const [rows] = await db.query(
-      'SELECT * FROM tb_admin WHERE adminuser = ? AND adminpass = ? LIMIT 1',
-      [adminuser, hashedPass]
-    );
-    return rows[0] || null;
+    const [rows] = await db.query('SELECT * FROM tb_admin WHERE adminuser = ? LIMIT 1', [adminuser]);
+    const admin = rows[0];
+    if (!admin || !(await matKhau.khop(adminpass, admin.adminpass))) return null;
+    if (matKhau.canBamLai(admin.adminpass)) {
+      await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?',
+        [await matKhau.bam(adminpass), admin.id_admin]);
+    }
+    return admin;
   },
 
   getAdminById: async (id) => {
@@ -34,25 +36,27 @@ const personnelService = {
 
   changeAdminPassword: async (id, oldPass, newPass) => {
     if (!oldPass || !newPass) throw new Error('Vui lòng nhập đầy đủ mật khẩu!');
-    const hashedOld = md5(String(oldPass));
-    const [rows] = await db.query(
-      'SELECT * FROM tb_admin WHERE id_admin = ? AND adminpass = ?',
-      [id, hashedOld]
-    );
-    if (!rows[0]) throw new Error('Mật khẩu cũ không đúng!');
-    const hashedNew = md5(String(newPass));
+    const [rows] = await db.query('SELECT adminpass FROM tb_admin WHERE id_admin = ?', [id]);
+    if (!rows[0] || !(await matKhau.khop(oldPass, rows[0].adminpass))) throw new Error('Mật khẩu cũ không đúng!');
+    const hashedNew = await matKhau.bam(newPass);
     await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [hashedNew, id]);
   },
 
   // ============ STAFF LOGIN & MANAGEMENT ============
   staffLogin: async (username, password) => {
     if (!username || !password) return null;
-    const hashedPassword = md5(String(password));
     const [rows] = await db.query(
-      'SELECT * FROM nhan_vien WHERE username = ? AND passwords = ? AND trangthai = 1 LIMIT 1',
-      [username, hashedPassword]
+      'SELECT * FROM nhan_vien WHERE username = ? AND trangthai = 1 LIMIT 1',
+      [username]
     );
-    return rows[0] || null;
+    const nv = rows[0];
+    if (!nv || !(await matKhau.khop(password, nv.passwords))) return null;
+    // Mat khau md5 cu: dang nhap dung thi bam lai bang bcrypt luon.
+    if (matKhau.canBamLai(nv.passwords)) {
+      await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?',
+        [await matKhau.bam(password), nv.id_nv]);
+    }
+    return nv;
   },
 
   getStaffById: async (id) => {
@@ -70,7 +74,7 @@ const personnelService = {
 
   addStaff: async (data) => {
     const { ten, sodienthoai, email, diachi, chucvu, username, passwords } = data;
-    const hashedPass = md5(passwords);
+    const hashedPass = await matKhau.bam(passwords);
     await db.query(
       'INSERT INTO nhan_vien (ten, sodienthoai, email, diachi, chucvu, username, passwords, ngayvaolam) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
       [ten, sodienthoai, email, diachi, chucvu, username, hashedPass]
@@ -80,7 +84,7 @@ const personnelService = {
   updateStaff: async (id, data) => {
     const { ten, sodienthoai, email, diachi, chucvu, username, passwords, trangthai } = data;
     if (passwords) {
-      const hashedPass = md5(passwords);
+      const hashedPass = await matKhau.bam(passwords);
       await db.query(
         'UPDATE nhan_vien SET ten = ?, sodienthoai = ?, email = ?, diachi = ?, chucvu = ?, username = ?, passwords = ?, trangthai = ? WHERE id_nv = ?',
         [ten, sodienthoai, email, diachi, chucvu, username, hashedPass, trangthai, id]
@@ -107,13 +111,9 @@ const personnelService = {
   },
 
   changeStaffPassword: async (id, oldPass, newPass) => {
-    const hashedOld = md5(oldPass);
-    const [rows] = await db.query(
-      'SELECT * FROM nhan_vien WHERE id_nv = ? AND passwords = ?',
-      [id, hashedOld]
-    );
-    if (!rows[0]) throw new Error('Mật khẩu cũ không đúng!');
-    const hashedNew = md5(newPass);
+    const [rows] = await db.query('SELECT passwords FROM nhan_vien WHERE id_nv = ?', [id]);
+    if (!rows[0] || !(await matKhau.khop(oldPass, rows[0].passwords))) throw new Error('Mật khẩu cũ không đúng!');
+    const hashedNew = await matKhau.bam(newPass);
     await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [hashedNew, id]);
   },
 
@@ -620,7 +620,7 @@ const personnelService = {
   },
 
   deleteExpense: async (id) => {
-    await db.query('DELETE FROM chi_phi_khac WHERE id_chi = ?', [id]);
+    await db.query('DELETE FROM chi_phi_khac WHERE id_cp = ?', [id]);
   },
 
   // ============ ATTENDANCE MANAGEMENT ============
@@ -667,9 +667,10 @@ const personnelService = {
   // ============ LEAVE REQUEST MANAGEMENT ============
   getAllLeaveRequests: async () => {
     const [rows] = await db.query(`
-      SELECT np.*, n.ten AS ten_nhanvien, n.chucvu 
-      FROM nghi_phep np 
-      JOIN nhan_vien n ON np.id_nv = n.id_nv 
+      SELECT np.*, n.ten AS ten_nhanvien, n.chucvu, nd.ten AS ten_nguoi_duyet
+      FROM nghi_phep np
+      JOIN nhan_vien n ON np.id_nv = n.id_nv
+      LEFT JOIN nhan_vien nd ON nd.id_nv = np.nguoi_duyet
       ORDER BY np.ngay_bat_dau DESC
     `);
     return rows;

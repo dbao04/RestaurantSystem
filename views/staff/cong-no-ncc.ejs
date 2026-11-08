@@ -1,0 +1,152 @@
+<%
+  var activePage = 'cong-no-ncc';
+  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var tongNo = tongHop.reduce(function (s, n) { return s + n.con_no; }, 0);
+  var tongQuaHan = tongHop.reduce(function (s, n) { return s + n.qua_han; }, 0);
+%>
+<%- include('partials/header') %>
+
+<style>
+  .cn-kpi { border-radius: 14px; padding: 1rem 1.2rem; background: #fff; border: 1px solid #e7ded0; height: 100%; }
+  .cn-kpi .so { font-size: 1.5rem; font-weight: 800; color: #2b1a12; }
+  .cn-kpi.do .so { color: #b3352c; }
+  .cn-ncc { display: flex; justify-content: space-between; align-items: center; padding: .6rem .9rem; border-bottom: 1px solid #f0e8dc; text-decoration: none !important; color: inherit; }
+  .cn-ncc:hover, .cn-ncc.is-on { background: #fbf7f0; }
+  .cn-ncc.is-on { border-left: 3px solid #c8a24b; }
+  .cn-tre { color: #b3352c; font-weight: 700; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-handshake mr-2"></i>Công nợ nhà cung cấp</h1>
+  <a href="/staff/thu-chi" class="btn btn-sm btn-outline-secondary"><i class="fas fa-book"></i> Sổ quỹ thu chi</a>
+</div>
+<p class="text-muted small mb-3">
+  Phiếu nhập kho có nhà cung cấp tự phát sinh công nợ, hạn trả <%= hanNo %> ngày kể từ ngày nhập.
+  Mỗi lần trả tiền sinh một <b>phiếu chi "Trả tiền nhà cung cấp"</b> trong sổ quỹ; hủy phiếu chi đó thì công nợ được cộng lại.
+</p>
+
+<div class="row mb-3">
+  <div class="col-md-4 mb-2"><div class="cn-kpi"><div class="small text-muted">Tổng còn nợ</div><div class="so"><%= vnd(tongNo) %></div></div></div>
+  <div class="col-md-4 mb-2"><div class="cn-kpi do"><div class="small text-muted">Quá hạn</div><div class="so"><%= vnd(tongQuaHan) %></div></div></div>
+  <div class="col-md-4 mb-2"><div class="cn-kpi"><div class="small text-muted">Nhà cung cấp còn nợ</div><div class="so"><%= tongHop.length %></div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-lg-4 mb-3">
+    <div class="card shadow">
+      <div class="card-header py-2"><b>Theo nhà cung cấp</b></div>
+      <div class="card-body p-0">
+        <a class="cn-ncc <%= !idNcc ? 'is-on' : '' %>" href="/staff/cong-no-ncc"><span>Tất cả</span><b><%= vnd(tongNo) %></b></a>
+        <% tongHop.forEach(function (n) { %>
+          <a class="cn-ncc <%= idNcc === Number(n.id_ncc) ? 'is-on' : '' %>" href="?ncc=<%= n.id_ncc %>">
+            <span><%= n.ten_ncc %><br><small class="text-muted"><%= n.so_phieu %> phiếu<%= n.sodienthoai ? ' · ' + n.sodienthoai : '' %></small></span>
+            <span class="text-right"><b><%= vnd(n.con_no) %></b><% if (n.qua_han > 0) { %><br><small class="cn-tre">quá hạn <%= vnd(n.qua_han) %></small><% } %></span>
+          </a>
+        <% }) %>
+        <% if (!tongHop.length) { %><div class="p-3 text-muted small">Không có công nợ nào.</div><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8 mb-3">
+    <div class="card shadow">
+      <div class="card-header py-2"><b>Phiếu nhập còn nợ</b></div>
+      <div class="card-body p-0">
+        <% if (!phieu.length) { %>
+          <div class="p-4 text-center text-muted">Không có phiếu nhập nào còn nợ.</div>
+        <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="thead-light">
+              <tr><th>Phiếu</th><th>Nhà cung cấp</th><th>Hạn trả</th><th class="text-right">Tổng</th><th class="text-right">Đã trả</th><th class="text-right">Còn nợ</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% phieu.forEach(function (p) { %>
+                <tr>
+                  <td><a href="/staff/kitchen/kho/phieu/nhap/<%= p.id_pn %>"><b><%= p.ma_phieu %></b></a><br><small class="text-muted"><%= ngayVN(p.ngay_nhap) %></small></td>
+                  <td><%= p.ten_ncc %></td>
+                  <td class="<%= p.qua_han ? 'cn-tre' : '' %>"><%= ngayVN(p.han_thanh_toan) %><%= p.qua_han ? ' (quá hạn)' : '' %></td>
+                  <td class="text-right"><%= vnd(p.tong_tien) %></td>
+                  <td class="text-right"><%= vnd(p.da_tra) %></td>
+                  <td class="text-right"><b><%= vnd(p.con_no) %></b></td>
+                  <td class="text-right">
+                    <button type="button" class="btn btn-sm btn-success py-0 nut-tra" data-id="<%= p.id_pn %>"
+                            data-ma="<%= p.ma_phieu %>" data-ncc="<%= p.ten_ncc %>" data-no="<%= Math.round(p.con_no) %>">Trả tiền</button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="hop-tra" style="border:none;border-radius:10px;padding:0;max-width:420px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.25)">
+  <form method="dialog" id="form-tra" style="padding:20px">
+    <h5 class="mb-1">Trả tiền nhà cung cấp</h5>
+    <div class="text-muted small mb-3" id="tra-mo-ta"></div>
+    <div class="form-group">
+      <label class="small font-weight-bold">Số tiền</label>
+      <input type="number" class="form-control" id="tra-so-tien" min="1000" step="1" required>
+    </div>
+    <div class="form-group">
+      <label class="small font-weight-bold">Phương thức</label>
+      <select class="form-control" id="tra-phuong-thuc">
+        <option value="chuyen_khoan">Chuyển khoản</option>
+        <option value="tien_mat">Tiền mặt</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="small font-weight-bold">Ghi chú <span class="text-muted font-weight-normal">(số UNC, người nhận...)</span></label>
+      <input type="text" class="form-control" id="tra-ghi-chu" maxlength="300">
+    </div>
+    <div class="text-danger small mb-2" id="tra-loi"></div>
+    <div class="d-flex justify-content-end" style="gap:8px">
+      <button type="button" class="btn btn-light" id="tra-dong">Đóng</button>
+      <button type="submit" class="btn btn-success" id="tra-xac-nhan">Xác nhận trả</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var hop = document.getElementById('hop-tra');
+  var dang = null;
+  document.querySelectorAll('.nut-tra').forEach(function (n) {
+    n.addEventListener('click', function () {
+      dang = { id: n.dataset.id, no: Number(n.dataset.no) };
+      document.getElementById('tra-mo-ta').textContent = n.dataset.ma + ' · ' + n.dataset.ncc
+        + ' · còn nợ ' + dang.no.toLocaleString('vi-VN') + 'đ';
+      var o = document.getElementById('tra-so-tien');
+      o.max = dang.no; o.value = dang.no;
+      document.getElementById('tra-ghi-chu').value = '';
+      document.getElementById('tra-loi').textContent = '';
+      document.getElementById('tra-xac-nhan').disabled = false;
+      hop.showModal();
+    });
+  });
+  document.getElementById('tra-dong').addEventListener('click', function () { hop.close(); });
+  document.getElementById('form-tra').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nut = document.getElementById('tra-xac-nhan');
+    nut.disabled = true;
+    fetch('/api/staff/cong-no-ncc/phieu/' + dang.id + '/tra', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        so_tien: document.getElementById('tra-so-tien').value,
+        phuong_thuc: document.getElementById('tra-phuong-thuc').value,
+        ghi_chu: document.getElementById('tra-ghi-chu').value,
+      }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) { document.getElementById('tra-loi').textContent = d.thong_bao || 'Không trả được.'; nut.disabled = false; return; }
+      location.reload();
+    }).catch(function () { document.getElementById('tra-loi').textContent = 'Lỗi mạng, vui lòng thử lại.'; nut.disabled = false; });
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

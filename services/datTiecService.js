@@ -254,28 +254,191 @@ async function thongKe() {
   return kq;
 }
 
-async function capNhatTrangThai(id, { trangThai, ghiChuNoiBo }, nhanVienId = null) {
-  if (!TRANG_THAI[trangThai]) throw new LoiDatTiec('Trạng thái không hợp lệ.');
-  const [[don]] = await db.query('SELECT * FROM dat_tiec WHERE id = ?', [id]);
-  if (!don) throw new LoiDatTiec('Không tìm thấy đơn tiệc.', 'NOT_FOUND');
+/*
+ * VONG DOI DON TIEC
+ *
+ *   MOI -> DA_LIEN_HE -> DA_XAC_NHAN -> DA_COC -> HOAN_THANH
+ *     \________\______________\___________\-----> HUY
+ *   (DA_XAC_NHAN -> HOAN_THANH duoc: tiec tra du mot lan cuoi buoi)
+ *
+ * Truoc day trang thai nhay tu do (HUY -> HOAN_THANH...) va "Da dat coc" chi
+ * la nhan: khong ghi tien. Nay cac buoc co tien sinh khoan thu THAT trong
+ * `payments` (sesis = ma tiec, processed_by = nguoi thu) nen tu vao bien ban
+ * chot ca thu ngan va lich su thanh toan:
+ *   - DA_COC     : thu coc >= TY_LE_COC du toan          (loai 'dat_coc')
+ *   - HOAN_THANH : nhap tong thuc te, thu phan con lai    (loai 'thanh_toan')
+ *   - HUY        : bat buoc ly do; da coc thi mac dinh GIU coc, Quan ly co
+ *                  the chon hoan coc (thanhToanService.hoanTien).
+ */
+const TY_LE_COC = 0.3;
+const CHUYEN_TIEC = {
+  MOI: ['DA_LIEN_HE', 'DA_XAC_NHAN', 'HUY'],
+  DA_LIEN_HE: ['DA_XAC_NHAN', 'HUY'],
+  DA_XAC_NHAN: ['DA_COC', 'HOAN_THANH', 'HUY'],
+  DA_COC: ['HOAN_THANH', 'HUY'],
+  HOAN_THANH: [],
+  HUY: [],
+};
+const PHUONG_THUC_TIEC = { tien_mat: 'Tiền mặt', vietqr: 'Chuyển khoản', the: 'Thẻ' };
 
-  if (GIU_CHO.includes(trangThai) && !GIU_CHO.includes(don.trang_thai)) {
-    const [[trung]] = await db.query(
-      `SELECT ma_tiec FROM dat_tiec
-        WHERE id <> ? AND khu_vuc_id = ? AND ngay_to_chuc = ? AND buoi = ? AND trang_thai IN (?) LIMIT 1`,
-      [id, don.khu_vuc_id, don.ngay_to_chuc, don.buoi, GIU_CHO]);
-    if (trung) throw new LoiDatTiec(`Sảnh đã được giữ cho tiệc ${trung.ma_tiec} cùng buổi. Không thể xác nhận trùng lịch.`, 'CONFLICT');
+let daCoCotTien = false;
+async function damBaoCotTien() {
+  if (daCoCotTien) return;
+  const cot = [
+    ['tien_coc', "DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'Tien coc da thu'"],
+    ['da_thu', "DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'Tong da thu (coc + thanh toan), tru phan da hoan'"],
+    ['tong_thuc_te', "DECIMAL(14,2) NULL COMMENT 'Tong hoa don thuc te khi hoan thanh'"],
+    ['ly_do_huy', 'VARCHAR(255) NULL'],
+  ];
+  for (const [ten, kieu] of cot) {
+    const [r] = await db.query(
+      'SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+      ['dat_tiec', ten]);
+    if (!r.length) await db.query(`ALTER TABLE dat_tiec ADD COLUMN ${ten} ${kieu}`);
+  }
+  daCoCotTien = true;
+}
+
+async function ghiKhoanThu(conn, { maTiec, soTien, phuongThuc, loai, nhanVienId, ghiChu }) {
+  const [[pt]] = await conn.query('SELECT id FROM payment_methods WHERE code = ? LIMIT 1', [phuongThuc]);
+  if (!pt) throw new LoiDatTiec('Phương thức thanh toán không hợp lệ.');
+  const [kq] = await conn.query(
+    `INSERT INTO payments (sesis, amount, payment_method_id, status, loai, nguon, processed_by, thanh_cong_luc, notes)
+     VALUES (?, ?, ?, 'success', ?, 'quay', ?, NOW(), ?)`,
+    [maTiec, soTien, pt.id, loai, nhanVienId || null, ghiChu]);
+  return kq.insertId;
+}
+
+/**
+ * @param {number} id
+ * @param {object} o
+ * @param {string} o.trangThai
+ * @param {string} [o.ghiChuNoiBo]
+ * @param {number} [o.soTien]        tien coc (DA_COC)
+ * @param {number} [o.tongThucTe]    tong hoa don thuc te (HOAN_THANH)
+ * @param {string} [o.phuongThuc]    tien_mat | vietqr | the
+ * @param {string} [o.lyDoHuy]
+ * @param {boolean} [o.hoanCoc]      HUY: hoan lai tien coc (chi Quan ly)
+ * @param {{id, coQuyenThuTien, laQuanLy}} nhanVien
+ */
+async function capNhatTrangThai(id, o, nhanVien = {}) {
+  await damBaoCotTien();
+  const { trangThai } = o;
+  if (!TRANG_THAI[trangThai]) throw new LoiDatTiec('Trạng thái không hợp lệ.');
+  const ghiChuNoiBo = o.ghiChuNoiBo == null ? null : String(o.ghiChuNoiBo).slice(0, 2000);
+  const nvId = nhanVien.id || null;
+
+  const conn = await db.getConnection();
+  let canHoanCoc = null;
+  try {
+    await conn.beginTransaction();
+    const [[don]] = await conn.query('SELECT * FROM dat_tiec WHERE id = ? FOR UPDATE', [id]);
+    if (!don) throw new LoiDatTiec('Không tìm thấy đơn tiệc.', 'NOT_FOUND');
+
+    // Chi luu ghi chu, khong doi trang thai.
+    if (trangThai === don.trang_thai) {
+      await conn.query(
+        'UPDATE dat_tiec SET ghi_chu_noi_bo = COALESCE(?, ghi_chu_noi_bo), nhan_vien_xu_ly = COALESCE(?, nhan_vien_xu_ly) WHERE id = ?',
+        [ghiChuNoiBo, nvId, id]);
+      await conn.commit();
+      return { ok: true, da_hoan: 0 };
+    }
+    if (!(CHUYEN_TIEC[don.trang_thai] || []).includes(trangThai)) {
+      throw new LoiDatTiec(`Không chuyển được từ "${TRANG_THAI[don.trang_thai]}" sang "${TRANG_THAI[trangThai]}".`);
+    }
+
+    if (GIU_CHO.includes(trangThai) && !GIU_CHO.includes(don.trang_thai)) {
+      const [[trung]] = await conn.query(
+        `SELECT ma_tiec FROM dat_tiec
+          WHERE id <> ? AND khu_vuc_id = ? AND ngay_to_chuc = ? AND buoi = ? AND trang_thai IN (?) LIMIT 1`,
+        [id, don.khu_vuc_id, don.ngay_to_chuc, don.buoi, GIU_CHO]);
+      if (trung) throw new LoiDatTiec(`Sảnh đã được giữ cho tiệc ${trung.ma_tiec} cùng buổi. Không thể xác nhận trùng lịch.`, 'CONFLICT');
+    }
+
+    const duToan = Number(don.tong_du_toan) || 0;
+    const daThu = Number(don.da_thu) || 0;
+    const dat = ['trang_thai = ?'];
+    const bien = [trangThai];
+    const canThuTien = () => {
+      if (!nhanVien.coQuyenThuTien) throw new LoiDatTiec('Chỉ Lễ tân, Thu ngân hoặc Quản lý được thu tiền tiệc.', 'FORBIDDEN');
+      if (!PHUONG_THUC_TIEC[o.phuongThuc]) throw new LoiDatTiec('Chọn phương thức thanh toán.');
+    };
+
+    if (trangThai === 'DA_COC') {
+      canThuTien();
+      const soTien = Math.round(Number(o.soTien));
+      const toiThieu = Math.ceil(duToan * TY_LE_COC);
+      if (!Number.isFinite(soTien) || soTien < toiThieu || soTien > duToan) {
+        throw new LoiDatTiec(`Tiền cọc phải từ ${toiThieu.toLocaleString('vi-VN')}đ (${TY_LE_COC * 100}% dự toán) đến ${duToan.toLocaleString('vi-VN')}đ.`);
+      }
+      await ghiKhoanThu(conn, {
+        maTiec: don.ma_tiec, soTien, phuongThuc: o.phuongThuc, loai: 'dat_coc', nhanVienId: nvId,
+        ghiChu: `Cọc tiệc ${don.ma_tiec} - ${don.ho_ten}`,
+      });
+      dat.push('tien_coc = tien_coc + ?', 'da_thu = da_thu + ?');
+      bien.push(soTien, soTien);
+    }
+
+    if (trangThai === 'HOAN_THANH') {
+      const tong = o.tongThucTe == null || o.tongThucTe === '' ? duToan : Math.round(Number(o.tongThucTe));
+      if (!Number.isFinite(tong) || tong <= 0) throw new LoiDatTiec('Tổng hóa đơn thực tế không hợp lệ.');
+      const conLai = tong - daThu;
+      if (conLai < 0) {
+        throw new LoiDatTiec(`Tổng thực tế (${tong.toLocaleString('vi-VN')}đ) nhỏ hơn số đã thu (${daThu.toLocaleString('vi-VN')}đ). Hãy hoàn phần chênh cho khách trước.`);
+      }
+      if (conLai > 0) {
+        canThuTien();
+        await ghiKhoanThu(conn, {
+          maTiec: don.ma_tiec, soTien: conLai, phuongThuc: o.phuongThuc, loai: 'thanh_toan', nhanVienId: nvId,
+          ghiChu: `Thanh toán tiệc ${don.ma_tiec} - ${don.ho_ten}`,
+        });
+      }
+      dat.push('tong_thuc_te = ?', 'da_thu = da_thu + ?');
+      bien.push(tong, conLai);
+    }
+
+    if (trangThai === 'HUY') {
+      const lyDo = String(o.lyDoHuy || '').trim().slice(0, 255);
+      if (lyDo.length < 3) throw new LoiDatTiec('Phải ghi lý do hủy tiệc.');
+      dat.push('ly_do_huy = ?');
+      bien.push(lyDo);
+      if (o.hoanCoc && daThu > 0) {
+        if (!nhanVien.laQuanLy) throw new LoiDatTiec('Hoàn cọc tiệc cần Quản lý thực hiện.', 'FORBIDDEN');
+        canHoanCoc = { maTiec: don.ma_tiec, lyDo };
+      }
+    }
+
+    dat.push('ghi_chu_noi_bo = COALESCE(?, ghi_chu_noi_bo)', 'nhan_vien_xu_ly = COALESCE(?, nhan_vien_xu_ly)');
+    bien.push(ghiChuNoiBo, nvId, id);
+    await conn.query(`UPDATE dat_tiec SET ${dat.join(', ')} WHERE id = ?`, bien);
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 
-  await db.query(
-    `UPDATE dat_tiec SET trang_thai = ?, ghi_chu_noi_bo = COALESCE(?, ghi_chu_noi_bo), nhan_vien_xu_ly = COALESCE(?, nhan_vien_xu_ly)
-      WHERE id = ?`,
-    [trangThai, ghiChuNoiBo == null ? null : String(ghiChuNoiBo).slice(0, 2000), nhanVienId, id]);
-  return { ok: true };
+  // Hoan coc sau khi da chot trang thai HUY: dung chung quy tac hoan tien
+  // (khoa chong hoan hai lan, tra luot ma, nhat ky). Coc tiec thu truoc ca
+  // thang nen bo qua han 72 gio cua hoan tien tai quay.
+  let daHoan = 0;
+  if (canHoanCoc) {
+    const tt = require('./thanhToanService');
+    const [ps] = await db.query(
+      "SELECT id, amount FROM payments WHERE sesis = ? AND status = 'success' ORDER BY id", [canHoanCoc.maTiec]);
+    for (const p of ps) {
+      await tt.hoanTien(p.id, { lyDo: 'Hoàn cọc tiệc hủy: ' + canHoanCoc.lyDo, nhanVienId: nvId, boQuaHan: true });
+      daHoan += Number(p.amount) || 0;
+    }
+    await db.query('UPDATE dat_tiec SET da_thu = GREATEST(da_thu - ?, 0) WHERE id = ?', [daHoan, id]);
+  }
+  return { ok: true, da_hoan: daHoan };
 }
 
 module.exports = {
   KHACH_MOI_BAN, DAT_TRUOC_TOI_THIEU_NGAY, DAT_TRUOC_TOI_DA_NGAY, LOAI_TIEC, BUOI, TRANG_THAI, GIU_CHO,
+  CHUYEN_TIEC, PHUONG_THUC_TIEC, TY_LE_COC, damBaoCotTien,
   LoiDatTiec, docKhongGian, docSanhTiec, docThucDon, docDichVu, lichDaKin, tinhDuToan, cong,
   taoDonTiec, danhSach, thongKe, capNhatTrangThai,
 };

@@ -90,14 +90,42 @@
                     <div class="tc-kv tc-kv--tien"><span><%= v.ten %><small><%= vnd(v.don_gia) %> × <%= v.so_luong %> <%= donVi[v.don_vi] %></small></span><span><%= vnd(v.thanh_tien) %></span></div>
                   <% }) %>
                   <div class="tc-kv tc-kv--tien mt-2 pt-2 border-top"><span>Tổng (chưa VAT)</span><span><b class="text-danger"><%= vnd(d.tong_du_toan) %></b></span></div>
-                  <div class="tc-kv tc-kv--tien"><span>Cọc 30%</span><span><%= vnd(Math.round(d.tong_du_toan * 0.3)) %></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Cọc tối thiểu (<%= tyLeCoc * 100 %>%)</span><span><%= vnd(Math.ceil(d.tong_du_toan * tyLeCoc)) %></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Đã cọc</span><span><b class="<%= Number(d.tien_coc) > 0 ? 'text-success' : 'text-muted' %>"><%= vnd(Number(d.tien_coc) || 0) %></b></span></div>
+                  <div class="tc-kv tc-kv--tien"><span>Tổng đã thu</span><span><b><%= vnd(Number(d.da_thu) || 0) %></b></span></div>
+                  <% if (d.tong_thuc_te != null) { %><div class="tc-kv tc-kv--tien"><span>Tổng thực tế</span><span><b><%= vnd(Number(d.tong_thuc_te)) %></b></span></div><% } %>
+                  <% if (d.ly_do_huy) { %><div class="tc-kv mt-1"><span>Lý do hủy</span><span class="text-danger"><%= d.ly_do_huy %></span></div><% } %>
                 </div>
                 <div class="col-md-4 mb-3">
                   <h6>Xử lý</h6>
                   <form data-cap-nhat="<%= d.id %>">
-                    <select name="trang_thai" class="form-control form-control-sm mb-2">
-                      <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= d.trang_thai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
+                    <select name="trang_thai" class="form-control form-control-sm mb-2" data-chon-tt>
+                      <option value="<%= d.trang_thai %>" selected><%= trangThai[d.trang_thai] %> (giữ nguyên)</option>
+                      <% (chuyenTiec[d.trang_thai] || []).forEach(function (k) { %><option value="<%= k %>">→ <%= trangThai[k] %></option><% }) %>
                     </select>
+                    <!-- O nhap theo buoc: hien bang JS khi doi lua chon -->
+                    <div data-o="DA_COC" hidden>
+                      <input type="number" name="so_tien" class="form-control form-control-sm mb-1" min="<%= Math.ceil(d.tong_du_toan * tyLeCoc) %>" max="<%= d.tong_du_toan %>"
+                             value="<%= Math.ceil(d.tong_du_toan * tyLeCoc) %>" placeholder="Số tiền cọc">
+                    </div>
+                    <div data-o="HOAN_THANH" hidden>
+                      <input type="number" name="tong_thuc_te" class="form-control form-control-sm mb-1" min="1" value="<%= d.tong_du_toan %>" placeholder="Tổng hóa đơn thực tế">
+                      <small class="text-muted d-block mb-1">Thu thêm = tổng thực tế − <%= vnd(Number(d.da_thu) || 0) %> đã thu</small>
+                    </div>
+                    <div data-o="DA_COC HOAN_THANH" hidden>
+                      <select name="phuong_thuc" class="form-control form-control-sm mb-2">
+                        <% Object.keys(phuongThuc).forEach(function (k) { %><option value="<%= k %>"><%= phuongThuc[k] %></option><% }) %>
+                      </select>
+                      <% if (!quyen.coQuyenThuTien) { %><small class="text-danger d-block mb-2">Bước này cần Lễ tân / Thu ngân / Quản lý thu tiền.</small><% } %>
+                    </div>
+                    <div data-o="HUY" hidden>
+                      <input type="text" name="ly_do_huy" class="form-control form-control-sm mb-1" maxlength="255" placeholder="Lý do hủy (bắt buộc)">
+                      <% if (Number(d.da_thu) > 0) { %>
+                        <label class="small d-block mb-2"><input type="checkbox" name="hoan_coc" value="1" <%= quyen.laQuanLy ? '' : 'disabled' %>>
+                          Hoàn lại <%= vnd(Number(d.da_thu)) %> đã thu<%= quyen.laQuanLy ? '' : ' (chỉ Quản lý)' %></label>
+                        <small class="text-muted d-block mb-2">Không chọn = giữ cọc theo chính sách hủy tiệc.</small>
+                      <% } %>
+                    </div>
                     <textarea name="ghi_chu_noi_bo" rows="3" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
                     <button class="btn btn-sm btn-warning"><i class="fas fa-save"></i> Lưu</button>
                     <small class="ml-2" data-kq></small>
@@ -123,6 +151,13 @@
     });
   });
   document.querySelectorAll('[data-cap-nhat]').forEach(function (f) {
+    var chon = f.querySelector('[data-chon-tt]');
+    function hienO() {
+      f.querySelectorAll('[data-o]').forEach(function (o) {
+        o.hidden = o.getAttribute('data-o').split(' ').indexOf(chon.value) < 0;
+      });
+    }
+    if (chon) { chon.addEventListener('change', hienO); hienO(); }
     f.addEventListener('submit', async function (e) {
       e.preventDefault();
       var kq = f.querySelector('[data-kq]');
@@ -130,11 +165,20 @@
       try {
         var r = await fetch('/api/staff/dat-tiec/' + f.getAttribute('data-cap-nhat') + '/trang-thai', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trang_thai: f.trang_thai.value, ghi_chu_noi_bo: f.ghi_chu_noi_bo.value })
+          body: JSON.stringify({
+            trang_thai: f.trang_thai.value,
+            ghi_chu_noi_bo: f.ghi_chu_noi_bo.value,
+            so_tien: f.so_tien ? f.so_tien.value : null,
+            tong_thuc_te: f.tong_thuc_te ? f.tong_thuc_te.value : null,
+            phuong_thuc: f.phuong_thuc ? f.phuong_thuc.value : null,
+            ly_do_huy: f.ly_do_huy ? f.ly_do_huy.value : null,
+            hoan_coc: !!(f.hoan_coc && f.hoan_coc.checked)
+          })
         });
         var j = await r.json();
         if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
-        kq.className = 'ml-2 text-success'; kq.textContent = 'Đã lưu';
+        kq.className = 'ml-2 text-success';
+        kq.textContent = j.da_hoan ? ('Đã lưu, đã hoàn ' + Number(j.da_hoan).toLocaleString('vi-VN') + 'đ') : 'Đã lưu';
         setTimeout(function () { location.reload(); }, 600);
       } catch (err) {
         kq.className = 'ml-2 text-danger'; kq.textContent = err.message;

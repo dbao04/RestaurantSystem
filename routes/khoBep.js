@@ -60,7 +60,13 @@ async function chung(req) {
   return { unread: await personnelService.countUnread(req.session.staffId).catch(() => 0), homNay: ngayCucBo() };
 }
 
-router.use(['/staff/kitchen/thong-ke', '/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/api/kitchen'], canBep);
+// Ke toan duoc XEM chi tiet phieu (doi soat cong no nha cung cap - routes/congNoNcc.js),
+// khong duoc lap phieu / xuat kho / mua hang.
+const canXemPhieu = phanQuyenMw.canVaiTroCu(['Bep', 'Quan ly', 'Ke toan']);
+router.use(['/staff/kitchen/thong-ke', '/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/api/kitchen'], (req, res, next) => {
+  const laXemPhieu = req.method === 'GET' && req.originalUrl.split('?')[0].startsWith('/staff/kitchen/kho/phieu/');
+  return (laXemPhieu ? canXemPhieu : canBep)(req, res, next);
+});
 
 // ------------------------------------------------------------------ thong ke
 router.get('/staff/kitchen/thong-ke', bat(async (req, res) => {

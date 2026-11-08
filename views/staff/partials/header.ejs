@@ -511,6 +511,7 @@
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>" href="/staff/accountant/salary" data-match="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i><span>Bảng lương</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='doi-soat' ? 'active' : '' %>" href="/staff/thanh-toan/doi-soat" data-match="/staff/thanh-toan/doi-soat"><i class="fas fa-file-invoice-dollar"></i><span>Đối soát chốt ca</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='cong-no-ncc' ? 'active' : '' %>" href="/staff/cong-no-ncc" data-match="/staff/cong-no-ncc"><i class="fas fa-handshake"></i><span>Công nợ nhà cung cấp</span></a>
         </div>
       <% } %>
 
@@ -543,6 +544,9 @@
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='schedule' ? 'active' : '' %>" href="/staff/schedule" data-match="/staff/schedule"><i class="fas fa-calendar-day"></i><span>Lịch làm việc của tôi</span></a>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='attendance' || activePage==='khuon-mat') ? 'active' : '' %>" href="/staff/attendance" data-match="/staff/attendance"><i class="fas fa-camera"></i><span>Chấm công khuôn mặt</span></a>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='leave' ? 'active' : '' %>" href="/staff/leave" data-match="/staff/leave"><i class="fas fa-plane-departure"></i><span>Xin nghỉ phép</span></a>
+        <% if (typeof tuCapBac === 'function' && tuCapBac(4)) { %>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='duyet-nghi-phep' ? 'active' : '' %>" href="/staff/duyet-nghi-phep" data-match="/staff/duyet-nghi-phep"><i class="fas fa-user-clock"></i><span>Duyệt nghỉ phép</span></a>
+        <% } %>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='profile' ? 'active' : '' %>" href="/staff/profile" data-match="/staff/profile"><i class="fas fa-user"></i><span>Hồ sơ cá nhân</span></a>
         <a class="qt-nav__item" href="/staff/logout"><i class="fas fa-right-from-bracket"></i><span>Đăng xuất</span></a>
       </div>

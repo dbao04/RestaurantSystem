@@ -905,6 +905,18 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   if (moi === 'that_bai' && !String(tuyChon.ly_do || '').trim()) {
     throw new Error('Phải ghi lý do giao thất bại (khách không nghe máy, sai địa chỉ...).');
   }
+  // Roi nha hang ("Dang giao") thi bep phai nau xong HET mon cua don. Truoc day
+  // shipper bam duoc khi mon con dang nau - di giao ma tay khong. "Dang lay
+  // hang" (dang tren duong toi nha hang) thi van cho bam khi bep chua xong.
+  if (moi === 'dang_giao') {
+    const [chuaXong] = await db.query(
+      `SELECT name_mon, soluong, trangthai_bep FROM hopdong
+       WHERE sesis = ? AND id_mon > 0 AND soluong > 0 AND trangthai_bep < 2`, [don.sesis]);
+    if (chuaXong.length) {
+      const ds = chuaXong.slice(0, 4).map((m) => `${m.name_mon} x${m.soluong}`).join(', ');
+      throw new Error(`Bếp chưa làm xong món: ${ds}${chuaXong.length > 4 ? '...' : ''}. Chờ bếp báo hoàn thành rồi mới nhận hàng đi giao.`);
+    }
+  }
 
   // Moc thoi gian di kem tung trang thai. Ghi trong cung mot cau lenh voi
   // trang thai de hai thu khong bao gio lech nhau.
@@ -920,8 +932,21 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
     bien.push(tuyChon.ma_ly_do, tuyChon.ben_loi || null);
   }
 
-  bien.push(idGiao);
-  await db.query(`UPDATE don_giao_hang SET ${dat.join(', ')} WHERE id_giao = ?`, bien);
+  // Chi doi khi trang thai VAN la `cu` - shipper va dieu phoi bam cung luc
+  // thi mot nguoi thang, nguoi kia nhan loi thay vi ghi de len nhau.
+  bien.push(idGiao, cu);
+  const [capNhat] = await db.query(`UPDATE don_giao_hang SET ${dat.join(', ')} WHERE id_giao = ? AND trang_thai = ?`, bien);
+  if (!capNhat.affectedRows) {
+    throw new Error('Đơn vừa được người khác cập nhật trạng thái. Vui lòng tải lại để xem trạng thái mới.');
+  }
+
+  // Shipper cam hang roi nha hang: mon cua don coi nhu da "len" (giao cho
+  // shipper) - bep khong con thay mon cho mang ra tren KDS.
+  if (moi === 'dang_giao') {
+    await db.query(
+      `UPDATE hopdong SET trangthai_bep = 3, len_mon_luc = COALESCE(len_mon_luc, NOW())
+       WHERE sesis = ? AND id_mon > 0 AND trangthai_bep = 2`, [don.sesis]);
+  }
 
   // Don giao xong thi don goc coi nhu da thanh toan (tinhtrang = 3): khach giao
   // hang tra tien cho shipper hoac da tra truoc, khong ai ra quay thanh toan nua.

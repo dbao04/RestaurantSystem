@@ -16,7 +16,7 @@ const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catc
 
 function traLoi(res, e) {
   if (e && e.name === 'LoiDatTiec') {
-    return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : 400)
+    return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : e.ma === 'FORBIDDEN' ? 403 : 400)
       .json({ ok: false, ma: e.ma, thong_bao: e.message });
   }
   console.error('[dat-tiec] lỗi:', e);
@@ -84,6 +84,18 @@ const apiCanDangNhap = (req, res, next) => {
 router.use('/staff/dat-tiec', canNhanVien);
 router.use('/api/staff/dat-tiec', apiCanDangNhap, canNhanVien);
 
+/** Quyen trong luong tien tiec: ai duoc thu tien, ai duoc hoan coc. */
+function quyenTiec(req) {
+  const ps = require('../services/phanQuyenService');
+  const phien = req.session || {};
+  const co = (ds) => !!(phien.adminlogin || ds.includes(phien.staffRole) || ps.dongVaiDuoc(req.hoSo, ds));
+  return {
+    id: phien.staffId || null,
+    coQuyenThuTien: co(['Quay', 'letan', 'Thu ngan', 'Quan ly']),
+    laQuanLy: co(['Quan ly']),
+  };
+}
+
 router.get('/staff/dat-tiec', bat(async (req, res) => {
   const personnelService = require('../services/personnelService');
   const loc = {
@@ -91,6 +103,7 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
     tuNgay: String(req.query.tu_ngay || ''),
     tim: String(req.query.tim || '').trim().slice(0, 60),
   };
+  await dv.damBaoCotTien();
   const [ds, tk] = await Promise.all([dv.danhSach(loc), dv.thongKe()]);
   res.render('staff/dat-tiec', {
     title: 'Quản lý Đặt tiệc',
@@ -100,18 +113,28 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
     tk,
     loc,
     trangThai: dv.TRANG_THAI,
+    chuyenTiec: dv.CHUYEN_TIEC,
+    phuongThuc: dv.PHUONG_THUC_TIEC,
+    tyLeCoc: dv.TY_LE_COC,
+    quyen: quyenTiec(req),
   });
 }));
 
 router.post('/api/staff/dat-tiec/:id/trang-thai', bat(async (req, res) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-    await dv.capNhatTrangThai(Number(req.params.id), {
-      trangThai: req.body.trang_thai,
-      ghiChuNoiBo: req.body.ghi_chu_noi_bo,
-    }, req.session.staffId || null);
+    const b = req.body || {};
+    const kq = await dv.capNhatTrangThai(Number(req.params.id), {
+      trangThai: b.trang_thai,
+      ghiChuNoiBo: b.ghi_chu_noi_bo,
+      soTien: b.so_tien,
+      tongThucTe: b.tong_thuc_te,
+      phuongThuc: b.phuong_thuc,
+      lyDoHuy: b.ly_do_huy,
+      hoanCoc: b.hoan_coc === true || b.hoan_coc === '1',
+    }, quyenTiec(req));
     realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_CAP_NHAT' });
-    res.json({ ok: true });
+    res.json({ ok: true, da_hoan: kq.da_hoan || 0 });
   } catch (e) { traLoi(res, e); }
 }));
 
