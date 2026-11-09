@@ -79,12 +79,18 @@ module.exports = function (io) {
   }));
 
   router.get(['/kds/api/don', '/staff/kitchen/api/don'], requireNhanSu, bat(async (req, res) => {
-    const [nhom, daPhucVu, thongKe] = await Promise.all([
-      kds.layDonBep(),
+    // duKien() doc san danh sach bep (layDonBep) va gan them thoi gian du kien:
+    // con_phut (con bao lau xong) va sap_tre (da cho + con lai > cam ket).
+    const [duKien, daPhucVu, thongKe] = await Promise.all([
+      require('../services/thoiGianChoService').duKien(),
       kds.layDaPhucVu(20),
       kds.thongKeBep(),
     ]);
-    res.json({ ...nhom, da_phuc_vu: daPhucVu, thong_ke: thongKe });
+    const nhom = duKien.nhom;
+    for (const ds of [nhom.cho, nhom.dang_lam]) {
+      for (const m of ds) Object.assign(m, duKien.theoId.get(m.id) || {});
+    }
+    res.json({ ...nhom, da_phuc_vu: daPhucVu, thong_ke: { ...thongKe, so_dau_bep: duKien.K, sla_phut: duKien.sla } });
   }));
 
   /** Cac buoc chuyen trang thai cua mot mon. */
@@ -181,7 +187,7 @@ module.exports = function (io) {
               m.images
        FROM hopdong h
        LEFT JOIN monan m ON m.id_mon = h.id_mon
-       WHERE h.sesis = ? AND h.id_mon > 0
+       WHERE h.sesis = ? AND h.id_mon > 0 AND h.soluong > 0
        ORDER BY h.id ASC`,
       [ban.sesis_hien_tai]
     );
@@ -203,6 +209,18 @@ module.exports = function (io) {
     if (!banRows.length) return res.status(404).json({ ok: false, loi: 'Không tìm thấy bàn.' });
     const ban = banRows[0];
 
+    // Kiem tra ca luot goi truoc: ben duoi them tung mon mot (khong chung
+    // transaction), het nguyen lieu giua chung se de lai don goi do dang.
+    const tonMon = require('../services/tonMonService');
+    try {
+      await tonMon.kiemTraDatMon(items.map((it) => ({
+        id_mon: Number(it.id_mon || it.id), qty: Number(it.soluong || it.qty) || 1,
+      })));
+    } catch (e) {
+      if (e instanceof tonMon.LoiHetMon) return res.status(400).json({ ok: false, loi: e.message });
+      throw e;
+    }
+
     let sesis = ban.sesis_hien_tai;
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
@@ -212,8 +230,8 @@ module.exports = function (io) {
       sesis = 'TB_' + Date.now().toString(36).toUpperCase();
       await db.query(
         `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien, images, tinhtrang, ngay_dat, gio_dat, id_ban)
-         VALUES (?, 0, 'Khởi tạo bàn tại chỗ', 1, ?, ?, 0, ?, ?, 0, 0, '', 1, ?, ?, ?)`,
-        [sesis, today, now, ghi_chu || ('Bàn ' + ban.number_ban), Number(so_khach) || 2, today, now, idBan]
+         VALUES (?, 0, 'Khởi tạo bàn tại chỗ', ?, ?, ?, 0, ?, ?, 0, 0, '', 1, ?, ?, ?)`,
+        [sesis, await orderService.khachVangLaiCuaBan(idBan, ban.number_ban), today, now, ghi_chu || ('Bàn ' + ban.number_ban), Number(so_khach) || 2, today, now, idBan]
       );
       await db.query('UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?', [sesis, idBan]);
     }
@@ -246,6 +264,42 @@ module.exports = function (io) {
 
     res.json({ ok: true, sesis, da_them: items.length, ban: banCapNhat[0] });
   }));
+
+  // ------------------------------------------------------ Chuyen / gop ban
+  // Xem services/chuyenBanService.js. Phuc vu, quay, thu ngan, quan ly.
+  function requireDieuPhoiBan(req, res, next) {
+    const phien = req.session || {};
+    if (phien.adminlogin) return next();
+    const ds = ['Phuc vu', 'Quay', 'Thu ngan', 'Quan ly'];
+    if (ds.includes(phien.staffRole) || phanQuyen.dongVaiDuoc(req.hoSo, ds)) return next();
+    return res.status(403).json({ ok: false, loi: 'Bạn không có quyền chuyển / gộp bàn.' });
+  }
+
+  for (const [duong, ham] of [['chuyen-ban', 'chuyenBan'], ['gop-ban', 'gopBan']]) {
+    router.post('/so-do-ban/api/' + duong, requireNhanSu, requireDieuPhoiBan, bat(async (req, res) => {
+      const cb = require('../services/chuyenBanService');
+      try {
+        const kq = await cb[ham](req.body.tu_ban, req.body.den_ban, {
+          lyDo: req.body.ly_do,
+          nhanVien: { id: req.session.staffId || null, ten: req.session.staffName || req.session.adminname || '' },
+        });
+        const db = require('../config/db');
+        const [banMoi] = await db.query(
+          'SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban IN (?)',
+          [[kq.ban_nguon, kq.ban_dich]]);
+        for (const b of banMoi) {
+          io.to('staff_room').emit('ban-cap-nhat', b);
+          io.to('kitchen_room').emit('ban-cap-nhat', b);
+        }
+        // Bep hien so ban theo hopdong.id_ban - lam moi man hinh KDS.
+        io.to('kitchen_room').emit('kds-cap-nhat', { buoc: duong, mon: null });
+        res.json({ ok: true, ...kq });
+      } catch (err) {
+        if (err instanceof cb.LoiChuyenBan) return res.status(400).json({ ok: false, loi: err.message });
+        throw err;
+      }
+    }));
+  }
 
   return router;
 };

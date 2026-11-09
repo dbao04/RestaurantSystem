@@ -16,7 +16,7 @@ const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catc
 
 function traLoi(res, e) {
   if (e && e.name === 'LoiDatTiec') {
-    return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : 400)
+    return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : e.ma === 'FORBIDDEN' ? 403 : 400)
       .json({ ok: false, ma: e.ma, thong_bao: e.message });
   }
   console.error('[dat-tiec] lỗi:', e);
@@ -84,6 +84,18 @@ const apiCanDangNhap = (req, res, next) => {
 router.use('/staff/dat-tiec', canNhanVien);
 router.use('/api/staff/dat-tiec', apiCanDangNhap, canNhanVien);
 
+/** Quyen trong luong tien tiec: ai duoc thu tien, ai duoc hoan coc. */
+function quyenTiec(req) {
+  const ps = require('../services/phanQuyenService');
+  const phien = req.session || {};
+  const co = (ds) => !!(phien.adminlogin || ds.includes(phien.staffRole) || ps.dongVaiDuoc(req.hoSo, ds));
+  return {
+    id: phien.staffId || null,
+    coQuyenThuTien: co(['Quay', 'letan', 'Thu ngan', 'Quan ly']),
+    laQuanLy: co(['Quan ly']),
+  };
+}
+
 router.get('/staff/dat-tiec', bat(async (req, res) => {
   const personnelService = require('../services/personnelService');
   const loc = {
@@ -91,10 +103,8 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
     tuNgay: String(req.query.tu_ngay || ''),
     tim: String(req.query.tim || '').trim().slice(0, 60),
   };
-  const [ds, tk, nhanVien, cauHinh, sanh, thucDon, dichVu] = await Promise.all([
-    dv.danhSach(loc), dv.thongKe(), dv.danhSachNhanVienXuLy(), dv.docCauHinh(),
-    dv.docSanhTiec(), dv.docThucDon(), dv.docDichVu(),
-  ]);
+  await dv.damBaoCotTien();
+  const [ds, tk] = await Promise.all([dv.danhSach(loc), dv.thongKe()]);
   res.render('staff/dat-tiec', {
     title: 'Quản lý Đặt tiệc',
     activePage: 'dattiec',
@@ -103,72 +113,36 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
     tk,
     loc,
     trangThai: dv.TRANG_THAI,
-    chuyenTrangThai: dv.CHUYEN_TRANG_THAI,
-    nhanVien,
-    cauHinh,
-    phuongThucThanhToan: dv.TEN_PHUONG_THUC,
-    loaiTiec: dv.LOAI_TIEC,
-    buoi: dv.BUOI,
-    sanh,
-    thucDon,
-    dichVu,
+    chuyenTiec: dv.CHUYEN_TIEC,
+    phuongThuc: dv.PHUONG_THUC_TIEC,
+    tyLeCoc: dv.TY_LE_COC,
+    quyen: quyenTiec(req),
   });
 }));
 
-/** Chi tiet day du mot don (dung de nap lai sau khi luu, hoac mo rieng). */
-router.get('/api/staff/dat-tiec/:id', bat(async (req, res) => {
+// Ke hoach nguyen lieu cua tiec (services/tiecVanHanhService.js).
+router.get('/api/staff/dat-tiec/:id/nguyen-lieu', bat(async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-  const d = await dv.chiTiet(Number(req.params.id));
-  if (!d) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy đơn tiệc' });
-  res.json({ ok: true, d });
-}));
-
-/** Sua thong tin don (ngay/gio/so khach/sanh/thuc don/dich vu...) khi chua dong ho so. */
-router.put('/api/staff/dat-tiec/:id', bat(async (req, res) => {
-  try {
-    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-    const d = await dv.capNhatDon(Number(req.params.id), req.body, { nhanVienId: req.session.staffId || null });
-    realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_CAP_NHAT' });
-    res.json({ ok: true, d });
-  } catch (e) { traLoi(res, e); }
+  const kq = await require('../services/tiecVanHanhService').keHoachNguyenLieu(Number(req.params.id));
+  if (!kq) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy tiệc' });
+  res.json({ ok: true, ...kq });
 }));
 
 router.post('/api/staff/dat-tiec/:id/trang-thai', bat(async (req, res) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-    const d = await dv.capNhatTrangThai(Number(req.params.id), {
-      trangThai: req.body.trang_thai,
-      ghiChuNoiBo: req.body.ghi_chu_noi_bo,
-      lyDoHuy: req.body.ly_do_huy,
-      nguoiHuy: req.body.nguoi_huy,
-    }, { nhanVienId: req.session.staffId || null });
+    const b = req.body || {};
+    const kq = await dv.capNhatTrangThai(Number(req.params.id), {
+      trangThai: b.trang_thai,
+      ghiChuNoiBo: b.ghi_chu_noi_bo,
+      soTien: b.so_tien,
+      tongThucTe: b.tong_thuc_te,
+      phuongThuc: b.phuong_thuc,
+      lyDoHuy: b.ly_do_huy,
+      hoanCoc: b.hoan_coc === true || b.hoan_coc === '1',
+    }, quyenTiec(req));
     realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_CAP_NHAT' });
-    res.json({ ok: true, d });
-  } catch (e) { traLoi(res, e); }
-}));
-
-/** Ghi nhan mot lan thu coc / thanh toan. Cho phep thu nhieu lan tren cung mot don. */
-router.post('/api/staff/dat-tiec/:id/thanh-toan', bat(async (req, res) => {
-  try {
-    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-    const d = await dv.ghiNhanThanhToan(Number(req.params.id), {
-      soTien: req.body.so_tien,
-      phuongThuc: req.body.phuong_thuc,
-      maGiaoDich: req.body.ma_giao_dich,
-      ghiChu: req.body.ghi_chu,
-    }, { nhanVienId: req.session.staffId || null });
-    realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_CAP_NHAT' });
-    res.json({ ok: true, d });
-  } catch (e) { traLoi(res, e); }
-}));
-
-/** Phan cong / doi nhan vien phu trach mot don. */
-router.post('/api/staff/dat-tiec/:id/nhan-vien', bat(async (req, res) => {
-  try {
-    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
-    const d = await dv.ganNhanVien(Number(req.params.id), req.body.nhan_vien_id || null, { nhanVienId: req.session.staffId || null });
-    realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_CAP_NHAT' });
-    res.json({ ok: true, d });
+    res.json({ ok: true, da_hoan: kq.da_hoan || 0 });
   } catch (e) { traLoi(res, e); }
 }));
 

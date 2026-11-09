@@ -60,7 +60,7 @@ const kdsService = {
        LEFT JOIN khach_hang k    ON k.id = h.id_user
        LEFT JOIN ban b           ON b.Id_ban = h.id_ban
        LEFT JOIN don_giao_hang dg ON dg.sesis = h.sesis
-       WHERE h.id_mon > 0
+       WHERE h.id_mon > 0 AND h.soluong > 0
          AND h.trangthai_bep < 3
          AND (
            (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
@@ -89,7 +89,7 @@ const kdsService = {
        FROM hopdong h
        LEFT JOIN ban b ON b.Id_ban = h.id_ban
        LEFT JOIN nhan_vien nv ON nv.id_nv = h.nv_len_mon
-       WHERE h.id_mon > 0 AND h.trangthai_bep = 3 AND h.ngay_dat = CURDATE()
+       WHERE h.id_mon > 0 AND h.soluong > 0 AND h.trangthai_bep = 3 AND h.ngay_dat = CURDATE()
        ORDER BY COALESCE(h.len_mon_luc, h.bep_ket_thuc) DESC LIMIT ?`,
       [gioiHan]
     );
@@ -207,7 +207,7 @@ const kdsService = {
          SUM(CASE WHEN h.trangthai_bep = 2 THEN 1 ELSE 0 END) AS xong
        FROM hopdong h
        LEFT JOIN don_giao_hang dg ON dg.sesis = h.sesis
-       WHERE h.id_mon > 0
+       WHERE h.id_mon > 0 AND h.soluong > 0
          AND h.trangthai_bep < 3
          AND (
            (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
@@ -255,7 +255,7 @@ const kdsService = {
                 MAX(so_user)             AS so_khach,
                 MIN(CONCAT(ngay_dat, ' ', COALESCE(gio_dat, '00:00:00'))) AS bat_dau
          FROM hopdong 
-         WHERE id_mon > 0 AND tinhtrang IN (1, 5, 6) ${ngayLoc ? 'AND ngay_dat = ?' : ''}
+         WHERE id_mon > 0 AND soluong > 0 AND tinhtrang IN (1, 5, 6) ${ngayLoc ? 'AND ngay_dat = ?' : ''}
          GROUP BY sesis, id_ban
        ) p ON (p.sesis = b.sesis_hien_tai OR (p.id_ban = b.Id_ban AND NOT ?))
        LEFT JOIN (
@@ -387,7 +387,7 @@ const kdsService = {
     const [dt] = await db.query(
       `SELECT COALESCE(SUM(h.thanhtien), 0) AS dang_mo
        FROM ban b JOIN hopdong h ON h.sesis = b.sesis_hien_tai
-       WHERE b.trangthai = 1 AND h.id_mon > 0 ${ngayLoc ? 'AND h.ngay_dat = ?' : ''}`,
+       WHERE b.trangthai = 1 AND h.id_mon > 0 AND h.soluong > 0 ${ngayLoc ? 'AND h.ngay_dat = ?' : ''}`,
       ngayLoc ? [ngayLoc] : []
     );
     const [hn] = await db.query(

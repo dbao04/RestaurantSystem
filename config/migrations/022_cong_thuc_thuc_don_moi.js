@@ -2,7 +2,7 @@
  * Migration 022 - Sinh cong thuc (dinh muc nguyen lieu) cho thuc don Nhat.
  *
  * VI SAO CAN
- * `kitchenService.markKitchenDone()` tru kho dua tren bang `cong_thuc`. Sau khi
+ * `kdsService.hoanThanhCheBien()` tru kho dua tren bang `cong_thuc`. Sau khi
  * thay toan bo thuc don, 258 mon moi khong co dong cong thuc nao, nen bep bam
  * "xong mon" ma kho khong nhuc nhich - ton kho, canh bao het hang, gia von va
  * bao cao loi nhuan theo mon deu dung yen.

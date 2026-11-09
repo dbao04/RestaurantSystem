@@ -301,34 +301,26 @@ const menuService = {
     await db.query('DELETE FROM don_vi_tinh WHERE id_dvt = ?', [id]);
   },
 
-  addStockIn: async (data) => {
-    const { id_nl, so_luong, gia_nhap } = data;
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-      await connection.query(
-        'INSERT INTO nhap_kho (id_nl, so_luong, gia_nhap) VALUES (?, ?, ?)',
-        [id_nl, so_luong, gia_nhap]
-      );
-      await connection.query('UPDATE nguyen_lieu SET so_luong = so_luong + ? WHERE id_nl = ?', [so_luong, id_nl]);
-      await connection.commit();
-    } catch (err) {
-      await connection.rollback();
-      throw err;
-    } finally {
-      connection.release();
-    }
-  },
-
+  /**
+   * Lich su nhap kho: dong cu trong `nhap_kho` (truoc khi gop vao phieu nhap)
+   * + dong cua phieu nhap moi (chi_tiet_phieu_nhap). Nhap kho nay chi con mot
+   * duong la khoBepService.taoPhieuNhap.
+   */
   getStockHistory: async () => {
     const [rows] = await db.query(`
-      SELECT nk.*, nl.ten_nl, dvt.ten_dvt 
-      FROM nhap_kho nk 
-      JOIN nguyen_lieu nl ON nk.id_nl = nl.id_nl 
-      LEFT JOIN don_vi_tinh dvt ON nl.id_dvt = dvt.id_dvt 
-      ORDER BY nk.ngay_nhap DESC
+      SELECT * FROM (
+        SELECT nk.id_nl, nk.so_luong, nk.gia_nhap, nk.ngay_nhap, NULL AS ma_phieu
+        FROM nhap_kho nk
+        UNION ALL
+        SELECT ct.id_nl, ct.so_luong, ct.gia_nhap, COALESCE(pn.thoi_diem, pn.ngay_nhap) AS ngay_nhap, pn.ma_phieu
+        FROM chi_tiet_phieu_nhap ct JOIN phieu_nhap pn ON pn.id_pn = ct.id_pn
+      ) x
+      JOIN nguyen_lieu nl ON x.id_nl = nl.id_nl
+      LEFT JOIN don_vi_tinh dvt ON nl.id_dvt = dvt.id_dvt
+      ORDER BY x.ngay_nhap DESC
+      LIMIT 500
     `);
-    return rows;
+    return rows.map((r) => ({ ...r }));
   },
 
   addRecipeItem: async (id_mon, id_nl, so_luong_tieu_hao) => {

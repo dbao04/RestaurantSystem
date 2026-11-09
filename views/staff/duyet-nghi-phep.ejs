@@ -1,0 +1,81 @@
+<%
+  var activePage = 'duyet-nghi-phep';
+  var ngayVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
+  var soNgay = function (a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000) + 1; };
+  var mau = { 0: 'warning', 1: 'success', 2: 'danger' };
+  var choDuyet = ds.filter(function (d) { return Number(d.trang_thai) === 0; }).length;
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-2">
+  <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-clock mr-2"></i>Duyệt nghỉ phép</h1>
+  <span class="badge badge-warning p-2"><%= choDuyet %> đơn chờ duyệt</span>
+</div>
+<p class="text-muted small mb-3">
+  Hiển thị đơn của nhân viên dưới quyền bạn trong cơ cấu tổ chức (quản lý cấp 1–2 thấy toàn bộ). Bạn không duyệt được đơn của chính mình.
+  Cột <b>Ca bị trùng</b> là số ca đã xếp trong những ngày nghỉ — duyệt xong nhớ xếp người thay.
+</p>
+
+<div class="card shadow">
+  <div class="card-body p-0">
+    <% if (!ds.length) { %>
+      <div class="p-4 text-center text-muted">Không có đơn nghỉ nào cần bạn xử lý.</div>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead class="thead-light">
+          <tr><th>Nhân viên</th><th>Thời gian nghỉ</th><th>Lý do</th><th class="text-center">Ca bị trùng</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% ds.forEach(function (d) { %>
+            <tr>
+              <td><b><%= d.ten_nv %></b><br><small class="text-muted"><%= d.chucvu %></small></td>
+              <td><%= ngayVN(d.ngay_bat_dau) %> → <%= ngayVN(d.ngay_ket_thuc) %><br><small class="text-muted"><%= soNgay(d.ngay_bat_dau, d.ngay_ket_thuc) %> ngày</small></td>
+              <td style="max-width:260px"><%= d.ly_do %></td>
+              <td class="text-center"><% if (d.so_ca_trung > 0) { %><span class="badge badge-danger"><%= d.so_ca_trung %> ca</span><% } else { %><span class="text-muted">0</span><% } %></td>
+              <td>
+                <span class="badge badge-<%= mau[d.trang_thai] || 'secondary' %>"><%= d.ten_trang_thai %></span>
+                <% if (d.ten_nguoi_duyet) { %><br><small class="text-muted"><%= d.ten_nguoi_duyet %> · <%= ngayVN(d.duyet_luc) %></small><% } %>
+                <% if (d.ly_do_tu_choi) { %><br><small class="text-danger"><%= d.ly_do_tu_choi %></small><% } %>
+              </td>
+              <td class="text-right" style="white-space:nowrap">
+                <% if (Number(d.trang_thai) === 0) { %>
+                  <button type="button" class="btn btn-sm btn-success nut-xl" data-id="<%= d.id_np %>" data-dong-y="1" data-ten="<%= d.ten_nv %>"><i class="fas fa-check"></i> Duyệt</button>
+                  <button type="button" class="btn btn-sm btn-outline-danger nut-xl" data-id="<%= d.id_np %>" data-dong-y="0" data-ten="<%= d.ten_nv %>"><i class="fas fa-times"></i> Từ chối</button>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('.nut-xl').forEach(function (n) {
+    n.addEventListener('click', function () {
+      var dongY = n.dataset.dongY === '1';
+      var lyDo = '';
+      if (dongY) {
+        if (!confirm('Duyệt đơn nghỉ của ' + n.dataset.ten + '?')) return;
+      } else {
+        lyDo = prompt('Lý do từ chối đơn nghỉ của ' + n.dataset.ten + ':', '');
+        if (lyDo === null) return;
+      }
+      n.disabled = true;
+      fetch('/api/staff/nghi-phep/' + n.dataset.id + '/xu-ly', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ dong_y: dongY, ly_do: lyDo }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.ok) { alert(d.thong_bao || 'Không xử lý được.'); n.disabled = false; return; }
+        location.reload();
+      }).catch(function () { alert('Lỗi mạng, vui lòng thử lại.'); n.disabled = false; });
+    });
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

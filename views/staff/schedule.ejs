@@ -203,7 +203,7 @@
               <div class="nguon">
                 <%= s.nguon === 'dang_ky' ? 'Tôi tự đăng ký' : 'Quản lý phân ca' %>
                 <% if (tuHuyDuoc(s)) { %>
-                  · <a href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
+                  · <a data-post href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
                        class="text-danger"
                        onclick="return confirm('Huỷ đăng ký ca <%= c.ten_ca %> ngày <%= ngayGon(ng) %>?')">Huỷ</a>
                 <% } %>
@@ -238,7 +238,7 @@
               <div class="nguon">
                 <%= s.nguon === 'dang_ky' ? 'Tôi tự đăng ký' : 'Quản lý phân ca' %>
                 <% if (tuHuyDuoc(s)) { %>
-                  · <a href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
+                  · <a data-post href="/staff/schedule/cancel/<%= s.id_lich %>?tuan=<%= thuHai %>"
                        class="text-danger" onclick="return confirm('Huỷ đăng ký ca này?')">Huỷ</a>
                 <% } %>
               </div>

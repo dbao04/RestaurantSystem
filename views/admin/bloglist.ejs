@@ -46,7 +46,7 @@
                                 <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/blogedit/<%= p.id_bv %>">
                                     <i class="fas fa-pen"></i> Sửa
                                 </a>
-                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/blogdel/<%= p.id_bv %>"
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" data-post href="/admin/blogdel/<%= p.id_bv %>"
                                    onclick="return confirm('Xóa bài viết &quot;<%= p.tieu_de %>&quot;?')">
                                     <i class="fas fa-trash"></i> Xóa
                                 </a>

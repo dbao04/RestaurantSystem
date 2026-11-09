@@ -330,7 +330,7 @@
           </div>
 
           <!-- Chức năng giả lập dành cho môi trường dev/demo giảng viên -->
-          <% if (typeof choPhepThanhToanGiaLap === 'undefined' || choPhepThanhToanGiaLap) { %>
+          <% if (typeof choPhepThanhToanGiaLap !== 'undefined' && choPhepThanhToanGiaLap) { %>
             <div class="spf-sim-box">
               <div style="font-size:12.5px; font-weight:700; color:#854d0e; margin-bottom:6px;">
                 <i class="fas fa-flask"></i> <%= t('tt_dat_ban.demo_tieu_de') %>

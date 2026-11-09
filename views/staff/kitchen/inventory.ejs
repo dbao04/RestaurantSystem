@@ -79,7 +79,7 @@
                               data-toggle="modal" data-target="#editIngModal<%= i.id_nl %>">
                               <i class="fas fa-edit"></i>
                             </button>
-                            <a href="/staff/kitchen/ingredient/delete/<%= i.id_nl %>" class="btn btn-sm btn-outline-danger"
+                            <a data-post href="/staff/kitchen/ingredient/delete/<%= i.id_nl %>" class="btn btn-sm btn-outline-danger"
                               onclick="return confirm('Xóa nguyên liệu này?')" title="Xóa">
                               <i class="fas fa-trash"></i>
                             </a>

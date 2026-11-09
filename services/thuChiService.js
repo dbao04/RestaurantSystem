@@ -34,13 +34,15 @@ const DANH_MUC = {
     tam_ung: 'Tạm ứng nhân viên',
     dien_nuoc: 'Điện, nước, internet',
     nop_tien: 'Nộp tiền về công ty / ngân hàng',
+    tra_ncc: 'Trả tiền nhà cung cấp',
     chi_khac: 'Chi khác',
   },
 };
 /** Danh muc thu ngan duoc chon khi lap phieu (khong gom muc tu dong). */
 const DANH_MUC_LAP = {
   thu: Object.keys(DANH_MUC.thu).filter((k) => !['ban_hang', 'dat_coc'].includes(k)),
-  chi: Object.keys(DANH_MUC.chi).filter((k) => k !== 'hoan_tien'),
+  // tra_ncc chi sinh tu trang Cong no NCC (gan voi phieu nhap) - khong lap tay.
+  chi: Object.keys(DANH_MUC.chi).filter((k) => !['hoan_tien', 'tra_ncc'].includes(k)),
 };
 const PHUONG_THUC = { tien_mat: 'Tiền mặt', chuyen_khoan: 'Chuyển khoản', the: 'Thẻ' };
 const TOI_DA = 500000000;
@@ -249,9 +251,12 @@ async function huyPhieu(id, { lyDo, idNv, laQuanLy }) {
       throw new LoiThuChi('Phiếu đã nằm trong biên bản chốt ca – chỉ kế toán hoặc quản lý được hủy.', 'FORBIDDEN');
     }
   }
-  await db.query(
+  const [kqHuy] = await db.query(
     "UPDATE phieu_thu_chi SET trang_thai = 'da_huy', ly_do_huy = ?, huy_boi = ?, huy_luc = NOW() WHERE id = ? AND trang_thai = 'hop_le'",
     [ly.slice(0, 300), idNv || null, id]);
+  if (!kqHuy.affectedRows) throw new LoiThuChi('Phiếu vừa được hủy bởi người khác.');
+  // Phieu chi tra nha cung cap: huy thi cong no cua phieu nhap tang lai.
+  await require('./congNoNccService').hoanTacTra(db, p);
   await db.query(
     `INSERT INTO audit_logs (action, actor_type, actor_id, resource_type, resource_id, status, details)
      VALUES ('huy_phieu_thu_chi', 'staff', ?, 'phieu_thu_chi', ?, 'success', ?)`,
@@ -323,6 +328,7 @@ async function xuatExcel(bc, { tenNguoiXem = '', phamVi = '' } = {}) {
 }
 
 module.exports = {
+  taoMaPhieu,
   DANH_MUC, DANH_MUC_LAP, PHUONG_THUC, LoiThuChi,
   baoCao, lapPhieu, huyPhieu, phieuTienMatTrongCa, xuatExcel,
 };

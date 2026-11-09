@@ -50,6 +50,8 @@ const MAC_DINH = {
   dat_coc_phan_tram: 20,
   webhook_api_key: '',
   tu_dong_doi_soat: 1,
+  // Chi hoan tien trong ngan nay gio ke tu luc thanh toan thanh cong.
+  han_hoan_tien_gio: 72,
 };
 
 async function layCauHinh(buocLamMoi = false) {
@@ -166,7 +168,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
             h.id_ban, k.ten AS ten_khach, k.sodienthoai,
             (SELECT table_name FROM qr_tables WHERE active_sesis = h.sesis LIMIT 1) AS ten_ban_qr,
             (SELECT number_ban FROM ban WHERE Id_ban = h.id_ban LIMIT 1) AS so_ban
-     FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+     FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`,
     [sesis]
   );
@@ -186,7 +188,7 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
   // --- Ho so khach: diem tich luy + hang thanh vien ---
   // Khach vang lai tu QR (sodienthoai dang 'QR_xxx') khong co tai khoan that
   // nen khong cho dung diem - neu khong moi ban se chung mot vi diem.
-  const laKhachVangLai = String(thongTin.sodienthoai || '').startsWith('QR_');
+  const laKhachVangLai = !thongTin.sodienthoai || String(thongTin.sodienthoai).startsWith('QR_');
   let diemDangCo = 0;
   let hangKhach = null;
   if (!laKhachVangLai) {
@@ -577,13 +579,15 @@ async function hauKyThanhToan(paymentId, { maGiamGia = null, diemDung = 0 } = {}
   const ch = await layCauHinh();
   const [[don]] = await db.query(
     `SELECT h.id_user, h.tinhtrang, h.id_ban, k.sodienthoai
-     FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+     FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`,
     [p.sesis]
   );
   if (!don) return {};
 
-  const laKhachVangLai = String(don.sodienthoai || '').startsWith('QR_');
+  // LEFT JOIN: don ma id_user khong con khach tuong ung (du lieu cu, hoac don mo
+  // ban truoc day gan id_user = 1) van dong duoc, coi nhu khach vang lai.
+  const laKhachVangLai = !don.sodienthoai || String(don.sodienthoai).startsWith('QR_');
   const ketQua = { diemCong: 0, diemTru: 0, donDaTraDu: false };
 
   // --- 1. Ma giam gia: ghi nhat ky mot luot dung ---
@@ -706,17 +710,47 @@ async function trangThaiPhien(paymentId) {
 /* HOAN TIEN                                                                   */
 /* ========================================================================== */
 
-async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
+/**
+ * Hoan tien mot phien thanh toan.
+ *
+ * Quy tac (route chi cho Quan ly goi - xem routes/thanhToan.js):
+ *   - Bat buoc co ly do.
+ *   - Chi trong `han_hoan_tien_gio` gio ke tu luc thanh toan thanh cong
+ *     (mac dinh 72 gio, chinh trong cau_hinh_thanh_toan).
+ *   - Doi trang thai success -> refunded bang MOT cau UPDATE co dieu kien:
+ *     bam hai lan / hai may cung luc thi chi mot lan "gianh" duoc phien, lan
+ *     kia bao loi - khong thu hoi diem hai lan. Truoc day kiem tra trang thai
+ *     roi moi UPDATE, hai request song song deu lot qua.
+ *   - Tra lai luot dung ma giam gia cua phien.
+ */
+async function hoanTien(paymentId, { lyDo = '', nhanVienId = null, boQuaHan = false } = {}) {
+  const lyDoSach = String(lyDo || '').trim();
+  if (lyDoSach.length < 3) throw new Error('Phải ghi lý do hoàn tiền (ít nhất 3 ký tự).');
+
   const [[p]] = await db.query('SELECT * FROM payments WHERE id = ? LIMIT 1', [paymentId]);
   if (!p) throw new Error('Không tìm thấy phiên thanh toán');
   if (p.status !== 'success') throw new Error('Chỉ hoàn tiền được phiên đã thanh toán thành công');
 
-  await db.query(
+  const ch0 = await layCauHinh();
+  const hanGio = Number(ch0.han_hoan_tien_gio) || 72;
+  const moc = p.thanh_cong_luc || p.created_at;
+  // boQuaHan: chi danh cho luong noi bo co quy tac rieng (vd. hoan coc tiec -
+  // coc thu truoc ca thang). Route hoan tien cua thu ngan KHONG truyen co nay.
+  if (!boQuaHan && moc && Date.now() - new Date(moc).getTime() > hanGio * 3600 * 1000) {
+    throw new Error(`Đã quá hạn hoàn tiền (${hanGio} giờ kể từ lúc thanh toán). Vui lòng xử lý ngoài hệ thống và ghi phiếu chi.`);
+  }
+
+  const [gianh] = await db.query(
     `UPDATE payments SET status = 'refunded', updated_at = NOW(),
             notes = TRIM(CONCAT(COALESCE(notes,''), ' | HOÀN TIỀN: ', ?))
-     WHERE id = ?`,
-    [lyDo || 'không ghi lý do', paymentId]
+     WHERE id = ? AND status = 'success'`,
+    [lyDoSach, paymentId]
   );
+  if (!gianh.affectedRows) throw new Error('Phiên này vừa được hoàn tiền hoặc đã đổi trạng thái.');
+
+  // Tra lai luot dung ma giam gia (neu phien co dung ma).
+  await discountService.huyGhiNhanSuDung(paymentId)
+    .catch((e) => console.error('[thanhToan] tra luot ma giam gia that bai:', e.message));
 
   /*
    * Tra vi diem cua khach ve dung nhu truoc khi co phien nay.
@@ -733,10 +767,10 @@ async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
    */
   const ch = await layCauHinh();
   const [[don]] = await db.query(
-    `SELECT h.id_user, k.sodienthoai FROM hopdong h JOIN khach_hang k ON h.id_user = k.id
+    `SELECT h.id_user, k.sodienthoai FROM hopdong h LEFT JOIN khach_hang k ON h.id_user = k.id
      WHERE h.sesis = ? LIMIT 1`, [p.sesis]
   );
-  if (don && !String(don.sodienthoai || '').startsWith('QR_')) {
+  if (don && don.sodienthoai && !String(don.sodienthoai).startsWith('QR_')) {
     if (p.loai === 'thanh_toan') {
       const diemDaCong = Math.floor(Number(p.amount) / Number(ch.ty_le_tich_diem || 10000));
       if (diemDaCong > 0) {
@@ -756,10 +790,14 @@ async function hoanTien(paymentId, { lyDo = '', nhanVienId = null } = {}) {
     }
   }
 
-  // Don chua chac con "da thanh toan" nua -> tinh lai.
-  const hoaDon = await layHoaDon(p.sesis);
-  if (hoaDon.tien.con_phai_tra > 0) {
-    await db.query("UPDATE hopdong SET tinhtrang = 6 WHERE sesis = ? AND tinhtrang = 3", [p.sesis]);
+  // Don chua chac con "da thanh toan" nua -> tinh lai. Khoan thu khong gan
+  // voi don an (vd. coc tiec: sesis = ma tiec) thi khong co hoa don de tinh.
+  const [[coDon]] = await db.query('SELECT 1 AS co FROM hopdong WHERE sesis = ? LIMIT 1', [p.sesis]);
+  if (coDon) {
+    const hoaDon = await layHoaDon(p.sesis);
+    if (hoaDon.tien.con_phai_tra > 0) {
+      await db.query("UPDATE hopdong SET tinhtrang = 6 WHERE sesis = ? AND tinhtrang = 3", [p.sesis]);
+    }
   }
 
   await db.query(

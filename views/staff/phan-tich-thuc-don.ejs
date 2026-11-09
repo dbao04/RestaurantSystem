@@ -1,0 +1,327 @@
+<%
+  var activePage = 'phan-tich-thuc-don';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var trieu = function (n) { var x = Number(n || 0); return x >= 1e9 ? (x / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ' : (x / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr'; };
+  var pt = function (x, so) { return (Number(x || 0) * 100).toLocaleString('vi-VN', { maximumFractionDigits: so == null ? 1 : so }) + '%'; };
+  var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+  var duLieu = kq.mon.map(function (m) {
+    return { id: m.id_mon, ten: m.ten, loai: m.ten_loai, sl: m.so_luong, tl: m.ty_le_ban, gb: m.gia_ban, gv: m.gia_von,
+             lai: m.lai_moi_phan, fc: m.food_cost, dt: m.doanh_thu, lg: m.lai_gop, nhom: m.nhom, goiY: m.goi_y };
+  });
+  var nhomThuTu = ['ngoi_sao', 'ngua_keo', 'cau_do', 'cho'];
+%>
+<%- include('partials/header') %>
+
+<style>
+  /* Vai tro mau cho bieu do - bang mau tham chieu da kiem tra (validate_palette, all-pairs, nen trang).
+     3 nhom dung 3 mau dau; nhom "Cho" dung xam trung tinh (giam chu y) de giu gioi han 3 mau cua bieu do phan tan. */
+  .ptm {
+    --surface: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --nguong: #898781;
+    --nhom-ngoi_sao: #2a78d6; --nhom-ngua_keo: #eb6834; --nhom-cau_do: #1baf7a; --nhom-cho: #a8a69f;
+  }
+  .ptm .loc { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .ptm .moc { border: 1px solid #e7ded0; background: #fff; color: #4e342e; border-radius: 999px; padding: .3rem .85rem; font-size: .85rem; font-weight: 600; text-decoration: none !important; }
+  .ptm .moc.is-on { background: #2b1a12; color: #f3dfa6; border-color: #2b1a12; }
+  .ptm .kpi { background: var(--surface); border: 1px solid #e7ded0; border-radius: 14px; padding: .9rem 1.1rem; height: 100%; }
+  .ptm .kpi .nhan { font-size: .8rem; color: var(--ink-2); }
+  .ptm .kpi .so { font-size: 1.45rem; font-weight: 800; color: var(--ink); }
+  .ptm .kpi .phu { font-size: .78rem; color: var(--muted); }
+  .ptm .cham { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .ptm .chu-giai { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .85rem; color: var(--ink-2); }
+  .ptm .khung-bd { position: relative; background: var(--surface); }
+  .ptm svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .ptm .tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid rgba(11,11,11,.12); border-radius: 10px;
+              box-shadow: 0 6px 24px rgba(0,0,0,.12); padding: .6rem .75rem; font-size: .8rem; color: var(--ink); min-width: 210px; display: none; z-index: 5; }
+  .ptm .tip b { display: block; margin-bottom: .25rem; }
+  .ptm .tip .dong { display: flex; justify-content: space-between; gap: 1rem; color: var(--ink-2); }
+  .ptm .tip .dong span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ptm table td.so, .ptm table th.so { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ptm table th[data-sx] { cursor: pointer; user-select: none; }
+  .ptm table th[data-sx]:hover { color: #8a6a22; }
+  .ptm .chip { border: 1px solid #e7ded0; background: #fff; border-radius: 999px; padding: .2rem .7rem; font-size: .8rem; cursor: pointer; }
+  .ptm .chip.is-on { border-color: #2b1a12; background: #2b1a12; color: #f3dfa6; }
+  .ptm .goi-y { font-size: .78rem; color: var(--ink-2); max-width: 340px; }
+</style>
+
+<div class="ptm">
+  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+    <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-utensils mr-2"></i>Phân tích thực đơn</h1>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="tai-csv"><i class="fas fa-download"></i> Tải CSV</button>
+  </div>
+  <p class="text-muted small mb-3">
+    Mỗi món được xếp theo <b>mức bán chạy</b> (tỷ lệ số phần bán trong phạm vi) và <b>lãi gộp mỗi phần</b> (giá bán − giá vốn theo công thức),
+    theo phương pháp menu engineering của Kasavana &amp; Smith. Nên so sánh trong cùng danh mục: đồ uống và món chính có giá vốn rất khác nhau.
+  </p>
+
+  <form class="loc mb-3" method="get">
+    <% moc.forEach(function (m) { %>
+      <a class="moc <%= loc.tu === m.tu && loc.den === m.den ? 'is-on' : '' %>" href="?tu=<%= m.tu %>&den=<%= m.den %><%= loc.idLoai ? '&loai=' + loc.idLoai : '' %>"><%= m.ten %></a>
+    <% }) %>
+    <input type="date" name="tu" value="<%= loc.tu %>" class="form-control form-control-sm" style="width:auto">
+    <span class="text-muted">→</span>
+    <input type="date" name="den" value="<%= loc.den %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto">
+    <select name="loai" class="form-control form-control-sm" style="width:auto">
+      <option value="">Toàn thực đơn</option>
+      <% danhMuc.forEach(function (d) { %><option value="<%= d.id_loai %>" <%= loc.idLoai === Number(d.id_loai) ? 'selected' : '' %>><%= d.name_loai %> (<%= d.so_mon %>)</option><% }) %>
+    </select>
+    <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Xem</button>
+  </form>
+
+  <% if (kq.it_du_lieu) { %>
+    <div class="alert alert-warning py-2 small">
+      <i class="fas fa-triangle-exclamation"></i>
+      Khoảng <%= ngayVN(loc.tu) %> – <%= ngayVN(loc.den) %> chỉ có <b><%= kq.tong_so_luong.toLocaleString('vi-VN') %> phần</b> được bán
+      (khuyến nghị từ <%= hang.soPhanToiThieu %> phần). Kết quả phân loại chưa đáng tin — hãy chọn khoảng thời gian dài hơn.
+    </div>
+  <% } %>
+
+  <div class="row mb-3">
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Doanh thu món</div><div class="so"><%= trieu(kq.tong.doanh_thu) %></div><div class="phu"><%= kq.tong_so_luong.toLocaleString('vi-VN') %> phần · <%= kq.mon.length %> món</div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Lãi gộp (doanh thu − giá vốn)</div><div class="so"><%= trieu(kq.tong.lai_gop) %></div><div class="phu">Lãi bình quân <%= vnd(kq.nguong_lai) %>/phần</div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Tỷ lệ giá vốn (food cost)</div><div class="so"><%= pt(kq.tong.food_cost) %></div><div class="phu">Mục tiêu ngành ≤ <%= pt(hang.foodCostMucTieu, 0) %></div></div></div>
+    <div class="col-6 col-lg-3 mb-2"><div class="kpi"><div class="nhan">Số món theo nhóm</div>
+      <div style="font-size:.85rem;line-height:1.7">
+        <% nhomThuTu.forEach(function (k) { %><span class="mr-2" style="white-space:nowrap"><span class="cham" style="background:var(--nhom-<%= k %>)"></span><%= nhom[k].ten %> <b><%= kq.tong.dem[k] %></b></span><% }) %>
+      </div></div></div>
+  </div>
+
+  <div class="card shadow mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2" style="gap:.5rem">
+        <b>Ma trận thực đơn</b>
+        <div class="chu-giai">
+          <% nhomThuTu.forEach(function (k) { %><span><span class="cham" style="background:var(--nhom-<%= k %>)"></span><%= nhom[k].ten %> <span class="text-muted">· <%= nhom[k].mo_ta.toLowerCase() %></span></span><% }) %>
+        </div>
+      </div>
+      <% if (!kq.mon.length) { %>
+        <div class="p-4 text-center text-muted">Không có món nào có giá vốn trong phạm vi đã chọn.</div>
+      <% } else { %>
+        <div class="khung-bd" id="khung-bd">
+          <svg id="bd" width="100%" height="440" role="img" aria-label="Biểu đồ phân tán: trục ngang là tỷ lệ bán, trục dọc là lãi gộp mỗi phần, mỗi chấm là một món"></svg>
+          <div class="tip" id="tip"></div>
+        </div>
+        <div class="small text-muted mt-1">
+          Đường ngang: lãi gộp bình quân <%= vnd(kq.nguong_lai) %>/phần · Đường dọc: ngưỡng bán chạy <%= pt(kq.nguong_pho_bien, 2) %> số phần (= <%= pt(hang.tyLeNguong, 0) %> × 1/<%= kq.mon.length %> món).
+          Di chuột vào chấm để xem chi tiết; bảng bên dưới có đủ số liệu.
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card shadow mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center mb-2" style="gap:.4rem">
+        <b class="mr-2">Chi tiết từng món</b>
+        <button type="button" class="chip is-on" data-loc="">Tất cả</button>
+        <% nhomThuTu.forEach(function (k) { %><button type="button" class="chip" data-loc="<%= k %>"><span class="cham" style="background:var(--nhom-<%= k %>)"></span><%= nhom[k].ten %> (<%= kq.tong.dem[k] %>)</button><% }) %>
+        <input type="search" id="tim" class="form-control form-control-sm ml-auto" placeholder="Tìm món..." style="max-width:200px">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th data-sx="ten">Món</th><th>Nhóm</th>
+              <th class="so" data-sx="sl">Đã bán</th><th class="so" data-sx="tl">Tỷ lệ</th>
+              <th class="so" data-sx="gb">Giá bán</th><th class="so" data-sx="gv">Giá vốn</th>
+              <th class="so" data-sx="fc">Food cost</th><th class="so" data-sx="lai">Lãi/phần</th>
+              <th class="so" data-sx="lg">Tổng lãi gộp</th><th>Gợi ý</th>
+            </tr>
+          </thead>
+          <tbody id="bang"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <% if (kq.thieu_gia_von.length) { %>
+    <div class="card shadow mb-3"><div class="card-body small">
+      <b>Món chưa có công thức hoặc giá vốn (<%= kq.thieu_gia_von.length %>)</b> — không xếp loại được, bếp cần bổ sung công thức:
+      <%= kq.thieu_gia_von.map(function (m) { return m.ten; }).join(', ') %>
+    </div></div>
+  <% } %>
+</div>
+
+<script>
+(function () {
+  var DATA = <%- JSON.stringify(duLieu).replace(/</g, '\\u003c') %>;
+  var TEN_NHOM = <%- JSON.stringify(Object.keys(nhom).reduce(function (o, k) { o[k] = nhom[k].ten; return o; }, {})) %>;
+  var NGUONG_TL = <%- JSON.stringify(kq.nguong_pho_bien) %>;
+  var NGUONG_LAI = <%- JSON.stringify(kq.nguong_lai) %>;
+  var THU_TU = ['ngoi_sao', 'ngua_keo', 'cau_do', 'cho'];
+  var root = document.querySelector('.ptm');
+  var mau = function (k) { return getComputedStyle(root).getPropertyValue('--nhom-' + k).trim(); };
+  var v = function (n) { return Math.round(n).toLocaleString('vi-VN') + 'đ'; };
+  var p = function (x, so) { return (x * 100).toLocaleString('vi-VN', { maximumFractionDigits: so == null ? 1 : so }) + '%'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+
+  /* ------------------------------------------------------------ bieu do */
+  var svg = document.getElementById('bd');
+  var tip = document.getElementById('tip');
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(ten, thuocTinh, cha) {
+    var e = document.createElementNS(NS, ten);
+    for (var k in thuocTinh) e.setAttribute(k, thuocTinh[k]);
+    (cha || svg).appendChild(e);
+    return e;
+  }
+  function moc(max, so) {
+    // Moc "tron" cho truc: 1, 2, 2.5, 5 x 10^k.
+    var tho = max / so, mu = Math.pow(10, Math.floor(Math.log10(tho))), b = tho / mu;
+    var buoc = (b <= 1 ? 1 : b <= 2 ? 2 : b <= 2.5 ? 2.5 : b <= 5 ? 5 : 10) * mu;
+    var ds = [];
+    for (var x = 0; x <= max + 1e-12; x += buoc) ds.push(x);
+    return ds;
+  }
+  function ve() {
+    if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = svg.clientWidth || 800, H = 440;
+    var L = 78, R = 18, T = 16, B = 46;
+    var maxX = Math.max(NGUONG_TL * 2, Math.max.apply(null, DATA.map(function (d) { return d.tl; }))) * 1.06;
+    var minY = Math.min(0, Math.min.apply(null, DATA.map(function (d) { return d.lai; })));
+    var maxY = Math.max(NGUONG_LAI * 2, Math.max.apply(null, DATA.map(function (d) { return d.lai; }))) * 1.06;
+    // Truc ngang dung THANG CAN BAC HAI: vai mon ban rat chay (sake ~2%) keo gian
+    // truc tuyen tinh, don ca thuc don vao dai 0-0.5%. Can bac hai gian vung nho,
+    // van giu thu tu va van ve duoc mon ban 0 phan (log thi khong).
+    var sx = function (x) { return L + Math.sqrt(Math.max(0, x) / maxX) * (W - L - R); };
+    var sy = function (y) { return T + (maxY - y) / (maxY - minY) * (H - T - B); };
+    // Chu co vien mau nen (halo): khong bi cham de len, khong che mat cham.
+    function chu(thuocTinh, noiDung) {
+      var t = el('text', Object.assign({ stroke: 'var(--surface)', 'stroke-width': 3, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, thuocTinh));
+      t.textContent = noiDung;
+      return t;
+    }
+
+    // Luoi + truc (manh, lui ve sau).
+    moc(maxY, 5).forEach(function (y) {
+      el('line', { x1: L, x2: W - R, y1: sy(y), y2: sy(y), stroke: 'var(--grid)', 'stroke-width': 1 });
+      el('text', { x: L - 8, y: sy(y) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)' }).textContent = (y / 1000).toLocaleString('vi-VN') + 'k';
+    });
+    // Moc truc ngang cho thang can bac hai: bo moc qua sat nhau (< 44px).
+    var xCuoi = -1e9;
+    [0, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.015, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3, 0.5]
+      .filter(function (x) { return x <= maxX; })
+      .forEach(function (x) {
+        if (sx(x) - xCuoi < 44) return;
+        xCuoi = sx(x);
+        el('line', { x1: sx(x), x2: sx(x), y1: T, y2: H - B, stroke: 'var(--grid)', 'stroke-width': 1 });
+        el('text', { x: sx(x), y: H - B + 18, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)' }).textContent = p(x, 2);
+      });
+    el('line', { x1: L, x2: W - R, y1: sy(0), y2: sy(0), stroke: 'var(--axis)', 'stroke-width': 1 });
+    el('text', { x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)' }).textContent = 'Tỷ lệ số phần bán (mức bán chạy, thang căn bậc hai) →';
+    var nhanY = el('text', { x: 16, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)', transform: 'rotate(-90 16 ' + ((T + H - B) / 2) + ')' });
+    nhanY.textContent = 'Lãi gộp mỗi phần →';
+
+    // Duong nguong (net lien, co nhan) + ten 4 goc phan tu.
+    el('line', { x1: sx(NGUONG_TL), x2: sx(NGUONG_TL), y1: T, y2: H - B, stroke: 'var(--nguong)', 'stroke-width': 1 });
+    el('line', { x1: L, x2: W - R, y1: sy(NGUONG_LAI), y2: sy(NGUONG_LAI), stroke: 'var(--nguong)', 'stroke-width': 1 });
+    // Cham: ve nhom "Cho" truoc (xam, lui sau) roi den cac nhom co mau.
+    var thuTuVe = ['cho', 'cau_do', 'ngua_keo', 'ngoi_sao'];
+    var top3 = DATA.slice().sort(function (a, b) { return b.lg - a.lg; }).slice(0, 3).map(function (d) { return d.id; });
+    thuTuVe.forEach(function (k) {
+      DATA.filter(function (d) { return d.nhom === k; }).forEach(function (d) {
+        var cx = sx(d.tl), cy = sy(d.lai);
+        el('circle', { cx: cx, cy: cy, r: 4.5, fill: mau(k), stroke: 'var(--surface)', 'stroke-width': 2 });
+        var hit = el('circle', { cx: cx, cy: cy, r: 10, fill: 'transparent', style: 'cursor:pointer' });
+        hit.addEventListener('mouseenter', function () { hienTip(d, cx, cy); });
+        hit.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+      });
+    });
+    // Nhan truc tiep chon loc: 3 mon dong gop lai gop nhieu nhat.
+    DATA.filter(function (d) { return top3.indexOf(d.id) >= 0; }).forEach(function (d) {
+      var cx = sx(d.tl), cy = sy(d.lai), trai = cx > W * 0.7;
+      chu({ x: cx + (trai ? -9 : 9), y: cy + 4, 'text-anchor': trai ? 'end' : 'start', 'font-size': 11, fill: 'var(--ink)' }, d.ten);
+    });
+
+    // Ten 4 goc phan tu - ve SAU cham (co halo) de khong bi che. Hai nhom duoi
+    // dat sat ngay duoi duong lai binh quan, nho dong mon day dac sat truc hoanh.
+    var xNguong = sx(NGUONG_TL), yNguong = sy(NGUONG_LAI);
+    [
+      ['ngoi_sao', W - R - 6, T + 14, 'end'], ['cau_do', xNguong - 8, T + 14, 'end'],
+      ['ngua_keo', W - R - 6, yNguong + 16, 'end'], ['cho', xNguong - 8, yNguong + 16, 'end'],
+    ].forEach(function (g) {
+      chu({ x: g[1], y: g[2], 'text-anchor': g[3], 'font-size': 12, 'font-weight': 700, fill: 'var(--ink-2)' }, TEN_NHOM[g[0]]);
+    });
+
+    function hienTip(d, cx, cy) {
+      tip.innerHTML = '<b>' + esc(d.ten) + '</b>'
+        + '<div class="dong"><span>Nhóm</span><span><span class="cham" style="background:' + mau(d.nhom) + '"></span>' + TEN_NHOM[d.nhom] + '</span></div>'
+        + '<div class="dong"><span>Đã bán</span><span>' + d.sl.toLocaleString('vi-VN') + ' phần (' + p(d.tl, 2) + ')</span></div>'
+        + '<div class="dong"><span>Giá bán / giá vốn</span><span>' + v(d.gb) + ' / ' + v(d.gv) + '</span></div>'
+        + '<div class="dong"><span>Lãi mỗi phần</span><span>' + v(d.lai) + ' (food cost ' + p(d.fc, 0) + ')</span></div>'
+        + '<div class="dong"><span>Tổng lãi gộp</span><span>' + v(d.lg) + '</span></div>';
+      tip.style.display = 'block';
+      var khung = document.getElementById('khung-bd').clientWidth;
+      var x = cx + 14, y = cy - 10;
+      if (x + tip.offsetWidth > khung) x = cx - 14 - tip.offsetWidth;
+      if (y + tip.offsetHeight > 440) y = 440 - tip.offsetHeight - 4;
+      tip.style.left = Math.max(0, x) + 'px';
+      tip.style.top = Math.max(0, y) + 'px';
+    }
+  }
+  ve();
+  var hen;
+  window.addEventListener('resize', function () { clearTimeout(hen); hen = setTimeout(ve, 150); });
+
+  /* ---------------------------------------------------------------- bang */
+  var locNhom = '', tim = '', sapXep = 'lg', giam = true;
+  var bang = document.getElementById('bang');
+  function veBang() {
+    var ds = DATA.filter(function (d) {
+      return (!locNhom || d.nhom === locNhom) && (!tim || d.ten.toLowerCase().indexOf(tim) >= 0);
+    }).sort(function (a, b) {
+      var x = a[sapXep], y = b[sapXep];
+      var kq = typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y;
+      return giam ? -kq : kq;
+    });
+    bang.innerHTML = ds.map(function (d) {
+      return '<tr>'
+        + '<td><b>' + esc(d.ten) + '</b><br><small class="text-muted">' + esc(d.loai) + '</small></td>'
+        + '<td style="white-space:nowrap"><span class="cham" style="background:' + mau(d.nhom) + '"></span>' + TEN_NHOM[d.nhom] + '</td>'
+        + '<td class="so">' + d.sl.toLocaleString('vi-VN') + '</td>'
+        + '<td class="so">' + p(d.tl, 2) + '</td>'
+        + '<td class="so">' + v(d.gb) + '</td>'
+        + '<td class="so">' + v(d.gv) + '</td>'
+        + '<td class="so">' + p(d.fc, 0) + '</td>'
+        + '<td class="so">' + v(d.lai) + '</td>'
+        + '<td class="so">' + v(d.lg) + '</td>'
+        + '<td class="goi-y">' + d.goiY.map(esc).join('<br>') + '</td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="10" class="text-center text-muted p-3">Không có món phù hợp.</td></tr>';
+  }
+  document.querySelectorAll('.chip[data-loc]').forEach(function (c) {
+    c.addEventListener('click', function () {
+      locNhom = c.dataset.loc;
+      document.querySelectorAll('.chip[data-loc]').forEach(function (x) { x.classList.toggle('is-on', x === c); });
+      veBang();
+    });
+  });
+  document.getElementById('tim').addEventListener('input', function (e) { tim = e.target.value.trim().toLowerCase(); veBang(); });
+  document.querySelectorAll('th[data-sx]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var k = th.dataset.sx;
+      giam = sapXep === k ? !giam : k !== 'ten';
+      sapXep = k;
+      veBang();
+    });
+  });
+  veBang();
+
+  /* ------------------------------------------------------------ tai CSV */
+  document.getElementById('tai-csv').addEventListener('click', function () {
+    var dong = [['Món', 'Danh mục', 'Nhóm', 'Đã bán', 'Tỷ lệ bán (%)', 'Giá bán', 'Giá vốn', 'Food cost (%)', 'Lãi mỗi phần', 'Tổng lãi gộp', 'Gợi ý']];
+    DATA.forEach(function (d) {
+      dong.push([d.ten, d.loai, TEN_NHOM[d.nhom], d.sl, (d.tl * 100).toFixed(3), d.gb, d.gv, (d.fc * 100).toFixed(1), d.lai, Math.round(d.lg), d.goiY.join(' ')]);
+    });
+    var csv = '﻿' + dong.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'phan-tich-thuc-don_<%= loc.tu %>_<%= loc.den %>.csv';
+    a.click();
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

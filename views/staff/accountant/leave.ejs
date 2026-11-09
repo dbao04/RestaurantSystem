@@ -63,18 +63,10 @@
                         </td>
                         <td>
                             <% if(l.trang_thai == 0) { %>
-                            <form action="/staff/accountant/leave/approve/<%= l.id_np %>" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-success shadow-sm" title="Duyệt đơn nghỉ" onclick="return confirm('Xác nhận duyệt đơn nghỉ phép của <%= l.ten_nhanvien %>?')">
-                                    <i class="fas fa-check"></i> Duyệt
-                                </button>
-                            </form>
-                            <form action="/staff/accountant/leave/reject/<%= l.id_np %>" method="POST" class="d-inline ml-1">
-                                <button type="submit" class="btn btn-sm btn-danger shadow-sm" title="Từ chối" onclick="return confirm('Xác nhận từ chối đơn nghỉ phép của <%= l.ten_nhanvien %>?')">
-                                    <i class="fas fa-times"></i> Từ chối
-                                </button>
-                            </form>
+                              <span class="text-muted small">Chờ cấp trên duyệt</span>
                             <% } else { %>
-                            <span class="text-muted small">Đã xử lý</span>
+                              <small><%= l.ten_nguoi_duyet || '—' %><% if (l.duyet_luc) { %><br><span class="text-muted"><%= new Date(l.duyet_luc).toLocaleDateString('vi-VN') %></span><% } %></small>
+                              <% if (l.ly_do_tu_choi) { %><br><small class="text-danger"><%= l.ly_do_tu_choi %></small><% } %>
                             <% } %>
                         </td>
                     </tr>

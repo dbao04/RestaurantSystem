@@ -372,6 +372,30 @@ const discountService = {
   },
 
   /**
+   * Tra lai luot dung ma cua mot phien thanh toan bi HOAN TIEN.
+   *
+   * Nguoc voi ghiNhanSuDung: xoa dong discount_usages cua phien va giam
+   * current_usage. Khong tra lai thi khach bi hoan tien van "mat" mot luot
+   * cua ma gioi han so lan / moi khach, va ma het luot som hon thuc te.
+   * Chi giam khi thuc su xoa duoc dong - goi hai lan khong tru hai lan.
+   */
+  huyGhiNhanSuDung: async (paymentId, conn = db) => {
+    const id = Number(paymentId);
+    if (!id) return false;
+    const [rows] = await conn.query('SELECT id, discount_id FROM discount_usages WHERE payment_id = ?', [id]);
+    let daTra = false;
+    for (const r of rows) {
+      const [kq] = await conn.query('DELETE FROM discount_usages WHERE id = ?', [r.id]);
+      if (kq.affectedRows > 0) {
+        await conn.query(
+          'UPDATE discount_codes SET current_usage = GREATEST(current_usage - 1, 0) WHERE id = ?', [r.discount_id]);
+        daTra = true;
+      }
+    }
+    return daTra;
+  },
+
+  /**
    * Tang so lan da dung (giu lai cho cac loi goi cu khong co ngu canh).
    */
   useCode: async (code, thongTin = {}) => {

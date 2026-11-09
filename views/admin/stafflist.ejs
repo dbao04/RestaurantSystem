@@ -49,7 +49,7 @@
                                 <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/staffedit/<%= s.id_nv %>">
                                     <i class="fas fa-pen"></i> Sửa
                                 </a>
-                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/staffdel/<%= s.id_nv %>"
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" data-post href="/admin/staffdel/<%= s.id_nv %>"
                                    onclick="return confirm('Chuyển nhân viên &quot;<%= s.ten %>&quot; sang trạng thái Đã nghỉ?')">
                                     <i class="fas fa-user-slash"></i> Cho nghỉ
                                 </a>

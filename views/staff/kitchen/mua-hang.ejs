@@ -24,7 +24,10 @@
 
 <!-- ================= GOI Y ================= -->
 <div class="kb-the mb-3">
-  <h6><i class="fas fa-lightbulb"></i> Gợi ý cần mua <small>– tồn dưới điểm đặt hàng = max(định mức, 3 ngày tiêu hao); đề xuất đủ dùng 7 ngày, đã trừ hàng đang về</small></h6>
+  <% var tsMua = goiY.thamSo || {}; %>
+  <h6><i class="fas fa-lightbulb"></i> Gợi ý cần mua theo dự báo
+    <small>– nhu cầu từng ngày = trung bình xuất kho cùng thứ trong 8 tuần gần nhất × hệ số mùa vụ <%= tsMua.he_so ? tsMua.he_so.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : 1 %>;
+    hàng về sau <%= tsMua.so_ngay_giao %> ngày, đặt đủ dùng thêm <%= tsMua.so_ngay_du_tru %> ngày + định mức an toàn; đã trừ phần giữ cho món đã gọi và hàng đang về</small></h6>
   <% if (!goiY.length) { %>
     <div class="kb-rong"><i class="fas fa-circle-check text-success"></i> Tồn kho đang đủ – chưa có nguyên liệu nào cần mua thêm.</div>
   <% } else { %>
@@ -33,23 +36,25 @@
       <small class="text-muted" id="demGoiY"></small>
       <label class="small mb-0 ml-auto"><input type="checkbox" id="chonHet"> Chọn tất cả</label>
       <button type="button" class="btn btn-sm btn-primary" id="taoTuGoiY" disabled><i class="fas fa-file-circle-plus"></i> Tạo đơn từ <span id="soChon">0</span> dòng</button>
+      <button type="button" class="btn btn-sm btn-success" id="taoTuDong" title="Gom tất cả gợi ý theo nhà cung cấp gần nhất, tạo đơn chờ duyệt"><i class="fas fa-wand-magic-sparkles"></i> Tạo đơn nháp tự động</button>
+      <small id="baoTuDong" class="w-100"></small>
     </div>
     <div class="table-responsive">
       <table class="table table-sm table-hover kb-bang mb-0" id="bangGoiY">
-        <thead class="thead-light"><tr><th></th><th>Nguyên liệu</th><th>NCC gần nhất</th><th class="so">Tồn</th><th class="so">Định mức</th><th class="so">Tiêu hao/ngày</th><th class="so">Đủ dùng</th><th class="so">Đang về</th><th class="so">Đề xuất</th><th class="so">Ước tính</th></tr></thead>
+        <thead class="thead-light"><tr><th></th><th>Nguyên liệu</th><th>NCC gần nhất</th><th class="so">Khả dụng</th><th class="so">Định mức</th><th class="so">Dự báo/ngày</th><th class="so">Hết dự kiến</th><th class="so">Đang về</th><th class="so">Đề xuất</th><th class="so">Ước tính</th></tr></thead>
         <tbody>
           <% goiY.forEach(function (g) { %>
             <tr data-tim-text="<%= tenNcc[g.ncc_gan_nhat] || '' %>">
-              <td><input type="checkbox" class="chon-goi-y" value="<%= g.id_nl %>" data-sl="<%= g.de_xuat %>" data-gia="<%= g.gia_von %>" data-ncc="<%= g.ncc_gan_nhat || '' %>" aria-label="Chọn <%= g.ten_nl %>"></td>
-              <td><b><%= g.ten_nl %></b> <% if (g.muc_do === 'het') { %><span class="kb-nhan do">Hết</span><% } else if (g.muc_do === 'duoi_dinh_muc') { %><span class="kb-nhan cam">Dưới ĐM</span><% } else { %><span class="kb-nhan xam">Sắp hết</span><% } %></td>
+              <td><input type="checkbox" class="chon-goi-y" value="<%= g.id_nl %>" data-sl="<%= g.de_xuat %>" data-gia="<%= g.gia_nhap_gan_nhat || g.gia_von %>" data-ncc="<%= g.ncc_gan_nhat || '' %>" aria-label="Chọn <%= g.ten_nl %>"></td>
+              <td><b><%= g.ten_nl %></b> <% if (g.muc_do === 'het') { %><span class="kb-nhan do">Hết</span><% } else if (g.muc_do === 'het_truoc_khi_ve') { %><span class="kb-nhan do">Hết trước khi hàng về</span><% } else if (g.muc_do === 'thieu_cho_tiec') { %><span class="kb-nhan do">Thiếu cho tiệc</span><% } else if (g.muc_do === 'duoi_dinh_muc') { %><span class="kb-nhan cam">Dưới ĐM</span><% } else { %><span class="kb-nhan xam">Sắp hết</span><% } %><% if (g.can_cho_tiec > 0) { %> <span class="kb-nhan xanh" title="Gồm <%= soVN(g.can_cho_tiec) %> <%= g.ten_dvt %> cho tiệc sắp tới">Có tiệc</span><% } %></td>
               <td class="small"><%= tenNcc[g.ncc_gan_nhat] || '—' %></td>
-              <td class="so <%= g.so_luong < g.dinh_muc_min ? 'text-danger font-weight-bold' : '' %>"><%= soVN(g.so_luong) %> <span class="text-muted small"><%= g.ten_dvt %></span></td>
+              <td class="so <%= g.kha_dung < g.dinh_muc_min ? 'text-danger font-weight-bold' : '' %>" title="Tồn <%= soVN(g.so_luong) %>, đã trừ phần giữ cho món đã gọi"><%= soVN(g.kha_dung) %> <span class="text-muted small"><%= g.ten_dvt %></span></td>
               <td class="so text-muted"><%= soVN(g.dinh_muc_min) %></td>
               <td class="so"><%= soVN(g.tieu_hao_ngay) %></td>
-              <td class="so"><%= g.con_du_ngay == null ? '—' : g.con_du_ngay + ' ngày' %></td>
+              <td class="so"><%= g.ngay_het_du_kien ? g.ngay_het_du_kien.split('-').reverse().join('/') : '—' %></td>
               <td class="so text-muted"><%= g.dang_ve ? soVN(g.dang_ve) : '—' %></td>
               <td class="so"><b><%= soVN(g.de_xuat, 1) %></b> <span class="small text-muted"><%= g.ten_dvt %></span></td>
-              <td class="so"><%= vnd(g.de_xuat * g.gia_von) %></td>
+              <td class="so"><%= vnd(g.de_xuat * (g.gia_nhap_gan_nhat || g.gia_von)) %></td>
             </tr>
           <% }) %>
         </tbody>
@@ -228,6 +233,24 @@
     } catch (err) { $('loiDon').textContent = err.message; $('loiDon').hidden = false; $('luuDon').disabled = false; }
   });
 })();
+
+  // Tao don nhap tu dong theo du bao (gom theo NCC) - khoBepService.taoDonTuDong.
+  (function () {
+    var nut = document.getElementById('taoTuDong');
+    if (!nut) return;
+    nut.addEventListener('click', async function () {
+      if (!confirm('Tạo đơn mua (chờ duyệt) cho tất cả gợi ý, gom theo nhà cung cấp gần nhất?')) return;
+      nut.disabled = true;
+      var bao = document.getElementById('baoTuDong');
+      try {
+        var r = await fetch('/api/kitchen/mua-hang/tu-dong', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: '{}' });
+        var d = await r.json();
+        if (!d.ok) throw new Error(d.thong_bao || 'Không tạo được đơn.');
+        if (!d.don.length) { bao.className = 'w-100 text-success'; bao.textContent = d.thong_bao; nut.disabled = false; return; }
+        location.href = '/staff/kitchen/mua-hang?trang_thai=cho_duyet';
+      } catch (err) { bao.className = 'w-100 text-danger'; bao.textContent = err.message; nut.disabled = false; }
+    });
+  })();
 </script>
 
 <%- include('../partials/footer') %>

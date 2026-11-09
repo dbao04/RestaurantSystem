@@ -280,7 +280,7 @@ const TRANG_THAI_THANH_TOAN = [
 ];
 
 const ANH_XA = [
-  ['Đặt bàn, giỏ hàng, đơn của tôi', '<code>server.js</code>, <code>services/orderService.js</code>, <code>services/bookingService.js</code>'],
+  ['Đặt bàn, giỏ hàng, đơn của tôi', '<code>server.js</code>, <code>services/orderService.js</code>'],
   ['Quét mã QR gọi món tại bàn', '<code>GET /qr/table/:tableId</code>, <code>POST /qr/add-dish</code>, <code>orderService.timIdBanTheoTen()</code>'],
   ['Sơ đồ bàn thời gian thực', '<code>routes/kds.js</code>, <code>services/kdsService.js</code>, <code>views/staff/so-do-ban.ejs</code>'],
   ['Màn hình bếp và trừ kho', '<code>kdsService.hoanThanhCheBien()</code> &rarr; bảng <code>nguyen_lieu</code>, <code>xuat_kho</code>'],

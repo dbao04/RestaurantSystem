@@ -59,7 +59,7 @@
                                 <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/admin/productedit/<%= prod.id_mon %>">
                                     <i class="fas fa-pen"></i> Sửa
                                 </a>
-                                <a class="qt-btn qt-btn--danger qt-btn--sm" href="/admin/productdel/<%= prod.id_mon %>"
+                                <a class="qt-btn qt-btn--danger qt-btn--sm" data-post href="/admin/productdel/<%= prod.id_mon %>"
                                    onclick="return confirm('Xóa món &quot;<%= (prod.name_mon || '').trim() %>&quot;?')">
                                     <i class="fas fa-trash"></i> Xóa
                                 </a>

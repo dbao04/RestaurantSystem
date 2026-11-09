@@ -39,7 +39,7 @@
                         <td class="text-danger font-weight-bold"><%= formatMoney(e.so_tien) %></td>
                         <td><%= e.ghi_chu %></td>
                         <td>
-                            <a href="/staff/accountant/expenses/delete/<%= e.id_chi %>" 
+                            <a data-post href="/staff/accountant/expenses/delete/<%= e.id_cp %>" 
                                class="btn btn-sm btn-circle btn-outline-danger"
                                onclick="return confirm('Bạn có chắc muốn xóa khoản chi này?')">
                                <i class="fas fa-trash"></i>
