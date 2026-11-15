@@ -38,6 +38,13 @@ if ! command -v node >/dev/null || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 24
 fi
 command -v pm2 >/dev/null || npm install -g pm2
 timedatectl set-timezone Asia/Ho_Chi_Minh || true
+# May mien phi it RAM (vd Oracle E2.1.Micro 1GB): them 2GB swap de pip/npm
+# va dich vu AI khong bi he dieu hanh giet vi het bo nho.
+RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [ "$RAM_MB" -lt 3000 ] && ! swapon --show | grep -q .; then
+  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
 
 buoc "2/9 Tao user he thong '$NGUOI_CHAY'"
 id "$NGUOI_CHAY" >/dev/null 2>&1 || useradd -m -s /bin/bash "$NGUOI_CHAY"
@@ -61,9 +68,11 @@ unzip -q -o "$GOI" -d "$TAM"
 buoc "5/9 MariaDB: tao CSDL, tai khoan rieng, nap du lieu"
 systemctl enable --now mariadb
 # Cau hinh InnoDB du lon (ban XAMPP mac dinh 16MB / log 5MB tung gay crash).
-cat > /etc/mysql/mariadb.conf.d/60-nhahang.cnf <<'CNF'
+# Bo dem = 1/4 RAM, toi da 512MB (may 1GB -> 256MB).
+BP_MB=$(( RAM_MB / 4 )); [ "$BP_MB" -gt 512 ] && BP_MB=512; [ "$BP_MB" -lt 128 ] && BP_MB=128
+cat > /etc/mysql/mariadb.conf.d/60-nhahang.cnf <<CNF
 [mysqld]
-innodb_buffer_pool_size = 512M
+innodb_buffer_pool_size = ${BP_MB}M
 innodb_log_file_size    = 128M
 max_allowed_packet      = 64M
 character-set-server    = utf8mb4
@@ -120,7 +129,18 @@ sed "s/__TEN_MIEN__/$TEN_MIEN/g" "$THU_MUC/deploy/nginx.conf" > /etc/nginx/sites
 ln -sf /etc/nginx/sites-available/nhahang /etc/nginx/sites-enabled/nhahang
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
-ufw allow OpenSSH >/dev/null; ufw allow 'Nginx Full' >/dev/null; ufw --force enable >/dev/null
+# Anh Ubuntu cua Oracle Cloud da co san luat iptables chan moi cong tru 22 va
+# khuyen KHONG dung ufw (xung dot). Nhan ra bang file rules.v4 co REJECT.
+if [ -f /etc/iptables/rules.v4 ] && grep -q REJECT /etc/iptables/rules.v4; then
+  for CONG in 80 443; do
+    iptables -C INPUT -p tcp --dport $CONG -m state --state NEW -j ACCEPT 2>/dev/null \
+      || iptables -I INPUT 6 -p tcp --dport $CONG -m state --state NEW -j ACCEPT
+  done
+  netfilter-persistent save >/dev/null 2>&1 || iptables-save > /etc/iptables/rules.v4
+  echo "   (Oracle Cloud) da mo cong 80/443 trong iptables - nho mo ca trong Security List cua VCN"
+else
+  ufw allow OpenSSH >/dev/null; ufw allow 'Nginx Full' >/dev/null; ufw --force enable >/dev/null
+fi
 certbot --nginx -d "$TEN_MIEN" -d "www.$TEN_MIEN" --non-interactive --agree-tos -m "$EMAIL_SSL" --redirect \
   || certbot --nginx -d "$TEN_MIEN" --non-interactive --agree-tos -m "$EMAIL_SSL" --redirect \
   || echo "   !! Chua lay duoc chung chi - kiem tra ban ghi DNS A da tro ve IP may nay chua, roi chay lai script."
