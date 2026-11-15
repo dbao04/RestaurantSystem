@@ -344,21 +344,21 @@
     </div>
     <div class="cb-dau__info">
       <b><%= t('chatbot.tro_ly') %></b>
-      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? t('chatbot.che_do_quan_ly') : (t('chung.ten_nha_hang') + ' · Trực tuyến 24/7') %></small>
+      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? t('chatbot.che_do_quan_ly') : (t('chung.ten_nha_hang') + ' · ' + t('giao_dien.truc_tuyen')) %></small>
     </div>
-    <a href="tel:0825297297" class="cb-dau__goi" title="Gọi ngay Hotline 0825 297 297">
+    <a href="tel:0825297297" class="cb-dau__goi" title="<%= t('giao_dien.goi_hotline') %>">
       <i class="fas fa-phone-alt"></i> 0825.297.297
     </a>
     <button class="cb-dau__dong" id="cb-dong" aria-label="<%= t('chatbot.dong') %>">&times;</button>
   </div>
   <div class="cb-thanh-lien-he">
-    <a href="tel:0825297297" class="cb-lien-he__nut cb-lien-he__nut--goi" title="Gọi trực tiếp tới Hotline 0825 297 297">
+    <a href="tel:0825297297" class="cb-lien-he__nut cb-lien-he__nut--goi" title="<%= t('giao_dien.goi_hotline') %>">
       <i class="fas fa-phone-volume"></i>
-      <span>Gọi 0825 297 297</span>
+      <span><%= t('giao_dien.goi_so') %></span>
     </a>
-    <a href="/chat" class="cb-lien-he__nut cb-lien-he__nut--nv" title="Chuyển sang trang Chat trực tiếp với nhân viên">
+    <a href="/chat" class="cb-lien-he__nut cb-lien-he__nut--nv" title="<%= t('giao_dien.sang_chat') %>">
       <i class="fas fa-headset"></i>
-      <span>Chat với nhân viên</span>
+      <span><%= t('giao_dien.chat_nv') %></span>
     </a>
   </div>
   <div class="cb-than" id="cb-than"></div>
@@ -508,9 +508,9 @@
       nut(cbI18n.dangNhap, '/login');
       nut(cbI18n.dangKy, '/register', true);
     } else {
-      nut(cbI18n.nhanVien || 'Chat với nhân viên', '/chat');
+      nut(cbI18n.nhanVien, '/chat');
     }
-    nut('📞 Gọi 0825 297 297', 'tel:0825297297', true);
+    nut('📞 ' + <%- JSON.stringify(t('giao_dien.goi_so')) %>, 'tel:0825297297', true);
     noi.appendChild(hop);
     than.scrollTop = than.scrollHeight;
   }

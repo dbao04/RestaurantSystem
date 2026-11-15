@@ -380,6 +380,32 @@ function tenNhom(loai, ngonNgu) {
 }
 
 /**
+ * Khoa tu dien cho mot chuoi NOI DUNG lay tu CSDL (ten / mo ta khu vuc, thuc
+ * don tiec, mon trong thuc don, dich vu tiec...).
+ *
+ * Khoa sinh tu CHINH chuoi tieng Viet: cung mot mon xuat hien o nhieu thuc don
+ * chi can dich mot lan. Phan duoi la ma bam ngan de hai chuoi dai co dau giong
+ * nhau khong trung khoa.
+ */
+function khoaNoiDung(chuoi) {
+  const goc = String(chuoi || '').trim();
+  const slug = goc.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 48);
+  let h = 0;
+  for (let i = 0; i < goc.length; i++) h = (h * 31 + goc.charCodeAt(i)) >>> 0;
+  return 'nd.' + slug + '_' + (h % 46656).toString(36);
+}
+
+/** Ban dich cua mot chuoi noi dung CSDL; chua co ban dich thi tra lai nguyen van. */
+function dichNd(chuoi, ngonNgu) {
+  const goc = String(chuoi == null ? '' : chuoi);
+  if (!goc.trim()) return goc;
+  const khoa = khoaNoiDung(goc);
+  const dich = t(khoa, ngonNgu);
+  return dich === khoa ? goc : dich;
+}
+
+/**
  * Ten khu vuc / vi tri theo ngon ngu.
  */
 function tenKhuVuc(ten, ngonNgu) {
@@ -556,4 +582,5 @@ function tenNguyenLieu(ten, ngonNgu) {
 module.exports = {
   DS_NGON_NGU, MAC_DINH, chuanHoa, doanTuTrinhDuyet, t,
   tenMon, tenNhom, tenTiengAnh, tenTiengNhat, tenNguyenLieu, nhanDip, nhanSoKhach, tenKhuVuc,
+  khoaNoiDung, dichNd,
 };

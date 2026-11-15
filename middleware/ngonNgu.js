@@ -90,6 +90,8 @@ module.exports = function napNgonNgu() {
     res.locals.tenNguyenLieu = (ten) => ngonNgu.tenNguyenLieu(ten, nn);
     res.locals.nhanDip = (gt) => ngonNgu.nhanDip(gt, nn);
     res.locals.nhanSoKhach = (so) => ngonNgu.nhanSoKhach(so, nn);
+    res.locals.dichNd = (chuoi) => ngonNgu.dichNd(chuoi, nn);
+    res.locals.tenKhuVuc = (ten) => ngonNgu.tenKhuVuc(ten, nn);
 
     // Dat `lang` dung cho the <html> - trinh duyet va trinh doc man hinh dung no.
     res.locals.maHtml = nn === 'ja' ? 'ja' : (nn === 'en' ? 'en' : 'vi');

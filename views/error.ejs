@@ -30,7 +30,7 @@
       <i class="fas <%= statusCode === 403 ? 'fa-lock' : (statusCode === 404 ? 'fa-map-signs' : 'fa-exclamation-triangle') %>"></i>
     </div>
     <p class="ma"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></p>
-    <h1><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></h1>
+    <h1><%= typeof title !== 'undefined' ? title : (typeof t === 'function' ? t('loi_trang.e_tieu_de') : 'Đã xảy ra lỗi') %></h1>
     <p class="thong-diep"><%= typeof message !== 'undefined' ? message : t('loi.mo_ta') %></p>
 
     <% if (typeof hoSo !== 'undefined' && hoSo) { %>

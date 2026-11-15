@@ -20,7 +20,18 @@ const app = express();
 // den tu 127.0.0.1. Tin X-Forwarded-For CHI khi ket noi truc tiep la tu may
 // nay (loopback), de req.ip la IP that cua khach - gioi han dang nhap sai va
 // gioi han dat mon QR moi tinh dung theo tung nguoi.
-app.set('trust proxy', 'loopback');
+//
+// Deploy sau reverse proxy o MAY KHAC (Render, Railway, load balancer...) thi
+// dat TRUST_PROXY trong .env: so tang proxy (vd 1), dai IP, hoac 'true'.
+function cauHinhTrustProxy(v) {
+  v = String(v || '').trim();
+  if (!v) return 'loopback';
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v;
+}
+app.set('trust proxy', cauHinhTrustProxy(process.env.TRUST_PROXY));
 const http = require('http');
 const server = http.createServer(app);
 const socketIo = require('socket.io');
@@ -157,14 +168,25 @@ app.use('/admin-img', express.static(path.join(__dirname, 'admin/img')));
 
 // Tach ra bien de dung chung cho ca Express lan Socket.IO. Nho vay socket doc
 // duoc phien dang nhap va biet chac nguoi ket noi la ai.
+if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+  // Thieu khoa = ai cung gia mao duoc cookie phien. Production thi dung han.
+  const tb = 'SESSION_SECRET trong .env phải có ít nhất 32 ký tự ngẫu nhiên.';
+  if (process.env.NODE_ENV === 'production') throw new Error(tb);
+  console.warn('[CẢNH BÁO] ' + tb);
+}
+const PhienMySql = require('./utils/phienMySql');
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'chi-dung-khi-phat-trien',
+  // Luu phien trong MySQL: khoi dong lai server khong dang xuat ai, khong ro bo nho.
+  store: new PhienMySql(db),
   resave: false,
   saveUninitialized: true,
   // SameSite=Lax: trinh duyet khong gui cookie phien kem cac POST xuat phat
   // tu trang khac - lop chong CSRF thu hai, doc lap voi middleware/chongCsrf.
   // httpOnly: JavaScript tren trang khong doc duoc cookie phien.
-  cookie: { secure: false, sameSite: 'lax', httpOnly: true }
+  // secure 'auto': cookie gan co Secure khi request di qua HTTPS (ke ca qua
+  // proxy da tin o tren), van chay binh thuong khi dung http trong mang noi bo.
+  cookie: { secure: 'auto', sameSite: 'lax', httpOnly: true }
 });
 
 app.use(sessionMiddleware);
@@ -738,9 +760,9 @@ app.get(['/combos', '/thuc-don', '/thuc-don-combo'], async (req, res) => {
     let imgMap = {};
     if (allIds.length > 0) {
       try {
-        const [rows] = await db.query('SELECT id_mon, images, gia_mon FROM monan WHERE id_mon IN (?)', [allIds]);
+        const [rows] = await db.query('SELECT id_mon, images, gia_mon, ghichu_mon FROM monan WHERE id_mon IN (?)', [allIds]);
         rows.forEach(r => {
-          imgMap[r.id_mon] = { images: r.images, gia: r.gia_mon };
+          imgMap[r.id_mon] = { images: r.images, gia: r.gia_mon, ghichu_mon: r.ghichu_mon };
         });
       } catch (e) {
         console.error('Lỗi nạp ảnh món cho combo:', e.message);
@@ -756,7 +778,9 @@ app.get(['/combos', '/thuc-don', '/thuc-don-combo'], async (req, res) => {
         return {
           ...m,
           gia_mon: giaMon,
-          images: dbInfo.images || m.images || ''
+          images: dbInfo.images || m.images || '',
+          // Nguon ten tieng Anh cho tenMon() o khu khach.
+          ghichu_mon: dbInfo.ghichu_mon || m.ghichu_mon || ''
         };
       });
 

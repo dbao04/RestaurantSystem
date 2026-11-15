@@ -64,13 +64,16 @@
     "md5": "^2.3.0",
     "multer": "^2.1.1",
     "mysql2": "^3.20.0",
-    "nodemailer": "^8.0.4",
+    "nodemailer": "10.2.1",
     "qrcode": "^1.5.4",
     "selfsigned": "^5.5.0",
     "socket.io": "^4.8.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "puppeteer-core": "^25.5.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

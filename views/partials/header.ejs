@@ -74,7 +74,7 @@
 
           <%# Chi hien trong ngan keo tren dien thoai - xem chu thich .nh-menu-mobile o tren %>
           <li class="nh-menu-mobile nh-menu-mobile--vach">
-            <a href="javascript:void(0)" class="nh-theme-toggle-mobile" id="nh-theme-toggle-mobile"><i class="fas fa-moon"></i> <span id="nh-theme-mobile-text">Chế độ tối</span></a>
+            <a href="javascript:void(0)" class="nh-theme-toggle-mobile" id="nh-theme-toggle-mobile"><i class="fas fa-moon"></i> <span id="nh-theme-mobile-text"><%= t('giao_dien.che_do_toi') %></span></a>
           </li>
           <li class="nh-menu-mobile">
             <a href="/cart" style="color:var(--nh-gold); font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
@@ -111,7 +111,7 @@
           </a>
 
           <!-- Nut chuyen doi che do Sang / Toi -->
-          <button type="button" class="nh-theme-btn" id="nh-theme-toggle" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Đổi màu sáng tối">
+          <button type="button" class="nh-theme-btn" id="nh-theme-toggle" title="<%= t('giao_dien.doi_giao_dien') %>" aria-label="<%= t('giao_dien.doi_giao_dien') %>">
             <i class="fas fa-moon" id="nh-theme-icon"></i>
           </button>
 

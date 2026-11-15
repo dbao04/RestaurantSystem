@@ -145,7 +145,7 @@ dip.*           nhãn "dịp đặt bàn" lưu trong CSDL
 npm run ngonngu:check
 ```
 
-Bốn phép kiểm tra, mỗi phép bắt một loại lỗi **đã thật sự xảy ra** khi làm:
+Năm phép kiểm tra, mỗi phép bắt một loại lỗi **đã thật sự xảy ra** khi làm:
 
 | Phép | Bắt lỗi gì |
 |---|---|
@@ -153,10 +153,39 @@ Bốn phép kiểm tra, mỗi phép bắt một loại lỗi **đã thật sự 
 | Khóa thừa | Gõ nhầm tên khóa → khóa đó không bao giờ được dùng tới |
 | Lẫn chữ Latin | Bản tiếng Nhật còn sót từ tiếng Anh — **đã xảy ra 2 lần**: một chuỗi còn nguyên chữ `season`, một chuỗi còn `support` |
 | Tên món | Bao nhiêu món dịch được, và món nào cho ra chuỗi lặp ký tự (dấu hiệu tra từng từ bị trùng nghĩa) |
+| Viết cứng | View khu khách còn chữ tiếng Việt gõ thẳng trong HTML, không qua `t()` — **đã xảy ra**: cả trang `/dat-tiec`, `/khong-gian`, `/chinh-sach-giao-hang` chưa dịch chữ nào mà bốn phép trên vẫn "đạt", vì chúng chỉ soi từ điển |
+
+Phép **Lẫn chữ Latin** bỏ qua tên riêng giữ nguyên trong bản tiếng Nhật (VietQR, VIP, LED, Wi-Fi…) — danh sách `TU_GIU` trong `scripts/kiemTraNgonNgu.js`.
 
 ---
 
-## 8. Những chỗ dễ hiểu nhầm
+## 8. Nội dung lấy từ CSDL: `dichNd()`
+
+Tên và mô tả khu vực, thực đơn tiệc, món trong thực đơn tiệc, dịch vụ tiệc, lý do hủy đơn giao, lưu ý khi dùng món… là **nội dung trong CSDL hoặc service**, không phải chuỗi giao diện. View gọi:
+
+```ejs
+<%= dichNd(k.mo_ta) %>
+```
+
+Khóa sinh từ **chính chuỗi tiếng Việt** (`nd.<slug>_<mã băm>`, xem `khoaNoiDung()` trong `services/ngonNgu.js`), nên một món xuất hiện ở nhiều thực đơn chỉ dịch một lần. **Chưa có bản dịch thì trả nguyên văn tiếng Việt** — sửa nội dung trong CSDL mà quên thêm bản dịch thì trang không vỡ, chỉ hiện tiếng Việt cho tới khi bổ sung khóa.
+
+Thêm bản dịch cho một chuỗi nội dung: lấy khóa bằng `require('./services/ngonNgu').khoaNoiDung('chuỗi tiếng Việt')` rồi thêm vào cả ba tệp `locales/`.
+
+---
+
+## 8b. Thông báo từ máy chủ: `services/dichThongBao.js`
+
+Các service (đặt bàn, đặt tiệc, giao hàng) vẫn ném lỗi bằng tiếng Việt. Route khu khách gọi `dich(thongBao, req.ngonNgu)` ngay trước khi trả JSON:
+
+- Câu tĩnh (`'Số điện thoại không hợp lệ'`) → tra bằng `dichNd` (khóa `nd.*`).
+- Câu có số liệu (`'Chỉ nhận đặt bàn trước tối đa 30 ngày'`) → khớp mẫu regex trong mảng `MAU`, ghép tham số vào khóa `tb.*`.
+- Không khớp → giữ nguyên tiếng Việt.
+
+Đã nối vào: `traLoi` của `routes/datBan.js` (chỉ `/api/dat-ban*`) và `routes/datTiec.js` (chỉ `/api/dat-tiec*`); `thong_diep` + `coc.lyDo` của `/api/dat-ban/kha-dung`; `ly_do` của `/api/giao-hang/bao-gia`. API khu nhân viên vẫn trả tiếng Việt.
+
+**Khi sửa câu thông báo trong service**: nhớ sửa regex tương ứng trong `MAU` (hoặc thêm khóa `nd.*` mới nếu là câu tĩnh) — nếu không, khách en/ja sẽ lại thấy tiếng Việt.
+
+## 9. Những chỗ dễ hiểu nhầm
 
 **Giá trị lưu trong CSDL không đổi theo ngôn ngữ.** `hopdong.noidung` vẫn lưu
 `'Sinh nhật'` kể cả khi khách đặt bằng giao diện tiếng Nhật — nhân viên đọc bảng

@@ -172,7 +172,7 @@
               
               <div class="nh-field">
                 <label><i class="fas fa-user mr-1 text-muted"></i> <%= t('tai_khoan.ho_va_ten') %></label>
-                <input type="text" name="ten" value="<%= user.ten %>" required placeholder="Nhập họ và tên">
+                <input type="text" name="ten" value="<%= user.ten %>" required placeholder="<%= t('tai_khoan.p_nhap_ho_ten') %>">
               </div>
 
               <div class="nh-field">
@@ -188,7 +188,7 @@
 
               <div class="nh-field">
                 <label><i class="fas fa-map-marker-alt mr-1 text-muted"></i> <%= t('chung.dia_chi') %></label>
-                <input type="text" name="diachi" value="<%= user.diachi || '' %>" placeholder="Số nhà, tên đường, phường/xã...">
+                <input type="text" name="diachi" value="<%= user.diachi || '' %>" placeholder="<%= t('tai_khoan.p_dia_chi_vd') %>">
               </div>
 
               <button type="submit" class="nh-btn nh-btn--gold" style="width:100%; justify-content:center; margin-top:.5rem;">
@@ -218,12 +218,12 @@
 
               <div class="nh-field">
                 <label><i class="fas fa-lock mr-1 text-muted"></i> <%= t('tai_khoan.mat_khau_moi') %></label>
-                <input type="password" name="new_pass" minlength="6" required placeholder="Tối thiểu 6 ký tự">
+                <input type="password" name="new_pass" minlength="6" required placeholder="<%= t('tai_khoan.p_toi_thieu') %>">
               </div>
 
               <div class="nh-field">
                 <label><i class="fas fa-check-double mr-1 text-muted"></i> <%= t('tai_khoan.xac_nhan_mat_khau_moi') %></label>
-                <input type="password" name="re_pass" minlength="6" required placeholder="Nhập lại mật khẩu mới">
+                <input type="password" name="re_pass" minlength="6" required placeholder="<%= t('tai_khoan.p_nhap_lai_moi') %>">
               </div>
 
               <button type="submit" class="nh-btn nh-btn--dark" style="width:100%; justify-content:center; margin-top:.5rem;">
@@ -251,7 +251,7 @@
               <li>
                 <a href="/thanh-vien">
                   <i class="fas fa-crown"></i>
-                  <span><%= t('dieu_huong.thanh_vien') %> & Điểm thưởng</span>
+                  <span><%= t('dieu_huong.thanh_vien') %> & <%= t('tai_khoan.p_diem_thuong') %></span>
                   <i class="fas fa-angle-right ml-auto text-muted" style="font-size:0.85rem"></i>
                 </a>
               </li>

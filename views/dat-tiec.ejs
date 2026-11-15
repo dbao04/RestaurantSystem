@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Đặt tiệc' }) %>
+<%- include('partials/header', { title: t('dat_tiec.tieu_de') }) %>
 <%
 /*
   DAT TIEC - tiec cuoi, sinh nhat, party, hop mat.
@@ -13,7 +13,14 @@
 var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
 var dsLoai = Object.keys(loaiTiec);
 var loaiDau = chon.loai || dsLoai[0];
-var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
+var donVi = { GOI: t('dat_tiec.dv_goi'), BAN: t('dat_tiec.dv_ban'), KHACH: t('dat_tiec.dv_khach') };
+// Ban dich cua du lieu (loai tiec, buoi, sanh, thuc don, dich vu) - dung chung cho HTML va cac khoi JSON ben duoi.
+var dichObj = function (o, truong) { var r = Object.assign({}, o); truong.forEach(function (k) { if (r[k]) r[k] = dichNd(r[k]); }); return r; };
+loaiTiec = (function () { var o = {}; Object.keys(loaiTiec).forEach(function (k) { o[k] = dichObj(loaiTiec[k], ['ten', 'mo_ta', 'nhan_vat']); }); return o; })();
+buoi = (function () { var o = {}; Object.keys(buoi).forEach(function (k) { o[k] = dichObj(buoi[k], ['ten']); }); return o; })();
+sanh = sanh.map(function (s) { return dichObj(s, ['ten', 'mo_ta']); });
+dichVu = dichVu.map(function (d) { return dichObj(d, ['ten', 'mo_ta']); });
+thucDon = thucDon.map(function (m) { var r = dichObj(m, ['ten', 'mo_ta']); r.mon = (m.mon || []).map(function (x) { return { nhom: dichNd(x.nhom), ten: dichNd(x.ten) }; }); r.bao_gom = (m.bao_gom || []).map(dichNd); return r; });
 %>
 <link rel="stylesheet" href="/su-kien.css">
 
@@ -21,10 +28,10 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <div class="nh-subhero__bg" style="background-image:url('/images/khong-gian/gala-2.jpg')"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Tiệc cưới · Sinh nhật · Party</span>
-    <h1>Đặt tiệc riêng</h1>
+    <span class="nh-eyebrow"><%= t('dat_tiec.eyebrow') %></span>
+    <h1><%= t('dat_tiec.h1') %></h1>
     <div class="nh-crumbs">
-      <a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/khong-gian">Không gian</a> &nbsp;/&nbsp; <span>Đặt tiệc</span>
+      <a href="/"><%= t('khong_gian.crumb') %></a> &nbsp;/&nbsp; <a href="/khong-gian"><%= t('dat_tiec.crumb_kg') %></a> &nbsp;/&nbsp; <span><%= t('dat_tiec.tieu_de') %></span>
     </div>
   </div>
 </section>
@@ -35,11 +42,11 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section sk-section--cream">
     <div class="nh-container">
       <div class="sk-head">
-        <span class="sk-eyebrow">Bước 1</span>
-        <h2>Bạn muốn tổ chức tiệc gì?</h2>
-        <p>Mỗi loại tiệc có thực đơn và gói trang trí được soạn riêng. Chọn một loại để xem thực đơn phù hợp.</p>
+        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_1') %></span>
+        <h2><%= t('dat_tiec.h2_loai') %></h2>
+        <p><%= t('dat_tiec.loai_mo_ta') %></p>
       </div>
-      <div class="dt-loai" role="radiogroup" aria-label="Loại tiệc">
+      <div class="dt-loai" role="radiogroup" aria-label="<%= t('dat_tiec.nhan_loai') %>">
         <% dsLoai.forEach(function (ma) { var l = loaiTiec[ma]; %>
           <button type="button" class="dt-loai__card" data-chon-loai="<%= ma %>" role="radio" aria-checked="false">
             <img src="<%= l.anh %>" alt="" loading="lazy">
@@ -59,18 +66,18 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section">
     <div class="nh-container">
       <div class="sk-head">
-        <span class="sk-eyebrow">Bước 2</span>
-        <h2>Chọn sảnh tổ chức</h2>
-        <p>Từ phòng VIP ấm cúng cho gia đình đến Sảnh Gala 300 khách với sân khấu và đèn chùm. <a href="/khong-gian" style="color:var(--nh-gold);font-weight:600">Xem ảnh tất cả khu vực →</a></p>
+        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_2') %></span>
+        <h2><%= t('dat_tiec.h2_sanh') %></h2>
+        <p><%= t('dat_tiec.sanh_mo_ta') %> <a href="/khong-gian" style="color:var(--nh-gold);font-weight:600"><%= t('dat_tiec.xem_anh_khu') %></a></p>
       </div>
-      <div class="dt-sanh" role="radiogroup" aria-label="Sảnh tổ chức">
+      <div class="dt-sanh" role="radiogroup" aria-label="<%= t('dat_tiec.nhan_sanh') %>">
         <% sanh.forEach(function (s) { %>
           <button type="button" class="dt-sanh__card" data-chon-sanh="<%= s.id %>" role="radio" aria-checked="false">
             <img src="<%= (s.thu_vien_anh && s.thu_vien_anh[0]) || '/images/khong-gian/gala-1.jpg' %>" alt="<%= s.ten %>" loading="lazy">
             <div class="dt-sanh__body">
               <h3><%= s.ten %></h3>
               <p><%= s.mo_ta %></p>
-              <span class="dt-sanh__cap"><i class="fas fa-user-friends"></i> <%= s.tiec_toi_thieu %> – <%= s.tiec_toi_da %> khách</span>
+              <span class="dt-sanh__cap"><i class="fas fa-user-friends"></i> <%= t('dat_tiec.khach_tu_den', { tu: s.tiec_toi_thieu, den: s.tiec_toi_da }) %></span>
             </div>
           </button>
         <% }) %>
@@ -82,9 +89,9 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section sk-section--cream" id="thuc-don">
     <div class="nh-container">
       <div class="sk-head">
-        <span class="sk-eyebrow">Bước 3</span>
-        <h2>Thực đơn tiệc</h2>
-        <p>Giá tính theo bàn <%= khachMoiBan %> khách, nguyên liệu nhập khẩu từ Nhật Bản, chế biến bởi bếp trưởng. Có thể đổi món tương đương khi trao đổi với chuyên viên tư vấn.</p>
+        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_3') %></span>
+        <h2><%= t('dat_tiec.h2_td') %></h2>
+        <p><%= t('dat_tiec.td_mo_ta', { n: khachMoiBan }) %></p>
       </div>
       <div class="dt-tabs" role="tablist">
         <% dsLoai.forEach(function (ma) { var l = loaiTiec[ma]; %>
@@ -101,11 +108,11 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
                  g.mon.push(m.ten);
                }); %>
             <article class="dt-menu <%= t.noi_bat ? 'dt-menu--hot' : '' %>" data-menu="<%= t.id %>">
-              <% if (t.noi_bat) { %><span class="dt-menu__ribbon"><i class="fas fa-star"></i> Được chọn nhiều nhất</span><% } %>
+              <% if (t.noi_bat) { %><span class="dt-menu__ribbon"><i class="fas fa-star"></i> <%= locals.t('dat_tiec.duoc_chon') %></span><% } %>
               <div class="dt-menu__img"><img src="<%= t.hinh_anh %>" alt="<%= t.ten %>" loading="lazy"></div>
               <div class="dt-menu__body">
                 <h3><%= t.ten %></h3>
-                <div class="dt-menu__gia"><b><%= vnd(t.gia_ban) %></b><span>/ bàn <%= khachMoiBan %> khách · ~<%= vnd(t.gia_khach) %>/khách</span></div>
+                <div class="dt-menu__gia"><b><%= vnd(t.gia_ban) %></b><span><%= locals.t('dat_tiec.gia_ban_khach', { n: khachMoiBan, gia: vnd(t.gia_khach) }) %></span></div>
                 <div class="dt-menu__mota"><%= t.mo_ta %></div>
                 <% nhom.forEach(function (g) { %>
                   <div class="dt-menu__nhom"><%= g.ten %></div>
@@ -116,7 +123,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
                     <% t.bao_gom.forEach(function (b) { %><div><i class="fas fa-check-circle"></i><%= b %></div><% }) %>
                   </div>
                 <% } %>
-                <button type="button" class="nh-btn nh-btn--gold dt-menu__btn" data-chon-menu="<%= t.id %>"><i class="fas fa-hand-pointer"></i> <span>Chọn thực đơn này</span></button>
+                <button type="button" class="nh-btn nh-btn--gold dt-menu__btn" data-chon-menu="<%= t.id %>"><i class="fas fa-hand-pointer"></i> <span><%= locals.t('dat_tiec.chon_td') %></span></button>
               </div>
             </article>
           <% }) %>
@@ -129,9 +136,9 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section">
     <div class="nh-container">
       <div class="sk-head">
-        <span class="sk-eyebrow">Bước 4</span>
-        <h2>Dịch vụ đi kèm</h2>
-        <p>Chọn thêm để tiệc thêm trọn vẹn. Giá được cộng vào dự toán ngay bên dưới.</p>
+        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_4') %></span>
+        <h2><%= t('dat_tiec.h2_dv') %></h2>
+        <p><%= t('dat_tiec.dv_mo_ta') %></p>
       </div>
       <div class="dt-dv">
         <% dichVu.forEach(function (d) { %>
@@ -153,14 +160,14 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section sk-section--cream" style="padding-bottom:2rem">
     <div class="nh-container">
       <div class="sk-head" style="margin-bottom:1.6rem">
-        <span class="sk-eyebrow">Đơn giản &amp; minh bạch</span>
-        <h2>Quy trình đặt tiệc</h2>
+        <span class="sk-eyebrow"><%= t('dat_tiec.don_gian') %></span>
+        <h2><%= t('dat_tiec.h2_qt') %></h2>
       </div>
       <div class="dt-steps">
-        <div class="dt-step"><div class="dt-step__so">1</div><b>Gửi yêu cầu</b><p>Chọn loại tiệc, sảnh, thực đơn và gửi thông tin trực tuyến.</p></div>
-        <div class="dt-step"><div class="dt-step__so">2</div><b>Tư vấn trong 2 giờ</b><p>Chuyên viên gọi lại, mời tham quan sảnh và nếm thử thực đơn.</p></div>
-        <div class="dt-step"><div class="dt-step__so">3</div><b>Xác nhận &amp; đặt cọc</b><p>Ký xác nhận, đặt cọc 30% để giữ sảnh. Chốt số bàn trước 3 ngày.</p></div>
-        <div class="dt-step"><div class="dt-step__so">4</div><b>Tổ chức tiệc</b><p>Nhà hàng chuẩn bị trọn gói. Thanh toán phần còn lại sau tiệc.</p></div>
+        <div class="dt-step"><div class="dt-step__so">1</div><b><%= t('dat_tiec.qt1') %></b><p><%= t('dat_tiec.qt1_mo_ta') %></p></div>
+        <div class="dt-step"><div class="dt-step__so">2</div><b><%= t('dat_tiec.qt2') %></b><p><%= t('dat_tiec.qt2_mo_ta') %></p></div>
+        <div class="dt-step"><div class="dt-step__so">3</div><b><%= t('dat_tiec.qt3') %></b><p><%= t('dat_tiec.qt3_mo_ta') %></p></div>
+        <div class="dt-step"><div class="dt-step__so">4</div><b><%= t('dat_tiec.qt4') %></b><p><%= t('dat_tiec.qt4_mo_ta') %></p></div>
       </div>
     </div>
   </section>
@@ -169,37 +176,37 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   <section class="sk-section sk-section--cream" id="form-dat-tiec" style="padding-top:2rem;scroll-margin-top:80px">
     <div class="nh-container">
       <div class="sk-head" style="margin-bottom:1.8rem">
-        <span class="sk-eyebrow">Bước 5</span>
-        <h2>Gửi yêu cầu đặt tiệc</h2>
+        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_5') %></span>
+        <h2><%= t('dat_tiec.h2_gui') %></h2>
       </div>
       <div class="dt-form-wrap">
         <form class="dt-card" id="formDatTiec" novalidate>
-          <h3><i class="fas fa-calendar-alt"></i> Thông tin buổi tiệc</h3>
+          <h3><i class="fas fa-calendar-alt"></i> <%= t('dat_tiec.tt_tiec') %></h3>
           <div class="dt-grid">
             <div class="dt-field">
-              <label for="fLoai">Loại tiệc <em>*</em></label>
+              <label for="fLoai"><%= t('dat_tiec.nhan_loai') %> <em>*</em></label>
               <select id="fLoai" name="loai_tiec" required>
                 <% dsLoai.forEach(function (ma) { %><option value="<%= ma %>"><%= loaiTiec[ma].ten %></option><% }) %>
               </select>
             </div>
             <div class="dt-field">
-              <label for="fSanh">Sảnh tổ chức <em>*</em></label>
+              <label for="fSanh"><%= t('dat_tiec.nhan_sanh') %> <em>*</em></label>
               <select id="fSanh" name="khu_vuc_id" required>
-                <% sanh.forEach(function (s) { %><option value="<%= s.id %>"><%= s.ten %> (<%= s.tiec_toi_thieu %>–<%= s.tiec_toi_da %> khách)</option><% }) %>
+                <% sanh.forEach(function (s) { %><option value="<%= s.id %>"><%= s.ten %> (<%= t('dat_tiec.khach_tu_den', { tu: s.tiec_toi_thieu, den: s.tiec_toi_da }) %>)</option><% }) %>
               </select>
             </div>
             <div class="dt-field">
-              <label for="fNgay">Ngày tổ chức <em>*</em></label>
+              <label for="fNgay"><%= t('dat_tiec.ngay') %> <em>*</em></label>
               <input type="date" id="fNgay" name="ngay_to_chuc" min="<%= ngayMin %>" max="<%= ngayMax %>" required>
-              <small>Đặt trước ít nhất 3 ngày.</small>
+              <small><%= t('dat_tiec.dat_truoc') %></small>
             </div>
             <div class="dt-field">
-              <label for="fSoKhach">Số khách dự kiến <em>*</em></label>
+              <label for="fSoKhach"><%= t('dat_tiec.so_khach') %> <em>*</em></label>
               <input type="number" id="fSoKhach" name="so_khach" inputmode="numeric" required>
               <small id="fSoKhachGoiY"></small>
             </div>
             <div class="dt-field">
-              <label>Buổi <em>*</em></label>
+              <label><%= t('dat_tiec.buoi') %> <em>*</em></label>
               <div class="dt-buoi">
                 <% Object.keys(buoi).forEach(function (b, i) { %>
                   <label><input type="radio" name="buoi" value="<%= b %>" <%= i === 1 ? 'checked' : '' %>><span><%= buoi[b].ten %><small><%= buoi[b].khung %></small></span></label>
@@ -207,26 +214,26 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
               </div>
             </div>
             <div class="dt-field">
-              <label for="fGio">Giờ bắt đầu <em>*</em></label>
+              <label for="fGio"><%= t('dat_tiec.gio') %> <em>*</em></label>
               <select id="fGio" name="gio_bat_dau" required></select>
             </div>
             <div class="dt-field dt-full">
-              <label for="fMenu">Thực đơn <em>*</em></label>
+              <label for="fMenu"><%= t('dat_tiec.thuc_don') %> <em>*</em></label>
               <select id="fMenu" name="thuc_don_id" required></select>
             </div>
             <div class="dt-field dt-full">
-              <label for="fNhanVat" id="fNhanVatNhan">Tên nhân vật chính</label>
+              <label for="fNhanVat" id="fNhanVatNhan"><%= t('dat_tiec.nhan_vat') %></label>
               <input type="text" id="fNhanVat" name="ten_nhan_vat" maxlength="150">
             </div>
 
             <hr class="dt-sep">
 
             <div class="dt-field">
-              <label for="fTen">Họ tên người đặt <em>*</em></label>
+              <label for="fTen"><%= t('dat_tiec.ho_ten') %> <em>*</em></label>
               <input type="text" id="fTen" name="ho_ten" maxlength="150" autocomplete="name" required value="<%= khach ? khach.ten : '' %>">
             </div>
             <div class="dt-field">
-              <label for="fSdt">Số điện thoại <em>*</em></label>
+              <label for="fSdt"><%= t('dat_tiec.sdt') %> <em>*</em></label>
               <input type="tel" id="fSdt" name="so_dien_thoai" maxlength="15" autocomplete="tel" required value="<%= khach ? khach.sdt : '' %>">
             </div>
             <div class="dt-field dt-full">
@@ -234,19 +241,19 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
               <input type="email" id="fEmail" name="email" maxlength="190" autocomplete="email">
             </div>
             <div class="dt-field dt-full">
-              <label for="fGhiChu">Yêu cầu thêm</label>
-              <textarea id="fGhiChu" name="ghi_chu" rows="3" maxlength="2000" placeholder="Tông màu trang trí, món kiêng, khách ăn chay, cần ghế em bé..."></textarea>
+              <label for="fGhiChu"><%= t('dat_tiec.yeu_cau') %></label>
+              <textarea id="fGhiChu" name="ghi_chu" rows="3" maxlength="2000" placeholder="<%= t('dat_tiec.yeu_cau_goi_y') %>"></textarea>
             </div>
           </div>
         </form>
 
         <aside class="dt-card dt-tom" aria-live="polite">
-          <h3><i class="fas fa-file-invoice-dollar"></i> Dự toán chi phí</h3>
+          <h3><i class="fas fa-file-invoice-dollar"></i> <%= t('dat_tiec.du_toan') %></h3>
           <div id="tomTat"></div>
-          <div class="dt-tom__tong"><span>Tổng dự toán</span><b id="tomTong">0đ</b></div>
-          <p class="dt-tom__note">Dự toán chưa gồm VAT 8%. Giá chính thức được chốt trong hợp đồng sau khi chuyên viên tư vấn. Đặt cọc 30% để giữ sảnh sau khi nhà hàng xác nhận.</p>
+          <div class="dt-tom__tong"><span><%= t('dat_tiec.tong_du_toan') %></span><b id="tomTong">0đ</b></div>
+          <p class="dt-tom__note"><%= t('dat_tiec.du_toan_note') %></p>
           <div class="dt-loi" id="dtLoi"></div>
-          <button type="submit" form="formDatTiec" class="nh-btn nh-btn--gold dt-submit" id="dtGui"><i class="fas fa-paper-plane"></i> Gửi yêu cầu đặt tiệc</button>
+          <button type="submit" form="formDatTiec" class="nh-btn nh-btn--gold dt-submit" id="dtGui"><i class="fas fa-paper-plane"></i> <%= t('dat_tiec.nut_gui') %></button>
         </aside>
       </div>
     </div>
@@ -256,13 +263,13 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
 <div class="sk dt-ok" id="dtOk" hidden role="dialog" aria-modal="true" aria-labelledby="dtOkTieuDe">
   <div class="dt-ok__box">
     <div class="dt-ok__icon"><i class="fas fa-check"></i></div>
-    <h3 id="dtOkTieuDe">Đã nhận yêu cầu đặt tiệc!</h3>
-    <p>Mã yêu cầu của quý khách:</p>
+    <h3 id="dtOkTieuDe"><%= t('dat_tiec.ok_h3') %></h3>
+    <p><%= t('dat_tiec.ok_ma') %></p>
     <div class="dt-ok__ma" id="dtOkMa"></div>
     <p id="dtOkNoiDung"></p>
     <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1rem">
-      <a href="/" class="nh-btn nh-btn--outline">Về trang chủ</a>
-      <button type="button" class="nh-btn nh-btn--gold" id="dtOkDong">Đóng</button>
+      <a href="/" class="nh-btn nh-btn--outline"><%= t('dat_tiec.ve_trang_chu') %></a>
+      <button type="button" class="nh-btn nh-btn--gold" id="dtOkDong"><%= t('dat_tiec.dong') %></button>
     </div>
   </div>
 </div>
@@ -275,6 +282,16 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
   var MENU = <%- JSON.stringify(thucDon.map(function (t) { return { id: t.id, loai: t.loai_tiec, ten: t.ten, gia: t.gia_ban }; })).replace(/</g, '\\u003c') %>;
   var DV = <%- JSON.stringify(dichVu.map(function (d) { return { id: d.id, ten: d.ten, gia: d.gia, don_vi: d.don_vi }; })).replace(/</g, '\\u003c') %>;
   var MOI_BAN = <%= khachMoiBan %>;
+  var NN = <%- JSON.stringify({
+    nhanVat: t('dat_tiec.nhan_vat'), ban: t('dat_tiec.js_ban'), daChon: t('dat_tiec.js_da_chon'), chon: t('dat_tiec.chon_td'),
+    nhanKhach: t('dat_tiec.js_nhan_khach'), kinBuoi: t('dat_tiec.js_kin_buoi'),
+    loai: t('dat_tiec.nhan_loai'), sanh: t('dat_tiec.nhan_sanh'), soKhach: t('dat_tiec.js_so_khach'),
+    khachBan: t('dat_tiec.js_khach_ban'), dvThem: t('dat_tiec.js_dv_them'), chuaChon: t('dat_tiec.js_chua_chon'),
+    loiNgay: t('dat_tiec.js_loi_ngay'), loiKin: t('dat_tiec.js_loi_kin'), loiSoKhach: t('dat_tiec.js_loi_so_khach'),
+    loiTen: t('dat_tiec.js_loi_ten'), loiSdt: t('dat_tiec.js_loi_sdt'), dangGui: t('dat_tiec.js_dang_gui'),
+    loiGui: t('dat_tiec.js_loi_gui'), okNoiDung: t('dat_tiec.js_ok_noi_dung'), nutGui: t('dat_tiec.nut_gui')
+  }).replace(/</g, '\\u003c') %>;
+  var tt = function (s, b) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return b[k] != null ? b[k] : ''; }); };
 
   var $ = function (id) { return document.getElementById(id); };
   var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
@@ -304,12 +321,12 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
     });
     document.querySelectorAll('[data-menus]').forEach(function (p) { p.hidden = p.getAttribute('data-menus') !== ma; });
     $('fLoai').value = ma;
-    $('fNhanVatNhan').textContent = (LOAI[ma] && LOAI[ma].nhan_vat) || 'Tên nhân vật chính';
+    $('fNhanVatNhan').textContent = (LOAI[ma] && LOAI[ma].nhan_vat) || NN.nhanVat;
 
     // Danh sach thuc don trong form chi gom thuc don cua loai nay
     var ds = MENU.filter(function (m) { return m.loai === ma; });
     $('fMenu').innerHTML = ds.map(function (m) {
-      return '<option value="' + m.id + '">' + esc(m.ten) + ' — ' + vnd(m.gia) + '/bàn</option>';
+      return '<option value="' + m.id + '">' + esc(m.ten) + ' — ' + vnd(m.gia) + '/' + NN.ban + '</option>';
     }).join('');
     if (!ds.some(function (m) { return String(m.id) === String(S.menu); })) {
       var hot = document.querySelector('[data-menus="' + ma + '"] .dt-menu--hot');
@@ -326,7 +343,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
       var on = m.getAttribute('data-menu') === S.menu;
       m.classList.toggle('is-active', on);
       var b = m.querySelector('[data-chon-menu] span');
-      if (b) b.textContent = on ? 'Đã chọn thực đơn này' : 'Chọn thực đơn này';
+      if (b) b.textContent = on ? NN.daChon : NN.chon;
     });
     tinh();
     if (cuon) $('form-dat-tiec').scrollIntoView({ behavior: 'smooth' });
@@ -344,7 +361,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
       var k = $('fSoKhach');
       k.min = s.min; k.max = s.max;
       k.placeholder = s.min + ' – ' + s.max;
-      $('fSoKhachGoiY').textContent = s.ten + ' nhận ' + s.min + '–' + s.max + ' khách (' + MOI_BAN + ' khách/bàn).';
+      $('fSoKhachGoiY').textContent = tt(NN.nhanKhach, { sanh: s.ten, min: s.min, max: s.max, moi: MOI_BAN });
       var v = Number(k.value);
       if (!v || v < s.min || v > s.max) k.value = s.max >= 100 ? 100 : s.min;
     }
@@ -358,7 +375,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
     dsBuoi.forEach(function (r) {
       var kin = S.kin.some(function (k) { return String(k.khu_vuc_id) === String(S.sanh) && k.buoi === r.value; });
       r.disabled = kin;
-      r.parentNode.title = kin ? 'Sảnh đã có tiệc vào buổi này' : '';
+      r.parentNode.title = kin ? NN.kinBuoi : '';
     });
     var chon = form.querySelector('input[name="buoi"]:checked');
     if (!chon || chon.disabled) {
@@ -396,12 +413,12 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
     var s = sanhHienTai();
     var html = '';
     var tong = 0;
-    html += '<div class="dt-tom__dong"><span>Loại tiệc</span><span>' + esc((LOAI[S.loai] || {}).ten || '—') + '</span></div>';
-    html += '<div class="dt-tom__dong"><span>Sảnh</span><span>' + esc(s ? s.ten : '—') + '</span></div>';
-    html += '<div class="dt-tom__dong"><span>Số khách</span><span>' + (soKhach ? soKhach + ' khách · ' + soBan + ' bàn' : '—') + '</span></div>';
+    html += '<div class="dt-tom__dong"><span>' + esc(NN.loai) + '</span><span>' + esc((LOAI[S.loai] || {}).ten || '—') + '</span></div>';
+    html += '<div class="dt-tom__dong"><span>' + esc(NN.sanh) + '</span><span>' + esc(s ? s.ten : '—') + '</span></div>';
+    html += '<div class="dt-tom__dong"><span>' + esc(NN.soKhach) + '</span><span>' + (soKhach ? tt(NN.khachBan, { khach: soKhach, ban: soBan }) : '—') + '</span></div>';
     if (menu) {
       var tm = menu.gia * soBan; tong += tm;
-      html += '<div class="dt-tom__dong"><span>' + esc(menu.ten) + '<br><small>' + vnd(menu.gia) + ' × ' + soBan + ' bàn</small></span><span>' + vnd(tm) + '</span></div>';
+      html += '<div class="dt-tom__dong"><span>' + esc(menu.ten) + '<br><small>' + vnd(menu.gia) + ' × ' + soBan + ' ' + NN.ban + '</small></span><span>' + vnd(tm) + '</span></div>';
     }
     var chon = Array.prototype.map.call(document.querySelectorAll('input[name="dich_vu"]:checked'), function (i) { return i.value; });
     chon.forEach(function (id) {
@@ -411,7 +428,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
       var tt = d.gia * sl; tong += tt;
       html += '<div class="dt-tom__dong"><span>' + esc(d.ten) + (sl > 1 ? '<br><small>' + vnd(d.gia) + ' × ' + sl + '</small>' : '') + '</span><span>' + vnd(tt) + '</span></div>';
     });
-    if (!chon.length) html += '<div class="dt-tom__dong"><span>Dịch vụ thêm</span><span class="dt-tom__trong">Chưa chọn</span></div>';
+    if (!chon.length) html += '<div class="dt-tom__dong"><span>' + esc(NN.dvThem) + '</span><span class="dt-tom__trong">' + esc(NN.chuaChon) + '</span></div>';
     $('tomTat').innerHTML = html;
     $('tomTong').textContent = vnd(tong);
   }
@@ -449,11 +466,11 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
     var s = sanhHienTai();
     var soKhach = Number($('fSoKhach').value);
     var b = form.querySelector('input[name="buoi"]:checked');
-    if (!$('fNgay').value) { baoLoi('Vui lòng chọn ngày tổ chức.'); $('fNgay').focus(); return; }
-    if (!b) { baoLoi('Sảnh đã kín cả hai buổi trong ngày này, vui lòng chọn ngày khác.'); return; }
-    if (s && (!soKhach || soKhach < s.min || soKhach > s.max)) { baoLoi(s.ten + ' nhận từ ' + s.min + ' đến ' + s.max + ' khách.'); $('fSoKhach').focus(); return; }
-    if ($('fTen').value.trim().length < 2) { baoLoi('Vui lòng nhập họ tên.'); $('fTen').focus(); return; }
-    if (!/^(\+?84|0)\d{9,10}$/.test($('fSdt').value.replace(/[\s.-]/g, ''))) { baoLoi('Số điện thoại không hợp lệ.'); $('fSdt').focus(); return; }
+    if (!$('fNgay').value) { baoLoi(NN.loiNgay); $('fNgay').focus(); return; }
+    if (!b) { baoLoi(NN.loiKin); return; }
+    if (s && (!soKhach || soKhach < s.min || soKhach > s.max)) { baoLoi(tt(NN.loiSoKhach, { sanh: s.ten, min: s.min, max: s.max })); $('fSoKhach').focus(); return; }
+    if ($('fTen').value.trim().length < 2) { baoLoi(NN.loiTen); $('fTen').focus(); return; }
+    if (!/^(\+?84|0)\d{9,10}$/.test($('fSdt').value.replace(/[\s.-]/g, ''))) { baoLoi(NN.loiSdt); $('fSdt').focus(); return; }
 
     var duLieu = {
       loai_tiec: S.loai, khu_vuc_id: S.sanh, thuc_don_id: S.menu,
@@ -464,16 +481,18 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
     };
     var nut = $('dtGui');
     nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + esc(NN.dangGui);
     try {
       var r = await fetch('/api/dat-tiec', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(duLieu) });
       var j = await r.json();
-      if (!j.ok) throw new Error(j.thong_bao || 'Không gửi được yêu cầu.');
+      if (!j.ok) throw new Error(j.thong_bao || NN.loiGui);
       $('dtOkMa').textContent = j.ma;
       var d = j.ngay.split('-');
-      $('dtOkNoiDung').innerHTML = esc(j.thuc_don) + ' · ' + j.so_ban + ' bàn tại ' + esc(j.sanh) + '<br>' +
-        esc(j.buoi) + ' ' + j.gio + ', ngày ' + d[2] + '/' + d[1] + '/' + d[0] + '<br>Dự toán: <b>' + vnd(j.tong_du_toan) + '</b><br><br>' +
-        'Chuyên viên tổ chức tiệc sẽ gọi cho quý khách trong vòng 2 giờ (giờ làm việc 9:00–21:00) để tư vấn chi tiết.';
+      var mn = MENU.filter(function (m) { return String(m.id) === String(S.menu); })[0];
+      $('dtOkNoiDung').innerHTML = tt(NN.okNoiDung, {
+        menu: esc(mn ? mn.ten : j.thuc_don), ban: j.so_ban, sanh: esc(s ? s.ten : j.sanh),
+        buoi: esc((BUOI[b.value] || {}).ten || j.buoi), gio: j.gio, ngay: d[2] + '/' + d[1] + '/' + d[0], tong: vnd(j.tong_du_toan)
+      });
       $('dtOk').hidden = false;
       $('dtOkDong').focus();
     } catch (e) {
@@ -481,7 +500,7 @@ var donVi = { GOI: '/ gói', BAN: '/ bàn', KHACH: '/ khách' };
       if (/đã có tiệc/.test(e.message)) taiLich();
     } finally {
       nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi yêu cầu đặt tiệc';
+      nut.innerHTML = '<i class="fas fa-paper-plane"></i> ' + esc(NN.nutGui);
     }
   });
   $('dtOkDong').addEventListener('click', function () { $('dtOk').hidden = true; });

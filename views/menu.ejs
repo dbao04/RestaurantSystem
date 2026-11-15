@@ -18,10 +18,13 @@ function phanLoaiNhom(name) {
 }
 
 var dsNhomChinh = (typeof mainGroups !== 'undefined' && mainGroups && mainGroups.length) ? mainGroups : [
-  { key: 'khai-vi', name: 'Khai vị', icon: 'fa-bowl-food', categories: [], so_mon: 0 },
-  { key: 'mon-chinh', name: 'Món chính', icon: 'fa-utensils', categories: [], so_mon: 0 },
-  { key: 'do-uong', name: 'Đồ uống', icon: 'fa-wine-glass', categories: [], so_mon: 0 }
+  { key: 'khai-vi', name: t('thuc_don.g_khai_vi'), icon: 'fa-bowl-food', categories: [], so_mon: 0 },
+  { key: 'mon-chinh', name: t('thuc_don.g_mon_chinh'), icon: 'fa-utensils', categories: [], so_mon: 0 },
+  { key: 'do-uong', name: t('thuc_don.g_do_uong'), icon: 'fa-wine-glass', categories: [], so_mon: 0 }
 ];
+// Ten nhom tu menuService la tieng Viet: dich theo key (giu nguyen doi tuong de cac cho khac van tro dung).
+var KHOA_NHOM = { 'khai-vi': 'thuc_don.g_khai_vi', 'mon-chinh': 'thuc_don.g_mon_chinh', 'do-uong': 'thuc_don.g_do_uong' };
+dsNhomChinh.forEach(function (g) { if (KHOA_NHOM[g.key]) g.name = t(KHOA_NHOM[g.key]); });
 
 if (typeof mainGroups === 'undefined' || !mainGroups || !mainGroups.length) {
   var gMap = { 'khai-vi': dsNhomChinh[0], 'mon-chinh': dsNhomChinh[1], 'do-uong': dsNhomChinh[2] };

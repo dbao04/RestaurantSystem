@@ -274,7 +274,7 @@
 
           <div class="spf-qr-image-wrapper">
             <% if (qr && qr.anh) { %>
-              <img src="<%= qr.anh %>" alt="VietQR Thanh Toán Đặt Bàn">
+              <img src="<%= qr.anh %>" alt="<%= t('tt_dat_ban.t_alt_qr') %>">
             <% } else { %>
               <div style="width:240px; height:240px; display:grid; place-content:center; background:#f9fafb; color:#9ca3af; font-size:13px;">
                 <%= t('tt_dat_ban.dang_chuan_bi_qr') %>
@@ -399,7 +399,7 @@
         <div class="spf-total-summary">
           <% if (tongTienMon > 0) { %>
             <div class="spf-sum-row">
-              <span><%= t('tt_dat_ban.tong_tien_mon') %> (Thanh toán 100%)</span>
+              <span><%= t('tt_dat_ban.tong_tien_mon') %> (<%= t('tt_dat_ban.t_100') %>)</span>
               <span><%= Number(tongTienMon).toLocaleString('vi-VN') %> ₫</span>
             </div>
           <% } %>
@@ -413,18 +413,18 @@
             <span><%= t('tt_dat_ban.tong_thanh_toan') %></span>
             <span><%= Number(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
           </div>
-          <% if (Number(r.guest_count || 0) >= 15) { %>
+          <% if (Number(r.guest_count || 0) >= (typeof nguongDoanDong !== 'undefined' ? nguongDoanDong : 15)) { %>
             <div style="margin-top:10px; padding:10px 12px; border-radius:8px; background:#f0fdf4; border:1px solid #86efac; color:#14532d; font-size:12.5px; line-height:1.5;">
               <i class="fas fa-hand-holding-usd" style="color:#16a34a"></i>
-              <strong>Cam kết hoàn tiền cọc dư (Đoàn tiệc <%= r.guest_count %> khách):</strong>
-              Trường hợp quý khách dùng món thực tế thấp hơn tổng mức cọc 150.000đ/người (<%= Number(Number(r.guest_count) * 150000).toLocaleString('vi-VN') %> ₫), nhà hàng sẽ <strong>hoàn trả lại phần tiền thừa</strong> ngay lúc thanh toán.
+              <strong><%= t('tt_dat_ban.t_ck_h', { n: r.guest_count }) %></strong>
+              <%- t('tt_dat_ban.t_ck_p', { tien: Number(Number(r.guest_count) * 150000).toLocaleString('vi-VN') }) %>
             </div>
           <% } %>
         </div>
 
         <div style="margin-top:12px; text-align:center;">
           <a href="/chinh-sach-dat-ban.pdf" target="_blank" style="font-size:12.5px; color:var(--spf-orange); font-weight:600; text-decoration:underline;">
-            <i class="fas fa-file-alt"></i> Xem chi tiết Chính sách Đặt bàn, Đặt cọc & Hoàn hủy
+            <i class="fas fa-file-alt"></i> <%= t('tt_dat_ban.t_xem_cs') %>
           </a>
         </div>
 
@@ -521,7 +521,7 @@
         if (res.thanhCong) {
           chuyenSangThanhCong();
         } else {
-          alert(res.loi || 'Có lỗi xảy ra');
+          alert(res.loi || <%- JSON.stringify(t('tt_dat_ban.t_loi')) %>);
           btnGiaLap.disabled = false;
         }
       })

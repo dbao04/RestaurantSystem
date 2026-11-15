@@ -41,8 +41,8 @@ function phucVu() {
   s += v.viec(X(5), L4, ['Ghi đơn, gắn bàn,', 'bàn → Đang phục vụ'], 'tu-dong');
   s += v.viec(X(6), L3, ['Nhận món,', 'bắt đầu chế biến']);
   s += v.viec(X(7), L3, 'Hoàn thành chế biến');
-  s += v.viec(X(7), L4, ['Trừ tồn kho theo', 'công thức, ghi xuất kho'], 'tu-dong');
-  s += v.viec(X(8), L2, 'Mang món ra bàn');
+  s += v.viec(X(7), L4, ['Trừ kho FIFO,', 'báo “món xong”', 'tới phục vụ'], 'tu-dong');
+  s += v.viec(X(8), L2, ['Mang món ra, bấm', '“Đã lên món”']);
   s += v.suKien(X(8), L1, 'Món đã lên bàn', 'cuoi', true);
 
   s += v.luong([[X(1) + c.sk, L1], [X(1) + 42, L1], [X(1) + 42, L2], [c.vTrai(X(2)), L2]], id);

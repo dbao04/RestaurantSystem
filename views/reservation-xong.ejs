@@ -14,7 +14,7 @@ function formatNgay(dateStr) {
     var parts = dateStr.split('-');
     if (parts.length === 3) {
       var d = new Date(parts[0], parts[1] - 1, parts[2]);
-      var days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      var days = [t('chung.thu_0'), t('chung.thu_1'), t('chung.thu_2'), t('chung.thu_3'), t('chung.thu_4'), t('chung.thu_5'), t('chung.thu_6')];
       var thu = days[d.getDay()] || '';
       return thu + ', ' + parts[2] + '/' + parts[1] + '/' + parts[0];
     }
@@ -23,7 +23,8 @@ function formatNgay(dateStr) {
 }
 
 var ngayDep = formatNgay(r.reservation_date);
-var tenBan = (r.ban && r.ban.length) ? r.ban.join(', ') : (r.table_names || 'Xếp khi đến');
+var coBan = !!((r.ban && r.ban.length) || r.table_names);
+var tenBan = (r.ban && r.ban.length) ? r.ban.join(', ') : (r.table_names || t('xong.xep_khi_den'));
 var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeDataUrl : '';
 %>
 
@@ -587,7 +588,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
 </style>
 
 <!-- Floating Toast -->
-<div id="ticketToast"><i class="fas fa-check-circle text-success"></i> <span id="toastMsg">Đã sao chép!</span></div>
+<div id="ticketToast"><i class="fas fa-check-circle text-success"></i> <span id="toastMsg"><%= t('xong.da_sao_chep') %></span></div>
 
 <section class="ticket-section">
   <div class="ticket-wrapper">
@@ -597,14 +598,14 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
       <div class="success-icon-badge">
         <i class="fas <%= dangCho ? 'fa-list-ol' : 'fa-check' %>"></i>
       </div>
-      <span class="ticket-eyebrow">Cảm ơn bạn đã lựa chọn</span>
+      <span class="ticket-eyebrow"><%= t('xong.cam_on') %></span>
       <h1 class="ticket-main-title">
-        <%= dangCho ? 'Đã Nhận Yêu Cầu Danh Sách Chờ' : 'Xác Nhận Đặt Bàn Thành Công' %>
+        <%= dangCho ? t('xong.h1_cho') : t('xong.h1_ok') %>
       </h1>
       <p class="ticket-lead-desc">
         <%= dangCho 
-            ? 'Bàn trong khung giờ này hiện đang kín. Nhà hàng đã ghi nhận vào hàng chờ ưu tiên và sẽ liên hệ ngay khi có bàn trống phù hợp.' 
-            : 'Yêu cầu đặt bàn của bạn đã được hệ thống xác nhận. Vui lòng xuất trình Phiếu Đặt Bàn bên dưới khi đến nhà hàng.' %>
+            ? t('xong.p_cho') 
+            : t('xong.p_ok') %>
       </p>
     </div>
 
@@ -616,18 +617,18 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
         <div class="vip-ticket__brand">
           <img src="/logo.svg" alt="Logo" class="vip-ticket__logo">
           <div>
-            <span class="vip-ticket__brand-name">Nhà Hàng Bảo Đoàn</span>
-            <span class="vip-ticket__brand-sub">Premium Dining Ticket &bull; Thẻ Đón Khách VIP</span>
+            <span class="vip-ticket__brand-name"><%= t('chung.ten_nha_hang') %></span>
+            <span class="vip-ticket__brand-sub">Premium Dining Ticket &bull; <%= t('xong.the_vip') %></span>
           </div>
         </div>
         <div>
           <% if (dangCho) { %>
             <span class="vip-status-badge status--waitlist">
-              <i class="fas fa-hourglass-half"></i> Danh Sách Chờ
+              <i class="fas fa-hourglass-half"></i> <%= t('xong.danh_sach_cho') %>
             </span>
           <% } else { %>
             <span class="vip-status-badge status--confirmed">
-              <i class="fas fa-circle-check"></i> Đã Xác Nhận Bàn
+              <i class="fas fa-circle-check"></i> <%= t('xong.da_xac_nhan') %>
             </span>
           <% } %>
         </div>
@@ -642,11 +643,11 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
           <!-- Code Box -->
           <div class="vip-code-box">
             <div>
-              <div class="vip-code-label">MÃ ĐẶT BÀN / RESERVATION CODE</div>
+              <div class="vip-code-label"><%= t('xong.ma_dat_ban') %></div>
               <div class="vip-code-value" id="resCodeVal"><%= r.reservation_code %></div>
             </div>
             <button type="button" class="btn-copy-code" onclick="copyReservationCode('<%= r.reservation_code %>')">
-              <i class="fas fa-copy"></i> <span>Sao chép</span>
+              <i class="fas fa-copy"></i> <span><%= t('xong.sao_chep') %></span>
             </button>
           </div>
 
@@ -657,7 +658,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-user-tie"></i></div>
               <div>
-                <div class="vip-info-label">Khách hàng</div>
+                <div class="vip-info-label"><%= t('xong.khach_hang') %></div>
                 <div class="vip-info-val"><%= r.customer_name %></div>
               </div>
             </div>
@@ -666,7 +667,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-phone"></i></div>
               <div>
-                <div class="vip-info-label">Số điện thoại</div>
+                <div class="vip-info-label"><%= t('xong.sdt') %></div>
                 <div class="vip-info-val">
                   <a href="tel:<%= r.phone %>" style="color:inherit; text-decoration:none;"><%= r.phone %></a>
                 </div>
@@ -677,7 +678,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-calendar-day"></i></div>
               <div>
-                <div class="vip-info-label">Ngày dùng bữa</div>
+                <div class="vip-info-label"><%= t('xong.ngay') %></div>
                 <div class="vip-info-val"><%= ngayDep %></div>
               </div>
             </div>
@@ -686,7 +687,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-clock"></i></div>
               <div>
-                <div class="vip-info-label">Khung giờ</div>
+                <div class="vip-info-label"><%= t('xong.gio') %></div>
                 <div class="vip-info-val">
                   <%= r.gio %> &ndash; <%= r.gio_ket_thuc %>
                 </div>
@@ -697,10 +698,10 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-users"></i></div>
               <div>
-                <div class="vip-info-label">Số lượng khách</div>
+                <div class="vip-info-label"><%= t('xong.so_khach') %></div>
                 <div class="vip-info-val">
                   <span class="badge badge-warning text-dark font-weight-bold px-2 py-1" style="font-size:0.9rem;">
-                    <%= r.guest_count %> Khách
+                    <%= t('xong.n_khach', { n: r.guest_count }) %>
                   </span>
                 </div>
               </div>
@@ -710,14 +711,14 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <div class="vip-info-item">
               <div class="vip-info-icon"><i class="fas fa-chair"></i></div>
               <div>
-                <div class="vip-info-label">Vị trí bàn tiệc</div>
+                <div class="vip-info-label"><%= t('xong.vi_tri') %></div>
                 <div class="vip-info-val">
-                  <% if (tenBan && tenBan !== 'Xếp khi đến') { %>
+                  <% if (coBan) { %>
                     <span class="badge badge-success px-2 py-1" style="font-size:0.9rem;">
-                      Bàn <%= tenBan %>
+                      <%= t('xong.ban_ten', { ten: tenBan }) %>
                     </span>
                   <% } else { %>
-                    <span class="badge badge-light border text-muted px-2 py-1">Xếp khi đến</span>
+                    <span class="badge badge-light border text-muted px-2 py-1"><%= t('xong.xep_khi_den') %></span>
                   <% } %>
                   <% if (r.area_name) { %>
                     <small class="text-muted d-block mt-1 font-weight-normal"><%= r.area_name %></small>
@@ -730,7 +731,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
               <div class="vip-info-item" style="grid-column: 1 / -1;">
                 <div class="vip-info-icon"><i class="fas fa-note-sticky"></i></div>
                 <div>
-                  <div class="vip-info-label">Ghi chú &amp; Yêu cầu</div>
+                  <div class="vip-info-label"><%= t('xong.ghi_chu') %></div>
                   <div class="vip-info-val text-muted font-italic" style="font-size:0.88rem;">
                     &ldquo;<%= r.special_requests %>&rdquo;
                   </div>
@@ -746,7 +747,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
 
         <!-- QR Check-in Stub (Right) -->
         <div class="vip-ticket__stub">
-          <div class="stub-tag"><i class="fas fa-qrcode text-warning mr-1"></i> Mã Check-in Tiếp Đón</div>
+          <div class="stub-tag"><i class="fas fa-qrcode text-warning mr-1"></i> <%= t('xong.ma_checkin') %></div>
           <div class="qr-frame">
             <% if (qrUrl) { %>
               <img src="<%= qrUrl %>" alt="QR Check-in" id="ticketQrImg">
@@ -755,10 +756,10 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
             <% } %>
           </div>
           <div class="stub-hint">
-            Xuất trình mã này cho Lễ tân khi đến nhà hàng để nhận bàn ngay lập tức.
+            <%= t('xong.xuat_trinh') %>
           </div>
           <button type="button" class="btn btn-xs btn-outline-secondary" onclick="taiMaQR()" style="font-size:0.75rem; border-radius:6px; padding:3px 8px;">
-            <i class="fas fa-download mr-1"></i> Tải mã QR
+            <i class="fas fa-download mr-1"></i> <%= t('xong.tai_qr') %>
           </button>
         </div>
 
@@ -768,11 +769,11 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
       <div class="vip-ticket__footer">
         <div>
           <i class="fas fa-circle-exclamation text-warning mr-1"></i>
-          Nhà hàng sẽ giữ bàn tối đa <strong>15 phút</strong> so với giờ hẹn. Quý khách vui lòng liên hệ nếu đến trễ.
+          <%- t('xong.giu_ban') %>
         </div>
         <div>
           <i class="fas fa-phone-volume text-success mr-1"></i>
-          Hotline hỗ trợ: <strong class="text-dark">0388 062 048</strong>
+          <%= t('xong.hotline') %> <strong class="text-dark">0388 062 048</strong>
         </div>
       </div>
 
@@ -785,13 +786,13 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
             <h5 class="font-weight-bold text-dark mb-1" style="font-size:1.05rem;">
-              <i class="fas fa-wallet text-warning mr-2"></i> Yêu cầu đặt cọc giữ bàn: 
+              <i class="fas fa-wallet text-warning mr-2"></i> <%= t('xong.coc') %> 
               <span class="text-danger"><%= Number(r.deposit_amount).toLocaleString('vi-VN') %>đ</span>
             </h5>
             <small class="text-muted"><%= t('dat_ban_moi.coc_huong_dan') %></small>
           </div>
           <a href="/thanh-toan/dat-ban/<%= encodeURIComponent(r.reservation_code) %>?dt=<%= encodeURIComponent(r.phone) %>" class="action-btn action-btn--gold py-2 px-3" style="font-size:0.88rem;">
-            <i class="fas fa-qrcode"></i> Thanh toán cọc VietQR
+            <i class="fas fa-qrcode"></i> <%= t('xong.tt_coc') %>
           </a>
         </div>
       </div>
@@ -800,19 +801,19 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
     <!-- Action Buttons Bar -->
     <div class="action-bar">
       <button type="button" class="action-btn action-btn--primary" onclick="window.print()">
-        <i class="fas fa-print"></i> <span>In Phiếu Đặt Bàn</span>
+        <i class="fas fa-print"></i> <span><%= t('xong.in_phieu') %></span>
       </button>
 
       <button type="button" class="action-btn action-btn--outline" onclick="chiaSeVe()">
-        <i class="fas fa-share-nodes"></i> <span>Chia Sẻ Vé</span>
+        <i class="fas fa-share-nodes"></i> <span><%= t('xong.chia_se') %></span>
       </button>
 
       <a href="/menu" class="action-btn action-btn--outline">
-        <i class="fas fa-utensils"></i> <span>Xem Thực Đơn</span>
+        <i class="fas fa-utensils"></i> <span><%= t('xong.xem_td') %></span>
       </a>
 
       <a href="https://maps.google.com/?q=Nhà+Hàng+Bảo+Đoàn" target="_blank" class="action-btn action-btn--outline">
-        <i class="fas fa-location-dot"></i> <span>Chỉ Đường</span>
+        <i class="fas fa-location-dot"></i> <span><%= t('xong.chi_duong') %></span>
       </a>
     </div>
 
@@ -820,31 +821,31 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
     <div class="timeline-card">
       <div class="timeline-title">
         <i class="fas fa-route text-warning"></i>
-        <span>Hành trình trải nghiệm tiếp theo của bạn</span>
+        <span><%= t('xong.hanh_trinh') %></span>
       </div>
 
       <div class="timeline-list">
         <div class="timeline-step">
           <div class="step-num"><i class="fas fa-check"></i></div>
           <div class="step-content">
-            <strong>1. Xác nhận giữ chỗ</strong>
-            <p>Hệ thống tự động bảo lưu bàn tiệc đẹp nhất theo yêu cầu của bạn.</p>
+            <strong><%= t('xong.b1') %></strong>
+            <p><%= t('xong.b1_p') %></p>
           </div>
         </div>
 
         <div class="timeline-step">
           <div class="step-num"><i class="fas fa-bell-concierge"></i></div>
           <div class="step-content">
-            <strong>2. Chuẩn bị chu đáo</strong>
-            <p>Nhà hàng vệ sinh bàn ăn, chuẩn bị menu và nguyên liệu chế biến trước giờ hẹn.</p>
+            <strong><%= t('xong.b2') %></strong>
+            <p><%= t('xong.b2_p') %></p>
           </div>
         </div>
 
         <div class="timeline-step">
           <div class="step-num"><i class="fas fa-glass-cheers"></i></div>
           <div class="step-content">
-            <strong>3. Đón tiếp &amp; Thưởng thức</strong>
-            <p>Đưa mã QR cho lễ tân, nhân viên sẽ hướng dẫn bạn và người thân vào vị trí bàn.</p>
+            <strong><%= t('xong.b3') %></strong>
+            <p><%= t('xong.b3_p') %></p>
           </div>
         </div>
       </div>
@@ -858,7 +859,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
   function copyReservationCode(code) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(code).then(() => {
-        hienThiToast('Đã sao chép mã đặt bàn: ' + code);
+        hienThiToast(<%- JSON.stringify(t('xong.js_sao_chep_ma')) %> + ' ' + code);
       });
     } else {
       const el = document.createElement('textarea');
@@ -867,7 +868,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
       el.select();
       document.execCommand('copy');
       document.body.removeChild(el);
-      hienThiToast('Đã sao chép mã đặt bàn: ' + code);
+      hienThiToast(<%- JSON.stringify(t('xong.js_sao_chep_ma')) %> + ' ' + code);
     }
   }
 
@@ -876,13 +877,13 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
     const url = window.location.href;
     if (navigator.share) {
       navigator.share({
-        title: 'Phiếu Đặt Bàn — Nhà Hàng Bảo Đoàn',
-        text: 'Phiếu đặt bàn của tôi tại Nhà Hàng Bảo Đoàn (Mã: <%= r.reservation_code %>)',
+        title: <%- JSON.stringify(t('xong.js_share_title')) %>,
+        text: <%- JSON.stringify(t('xong.js_share_text', { ma: r.reservation_code })) %>,
         url: url
       }).catch(() => {});
     } else {
       copyReservationCode(url);
-      hienThiToast('Đã sao chép liên kết vé đặt bàn vào bộ nhớ tạm!');
+      hienThiToast(<%- JSON.stringify(t('xong.js_sao_chep_link')) %>);
     }
   }
 
@@ -896,7 +897,7 @@ var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeData
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    hienThiToast('Đang tải mã QR check-in về máy...');
+    hienThiToast(<%- JSON.stringify(t('xong.js_dang_tai_qr')) %>);
   }
 
   // Toast Helper

@@ -36,7 +36,7 @@
             <label class="nh-auth-label"><%= t('chung.ho_ten') %></label>
             <div class="nh-auth-input-wrap">
               <i class="fas fa-user"></i>
-              <input type="text" name="ten" class="nh-auth-input" placeholder="Họ và tên" required autofocus>
+              <input type="text" name="ten" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_ho_ten') %>" required autofocus>
             </div>
           </div>
 
@@ -44,7 +44,7 @@
             <label class="nh-auth-label"><%= t('chung.dien_thoai') %></label>
             <div class="nh-auth-input-wrap">
               <i class="fas fa-phone"></i>
-              <input type="text" name="sodienthoai" class="nh-auth-input" placeholder="Số điện thoại" required>
+              <input type="text" name="sodienthoai" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_sdt') %>" required>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@
           <label class="nh-auth-label"><%= t('tai_khoan.email_khoi_phuc') %></label>
           <div class="nh-auth-input-wrap">
             <i class="fas fa-envelope"></i>
-            <input type="email" name="email" class="nh-auth-input" placeholder="Địa chỉ email" required>
+            <input type="email" name="email" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_email') %>" required>
           </div>
         </div>
 
@@ -61,7 +61,7 @@
           <label class="nh-auth-label"><%= t('chung.dia_chi') %></label>
           <div class="nh-auth-input-wrap">
             <i class="fas fa-map-marker-alt"></i>
-            <input type="text" name="diachi" class="nh-auth-input" placeholder="Địa chỉ giao hàng / cư trú" required>
+            <input type="text" name="diachi" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_dia_chi') %>" required>
           </div>
         </div>
 
@@ -70,7 +70,7 @@
             <label class="nh-auth-label"><%= t('tai_khoan.mat_khau') %></label>
             <div class="nh-auth-input-wrap">
               <i class="fas fa-lock"></i>
-              <input type="password" name="passwords" class="nh-auth-input" placeholder="Mật khẩu" required>
+              <input type="password" name="passwords" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_mat_khau') %>" required>
             </div>
           </div>
 
@@ -78,7 +78,7 @@
             <label class="nh-auth-label"><%= t('tai_khoan.xac_nhan_mat_khau') %></label>
             <div class="nh-auth-input-wrap">
               <i class="fas fa-shield-alt"></i>
-              <input type="password" name="repass" class="nh-auth-input" placeholder="Nhập lại mật khẩu" required>
+              <input type="password" name="repass" class="nh-auth-input" placeholder="<%= t('tai_khoan.p_nhap_lai') %>" required>
             </div>
           </div>
         </div>

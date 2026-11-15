@@ -302,7 +302,7 @@ function batDau() {
       await quetHetHan();
       await phanHangCho();
     } catch (e) {
-      console.error('[phan-cong-giao] tác vụ nền lỗi:', e.message);
+      console.error('[phan-cong-giao] tác vụ nền lỗi:', (e.message || e.code || String(e)));
     }
   }, 30000);
   if (henGio.unref) henGio.unref();

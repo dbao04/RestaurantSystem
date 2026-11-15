@@ -38,6 +38,7 @@ const jobs = require('../services/reservationJobs');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
 const { ngayCucBo } = require('../utils/thoiGian');
+const { dich } = require('../services/dichThongBao');
 
 const menuService = require('../services/menuService');
 
@@ -116,13 +117,16 @@ function nguoiDung(req) {
  * hoac ca mot phan cau truy van.
  */
 function traLoi(res, e, macDinh = 400) {
+  // Chi dich cho API khu khach (/api/dat-ban*); man hinh nhan vien giu tieng Viet.
+  const req = res.req || {};
+  const nn = String(req.originalUrl || '').startsWith('/api/dat-ban') ? req.ngonNgu : 'vi';
   if (e && e.name === 'LoiDatBan') {
     return res.status(e.ma === 'NOT_FOUND' ? 404 : macDinh).json({
-      ok: false, ma: e.ma, thong_bao: e.message, chi_tiet: e.chiTiet || null,
+      ok: false, ma: e.ma, thong_bao: dich(e.message, nn), chi_tiet: e.chiTiet || null,
     });
   }
   console.error('[dat-ban] lỗi:', e);
-  return res.status(500).json({ ok: false, ma: 'SERVER', thong_bao: 'Hệ thống đang bận, vui lòng thử lại.' });
+  return res.status(500).json({ ok: false, ma: 'SERVER', thong_bao: dich('Hệ thống đang bận, vui lòng thử lại.', nn) });
 }
 
 /** Bao cho moi man hinh nhan vien dang mo biet co thay doi. */
@@ -308,7 +312,7 @@ router.get('/api/dat-ban/khung-gio', bat(async (req, res) => {
     const cf = await qt.docCauHinh();
 
     const lich = await qt.lichMoCua(ngay);
-    if (lich.dong) return res.json({ ok: true, ngay, dong_cua: true, ly_do: lich.lyDo, khung: [] });
+    if (lich.dong) return res.json({ ok: true, ngay, dong_cua: true, ly_do: dich(lich.lyDo, req.ngonNgu), khung: [] });
 
     const buoc = Number(cf.slot_step_minutes) || 15;
     const thoiLuong = qt.thoiLuongMacDinh(soKhach, cf);
@@ -348,7 +352,10 @@ router.get('/api/dat-ban/khung-gio', bat(async (req, res) => {
  */
 router.get('/api/dat-ban/kha-dung', bat(async (req, res) => {
   try {
-    res.json({ ok: true, ...await dv.kiemTraKhaDung(req.query, { laOnline: !nguoiDung(req).laNhanVien }) });
+    const kq = await dv.kiemTraKhaDung(req.query, { laOnline: !nguoiDung(req).laNhanVien });
+    if (kq.thong_diep) kq.thong_diep = dich(kq.thong_diep, req.ngonNgu);
+    if (kq.coc && kq.coc.lyDo) kq.coc = { ...kq.coc, lyDo: dich(kq.coc.lyDo, req.ngonNgu) };
+    res.json({ ok: true, ...kq });
   } catch (e) { traLoi(res, e); }
 }));
 
@@ -399,7 +406,7 @@ router.post('/api/dat-ban/tra-cuu', bat(async (req, res) => {
     if (!r) {
       return res.status(404).json({
         ok: false, ma: 'NOT_FOUND',
-        thong_bao: 'Không tìm thấy lượt đặt nào khớp mã và số điện thoại này.',
+        thong_bao: dich('Không tìm thấy lượt đặt nào khớp mã và số điện thoại này.', req.ngonNgu),
       });
     }
     const xemTruoc = qt.TRANG_THAI_GIU_CHO.includes(r.status)
@@ -450,7 +457,7 @@ router.post('/api/dat-ban/tra-cuu/huy', bat(async (req, res) => {
         r = ds[0];
       }
     }
-    if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
+    if (!r) return res.status(404).json({ ok: false, thong_bao: dich('Không tìm thấy lượt đặt', req.ngonNgu) });
     const kq = await dv.doiTrangThai(r.id, 'CANCELLED', {
       lyDo: String(req.body.ly_do || '').trim() || 'Khách tự hủy trực tuyến',
       boiAi: 'CUSTOMER',
@@ -475,7 +482,7 @@ router.post('/api/dat-ban/tra-cuu/doi-lich', bat(async (req, res) => {
         r = ds[0];
       }
     }
-    if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
+    if (!r) return res.status(404).json({ ok: false, thong_bao: dich('Không tìm thấy lượt đặt', req.ngonNgu) });
     const moi = await dv.capNhat(r.id, {
       reservation_date: req.body.ngay,
       start_time: req.body.gio,
@@ -509,7 +516,7 @@ router.post('/api/dat-ban/tra-cuu/doi-mon', bat(async (req, res) => {
         r = ds[0];
       }
     }
-    if (!r) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy lượt đặt' });
+    if (!r) return res.status(404).json({ ok: false, thong_bao: dich('Không tìm thấy lượt đặt', req.ngonNgu) });
     const moi = await dv.capNhatMonDatTruoc(r.id, req.body.items, { laNhanVien: false });
     bao('RESERVATION_UPDATED', { reservation_id: r.id, ma: r.reservation_code });
     res.json({ ok: true, r: { ma: moi.reservation_code, mon_dat_truoc: moi.mon_dat_truoc, coc: Number(moi.deposit_amount) || 0 } });

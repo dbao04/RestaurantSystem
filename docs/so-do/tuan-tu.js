@@ -287,4 +287,53 @@ function chamCongKhuonMat() {
   });
 }
 
-module.exports = { veTuanTu, goiMonQR, thanhToanVietQR, duBaoLuotKhach, chamCongKhuonMat };
+/* ======================================================================== */
+/* 5. DAT BAN TRUC TUYEN                                                    */
+/* ======================================================================== */
+
+function datBanTrucTuyen() {
+  return veTuanTu({
+    id: 'sqE',
+    nhan: 'Sơ đồ tuần tự luồng khách đặt bàn trực tuyến: kiểm tra ràng buộc, xếp bàn, tính cọc và giữ chỗ trong một giao dịch',
+    doiTuong: [
+      { ten: 'Khách', lop: 'ngoai' },
+      { ten: ['Trang đặt bàn', 'reservation.ejs'] },
+      { ten: ['Web (Node)', 'routes/datBan.js'] },
+      { ten: 'reservationService' },
+      { ten: 'reservationRules' },
+      { ten: 'reservationTables' },
+      { ten: ['MySQL', 'reservations'], lop: 'ngoai' },
+    ],
+    buoc: [
+      { tu: 0, den: 1, nhan: 'chọn ngày, giờ, số khách, khu vực' },
+      { tu: 1, den: 2, nhan: 'GET /api/dat-ban/kha-dung' },
+      { tu: 2, den: 1, nhan: 'khung giờ còn trống, sơ đồ bàn', loai: 'tra' },
+      { tu: 0, den: 1, nhan: 'gọi món trước, nhập thông tin, xác nhận' },
+      { tu: 1, den: 2, nhan: 'POST /api/dat-ban {ngày, giờ, số khách, items}' },
+      { tu: 2, den: 3, nhan: "taoLuotDat(input, {laNhanVien: false})" },
+      { tu: 3, den: 4, nhan: 'kiemTraQuaKhu / GioMoCua / DatSatGio(khung)' },
+      { tu: 4, den: 3, nhan: 'khung giờ hợp lệ (hoặc ném LoiDatBan)', loai: 'tra' },
+      { tu: 3, den: 6, nhan: 'đọc hồ sơ khách theo SĐT (no-show, bị chặn)' },
+      { tu: 3, den: 4, nhan: 'tinhTienCoc({soKhach, gio, tongTienMon})' },
+      { tu: 4, den: 3, nhan: '{ soTien, quyTac, lyDo }', loai: 'tra' },
+      { tu: 3, den: 5, nhan: 'goiYXepBan(khung, {soKhach, areaId})' },
+      { tu: 5, den: 3, nhan: 'bàn / tổ hợp bàn có điểm cao nhất', loai: 'tra' },
+      { tu: 3, den: 6, nhan: 'BEGIN; INSERT reservations' },
+      { tu: 3, den: 5, nhan: 'chiemO(conn, id, dsBan, khung)' },
+      { tu: 5, den: 6, nhan: 'INSERT reservation_slot_locks (ô 15 phút)' },
+      { tu: 3, den: 6, nhan: 'INSERT preorders, history; COMMIT' },
+      { tu: 3, den: 2, nhan: '{ ma, ban, coc, han_coc }', loai: 'tra' },
+      { tu: 2, den: 1, nhan: '201 Created + mã đặt bàn', loai: 'tra' },
+      { tu: 1, den: 0, nhan: 'phiếu xác nhận, mã VietQR nếu cần cọc', loai: 'tra' },
+    ],
+    khoi: [
+      { ten: 'loop', dieuKien: 'lặp tối đa 3 lần nếu bàn vừa bị giữ mất (RACE_LOST)', tu: 11, den: 16, trai: 3, phai: 6 },
+    ],
+    ghiChu: [
+      'reservation_slot_locks có khoá chính (table_id, slot_start): hai yêu cầu đến cùng lúc thì yêu cầu sau nhận lỗi trùng khoá,',
+      'giao dịch quay lui và hệ thống xếp lại bàn khác — chống đặt trùng nằm ở CSDL chứ không dựa vào việc kiểm tra trước rồi mới ghi.',
+    ],
+  });
+}
+
+module.exports = { veTuanTu, goiMonQR, thanhToanVietQR, duBaoLuotKhach, chamCongKhuonMat, datBanTrucTuyen };

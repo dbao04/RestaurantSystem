@@ -817,6 +817,8 @@ module.exports = function (io) {
       taiKhoan,
       qr,
       choPhepThanhToanGiaLap: giaLapKhach(),
+      // Nguong doan dong lay tu cau hinh dat ban (giong reservationRules.tinhTienCoc).
+      nguongDoanDong: Number((await require('../services/reservationRules').docCauHinh()).large_group_threshold) || 15,
     });
   }));
 

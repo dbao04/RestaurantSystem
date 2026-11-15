@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Không gian nhà hàng' }) %>
+<%- include('partials/header', { title: t('khong_gian.tieu_de') }) %>
 <%
 /*
   KHONG GIAN NHA HANG - anh, suc chua va tien ich tung khu.
@@ -8,10 +8,10 @@
 var sanh = khongGian.filter(function (k) { return k.la_sanh_tiec; });
 var khuThuong = khongGian.filter(function (k) { return !k.la_sanh_tiec; });
 var nhanKhu = function (k) {
-  if (k.la_sanh_tiec) return { icon: 'fa-crown', chu: 'Sảnh tiệc', lop: 'kg-tag--gala' };
-  if (k.la_vip) return { icon: 'fa-door-closed', chu: 'Phòng riêng', lop: '' };
-  if (k.ngoai_troi) return { icon: 'fa-leaf', chu: 'Ngoài trời', lop: '' };
-  return { icon: 'fa-utensils', chu: 'Khu chung', lop: '' };
+  if (k.la_sanh_tiec) return { icon: 'fa-crown', chu: t('khong_gian.nhan_sanh_tiec'), lop: 'kg-tag--gala' };
+  if (k.la_vip) return { icon: 'fa-door-closed', chu: t('khong_gian.nhan_phong_rieng'), lop: '' };
+  if (k.ngoai_troi) return { icon: 'fa-leaf', chu: t('khong_gian.nhan_ngoai_troi'), lop: '' };
+  return { icon: 'fa-utensils', chu: t('khong_gian.nhan_khu_chung'), lop: '' };
 };
 var anhCua = function (k) {
   return (k.thu_vien_anh && k.thu_vien_anh.length) ? k.thu_vien_anh : ['/images/khong-gian/sanh-chinh-1.jpg'];
@@ -20,39 +20,39 @@ var veKhu = function (k, dao) {
   var n = nhanKhu(k), ds = anhCua(k);
   var html = '';
   html += '<article class="kg-khu' + (dao ? ' kg-khu--dao' : '') + '" id="khu-' + k.id + '">';
-  html += '<div class="kg-gallery" data-gallery data-ten="' + escapeHtml(k.ten) + '" data-anh="' + escapeHtml(JSON.stringify(ds)) + '">';
-  html += '<button type="button" class="kg-gallery__main" data-mo="0" aria-label="Xem ảnh lớn ' + escapeHtml(k.ten) + '">';
-  html += '<img src="' + ds[0] + '" alt="' + escapeHtml(k.ten) + '" loading="lazy">';
-  html += '<span class="kg-gallery__count"><i class="fas fa-images"></i> ' + ds.length + ' ảnh</span></button>';
+  html += '<div class="kg-gallery" data-gallery data-ten="' + escapeHtml(dichNd(k.ten)) + '" data-anh="' + escapeHtml(JSON.stringify(ds)) + '">';
+  html += '<button type="button" class="kg-gallery__main" data-mo="0" aria-label="' + t('khong_gian.xem_anh_lon') + ' ' + escapeHtml(dichNd(k.ten)) + '">';
+  html += '<img src="' + ds[0] + '" alt="' + escapeHtml(dichNd(k.ten)) + '" loading="lazy">';
+  html += '<span class="kg-gallery__count"><i class="fas fa-images"></i> ' + t('khong_gian.so_anh', { n: ds.length }) + '</span></button>';
   if (ds.length > 1) {
     html += '<div class="kg-gallery__thumbs">';
     ds.forEach(function (a, i) {
-      html += '<button type="button" data-thumb="' + i + '"' + (i === 0 ? ' class="is-active"' : '') + ' aria-label="Ảnh ' + (i + 1) + '"><img src="' + a + '" alt="" loading="lazy"></button>';
+      html += '<button type="button" data-thumb="' + i + '"' + (i === 0 ? ' class="is-active"' : '') + ' aria-label="' + t('khong_gian.anh_so', { n: i + 1 }) + '"><img src="' + a + '" alt="" loading="lazy"></button>';
     });
     html += '</div>';
   }
   html += '</div>';
   html += '<div class="kg-info">';
   html += '<span class="kg-tag ' + n.lop + '"><i class="fas ' + n.icon + '"></i> ' + n.chu + '</span>';
-  html += '<h3>' + escapeHtml(k.ten) + '</h3>';
-  if (k.mo_ta) html += '<div class="kg-ngan">' + escapeHtml(k.mo_ta) + '</div>';
-  if (k.mo_ta_dai) html += '<p class="kg-dai">' + escapeHtml(k.mo_ta_dai) + '</p>';
+  html += '<h3>' + escapeHtml(dichNd(k.ten)) + '</h3>';
+  if (k.mo_ta) html += '<div class="kg-ngan">' + escapeHtml(dichNd(k.mo_ta)) + '</div>';
+  if (k.mo_ta_dai) html += '<p class="kg-dai">' + escapeHtml(dichNd(k.mo_ta_dai)) + '</p>';
   html += '<div class="kg-stats">';
-  html += '<div class="kg-stat"><b>' + k.so_ban + '</b><span>' + (k.la_vip ? 'Phòng' : 'Bàn') + '</span></div>';
-  html += '<div class="kg-stat"><b>' + (k.la_sanh_tiec ? k.tiec_toi_da : k.tong_cho) + '</b><span>Sức chứa</span></div>';
-  html += '<div class="kg-stat"><b>' + (k.cho_min === k.cho_max ? k.cho_max : k.cho_min + '–' + k.cho_max) + '</b><span>Khách / bàn</span></div>';
+  html += '<div class="kg-stat"><b>' + k.so_ban + '</b><span>' + (k.la_vip ? t('khong_gian.dv_phong') : t('khong_gian.dv_ban')) + '</span></div>';
+  html += '<div class="kg-stat"><b>' + (k.la_sanh_tiec ? k.tiec_toi_da : k.tong_cho) + '</b><span>' + t('khong_gian.suc_chua') + '</span></div>';
+  html += '<div class="kg-stat"><b>' + (k.cho_min === k.cho_max ? k.cho_max : k.cho_min + '–' + k.cho_max) + '</b><span>' + t('khong_gian.khach_ban') + '</span></div>';
   html += '</div>';
   if (k.tien_ich && k.tien_ich.length) {
     html += '<div class="kg-chips">';
-    k.tien_ich.forEach(function (t) { html += '<span><i class="fas fa-check"></i> ' + escapeHtml(t) + '</span>'; });
+    k.tien_ich.forEach(function (ti) { html += '<span><i class="fas fa-check"></i> ' + escapeHtml(dichNd(ti)) + '</span>'; });
     html += '</div>';
   }
   html += '<div class="kg-actions">';
   if (k.cho_dat_truoc) {
-    html += '<a href="/dat-ban?khu_vuc=' + k.id + '" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> Đặt bàn tại ' + escapeHtml(k.ten) + '</a>';
+    html += '<a href="/dat-ban?khu_vuc=' + k.id + '" class="nh-btn nh-btn--gold"><i class="fas fa-calendar-check"></i> ' + escapeHtml(t('khong_gian.dat_ban_tai', { khu: dichNd(k.ten) })) + '</a>';
   }
   if (k.tiec_toi_da > 0) {
-    html += '<a href="/dat-tiec?sanh=' + k.id + '#form-dat-tiec" class="nh-btn ' + (k.cho_dat_truoc ? 'nh-btn--outline' : 'nh-btn--gold') + '"><i class="fas fa-glass-cheers"></i> Đặt tiệc (' + k.tiec_toi_thieu + '–' + k.tiec_toi_da + ' khách)</a>';
+    html += '<a href="/dat-tiec?sanh=' + k.id + '#form-dat-tiec" class="nh-btn ' + (k.cho_dat_truoc ? 'nh-btn--outline' : 'nh-btn--gold') + '"><i class="fas fa-glass-cheers"></i> ' + t('khong_gian.dat_tiec_khach', { tu: k.tiec_toi_thieu, den: k.tiec_toi_da }) + '</a>';
   }
   html += '</div></div></article>';
   return html;
@@ -69,10 +69,10 @@ function escapeHtml(s) {
   <div class="nh-subhero__bg" style="background-image:url('/images/khong-gian/sanh-chinh-1.jpg')"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow">Không gian Bảo Đoàn</span>
-    <h1>Phòng &amp; Khu vực</h1>
+    <span class="nh-eyebrow"><%= t('khong_gian.eyebrow') %></span>
+    <h1><%= t('khong_gian.h1') %></h1>
     <div class="nh-crumbs">
-      <a href="/">Trang chủ</a> &nbsp;/&nbsp; <span>Không gian nhà hàng</span>
+      <a href="/"><%= t('khong_gian.crumb') %></a> &nbsp;/&nbsp; <span><%= t('khong_gian.tieu_de') %></span>
     </div>
   </div>
 </section>
@@ -81,12 +81,12 @@ function escapeHtml(s) {
   <section class="sk-section sk-section--cream" style="padding-bottom:1.5rem">
     <div class="nh-container">
       <div class="sk-head" style="margin-bottom:0">
-        <span class="sk-eyebrow">Chọn chỗ ngồi ưng ý</span>
-        <h2>Mỗi khu vực, một trải nghiệm</h2>
-        <p>Từ quầy sushi sôi động, sân vườn xanh mát, phòng riêng kín đáo đến sảnh Gala cho những dịp trọng đại – xem ảnh thực tế và chọn nơi phù hợp trước khi đặt bàn.</p>
-        <nav class="sk-jump" aria-label="Các khu vực">
+        <span class="sk-eyebrow"><%= t('khong_gian.chon_cho') %></span>
+        <h2><%= t('khong_gian.moi_khu') %></h2>
+        <p><%= t('khong_gian.gioi_thieu') %></p>
+        <nav class="sk-jump" aria-label="<%= t('khong_gian.cac_khu') %>">
           <% khongGian.forEach(function (k) { var n = nhanKhu(k); %>
-            <a href="#khu-<%= k.id %>"><i class="fas <%= n.icon %>"></i> <%= k.ten %></a>
+            <a href="#khu-<%= k.id %>"><i class="fas <%= n.icon %>"></i> <%= dichNd(k.ten) %></a>
           <% }) %>
         </nav>
       </div>
@@ -103,9 +103,9 @@ function escapeHtml(s) {
   <section class="sk-section kg-gala-wrap">
     <div class="nh-container">
       <div class="sk-head" style="margin-bottom:0">
-        <span class="sk-eyebrow">Dành cho dịp trọng đại</span>
-        <h2>Sảnh tiệc Gala</h2>
-        <p>Tiệc cưới, sinh nhật, Year End Party hay hội nghị khách hàng – không gian lộng lẫy, thực đơn Nhật Bản tinh tế và đội ngũ tổ chức trọn gói.</p>
+        <span class="sk-eyebrow"><%= t('khong_gian.dip_trong_dai') %></span>
+        <h2><%= t('khong_gian.sanh_gala') %></h2>
+        <p><%= t('khong_gian.gala_mo_ta') %></p>
       </div>
       <% sanh.forEach(function (k, i) { %><%- veKhu(k, i % 2 === 1) %><% }) %>
     </div>
@@ -116,23 +116,23 @@ function escapeHtml(s) {
     <div class="nh-container">
       <div class="sk-cta">
         <div class="sk-cta__bg" style="background-image:url('/images/khong-gian/tiec-cuoi-2.jpg')"></div>
-        <span class="sk-eyebrow">Tiệc cưới · Sinh nhật · Party</span>
-        <h2>Tổ chức tiệc riêng tại Bảo Đoàn</h2>
-        <p>12 thực đơn tiệc soạn riêng theo từng dịp, từ 2.790.000đ/bàn 10 khách. Gửi yêu cầu trực tuyến, chuyên viên sẽ gọi tư vấn trong vòng 2 giờ.</p>
+        <span class="sk-eyebrow"><%= t('khong_gian.cta_eyebrow') %></span>
+        <h2><%= t('khong_gian.cta_h2') %></h2>
+        <p><%= t('khong_gian.cta_mo_ta') %></p>
         <div class="kg-actions" style="justify-content:center">
-          <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> Xem thực đơn &amp; đặt tiệc</a>
-          <a href="/dat-ban" class="nh-btn nh-btn--outline" style="color:#fff;border-color:rgba(255,255,255,.6)"><i class="fas fa-utensils"></i> Đặt bàn thường</a>
+          <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> <%= t('khong_gian.cta_xem_td') %></a>
+          <a href="/dat-ban" class="nh-btn nh-btn--outline" style="color:#fff;border-color:rgba(255,255,255,.6)"><i class="fas fa-utensils"></i> <%= t('khong_gian.cta_dat_ban') %></a>
         </div>
       </div>
     </div>
   </section>
 </div>
 
-<div class="sk-lightbox" id="skLightbox" hidden role="dialog" aria-modal="true" aria-label="Xem ảnh">
-  <button type="button" class="sk-lightbox__btn sk-lightbox__close" data-lb="dong" aria-label="Đóng"><i class="fas fa-times"></i></button>
-  <button type="button" class="sk-lightbox__btn sk-lightbox__prev" data-lb="truoc" aria-label="Ảnh trước"><i class="fas fa-chevron-left"></i></button>
+<div class="sk-lightbox" id="skLightbox" hidden role="dialog" aria-modal="true" aria-label="<%= t('khong_gian.xem_anh') %>">
+  <button type="button" class="sk-lightbox__btn sk-lightbox__close" data-lb="dong" aria-label="<%= t('khong_gian.dong') %>"><i class="fas fa-times"></i></button>
+  <button type="button" class="sk-lightbox__btn sk-lightbox__prev" data-lb="truoc" aria-label="<%= t('khong_gian.anh_truoc') %>"><i class="fas fa-chevron-left"></i></button>
   <img id="skLbImg" src="" alt="">
-  <button type="button" class="sk-lightbox__btn sk-lightbox__next" data-lb="sau" aria-label="Ảnh sau"><i class="fas fa-chevron-right"></i></button>
+  <button type="button" class="sk-lightbox__btn sk-lightbox__next" data-lb="sau" aria-label="<%= t('khong_gian.anh_sau') %>"><i class="fas fa-chevron-right"></i></button>
   <div class="sk-lightbox__cap" id="skLbCap"></div>
 </div>
 

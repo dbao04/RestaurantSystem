@@ -286,7 +286,7 @@
       document.getElementById('nh-modal-date').textContent = el.dataset.date || '';
       document.getElementById('nh-modal-read').textContent = el.dataset.read || '1';
       document.getElementById('nh-modal-text').textContent =
-        (el.dataset.content || '').trim() || 'Nội dung đang được cập nhật.';
+        (el.dataset.content || '').trim() || <%- JSON.stringify(t('tin_tuc.t_dang_cap_nhat')) %>;
       var duPhong = el.dataset.fallback || '/mon-thay-the.svg';
       var img = document.getElementById('nh-modal-img');
       img.onerror = function () { this.onerror = null; this.src = duPhong; };

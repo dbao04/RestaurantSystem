@@ -245,12 +245,12 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
           <table class="hd__bang">
             <tbody>
               <tr>
-                <td>Đặt bàn dùng bữa tại chỗ</td>
-                <td>Giữ chỗ trước, tự chọn bàn trên sơ đồ và có thể gọi món trước (tùy chọn) để nhà hàng chuẩn bị chu đáo.</td>
+                <td><%= t('huong_dan_dat_ban.g_dv_a') %></td>
+                <td><%= t('huong_dan_dat_ban.g_dv_a_p') %></td>
               </tr>
               <tr>
-                <td>Đặt món giao tận nơi</td>
-                <td>Chọn món ngon từ thực đơn, shipper giao món nóng sốt tận địa chỉ và theo dõi vị trí trên bản đồ.</td>
+                <td><%= t('gio_hang.dat_mon_giao_tan_noi') %></td>
+                <td><%= t('huong_dan_dat_ban.g_dv_b_p') %></td>
               </tr>
             </tbody>
           </table>
@@ -405,9 +405,9 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
           <div class="hd__khu">
             <% khuVuc.forEach(function (k) { %>
               <article>
-                <b><%= k.la_vip ? '★ ' : '' %><%= k.ten %></b>
+                <b><%= k.la_vip ? '★ ' : '' %><%= dichNd(k.ten) %></b>
                 <small><%= k.so_ban %> <%= t('dat_ban_moi.ban_dv') %> · <%= k.tong_cho %> <%= t('dat_ban_moi.cho') %></small>
-                <% if (k.mo_ta) { %><br><small><%= k.mo_ta %></small><% } %>
+                <% if (k.mo_ta) { %><br><small><%= dichNd(k.mo_ta) %></small><% } %>
               </article>
             <% }); %>
           </div>
@@ -516,10 +516,10 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
               <b class="hd-lichsu-title">
                 <i class="fas fa-calendar-check" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('dieu_huong.don_cua_toi') %>
               </b>
-              <span class="hd-lichsu-desc">Xem toàn bộ lịch sử các đơn đặt bàn, trạng thái và xem chi tiết lượt đặt.</span>
+              <span class="hd-lichsu-desc"><%= t('huong_dan_dat_ban.g_ls_p') %></span>
             </div>
             <a href="/my-orders" class="nh-btn nh-btn--gold nh-btn--sm">
-              <i class="fas fa-arrow-right"></i> Xem lịch sử đặt bàn
+              <i class="fas fa-arrow-right"></i> <%= t('huong_dan_dat_ban.g_ls_nut') %>
             </a>
           </div>
         </section>

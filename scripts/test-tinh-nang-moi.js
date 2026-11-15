@@ -4,7 +4,7 @@
  *   A. Chinh sach giao hang: vung giao, phi ship bac thang, bat buoc dong y chinh
  *      sach, thanh toan truoc 100%, huy do khach (khong hoan) / do nha hang (hoan diem)
  *   B. Rang buoc quy mo ban: nhom nho 1 ban, khong thua ban, khong thua ghe
- *   C. Khong gian & Dat tiec: tao don, kiem tra hop le, trung lich, nhan vien xu ly
+ *   C. Khong gian & Dat tiec: tao don, kiem tra hop le, trung lich
  *   D. Phieu thu / chi: lap, kiem tra hop le, huy, phan quyen
  *   E. Kho bep: phieu nhap / xuat (FEFO, ton kho), don mua hang (duyet 4 mat)
  *   F. KDS: don giao chua thanh toan khong vao bep
@@ -327,122 +327,9 @@ async function testDatTiec() {
   ok('RBAC: Đầu bếp không vào được quản lý đặt tiệc', bepXem.status !== 200, `HTTP ${bepXem.status}`);
 }
 
-// ====================================================================== C2
-async function testDatTiecChiTiet() {
-  nhom('C2. Đặt tiệc chi tiết: máy trạng thái, tiền cọc, thanh toán, hoàn tiền, sửa đơn, phân công');
-  const dv = require(path.join(__dirname, '..', 'services', 'datTiecService'));
-  const ch = await dv.docCauHinh();
-
-  // --- Chinh sach (ham thuan)
-  const hn = ngayCong(0);
-  const hoan = (nguoiHuy, soNgay, coc = 3000000) => dv.tinhHoanTien({ tienDaCoc: coc, ngayToChuc: ngayCong(soNgay), ngayHuy: hn, nguoiHuy }, ch);
-  ok('Tiền cọc = ty_le_coc% dự toán, làm tròn nghìn', dv.tinhTienCoc(10001000, ch) === Math.round(10001000 * ch.ty_le_coc / 100 / 1000) * 1000, `${ch.ty_le_coc}%`);
-  ok(`Khách hủy trước ≥ ${ch.hoan_tien_som_ngay} ngày → hoàn 100%`, hoan('KHACH', ch.hoan_tien_som_ngay).soTien === 3000000);
-  ok(`Khách hủy trước ${ch.hoan_tien_giua_ngay}–${ch.hoan_tien_som_ngay - 1} ngày → hoàn ${ch.hoan_tien_giua_phan_tram}%`,
-    hoan('KHACH', ch.hoan_tien_giua_ngay).soTien === Math.round(3000000 * ch.hoan_tien_giua_phan_tram / 100 / 1000) * 1000);
-  ok(`Khách hủy sát ngày (< ${ch.hoan_tien_giua_ngay} ngày) → không hoàn`, hoan('KHACH', ch.hoan_tien_giua_ngay - 1).soTien === 0);
-  ok('Nhà hàng chủ động hủy sát ngày → vẫn hoàn 100%', hoan('NHA_HANG', 0).soTien === 3000000);
-  ok('Chưa cọc → hoàn 0đ', hoan('KHACH', 30, 0).soTien === 0);
-
-  // --- Tao 2 don o 2 ngay trong
-  const [sanh] = await dv.docSanhTiec(); const [td] = await dv.docThucDon();
-  const ngayTrong = [];
-  for (let i = 280; i < 360 && ngayTrong.length < 2; i++) {
-    const n = ngayCong(i);
-    const kin = await dv.lichDaKin(n, n);
-    if (!kin.some((x) => Number(x.khu_vuc_id) === Number(sanh.id) && x.buoi === 'TOI')) ngayTrong.push(n);
-  }
-  const mau = (ngay, ten) => ({ ho_ten: ten, so_dien_thoai: '0971112244', loai_tiec: 'SINH_NHAT', ngay_to_chuc: ngay,
-    buoi: 'TOI', gio_bat_dau: '18:00', so_khach: sanh.tiec_toi_thieu, khu_vuc_id: sanh.id, thuc_don_id: td.id, ghi_chu: 'AUTOTEST' });
-  const k = new Phien();
-  const a = await k.goi('/api/dat-tiec', { method: 'POST', json: mau(ngayTrong[0], 'AUTOTEST Chi tiết A') });
-  const b = await k.goi('/api/dat-tiec', { method: 'POST', json: mau(ngayTrong[1], 'AUTOTEST Chi tiết B') });
-  [a, b].forEach((x) => x.data && x.data.id && DON_DEP.tiec.push(x.data.id));
-  ok('Tạo đơn tiệc trả về tiền cọc yêu cầu', a.status === 201 && a.data.tien_coc === dv.tinhTienCoc(a.data.tong_du_toan, ch), a.data && `cọc ${a.data.tien_coc}đ / ${a.data.tong_du_toan}đ`);
-  if (!(a.data && a.data.id && b.data && b.data.id)) return;
-  const idA = a.data.id; const idB = b.data.id;
-
-  const lt = await dangNhapNV('letan');
-  const ct = await lt.goi(`/api/staff/dat-tiec/${idA}`);
-  ok('GET chi tiết đơn tiệc (lịch sử khởi tạo MOI)', ct.status === 200 && ct.data.d.lich_su.length === 1 && ct.data.d.lich_su[0].den_trang_thai === 'MOI');
-  ok('GET chi tiết đơn không tồn tại → 404', (await lt.goi('/api/staff/dat-tiec/99999999')).status === 404);
-  ok('Trang nhân viên đặt tiệc hiển thị (có thực đơn/sảnh để sửa)', (await lt.goi('/staff/dat-tiec')).status === 200);
-
-  const doi = (id, json) => lt.goi(`/api/staff/dat-tiec/${id}/trang-thai`, { method: 'POST', json });
-  const tt = (id, json) => lt.goi(`/api/staff/dat-tiec/${id}/thanh-toan`, { method: 'POST', json });
-  const nhay = await doi(idA, { trang_thai: 'HOAN_THANH' });
-  ok('Máy trạng thái: chặn MOI → HOÀN THÀNH', nhay.status === 400 && nhay.data.ma === 'BAD_TRANSITION', nhay.data && nhay.data.thong_bao);
-  const nhay2 = await doi(idA, { trang_thai: 'DA_COC' });
-  ok('Máy trạng thái: chặn MOI → ĐÃ CỌC', nhay2.status === 400 && nhay2.data.ma === 'BAD_TRANSITION');
-
-  // --- Phan cong nhan vien
-  const dsNv = await dv.danhSachNhanVienXuLy();
-  const [[nvLt]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'letan' LIMIT 1");
-  const nvKhac = dsNv.find((n) => Number(n.id) !== Number(nvLt && nvLt.id_nv));
-  if (nvKhac) {
-    const gan = await lt.goi(`/api/staff/dat-tiec/${idA}/nhan-vien`, { method: 'POST', json: { nhan_vien_id: nvKhac.id } });
-    ok('Phân công nhân viên phụ trách', gan.status === 200 && Number(gan.data.d.nhan_vien_xu_ly) === Number(nvKhac.id), nvKhac.ten);
-    const lh = await doi(idA, { trang_thai: 'DA_LIEN_HE' });
-    ok('MOI → ĐÃ LIÊN HỆ hợp lệ', lh.status === 200 && lh.data.d.trang_thai === 'DA_LIEN_HE');
-    ok('Đổi trạng thái KHÔNG ghi đè nhân viên đã được phân công', Number(lh.data.d.nhan_vien_xu_ly) === Number(nvKhac.id),
-      `phân công #${nvKhac.id}, sau khi lễ tân đổi trạng thái còn #${lh.data.d.nhan_vien_xu_ly}`);
-  } else {
-    await doi(idA, { trang_thai: 'DA_LIEN_HE' });
-  }
-
-  // --- Sua don
-  const goc = (await lt.goi(`/api/staff/dat-tiec/${idA}`)).data.d;
-  const soKhachMoi = Math.min(sanh.tiec_toi_da, sanh.tiec_toi_thieu + 10);
-  const sua = await lt.goi(`/api/staff/dat-tiec/${idA}`, { method: 'PUT', json: { ...mau(ngayTrong[0], 'AUTOTEST Chi tiết A'), so_khach: soKhachMoi } });
-  ok('Sửa đơn (PUT) → tính lại dự toán & tiền cọc', sua.status === 200 && sua.data.d.so_khach === soKhachMoi
-    && sua.data.d.tien_coc === dv.tinhTienCoc(sua.data.d.tong_du_toan, ch) && (soKhachMoi === goc.so_khach || sua.data.d.tong_du_toan > goc.tong_du_toan),
-    sua.data && sua.data.d && `${goc.so_khach}→${sua.data.d.so_khach} khách · ${goc.tong_du_toan}→${sua.data.d.tong_du_toan}đ`);
-  const suaSai = await lt.goi(`/api/staff/dat-tiec/${idA}`, { method: 'PUT', json: { ...mau(ngayTrong[0], 'X'), so_khach: sanh.tiec_toi_da + 1 } });
-  ok('Sửa đơn: từ chối số khách vượt sức chứa', suaSai.status === 400);
-  const suaTrung = await lt.goi(`/api/staff/dat-tiec/${idB}`, { method: 'PUT', json: mau(ngayTrong[0], 'AUTOTEST Chi tiết B') });
-  ok('Sửa đơn B: dời sang ngày của A (A chưa giữ chỗ) vẫn cho phép', suaTrung.status === 200);
-  await lt.goi(`/api/staff/dat-tiec/${idB}`, { method: 'PUT', json: mau(ngayTrong[1], 'AUTOTEST Chi tiết B') });
-
-  // --- Thanh toan nhieu lan + tu chuyen DA_COC
-  await doi(idA, { trang_thai: 'DA_XAC_NHAN' });
-  const coc = sua.data.d.tien_coc;
-  ok('Từ chối thanh toán số tiền ≤ 0', (await tt(idA, { so_tien: 0 })).status === 400);
-  ok('Từ chối thanh toán số tiền không phải số', (await tt(idA, { so_tien: 'abc' })).status === 400);
-  const lan1Tien = Math.round(coc / 2 / 1000) * 1000;
-  const lan1 = await tt(idA, { so_tien: lan1Tien, phuong_thuc: 'CHUYEN_KHOAN', ma_giao_dich: 'AUTOTEST1' });
-  ok('Thu cọc lần 1 (chưa đủ) → vẫn ĐÃ XÁC NHẬN', lan1.status === 200 && lan1.data.d.trang_thai === 'DA_XAC_NHAN' && lan1.data.d.da_coc === lan1Tien, `${lan1Tien}/${coc}đ`);
-  const lan2 = await tt(idA, { so_tien: coc - lan1Tien, phuong_thuc: 'PHUONG_THUC_LA' });
-  ok('Thu cọc lần 2 đủ → tự chuyển ĐÃ CỌC', lan2.status === 200 && lan2.data.d.trang_thai === 'DA_COC' && lan2.data.d.da_coc === coc);
-  ok('Lưu 2 lần thanh toán; phương thức lạ → TIỀN MẶT', lan2.data.d.thanh_toan.length === 2 && lan2.data.d.thanh_toan[1].phuong_thuc === 'TIEN_MAT');
-  ok('Lịch sử ghi nhận tự động chuyển trạng thái', lan2.data.d.lich_su.some((h) => h.tu_trang_thai === 'DA_XAC_NHAN' && h.den_trang_thai === 'DA_COC'));
-
-  // --- Huy don A (khach huy som -> hoan 100%)
-  const khongLyDo = await doi(idA, { trang_thai: 'HUY', nguoi_huy: 'KHACH' });
-  ok('Hủy bắt buộc có lý do (NEED_REASON)', khongLyDo.status === 400 && khongLyDo.data.ma === 'NEED_REASON');
-  const huy = await doi(idA, { trang_thai: 'HUY', nguoi_huy: 'KHACH', ly_do_huy: 'AUTOTEST khách đổi kế hoạch' });
-  ok('Khách hủy sớm (> 7 ngày) → hoàn 100% tiền đã cọc', huy.status === 200 && huy.data.d.so_tien_hoan === coc && huy.data.d.nguoi_huy === 'KHACH', huy.data && `hoàn ${huy.data.d.so_tien_hoan}đ`);
-  ok('Đơn đã hủy: chặn sửa (CLOSED)', (await lt.goi(`/api/staff/dat-tiec/${idA}`, { method: 'PUT', json: mau(ngayTrong[0], 'X') })).data.ma === 'CLOSED');
-  ok('Đơn đã hủy: chặn ghi nhận thanh toán (CLOSED)', (await tt(idA, { so_tien: 1000 })).data.ma === 'CLOSED');
-  ok('Đơn đã hủy: không mở lại được (HỦY → MỚI)', (await doi(idA, { trang_thai: 'MOI' })).data.ma === 'BAD_TRANSITION');
-  const lich = await k.goi(`/api/dat-tiec/lich?ngay=${ngayTrong[0]}`);
-  ok('Hủy xong → sảnh được nhả lịch', !(lich.data && lich.data.kin.some((x) => Number(x.khu_vuc_id) === Number(sanh.id) && x.buoi === 'TOI')));
-
-  // --- Don B: di het luong toi HOAN_THANH, roi thu nha hang huy tren don khac
-  for (const s of ['DA_LIEN_HE', 'DA_XAC_NHAN']) await doi(idB, { trang_thai: s });
-  const cocB = (await lt.goi(`/api/staff/dat-tiec/${idB}`)).data.d.tien_coc;
-  await tt(idB, { so_tien: cocB, phuong_thuc: 'QUET_QR' });
-  const xongB = await doi(idB, { trang_thai: 'HOAN_THANH' });
-  ok('Luồng đầy đủ MOI → LIÊN HỆ → XÁC NHẬN → CỌC → HOÀN THÀNH', xongB.status === 200 && xongB.data.d.trang_thai === 'HOAN_THANH'
-    && xongB.data.d.lich_su.length >= 5, xongB.data && `${xongB.data.d.lich_su.length} dòng lịch sử`);
-  ok('Đơn hoàn thành: chặn hủy ngược', (await doi(idB, { trang_thai: 'HUY', ly_do_huy: 'x' })).data.ma === 'BAD_TRANSITION');
-
-  // --- RBAC
-  ok('API sửa/thanh toán chặn khi chưa đăng nhập (401)',
-    (await new Phien().goi(`/api/staff/dat-tiec/${idB}/thanh-toan`, { method: 'POST', json: { so_tien: 1000 } })).status === 401
-    && (await new Phien().goi(`/api/staff/dat-tiec/${idB}`, { method: 'PUT', json: {} })).status === 401);
-  const bep = await dangNhapNV('daubep');
-  ok('RBAC: Đầu bếp không ghi nhận thanh toán tiệc được', (await bep.goi(`/api/staff/dat-tiec/${idB}/thanh-toan`, { method: 'POST', json: { so_tien: 1000 } })).status >= 400);
-}
+// C2 (dat tiec chi tiet: phan cong, sua don, coc/hoan theo cau hinh) da bo:
+// sau khi gop nhanh bao, luong do duoc kiem trong tests/tichHop.test.js
+// ("dat tiec: vong doi dung thu tu, coc va thanh toan...").
 
 // ====================================================================== D
 async function testThuChi() {
@@ -695,7 +582,7 @@ async function donDep() {
 (async () => {
   const t0 = Date.now();
   console.log('\x1b[1m🚀 KIỂM THỬ TỰ ĐỘNG CÁC TÍNH NĂNG MỚI\x1b[0m  →  ' + BASE);
-  const nhomTest = [testGiaoHang, testQuyMoBan, testDatTiec, testDatTiecChiTiet, testThuChi, testKhoBep, testDoiMonDatTruoc];
+  const nhomTest = [testGiaoHang, testQuyMoBan, testDatTiec, testThuChi, testKhoBep, testDoiMonDatTruoc];
   for (const f of nhomTest) {
     try { await f(); } catch (e) { ok(`${f.name} chạy không lỗi`, false, e.stack.split('\n').slice(0, 2).join(' ')); }
   }

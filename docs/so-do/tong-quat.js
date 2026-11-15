@@ -19,8 +19,8 @@ const v = require('./ve');
 /* ---------------------------------------------------------------- luoi ve */
 
 const RX = 150;        // ban kinh ngang e-lip ca su dung
-const RY = 20;
-const BUOC = 52;       // khoang cach giua hai hang
+const RY = 19;
+const BUOC = 46;       // khoang cach giua hai hang
 const Y0 = 178;        // hang dau tien
 
 const X_TN_TRAI = 140;   // tac nhan cot trai
@@ -44,9 +44,14 @@ const TRAI = [
     ten: ['Khách', 'vãng lai'],
     dangNhap: false,
     uc: [
-      'Xem thực đơn, tìm món',
-      'Xem tin tức, bài viết',
+      'Xem thực đơn, combo, tìm món',
+      'Xem tin tức, không gian nhà hàng',
       'Quét mã QR gọi món tại bàn',
+      ['Đặt bàn trực tuyến, gọi món trước', '(chọn giờ, khu vực, sơ đồ bàn)'],
+      ['Tra cứu, đổi lịch, đổi món,', 'huỷ lượt đặt bằng mã + SĐT'],
+      'Gửi yêu cầu đặt tiệc, sự kiện',
+      'Hỏi đáp với trợ lý ảo (chatbot)',
+      'Theo dõi đơn giao bằng mã giao',
       'Đăng ký tài khoản',
     ],
   },
@@ -56,14 +61,13 @@ const TRAI = [
     uc: [
       'Quản lý thông tin cá nhân',
       'Quản lý giỏ hàng',
-      'Đặt bàn trực tuyến',
+      ['Đặt bàn kèm các món', 'trong giỏ hàng'],
       'Đặt cọc bằng mã VietQR',
-      'Quản lý đơn đặt bàn',
-      ['Đánh giá, bình luận sau khi', 'hoàn thành đơn hàng'],
+      'Xem lịch sử đặt bàn của tôi',
+      'Đánh giá sau khi dùng bữa',
       'Chat với nhân viên tư vấn',
-      'Đổi điểm tích luỹ, áp mã giảm giá',
+      ['Tích điểm, đổi điểm,', 'áp mã giảm giá'],
       'Đặt món giao tận nơi',
-      'Theo dõi đơn giao bằng mã giao',
     ],
   },
   {
@@ -71,8 +75,8 @@ const TRAI = [
     keThuaNvChung: true,
     uc: [
       'Quản lý bảng lương',
-      'Quản lý thu chi',
-      'Quản lý nghỉ phép',
+      ['Quản lý thu chi, sổ quỹ,', 'xuất Excel'],
+      'Duyệt đơn nghỉ phép',
       'Quản lý email gửi khách',
       'Xem báo cáo kế toán',
     ],
@@ -87,19 +91,25 @@ const TRAI = [
       'Dự báo nhu cầu nguyên liệu',
       'Khai phá luật kết hợp (Apriori)',
       'Xem đánh giá mô hình dự báo',
+      'Xếp ca tự động, khai định mức ca',
+      'Duyệt đơn mua nguyên liệu',
+      'Duyệt báo cáo cuối ngày phục vụ',
       'Quản lý nhân sự, phân quyền',
     ],
   },
   {
     ten: ['Quản trị', 'hệ thống'],
     uc: [
-      'Quản lý danh mục, món ăn',
+      'Quản lý danh mục, món ăn, combo',
       'Quản lý bài viết',
       'Quản lý nhân viên, hợp đồng',
-      ['Quản lý mã giảm giá,', 'phương thức thanh toán'],
+      ['Quản lý chương trình khuyến mãi,', 'mã giảm giá'],
+      'Quản lý thành viên, hạng thẻ',
+      ['Cấu hình chính sách đặt bàn,', 'tiền cọc, hoàn huỷ'],
       ['Cấu hình tài khoản nhận tiền,', 'khoá webhook'],
       'Quản lý cơ cấu tổ chức',
       ['Quản lý đơn vị vận chuyển,', 'bảng giá và hồ sơ shipper'],
+      'Quản trị trợ lý ảo (chatbot)',
     ],
   },
 ];
@@ -110,12 +120,14 @@ const PHAI = [
     ten: ['Nhân viên', 'phục vụ'],
     keThuaNvChung: true,
     uc: [
-      'Quản lý sơ đồ bàn',
-      'Quản lý đơn đặt bàn',
+      'Quản lý sơ đồ bàn thời gian thực',
+      ['Quản lý lượt đặt bàn,', 'xếp / ghép bàn'],
+      'Tiếp nhận khách vãng lai (walk-in)',
+      ['Xử lý yêu cầu đặt tiệc,', 'thu tiền tiệc nhiều đợt'],
       'Quản lý mã QR của bàn',
-      'Mang món ra bàn',
-      'Nhắn tin với khách hàng để tư vấn',
-      'In phiếu đặt bàn',
+      'Xác nhận đã mang món ra bàn',
+      'Nhắn tin với khách để tư vấn',
+      'Lập báo cáo cuối ngày, giao ca',
     ],
   },
   {
@@ -127,6 +139,7 @@ const PHAI = [
       'Xuất hoá đơn, in biên lai',
       'Hoàn tiền / huỷ phiên',
       'Đối soát giao dịch ngân hàng',
+      'Lập phiếu thu, phiếu chi',
       'Chốt ca thu ngân',
     ],
   },
@@ -134,18 +147,20 @@ const PHAI = [
     ten: ['Nhân viên', 'bếp'],
     keThuaNvChung: true,
     uc: [
-      'Quản lý màn hình bếp (KDS)',
+      ['Nhận, chế biến, hoàn thành món', 'trên màn hình bếp (KDS)'],
       'Quản lý loại món, món, combo',
       'Quản lý công thức, đơn vị tính',
+      'Đề xuất đơn mua nguyên liệu',
+      'Xem thống kê bếp',
       'Quản lý trang thiết bị bếp',
-      'Chốt ca bếp',
     ],
   },
   {
     ten: ['Thủ kho'],
     keThuaNvChung: true,
     uc: [
-      'Quản lý nguyên liệu, nhập kho',
+      ['Nhận hàng, lập phiếu nhập', 'theo lô và hạn dùng'],
+      'Lập phiếu xuất (hỏng, hao hụt)',
       'Cảnh báo lô sắp hết hạn',
     ],
   },
@@ -154,7 +169,8 @@ const PHAI = [
     keThuaNvChung: true,
     uc: [
       'Quản lý đơn giao hàng',
-      'Phân đơn cho nhân viên giao hàng',
+      ['Phân đơn cho shipper', '(thủ công / tự động)'],
+      'Cấu hình khu vực giao',
       'Theo dõi bản đồ thời gian thực',
       'Xử lý đơn giao thất bại',
     ],
@@ -163,7 +179,7 @@ const PHAI = [
     ten: ['Nhân viên', 'giao hàng'],
     keThuaNvChung: true,
     uc: [
-      'Xem đơn được phân cho mình',
+      'Xem, nhận / từ chối đơn được phân',
       'Cập nhật trạng thái giao hàng',
       'Phát vị trí GPS khi đang giao',
     ],
@@ -177,6 +193,7 @@ const PHAI = [
       'Quản lý thông tin cá nhân',
       'Xem thông báo',
       'Chấm công bằng khuôn mặt',
+      'Chấm công trên điện thoại (GPS)',
       'Xin nghỉ phép',
       'Đổi mật khẩu',
     ],
@@ -252,7 +269,7 @@ function tongQuatMau() {
   const bienY = 24;
   const bienH = hangCuoi + RY + 34 - bienY;
   const H = bienY + bienH + 74;   // chua duong ke thua chay vong duoi
-  const W = 1500;
+  const W = 1540;
 
   const dnCy = Math.round(bienY + bienH / 2);
 

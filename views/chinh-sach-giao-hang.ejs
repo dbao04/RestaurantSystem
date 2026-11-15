@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Chính sách giao hàng' }) %>
+<%- include('partials/header', { title: t('cs_giao.tieu_de') }) %>
 <%
 /*
   CHINH SACH GIAO HANG.
@@ -47,46 +47,46 @@ var tien = function (n) { return formatMoney(n) + '₫'; };
 
 <section class="cs-wrap">
   <div class="cs-hero">
-    <h1><i class="fas fa-file-shield"></i> Chính sách giao hàng</h1>
-    <p>Áp dụng cho mọi đơn đặt giao tận nơi trên website. Vui lòng đọc kỹ trước khi đặt đơn, vì khi bấm đặt là quý khách đã đồng ý các điều khoản dưới đây.</p>
+    <h1><i class="fas fa-file-shield"></i> <%= t('cs_giao.tieu_de') %></h1>
+    <p><%= t('cs_giao.gioi_thieu') %></p>
     <div class="cs-tom-tat">
-      <div><b>Thanh toán trước 100%</b>Trả đủ tiền món và phí ship qua VietQR. Bếp nấu khi đã nhận đủ tiền.</div>
-      <div><b>Ship theo km, xa thì giảm giá/km</b>Mấy km đầu tính trọn gói, đi xa hơn thì đơn giá mỗi km thấp dần.</div>
-      <div><b>Lỗi khách: không hoàn</b>Tự hủy sau khi trả tiền, không nghe máy, sai địa chỉ, từ chối nhận.</div>
-      <div><b>Lỗi nhà hàng: hoàn điểm</b>Hoàn <%= cs.ty_le_hoan_diem %>% số tiền đã trả bằng điểm, không hoàn tiền mặt.</div>
+      <div><b><%= t('cs_giao.tt1_b') %></b><%= t('cs_giao.tt1') %></div>
+      <div><b><%= t('cs_giao.tt2_b') %></b><%= t('cs_giao.tt2') %></div>
+      <div><b><%= t('cs_giao.tt3_b') %></b><%= t('cs_giao.tt3') %></div>
+      <div><b><%= t('cs_giao.tt4_b') %></b><%= t('cs_giao.tt4', { pt: cs.ty_le_hoan_diem }) %></div>
     </div>
   </div>
 
   <!-- 1. THANH TOAN -->
   <div class="cs-muc">
-    <h2><span class="so">1</span> Thanh toán</h2>
+    <h2><span class="so">1</span> <%= t('cs_giao.m1') %></h2>
     <ul>
-      <li>Đơn giao hàng <b>phải thanh toán trước 100%</b>, gồm tiền món ăn và phí giao hàng, bằng chuyển khoản <b>VietQR</b>. Nhà hàng <b>không nhận COD</b> (trả tiền khi nhận hàng).</li>
-      <li>Sau khi bấm đặt, đơn được giữ <b><%= cs.phut_giu_thanh_toan %> phút</b> để quý khách chuyển khoản. Quá thời gian này mà nhà hàng chưa nhận đủ tiền, đơn <b>tự hủy</b>, quý khách không mất phí.</li>
-      <li>Bếp chỉ bắt đầu chế biến và hệ thống mới điều shipper sau khi nhà hàng đã nhận <b>đủ</b> số tiền.</li>
-      <li>Quý khách có thể dùng <b>điểm tích lũy / điểm hoàn</b> để trừ vào tiền món (1 điểm = <%= tien(cs.gia_tri_1_diem) %>, tối đa <%= cs.toi_da_diem_moi_don %>% tiền món mỗi đơn). Điểm không trừ vào phí ship.</li>
-      <li>Nếu tiền chuyển khoản về <b>sau</b> khi đơn đã tự hủy vì quá hạn, nhà hàng hoàn lại toàn bộ số tiền đó bằng điểm.</li>
+      <li><%- t('cs_giao.m1_1') %></li>
+      <li><%- t('cs_giao.m1_2', { phut: cs.phut_giu_thanh_toan }) %></li>
+      <li><%- t('cs_giao.m1_3') %></li>
+      <li><%- t('cs_giao.m1_4', { gia: tien(cs.gia_tri_1_diem), pt: cs.toi_da_diem_moi_don }) %></li>
+      <li><%- t('cs_giao.m1_5') %></li>
     </ul>
   </div>
 
   <!-- 2. PHI SHIP -->
   <div class="cs-muc">
-    <h2><span class="so">2</span> Phí giao hàng</h2>
-    <p>Phí ship tính theo <b>khoảng cách từ nhà hàng tới địa chỉ nhận</b>, phần lẻ làm tròn lên từng 0,5 km. Phí <b>tính theo bậc</b>: mấy km đầu trọn gói, mỗi km tiếp theo có đơn giá, và <b>càng đi xa thì đơn giá mỗi km càng giảm</b>. Tổng phí làm tròn lên bội số 1.000₫.</p>
+    <h2><span class="so">2</span> <%= t('cs_giao.m2') %></h2>
+    <p><%- t('cs_giao.m2_p') %></p>
     <% if (cs.mien_phi_tu > 0) { %>
-      <p><span class="cs-the cs-the--giam"><i class="fas fa-gift"></i> Miễn phí ship</span> cho đơn có tiền món từ <b><%= tien(cs.mien_phi_tu) %></b>.</p>
+      <p><span class="cs-the cs-the--giam"><i class="fas fa-gift"></i> <%= t('cs_giao.mien_ship') %></span> <%- t('cs_giao.mien_ship_p', { tien: tien(cs.mien_phi_tu) }) %></p>
     <% } %>
 
     <% cs.bang_gia.forEach(function (dv) { %>
-      <h3 style="font-size:15.5px; margin:16px 0 4px;"><i class="fas fa-motorcycle" style="color:#c8a24b"></i> <%= dv.ten_dv %> <span style="font-weight:400; color:#7a6b5c; font-size:13px;">— giao trong bán kính <%= dv.ban_kinh_km %> km</span></h3>
+      <h3 style="font-size:15.5px; margin:16px 0 4px;"><i class="fas fa-motorcycle" style="color:#c8a24b"></i> <%= dichNd(dv.ten_dv) %> <span style="font-weight:400; color:#7a6b5c; font-size:13px;"><%= t('cs_giao.ban_kinh', { km: dv.ban_kinh_km }) %></span></h3>
       <div class="cs-cuon">
         <table class="cs-bang">
-          <tr><th>Quãng đường</th><th>Đơn giá</th></tr>
-          <tr><td><%= dv.so_km_dau %> km đầu</td><td class="so"><%= tien(dv.phi_co_ban) %> (trọn gói)</td></tr>
+          <tr><th><%= t('cs_giao.quang_duong') %></th><th><%= t('cs_giao.don_gia') %></th></tr>
+          <tr><td><%= t('cs_giao.km_dau', { km: dv.so_km_dau }) %></td><td class="so"><%= tien(dv.phi_co_ban) %> (<%= t('cs_giao.tron_goi') %>)</td></tr>
           <% dv.bac.forEach(function (b, i) { var den = dv.bac[i + 1] ? dv.bac[i + 1].tu_km : null; %>
             <tr>
-              <td><%= den ? ('Từ km ' + b.tu_km + ' đến km ' + den) : ('Từ km ' + b.tu_km + ' trở đi') %>
-                <% if (b.giam > 0) { %> <span class="cs-the cs-the--giam">giảm <%= b.giam %>%</span><% } %></td>
+              <td><%= den ? t('cs_giao.tu_den_km', { tu: b.tu_km, den: den }) : t('cs_giao.tu_km', { tu: b.tu_km }) %>
+                <% if (b.giam > 0) { %> <span class="cs-the cs-the--giam"><%= t('cs_giao.giam', { pt: b.giam }) %></span><% } %></td>
               <td class="so"><%= tien(b.don_gia) %> / km</td>
             </tr>
           <% }) %>
@@ -94,75 +94,75 @@ var tien = function (n) { return formatMoney(n) + '₫'; };
       </div>
       <div class="cs-cuon">
         <table class="cs-bang">
-          <tr><th>Ví dụ khoảng cách</th><% dv.vi_du.forEach(function (v) { %><th style="text-align:right"><%= v.km %> km</th><% }) %></tr>
-          <tr><td>Phí ship</td><% dv.vi_du.forEach(function (v) { %><td class="so"><%= tien(v.phi) %></td><% }) %></tr>
+          <tr><th><%= t('cs_giao.vi_du_kc') %></th><% dv.vi_du.forEach(function (v) { %><th style="text-align:right"><%= v.km %> km</th><% }) %></tr>
+          <tr><td><%= t('cs_giao.phi_ship') %></td><% dv.vi_du.forEach(function (v) { %><td class="so"><%= tien(v.phi) %></td><% }) %></tr>
         </table>
       </div>
     <% }) %>
     <% var dv0 = cs.bang_gia[0]; if (dv0 && dv0.bac.length > 1) { %>
       <div class="cs-vd">
-        <b>Cách tính, ví dụ địa chỉ cách 6,3 km</b> (đội giao của nhà hàng, làm tròn thành 6,5 km):<br>
-        <%= dv0.so_km_dau %> km đầu <%= tien(dv0.phi_co_ban) %>
+        <%- t('cs_giao.vd_cach_tinh') %><br>
+        <%= t('cs_giao.km_dau', { km: dv0.so_km_dau }) %> <%= tien(dv0.phi_co_ban) %>
         <% var kmTinh = 6.5; dv0.bac.forEach(function (b, i) {
              var den = dv0.bac[i + 1] ? dv0.bac[i + 1].tu_km : Infinity;
              var soKm = Math.max(0, Math.min(kmTinh, den) - b.tu_km);
              if (soKm > 0) { %> + <%= String(soKm).replace('.', ',') %> km × <%= tien(b.don_gia) %><% } }) %>
-        . Hệ thống tự tính, quý khách thấy phí ship chính xác ngay khi ghim địa chỉ trên bản đồ.
+        . <%= t('cs_giao.tu_tinh') %>
       </div>
     <% } %>
   </div>
 
   <!-- 3. HUY DON -->
   <div class="cs-muc">
-    <h2><span class="so">3</span> Hủy đơn và hoàn điểm</h2>
+    <h2><span class="so">3</span> <%= t('cs_giao.m3') %></h2>
     <ul>
-      <li><b>Chưa thanh toán:</b> hủy thoải mái, không mất phí.</li>
-      <li><b>Đã thanh toán:</b> quý khách tự hủy được khi shipper <b>chưa tới lấy hàng</b>. Hủy lúc này được tính là <b>lỗi do khách</b>, theo mục bên dưới. Khi shipper đã lấy hàng thì đơn không hủy được nữa.</li>
+      <li><%- t('cs_giao.m3_1') %></li>
+      <li><%- t('cs_giao.m3_2') %></li>
     </ul>
 
     <div class="cs-hai-cot" style="margin-top:12px;">
       <div class="cs-o cs-o--khach">
-        <h3><i class="fas fa-user-xmark"></i> Lỗi do khách: KHÔNG hoàn</h3>
+        <h3><i class="fas fa-user-xmark"></i> <%= t('cs_giao.khach_h3') %></h3>
         <ul>
-          <% cs.ly_do_khach.forEach(function (l) { %><li><%= l.nhan %></li><% }) %>
+          <% cs.ly_do_khach.forEach(function (l) { %><li><%= dichNd(l.nhan) %></li><% }) %>
         </ul>
-        <p style="margin:8px 0 0; font-size:13.5px;">Món đã chế biến, shipper đã chạy nên nhà hàng <b>không hoàn tiền, không hoàn điểm</b>. Điểm đã dùng cho đơn cũng không được trả lại, và đơn hủy không được tích điểm.</p>
+        <p style="margin:8px 0 0; font-size:13.5px;"><%- t('cs_giao.khach_p') %></p>
       </div>
       <div class="cs-o cs-o--nh">
-        <h3><i class="fas fa-store-slash"></i> Lỗi do nhà hàng: HOÀN ĐIỂM</h3>
+        <h3><i class="fas fa-store-slash"></i> <%= t('cs_giao.nh_h3') %></h3>
         <ul>
-          <% cs.ly_do_nha_hang.forEach(function (l) { %><li><%= l.nhan %></li><% }) %>
+          <% cs.ly_do_nha_hang.forEach(function (l) { %><li><%= dichNd(l.nhan) %></li><% }) %>
         </ul>
-        <p style="margin:8px 0 0; font-size:13.5px;">Nhà hàng <b>không hoàn tiền mặt</b> mà hoàn <b><%= cs.ty_le_hoan_diem %>% số tiền đã thanh toán</b> (món + ship) <b>bằng điểm</b>, và trả lại nguyên số điểm quý khách đã dùng cho đơn.</p>
+        <p style="margin:8px 0 0; font-size:13.5px;"><%- t('cs_giao.nh_p', { pt: cs.ty_le_hoan_diem }) %></p>
       </div>
     </div>
 
     <div class="cs-vd">
-      <b>Quy đổi:</b> 1 điểm = <%= tien(cs.gia_tri_1_diem) %>. Ví dụ đơn đã trả 250.000₫ bị hủy vì nhà hàng hết món thì quý khách nhận <b><%= Math.ceil(250000 * cs.ty_le_hoan_diem / 100 / cs.gia_tri_1_diem) %> điểm</b>.<br>
-      <b>Giao thiếu hoặc sai một vài món</b> (đơn vẫn giao): nhà hàng hoàn điểm <b>đúng giá trị phần bị thiếu/sai</b>.
+      <%- t('cs_giao.quy_doi', { gia: tien(cs.gia_tri_1_diem), diem: Math.ceil(250000 * cs.ty_le_hoan_diem / 100 / cs.gia_tri_1_diem) }) %><br>
+      <%- t('cs_giao.thieu_mon') %>
     </div>
   </div>
 
   <!-- 4. DUNG DIEM -->
   <div class="cs-muc">
-    <h2><span class="so">4</span> Dùng điểm hoàn</h2>
+    <h2><span class="so">4</span> <%= t('cs_giao.m4') %></h2>
     <ul>
-      <li>Điểm vào ví thành viên ngay khi nhà hàng xác nhận hủy hoặc bù, quý khách xem tại <a href="/thanh-vien">Thành viên</a>.</li>
-      <li><b>Đặt giao hàng lần sau:</b> nhập số điểm muốn dùng ở bước thanh toán.</li>
-      <li><b>Ăn tại nhà hàng:</b> báo thu ngân dùng điểm, điểm được trừ thẳng vào hóa đơn như voucher.</li>
-      <li>Mỗi đơn dùng điểm tối đa <%= cs.toi_da_diem_moi_don %>% giá trị món. Điểm không đổi ra tiền mặt.</li>
+      <li><%- t('cs_giao.m4_1') %></li>
+      <li><%- t('cs_giao.m4_2') %></li>
+      <li><%- t('cs_giao.m4_3') %></li>
+      <li><%= t('cs_giao.m4_4', { pt: cs.toi_da_diem_moi_don }) %></li>
     </ul>
   </div>
 
   <!-- 5. HANH TRINH -->
   <div class="cs-muc">
-    <h2><span class="so">5</span> Hành trình một đơn</h2>
+    <h2><span class="so">5</span> <%= t('cs_giao.m5') %></h2>
     <ol class="cs-hanh-trinh">
-      <li>Chọn món, ghim địa chỉ: hệ thống báo khoảng cách và phí ship ngay.</li>
-      <li>Đồng ý chính sách, bấm <b>Đặt đơn &amp; Thanh toán</b>. Đơn được giữ <%= cs.phut_giu_thanh_toan %> phút.</li>
-      <li>Quét VietQR (có thể trừ bằng điểm). Nhà hàng nhận đủ tiền thì đơn tự chuyển xuống bếp.</li>
-      <li>Bếp nấu xong, shipper nhận đơn và giao. Quý khách theo dõi vị trí shipper trực tiếp bằng mã đơn.</li>
-      <li>Nhận hàng. Nếu có sự cố do nhà hàng, liên hệ hotline để được hoàn điểm.</li>
+      <li><%= t('cs_giao.m5_1') %></li>
+      <li><%- t('cs_giao.m5_2', { phut: cs.phut_giu_thanh_toan }) %></li>
+      <li><%= t('cs_giao.m5_3') %></li>
+      <li><%= t('cs_giao.m5_4') %></li>
+      <li><%= t('cs_giao.m5_5') %></li>
     </ol>
   </div>
 </section>

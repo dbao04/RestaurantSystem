@@ -13,7 +13,8 @@ fs.mkdirSync(thuMucPng, { recursive: true });
   const p = await b.newPage();
   const loi = [];
   p.on('pageerror', (e) => loi.push(e.message));
-  for (const ten of fs.readdirSync(thuMucSvg).filter((f) => f.endsWith('.svg'))) {
+  const chon = process.argv.slice(2);
+  for (const ten of fs.readdirSync(thuMucSvg).filter((f) => f.endsWith('.svg') && (!chon.length || chon.some((c) => f.includes(c))))) {
     const duong = 'file:///' + path.join(thuMucSvg, ten).replace(/\\/g, '/');
     await p.goto(duong, { waitUntil: 'load' });
     const vb = await p.evaluate(() => {

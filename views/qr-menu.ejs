@@ -582,7 +582,7 @@
       <div class="dish-note"><%= d.ghichu_mon || '' %></div>
       <div class="dish-footer">
         <span class="dish-price"><%= Number(d.gia_mon).toLocaleString('vi-VN') %>đ</span>
-        <% if (het) { %><span class="dish-het">Tạm hết</span><% } %>
+        <% if (het) { %><span class="dish-het"><%= t('qr.q_tam_het') %></span><% } %>
         <button class="btn-add" data-them="1" aria-label="<%= t('qr.them_vao_gio_aria', { ten: d.name_mon }) %>">
           <i class="fas fa-plus"></i> <%= t('qr.them') %>
         </button>
@@ -650,7 +650,7 @@
   <div class="tay-nam"></div>
   <div class="sheet-dau">
     <h3><i class="fas fa-basket-shopping"></i> <%= t('qr.gio_mon_cua_ban') %></h3>
-    <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
+    <button class="nut-tron" data-dong="1" aria-label="<%= t('qr.q_dong') %>"><i class="fas fa-times"></i></button>
   </div>
   <div id="gioItems"></div>
 
@@ -679,7 +679,7 @@
   <div class="sheet-dau">
     <button class="nut-tron" id="nutQuayLaiGio" aria-label="<%= t('qr.quay_lai_gio') %>"><i class="fas fa-arrow-left"></i></button>
     <h3><i class="fas fa-clipboard-check"></i> <%= t('qr.xac_nhan_goi_mon') %></h3>
-    <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
+    <button class="nut-tron" data-dong="1" aria-label="<%= t('qr.q_dong') %>"><i class="fas fa-times"></i></button>
   </div>
 
   <div class="hop-nhac">
@@ -710,7 +710,7 @@
   <div class="sheet-dau">
     <h3><i class="fas fa-list-check"></i> <%= t('qr.don_cua_ban', { ban: t('qr.ban') + ' ' + tableName }) %></h3>
     <button class="nut-tron" id="nutLamMoi" aria-label="<%= t('qr.lam_moi') %>"><i class="fas fa-rotate"></i></button>
-    <button class="nut-tron" data-dong="1" aria-label="Đóng"><i class="fas fa-times"></i></button>
+    <button class="nut-tron" data-dong="1" aria-label="<%= t('qr.q_dong') %>"><i class="fas fa-times"></i></button>
   </div>
 
   <div id="donTienTrinhWrap" style="display:none">
@@ -739,7 +739,7 @@
   <div class="nhom">
     <button class="nut-chinh" id="nutTheoDoi"><i class="fas fa-list-check"></i> <%= t('qr.theo_doi_don') %></button>
     <button class="nut-phu" id="nutDatThem"><i class="fas fa-plus"></i> <%= t('qr.goi_them_mon') %></button>
-    <button class="nut-phu" id="nutThanhToanXong"><i class="fas fa-wallet"></i> Thanh toán</button>
+    <button class="nut-phu" id="nutThanhToanXong"><i class="fas fa-wallet"></i> <%= t('qr.q_thanh_toan') %></button>
   </div>
 </div>
 
@@ -929,7 +929,7 @@
   document.getElementById('menuGrid').addEventListener('click', function (e) {
     var card = e.target.closest('.dish-card');
     if (!card) return;
-    if (card.hasAttribute('data-het')) { showToast('Món này tạm hết, vui lòng chọn món khác.'); return; }
+    if (card.hasAttribute('data-het')) { showToast(<%- JSON.stringify(t('qr.q_het_mon')) %>); return; }
     var mon = docMonTuThe(card);
     // Nut "Them" them nhanh mot phan; bam vao the thi mo chi tiet de chon so
     // luong va ghi chu truoc.

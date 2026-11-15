@@ -36,6 +36,7 @@ const db = require('../config/db');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
 const diaChiQR = require('../utils/diaChiQR');
+const { dich } = require('../services/dichThongBao');
 
 const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -436,6 +437,7 @@ router.get('/api/giao-hang/bao-gia', bat(async (req, res) => {
   const bao = await vc.tinhPhi(
     req.query.vi_do, req.query.kinh_do, Number(req.query.tien_hang) || 0
   );
+  if (bao && bao.ly_do) bao.ly_do = dich(bao.ly_do, req.ngonNgu);
   res.json({ ok: true, ...bao });
 }));
 

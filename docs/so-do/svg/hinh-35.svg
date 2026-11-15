@@ -1,0 +1,137 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1428 840" role="img" aria-label="Lược đồ quan hệ thực thể của phân hệ đặt bàn và đặt tiệc: lượt đặt, khoá ô thời gian, món đặt trước, tiền cọc, đơn tiệc và các lần thu tiền"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-erdE" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-erdE" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="bang "><rect class="vien" x="30" y="40" width="160" height="158" rx="3"/><rect class="ngan-ten" x="30" y="40" width="160" height="24" rx="3"/><text class="tx-bang-ten" x="110" y="56">reservation_customers</text><line x1="30" y1="64" x2="190" y2="64"/><text class="tx-khoa" x="38" y="77">PK</text><text class="tx-cot" x="60" y="77">phone</text><text class="tx-khoa" x="38" y="93">FK</text><text class="tx-cot" x="60" y="93">customer_id</text><text class="tx-cot" x="40" y="109">full_name</text><text class="tx-cot" x="40" y="125">customer_type</text><text class="tx-cot" x="40" y="141">total_reservations</text><text class="tx-cot" x="40" y="157">no_show_count</text><text class="tx-cot" x="40" y="173">cancelled_count</text><text class="tx-cot" x="40" y="189">is_blocked</text></g><g class="bang phu"><rect class="vien" x="30" y="290" width="180" height="174" rx="3"/><rect class="ngan-ten" x="30" y="290" width="180" height="24" rx="3"/><text class="tx-bang-ten" x="120" y="306">reservation_deposit_rules</text><line x1="30" y1="314" x2="210" y2="314"/><text class="tx-khoa" x="38" y="327">PK</text><text class="tx-cot" x="60" y="327">id</text><text class="tx-cot" x="40" y="343">name</text><text class="tx-cot" x="40" y="359">applies_to</text><text class="tx-cot" x="40" y="375">min_guests</text><text class="tx-cot" x="40" y="391">from_time</text><text class="tx-cot" x="40" y="407">to_time</text><text class="tx-cot" x="40" y="423">amount_type</text><text class="tx-cot" x="40" y="439">amount</text><text class="tx-cot" x="40" y="455">priority</text></g><g class="bang phu"><rect class="vien" x="30" y="520" width="146" height="110" rx="3"/><rect class="ngan-ten" x="30" y="520" width="146" height="24" rx="3"/><text class="tx-bang-ten" x="103" y="536">cancellation_policies</text><line x1="30" y1="544" x2="176" y2="544"/><text class="tx-khoa" x="38" y="557">PK</text><text class="tx-cot" x="60" y="557">id</text><text class="tx-cot" x="40" y="573">name</text><text class="tx-cot" x="40" y="589">hours_before</text><text class="tx-cot" x="40" y="605">refund_percent</text><text class="tx-cot" x="40" y="621">applies_to</text></g><g class="bang "><rect class="vien" x="330" y="40" width="124" height="302" rx="3"/><rect class="ngan-ten" x="330" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="392" y="56">reservations</text><line x1="330" y1="64" x2="454" y2="64"/><text class="tx-khoa" x="338" y="77">PK</text><text class="tx-cot" x="360" y="77">id</text><text class="tx-cot" x="340" y="93">reservation_code</text><text class="tx-khoa" x="338" y="109">FK</text><text class="tx-cot" x="360" y="109">customer_id</text><text class="tx-cot" x="340" y="125">phone</text><text class="tx-cot" x="340" y="141">customer_name</text><text class="tx-cot" x="340" y="157">reservation_date</text><text class="tx-cot" x="340" y="173">start_time</text><text class="tx-cot" x="340" y="189">expected_end_time</text><text class="tx-cot" x="340" y="205">guest_count</text><text class="tx-khoa" x="338" y="221">FK</text><text class="tx-cot" x="360" y="221">area_id</text><text class="tx-cot" x="340" y="237">source</text><text class="tx-cot" x="340" y="253">status</text><text class="tx-cot" x="340" y="269">deposit_status</text><text class="tx-cot" x="340" y="285">deposit_amount</text><text class="tx-cot" x="340" y="301">deposit_due_at</text><text class="tx-cot" x="340" y="317">hold_until</text><text class="tx-cot" x="340" y="333">refund_amount</text></g><g class="bang "><rect class="vien" x="594" y="40" width="138" height="62" rx="3"/><rect class="ngan-ten" x="594" y="40" width="138" height="24" rx="3"/><text class="tx-bang-ten" x="663" y="56">reservation_tables</text><line x1="594" y1="64" x2="732" y2="64"/><text class="tx-khoa" x="602" y="77">PF</text><text class="tx-cot" x="624" y="77">reservation_id</text><text class="tx-khoa" x="602" y="93">PF</text><text class="tx-cot" x="624" y="93">table_id</text></g><g class="bang "><rect class="vien" x="594" y="140" width="161" height="78" rx="3"/><rect class="ngan-ten" x="594" y="140" width="161" height="24" rx="3"/><text class="tx-bang-ten" x="674.5" y="156">reservation_slot_locks</text><line x1="594" y1="164" x2="755" y2="164"/><text class="tx-khoa" x="602" y="177">PF</text><text class="tx-cot" x="624" y="177">table_id</text><text class="tx-khoa" x="602" y="193">PK</text><text class="tx-cot" x="624" y="193">slot_start</text><text class="tx-khoa" x="602" y="209">FK</text><text class="tx-cot" x="624" y="209">reservation_id</text></g><g class="bang "><rect class="vien" x="594" y="270" width="160" height="142" rx="3"/><rect class="ngan-ten" x="594" y="270" width="160" height="24" rx="3"/><text class="tx-bang-ten" x="674" y="286">reservation_preorders</text><line x1="594" y1="294" x2="754" y2="294"/><text class="tx-khoa" x="602" y="307">PK</text><text class="tx-cot" x="624" y="307">id</text><text class="tx-khoa" x="602" y="323">FK</text><text class="tx-cot" x="624" y="323">reservation_id</text><text class="tx-khoa" x="602" y="339">FK</text><text class="tx-cot" x="624" y="339">dish_id</text><text class="tx-cot" x="604" y="355">dish_name</text><text class="tx-cot" x="604" y="371">price</text><text class="tx-cot" x="604" y="387">quantity</text><text class="tx-cot" x="604" y="403">note</text></g><g class="bang "><rect class="vien" x="594" y="450" width="151" height="142" rx="3"/><rect class="ngan-ten" x="594" y="450" width="151" height="24" rx="3"/><text class="tx-bang-ten" x="669.5" y="466">reservation_deposits</text><line x1="594" y1="474" x2="745" y2="474"/><text class="tx-khoa" x="602" y="487">PK</text><text class="tx-cot" x="624" y="487">id</text><text class="tx-khoa" x="602" y="503">FK</text><text class="tx-cot" x="624" y="503">reservation_id</text><text class="tx-cot" x="604" y="519">amount</text><text class="tx-cot" x="604" y="535">status</text><text class="tx-cot" x="604" y="551">paid_at</text><text class="tx-cot" x="604" y="567">refunded_at</text><text class="tx-cot" x="604" y="583">transaction_id</text></g><g class="bang "><rect class="vien" x="594" y="630" width="144" height="126" rx="3"/><rect class="ngan-ten" x="594" y="630" width="144" height="24" rx="3"/><text class="tx-bang-ten" x="666" y="646">reservation_history</text><line x1="594" y1="654" x2="738" y2="654"/><text class="tx-khoa" x="602" y="667">PK</text><text class="tx-cot" x="624" y="667">id</text><text class="tx-khoa" x="602" y="683">FK</text><text class="tx-cot" x="624" y="683">reservation_id</text><text class="tx-cot" x="604" y="699">from_status</text><text class="tx-cot" x="604" y="715">to_status</text><text class="tx-cot" x="604" y="731">note</text><text class="tx-cot" x="604" y="747">changed_by</text></g><g class="bang phu"><rect class="vien" x="875" y="40" width="124" height="110" rx="3"/><rect class="ngan-ten" x="875" y="40" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="937" y="56">ban</text><line x1="875" y1="64" x2="999" y2="64"/><text class="tx-khoa" x="883" y="77">PK</text><text class="tx-cot" x="905" y="77">Id_ban</text><text class="tx-khoa" x="883" y="93">FK</text><text class="tx-cot" x="905" y="93">id_vitri</text><text class="tx-cot" x="885" y="109">number_ban</text><text class="tx-cot" x="885" y="125">so_cho</text><text class="tx-cot" x="885" y="141">trangthai</text></g><g class="bang phu"><rect class="vien" x="875" y="230" width="124" height="94" rx="3"/><rect class="ngan-ten" x="875" y="230" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="937" y="246">vitri</text><line x1="875" y1="254" x2="999" y2="254"/><text class="tx-khoa" x="883" y="267">PK</text><text class="tx-cot" x="905" y="267">id_vitri</text><text class="tx-cot" x="885" y="283">name_vitri</text><text class="tx-cot" x="885" y="299">tiec_toi_thieu</text><text class="tx-cot" x="885" y="315">tiec_toi_da</text></g><g class="bang phu"><rect class="vien" x="875" y="350" width="124" height="78" rx="3"/><rect class="ngan-ten" x="875" y="350" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="937" y="366">monan</text><line x1="875" y1="374" x2="999" y2="374"/><text class="tx-khoa" x="883" y="387">PK</text><text class="tx-cot" x="905" y="387">id_mon</text><text class="tx-cot" x="885" y="403">name_mon</text><text class="tx-cot" x="885" y="419">gia_mon</text></g><g class="bang "><rect class="vien" x="1119" y="40" width="127" height="270" rx="3"/><rect class="ngan-ten" x="1119" y="40" width="127" height="24" rx="3"/><text class="tx-bang-ten" x="1182.5" y="56">dat_tiec</text><line x1="1119" y1="64" x2="1246" y2="64"/><text class="tx-khoa" x="1127" y="77">PK</text><text class="tx-cot" x="1149" y="77">id</text><text class="tx-cot" x="1129" y="93">ma_tiec</text><text class="tx-khoa" x="1127" y="109">FK</text><text class="tx-cot" x="1149" y="109">customer_id</text><text class="tx-cot" x="1129" y="125">ho_ten</text><text class="tx-cot" x="1129" y="141">so_dien_thoai</text><text class="tx-cot" x="1129" y="157">loai_tiec</text><text class="tx-cot" x="1129" y="173">ngay_to_chuc</text><text class="tx-cot" x="1129" y="189">buoi</text><text class="tx-cot" x="1129" y="205">so_khach</text><text class="tx-cot" x="1129" y="221">so_ban</text><text class="tx-khoa" x="1127" y="237">FK</text><text class="tx-cot" x="1149" y="237">khu_vuc_id</text><text class="tx-khoa" x="1127" y="253">FK</text><text class="tx-cot" x="1149" y="253">thuc_don_id</text><text class="tx-cot" x="1129" y="269">tong_du_toan</text><text class="tx-cot" x="1129" y="285">trang_thai</text><text class="tx-khoa" x="1127" y="301">FK</text><text class="tx-cot" x="1149" y="301">nhan_vien_xu_ly</text></g><g class="bang "><rect class="vien" x="1119" y="340" width="124" height="110" rx="3"/><rect class="ngan-ten" x="1119" y="340" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="1181" y="356">thuc_don_tiec</text><line x1="1119" y1="364" x2="1243" y2="364"/><text class="tx-khoa" x="1127" y="377">PK</text><text class="tx-cot" x="1149" y="377">id</text><text class="tx-cot" x="1129" y="393">ma</text><text class="tx-cot" x="1129" y="409">loai_tiec</text><text class="tx-cot" x="1129" y="425">ten</text><text class="tx-cot" x="1129" y="441">gia_ban</text></g><g class="bang "><rect class="vien" x="1119" y="480" width="147" height="126" rx="3"/><rect class="ngan-ten" x="1119" y="480" width="147" height="24" rx="3"/><text class="tx-bang-ten" x="1192.5" y="496">dat_tiec_thanh_toan</text><line x1="1119" y1="504" x2="1266" y2="504"/><text class="tx-khoa" x="1127" y="517">PK</text><text class="tx-cot" x="1149" y="517">id</text><text class="tx-khoa" x="1127" y="533">FK</text><text class="tx-cot" x="1149" y="533">dat_tiec_id</text><text class="tx-cot" x="1129" y="549">so_tien</text><text class="tx-cot" x="1129" y="565">phuong_thuc</text><text class="tx-cot" x="1129" y="581">ma_giao_dich</text><text class="tx-cot" x="1129" y="597">nguoi_ghi_nhan</text></g><g class="bang "><rect class="vien" x="1119" y="640" width="124" height="110" rx="3"/><rect class="ngan-ten" x="1119" y="640" width="124" height="24" rx="3"/><text class="tx-bang-ten" x="1181" y="656">dat_tiec_lich_su</text><line x1="1119" y1="664" x2="1243" y2="664"/><text class="tx-khoa" x="1127" y="677">PK</text><text class="tx-cot" x="1149" y="677">id</text><text class="tx-khoa" x="1127" y="693">FK</text><text class="tx-cot" x="1149" y="693">dat_tiec_id</text><text class="tx-cot" x="1129" y="709">tu_trang_thai</text><text class="tx-cot" x="1129" y="725">den_trang_thai</text><text class="tx-cot" x="1129" y="741">nguoi_doi</text></g><g class="noi-bang">
+    <polyline class="qh-lop" points="190,100 330,100"/>
+    <line x1="201" y1="93" x2="201" y2="107"/><line x1="330" y1="100" x2="319" y2="100"/><line x1="330" y1="100" x2="319" y2="93"/><line x1="330" y1="100" x2="319" y2="107"/><text class="tx-boi" x="260" y="92">theo SĐT</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="454,70 594,70"/>
+    <line x1="465" y1="63" x2="465" y2="77"/><line x1="594" y1="70" x2="583" y2="70"/><line x1="594" y1="70" x2="583" y2="63"/><line x1="594" y1="70" x2="583" y2="77"/><text class="tx-boi" x="524" y="62">xếp bàn</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="454,190 594,190"/>
+    <line x1="465" y1="183" x2="465" y2="197"/><line x1="594" y1="190" x2="583" y2="190"/><line x1="594" y1="190" x2="583" y2="183"/><line x1="594" y1="190" x2="583" y2="197"/><text class="tx-boi" x="524" y="182">giữ ô 15 phút</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="454,320 594,320"/>
+    <line x1="465" y1="313" x2="465" y2="327"/><line x1="594" y1="320" x2="583" y2="320"/><line x1="594" y1="320" x2="583" y2="313"/><line x1="594" y1="320" x2="583" y2="327"/><text class="tx-boi" x="524" y="312">món đặt trước</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="424,342 424,510 594,510"/>
+    <line x1="431" y1="353" x2="417" y2="353"/><line x1="594" y1="510" x2="583" y2="510"/><line x1="594" y1="510" x2="583" y2="503"/><line x1="594" y1="510" x2="583" y2="517"/><text class="tx-boi" x="509" y="502">tiền cọc</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="394,342 394,680 594,680"/>
+    <line x1="401" y1="353" x2="387" y2="353"/><line x1="594" y1="680" x2="583" y2="680"/><line x1="594" y1="680" x2="583" y2="673"/><line x1="594" y1="680" x2="583" y2="687"/><text class="tx-boi" x="504" y="672">lịch sử trạng thái</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="875,70 732,70"/>
+    <line x1="864" y1="77" x2="864" y2="63"/><line x1="732" y1="70" x2="743" y2="70"/><line x1="732" y1="70" x2="743" y2="77"/><line x1="732" y1="70" x2="743" y2="63"/><text class="tx-boi" x="803.5" y="62">bàn</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="875,120 835,120 835,190 755,190"/>
+    <line x1="864" y1="127" x2="864" y2="113"/><line x1="755" y1="190" x2="766" y2="190"/><line x1="755" y1="190" x2="766" y2="197"/><line x1="755" y1="190" x2="766" y2="183"/><text class="tx-boi" x="795" y="182">bị khoá</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="937,230 937,150"/>
+    <line x1="930" y1="219" x2="944" y2="219"/><line x1="937" y1="150" x2="937" y2="161"/><line x1="937" y1="150" x2="930" y2="161"/><line x1="937" y1="150" x2="944" y2="161"/><text class="tx-boi" x="977" y="216">gồm bàn</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="875,250 454,250"/>
+    <line x1="864" y1="257" x2="864" y2="243"/><line x1="454" y1="250" x2="465" y2="250"/><line x1="454" y1="250" x2="465" y2="257"/><line x1="454" y1="250" x2="465" y2="243"/><text class="tx-boi" x="524" y="242">khu vực</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="875,385 754,385"/>
+    <line x1="864" y1="392" x2="864" y2="378"/><line x1="754" y1="385" x2="765" y2="385"/><line x1="754" y1="385" x2="765" y2="392"/><line x1="754" y1="385" x2="765" y2="378"/><text class="tx-boi" x="814.5" y="377">món</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="999,290 1119,290"/>
+    <line x1="1010" y1="283" x2="1010" y2="297"/><line x1="1119" y1="290" x2="1108" y2="290"/><line x1="1119" y1="290" x2="1108" y2="283"/><line x1="1119" y1="290" x2="1108" y2="297"/><text class="tx-boi" x="1059" y="282">sảnh tổ chức</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="1181,340 1181,310"/>
+    <line x1="1174" y1="329" x2="1188" y2="329"/><line x1="1181" y1="310" x2="1181" y2="321"/><line x1="1181" y1="310" x2="1174" y2="321"/><line x1="1181" y1="310" x2="1188" y2="321"/><text class="tx-boi" x="1223" y="326">thực đơn</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="1246,200 1296,200 1296,530 1266,530"/>
+    <line x1="1257" y1="193" x2="1257" y2="207"/><line x1="1266" y1="530" x2="1277" y2="530"/><line x1="1266" y1="530" x2="1277" y2="537"/><line x1="1266" y1="530" x2="1277" y2="523"/><text class="tx-boi" x="1370" y="510">thu nhiều đợt</text>
+  </g><g class="noi-bang">
+    <polyline class="qh-lop" points="1246,230 1318,230 1318,690 1243,690"/>
+    <line x1="1257" y1="223" x2="1257" y2="237"/><line x1="1243" y1="690" x2="1254" y2="690"/><line x1="1243" y1="690" x2="1254" y2="697"/><line x1="1243" y1="690" x2="1254" y2="683"/><text class="tx-boi" x="1354" y="670">lịch sử</text>
+  </g><g class="ghi-chu">
+    <text class="tx-ghi" x="30" y="790">reservation_slot_locks là "hàng rào" chống đặt trùng: mỗi dòng là một ô 15 phút của một bàn, khoá chính (table_id, slot_start) nên hai lượt đặt</text><text class="tx-ghi" x="30" y="803">không thể cùng giữ một ô. reservation_deposit_rules và cancellation_policies là bảng cấu hình luật, không có khoá ngoại. Đặt tiệc giữ cả sảnh</text><text class="tx-ghi" x="30" y="816">(vitri) theo buổi, chỉ đơn ĐÃ XÁC NHẬN / ĐÃ CỌC mới giữ chỗ; mỗi lần đổi trạng thái hay thu tiền đều để lại một dòng lịch sử.</text>
+  </g></svg>

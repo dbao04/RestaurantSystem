@@ -208,7 +208,7 @@
                   <button type="button" class="nh-btn nh-btn--dark nh-btn--sm btn-mo-chi-tiet"
                     onclick="moModalChiTiet(this)"
                     data-code="<%= r.reservation_code %>"
-                    data-name="<%= r.customer_name || 'Khách hàng' %>"
+                    data-name="<%= r.customer_name || t('don.d_khach_hang') %>"
                     data-phone="<%= r.phone || '' %>"
                     data-time="<%= (r.gio || '') + (r.gio_ket_thuc ? ' – ' + r.gio_ket_thuc : '') + ' · ' + (r.reservation_date || '') %>"
                     data-guests="<%= r.guest_count || 1 %>"
@@ -217,7 +217,7 @@
                     data-occasion="<%= r.occasion || t('don.thong_thuong') %>"
                     data-deposit="<%= Number(r.deposit_amount) > 0 ? (Number(r.deposit_amount).toLocaleString('vi-VN') + ' ₫ (' + r.deposit_status + ')') : t('don.khong_yeu_cau_coc') %>"
                     data-requests="<%= r.special_requests || t('don.khong_co') %>"
-                    data-dishes="<%= (r.mon_dat_truoc && r.mon_dat_truoc.length > 0) ? r.mon_dat_truoc.map(function(m){ return (m.dish_name || m.name || 'Món') + ' (x' + (m.quantity || 1) + ')'; }).join(', ') : '' %>"
+                    data-dishes="<%= (r.mon_dat_truoc && r.mon_dat_truoc.length > 0) ? r.mon_dat_truoc.map(function(m){ return (m.dish_name || m.name || t('don.d_mon')) + ' (x' + (m.quantity || 1) + ')'; }).join(', ') : '' %>"
                     data-status="<%= r.nhan_trang_thai || r.status || '' %>"
                     data-raw-status="<%= r.status || 'PENDING' %>">
                     <i class="fas fa-eye"></i> <%= t('don.xem_chi_tiet_btn') %>
@@ -559,7 +559,7 @@ function moModalSuaDatBan(btn) {
 function moModalChiTiet(btn) {
   var d = btn.dataset;
   document.getElementById('mMa').textContent = d.code || '';
-  document.getElementById('mTenKhach').textContent = d.name || 'Khách hàng';
+  document.getElementById('mTenKhach').textContent = d.name || <%- JSON.stringify(t('don.d_khach_hang')) %>;
   document.getElementById('mSdt').textContent = d.phone || '-';
   document.getElementById('mThoiGian').textContent = d.time || '';
   document.getElementById('mSoKhach').textContent = (d.guests || 1) + ' ' + TXT_KHACH;
@@ -612,18 +612,18 @@ function moModalHuyDatBan(btn) {
     if (data.ok && data.huy) {
       var h = data.huy;
       if (h.soTien > 0) {
-        box.innerHTML = '<i class="fas fa-check-circle" style="color:#16a34a"></i> <strong>Chính sách hoàn tiền:</strong> Bạn sẽ được hoàn <strong>' + Number(h.soTien).toLocaleString('vi-VN') + ' ₫ (' + h.phanTram + '%)</strong> theo chính sách ' + (h.chinhSach || '') + '.';
+        box.innerHTML = '<i class="fas fa-check-circle" style="color:#16a34a"></i> ' + <%- JSON.stringify(t('don.d_hoan_tien')) %>.replace('{tien}', Number(h.soTien).toLocaleString('vi-VN')).replace('{pt}', h.phanTram);
       } else if (h.da_coc > 0) {
-        box.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#d97706"></i> <strong>Lưu ý:</strong> Do hủy sát giờ hẹn (' + h.gio_con_lai + ' giờ trước giờ dùng bữa), tiền đặt cọc sẽ <strong>không được hoàn lại</strong> theo quy định nhà hàng.';
+        box.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#d97706"></i> ' + <%- JSON.stringify(t('don.d_sat_gio')) %>.replace('{gio}', h.gio_con_lai);
       } else {
-        box.innerHTML = '<i class="fas fa-info-circle"></i> Đơn đặt bàn này không có tiền cọc, việc hủy bàn sẽ được thực hiện ngay lập tức.';
+        box.innerHTML = '<i class="fas fa-info-circle"></i> ' + <%- JSON.stringify(t('don.d_khong_coc')) %>;
       }
     } else {
-      box.innerHTML = '<i class="fas fa-info-circle"></i> Xác nhận hủy bàn này. Bàn của bạn sẽ được mở lại cho các khách hàng khác.';
+      box.innerHTML = '<i class="fas fa-info-circle"></i> ' + <%- JSON.stringify(t('don.d_xac_nhan_huy')) %>;
     }
   })
   .catch(function() {
-    if (box) box.innerHTML = '<i class="fas fa-info-circle"></i> Xác nhận hủy bàn này. Bàn của bạn sẽ được mở lại cho các khách hàng khác.';
+    if (box) box.innerHTML = '<i class="fas fa-info-circle"></i> ' + <%- JSON.stringify(t('don.d_xac_nhan_huy')) %>;
   });
 }
 
@@ -943,7 +943,7 @@ function xuLyLuuSua(e) {
       alert(TXT_CAP_NHAT_OK);
       window.location.reload();
     } else {
-      loiBox.textContent = res.thong_bao || 'Có lỗi khi cập nhật lịch đặt bàn.';
+      loiBox.textContent = res.thong_bao || <%- JSON.stringify(t('don.d_loi_doi_lich')) %>;
       loiBox.style.display = 'block';
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> ' + TXT_LUU_THAY_DOI;
@@ -984,7 +984,7 @@ function xuLyHuyDatBan(e) {
       alert(TXT_HUY_OK);
       window.location.reload();
     } else {
-      loiBox.textContent = res.thong_bao || 'Có lỗi khi hủy lượt đặt bàn.';
+      loiBox.textContent = res.thong_bao || <%- JSON.stringify(t('don.d_loi_huy')) %>;
       loiBox.style.display = 'block';
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-trash-alt"></i> ' + TXT_XAC_NHAN_HUY;

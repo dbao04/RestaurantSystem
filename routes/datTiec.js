@@ -10,17 +10,21 @@ const dv = require('../services/datTiecService');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
 const { ngayCucBo } = require('../utils/thoiGian');
+const { dich } = require('../services/dichThongBao');
 
 const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 function traLoi(res, e) {
+  // Chi dich cho API khu khach (/api/dat-tiec*); khu nhan vien giu tieng Viet.
+  const req = res.req || {};
+  const nn = String(req.originalUrl || '').startsWith('/api/dat-tiec') ? req.ngonNgu : 'vi';
   if (e && e.name === 'LoiDatTiec') {
     return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CONFLICT' ? 409 : e.ma === 'FORBIDDEN' ? 403 : 400)
-      .json({ ok: false, ma: e.ma, thong_bao: e.message });
+      .json({ ok: false, ma: e.ma, thong_bao: dich(e.message, nn) });
   }
   console.error('[dat-tiec] lỗi:', e);
-  return res.status(500).json({ ok: false, thong_bao: 'Hệ thống đang bận, vui lòng thử lại.' });
+  return res.status(500).json({ ok: false, thong_bao: dich('Hệ thống đang bận, vui lòng thử lại.', nn) });
 }
 
 // ------------------------------------------------------------------ khach

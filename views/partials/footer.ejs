@@ -53,7 +53,7 @@
             <ul>
               <li style="line-height:1.55;"><i class="fas fa-map-marker-alt" style="margin-top:0.2rem;"></i><span style="display:inline-block;"><%= t('chan_trang.dia_chi') %></span></li>
               <li><i class="fas fa-phone-alt"></i><a href="tel:0388062048">0388 062 048</a></li>
-              <li><i class="fas fa-headset"></i><a href="/chat" style="color:var(--nh-gold-soft); font-weight:600;"><%= t('chat.tieu_de') || 'Chat với nhân viên' %></a></li>
+              <li><i class="fas fa-headset"></i><a href="/chat" style="color:var(--nh-gold-soft); font-weight:600;"><%= t('chat.tieu_de') %></a></li>
             </ul>
           </div>
 
@@ -135,7 +135,7 @@
           title: data.title,
           text: data.message,
           icon: 'success',
-          confirmButtonText: 'Đóng',
+          confirmButtonText: <%- JSON.stringify(t('giao_dien.dong')) %>,
           timer: 10000,
           timerProgressBar: true
         });
@@ -146,8 +146,8 @@
         if(!window.location.pathname.includes('/chat') && data.nguoi_gui !== 'khach') {
             notifSound.play().catch(e=>console.log(e));
             Swal.fire({
-              title: "Tin nhắn mới!",
-              text: data.noi_dung || (data.loai_file === 'image' ? '📷 Nhân viên đã gửi một hình ảnh' : '📎 Nhân viên đã gửi một tệp đính kèm'),
+              title: <%- JSON.stringify(t('giao_dien.tin_nhan_moi')) %>,
+              text: data.noi_dung || (data.loai_file === 'image' ? <%- JSON.stringify(t('giao_dien.nv_gui_anh')) %> : <%- JSON.stringify(t('giao_dien.nv_gui_tep')) %>),
               icon: 'info',
               toast: true,
               position: 'bottom-end',
@@ -196,13 +196,13 @@
     if (iconToggle) {
       iconToggle.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
       if (nutToggle) {
-        nutToggle.title = isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối';
+        nutToggle.title = isDark ? <%- JSON.stringify(t('giao_dien.sang_sang')) %> : <%- JSON.stringify(t('giao_dien.sang_toi')) %>;
       }
     }
     if (nutMobile) {
       var mIcon = nutMobile.querySelector('i');
       if (mIcon) mIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-      if (textMobile) textMobile.textContent = isDark ? 'Chế độ sáng' : 'Chế độ tối';
+      if (textMobile) textMobile.textContent = isDark ? <%- JSON.stringify(t('giao_dien.che_do_sang')) %> : <%- JSON.stringify(t('giao_dien.che_do_toi')) %>;
     }
   }
 

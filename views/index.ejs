@@ -45,7 +45,7 @@
   var soSlide = 1 + dsKM.length + (dsBC.length ? 1 : 0) + 1;
   var stt = 0;
 %>
-<header class="nh-hero nh-hero--slider" aria-roledescription="carousel" aria-label="Ưu đãi và nổi bật">
+<header class="nh-hero nh-hero--slider" aria-roledescription="carousel" aria-label="<%= t('trang_chu.sl_aria') %>">
   <div class="nh-hero__bg nh-wa-song"></div>
   <div class="nh-hero__veil"></div>
 
@@ -119,23 +119,23 @@
     <div class="nh-slide nh-slide--km" data-slide="<%= stt %>" role="group" aria-roledescription="slide" aria-label="<%= ++stt %> / <%= soSlide %>" aria-hidden="true">
       <div class="nh-km-ve" aria-hidden="true">
         <div class="nh-km-ve__trai">
-          <span class="nh-km-ve__nhan">Giảm</span>
+          <span class="nh-km-ve__nhan"><%= t('trang_chu.sl_giam') %></span>
           <b class="nh-km-ve__so"><%= giaTriKM(k) %></b>
-          <% if (k.max_discount_amount && k.discount_type === 'percentage') { %><span class="nh-km-ve__phu">tối đa <%= vnd(k.max_discount_amount) %></span><% } %>
+          <% if (k.max_discount_amount && k.discount_type === 'percentage') { %><span class="nh-km-ve__phu"><%= t('trang_chu.sl_toi_da', { tien: vnd(k.max_discount_amount) }) %></span><% } %>
         </div>
         <div class="nh-km-ve__phai">
-          <span>Mã ưu đãi</span>
+          <span><%= t('trang_chu.sl_ma') %></span>
           <b><%= k.code %></b>
-          <small>HSD: <%= k.han %></small>
+          <small><%= t('trang_chu.sl_hsd', { han: k.han }) %></small>
         </div>
       </div>
       <div class="nh-container">
         <div class="nh-hero__inner">
-          <span class="nh-eyebrow">Ưu đãi đặc biệt</span>
-          <h1>Giảm ngay <span><%= giaTriKM(k) %></span><br>cho hóa đơn</h1>
-          <p><% if (k.min_order_value) { %>Áp dụng cho đơn từ <%= vnd(k.min_order_value) %><% if (k.max_discount_amount && k.discount_type === 'percentage') { %>, giảm tối đa <%= vnd(k.max_discount_amount) %><% } %>. <% } %>Nhập mã khi thanh toán đơn giao tận nơi hoặc tại quầy – hạn dùng đến <%= k.han %>.</p>
+          <span class="nh-eyebrow"><%= t('trang_chu.sl_eyebrow') %></span>
+          <h1><%- t('trang_chu.sl_h1', { gt: giaTriKM(k) }) %></h1>
+          <p><% if (k.min_order_value) { %><%= t('trang_chu.sl_ap_dung', { tien: vnd(k.min_order_value) }) %><% if (k.max_discount_amount && k.discount_type === 'percentage') { %>, <%= t('trang_chu.sl_giam_toi_da', { tien: vnd(k.max_discount_amount) }) %><% } %>. <% } %><%= t('trang_chu.sl_nhap_ma', { han: k.han }) %></p>
           <div class="nh-hero__actions">
-            <button type="button" class="nh-btn nh-btn--gold nh-km-copy" data-ma="<%= k.code %>"><i class="fas fa-copy"></i> <span>Sao chép mã <%= k.code %></span></button>
+            <button type="button" class="nh-btn nh-btn--gold nh-km-copy" data-ma="<%= k.code %>"><i class="fas fa-copy"></i> <span><%= t('trang_chu.sl_sao_chep', { ma: k.code }) %></span></button>
             <a href="/giao-hang" class="nh-btn nh-btn--ghost"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
           </div>
         </div>
@@ -154,21 +154,21 @@
       <div class="nh-container">
         <div class="nh-hero__inner">
           <span class="nh-eyebrow">Best Seller</span>
-          <h1>Món bán chạy <span>nhất</span><br>tại Bảo Đoàn</h1>
+          <h1><%- t('trang_chu.bc_h1') %></h1>
           <ol class="nh-bc-ds">
             <% dsBC.forEach(function (m, i) { %>
               <li>
                 <a href="/detail?monid=<%= m.id_mon %>">
                   <span class="nh-bc-ds__hang">#<%= i + 1 %></span>
                   <img src="/food/<%= m.images %>" alt="" loading="lazy">
-                  <span class="nh-bc-ds__ten"><%= tenGon(m) %><small><%= m.da_ban.toLocaleString('vi-VN') %> phần đã bán</small></span>
+                  <span class="nh-bc-ds__ten"><%= tenGon(m) %><small><%= t('trang_chu.bc_da_ban', { n: m.da_ban.toLocaleString('vi-VN') }) %></small></span>
                   <span class="nh-bc-ds__gia"><%= vnd(m.gia_mon) %></span>
                 </a>
               </li>
             <% }) %>
           </ol>
           <div class="nh-hero__actions">
-            <a href="/detail?monid=<%= top.id_mon %>" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> Gọi món #1 ngay</a>
+            <a href="/detail?monid=<%= top.id_mon %>" class="nh-btn nh-btn--gold"><i class="fas fa-utensils"></i> <%= t('trang_chu.bc_goi') %></a>
             <a href="/menu" class="nh-btn nh-btn--ghost"><i class="fas fa-book-open"></i> <%= t('chung.xem_thuc_don') %></a>
           </div>
         </div>
@@ -181,12 +181,12 @@
       <div class="nh-slide__anh" style="background-image:url('/images/khong-gian/gala-1.jpg')" aria-hidden="true"></div>
       <div class="nh-container">
         <div class="nh-hero__inner">
-          <span class="nh-eyebrow">Sảnh Gala mới</span>
-          <h1>Tiệc cưới · Sinh nhật<br><span>Party</span> trọn gói</h1>
-          <p>Sảnh tiệc 50–300 khách với sân khấu, đèn chùm và 12 thực đơn Nhật Bản soạn riêng cho từng dịp – chỉ từ 2.790.000đ/bàn 10 khách.</p>
+          <span class="nh-eyebrow"><%= t('trang_chu.gala_eyebrow') %></span>
+          <h1><%- t('trang_chu.gala_h1') %></h1>
+          <p><%= t('trang_chu.gala_p') %></p>
           <div class="nh-hero__actions">
-            <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> Xem thực đơn tiệc</a>
-            <a href="/khong-gian" class="nh-btn nh-btn--ghost"><i class="fas fa-images"></i> Xem không gian</a>
+            <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> <%= t('trang_chu.gala_xem_td') %></a>
+            <a href="/khong-gian" class="nh-btn nh-btn--ghost"><i class="fas fa-images"></i> <%= t('trang_chu.gala_xem_kg') %></a>
           </div>
         </div>
       </div>
@@ -194,13 +194,13 @@
   </div>
 
   <div class="nh-slider-nav">
-    <button type="button" class="nh-slider-nav__nut" data-slider="truoc" aria-label="Slide trước"><i class="fas fa-chevron-left"></i></button>
+    <button type="button" class="nh-slider-nav__nut" data-slider="truoc" aria-label="<%= t('trang_chu.sl_truoc') %>"><i class="fas fa-chevron-left"></i></button>
     <div class="nh-slider-nav__cham">
       <% for (var c = 0; c < soSlide; c++) { %>
-        <button type="button" data-den="<%= c %>" class="<%= c === 0 ? 'is-active' : '' %>" aria-label="Đến slide <%= c + 1 %>" aria-current="<%= c === 0 %>"><span><i></i></span></button>
+        <button type="button" data-den="<%= c %>" class="<%= c === 0 ? 'is-active' : '' %>" aria-label="<%= t('trang_chu.sl_den', { n: c + 1 }) %>" aria-current="<%= c === 0 %>"><span><i></i></span></button>
       <% } %>
     </div>
-    <button type="button" class="nh-slider-nav__nut" data-slider="sau" aria-label="Slide sau"><i class="fas fa-chevron-right"></i></button>
+    <button type="button" class="nh-slider-nav__nut" data-slider="sau" aria-label="<%= t('trang_chu.sl_sau') %>"><i class="fas fa-chevron-right"></i></button>
   </div>
   <div class="nh-hero__scroll"><%= t('trang_chu.cuon_xuong') %><span></span></div>
 </header>
@@ -428,7 +428,7 @@
     document.querySelectorAll('.nh-km-copy').forEach(function (b) {
       b.addEventListener('click', function () {
         var ma = b.getAttribute('data-ma'), nhan = b.querySelector('span'), cu = nhan.textContent;
-        var xong = function () { nhan.textContent = 'Đã sao chép ' + ma; setTimeout(function () { nhan.textContent = cu; }, 2000); };
+        var xong = function () { nhan.textContent = <%- JSON.stringify(t('trang_chu.sl_da_sao_chep')) %>.replace('{ma}', ma); setTimeout(function () { nhan.textContent = cu; }, 2000); };
         if (navigator.clipboard) navigator.clipboard.writeText(ma).then(xong, xong); else xong();
       });
     });

@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Thanh toán chuyển khoản VietQR - ShopeeFood Style' }) %>
+<%- include('partials/header', { title: t('tt_don.tieu_de') }) %>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -260,11 +260,11 @@
   <!-- Top bar -->
   <div class="spf-top-card">
     <div>
-      <h1><i class="fas fa-qrcode" style="color:var(--spf-orange);"></i> Thanh toán đơn hàng</h1>
-      <div style="font-size:13.5px; color:#6b7280;">Vui lòng mở ứng dụng ngân hàng hoặc ví điện tử để quét mã thanh toán</div>
+      <h1><i class="fas fa-qrcode" style="color:var(--spf-orange);"></i> <%= t('tt_don.tieu_de') %></h1>
+      <div style="font-size:13.5px; color:#6b7280;"><%= t('tt_don.mo_app') %></div>
     </div>
     <div class="spf-badge-order">
-      Mã đơn: <b><%= donGiao ? donGiao.ma_giao : ('DH' + hoaDon.sesis.slice(-6).toUpperCase()) %></b>
+      <%= t('tt_don.ma_don') %> <b><%= donGiao ? donGiao.ma_giao : ('DH' + hoaDon.sesis.slice(-6).toUpperCase()) %></b>
     </div>
   </div>
 
@@ -274,63 +274,63 @@
       <div class="spf-card">
         <div class="spf-card-title">
           <i class="fas fa-wallet" style="color:var(--spf-orange);"></i>
-          Mã VietQR chuyển khoản nhanh 24/7
+          <%= t('tt_don.qr_24') %>
         </div>
 
         <div class="spf-qr-box">
           <div class="spf-timer-pill" id="spf-dem-nguoc" data-giay="<%= (typeof conLaiGiay !== 'undefined' && conLaiGiay !== null) ? conLaiGiay : '' %>">
-            <i class="fas fa-clock"></i> <span id="spf-dem-nguoc-chu">Đang chờ chuyển khoản (Mã tự duyệt tức thì)</span>
+            <i class="fas fa-clock"></i> <span id="spf-dem-nguoc-chu"><%= t('tt_don.dang_cho') %></span>
           </div>
 
           <div class="spf-qr-image-wrapper">
-            <img id="spf-qr-img" class="spf-qr-img" src="<%= (qr && qr.anh) ? qr.anh : '' %>" alt="Mã VietQR ShopeeFood Style">
+            <img id="spf-qr-img" class="spf-qr-img" src="<%= (qr && qr.anh) ? qr.anh : '' %>" alt="<%= t('tt_don.alt_qr') %>">
           </div>
 
           <div style="font-size:13.5px; color:#4b5563; font-weight:600;">
-            Quét mã bằng <b style="color:var(--spf-dark);">bất kỳ App Ngân hàng</b> hoặc <b style="color:#0284c7;">Viettel Money / VNPT Money</b>
+            <%- t('tt_don.quet_ma') %>
           </div>
         </div>
 
         <!-- Bảng thông tin chuyển khoản chi tiết -->
         <div class="spf-info-table">
           <div class="spf-info-row">
-            <span class="spf-info-label">Ngân hàng thụ hưởng:</span>
+            <span class="spf-info-label"><%= t('tt_don.ngan_hang') %></span>
             <span class="spf-info-val">
               <span style="color:#0284c7;"><i class="fas fa-building-columns"></i> <%= (qr && qr.nganHang) ? qr.nganHang : 'VIB (NH Quốc Tế)' %></span>
             </span>
           </div>
 
           <div class="spf-info-row">
-            <span class="spf-info-label">Số tài khoản:</span>
+            <span class="spf-info-label"><%= t('tt_don.so_tk') %></span>
             <span class="spf-info-val">
               <b style="font-size:15px; letter-spacing:0.5px;"><%= (qr && qr.soTaiKhoan) ? qr.soTaiKhoan : '071120047' %></b>
-              <button type="button" class="spf-btn-copy" onclick="copyText('<%= (qr && qr.soTaiKhoan) ? qr.soTaiKhoan : '071120047' %>', 'Đã chép số tài khoản!')">
-                <i class="fas fa-copy"></i> Sao chép
+              <button type="button" class="spf-btn-copy" onclick="copyText('<%= (qr && qr.soTaiKhoan) ? qr.soTaiKhoan : '071120047' %>', <%= JSON.stringify(t('tt_don.da_chep_tk')) %>)">
+                <i class="fas fa-copy"></i> <%= t('xong.sao_chep') %>
               </button>
             </span>
           </div>
 
           <div class="spf-info-row">
-            <span class="spf-info-label">Tên chủ tài khoản:</span>
+            <span class="spf-info-label"><%= t('tt_don.chu_tk') %></span>
             <span class="spf-info-val">
               <%= (qr && qr.tenTaiKhoan) ? qr.tenTaiKhoan : 'NHA HANG BAO DOAN' %>
             </span>
           </div>
 
           <div class="spf-info-row">
-            <span class="spf-info-label">Số tiền thanh toán:</span>
+            <span class="spf-info-label"><%= t('tt_don.so_tien') %></span>
             <span class="spf-info-val" style="color:var(--spf-orange); font-size:16px; font-weight:800;">
               <%= Math.round(tongThanhToan).toLocaleString('vi-VN') %> ₫
             </span>
           </div>
 
           <div class="spf-info-row">
-            <span class="spf-info-label">Nội dung chuyển khoản:</span>
+            <span class="spf-info-label"><%= t('tt_don.noi_dung') %></span>
             <span class="spf-info-val">
               <% var memoCode = (qr && qr.noiDung) ? qr.noiDung : ((payment && payment.ma_doi_soat) ? payment.ma_doi_soat : ('TT' + hoaDon.sesis.slice(-6).toUpperCase())); %>
               <span class="spf-memo-highlight"><%= memoCode %></span>
-              <button type="button" class="spf-btn-copy" onclick="copyText('<%= memoCode %>', 'Đã chép nội dung chuyển khoản!')">
-                <i class="fas fa-copy"></i> Sao chép
+              <button type="button" class="spf-btn-copy" onclick="copyText('<%= memoCode %>', <%= JSON.stringify(t('tt_don.da_chep_nd')) %>)">
+                <i class="fas fa-copy"></i> <%= t('xong.sao_chep') %>
               </button>
             </span>
           </div>
@@ -341,18 +341,17 @@
           <form method="GET" class="spf-diem-box">
             <div style="font-weight:700; font-size:13.5px; margin-bottom:6px;">
               <i class="fas fa-coins" style="color:var(--spf-gold);"></i>
-              Bạn đang có <b><%= Number(diemDangCo).toLocaleString('vi-VN') %> điểm</b>
-              (1 điểm = <%= Number(giaTri1Diem).toLocaleString('vi-VN') %>₫)
+              <%- t('tt_don.diem_co', { diem: Number(diemDangCo).toLocaleString('vi-VN'), gia: Number(giaTri1Diem).toLocaleString('vi-VN') }) %>
             </div>
             <div style="font-size:12.5px; color:#6b7280; margin-bottom:8px;">
-              Dùng tối đa <b><%= Number(diemToiDa).toLocaleString('vi-VN') %> điểm</b> cho đơn này. Điểm chỉ trừ vào tiền món, không trừ phí ship.
+              <%- t('tt_don.diem_toi_da', { diem: Number(diemToiDa).toLocaleString('vi-VN') }) %>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <input type="number" name="diem" min="0" max="<%= diemToiDa %>" value="<%= diemDung || '' %>"
-                     placeholder="Số điểm muốn dùng" class="nh-input" style="flex:1; min-width:140px;">
-              <button type="submit" class="nh-btn nh-btn--gold nh-btn--sm">Áp dụng</button>
+                     placeholder="<%= t('tt_don.diem_ph') %>" class="nh-input" style="flex:1; min-width:140px;">
+              <button type="submit" class="nh-btn nh-btn--gold nh-btn--sm"><%= t('tt_don.ap_dung') %></button>
               <% if (diemToiDa > 0) { %>
-                <button type="submit" name="diem" value="<%= diemToiDa %>" class="nh-btn nh-btn--sm" style="background:#fff;border:1px solid var(--spf-gold);">Dùng tối đa</button>
+                <button type="submit" name="diem" value="<%= diemToiDa %>" class="nh-btn nh-btn--sm" style="background:#fff;border:1px solid var(--spf-gold);"><%= t('tt_don.dung_toi_da') %></button>
               <% } %>
             </div>
           </form>
@@ -360,16 +359,16 @@
 
         <div class="spf-live-status" id="spf-box-status">
           <div class="spf-dot-spin"></div>
-          <span>Đang lắng nghe thanh toán từ tài khoản của bạn...</span>
+          <span><%= t('tt_don.dang_nghe') %></span>
         </div>
 
         <% if (typeof choPhepThanhToanGiaLap !== 'undefined' && choPhepThanhToanGiaLap) { %>
           <div class="spf-sim-box">
             <div style="font-size: 12.5px; color: #854d0e; font-weight: 700; margin-bottom: 8px;">
-              <i class="fas fa-flask"></i> Môi trường thử nghiệm &amp; Demo giảng viên
+              <i class="fas fa-flask"></i> <%= t('tt_don.demo_h') %>
             </div>
             <button type="button" class="nh-btn nh-btn--gold nh-btn--sm" id="nut-gia-lap-spf" style="border-radius:8px; font-weight:700; padding:9px 20px;">
-              <i class="fas fa-check-double"></i> Xác nhận giả lập chuyển khoản ngay (Demo)
+              <i class="fas fa-check-double"></i> <%= t('tt_don.demo_nut') %>
             </button>
           </div>
         <% } %>
@@ -382,10 +381,10 @@
       <div class="spf-card">
         <div class="spf-card-title">
           <i class="fas fa-location-dot" style="color:#ef4444;"></i>
-          Địa chỉ giao tới
+          <%= t('tt_don.dia_chi_toi') %>
         </div>
         <div style="font-size:14.5px; font-weight:700; color:var(--spf-dark); line-height:1.4; margin-bottom:6px;">
-          <%= donGiao ? donGiao.dia_chi_giao : (hoaDon.thongTin ? hoaDon.thongTin.diachi : 'Địa chỉ nhận hàng') %>
+          <%= donGiao ? donGiao.dia_chi_giao : (hoaDon.thongTin ? hoaDon.thongTin.diachi : t('gio_hang.g_dia_chi_nhan')) %>
         </div>
         <div style="font-size:13px; color:#6b7280; display:flex; flex-wrap:wrap; gap:10px;">
           <span><i class="fas fa-user" style="color:var(--spf-gold);"></i> <%= donGiao ? donGiao.ten_nguoi_nhan : (hoaDon.thongTin ? hoaDon.thongTin.ten_khach : '') %></span>
@@ -397,7 +396,7 @@
       <div class="spf-card">
         <div class="spf-card-title">
           <i class="fas fa-bag-shopping" style="color:var(--spf-gold);"></i>
-          Món ăn đã chọn (<%= (mon || []).length %> món)
+          <%= t('gio_hang.g_mon_da_chon') %> (<%= t('gio_hang.so_mon_count', { n: (mon || []).length }) %>)
         </div>
 
         <div>
@@ -414,40 +413,40 @@
 
         <div class="spf-total-summary">
           <div class="spf-sum-row">
-            <span>Tiền món ăn</span>
+            <span><%= t('gio_hang.tien_mon_an') %></span>
             <b><%= Math.round(tienMon).toLocaleString('vi-VN') %> ₫</b>
           </div>
           <div class="spf-sum-row">
-            <span>Phí giao hàng<% if (donGiao && donGiao.khoang_cach_km) { %> (<%= donGiao.khoang_cach_km %> km)<% } %></span>
-            <b><%= phiShip > 0 ? (Math.round(phiShip).toLocaleString('vi-VN') + ' ₫') : 'Miễn phí' %></b>
+            <span><%= t('gio_hang.phi_giao_hang') %><% if (donGiao && donGiao.khoang_cach_km) { %> (<%= donGiao.khoang_cach_km %> km)<% } %></span>
+            <b><%= phiShip > 0 ? (Math.round(phiShip).toLocaleString('vi-VN') + ' ₫') : t('gio_hang.g_mien_phi') %></b>
           </div>
           <% if (tienTuDiem > 0) { %>
             <div class="spf-sum-row" style="color:#15803d;">
-              <span>Trừ <%= Number(diemDung).toLocaleString('vi-VN') %> điểm</span>
+              <span><%= t('tt_don.tru_diem', { diem: Number(diemDung).toLocaleString('vi-VN') }) %></span>
               <b>− <%= Math.round(tienTuDiem).toLocaleString('vi-VN') %> ₫</b>
             </div>
           <% } %>
           <div class="spf-sum-final">
-            <span>Cần thanh toán trước</span>
+            <span><%= t('tt_don.can_tt') %></span>
             <span><%= Math.round(tongThanhToan).toLocaleString('vi-VN') %> ₫</span>
           </div>
         </div>
 
         <!-- Tóm tắt chính sách -->
         <div class="spf-chinh-sach">
-          <div style="font-weight:800; margin-bottom:6px;"><i class="fas fa-file-shield"></i> Chính sách đơn giao hàng</div>
+          <div style="font-weight:800; margin-bottom:6px;"><i class="fas fa-file-shield"></i> <%= t('tt_don.cs_h') %></div>
           <ul>
-            <li>Thanh toán trước <b>100%</b> tiền món + phí ship. Bếp chỉ bắt đầu nấu khi nhà hàng đã nhận đủ tiền.</li>
-            <li>Chưa thanh toán trong thời gian giữ đơn, đơn sẽ <b>tự hủy</b>.</li>
-            <li>Khách tự hủy, không nghe máy, sai địa chỉ, từ chối nhận: <b>không hoàn tiền, không hoàn điểm</b>.</li>
-            <li>Lỗi do nhà hàng (hết món, giao trễ, sai/thiếu món...): <b>hoàn 100% bằng điểm</b>, không hoàn tiền mặt. Điểm dùng cho đơn sau hoặc trừ vào hóa đơn khi ăn tại nhà hàng.</li>
+            <li><%- t('tt_don.cs1') %></li>
+            <li><%- t('tt_don.cs2') %></li>
+            <li><%- t('tt_don.cs3') %></li>
+            <li><%- t('tt_don.cs4') %></li>
           </ul>
-          <a href="/chinh-sach-giao-hang" target="_blank">Xem chính sách đầy đủ <i class="fas fa-arrow-up-right-from-square"></i></a>
+          <a href="/chinh-sach-giao-hang" target="_blank"><%= t('tt_don.xem_cs') %> <i class="fas fa-arrow-up-right-from-square"></i></a>
         </div>
 
         <div style="margin-top: 18px; text-align: center;">
           <button type="button" id="nut-huy-don-spf" style="background:none;border:0;color:#b91c1c;font-size:13.5px;font-weight:700;cursor:pointer;">
-            <i class="fas fa-ban"></i> Hủy đơn (chưa thanh toán nên không mất phí)
+            <i class="fas fa-ban"></i> <%= t('tt_don.huy_don') %>
           </button>
         </div>
       </div>
@@ -463,7 +462,7 @@
 function copyText(txt, msg) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(txt).then(function() {
-      showToast(msg || 'Đã sao chép!');
+      showToast(msg || <%- JSON.stringify(t('xong.da_sao_chep')) %>);
     });
   } else {
     var inp = document.createElement('input');
@@ -472,7 +471,7 @@ function copyText(txt, msg) {
     inp.select();
     document.execCommand('copy');
     document.body.removeChild(inp);
-    showToast(msg || 'Đã sao chép!');
+    showToast(msg || <%- JSON.stringify(t('xong.da_sao_chep')) %>);
   }
 }
 
@@ -500,14 +499,14 @@ function showToast(msg) {
     var demTimer = null;
     var veDem = function () {
       if (conGiay <= 0) {
-        demChu.textContent = 'Hết thời gian giữ đơn — đơn sẽ tự hủy';
+        demChu.textContent = <%- JSON.stringify(t('tt_don.js_het_gio')) %>;
         demEl.style.background = '#fee2e2'; demEl.style.color = '#b91c1c';
         if (demTimer) clearInterval(demTimer);
         setTimeout(function () { location.reload(); }, 65000);
         return;
       }
       var p = Math.floor(conGiay / 60), g = conGiay % 60;
-      demChu.textContent = 'Giữ đơn trong ' + p + ':' + (g < 10 ? '0' : '') + g + ' — chuyển khoản trước khi hết giờ';
+      demChu.textContent = <%- JSON.stringify(t('tt_don.js_giu_don')) %>.replace('{tg}', p + ':' + (g < 10 ? '0' : '') + g);
       conGiay--;
     };
     veDem();
@@ -517,13 +516,13 @@ function showToast(msg) {
   var nutHuy = document.getElementById('nut-huy-don-spf');
   if (nutHuy) {
     nutHuy.onclick = function () {
-      if (!confirm('Hủy đơn này? Đơn chưa thanh toán nên bạn không mất phí.')) return;
+      if (!confirm(<%- JSON.stringify(t('tt_don.js_xac_nhan_huy')) %>)) return;
       nutHuy.disabled = true;
       fetch('/thanh-toan/don-hang/' + SESIS + '/huy', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
         .then(function (r) { return r.json(); })
         .then(function (kq) {
           if (kq && kq.thanhCong) { location.href = '/theo-doi/' + kq.ma_giao; }
-          else { alert((kq && kq.loi) || 'Không hủy được đơn.'); nutHuy.disabled = false; }
+          else { alert((kq && kq.loi) || <%- JSON.stringify(t('tt_don.js_loi_huy')) %>); nutHuy.disabled = false; }
         });
     };
   }
@@ -543,7 +542,7 @@ function showToast(msg) {
       boxStatus.style.background = '#dcfce7';
       boxStatus.style.borderColor = '#86efac';
       boxStatus.style.color = '#15803d';
-      boxStatus.innerHTML = '<i class="fas fa-circle-check" style="font-size:18px;"></i> <b>Thanh toán thành công! Đang chuyển tiếp tới tài xế...</b>';
+      boxStatus.innerHTML = '<i class="fas fa-circle-check" style="font-size:18px;"></i> <b>' + <%- JSON.stringify(t('tt_don.js_tt_ok')) %> + '</b>';
     }
     setTimeout(function() {
       if (MA_GIAO) {
@@ -571,7 +570,7 @@ function showToast(msg) {
   if (nutGiaLap) {
     nutGiaLap.onclick = function() {
       this.disabled = true;
-      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xác nhận thanh toán...';
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + <%- JSON.stringify(t('tt_don.js_dang_xn')) %>;
       fetch('/thanh-toan/don-hang/' + SESIS + '/gia-lap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -582,7 +581,7 @@ function showToast(msg) {
         if (res && res.thanhCong) {
           daThanhToanXong();
         } else {
-          alert(res.loi || 'Lỗi giả lập thanh toán');
+          alert(res.loi || <%- JSON.stringify(t('tt_don.js_loi_demo')) %>);
         }
       });
     };

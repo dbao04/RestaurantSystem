@@ -1,4 +1,4 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1240 940" role="img" aria-label="Sơ đồ hoạt động quy trình nhập kho theo lô và cơ chế trừ tồn kho tự động khi bếp hoàn thành món"
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1420 1440" role="img" aria-label="Sơ đồ hoạt động vòng mua hàng, nhập kho theo lô và trừ tồn kho tự động khi bếp hoàn thành món"
      xmlns="http://www.w3.org/2000/svg"><style>svg{
 --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
 --mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
@@ -88,44 +88,69 @@ text{fill:currentColor;font-family:var(--sans);}
       <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
     </marker>
   </defs><g class="lan-doc">
-    <rect class="lan" x="0" y="28" width="400" height="912"/>
-    <rect class="lan-nhan" x="0" y="0" width="400" height="28"/>
-    <text class="tx-lan" x="200" y="18">Thủ kho</text>
+    <rect class="lan" x="0" y="28" width="340" height="1412"/>
+    <rect class="lan-nhan" x="0" y="0" width="340" height="28"/>
+    <text class="tx-lan" x="170" y="18">Bếp</text>
   </g><g class="lan-doc">
-    <rect class="lan" x="400" y="28" width="450" height="912"/>
-    <rect class="lan-nhan" x="400" y="0" width="450" height="28"/>
-    <text class="tx-lan" x="625" y="18">Hệ thống</text>
+    <rect class="lan" x="340" y="28" width="330" height="1412"/>
+    <rect class="lan-nhan" x="340" y="0" width="330" height="28"/>
+    <text class="tx-lan" x="505" y="18">Quản lý (người duyệt)</text>
   </g><g class="lan-doc">
-    <rect class="lan" x="850" y="28" width="390" height="912"/>
-    <rect class="lan-nhan" x="850" y="0" width="390" height="28"/>
-    <text class="tx-lan" x="1045" y="18">Bếp (màn hình KDS)</text>
-  </g><g class="nut-dau"><circle cx="200" cy="90" r="10"/></g><g class="hd ">
-      <rect x="137" y="138" width="126" height="44" rx="13"/>
-      <text class="tx-viec" x="200" y="157.5">Tạo phiếu nhập,</text><text class="tx-viec" x="200" y="171.5">chọn nhà cung cấp</text>
+    <rect class="lan" x="670" y="28" width="420" height="1412"/>
+    <rect class="lan-nhan" x="670" y="0" width="420" height="28"/>
+    <text class="tx-lan" x="880" y="18">Hệ thống (web + CSDL)</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="1090" y="28" width="330" height="1412"/>
+    <rect class="lan-nhan" x="1090" y="0" width="330" height="28"/>
+    <text class="tx-lan" x="1255" y="18">Thủ kho / người nhận hàng</text>
+  </g><g class="nut-dau"><circle cx="880" cy="80" r="10"/></g><g class="hd tu-dong">
+      <rect x="771.5" y="131" width="217" height="58" rx="13"/>
+      <text class="tx-viec" x="880" y="150.5">Tính gợi ý mua: tồn + hàng đang về</text><text class="tx-viec" x="880" y="164.5">dưới điểm đặt = max(định mức, 3 ngày</text><text class="tx-viec" x="880" y="178.5">tiêu hao); đề xuất đủ 7 ngày tiêu hao</text>
     </g><g class="hd ">
-      <rect x="117.5" y="228" width="165" height="44" rx="13"/>
-      <text class="tx-viec" x="200" y="247.5">Nhập từng lô: số lượng, giá,</text><text class="tx-viec" x="200" y="261.5">số lô và hạn sử dụng</text>
+      <rect x="92" y="138" width="156" height="44" rx="13"/>
+      <text class="tx-viec" x="170" y="157.5">Xem gợi ý mua, chọn</text><text class="tx-viec" x="170" y="171.5">nhà cung cấp, lập đơn mua</text>
+    </g><g class="hd tu-dong">
+      <rect x="787" y="248" width="186" height="44" rx="13"/>
+      <text class="tx-viec" x="880" y="267.5">Ghi don_mua_hang (cho_duyet)</text><text class="tx-viec" x="880" y="281.5">+ chi_tiet_don_mua</text>
     </g><g class="hd ">
-      <rect x="103" y="678" width="194" height="44" rx="13"/>
-      <text class="tx-viec" x="200" y="697.5">Nhận cảnh báo thiếu nguyên liệu,</text><text class="tx-viec" x="200" y="711.5">nhập bù hoặc báo hết món</text>
-    </g><g class="hd tu-dong">
-      <rect x="513" y="228" width="224" height="44" rx="13"/>
-      <text class="tx-viec" x="625" y="247.5">Ghi phieu_nhap + chi_tiet_phieu_nhap,</text><text class="tx-viec" x="625" y="261.5">cộng tồn cho nguyen_lieu</text>
-    </g><g class="hd tu-dong">
-      <rect x="550.5" y="408" width="149" height="44" rx="13"/>
-      <text class="tx-viec" x="625" y="427.5">Cảnh báo lô sắp hết hạn</text><text class="tx-viec" x="625" y="441.5">trên dashboard tồn kho</text>
-    </g><g class="hd tu-dong">
-      <rect x="537.5" y="581" width="175" height="58" rx="13"/>
-      <text class="tx-viec" x="625" y="600.5">Mở giao dịch: đọc cong_thuc,</text><text class="tx-viec" x="625" y="614.5">trừ tồn theo lô FIFO,</text><text class="tx-viec" x="625" y="628.5">ghi nhật ký xuat_kho</text>
-    </g><g class="hd tu-dong">
-      <rect x="529.5" y="778" width="191" height="44" rx="13"/>
-      <text class="tx-viec" x="625" y="797.5">Xác nhận giao dịch, phát sự kiện</text><text class="tx-viec" x="625" y="811.5">cho KDS và sơ đồ bàn</text>
+      <rect x="422.5" y="348" width="165" height="44" rx="13"/>
+      <text class="tx-viec" x="505" y="367.5">Xem đơn chờ duyệt</text><text class="tx-viec" x="505" y="381.5">(người lập không tự duyệt)</text>
     </g><g class="hd ">
-      <rect x="978" y="498" width="134" height="44" rx="13"/>
-      <text class="tx-viec" x="1045" y="517.5">Bấm “Hoàn thành”</text><text class="tx-viec" x="1045" y="531.5">cho một món đang nấu</text>
-    </g><rect class="thanh-db" x="465" y="337" width="320" height="6" rx="2"/><g class="qd">
-    <polygon points="625,674 657,700 625,726 593,700"/>
-    <text class="tx-sk" x="625" y="664">Đủ nguyên liệu?</text>
-  </g><g class="nut-cuoi"><circle class="ngoai" cx="625" cy="870" r="12"/><circle class="trong" cx="625" cy="870" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="815" cy="430" r="12"/><circle class="trong" cx="815" cy="430" r="7"/></g><polyline class="luong " points="200,100 200,138" marker-end="url(#mui-hdB)"/><polyline class="luong " points="200,182 200,228" marker-end="url(#mui-hdB)"/><polyline class="luong " points="282.5,250 513,250" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,272 625,337" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,343 625,408" marker-end="url(#mui-hdB)"/><polyline class="luong " points="699.5,430 803,430" marker-end="url(#mui-hdB)"/><polyline class="luong " points="765,343 1045,343 1045,498" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="1127" y="420">chờ bếp bán món</text><polyline class="luong " points="978,520 625,520 625,581" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,639 625,674" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,726 625,778" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="651" y="754">đủ</text><polyline class="luong " points="595,700 297,700" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="535" y="694">thiếu</text><polyline class="luong " points="200,678 200,290 242.5,290 242.5,272" marker-end="url(#mui-hdB)"/><polyline class="luong " points="625,822 625,858" marker-end="url(#mui-hdB)"/><g class="ghi-chu">
-    <text class="tx-ghi" x="20" y="906">Thời điểm trừ kho đặt ở bước bếp HOÀN THÀNH món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ</text><text class="tx-ghi" x="20" y="919">sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.</text>
+      <rect x="107" y="448" width="126" height="44" rx="13"/>
+      <text class="tx-viec" x="170" y="467.5">Nhận đơn bị huỷ</text><text class="tx-viec" x="170" y="481.5">kèm lý do</text>
+    </g><g class="hd ">
+      <rect x="428" y="548" width="154" height="44" rx="13"/>
+      <text class="tx-viec" x="505" y="567.5">Gửi đơn cho nhà cung cấp</text><text class="tx-viec" x="505" y="581.5">(Đặt hàng → da_dat)</text>
+    </g><g class="hd ">
+      <rect x="1177.5" y="651" width="155" height="58" rx="13"/>
+      <text class="tx-viec" x="1255" y="670.5">Nhận hàng, đối chiếu đơn,</text><text class="tx-viec" x="1255" y="684.5">lập phiếu nhập: số lô,</text><text class="tx-viec" x="1255" y="698.5">hạn dùng, đơn giá</text>
+    </g><g class="hd tu-dong">
+      <rect x="771" y="761" width="218" height="58" rx="13"/>
+      <text class="tx-viec" x="880" y="780.5">Một giao dịch: ghi phieu_nhap + lô,</text><text class="tx-viec" x="880" y="794.5">cộng tồn nguyen_lieu, tính lại giá vốn</text><text class="tx-viec" x="880" y="808.5">bình quân gia quyền, cộng số đã nhận</text>
+    </g><g class="hd tu-dong">
+      <rect x="778" y="988" width="204" height="44" rx="13"/>
+      <text class="tx-viec" x="880" y="1007.5">Đơn → da_nhan; lô mới vào sổ kho,</text><text class="tx-viec" x="880" y="1021.5">cảnh báo lô sắp hết hạn (≤ 3 ngày)</text>
+    </g><g class="hd ">
+      <rect x="89.5" y="1108" width="161" height="44" rx="13"/>
+      <text class="tx-viec" x="170" y="1127.5">Bấm “Hoàn thành” một món</text><text class="tx-viec" x="170" y="1141.5">trên màn hình bếp (KDS)</text>
+    </g><g class="hd tu-dong">
+      <rect x="775" y="1101" width="210" height="58" rx="13"/>
+      <text class="tx-viec" x="880" y="1120.5">Đọc cong_thuc × số phần, trừ tồn</text><text class="tx-viec" x="880" y="1134.5">(không âm), trừ lô hết hạn sớm nhất</text><text class="tx-viec" x="880" y="1148.5">trước, ghi xuat_kho kèm giá vốn</text>
+    </g><g class="hd tu-dong">
+      <rect x="784.5" y="1318" width="191" height="44" rx="13"/>
+      <text class="tx-viec" x="880" y="1337.5">Xác nhận giao dịch, phát sự kiện</text><text class="tx-viec" x="880" y="1351.5">realtime cho KDS và sơ đồ bàn</text>
+    </g><g class="qd">
+    <polygon points="505,444 537,470 505,496 473,470"/>
+    
+  </g><text class="tx-sk" x="545" y="456" style="text-anchor:start">Duyệt?</text><g class="qd">
+    <polygon points="880,874 912,900 880,926 848,900"/>
+    
+  </g><text class="tx-sk" x="840" y="886" style="text-anchor:end">Đã nhận đủ?</text><g class="qd">
+    <polygon points="880,1214 912,1240 880,1266 848,1240"/>
+    
+  </g><text class="tx-sk" x="920" y="1226" style="text-anchor:start">Tồn dưới điểm đặt?</text><g class="hd ">
+      <rect x="407.5" y="1218" width="195" height="44" rx="13"/>
+      <text class="tx-viec" x="505" y="1237.5">Nguyên liệu hiện trong gợi ý mua,</text><text class="tx-viec" x="505" y="1251.5">bắt đầu một vòng mua mới</text>
+    </g><g class="nut-cuoi"><circle class="ngoai" cx="505" cy="1330" r="12"/><circle class="trong" cx="505" cy="1330" r="7"/></g><g class="nut-dau"><circle cx="170" cy="1050" r="10"/></g><g class="nut-cuoi"><circle class="ngoai" cx="170" cy="550" r="12"/><circle class="trong" cx="170" cy="550" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="880" cy="1070" r="12"/><circle class="trong" cx="880" cy="1070" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="880" cy="1410" r="12"/><circle class="trong" cx="880" cy="1410" r="7"/></g><polyline class="luong " points="880,90 880,131" marker-end="url(#mui-hdB)"/><polyline class="luong " points="771.5,160 248,160" marker-end="url(#mui-hdB)"/><polyline class="luong " points="170,182 170,270 787,270" marker-end="url(#mui-hdB)"/><polyline class="luong " points="880,292 880,320 505,320 505,348" marker-end="url(#mui-hdB)"/><polyline class="luong " points="505,392 505,444" marker-end="url(#mui-hdB)"/><polyline class="luong " points="473,470 233,470" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="405" y="462">từ chối → huy</text><polyline class="luong " points="170,492 170,538" marker-end="url(#mui-hdB)"/><polyline class="luong " points="505,496 505,548" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="567" y="522">duyệt → da_duyet</text><polyline class="luong " points="505,592 505,620 1255,620 1255,651" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="880" y="612">hàng về</text><polyline class="luong " points="1177.5,680 880,680 880,761" marker-end="url(#mui-hdB)"/><polyline class="luong " points="880,819 880,874" marker-end="url(#mui-hdB)"/><polyline class="luong " points="912,900 1255,900 1255,709" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="1160" y="892">thiếu → nhan_mot_phan</text><polyline class="luong " points="880,926 880,988" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="900" y="952">đủ</text><polyline class="luong " points="880,1032 880,1058" marker-end="url(#mui-hdB)"/><polyline class="luong " points="170,1060 170,1108" marker-end="url(#mui-hdB)"/><polyline class="luong " points="250.5,1130 775,1130" marker-end="url(#mui-hdB)"/><polyline class="luong " points="880,1159 880,1214" marker-end="url(#mui-hdB)"/><polyline class="luong " points="880,1266 880,1318" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="908" y="1292">không</text><polyline class="luong " points="848,1240 602.5,1240" marker-end="url(#mui-hdB)"/><text class="tx-luong" x="810" y="1232">có</text><polyline class="luong " points="505,1262 505,1318" marker-end="url(#mui-hdB)"/><polyline class="luong " points="880,1362 880,1398" marker-end="url(#mui-hdB)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="20" y="1384">Trừ kho đặt ở bước bếp HOÀN THÀNH món: đơn có thể huỷ sau khi gọi, còn</text><text class="tx-ghi" x="20" y="1397">nguyên liệu đã tiêu hao khi nấu xong. Tồn không bao giờ âm; nguyên liệu</text><text class="tx-ghi" x="20" y="1410">xuống dưới điểm đặt hàng tự quay về vòng gợi ý mua. Phiếu xuất hỏng / hao</text><text class="tx-ghi" x="20" y="1423">hụt cũng trừ lô theo cùng thứ tự hạn dùng.</text>
   </g></svg>

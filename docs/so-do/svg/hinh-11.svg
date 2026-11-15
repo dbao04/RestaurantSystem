@@ -139,9 +139,9 @@ text{fill:currentColor;font-family:var(--sans);}
     <g class="bt"><rect x="945" y="512" width="11" height="11" rx="1.5"/>
        <line x1="947.5" y1="515" x2="953.5" y2="515"/>
        <line x1="947.5" y1="517.5" x2="953.5" y2="517.5"/></g>
-    <text class="tx-viec" x="1008" y="530.5">Trừ tồn kho theo</text><text class="tx-viec" x="1008" y="544.5">công thức, ghi xuất kho</text>
+    <text class="tx-viec" x="1008" y="523.5">Trừ kho FIFO,</text><text class="tx-viec" x="1008" y="537.5">báo “món xong”</text><text class="tx-viec" x="1008" y="551.5">tới phục vụ</text>
   </g><g class="viec ">
     <rect x="1087" y="206" width="138" height="54" rx="7"/>
     
-    <text class="tx-viec" x="1156" y="237.5">Mang món ra bàn</text>
+    <text class="tx-viec" x="1156" y="230.5">Mang món ra, bấm</text><text class="tx-viec" x="1156" y="244.5">“Đã lên món”</text>
   </g><g class="sk sk-cuoi"><circle cx="1156" cy="83" r="19"/><text class="tx-sk" x="1156" y="53">Món đã lên bàn</text></g><polyline class="luong " points="139,83 162,83 162,233 199,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="337,233 392,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="416,209 416,83 495,83" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="430" y="141">Có</text><polyline class="luong " points="440,233 495,233" marker-end="url(#mui-bpA)"/><text class="tx-luong" x="458" y="224">Không</text><polyline class="luong " points="633,83 672,83 672,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="633,233 752,233 752,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="781,533 791,533 791,383 791,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="929,383 939,383" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1008,410 1008,506" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1077,533 1082,533 1082,233 1087,233" marker-end="url(#mui-bpA)"/><polyline class="luong " points="1156,206 1156,102" marker-end="url(#mui-bpA)"/></svg>

@@ -163,7 +163,7 @@ async function phatThongBao() {
         await mailer.sendMail(nhan, mau.tieuDe, mau.than);
       } catch (e) {
         trangThai = 'FAILED';
-        console.error(`[dat-ban] gửi mail ${tb.event_key} thất bại:`, e.message);
+        console.error(`[dat-ban] gửi mail ${tb.event_key} thất bại:`, (e.message || e.code || String(e)));
       }
     }
 
@@ -234,7 +234,7 @@ async function quetNoShow() {
         ketQua.no_show += 1;
       } catch (e) {
         // Nhan vien vua xu ly tay trong cung nhip quet - khong phai loi.
-        if (e.ma !== 'BAD_TRANSITION') console.error('[dat-ban] no-show tự động lỗi:', e.message);
+        if (e.ma !== 'BAD_TRANSITION') console.error('[dat-ban] no-show tự động lỗi:', (e.message || e.code || String(e)));
       }
     }
   }
@@ -265,7 +265,7 @@ async function quetCocQuaHan() {
       });
       dem += 1;
     } catch (e) {
-      if (e.ma !== 'BAD_TRANSITION') console.error('[dat-ban] hủy do quá hạn cọc lỗi:', e.message);
+      if (e.ma !== 'BAD_TRANSITION') console.error('[dat-ban] hủy do quá hạn cọc lỗi:', (e.message || e.code || String(e)));
     }
   }
   return dem;
@@ -394,7 +394,7 @@ async function chayMotNhip() {
     try { kq[ten] = await ham(); }
     catch (e) {
       kq[ten] = { loi: e.message };
-      console.error(`[dat-ban] bước "${ten}" lỗi:`, e.message);
+      console.error(`[dat-ban] bước "${ten}" lỗi:`, (e.message || e.code || String(e)));
     }
   }
 
@@ -402,7 +402,7 @@ async function chayMotNhip() {
   const gio = new Date().getHours();
   if (gio === 3) {
     try { kq.don_luoi = await donLuoiCu(); }
-    catch (e) { console.error('[dat-ban] dọn lưới lỗi:', e.message); }
+    catch (e) { console.error('[dat-ban] dọn lưới lỗi:', (e.message || e.code || String(e))); }
   }
   return kq;
 }

@@ -282,7 +282,7 @@
           <div class="ct-dau__ten"><%= t('chat.ho_tro') %></div>
           <div class="ct-dau__phu"><%= t('chat.gio_lam') %></div>
         </div>
-        <a href="tel:0825297297" style="margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:999px; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 3px 10px rgba(22,163,74,.35);" title="Gọi ngay Hotline 0825 297 297">
+        <a href="tel:0825297297" style="margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:999px; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 3px 10px rgba(22,163,74,.35);" title="<%= t('giao_dien.goi_hotline') %>">
           <i class="fas fa-phone-alt"></i> 0825 297 297
         </a>
         <span class="ct-song" style="margin-left:8px;"><i></i><%= t('chat.dang_hoat_dong') %></span>
@@ -318,13 +318,13 @@
                 <% if (!toi && !tiep) { %><div class="ct-ten-nv"><%= m.ten_nv || t('chat.nhan_vien') %></div><% } %>
                 <% if (m.duong_dan_file) { %>
                   <% if (m.loai_file === 'image') { %>
-                    <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" class="ct-anh-dinh-kem" onclick="moLightboxAnh(this.src)" loading="lazy">
+                    <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || t('chat.c_hinh_anh') %>" class="ct-anh-dinh-kem" onclick="moLightboxAnh(this.src)" loading="lazy">
                   <% } else { %>
                     <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="ct-tep-dinh-kem">
                       <span class="ct-tep-dinh-kem__icon"><i class="fas fa-file-alt"></i></span>
                       <span class="ct-tep-dinh-kem__meta">
-                        <span class="ct-tep-dinh-kem__ten"><%= m.ten_file || 'Tệp đính kèm' %></span>
-                        <% if (m.kich_thuoc_file) { %><span class="ct-tep-dinh-kem__co"><%= (m.kich_thuoc_file / 1024).toFixed(1) %> KB · Nhấn để tải</span><% } %>
+                        <span class="ct-tep-dinh-kem__ten"><%= m.ten_file || t('chat.c_tep') %></span>
+                        <% if (m.kich_thuoc_file) { %><span class="ct-tep-dinh-kem__co"><%= (m.kich_thuoc_file / 1024).toFixed(1) %> KB · <%= t('chat.c_nhan_tai') %></span><% } %>
                       </span>
                       <i class="fas fa-download" style="font-size:13px;opacity:.75"></i>
                     </a>
@@ -355,7 +355,7 @@
             <div class="ct-xem-truoc__ten" id="ct-xem-truoc-ten"></div>
             <div class="ct-xem-truoc__co" id="ct-xem-truoc-co"></div>
           </div>
-          <button type="button" class="ct-xem-truoc__xoa" id="ct-xoa-tep" title="Gỡ tệp đính kèm">
+          <button type="button" class="ct-xem-truoc__xoa" id="ct-xoa-tep" title="<%= t('chat.c_go_tep') %>">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -364,20 +364,20 @@
           <input type="file" id="ct-input-anh" accept="image/*" style="display:none">
           <input type="file" id="ct-input-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,image/*" style="display:none">
           <div class="ct-cong-cu">
-            <button type="button" class="ct-nut-tep" id="ct-chon-anh" title="Gửi hình ảnh">
+            <button type="button" class="ct-nut-tep" id="ct-chon-anh" title="<%= t('chat.c_gui_anh') %>">
               <i class="fas fa-image"></i>
             </button>
-            <button type="button" class="ct-nut-tep" id="ct-chon-file" title="Đính kèm tệp / tài liệu">
+            <button type="button" class="ct-nut-tep" id="ct-chon-file" title="<%= t('chat.c_dinh_kem') %>">
               <i class="fas fa-paperclip"></i>
             </button>
           </div>
           <textarea class="ct-nhap" id="ct-nhap" name="noi_dung" rows="1"
-                    placeholder="<%= t('chat.nhap_tin') %> (hoặc dán ảnh Ctrl+V)" autocomplete="off"></textarea>
+                    placeholder="<%= t('chat.nhap_tin') %> <%= t('chat.c_dan_anh') %>" autocomplete="off"></textarea>
           <button type="submit" class="ct-gui" id="ct-gui" title="<%= t('chung.gui') %>" disabled>
             <i class="fas fa-paper-plane"></i>
           </button>
         </form>
-        <div class="ct-meo"><%= t('chat.goi_y_enter') %> · Hỗ trợ gửi ảnh & tệp đính kèm (tối đa 15MB)</div>
+        <div class="ct-meo"><%= t('chat.goi_y_enter') %> · <%= t('chat.c_ho_tro_tep') %></div>
       </div>
 
     </div>
@@ -386,8 +386,8 @@
 
 <!-- Lightbox xem ảnh lớn -->
 <div class="ct-lightbox" id="ct-lightbox" onclick="dongLightboxAnh(event)">
-  <button type="button" class="ct-lightbox__dong" onclick="dongLightboxAnh(event)" aria-label="Đóng"><i class="fas fa-times"></i></button>
-  <img id="ct-lightbox-img" src="" alt="Xem ảnh phóng to">
+  <button type="button" class="ct-lightbox__dong" onclick="dongLightboxAnh(event)" aria-label="<%= t('giao_dien.dong') %>"><i class="fas fa-times"></i></button>
+  <img id="ct-lightbox-img" src="" alt="<%= t('chat.c_anh_to') %>">
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

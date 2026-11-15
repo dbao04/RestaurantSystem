@@ -19,7 +19,7 @@ var CAC_BUOC = [
        var quayLaiDuoc = so < _buoc && b.duongDan;
   %>
     <div class="nh-step <%= lop %>">
-      <% if (quayLaiDuoc) { %><a href="<%= b.duongDan %>" title="Quay lại bước này"><% } %>
+      <% if (quayLaiDuoc) { %><a href="<%= b.duongDan %>" title="<%= t('giao_dien.quay_lai_buoc') %>"><% } %>
         <div class="nh-step__dot">
           <% if (so < _buoc) { %><i class="fas fa-check"></i><% } else { %><%= so %><% } %>
         </div>

@@ -249,6 +249,7 @@ var SD_GOC = {
   dai_khu: '{ban} bàn · {cho} chỗ · {trong} trống',
   ban_trong: '{n} bàn trống',
   het_ban: 'Hết bàn',
+  cao_diem_dung_cho: 'Giờ cao điểm: Ưu tiên bàn đúng chỗ',
 };
 var SD_NHAN = {};
 Object.keys(SD_GOC).forEach(function (k) {
@@ -262,6 +263,8 @@ if (typeof laKhuKhach !== 'undefined' && laKhuKhach) {
     SD_NHAN['kv_' + kv] = t('khu_vuc.' + kv);
   });
 }
+// Co khu khach: de JS bo qua cac mo ta chi co tieng Viet tra ve tu API.
+SD_NHAN.la_khach = typeof laKhuKhach !== 'undefined' && !!laKhuKhach;
 %>
 
 <script>
@@ -309,7 +312,7 @@ window.SoDoDatBan = (function () {
     CLEANING:     { kieu: 'don',      ten: N.dang_don },
     MAINTENANCE:  { kieu: 'baotri',   ten: N.bao_tri },
     NOT_BOOKABLE: { kieu: 'khongdat', ten: N.khong_nhan_dat },
-    PEAK_HOUR_MISMATCH: { kieu: 'khongdat', ten: 'Giờ cao điểm: Ưu tiên bàn đúng chỗ' }
+    PEAK_HOUR_MISMATCH: { kieu: 'khongdat', ten: N.cao_diem_dung_cho }
   };
 
   /** Trang thai vat ly cua ban -> kieu ve. Khop table_status_catalog. */
@@ -709,7 +712,7 @@ window.SoDoDatBan = (function () {
     var theo = {};
     dsBan.forEach(function (b) {
       var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
-      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || N.kv_khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
       theo[k].ban.push(b);
     });
     return thuTu;
@@ -739,7 +742,7 @@ window.SoDoDatBan = (function () {
     var theo = {};
     dsBan.forEach(function (b) {
       var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
-      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || N.kv_khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
       theo[k].ban.push(b);
     });
     return thuTu;
@@ -769,7 +772,7 @@ window.SoDoDatBan = (function () {
     var theo = {};
     dsBan.forEach(function (b) {
       var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
-      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || N.kv_khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
       theo[k].ban.push(b);
     });
     return thuTu;
@@ -799,7 +802,7 @@ window.SoDoDatBan = (function () {
     var theo = {};
     dsBan.forEach(function (b) {
       var k = String(b.khu_vuc_id == null ? '' : b.khu_vuc_id);
-      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
+      if (!theo[k]) { theo[k] = { id: k, ten: b.khu_vuc || N.kv_khu_vuc || 'Khu vực', ban: [] }; thuTu.push(theo[k]); }
       theo[k].ban.push(b);
     });
     return thuTu;
@@ -913,7 +916,8 @@ window.SoDoDatBan = (function () {
       // minh khong mang du thong tin.
       var nhan = b.ten + ' · ' + b.so_cho + ' ' + N.cho + ' · ' + (b.kha_dung ? N.trong : ly.ten);
       if (b.khu_vuc) nhan += ' · ' + b.khu_vuc;
-      if (!b.kha_dung && b.ly_do && b.ly_do.mo_ta) nhan += ' · ' + b.ly_do.mo_ta;
+      // mo_ta tu API chi co tieng Viet: khu khach da co ly.ten (da dich) nen bo qua.
+      if (!N.la_khach && !b.kha_dung && b.ly_do && b.ly_do.mo_ta) nhan += ' · ' + b.ly_do.mo_ta;
       if (b.thuoc_tinh) {
         var tt = [];
         if (b.thuoc_tinh.gan_cua_so) tt.push(N.gan_cua_so);

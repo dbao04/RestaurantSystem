@@ -253,8 +253,8 @@
 
   <!-- Top Nav Bar -->
   <div class="top-nav">
-    <a href="/cart"><i class="fas fa-chevron-left"></i> Giỏ hàng &amp; Đơn của tôi</a>
-    <a href="/"><i class="fas fa-house"></i> Trang chủ</a>
+    <a href="/cart"><i class="fas fa-chevron-left"></i> <%= t('theo_doi.t_ve_gio') %></a>
+    <a href="/"><i class="fas fa-house"></i> <%= t('khong_gian.crumb') %></a>
   </div>
 
   <!-- Hero Status Card -->
@@ -286,30 +286,29 @@
 
   <% if (don.trang_thai === 'cho_thanh_toan') { %>
     <div class="cs-hop cs-hop--vang">
-      <strong><i class="fas fa-wallet"></i> Đơn đang chờ thanh toán</strong><br>
-      Nhà hàng chỉ bắt đầu nấu sau khi nhận đủ <b><%= vnd(don.tong_thu) %></b> (món + ship). Đơn tự hủy nếu quá thời gian giữ đơn.
+      <strong><i class="fas fa-wallet"></i> <%= t('theo_doi.t_cho_tt') %></strong><br>
+      <%- t('theo_doi.t_cho_tt_p', { tien: vnd(don.tong_thu) }) %>
       <% if (cs.la_chu_don && cs.sesis) { %>
-        <a class="cs-nut cs-nut--vang" href="/thanh-toan/don-hang/<%= cs.sesis %>"><i class="fas fa-qrcode"></i> Thanh toán ngay</a>
+        <a class="cs-nut cs-nut--vang" href="/thanh-toan/don-hang/<%= cs.sesis %>"><i class="fas fa-qrcode"></i> <%= t('theo_doi.t_tt_ngay') %></a>
       <% } %>
     </div>
   <% } %>
 
   <% if (don.trang_thai === 'huy') { %>
     <div class="cs-hop <%= cs.ben_loi === 'nha_hang' ? 'cs-hop--xanh' : 'cs-hop--xam' %>">
-      <strong><i class="fas fa-ban"></i> Đơn đã hủy</strong><% if (cs.ly_do_huy) { %> — <%= cs.ly_do_huy %><% } %><br>
+      <strong><i class="fas fa-ban"></i> <%= t('theo_doi.t_da_huy') %></strong><% if (cs.ly_do_huy) { %> — <%= dichNd(cs.ly_do_huy) %><% } %><br>
       <% if (cs.ben_loi === 'nha_hang') { %>
-        Lỗi thuộc về nhà hàng, rất xin lỗi quý khách. Đã hoàn <b><%= Number(cs.diem_hoan).toLocaleString('vi-VN') %> điểm</b>
-        (tương đương <%= vnd(cs.tien_hoan) %>) vào ví thành viên. Dùng cho đơn sau hoặc trừ vào hóa đơn khi ăn tại nhà hàng.
-        <a class="cs-nut" href="/thanh-vien"><i class="fas fa-coins"></i> Xem ví điểm</a>
+        <%- t('theo_doi.t_loi_nh', { diem: Number(cs.diem_hoan).toLocaleString('vi-VN'), tien: vnd(cs.tien_hoan) }) %>
+        <a class="cs-nut" href="/thanh-vien"><i class="fas fa-coins"></i> <%= t('theo_doi.t_vi_diem') %></a>
       <% } else if (cs.da_tra > 0) { %>
-        Hủy do phía khách hàng. Theo <a href="/chinh-sach-giao-hang" style="color:inherit">chính sách giao hàng</a>, số tiền đã thanh toán không được hoàn tiền hay hoàn điểm.
+        <%- t('theo_doi.t_loi_khach') %>
       <% } else { %>
-        Đơn chưa thanh toán nên quý khách không mất phí.
+        <%= t('theo_doi.t_chua_tt') %>
       <% } %>
     </div>
   <% } else if (cs.diem_hoan > 0) { %>
     <div class="cs-hop cs-hop--xanh">
-      <i class="fas fa-hand-holding-heart"></i> Nhà hàng đã bù <b><%= Number(cs.diem_hoan).toLocaleString('vi-VN') %> điểm</b> (<%= vnd(cs.tien_hoan) %>) cho sự cố của đơn này.
+      <i class="fas fa-hand-holding-heart"></i> <%- t('theo_doi.t_da_bu', { diem: Number(cs.diem_hoan).toLocaleString('vi-VN'), tien: vnd(cs.tien_hoan) }) %>
     </div>
   <% } %>
 
@@ -361,7 +360,7 @@
     </div>
     <% if (don.ghi_chu) { %>
       <div class="ghi-chu-box">
-        <i class="fas fa-note-sticky"></i> <b>Ghi chú:</b> <%= don.ghi_chu %>
+        <i class="fas fa-note-sticky"></i> <b><%= t('theo_doi.t_ghi_chu') %></b> <%= don.ghi_chu %>
       </div>
     <% } %>
     <% if (don.ten_shipper && !don.da_xong) { %>
@@ -401,19 +400,17 @@
       </p>
     <% } else if (cs.da_tra > 0) { %>
       <p style="margin:8px 0 0; font-size:12.5px; color:#86efac; text-align:right;">
-        <i class="fas fa-circle-check"></i> Đã thanh toán trước <%= vnd(cs.da_tra) %>
+        <i class="fas fa-circle-check"></i> <%= t('theo_doi.t_da_tra', { tien: vnd(cs.da_tra) }) %>
       </p>
     <% } %>
   </div>
 
   <% if (cs.huy_duoc) { %>
     <form method="POST" action="/theo-doi/<%= don.ma_giao %>/huy" class="cs-huy"
-          onsubmit="return confirm(<%= JSON.stringify(cs.da_tra > 0
-            ? 'Đơn đã thanh toán. Theo chính sách, khách tự hủy sẽ KHÔNG được hoàn tiền hay hoàn điểm. Bạn vẫn muốn hủy?'
-            : 'Hủy đơn này? Đơn chưa thanh toán nên bạn không mất phí.') %>)">
-      <button type="submit"><i class="fas fa-ban"></i> Hủy đơn</button>
-      <div><%= cs.da_tra > 0 ? 'Đã thanh toán: tự hủy không được hoàn tiền/điểm.' : 'Chưa thanh toán: hủy miễn phí.' %>
-        <a href="/chinh-sach-giao-hang">Chính sách</a></div>
+          onsubmit="return confirm(<%= JSON.stringify(cs.da_tra > 0 ? t('theo_doi.t_xn_huy_da_tra') : t('tt_don.js_xac_nhan_huy')) %>)">
+      <button type="submit"><i class="fas fa-ban"></i> <%= t('theo_doi.t_huy_don') %></button>
+      <div><%= cs.da_tra > 0 ? t('theo_doi.t_huy_da_tra') : t('theo_doi.t_huy_chua_tra') %>
+        <a href="/chinh-sach-giao-hang"><%= t('theo_doi.t_chinh_sach') %></a></div>
     </form>
   <% } %>
 

@@ -1,0 +1,155 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="hinh" viewBox="0 0 1320 1380" role="img" aria-label="Sơ đồ hoạt động quy trình xử lý một đơn đặt tiệc: kiểm tra sảnh, dự toán, tư vấn, xác nhận lịch, thu cọc nhiều đợt và tất toán"
+     xmlns="http://www.w3.org/2000/svg"><style>svg{
+--sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+--mono-svg:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+--giay:#ffffff; --giay-2:#e9efec; --muc:#141c1a; --muc-mo:#5b6b66;
+--vien-dam:#a6b6b0; --nhan:#0f6b62; --nhan-nen:#e2efec; color:var(--muc); background:var(--giay);}
+text{fill:currentColor;font-family:var(--sans);}
+.tx-uc{font-size:12.5px;text-anchor:middle;}
+.tx-tn{font-size:12.5px;font-weight:650;text-anchor:middle;}
+.tx-bien{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-anchor:middle;fill:var(--muc-mo);}
+.tx-khuon{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);font-style:italic;}
+.tx-ht{font-size:12px;text-anchor:middle;}
+.tx-ghi{font-size:11px;fill:var(--muc-mo);font-style:italic;}
+.tx-viec{font-size:11px;text-anchor:middle;}
+.tx-sk{font-size:11px;text-anchor:middle;fill:var(--muc-mo);}
+.tx-lan{font-size:11.5px;font-weight:700;text-anchor:middle;letter-spacing:.04em;}
+.tx-luong{font-size:10.5px;text-anchor:middle;fill:var(--muc-mo);}
+.tn circle,.tn line{fill:none;stroke:currentColor;stroke-width:1.5;}
+.uc ellipse{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.uc-phu ellipse{fill:var(--nhan-nen);stroke:var(--nhan);}
+.uc-ngoai ellipse{fill:var(--giay);stroke:var(--nhan);stroke-width:1.5;stroke-dasharray:6 3.5;}
+.uc-dn ellipse{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.6;}
+.uc-dn .dn-ngan{stroke:var(--nhan);stroke-width:1;}
+.goi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;stroke-dasharray:3 3;}
+.tx-goi{font-size:11px;font-weight:700;letter-spacing:.07em;fill:var(--nhan);}
+.bien rect{fill:none;stroke:var(--vien-dam);stroke-width:1.2;}
+.ht-ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.lk{stroke:currentColor;stroke-width:1.05;fill:none;}
+.lk-dut{stroke:currentColor;stroke-width:1.05;stroke-dasharray:5 4;fill:none;}
+.lan{fill:none;stroke:var(--vien-dam);stroke-width:1;}
+.lan-nhan{fill:var(--nhan-nen);stroke:var(--vien-dam);stroke-width:1;}
+.viec rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.viec.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.bt rect,.bt line{fill:none;stroke:var(--nhan);stroke-width:1;}
+.sk circle{fill:var(--giay);stroke:currentColor;stroke-width:1.6;}
+.sk-cuoi circle{stroke-width:3.4;}
+.thu{fill:none;stroke:currentColor;stroke-width:1.1;}
+.cong polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.cong line{stroke:currentColor;stroke-width:1.25;}
+.luong{fill:none;stroke:currentColor;stroke-width:1.2;}
+
+/* --- so do lop va luoc do CSDL --- */
+.tx-lop-ten{font-size:12.5px;font-weight:700;text-anchor:middle;}
+.tx-bang-ten{font-size:12px;font-weight:700;text-anchor:middle;font-family:var(--mono-svg);}
+.tx-lop{font-size:10.5px;}
+.tx-lop.pt{font-style:italic;}
+.tx-cot{font-size:10.5px;font-family:var(--mono-svg);}
+.tx-khoa{font-size:9.5px;font-weight:700;fill:var(--nhan);}
+.tx-boi{font-size:10px;fill:var(--muc-mo);text-anchor:middle;}
+.lop rect.vien,.bang rect.vien{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.lop rect.ngan-ten,.bang rect.ngan-ten{fill:var(--nhan-nen);stroke:currentColor;stroke-width:1.25;}
+.lop line,.bang line{stroke:currentColor;stroke-width:1.1;}
+.lop.phu rect.ngan-ten,.bang.phu rect.ngan-ten{fill:var(--giay-2);}
+.qh-lop{stroke:currentColor;stroke-width:1.15;fill:none;}
+.noi-bang line{stroke:currentColor;stroke-width:1.15;fill:none;}
+.thoi{fill:var(--giay);stroke:currentColor;stroke-width:1.15;}
+.thoi.dac{fill:currentColor;}
+
+/* --- so do tuan tu --- */
+.tx-dt{font-size:11.5px;font-weight:650;text-anchor:middle;}
+.tx-tin{font-size:10.5px;text-anchor:middle;}
+.tx-khoi{font-size:10px;font-weight:700;letter-spacing:.06em;}
+.tx-dk{font-size:10px;font-style:italic;fill:var(--muc-mo);}
+.doi-tuong rect{fill:var(--nhan-nen);stroke:var(--nhan);stroke-width:1.3;}
+.doi-tuong.ngoai rect{fill:var(--giay-2);stroke:var(--vien-dam);}
+.duong-doi{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:5 5;}
+.kich-hoat{fill:var(--giay-2);stroke:currentColor;stroke-width:1;}
+.tin{stroke:currentColor;stroke-width:1.25;fill:none;}
+.tin-tra{stroke:currentColor;stroke-width:1.05;fill:none;stroke-dasharray:5 4;}
+.khoi rect{fill:none;stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi path.the{fill:var(--giay-2);stroke:var(--vien-dam);stroke-width:1.1;}
+.khoi line.chia{stroke:var(--vien-dam);stroke-width:1;stroke-dasharray:6 4;}
+
+/* --- so do hoat dong --- */
+.nut-dau circle{fill:currentColor;}
+.nut-cuoi circle.ngoai{fill:none;stroke:currentColor;stroke-width:1.5;}
+.nut-cuoi circle.trong{fill:currentColor;}
+.hd rect{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.hd.tu-dong rect{fill:var(--nhan-nen);stroke:var(--nhan);}
+.qd polygon{fill:var(--giay);stroke:currentColor;stroke-width:1.25;}
+.thanh-db{fill:currentColor;}</style><defs>
+    <marker id="mui-hdD" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="mui-rong-hdD" viewBox="0 0 12 12" refX="11" refY="6"
+            markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    </marker>
+  </defs><g class="lan-doc">
+    <rect class="lan" x="0" y="28" width="430" height="1352"/>
+    <rect class="lan-nhan" x="0" y="0" width="430" height="28"/>
+    <text class="tx-lan" x="215" y="18">Khách hàng</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="430" y="28" width="470" height="1352"/>
+    <rect class="lan-nhan" x="430" y="0" width="470" height="28"/>
+    <text class="tx-lan" x="665" y="18">Hệ thống (web + CSDL)</text>
+  </g><g class="lan-doc">
+    <rect class="lan" x="900" y="28" width="420" height="1352"/>
+    <rect class="lan-nhan" x="900" y="0" width="420" height="28"/>
+    <text class="tx-lan" x="1110" y="18">Nhân viên xử lý tiệc</text>
+  </g><g class="nut-dau"><circle cx="215" cy="90" r="10"/></g><g class="hd ">
+      <rect x="118.5" y="138" width="193" height="44" rx="13"/>
+      <text class="tx-viec" x="215" y="157.5">Xem không gian, chọn loại tiệc,</text><text class="tx-viec" x="215" y="171.5">sảnh, buổi, giờ bắt đầu, số khách</text>
+    </g><g class="hd ">
+      <rect x="109" y="238" width="212" height="44" rx="13"/>
+      <text class="tx-viec" x="215" y="257.5">Chọn thực đơn (giá / bàn 10 khách),</text><text class="tx-viec" x="215" y="271.5">dịch vụ thêm; gửi yêu cầu</text>
+    </g><g class="hd ">
+      <rect x="145" y="348" width="140" height="44" rx="13"/>
+      <text class="tx-viec" x="215" y="367.5">Xem lý do, chọn sảnh /</text><text class="tx-viec" x="215" y="381.5">buổi / ngày khác</text>
+    </g><g class="hd ">
+      <rect x="133.5" y="458" width="163" height="44" rx="13"/>
+      <text class="tx-viec" x="215" y="477.5">Nhận mã tiệc, chờ nhà hàng</text><text class="tx-viec" x="215" y="491.5">gọi lại tư vấn</text>
+    </g><g class="hd ">
+      <rect x="110" y="858" width="210" height="44" rx="13"/>
+      <text class="tx-viec" x="215" y="877.5">Nộp cọc: tiền mặt / chuyển khoản /</text><text class="tx-viec" x="215" y="891.5">quét QR / thẻ — chia được nhiều đợt</text>
+    </g><g class="hd tu-dong">
+      <rect x="540.5" y="231" width="249" height="58" rx="13"/>
+      <text class="tx-viec" x="665" y="250.5">Kiểm tra: đặt trước ≥ 3 ngày và ≤ 12 tháng,</text><text class="tx-viec" x="665" y="264.5">số khách trong sức chứa của sảnh,</text><text class="tx-viec" x="665" y="278.5">sảnh chưa có tiệc giữ chỗ cùng buổi</text>
+    </g><g class="hd tu-dong">
+      <rect x="554.5" y="451" width="221" height="58" rx="13"/>
+      <text class="tx-viec" x="665" y="470.5">Dự toán = thực đơn × số bàn + dịch vụ;</text><text class="tx-viec" x="665" y="484.5">tiền cọc = 30% dự toán;</text><text class="tx-viec" x="665" y="498.5">ghi dat_tiec (MOI) + dòng lịch sử</text>
+    </g><g class="hd tu-dong">
+      <rect x="575" y="668" width="180" height="44" rx="13"/>
+      <text class="tx-viec" x="665" y="687.5">Kiểm tra lại: sảnh chưa bị tiệc</text><text class="tx-viec" x="665" y="701.5">khác giữ cùng buổi</text>
+    </g><g class="hd tu-dong">
+      <rect x="550.5" y="968" width="229" height="44" rx="13"/>
+      <text class="tx-viec" x="665" y="987.5">Cộng da_coc, ghi dat_tiec_thanh_toan;</text><text class="tx-viec" x="665" y="1001.5">đủ cọc → tự chuyển DA_COC</text>
+    </g><g class="hd ">
+      <rect x="1020.5" y="568" width="179" height="44" rx="13"/>
+      <text class="tx-viec" x="1110" y="587.5">Gọi tư vấn, chốt thực đơn,</text><text class="tx-viec" x="1110" y="601.5">sửa đơn (MOI → DA_LIEN_HE)</text>
+    </g><g class="hd ">
+      <rect x="1013" y="668" width="194" height="44" rx="13"/>
+      <text class="tx-viec" x="1110" y="687.5">Xác nhận lịch</text><text class="tx-viec" x="1110" y="701.5">(DA_LIEN_HE → DA_XAC_NHAN)</text>
+    </g><g class="hd ">
+      <rect x="1031" y="771" width="158" height="38" rx="13"/>
+      <text class="tx-viec" x="1110" y="794.5">Báo khách đổi buổi / sảnh</text>
+    </g><g class="hd ">
+      <rect x="1039" y="968" width="142" height="44" rx="13"/>
+      <text class="tx-viec" x="1110" y="987.5">Ghi nhận khoản thu,</text><text class="tx-viec" x="1110" y="1001.5">mã giao dịch, người thu</text>
+    </g><g class="hd ">
+      <rect x="1004" y="1178" width="212" height="44" rx="13"/>
+      <text class="tx-viec" x="1110" y="1197.5">Phân công nhân viên, tổ chức tiệc,</text><text class="tx-viec" x="1110" y="1211.5">tất toán (DA_COC → HOAN_THANH)</text>
+    </g><g class="qd">
+    <polygon points="665,344 697,370 665,396 633,370"/>
+    
+  </g><text class="tx-sk" x="705" y="356" style="text-anchor:start">Hợp lệ?</text><g class="qd">
+    <polygon points="665,764 697,790 665,816 633,790"/>
+    
+  </g><text class="tx-sk" x="625" y="776" style="text-anchor:end">Trùng lịch?</text><g class="qd">
+    <polygon points="665,1074 697,1100 665,1126 633,1100"/>
+    
+  </g><text class="tx-sk" x="705" y="1086" style="text-anchor:start">Đã đủ cọc?</text><g class="nut-cuoi"><circle class="ngoai" cx="215" cy="570" r="12"/><circle class="trong" cx="215" cy="570" r="7"/></g><g class="nut-cuoi"><circle class="ngoai" cx="1110" cy="1290" r="12"/><circle class="trong" cx="1110" cy="1290" r="7"/></g><polyline class="luong " points="215,100 215,138" marker-end="url(#mui-hdD)"/><polyline class="luong " points="215,182 215,238" marker-end="url(#mui-hdD)"/><polyline class="luong " points="321,260 540.5,260" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,289 665,344" marker-end="url(#mui-hdD)"/><polyline class="luong " points="633,370 285,370" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="585" y="362">không</text><polyline class="luong " points="145,370 36,370 36,268 109,268" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,396 665,451" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="699" y="424">hợp lệ</text><polyline class="luong " points="554.5,480 296.5,480" marker-end="url(#mui-hdD)"/><polyline class="luong " points="215,502 215,558" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,509 665,540 1110,540 1110,568" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="960" y="532">thông báo yêu cầu mới</text><polyline class="luong " points="1110,612 1110,668" marker-end="url(#mui-hdD)"/><polyline class="luong " points="1013,690 755,690" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,712 665,764" marker-end="url(#mui-hdD)"/><polyline class="luong " points="697,790 1031,790" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="745" y="782">trùng</text><polyline class="luong " points="1189,790 1300,790 1300,590 1199.5,590" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,816 665,840 215,840 215,858" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="555" y="832">không trùng → giữ sảnh</text><polyline class="luong " points="215,902 215,940 1110,940 1110,968" marker-end="url(#mui-hdD)"/><polyline class="luong " points="1039,990 779.5,990" marker-end="url(#mui-hdD)"/><polyline class="luong " points="665,1012 665,1074" marker-end="url(#mui-hdD)"/><polyline class="luong " points="633,1100 40,1100 40,888 110,888" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="515" y="1092">chưa đủ → thu tiếp</text><polyline class="luong " points="665,1126 665,1150 1110,1150 1110,1178" marker-end="url(#mui-hdD)"/><text class="tx-luong" x="689" y="1142">đủ</text><polyline class="luong " points="1110,1222 1110,1278" marker-end="url(#mui-hdD)"/><g class="ghi-chu">
+    <text class="tx-ghi" x="20" y="1318">Huỷ được ở mọi bước trước HOÀN THÀNH và bắt buộc ghi lý do. Tiền hoàn tính theo số ngày còn lại trước ngày tiệc: ≥ 7 ngày hoàn 100%,</text><text class="tx-ghi" x="20" y="1331">3–6 ngày hoàn 50%, dưới 3 ngày không hoàn; nhà hàng chủ động huỷ luôn hoàn 100%. Chỉ đơn ĐÃ XÁC NHẬN / ĐÃ CỌC mới giữ sảnh,</text><text class="tx-ghi" x="20" y="1344">nên một yêu cầu mới chưa ai gọi lại không khoá được sảnh của một ngày cuối tuần. Mỗi lần đổi trạng thái hay thu tiền đều ghi lịch sử.</text>
+  </g></svg>

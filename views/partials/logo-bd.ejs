@@ -13,7 +13,7 @@ var _cao = typeof cao !== 'undefined' ? cao : 24;
 var _mau = typeof mau !== 'undefined' ? mau : '#c8a951';
 %><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="<%= _cao %>" height="<%= _cao %>"
      fill="none" stroke="<%= _mau %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-     role="img" aria-label="Nhà Hàng Bảo Đoàn" style="flex:none; vertical-align:middle">
+     role="img" aria-label="<%= typeof t === 'function' ? t('chung.ten_nha_hang') : 'Nhà Hàng Bảo Đoàn' %>" style="flex:none; vertical-align:middle">
   <circle cx="16" cy="16" r="8.5"/>
   <circle cx="16" cy="16" r="4.5" stroke-width="1.5" opacity=".55"/>
   <path d="M4 3.5v6a2.5 2.5 0 0 0 2.5 2.5v0a2.5 2.5 0 0 0 2.5-2.5v-6"/>

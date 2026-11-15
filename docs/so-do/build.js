@@ -817,6 +817,8 @@ thay vì dựng lên một mô hình hướng đối tượng không tồn tại
     'Ranh giới quan trọng nhất trên sơ đồ là giữa tầng định tuyến và tầng dịch vụ: toàn bộ câu lệnh SQL nằm ở tầng dịch vụ, tầng định tuyến chỉ nhận tham số và kiểm tra quyền. Nhờ vậy đổi một câu truy vấn hay đổi cả lược đồ bảng chỉ phải sửa trong <code>services/</code>.') +
   hinh(23, 'Sơ đồ lớp phân hệ học máy', lop.phanHeHocMay(),
     'Bốn mô-đun nghiệp vụ của tiến trình Python đều được <code>main.py</code> gọi trực tiếp và không gọi lẫn nhau. Hai tiến trình chỉ nói chuyện qua HTTP JSON, không dùng chung bộ nhớ, nên tắt tiến trình Python thì tầng web vẫn chạy.') +
+  hinh(36, 'Sơ đồ lớp phân hệ đặt bàn, đặt tiệc, kho bếp và thu chi', lop.phanHeDatBanKho(),
+    'Luật đặt bàn (giờ mở cửa, tiền cọc, hoàn huỷ, máy trạng thái) tách thành module thuần <code>reservationRules</code>: trang cấu hình và tầng tạo lượt đặt dùng chung một cách tính, nên số tiền cọc báo trước cho khách luôn khớp số tiền thu thật.') +
   `</section>`;
 
 /* --- 8. ERD --- */
@@ -833,6 +835,8 @@ bản ghi; cột đánh dấu <code>PK</code> là khoá chính, <code>FK</code> 
     'Ba bảng bên phải lưu dữ liệu sinh trắc học và bằng chứng chấm công. Quan hệ tự tham chiếu <code>chuc_danh.id_cd_cha</code> chính là cây cơ cấu tổ chức sáu cấp bậc.') +
   hinh(27, 'Lược đồ quan hệ thực thể phân hệ giao hàng', erd.giaoHang(),
     'Hai bảng vị trí cố ý không gộp vì trả lời hai câu hỏi có yêu cầu trái ngược nhau: <code>vi_tri_shipper_moi_nhat</code> ghi đè nên đọc rất nhanh cho bản đồ, còn <code>vi_tri_shipper</code> thêm một dòng mỗi nhịp nên giữ được vết đường để đối chiếu khi khách khiếu nại.') +
+  hinh(35, 'Lược đồ quan hệ thực thể phân hệ đặt bàn và đặt tiệc', erd.datBanTiec(),
+    'Bảng <code>reservation_slot_locks</code> là hàng rào chống đặt trùng ở tầng CSDL: khoá chính (bàn, ô 15 phút) khiến hai lượt đặt không thể cùng giữ một ô, kể cả khi hai yêu cầu đến cùng lúc.') +
   `</section>`;
 
 /* --- 9. Tuan tu --- */
@@ -849,6 +853,8 @@ nào gọi hàm nào của mô-đun nào, theo đúng thứ tự thời gian. T�
     'Nhánh thứ hai của khối <code>alt</code> là ràng buộc thiết kế quan trọng nhất của phân hệ AI: dịch vụ Python có thể tắt, nhưng trang web vẫn phải mở được và hiển thị kết quả dự báo đã lưu lần trước.') +
   hinh(31, 'Sơ đồ tuần tự luồng chấm công bằng khuôn mặt', tuanTu.chamCongKhuonMat(),
     'Vị trí được kiểm tra trước khuôn mặt. Người chấm công từ xa bị chặn trong một phần giây mà hệ thống chưa cần biết người đó là ai, và không tốn một lượt gọi dịch vụ nhận diện.') +
+  hinh(37, 'Sơ đồ tuần tự luồng đặt bàn trực tuyến', tuanTu.datBanTrucTuyen(),
+    'Giữ chỗ và ghi lượt đặt nằm trong cùng một giao dịch: không bao giờ có lượt đặt mà không giữ bàn, cũng không có bàn bị giữ bởi một lượt đặt không tồn tại.') +
   `</section>`;
 
 /* --- 10. Hoat dong --- */
@@ -858,11 +864,13 @@ h += mo(10) + `
 tách luồng song song <i>bên trong</i> một chức năng — những thứ mà sơ đồ quy trình mức tổng
 quan cố ý không thể hiện.</p></div>` +
   hinh(32, 'Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc', hoatDong.datBan(),
-    'Nhánh “ngày ở quá khứ” được kiểm tra ở phía máy chủ chứ không chỉ ở trình duyệt: thuộc tính <code>min</code> của ô ngày chỉ ngăn thao tác nhầm, còn người gửi thẳng yêu cầu HTTP vẫn bỏ qua được.') +
-  hinh(33, 'Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động', hoatDong.nhapKho(),
-    'Thời điểm trừ kho đặt ở bước bếp <i>hoàn thành</i> món, không phải lúc khách gọi món hay lúc thanh toán: đơn có thể bị huỷ sau khi gọi, còn nguyên liệu thì đã thực sự tiêu hao ngay khi bếp nấu xong.') +
+    'Mọi ràng buộc được kiểm tra ở máy chủ; tiền cọc tính từ giá món trong thực đơn. Khi hai khách cùng giữ một bàn, CSDL chặn trùng và hệ thống tự xếp bàn khác tối đa ba lần.') +
+  hinh(33, 'Sơ đồ hoạt động vòng mua hàng, nhập kho theo lô và trừ kho tự động', hoatDong.nhapKho(),
+    'Thời điểm trừ kho đặt ở bước bếp <i>hoàn thành</i> món. Tồn không bao giờ âm; nguyên liệu xuống dưới điểm đặt hàng tự quay về danh sách gợi ý mua, khép kín vòng mua hàng.') +
   hinh(34, 'Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo', hoatDong.troLyAo(),
     'Tầng ④ là lớp bảo vệ quan trọng nhất: mô hình chỉ chọn <i>mẫu</i> câu truy vấn rồi điền tham số đã kiểm tra kiểu, chứ không sinh chuỗi SQL tự do.') +
+  hinh(38, 'Sơ đồ hoạt động quy trình xử lý một đơn đặt tiệc', hoatDong.datTiec(),
+    'Chỉ đơn đã xác nhận hoặc đã cọc mới giữ sảnh; tiền cọc thu được nhiều đợt và đơn tự chuyển sang “Đã đặt cọc” khi đủ 30% dự toán.') +
   `</section>`;
 
 /* --- 11. Anh xa --- */

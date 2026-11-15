@@ -23,14 +23,18 @@
 | Hình 21 | Chú giải ký hiệu sơ đồ lớp, lược đồ CSDL, tuần tự và hoạt động | `svg/hinh-21.svg` |
 | Hình 22 | Sơ đồ lớp tầng dịch vụ nghiệp vụ | `svg/hinh-22.svg` |
 | Hình 23 | Sơ đồ lớp phân hệ học máy | `svg/hinh-23.svg` |
+| Hình 36 | Sơ đồ lớp phân hệ đặt bàn, đặt tiệc, kho bếp và thu chi | `svg/hinh-36.svg` |
 | Hình 24 | Lược đồ quan hệ thực thể phân hệ bán hàng | `svg/hinh-24.svg` |
 | Hình 25 | Lược đồ quan hệ thực thể phân hệ kho và dự báo nguyên liệu | `svg/hinh-25.svg` |
 | Hình 26 | Lược đồ quan hệ thực thể phân hệ nhân sự và sinh trắc học | `svg/hinh-26.svg` |
 | Hình 27 | Lược đồ quan hệ thực thể phân hệ giao hàng | `svg/hinh-27.svg` |
+| Hình 35 | Lược đồ quan hệ thực thể phân hệ đặt bàn và đặt tiệc | `svg/hinh-35.svg` |
 | Hình 28 | Sơ đồ tuần tự luồng khách quét mã QR gọi món | `svg/hinh-28.svg` |
 | Hình 29 | Sơ đồ tuần tự luồng thanh toán VietQR và đối soát tự động | `svg/hinh-29.svg` |
 | Hình 30 | Sơ đồ tuần tự luồng chạy dự báo lượt khách | `svg/hinh-30.svg` |
 | Hình 31 | Sơ đồ tuần tự luồng chấm công bằng khuôn mặt | `svg/hinh-31.svg` |
+| Hình 37 | Sơ đồ tuần tự luồng đặt bàn trực tuyến | `svg/hinh-37.svg` |
 | Hình 32 | Sơ đồ hoạt động quy trình đặt bàn trực tuyến và đặt cọc | `svg/hinh-32.svg` |
-| Hình 33 | Sơ đồ hoạt động quy trình nhập kho theo lô và trừ kho tự động | `svg/hinh-33.svg` |
+| Hình 33 | Sơ đồ hoạt động vòng mua hàng, nhập kho theo lô và trừ kho tự động | `svg/hinh-33.svg` |
 | Hình 34 | Sơ đồ hoạt động đường đi của một câu hỏi qua trợ lý ảo | `svg/hinh-34.svg` |
+| Hình 38 | Sơ đồ hoạt động quy trình xử lý một đơn đặt tiệc | `svg/hinh-38.svg` |

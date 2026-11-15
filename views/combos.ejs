@@ -318,7 +318,7 @@
       <% combos.forEach(function (cb) { %>
         <%
           var tenHienThi = (cb.tenKey && t(cb.tenKey) !== cb.tenKey) ? t(cb.tenKey) : (cb.tenVi || cb.id);
-          var nguoiHienThi = (cb.nguoiKey && t(cb.nguoiKey) !== cb.nguoiKey) ? t(cb.nguoiKey) : (cb.nguoiVi || (cb.minKhach + ' - ' + cb.maxKhach + ' khách'));
+          var nguoiHienThi = (cb.nguoiKey && t(cb.nguoiKey) !== cb.nguoiKey) ? t(cb.nguoiKey) : (cb.nguoiVi || t('thuc_don_combo.c_khach', { tu: cb.minKhach, den: cb.maxKhach }));
           var moTaHienThi = (cb.moTaKey && t(cb.moTaKey) !== cb.moTaKey) ? t(cb.moTaKey) : (cb.moTaVi || '');
           var filterCategory = 'all';
           if (cb.maxKhach <= 2) filterCategory = '2';
@@ -340,17 +340,17 @@
 
             <div class="nh-combo-card__dishes">
               <div class="nh-combo-card__dishes-title">
-                <i class="fas fa-utensils"></i> <%= t('thuc_don_combo.chi_tiet_mon') %> (<%= cb.monList.length %> món)
+                <i class="fas fa-utensils"></i> <%= t('thuc_don_combo.chi_tiet_mon') %> (<%= t('gio_hang.so_mon_count', { n: cb.monList.length }) %>)
               </div>
               <% cb.monList.forEach(function (m) { %>
                 <div class="nh-combo-card__dish-item">
                   <div class="nh-combo-card__dish-name">
                     <% if (m.images) { %>
-                      <img src="/food/<%= m.images %>" alt="<%= m.name_mon %>" class="nh-combo-card__dish-thumb" loading="lazy" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
+                      <img src="/food/<%= m.images %>" alt="<%= tenMon(m).chinh %>" class="nh-combo-card__dish-thumb" loading="lazy" onerror="this.onerror=null;this.src='/mon-thay-the.svg'">
                     <% } else { %>
                       <div class="nh-combo-card__dish-thumb" style="display:flex;align-items:center;justify-content:center;background:#eee;color:#999;font-size:0.7rem;"><i class="fas fa-bowl-food"></i></div>
                     <% } %>
-                    <span><%= m.name_mon %></span>
+                    <span><%= tenMon(m).chinh %></span>
                   </div>
                   <span class="nh-combo-card__dish-qty">x<%= m.soluong || 1 %></span>
                 </div>

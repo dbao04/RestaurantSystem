@@ -141,7 +141,7 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ so_tien: TIEN_COC }),
     })
-      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || j.loi || 'Lỗi'); return j; }); })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || j.loi || <%- JSON.stringify(t('ttqr.t_loi')) %>); return j; }); })
       .then(function (kq) {
         phienId = kq.payment.id;
         $('anh-qr').src = kq.qr.anh;

@@ -109,6 +109,8 @@ function tinhPhiDonVi(km, dv, bac = MAC_DINH_BAC) {
 
   const chiTiet = [{
     nhan: kmDau > 0 ? `${kmDau} km đầu (trọn gói)` : 'Phí mở chuyến',
+    // loai/tu/den de khu khach tu dung nhan theo ngon ngu (xem views/cart.ejs).
+    loai: kmDau > 0 ? 'km_dau' : 'mo_chuyen', tu: 0, den: kmDau,
     so_km: kmDau, don_gia: null, tien: phiCoBan,
   }];
 
@@ -125,6 +127,7 @@ function tinhPhiDonVi(km, dv, bac = MAC_DINH_BAC) {
     tong += tien;
     chiTiet.push({
       nhan: den === Infinity ? `Từ km ${tu} trở đi` : `Km ${tu} – ${den}`,
+      loai: den === Infinity ? 'tu_km' : 'khoang', tu, den: den === Infinity ? null : den,
       so_km: soKm, don_gia: donGia, tien,
       giam_phan_tram: Math.round((1 - moc[i].he_so) * 100),
     });
@@ -369,7 +372,7 @@ async function quetQuaHan() {
       await huyDon(d.id_giao, { ma_ly_do: 'qua_han_thanh_toan', nguoi: { ten: 'Hệ thống', heThong: true } });
       n++;
     } catch (e) {
-      console.error('[chinh-sach-giao] tu huy loi:', d.id_giao, e.message);
+      console.error('[chinh-sach-giao] tu huy loi:', d.id_giao, (e.message || e.code || String(e)));
     }
   }
   if (n) baoThayDoi();
@@ -379,7 +382,7 @@ async function quetQuaHan() {
 let _vong = null;
 function batVongQuet() {
   if (_vong) return;
-  _vong = setInterval(() => quetQuaHan().catch((e) => console.error('[chinh-sach-giao]', e.message)), 60000);
+  _vong = setInterval(() => quetQuaHan().catch((e) => console.error('[chinh-sach-giao]', (e.message || e.code || String(e)))), 60000);
   console.log('[giao-hang] vòng quét đơn quá hạn thanh toán đã bật (mỗi 60s)');
 }
 

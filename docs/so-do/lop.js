@@ -264,4 +264,155 @@ function phanHeHocMay() {
     'Sơ đồ lớp phân hệ học máy: mô-đun phía Node gọi sang tiến trình Python và các mô-đun dự báo, khai phá luật, nhận diện khuôn mặt, trợ lý ảo', s);
 }
 
-module.exports = { tangDichVu, phanHeHocMay };
+/* ======================================================================== */
+/* 3. PHAN HE DAT BAN, DAT TIEC, KHO BEP VA THU CHI                         */
+/* ======================================================================== */
+
+/**
+ * Bon phan he lam sau cung (migration 028 - 038). Cung ranh gioi ba tang nhu
+ * tangDichVu(): router chi nhan tham so va kiem quyen, luat thuan tuy tach ra
+ * module rieng (reservationRules) de test duoc khong can CSDL.
+ */
+function phanHeDatBanKho() {
+  const id = 'lopC';
+  let s = '';
+  const C = [30, 360, 690, 1020];   // bon cot
+
+  // --- hang 1: router ---
+  const rDb = v.hopLop(C[0], 40, 'routes/datBan.js', [], [
+    '+ POST /api/dat-ban',
+    '+ POST /api/dat-ban/tra-cuu/doi-lich',
+    '+ POST /api/reservations/walk-in',
+    '+ POST /api/reservations/:id/deposit',
+  ], { khuonMau: 'router' });
+  const rDt = v.hopLop(C[1], 40, 'routes/datTiec.js', [], [
+    '+ POST /api/dat-tiec',
+    '+ POST /api/staff/dat-tiec/:id/trang-thai',
+    '+ POST /api/staff/dat-tiec/:id/thanh-toan',
+  ], { khuonMau: 'router' });
+  const rKb = v.hopLop(C[2], 40, 'routes/khoBep.js', [], [
+    '+ POST /api/kitchen/kho/nhap',
+    '+ POST /api/kitchen/kho/xuat',
+    '+ POST /api/kitchen/mua-hang/:id/:buoc',
+  ], { khuonMau: 'router' });
+  const rTc = v.hopLop(C[3], 40, 'routes/thuChi.js', [], [
+    '+ GET /staff/thu-chi',
+    '+ POST /api/staff/thu-chi/phieu',
+    '+ POST /api/staff/thu-chi/phieu/:id/huy',
+  ], { khuonMau: 'router' });
+
+  // --- hang 2: dich vu dieu phoi ---
+  const sRsv = v.hopLop(C[0], 230, 'reservationService', ['− COT_RSV: string'], [
+    '+ taoLuotDat(input, ctx)',
+    '+ taoWalkIn(input, ctx)',
+    '+ capNhat(id, input, ctx)',
+    '+ capNhatMonDatTruoc(id, items)',
+    '+ ganBan(id, dsBanId)',
+    '+ doiTrangThai(id, moi, ctx)',
+    '+ luuCoc(id, input)',
+    '+ xemTruocHuy(id)',
+  ], { khuonMau: 'module' });
+  const sDt = v.hopLop(C[1], 230, 'datTiecService', [
+    '+ CHUYEN_TRANG_THAI: map',
+    '+ GIU_CHO: [DA_XAC_NHAN, DA_COC]',
+  ], [
+    '+ taoDonTiec(body, ctx)',
+    '+ tinhDuToan(...)',
+    '+ tinhTienCoc(...)',
+    '+ capNhatTrangThai(id, moi)',
+    '+ ghiNhanThanhToan(id, tt)',
+    '+ tinhHoanTien(don)',
+    '+ ganNhanVien(id, dsNv)',
+  ], { khuonMau: 'module' });
+  const sKb = v.hopLop(C[2], 230, 'khoBepService', [], [
+    '+ goiYMuaHang()',
+    '+ taoDonMua(body, idNv)',
+    '+ doiTrangThaiDon(id, buoc)',
+    '+ taoPhieuNhap(body, idNv)',
+    '+ taoPhieuXuat(body, idNv)',
+    '+ truLoFIFO(conn, idNl, sl)',
+  ], { khuonMau: 'module' });
+  const sTc = v.hopLop(C[3], 230, 'thuChiService', ['+ DANH_MUC: map'], [
+    '+ lapPhieu(body, nv)',
+    '+ huyPhieu(id, lyDo, nv)',
+    '+ baoCao(loc)',
+    '+ phieuTienMatTrongCa(ca)',
+    '+ xuatExcel(loc)',
+  ], { khuonMau: 'module' });
+
+  // --- hang 3: luat thuan tuy, xep ban, vong quet nen, KDS, chot ca ---
+  const sRule = v.hopLop(C[0], 500, 'reservationRules', [
+    '+ SLOT_MINUTES = 15',
+    '+ CHUYEN_TRANG_THAI: map',
+  ], [
+    '+ kiemTraQuaKhu(khung)',
+    '+ kiemTraGioMoCua(khung)',
+    '+ kiemTraDatSatGio(khung, ch)',
+    '+ tinhTienCoc({soKhach, gio, ...})',
+    '+ tinhHoanTien(rsv, luc)',
+    '+ batBuocChuyenDuoc(tu, den)',
+  ], { khuonMau: 'module' });
+  const sTab = v.hopLop(C[1], 520, 'reservationTables', [], [
+    '+ goiYXepBan(khung, yeuCau)',
+    '+ timToHop(dsBan, soKhach)',
+    '+ khungGioThayThe(...)',
+    '+ chiemO(conn, id, ban, khung)',
+    '+ nhaO(conn, id)',
+  ], { khuonMau: 'module' });
+  const sKds = v.hopLop(C[2], 520, 'kdsService', [], [
+    '+ hoanThanhCheBien(id)',
+    '+ danhDauDaPhucVu(id, idNv)',
+  ], { khuonMau: 'module' });
+  const sCc = v.hopLop(C[3], 520, 'chotCaService', [], [
+    '+ tongHopCa(nv, moc)',
+    '+ chotCa(input, nv)',
+    '+ duyetBienBan(id, nv)',
+  ], { khuonMau: 'module' });
+  const sJob = v.hopLop(C[0], sRule.y + sRule.h + 60, 'reservationJobs', ['+ CHU_KY_MS = 60000'], [
+    '+ quetNoShow() → dv.doiTrangThai()',
+    '+ quetCocQuaHan() → huỷ, nhả bàn',
+    '+ quetNhacLich() → gửi email nhắc',
+  ], { khuonMau: 'tiến trình nền' });
+
+  [rDb, rDt, rKb, rTc, sRsv, sDt, sKb, sTc, sRule, sTab, sKds, sCc, sJob].forEach((x) => { s += x.svg; });
+
+  /* --- quan he --- */
+  const dung = (a, b) => v.quanHeLop(
+    [[a.x + 40, a.canh.duoi], [a.x + 40, b.canh.tren]], id,
+    { kieu: 'phu-thuoc', nhan: '«use»', viTriNhan: [a.x + 76, (a.canh.duoi + b.canh.tren) / 2 + 4] });
+  s += dung(rDb, sRsv);
+  s += dung(rDt, sDt);
+  s += dung(rKb, sKb);
+  s += dung(rTc, sTc);
+
+  // reservationService --> reservationRules / reservationTables
+  s += v.quanHeLop([[sRsv.x + 40, sRsv.canh.duoi], [sRsv.x + 40, sRule.canh.tren]], id,
+    { kieu: 'phu-thuoc', nhan: 'hỏi luật', viTriNhan: [sRsv.x + 82, (sRsv.canh.duoi + sRule.canh.tren) / 2 + 4] });
+  const xKhe = C[1] - 30;
+  s += v.quanHeLop([[sRsv.canh.phai, sRsv.y + 70], [xKhe, sRsv.y + 70], [xKhe, sTab.y + 40], [sTab.canh.trai, sTab.y + 40]], id,
+    { kieu: 'phu-thuoc', nhan: 'xếp bàn', viTriNhan: [xKhe - 28, sRsv.y + 62] });
+  // datTiecService --> reservationRules (dung chung luat gio mo cua, ngay le)
+  const yDt = sRule.y - 24;
+  const xDich = sRule.x + sRule.w - 40;
+  s += v.quanHeLop([[sDt.x + 40, sDt.canh.duoi], [sDt.x + 40, yDt], [xDich, yDt], [xDich, sRule.canh.tren]], id,
+    { kieu: 'phu-thuoc', nhan: 'dùng chung luật', viTriNhan: [sDt.x + 110, yDt - 6] });
+  // reservationJobs --> reservationRules (va goi reservationService)
+  s += v.quanHeLop([[sJob.x + 40, sJob.canh.tren], [sJob.x + 40, sRule.canh.duoi]], id,
+    { kieu: 'phu-thuoc', nhan: 'mỗi phút một nhịp', viTriNhan: [sJob.x + 110, (sRule.canh.duoi + sJob.canh.tren) / 2 + 4] });
+  // kdsService --> khoBepService.truLoFIFO
+  s += v.quanHeLop([[sKds.x + 60, sKds.canh.tren], [sKds.x + 60, sKb.canh.duoi]], id,
+    { kieu: 'phu-thuoc', nhan: 'trừ lô FIFO', viTriNhan: [sKds.x + 116, (sKb.canh.duoi + sKds.canh.tren) / 2 + 4] });
+  // chotCaService --> thuChiService.phieuTienMatTrongCa
+  s += v.quanHeLop([[sCc.x + 60, sCc.canh.tren], [sCc.x + 60, sTc.canh.duoi]], id,
+    { kieu: 'phu-thuoc', nhan: 'phiếu tiền mặt trong ca', viTriNhan: [sCc.x + 150, (sTc.canh.duoi + sCc.canh.tren) / 2 + 4] });
+  const H = sJob.y + sJob.h + 80;
+  s += v.ghiChu(30, H - 46, [
+    'reservationRules không truy cập trạng thái phiên hay request: mọi hàm là hàm thuần (trừ docCauHinh), nên trang cấu hình của quản lý và tầng tạo lượt đặt',
+    'dùng CHUNG một cách tính tiền cọc / hoàn tiền. Mọi module dịch vụ trên hình đều truy vấn qua pool config/db (không vẽ để tránh rối).',
+  ]);
+
+  return v.khung(id, 1350, H,
+    'Sơ đồ lớp các phân hệ đặt bàn, đặt tiệc, kho bếp và thu chi: router, module điều phối, module luật thuần và tiến trình quét nền', s);
+}
+
+module.exports = { tangDichVu, phanHeHocMay, phanHeDatBanKho };

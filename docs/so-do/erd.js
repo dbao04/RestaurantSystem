@@ -137,98 +137,113 @@ function kho() {
   const id = 'erdB';
   let s = '';
 
-  const ncc = v.hopBang(30, 40, 'nha_cung_cap', [
+  // Cot A: mua hang
+  const dmh = v.hopBang(30, 40, 'don_mua_hang', [
+    'PK id_dmh', 'ma_don', 'FK id_ncc', 'trang_thai', 'ngay_giao_du_kien', 'tong_tien',
+    'FK id_nv_tao', 'FK id_nv_duyet', 'duyet_luc',
+  ]);
+  const ctdm = v.hopBang(30, 300, 'chi_tiet_don_mua', [
+    'PK id', 'FK id_dmh', 'FK id_nl', 'so_luong', 'don_gia', 'so_luong_da_nhan',
+  ]);
+  // Cot B: nha cung cap, phieu nhap theo lo
+  const ncc = v.hopBang(320, 40, 'nha_cung_cap', [
     'PK id_ncc', 'ten_ncc', 'sodienthoai', 'email', 'danh_gia', 'trangthai',
   ]);
-  const phieuNhap = v.hopBang(30, 250, 'phieu_nhap', [
-    'PK id_pn', 'ma_phieu', 'FK id_ncc', 'FK id_nv', 'ngay_nhap', 'tong_tien',
+  const phieuNhap = v.hopBang(320, 250, 'phieu_nhap', [
+    'PK id_pn', 'ma_phieu', 'FK id_ncc', 'FK id_dmh', 'FK id_nv', 'thoi_diem', 'tong_tien',
   ]);
-  const ctpn = v.hopBang(30, 450, 'chi_tiet_phieu_nhap', [
+  const ctpn = v.hopBang(320, 470, 'chi_tiet_phieu_nhap', [
     'PK id_ct', 'FK id_pn', 'FK id_nl', 'so_luong', 'gia_nhap', 'so_lo',
     'han_su_dung', 'so_luong_con_lai',
   ]);
-
-  const dvt = v.hopBang(400, 40, 'don_vi_tinh', ['PK id_dvt', 'ten_dvt', 'ky_hieu']);
-  const nl = v.hopBang(400, 175, 'nguyen_lieu', [
-    'PK id_nl', 'ten_nl', 'FK id_dvt', 'so_luong', 'dinh_muc_min', 'gia_von',
+  // Cot C: nguyen lieu, cong thuc
+  const dvt = v.hopBang(700, 40, 'don_vi_tinh', ['PK id_dvt', 'ten_dvt', 'ky_hieu']);
+  const nl = v.hopBang(700, 175, 'nguyen_lieu', [
+    'PK id_nl', 'ten_nl', 'FK id_dvt', 'so_luong', 'dinh_muc_min', 'gia_von', 'han_su_dung_ngay',
   ]);
-  const congThuc = v.hopBang(400, 400, 'cong_thuc', [
+  const congThuc = v.hopBang(700, 410, 'cong_thuc', [
     'PK id_ct', 'FK id_mon', 'FK id_nl', 'so_luong_tieu_hao',
   ]);
-  const monAn = v.hopBang(400, 570, 'monan', ['PK id_mon', 'name_mon', 'gia_mon'], { lop: 'phu' });
-
-  const xuatKho = v.hopBang(730, 175, 'xuat_kho', [
-    'PK id_xk', 'FK id_nl', 'FK id_mon', 'sesis', 'so_luong', 'ly_do', 'ngay_xuat',
+  const monAn = v.hopBang(700, 570, 'monan', ['PK id_mon', 'name_mon', 'gia_mon'], { lop: 'phu' });
+  // Cot D: xuat kho
+  const phieuXuat = v.hopBang(1030, 40, 'phieu_xuat', [
+    'PK id_px', 'ma_phieu', 'ly_do', 'FK id_nv', 'thoi_diem', 'tong_gia_tri',
   ]);
-  const dbnl = v.hopBang(730, 420, 'du_bao_nguyen_lieu', [
-    'PK id', 'ngay_du_bao', 'FK id_nl', 'so_luong_can', 'ton_hien_tai',
-    'can_nhap_them', 'mo_hinh',
+  const xuatKho = v.hopBang(1030, 200, 'xuat_kho', [
+    'PK id_xk', 'FK id_nl', 'FK id_mon', 'FK id_px', 'sesis', 'so_luong', 'gia_tri', 'ly_do', 'ngay_xuat',
   ]);
-
-  const dblk = v.hopBang(1030, 175, 'du_bao_luot_khach', [
+  // Cot E: ket qua hoc may
+  const dbnl = v.hopBang(1330, 40, 'du_bao_nguyen_lieu', [
+    'PK id', 'ngay_du_bao', 'FK id_nl', 'so_luong_can', 'ton_hien_tai', 'can_nhap_them', 'mo_hinh',
+  ]);
+  const dblk = v.hopBang(1330, 230, 'du_bao_luot_khach', [
     'PK id', 'ngay_du_bao', 'so_khach_du_bao', 'can_duoi', 'can_tren', 'mo_hinh',
   ]);
-  const dgmh = v.hopBang(1030, 360, 'danh_gia_mo_hinh', [
+  const dgmh = v.hopBang(1330, 400, 'danh_gia_mo_hinh', [
     'PK id', 'bai_toan', 'mo_hinh', 'mae', 'rmse', 'mape', 'r2',
   ]);
-  const lkh = v.hopBang(1030, 550, 'luat_ket_hop', [
+  const lkh = v.hopBang(1330, 580, 'luat_ket_hop', [
     'PK id', 'mon_ve_trai', 'FK mon_ve_phai', 'do_ho_tro', 'do_tin_cay', 'do_nang',
   ]);
 
-  [ncc, phieuNhap, ctpn, dvt, nl, congThuc, monAn, xuatKho, dbnl, dblk, dgmh, lkh]
+  [dmh, ctdm, ncc, phieuNhap, ctpn, dvt, nl, congThuc, monAn, phieuXuat, xuatKho, dbnl, dblk, dgmh, lkh]
     .forEach((b) => { s += b.svg; });
 
+  // nha_cung_cap 1 --- n don_mua_hang
+  s += v.noiBang([[ncc.canh.trai, 100], [dmh.canh.phai, 100]],
+    { nhan: 'nhận đơn', viTriNhan: [(ncc.canh.trai + dmh.canh.phai) / 2, 92] });
+  // don_mua_hang 1 --- n chi_tiet_don_mua
+  s += v.noiBang([[dmh.canh.giuaX, dmh.canh.duoi], [dmh.canh.giuaX, ctdm.canh.tren]],
+    { nhan: 'gồm', viTriNhan: [dmh.canh.giuaX + 28, dmh.canh.duoi + 26] });
+  // don_mua_hang 1 --- n phieu_nhap (nhan hang nhieu dot)
+  s += v.noiBang([[dmh.canh.phai, 180], [290, 180], [290, phieuNhap.y + 60], [phieuNhap.canh.trai, phieuNhap.y + 60]],
+    { nhan: 'nhận theo đơn', viTriNhan: [250, 240] });
+  // nha_cung_cap 1 --- n phieu_nhap
   s += v.noiBang([[ncc.canh.giuaX, ncc.canh.duoi], [ncc.canh.giuaX, phieuNhap.canh.tren]],
     { nhan: 'cung cấp', viTriNhan: [ncc.canh.giuaX + 44, ncc.canh.duoi + 26] });
+  // phieu_nhap 1 --- n chi_tiet_phieu_nhap
   s += v.noiBang([[phieuNhap.canh.giuaX, phieuNhap.canh.duoi], [phieuNhap.canh.giuaX, ctpn.canh.tren]],
     { nhan: 'gồm lô', viTriNhan: [phieuNhap.canh.giuaX + 38, phieuNhap.canh.duoi + 26] });
+  // don_vi_tinh 1 --- n nguyen_lieu
   s += v.noiBang([[dvt.canh.giuaX, dvt.canh.duoi], [dvt.canh.giuaX, nl.canh.tren]],
     { nhan: 'đơn vị', viTriNhan: [dvt.canh.giuaX + 38, dvt.canh.duoi + 22] });
-
-  // nguyen_lieu 1 --- n chi_tiet_phieu_nhap (nhap theo lo)
-  s += v.noiBang([
-    [nl.canh.trai, nl.y + 60], [355, nl.y + 60], [355, ctpn.y + 96],
-    [ctpn.canh.phai, ctpn.y + 96],
-  ], { nhan: 'nhập theo lô', viTriNhan: [300, ctpn.y + 88] });
-
+  // nguyen_lieu 1 --- n chi_tiet_phieu_nhap
+  s += v.noiBang([[nl.canh.trai, nl.y + 60], [665, nl.y + 60], [665, ctpn.y + 96], [ctpn.canh.phai, ctpn.y + 96]],
+    { nhan: 'nhập theo lô', viTriNhan: [612, ctpn.y + 88] });
+  // nguyen_lieu 1 --- n chi_tiet_don_mua
+  s += v.noiBang([[nl.canh.trai, nl.y + 130], [640, nl.y + 130], [640, 450], [250, 450], [250, ctdm.y + 100],
+    [ctdm.canh.phai, ctdm.y + 100]], { nhan: 'đặt mua', viTriNhan: [560, 442] });
   // nguyen_lieu 1 --- n cong_thuc
   s += v.noiBang([[nl.canh.giuaX, nl.canh.duoi], [nl.canh.giuaX, congThuc.canh.tren]],
-    { nhan: 'định lượng', viTriNhan: [nl.canh.giuaX + 52, nl.canh.duoi + 26] });
-
+    { nhan: 'định lượng', viTriNhan: [nl.canh.giuaX + 52, nl.canh.duoi + 22] });
   // monan 1 --- n cong_thuc
   s += v.noiBang([[monAn.canh.giuaX, monAn.canh.tren], [monAn.canh.giuaX, congThuc.canh.duoi]],
     { nhan: 'công thức của', viTriNhan: [monAn.canh.giuaX + 62, monAn.canh.tren - 12] });
-
   // nguyen_lieu 1 --- n xuat_kho
   s += v.noiBang([[nl.canh.phai, nl.y + 60], [xuatKho.canh.trai, nl.y + 60]],
     { nhan: 'tiêu hao', viTriNhan: [(nl.canh.phai + xuatKho.canh.trai) / 2, nl.y + 52] });
-
-  // nguyen_lieu 1 --- n du_bao_nguyen_lieu
-  s += v.noiBang([
-    [nl.canh.phai, nl.y + 140], [690, nl.y + 140], [690, dbnl.y + 60],
-    [dbnl.canh.trai, dbnl.y + 60],
-  ], { nhan: 'dự báo cho', viTriNhan: [660, dbnl.y + 52] });
-
-  // monan 1 --- n luat_ket_hop (mon o ve phai cua luat)
-  s += v.noiBang([
-    [monAn.canh.phai, monAn.y + 40], [1000, monAn.y + 40], [1000, lkh.y + 60],
-    [lkh.canh.trai, lkh.y + 60],
-  ], { nhan: 'món được gợi ý', viTriNhan: [880, monAn.y + 32] });
-
+  // phieu_xuat 1 --- n xuat_kho
+  s += v.noiBang([[phieuXuat.canh.giuaX, phieuXuat.canh.duoi], [phieuXuat.canh.giuaX, xuatKho.canh.tren]],
+    { nhan: 'gồm dòng', viTriNhan: [phieuXuat.canh.giuaX + 46, phieuXuat.canh.duoi + 22] });
+  // nguyen_lieu 1 --- n du_bao_nguyen_lieu (vong qua mep tren)
+  s += v.noiBang([[nl.canh.phai, nl.y + 20], [995, nl.y + 20], [995, 20], [1300, 20], [1300, dbnl.y + 60],
+    [dbnl.canh.trai, dbnl.y + 60]], { nhan: 'dự báo cho', viTriNhan: [1150, 14] });
   // monan 1 --- n xuat_kho
-  s += v.noiBang([
-    [monAn.canh.phai, monAn.y + 66], [960, monAn.y + 66], [960, xuatKho.canh.duoi + 28],
-    [xuatKho.canh.giuaX, xuatKho.canh.duoi + 28], [xuatKho.canh.giuaX, xuatKho.canh.duoi],
-  ], { nhan: 'bán món nào', viTriNhan: [845, xuatKho.canh.duoi + 22] });
+  s += v.noiBang([[monAn.canh.phai, monAn.y + 30], [995, monAn.y + 30], [995, xuatKho.canh.duoi + 30],
+    [xuatKho.canh.giuaX, xuatKho.canh.duoi + 30], [xuatKho.canh.giuaX, xuatKho.canh.duoi]],
+  { nhan: 'bán món nào', viTriNhan: [1180, xuatKho.canh.duoi + 24] });
+  // monan 1 --- n luat_ket_hop
+  s += v.noiBang([[monAn.canh.phai, monAn.y + 56], [lkh.canh.trai, monAn.y + 56]],
+    { nhan: 'món được gợi ý', viTriNhan: [1180, monAn.y + 48] });
 
-  s += v.ghiChu(30, 690, [
-    'Ba bảng bên phải là nơi lưu KẾT QUẢ của phần học máy chứ không tham gia nghiệp vụ hằng ngày:',
-    'du_bao_luot_khach và du_bao_nguyen_lieu lưu số dự báo, danh_gia_mo_hinh lưu chỉ số MAE / RMSE / MAPE / R²',
-    'của từng mô hình trong mỗi lần chạy, luat_ket_hop lưu các luật Apriori đã khai phá được.',
+  s += v.ghiChu(30, 728, [
+    'Vòng mua hàng: don_mua_hang (chờ duyệt → đã duyệt → đã đặt → nhận một phần / đã nhận) sinh ra một hoặc nhiều phieu_nhap; mỗi dòng',
+    'chi_tiet_phieu_nhap là MỘT LÔ có hạn dùng riêng, so_luong_con_lai bị trừ theo hạn dùng sớm nhất trước. xuat_kho ghi cả tiêu hao do bán món',
+    '(id_mon, sesis) lẫn phiếu xuất hỏng / hao hụt (id_px). Bốn bảng cột phải lưu KẾT QUẢ của phần học máy, không tham gia nghiệp vụ hằng ngày.',
   ]);
 
-  return v.khung(id, 1290, 745,
-    'Lược đồ quan hệ thực thể của phân hệ kho: nhập theo lô, định lượng công thức, nhật ký tiêu hao và các bảng kết quả học máy', s);
+  return v.khung(id, 1560, 780,
+    'Lược đồ quan hệ thực thể của phân hệ kho: mua hàng, nhập theo lô, định lượng công thức, xuất kho và các bảng kết quả học máy', s);
 }
 
 /* ======================================================================== */
@@ -388,7 +403,8 @@ function giaoHang() {
     'PK id_giao', 'FK sesis', 'ma_giao', 'FK id_dv', 'FK id_shipper',
     'ten_nguoi_nhan', 'sdt_nguoi_nhan', 'dia_chi_giao', 'vi_do', 'kinh_do',
     'khoang_cach_km', 'phi_giao', 'tien_thu_ho', 'trang_thai',
-    'FK id_nv_phan', 'phan_luc', 'lay_luc', 'giao_luc', 'hoan_tat_luc',
+    'FK id_nv_phan', 'ma_khu_vuc', 'phan_tu_dong', 'phan_luc', 'xac_nhan_luc',
+    'lay_luc', 'giao_luc', 'hoan_tat_luc',
   ]);
 
   // Cot 4 -------------------------------------------------- 40..214 / 300..490 / 540..666
@@ -404,7 +420,15 @@ function giaoHang() {
     'PK id_shipper', 'FK id_giao', 'vi_do', 'kinh_do', 'do_chinh_xac_m', 'luc',
   ]);
 
-  [dvvc, nhanVien, hopDong, shipper, donGiao, nhatKy, viTri, viTriMoi]
+  // Cot 5: phan cong va khu vuc giao (migration 035)
+  const phanCong = v.hopBang(1330, 330, 'phan_cong_giao', [
+    'PK id', 'FK id_giao', 'FK id_shipper', 'kieu', 'ket_qua', 'ly_do_chon', 'tao_luc', 'phan_hoi_luc',
+  ]);
+  const khuVuc = v.hopBang(1330, 150, 'khu_vuc_giao', [
+    'PK id_kv', 'ma', 'ten', 'da_giac', 'bat', 'mau',
+  ]);
+
+  [dvvc, nhanVien, hopDong, shipper, donGiao, nhatKy, viTri, viTriMoi, phanCong, khuVuc]
     .forEach((b) => { s += b.svg; });
 
   /* --- quan he --- */
@@ -438,10 +462,10 @@ function giaoHang() {
     { nhan: 'ghi vết', viTriNhan: [(donGiao.canh.phai + nhatKy.canh.trai) / 2, 92] });
 
   // shipper 1 --- n vi_tri_shipper (vet duong: them mot dong moi nhip)
-  const xVet = shipper.canh.giuaX - 50;
+  const xVet = shipper.canh.giuaX - 28;
   s += v.noiBang([
-    [xVet, shipper.canh.duoi], [xVet, 420], [viTri.canh.trai, 420],
-  ], { nhan: 'vết đường', viTriNhan: [xVet + 90, 412] });
+    [xVet, shipper.canh.duoi], [xVet, 470], [viTri.canh.trai, 470],
+  ], { nhan: 'vết đường', viTriNhan: [xVet + 90, 462] });
 
   // shipper 1 --- 1 vi_tri_shipper_moi_nhat (ghi de, moi nguoi giao mot dong)
   const xMoi = shipper.canh.giuaX + 50;
@@ -449,13 +473,155 @@ function giaoHang() {
     [xMoi, shipper.canh.duoi], [xMoi, 596], [viTriMoi.canh.trai, 596],
   ], { cuoi: 'mot', nhan: 'vị trí hiện tại', viTriNhan: [xMoi + 110, 588] });
 
-  s += v.ghiChu(30, 730, [
+  // don_giao_hang 1 --- n phan_cong_giao (moi lan moi / go don la mot dong)
+  s += v.noiBang([[donGiao.canh.phai, 268], [1300, 268], [1300, 400], [phanCong.canh.trai, 400]],
+    { nhan: 'lượt phân', viTriNhan: [1262, 392] });
+  // khu_vuc_giao 1 --- n don_giao_hang (theo ma_khu_vuc)
+  s += v.noiBang([[khuVuc.canh.trai, 232], [donGiao.canh.phai, 232]],
+    { dau: 'mot', cuoi: 'nhieu', nhan: 'thuộc khu (ma_khu_vuc)', viTriNhan: [1196, 224] });
+  // shipper 1 --- n phan_cong_giao: vong duoi day hinh
+  s += v.noiBang([[shipper.x + 8, shipper.canh.duoi], [shipper.x + 8, 768], [phanCong.canh.giuaX, 768],
+    [phanCong.canh.giuaX, phanCong.canh.duoi]], { nhan: 'shipper được mời nhận đơn', viTriNhan: [1200, 760] });
+
+  s += v.ghiChu(410, 726, [
     'Hai bảng vị trí cố ý không gộp: vi_tri_shipper thêm một dòng mỗi nhịp để trả lời "đã đi đường nào"; vi_tri_shipper_moi_nhat ghi đè,',
     'mỗi người giao đúng một dòng, để bản đồ trả lời "đang ở đâu" mà không phải quét cả vết đường.',
   ]);
 
-  return v.khung(id, 1400, 790,
+  return v.khung(id, 1560, 790,
     'Lược đồ quan hệ thực thể của phân hệ giao hàng: đơn vị vận chuyển, hồ sơ người giao, đơn giao kèm nhật ký chuyển trạng thái và hai bảng vị trí', s);
 }
 
-module.exports = { banHang, kho, nhanSu, giaoHang };
+/* ======================================================================== */
+/* 5. PHAN HE DAT BAN VA DAT TIEC                                           */
+/* ======================================================================== */
+
+/**
+ * Dat ban le (reservations) va dat tiec (dat_tiec) la hai luong tach biet:
+ * dat ban giu BAN theo o 15 phut, dat tiec giu ca SANH (vitri) theo buoi.
+ * Toa do cac cot tinh tu be rong that cua hop ben trai de khong phai uoc luong.
+ */
+function datBanTiec() {
+  const id = 'erdE';
+  let s = '';
+  const KHE = 120;   // khoang trong giua hai cot, du cho nhan quan he
+
+  // Cot 1: ho so khach + hai bang cau hinh luat
+  const rc = v.hopBang(30, 40, 'reservation_customers', [
+    'PK phone', 'FK customer_id', 'full_name', 'customer_type', 'total_reservations',
+    'no_show_count', 'cancelled_count', 'is_blocked',
+  ]);
+  const rules = v.hopBang(30, 290, 'reservation_deposit_rules', [
+    'PK id', 'name', 'applies_to', 'min_guests', 'from_time', 'to_time', 'amount_type', 'amount', 'priority',
+  ], { lop: 'phu' });
+  const cancel = v.hopBang(30, 520, 'cancellation_policies', [
+    'PK id', 'name', 'hours_before', 'refund_percent', 'applies_to',
+  ], { lop: 'phu' });
+
+  // Cot 2: luot dat ban
+  const x2 = Math.max(rc.x + rc.w, rules.x + rules.w) + KHE;
+  const rsv = v.hopBang(x2, 40, 'reservations', [
+    'PK id', 'reservation_code', 'FK customer_id', 'phone', 'customer_name', 'reservation_date',
+    'start_time', 'expected_end_time', 'guest_count', 'FK area_id', 'source', 'status',
+    'deposit_status', 'deposit_amount', 'deposit_due_at', 'hold_until', 'refund_amount',
+  ]);
+
+  // Cot 3: cac bang con cua reservations
+  const x3 = rsv.x + rsv.w + KHE + 20;
+  const rt = v.hopBang(x3, 40, 'reservation_tables', ['PF reservation_id', 'PF table_id']);
+  const lock = v.hopBang(x3, 140, 'reservation_slot_locks', ['PF table_id', 'PK slot_start', 'FK reservation_id']);
+  const pre = v.hopBang(x3, 270, 'reservation_preorders', [
+    'PK id', 'FK reservation_id', 'FK dish_id', 'dish_name', 'price', 'quantity', 'note',
+  ]);
+  const dep = v.hopBang(x3, 450, 'reservation_deposits', [
+    'PK id', 'FK reservation_id', 'amount', 'status', 'paid_at', 'refunded_at', 'transaction_id',
+  ]);
+  const his = v.hopBang(x3, 630, 'reservation_history', [
+    'PK id', 'FK reservation_id', 'from_status', 'to_status', 'note', 'changed_by',
+  ]);
+
+  // Cot 4: ban, khu vuc / sanh, mon an (bang dung chung voi phan he khac)
+  const x4 = Math.max(rt.x + rt.w, lock.x + lock.w, pre.x + pre.w, dep.x + dep.w) + KHE;
+  const ban = v.hopBang(x4, 40, 'ban', ['PK Id_ban', 'FK id_vitri', 'number_ban', 'so_cho', 'trangthai'], { lop: 'phu' });
+  const vitri = v.hopBang(x4, 230, 'vitri', ['PK id_vitri', 'name_vitri', 'tiec_toi_thieu', 'tiec_toi_da'], { lop: 'phu' });
+  const mon = v.hopBang(x4, 350, 'monan', ['PK id_mon', 'name_mon', 'gia_mon'], { lop: 'phu' });
+
+  // Cot 5: dat tiec
+  const x5 = Math.max(ban.x + ban.w, vitri.x + vitri.w) + KHE;
+  const tiec = v.hopBang(x5, 40, 'dat_tiec', [
+    'PK id', 'ma_tiec', 'FK customer_id', 'ho_ten', 'so_dien_thoai', 'loai_tiec', 'ngay_to_chuc', 'buoi',
+    'so_khach', 'so_ban', 'FK khu_vuc_id', 'FK thuc_don_id', 'tong_du_toan', 'trang_thai', 'FK nhan_vien_xu_ly',
+  ]);
+  const tdt = v.hopBang(x5, 340, 'thuc_don_tiec', ['PK id', 'ma', 'loai_tiec', 'ten', 'gia_ban']);
+  const ttt = v.hopBang(x5, 480, 'dat_tiec_thanh_toan', [
+    'PK id', 'FK dat_tiec_id', 'so_tien', 'phuong_thuc', 'ma_giao_dich', 'nguoi_ghi_nhan',
+  ]);
+  const lst = v.hopBang(x5, 640, 'dat_tiec_lich_su', [
+    'PK id', 'FK dat_tiec_id', 'tu_trang_thai', 'den_trang_thai', 'nguoi_doi',
+  ]);
+
+  [rc, rules, cancel, rsv, rt, lock, pre, dep, his, ban, vitri, mon, tiec, tdt, ttt, lst]
+    .forEach((b) => { s += b.svg; });
+
+  const giua = (a, b) => (a + b) / 2;
+
+  // reservation_customers 1 --- n reservations (khop theo so dien thoai)
+  s += v.noiBang([[rc.canh.phai, 100], [rsv.canh.trai, 100]],
+    { nhan: 'theo SĐT', viTriNhan: [giua(rc.canh.phai, rsv.canh.trai), 92] });
+
+  // reservations 1 --- n cac bang con
+  s += v.noiBang([[rsv.canh.phai, 70], [rt.canh.trai, 70]],
+    { nhan: 'xếp bàn', viTriNhan: [giua(rsv.canh.phai, rt.canh.trai), 62] });
+  s += v.noiBang([[rsv.canh.phai, 190], [lock.canh.trai, 190]],
+    { nhan: 'giữ ô 15 phút', viTriNhan: [giua(rsv.canh.phai, lock.canh.trai), 182] });
+  s += v.noiBang([[rsv.canh.phai, 320], [pre.canh.trai, 320]],
+    { nhan: 'món đặt trước', viTriNhan: [giua(rsv.canh.phai, pre.canh.trai), 312] });
+  const xDep = rsv.x + rsv.w - 30;
+  const xHis = rsv.x + rsv.w - 60;
+  s += v.noiBang([[xDep, rsv.canh.duoi], [xDep, dep.y + 60], [dep.canh.trai, dep.y + 60]],
+    { nhan: 'tiền cọc', viTriNhan: [giua(xDep, dep.canh.trai), dep.y + 52] });
+  s += v.noiBang([[xHis, rsv.canh.duoi], [xHis, his.y + 50], [his.canh.trai, his.y + 50]],
+    { nhan: 'lịch sử trạng thái', viTriNhan: [giua(xHis, his.canh.trai) + 10, his.y + 42] });
+
+  // ban 1 --- n reservation_tables, ban 1 --- n reservation_slot_locks
+  s += v.noiBang([[ban.canh.trai, 70], [rt.canh.phai, 70]], { nhan: 'bàn', viTriNhan: [giua(rt.canh.phai, ban.canh.trai), 62] });
+  const xKhoa = ban.x - 40;
+  s += v.noiBang([[ban.canh.trai, 120], [xKhoa, 120], [xKhoa, 190], [lock.canh.phai, 190]],
+    { nhan: 'bị khoá', viTriNhan: [giua(lock.canh.phai, xKhoa), 182] });
+
+  // vitri 1 --- n ban
+  s += v.noiBang([[vitri.canh.giuaX, vitri.canh.tren], [vitri.canh.giuaX, ban.canh.duoi]],
+    { nhan: 'gồm bàn', viTriNhan: [vitri.canh.giuaX + 40, vitri.canh.tren - 14] });
+  // vitri 1 --- n reservations (khu vuc mong muon): di qua khe giua lock va pre
+  s += v.noiBang([[vitri.canh.trai, 250], [rsv.canh.phai, 250]],
+    { dau: 'mot', cuoi: 'nhieu', nhan: 'khu vực', viTriNhan: [giua(rsv.canh.phai, lock.canh.trai), 242] });
+  // monan 1 --- n reservation_preorders
+  s += v.noiBang([[mon.canh.trai, 385], [pre.canh.phai, 385]],
+    { nhan: 'món', viTriNhan: [giua(pre.canh.phai, mon.canh.trai), 377] });
+
+  // vitri (sanh) 1 --- n dat_tiec
+  s += v.noiBang([[vitri.canh.phai, 290], [tiec.canh.trai, 290]],
+    { nhan: 'sảnh tổ chức', viTriNhan: [giua(vitri.canh.phai, tiec.canh.trai), 282] });
+  // thuc_don_tiec 1 --- n dat_tiec
+  s += v.noiBang([[tdt.canh.giuaX, tdt.canh.tren], [tdt.canh.giuaX, tiec.canh.duoi]],
+    { nhan: 'thực đơn', viTriNhan: [tdt.canh.giuaX + 42, tdt.canh.tren - 14] });
+  // dat_tiec 1 --- n thanh toan / lich su: vong ben phai
+  const xP1 = tiec.x + Math.max(tiec.w, ttt.w, lst.w) + 30;
+  const xP2 = xP1 + 22;
+  s += v.noiBang([[tiec.canh.phai, 200], [xP1, 200], [xP1, ttt.y + 50], [ttt.canh.phai, ttt.y + 50]],
+    { nhan: 'thu nhiều đợt', viTriNhan: [xP2 + 52, ttt.y + 30] });
+  s += v.noiBang([[tiec.canh.phai, 230], [xP2, 230], [xP2, lst.y + 50], [lst.canh.phai, lst.y + 50]],
+    { nhan: 'lịch sử', viTriNhan: [xP2 + 36, lst.y + 30] });
+
+  const W = xP2 + 110;
+  s += v.ghiChu(30, 790, [
+    'reservation_slot_locks là "hàng rào" chống đặt trùng: mỗi dòng là một ô 15 phút của một bàn, khoá chính (table_id, slot_start) nên hai lượt đặt',
+    'không thể cùng giữ một ô. reservation_deposit_rules và cancellation_policies là bảng cấu hình luật, không có khoá ngoại. Đặt tiệc giữ cả sảnh',
+    '(vitri) theo buổi, chỉ đơn ĐÃ XÁC NHẬN / ĐÃ CỌC mới giữ chỗ; mỗi lần đổi trạng thái hay thu tiền đều để lại một dòng lịch sử.',
+  ]);
+
+  return v.khung(id, W, 840,
+    'Lược đồ quan hệ thực thể của phân hệ đặt bàn và đặt tiệc: lượt đặt, khoá ô thời gian, món đặt trước, tiền cọc, đơn tiệc và các lần thu tiền', s);
+}
+
+module.exports = { banHang, kho, nhanSu, giaoHang, datBanTiec };

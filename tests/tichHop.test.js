@@ -65,6 +65,9 @@ async function giuMatKhau(bang, khoa, id, cot) {
 async function dangNhapNhanVien(username) {
   const [[nv]] = await db.query('SELECT id_nv FROM nhan_vien WHERE username = ?', [username]);
   await giuMatKhau('nhan_vien', 'id_nv', nv.id_nv, 'passwords');
+  // Tai khoan that co the da doi mat khau rieng (vd quanly) - dat tam MK kiem
+  // thu; hash goc duoc tra lai o test.after qua khoiPhuc.matKhau.
+  await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5(MK), nv.id_nv]);
   const c = client();
   const r = await c('/staff/login', form({ username, password: MK }));
   assert.equal(r.status, 302, `dang nhap ${username}`);
