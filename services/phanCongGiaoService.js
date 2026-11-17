@@ -299,6 +299,9 @@ function batDau() {
   if (henGio) return;
   henGio = setInterval(async () => {
     try {
+      // Sua trang thai ca lech truoc (shipper hien 'dang_giao' ma het don thi
+      // khong bao gio duoc phan don moi).
+      await require('./vanChuyenService').dongBoCaShipper();
       await quetHetHan();
       await phanHangCho();
     } catch (e) {

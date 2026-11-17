@@ -301,6 +301,25 @@
       </div>
     </div>
 
+    <!-- Tien thu ho (COD) shipper dang giu, chua nop ve quay -->
+    <div class="card shadow mb-3">
+      <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-warning"><i class="fas fa-sack-dollar"></i> Tiền thu hộ đang ở shipper</h6>
+        <a href="/staff/giao-hang/thu-ho" class="small">Nhận tiền <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="card-body py-2">
+        <% if (!(thuHo || []).length) { %>
+          <p class="text-muted small mb-0">Không shipper nào đang giữ tiền thu hộ.</p>
+        <% } %>
+        <% (thuHo || []).forEach(function (t) { %>
+          <div class="d-flex justify-content-between small py-1 border-bottom">
+            <span><%= t.ten %> · <%= t.so_don %> đơn</span>
+            <b class="text-danger"><%= Math.round(t.tong).toLocaleString('vi-VN') %>đ</b>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
     <div class="card shadow mb-3">
       <div class="card-header py-2">
         <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-plus"></i> Tạo đơn giao thủ công</h6>

@@ -32,7 +32,18 @@ async function tamTatDoiMatKhau() {
     const [[r]] = await db.query('SELECT gia_tri FROM cau_hinh WHERE khoa = ?', [KHOA]);
     if (!r) return;
     await db.query("UPDATE cau_hinh SET gia_tri = '0' WHERE khoa = ?", [KHOA]);
+    // Mat khau THAT cua tai khoan co the da doi khoi 123456 -> tam dat 123456
+    // cho phien test, ket thuc tra lai dung hash goc.
+    const md5 = require('md5');
+    const TK_TEST = ['quanly', 'trolyquanly', 'beptruong', 'daubep', 'phucvu', 'letan', 'thungan',
+      'ketoan', 'ketoantruong', 'dieuphoi', 'shipper1'];
+    const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
+    const [gocAdmin] = await db.query("SELECT id_admin, adminpass FROM tb_admin WHERE adminuser = 'admin'");
+    for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
+    for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5('123456'), g.id_admin]);
     khoiPhucCoDoiMk = async () => {
+      for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
+      for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [g.adminpass, g.id_admin]).catch(() => {});
       await db.query('UPDATE cau_hinh SET gia_tri = ? WHERE khoa = ?', [r.gia_tri, KHOA]).catch(() => {});
       await db.end().catch(() => {});
       khoiPhucCoDoiMk = async () => {};

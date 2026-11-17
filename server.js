@@ -1636,6 +1636,12 @@ app.post('/staff/login', async (req, res) => {
       // ve DUNG cho ho dinh toi. Uu tien hon ca buoc moi dang ky khuon mat ben
       // duoi, vi trang /cham-cong/ tu no da co phan dang ky ngay trong trang -
       // chen them mot trang nua vao giua chi khien ho lac duong.
+      // Nguoi co ho so shipper: viec chinh cua ho nam o ung dung /shipper/ chu
+      // khong phai trang tong quan nhan vien (truoc day phai tu go dia chi).
+      try {
+        req.session.laShipper = !!(await require('./services/vanChuyenService').shipperCuaNhanVien(staff.id_nv));
+      } catch (e) { req.session.laShipper = false; }
+
       if (tiep) return res.redirect(tiep);
 
       if (req.session.nvPhaiDoiMatKhau) {
@@ -1643,6 +1649,8 @@ app.post('/staff/login', async (req, res) => {
           'Bạn đang dùng mật khẩu mặc định 123456. Vui lòng đổi mật khẩu mới để tiếp tục.'
         ) + '&msgType=danger');
       }
+
+      if (req.session.laShipper) return res.redirect('/shipper/');
 
       // Lan dau dang nhap ma chua co khuon mat -> dua thang toi trang tu dang ky.
       // Chi kiem tra CSDL (nhanh); trang do tu kiem tra dich vu Python va luon co

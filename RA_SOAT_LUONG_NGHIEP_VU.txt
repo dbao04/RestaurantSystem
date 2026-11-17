@@ -298,6 +298,41 @@ ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
     chờ thanh toán không xác nhận tay được.
   - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
 
+(chưa commit) - RÀ SOÁT & HOÀN THIỆN VAI TRÒ SHIPPER
+  Đã chạy thử nguyên luồng thật (điều phối phân đơn -> shipper nhận -> GPS -> giao xong).
+  - Shipper đăng nhập ở /staff/login giờ vào THẲNG ứng dụng /shipper/ (trước phải tự gõ
+    địa chỉ); menu nhân viên có mục "Ứng dụng giao hàng"; app có nút "Khu nhân viên".
+  - GPS XÁC MINH GIAO HÀNG: bấm "Giao xong" khi cách điểm giao quá 300m (cấu hình
+    giao_hang.ban_kinh_xac_nhan_m) hoặc không có GPS -> phải ghi lý do; nhật ký đơn lưu
+    khoảng cách + lý do làm bằng chứng. App hỏi lý do rồi gửi lại tự động.
+  - Giữ màn hình sáng (Wake Lock) khi đang lấy / giao hàng để GPS không bị trình duyệt dừng.
+  - TIỀN THU HỘ (COD): trước đây giao xong là đơn "đã thanh toán" nhưng KHÔNG có dòng
+    payments -> tiền shipper cầm về không có trong sổ quỹ / chốt ca. Nay: app hiện "Tiền
+    thu hộ đang giữ"; trang điều phối có thẻ tổng; MỚI /staff/giao-hang/thu-ho cho thu ngân
+    / điều phối đếm tiền, chọn đơn, bấm Nhận -> sinh payments tiền mặt đứng tên người nhận
+    (nguồn "shipper") -> vào sổ quỹ và két chốt ca; đếm lệch thì từ chối; không nộp 2 lần.
+  - MỚI: lịch sử 7 ngày trong app shipper (giao xong / thất bại, phí ship, thu hộ đã/chưa nộp).
+  - Sửa lỗi nhãn bếp bị NGƯỢC ("bếp đã xong" khi món đang nấu và ngược lại) ở app shipper,
+    trang điều phối và bản đồ.
+  - Tự đồng bộ trạng thái ca shipper (shipper3 kẹt "đang giao" dù hết đơn -> không được phân).
+  - Kiểm thử: luồng shipper đầy đủ; helper test không còn phụ thuộc mật khẩu thật 123456.
+    npm test 37/37, npm run test:automation 175/175.
+
+(chưa commit) - SẴN SÀNG ĐẤU SePay (CHUYỂN KHOẢN THẬT)
+  - Rà webhook /api/webhook/ngan-hang (đã theo định dạng SePay) và vá 5 chỗ:
+    + Kiểm tra TÀI KHOẢN NHẬN: tiền vào số TK khác (kể cả TK ảo subAccount) bị bỏ qua.
+    + Cọc đặt bàn: chuyển thiếu cọc / lượt đã hủy / đã cọc rồi -> không ghi nhận, để hoàn
+      tay (trước đây 1.000đ cũng thành "đã cọc" và tự xác nhận lượt).
+    + Mã RSV-... chấp nhận khi ngân hàng bỏ dấu "-" (RSV123456ABCD).
+    + Khách trả SAU khi QR hết hạn: tự mở lại phiên nếu đơn còn nợ đủ số tiền; thu ngân
+      đối soát tay được cả phiên đã hết hạn (trước đây báo lỗi).
+    + So khóa webhook bằng so sánh thời gian hằng.
+  - MỚI: thẻ "Giả lập giao dịch SePay" ở /admin/thanh-toan: chọn phiên VietQR đang chờ,
+    gửi webhook mẫu THẬT vào hệ thống (qua xác thực Apikey). Mã tham chiếu GIALAP-...,
+    cổng "SePay (giả lập)", ghi audit_logs. Dùng để demo khi mất mạng.
+  - Kiểm thử mới: webhook SePay (sai khóa, sai TK, trả muộn, cọc thiếu/đủ/thừa, nút giả lập).
+    npm test 36/36, npm run test:automation 175/175.
+
 17/11/2026 - GỘP NHÁNH main (PR #3, #4 của nhánh doan) VÀO bao
   - Giải quyết 6 file xung đột: giữ logic nghiệp vụ của bao, thêm tính năng
     của main (đặt bàn realtime, phiếu boarding pass, giờ cao điểm nhiều khung,

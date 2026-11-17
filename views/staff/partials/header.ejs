@@ -680,6 +680,9 @@
       <div class="qt-side__group">
         <div class="qt-side__label">Chung</div>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>" href="/staff" data-match="/staff"><i class="fas fa-gauge-high"></i><span>Tổng quan</span></a>
+        <% if (typeof session !== 'undefined' && session && session.laShipper) { %>
+          <a class="qt-nav__item" href="/shipper/"><i class="fas fa-motorcycle"></i><span>Ứng dụng giao hàng</span></a>
+        <% } %>
       </div>
 
       <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quay', 'letan', 'Quan ly'])) { %>

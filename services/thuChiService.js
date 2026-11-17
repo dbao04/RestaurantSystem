@@ -105,7 +105,8 @@ async function dongTien({ tu, den, idNv = null }) {
       nguon: 'payment', id: r.id, thoi_diem: r.thoi_diem,
       ma: r.ma_doi_soat || `TT${r.id}`, loai: 'thu', danh_muc: dc ? 'dat_coc' : 'ban_hang',
       noi_dung: (dc ? 'Đặt cọc ' : 'Thanh toán hóa đơn ') + (r.ban ? `bàn ${r.ban}` : (r.sesis || '').slice(0, 18)) +
-        (r.nguon === 'khach_qr' ? ' (khách tự quét QR)' : r.nguon === 'web' ? ' (trực tuyến)' : ''),
+        (r.nguon === 'khach_qr' ? ' (khách tự quét QR)' : r.nguon === 'web' ? ' (trực tuyến)'
+          : r.nguon === 'shipper' ? ' (tiền thu hộ giao hàng - shipper nộp)' : ''),
       phuong_thuc: ptTuLoai(r.type), nguoi: r.nguoi || (r.nguon === 'quay' ? 'Quầy' : 'Khách tự trả'),
       so_tien: Number(r.amount), tip: Number(r.tien_tip) || 0, huy: false,
     });

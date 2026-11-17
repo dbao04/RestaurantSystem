@@ -166,9 +166,21 @@
     <span>Hôm nay đã giao</span>
     <span><b id="hn-don">0</b> đơn · <b id="hn-phi">0</b>đ phí ship</span>
   </div>
+  <!-- Tien mat da thu cua khach (COD) chua nop ve quay -->
+  <div class="tong" id="giu-tien" style="display:none;border-color:rgba(231,74,59,.45)">
+    <span><i class="fas fa-sack-dollar"></i> Tiền thu hộ đang giữ</span>
+    <span><b id="giu-tong">0</b>đ · <b id="giu-don">0</b> đơn — nộp ở quầy thu ngân</span>
+  </div>
 
   <!-- ================================================== DANH SÁCH ĐƠN -->
   <div id="ds-don"></div>
+
+  <!-- ================================================== LỊCH SỬ -->
+  <div class="hang2" style="margin-top:14px">
+    <button class="nut nut--phu" id="nut-lich-su" type="button"><i class="fas fa-clock-rotate-left"></i> Lịch sử 7 ngày</button>
+    <a class="nut nut--phu" href="/staff"><i class="fas fa-id-badge"></i> Khu nhân viên</a>
+  </div>
+  <div id="lich-su"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -441,6 +453,11 @@
         nutCa.className = 'ca ' + (CA === 'nghi' ? 'ca--tat' : 'ca--bat');
         document.getElementById('hn-don').textContent = d.hom_nay.so_don;
         document.getElementById('hn-phi').textContent = tien(d.hom_nay.tien_phi);
+        var giu = d.dang_giu || { tong: 0, so_don: 0 };
+        document.getElementById('giu-tien').style.display = giu.tong > 0 ? '' : 'none';
+        document.getElementById('giu-tong').textContent = tien(giu.tong);
+        document.getElementById('giu-don').textContent = giu.so_don;
+        giuManHinh((d.don || []).some(function (g) { return g.trang_thai === 'dang_lay' || g.trang_thai === 'dang_giao'; }));
         veDon(d.don || []);
         (d.don || []).forEach(function (g) {
           if (g.cho_xac_nhan && !daBao[g.id_giao]) { daBao[g.id_giao] = true; keuMoi(); }
@@ -529,13 +546,29 @@
     if (viTriCuoi) { goi.vi_do = viTriCuoi.vi_do; goi.kinh_do = viTriCuoi.kinh_do; }
 
     nut.disabled = true;
-    fetch('/api/shipper/don/' + id + '/trang-thai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(goi),
-    })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    function gui() {
+      return fetch('/api/shipper/don/' + id + '/trang-thai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goi),
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); });
+    }
+    gui()
       .then(function (k) {
+        // Xa diem giao / chua co GPS: may chu bat ghi ly do roi moi cho xac nhan.
+        if (!k.ok && (k.d.ma === 'XA_DIEM_GIAO' || k.d.ma === 'CHUA_CO_GPS')) {
+          var lyDo = prompt(k.d.thong_bao + '\n\nLý do (VD: khách ra đầu hẻm nhận, giao cho bảo vệ…):');
+          if (lyDo === null || lyDo.trim().length < 5) {
+            if (lyDo !== null) bao('Lý do phải rõ ràng (ít nhất 5 ký tự).');
+            nut.disabled = false; return null;
+          }
+          goi.ly_do_ngoai_vung = lyDo.trim();
+          return gui();
+        }
+        return k;
+      })
+      .then(function (k) {
+        if (!k) return;
         if (!k.ok) { bao(k.d.thong_bao || 'Không đổi được trạng thái.'); nut.disabled = false; return; }
         bao(k.d.nhan);
         taiDon();
@@ -543,6 +576,62 @@
       })
       .catch(function () { bao('Mất kết nối, thử lại.'); nut.disabled = false; });
   }
+
+  /*
+    GIU MAN HINH SANG khi dang cam don (Screen Wake Lock API).
+    Trinh duyet bop / dung GPS khi man hinh tat - diem tren ban do khach va dieu
+    phoi se dung im. Chi giu khi co don dang lay / dang giao, het don thi nha
+    ra cho do ton pin. May khong ho tro thi bo qua, khong phai loi.
+  */
+  var khoaManHinh = null, canGiu = false;
+  function giuManHinh(bat) {
+    canGiu = bat;
+    if (!('wakeLock' in navigator)) return;
+    if (bat && !khoaManHinh) {
+      navigator.wakeLock.request('screen').then(function (k) {
+        khoaManHinh = k;
+        k.addEventListener('release', function () { khoaManHinh = null; });
+      }).catch(function () {});
+    } else if (!bat && khoaManHinh) {
+      khoaManHinh.release().catch(function () {});
+      khoaManHinh = null;
+    }
+  }
+  // Wake lock tu nha khi tab bi an; quay lai thi xin lai.
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && canGiu) giuManHinh(true);
+  });
+
+  // ------------------------------------------------------------------ lịch sử
+  document.getElementById('nut-lich-su').addEventListener('click', function () {
+    var o = document.getElementById('lich-su');
+    if (o.innerHTML) { o.innerHTML = ''; return; }
+    o.innerHTML = '<p class="mon">Đang tải…</p>';
+    fetch('/api/shipper/lich-su?ngay=7', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { o.innerHTML = ''; bao(d.thong_bao || 'Không tải được lịch sử.'); return; }
+        var t = d.tong_ket;
+        var dau = '<div class="tong"><span>7 ngày: <b>' + t.da_giao + '</b> giao xong · <b>' + t.that_bai + '</b> thất bại</span>' +
+          '<span>ship <b>' + tien(t.phi_ship) + '</b>đ · thu hộ <b>' + tien(t.thu_ho) + '</b>đ</span></div>';
+        if (!d.don.length) { o.innerHTML = dau + '<p class="mon">Chưa có đơn nào trong 7 ngày.</p>'; return; }
+        o.innerHTML = dau + d.don.map(function (g) {
+          var tt = d.TT[g.trang_thai] || { nhan: g.trang_thai, mau: '#888' };
+          var luc = g.hoan_tat_luc ? new Date(g.hoan_tat_luc) : null;
+          var thuHo = Number(g.tien_thu_ho) > 0 && Number(g.da_thu_ho)
+            ? ' · thu hộ ' + tien(g.tien_thu_ho) + 'đ ' + (g.nop_tien_luc ? '<span style="color:#1cc88a">(đã nộp)</span>' : '<span style="color:#ff8a80">(chưa nộp)</span>')
+            : '';
+          return '<div class="the" style="border-left-color:' + tt.mau + '">' +
+            '<div class="the__dau"><span class="ma">' + thoat(g.ma_giao) + '</span>' +
+            '<span class="tt" style="background:' + tt.mau + '">' + thoat(tt.nhan) + '</span></div>' +
+            '<p class="dc">' + thoat(g.dia_chi_giao) + '</p>' +
+            '<p class="nguoi">' + (luc ? luc.toLocaleString('vi-VN') : '') + ' · ship ' + tien(g.phi_giao) + 'đ' + thuHo + '</p>' +
+            (g.ly_do ? '<p class="mon">' + thoat(g.ly_do) + '</p>' : '') +
+          '</div>';
+        }).join('');
+      })
+      .catch(function () { o.innerHTML = ''; bao('Mất kết nối.'); });
+  });
 
   function xemMon(id) {
     var o = document.getElementById('mon-' + id);
