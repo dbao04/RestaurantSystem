@@ -999,7 +999,10 @@ module.exports = function (io) {
     const header = String(req.headers.authorization || '');
     const khoaGui = header.replace(/^Apikey\s+/i, '').replace(/^Bearer\s+/i, '').trim();
 
-    if (!khoa || khoaGui !== khoa) {
+    // So sanh thoi gian hang (khong lo do dai khop qua thoi gian phan hoi).
+    const crypto = require('crypto');
+    const bam = (s) => crypto.createHash('sha256').update(String(s)).digest();
+    if (!khoa || !crypto.timingSafeEqual(bam(khoaGui), bam(khoa))) {
       console.warn('[webhook] sai khoa xac thuc, tu choi. IP:', req.ip);
       return res.status(401).json({ success: false, message: 'Sai khóa xác thực' });
     }
@@ -1009,6 +1012,7 @@ module.exports = function (io) {
       ma_tham_chieu: String(b.referenceCode || b.id || b.ma_tham_chieu || ''),
       cong_thanh_toan: b.gateway || b.cong_thanh_toan || null,
       so_tai_khoan: b.accountNumber || b.so_tai_khoan || null,
+      tai_khoan_phu: b.subAccount || null,
       so_tien: b.transferAmount ?? b.so_tien ?? 0,
       loai: (b.transferType || b.loai || 'in') === 'out' ? 'out' : 'in',
       noi_dung: b.content || b.description || b.noi_dung || '',
@@ -1034,12 +1038,79 @@ module.exports = function (io) {
   /* ADMIN - CAU HINH                                                         */
   /* ======================================================================== */
 
+  /**
+   * GIA LAP GIAO DICH SEPAY - de demo / bao ve khoa luan khi chua co (hoac mat)
+   * Internet. Gui THAT mot HTTP POST dung dinh dang SePay vao chinh webhook
+   * /api/webhook/ngan-hang kem khoa Apikey, nen di qua du cac buoc that: xac
+   * thuc, kiem tra tai khoan nhan, rut ma doi soat, khop phien, realtime.
+   * Giao dich mang ma tham chieu GIALAP-... va cong "SePay (giả lập)" de trang
+   * doi soat / bao cao phan biet voi tien that; moi lan bam ghi audit_logs.
+   */
+  router.post('/admin/thanh-toan/gia-lap-sepay', requireAdmin, batJson(async (req, res) => {
+    const soTien = Math.round(Number(String(req.body.so_tien || '').replace(/[^\d]/g, '')));
+    const noiDung = String(req.body.noi_dung || '').trim().slice(0, 255);
+    if (!Number.isFinite(soTien) || soTien < 1000) return res.status(400).json({ ok: false, thong_bao: 'Số tiền tối thiểu 1.000đ.' });
+    if (!noiDung) return res.status(400).json({ ok: false, thong_bao: 'Nhập nội dung chuyển khoản.' });
+
+    const [ch, tk] = await Promise.all([tt.layCauHinh(true), tt.layTaiKhoanNhan()]);
+    if (!ch.webhook_api_key) return res.status(400).json({ ok: false, thong_bao: 'Chưa có khóa webhook - bấm "Sinh khóa mới" trước.' });
+
+    const bayGio = new Date();
+    const p2 = (n) => String(n).padStart(2, '0');
+    const maThamChieu = 'GIALAP-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
+    const body = {
+      id: Date.now(),
+      gateway: 'SePay (giả lập)',
+      transactionDate: `${bayGio.getFullYear()}-${p2(bayGio.getMonth() + 1)}-${p2(bayGio.getDate())} ${p2(bayGio.getHours())}:${p2(bayGio.getMinutes())}:${p2(bayGio.getSeconds())}`,
+      accountNumber: String(req.body.so_tai_khoan || '').trim() || (tk && tk.soTaiKhoan) || '',
+      subAccount: null,
+      code: null,
+      content: noiDung,
+      transferType: 'in',
+      transferAmount: soTien,
+      accumulated: 0,
+      referenceCode: maThamChieu,
+      description: noiDung,
+    };
+
+    const cong = process.env.PORT || 3000;
+    const phanHoi = await fetch(`http://127.0.0.1:${cong}/api/webhook/ngan-hang`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Apikey ' + ch.webhook_api_key },
+      body: JSON.stringify(body),
+    });
+    const kq = await phanHoi.json().catch(() => ({}));
+    const [[gd]] = await db.query(
+      'SELECT trang_thai, ghi_chu, payment_id FROM giao_dich_ngan_hang WHERE ma_tham_chieu = ? LIMIT 1', [maThamChieu]);
+
+    await db.query(
+      `INSERT INTO audit_logs (action, actor_type, actor_id, resource_type, resource_id, status, details)
+       VALUES ('gia_lap_sepay', 'admin', ?, 'giao_dich_ngan_hang', NULL, ?, ?)`,
+      [null, phanHoi.ok ? 'success' : 'failed',
+        JSON.stringify({ admin: req.session.adminuser || null, ma_tham_chieu: maThamChieu, so_tien: soTien, noi_dung: noiDung, ket_qua: gd || kq })]).catch(() => {});
+
+    res.json({
+      ok: phanHoi.ok, http: phanHoi.status, khop: !!kq.matched,
+      ma_tham_chieu: maThamChieu,
+      trang_thai: gd ? gd.trang_thai : null,
+      ghi_chu: gd ? gd.ghi_chu : (kq.message || null),
+      payment_id: gd ? gd.payment_id : null,
+      body_gui: body,
+    });
+  }));
+
   router.get('/admin/thanh-toan', requireAdmin, bat(async (req, res) => {
-    const [cauHinh, taiKhoan, phuongThuc, tongHop] = await Promise.all([
+    const [cauHinh, taiKhoan, phuongThuc, tongHop, phienCho] = await Promise.all([
       tt.layCauHinh(true),
       tt.layTaiKhoanNhan(),
       tt.danhSachPhuongThuc(),
       tt.tongHopTheoPhuongThuc({}),
+      // Phien VietQR dang cho tien - de chon nhanh khi gia lap SePay.
+      db.query(
+        `SELECT p.id, p.sesis, p.amount, p.ma_doi_soat, p.het_han_luc,
+                (SELECT b.number_ban FROM hopdong h JOIN ban b ON b.Id_ban = h.id_ban WHERE h.sesis = p.sesis LIMIT 1) AS ban
+           FROM payments p WHERE p.status = 'pending' AND p.ma_doi_soat IS NOT NULL
+          ORDER BY p.id DESC LIMIT 20`).then(([r]) => r).catch(() => []),
     ]);
 
     // QR tinh (khong kem so tien) de in dan tai quay - khach tu nhap so tien.
@@ -1054,7 +1125,7 @@ module.exports = function (io) {
 
     res.render('admin/thanh-toan', {
       title: 'Cấu hình thanh toán',
-      cauHinh, taiKhoan, phuongThuc, tongHop, qrTinh,
+      cauHinh, taiKhoan, phuongThuc, tongHop, qrTinh, phienCho,
       danhSachNganHang: vietQR.danhSachNganHang(),
       thongBao: req.query.tb || null,
     });

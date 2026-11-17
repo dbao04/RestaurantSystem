@@ -224,6 +224,40 @@
       </div>
     </div>
 
+    <!-- Gia lap giao dich SePay: gui webhook mau dung dinh dang vao chinh he thong -->
+    <div class="qt-card" style="margin-top:1.5rem">
+      <div class="qt-card__head"><div><h2>Giả lập giao dịch SePay</h2>
+        <p>Gửi một webhook mẫu đúng định dạng SePay vào hệ thống — để demo khi chưa đấu nối hoặc mất mạng. Giao dịch được đánh dấu <code>GIALAP-…</code>, không lẫn với tiền thật.</p></div></div>
+      <div class="qt-card__body">
+        <label class="qt-label">Phiên VietQR đang chờ tiền</label>
+        <select class="qt-input" id="gl-phien">
+          <option value="">— Nhập tay —</option>
+          <% (phienCho || []).forEach(function (p) { %>
+            <option value="<%= p.ma_doi_soat %>" data-tien="<%= Math.round(Number(p.amount)) %>">
+              <%= p.ban ? 'Bàn ' + p.ban : String(p.sesis).slice(0, 14) %> · <%= Math.round(Number(p.amount)).toLocaleString('vi-VN') %>đ · <%= p.ma_doi_soat %>
+            </option>
+          <% }) %>
+        </select>
+        <% if (!(phienCho || []).length) { %>
+          <div class="qt-field__hint">Chưa có phiên nào chờ. Tạo một phiên bằng cách tính tiền một bàn và chọn VietQR ở màn hình thu ngân.</div>
+        <% } %>
+
+        <label class="qt-label" style="margin-top:.8rem">Số tiền khách chuyển (đ)</label>
+        <input class="qt-input" id="gl-tien" inputmode="numeric" placeholder="VD: 250000">
+
+        <label class="qt-label" style="margin-top:.8rem">Nội dung chuyển khoản (như sao kê ngân hàng)</label>
+        <input class="qt-input" id="gl-noidung" maxlength="255" placeholder="VD: NGUYEN VAN A chuyen tien BD…">
+
+        <label class="qt-label" style="margin-top:.8rem">Số tài khoản nhận <span style="font-weight:400">(để trống = tài khoản đã cấu hình)</span></label>
+        <input class="qt-input" id="gl-stk" inputmode="numeric" placeholder="<%= taiKhoan ? taiKhoan.soTaiKhoan : '' %>">
+
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem">
+          <button type="button" class="qt-btn qt-btn--sm" id="gl-gui"><i class="fas fa-paper-plane"></i> Gửi giao dịch giả lập</button>
+        </div>
+        <div id="gl-kq" style="margin-top:.8rem;font-size:.88rem" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+
     <div class="qt-card" style="margin-top:1.5rem">
       <div class="qt-card__head"><div><h2>Cách hoạt động</h2></div></div>
       <div class="qt-card__body" style="font-size:.88rem;line-height:1.8;color:var(--qt-muted)">
@@ -248,6 +282,42 @@
 
 <script>
   document.getElementById('url-webhook').value = location.origin + '/api/webhook/ngan-hang';
+
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+    var TEN = { da_khop: 'Đã khớp – hóa đơn ghi nhận đã thanh toán', khong_khop: 'Không khớp', bo_qua: 'Bỏ qua', cho_doi_soat: 'Chờ đối soát tay' };
+    $('gl-phien').addEventListener('change', function () {
+      var o = this.selectedOptions[0];
+      if (!this.value) return;
+      $('gl-tien').value = o.getAttribute('data-tien');
+      $('gl-noidung').value = 'NGUYEN VAN A chuyen tien ' + this.value;
+    });
+    $('gl-gui').addEventListener('click', async function () {
+      var nut = this, kq = $('gl-kq');
+      nut.disabled = true; kq.style.color = ''; kq.textContent = 'Đang gửi webhook…';
+      try {
+        var r = await fetch('/admin/thanh-toan/gia-lap-sepay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ so_tien: $('gl-tien').value, noi_dung: $('gl-noidung').value, so_tai_khoan: $('gl-stk').value }),
+        });
+        var d = await r.json();
+        if (d.thong_bao && !d.ma_tham_chieu) throw new Error(d.thong_bao);
+        kq.style.color = d.khop ? '#1f7a4a' : '#b3352c';
+        kq.innerHTML = '<b>' + esc(TEN[d.trang_thai] || ('HTTP ' + d.http)) + '</b>' +
+          (d.ghi_chu ? '<br>' + esc(d.ghi_chu) : '') +
+          '<br><span style="color:var(--qt-muted)">Mã tham chiếu: ' + esc(d.ma_tham_chieu) + ' · webhook trả HTTP ' + esc(d.http) + '</span>';
+        if (d.khop) {
+          var o = $('gl-phien').selectedOptions[0];
+          if (o && o.value) o.remove();
+        }
+      } catch (e) {
+        kq.style.color = '#b3352c'; kq.textContent = e.message || 'Lỗi mạng';
+      }
+      nut.disabled = false;
+    });
+  })();
 </script>
 
 <%- include('partials/footer') %>

@@ -825,9 +825,51 @@ function rutMaDoiSoat(noiDung) {
   const s = vietQR.boDau(noiDung).toUpperCase();
   const khop = s.match(/BD[A-Z0-9]{9}/);
   if (khop) return khop[0];
-  const khopRSV = s.match(/RSV-[0-9]{6}-[A-Z0-9]{4}/);
-  if (khopRSV) return khopRSV[0];
+  // Nhieu ngan hang BO dau '-' trong noi dung CK: "RSV-123456-ABCD" ve thanh
+  // "RSV123456ABCD" hoac "RSV 123456 ABCD" -> chap nhan ca ba, quy ve dang goc.
+  const khopRSV = s.match(/RSV[-\s.]?([0-9]{6})[-\s.]?([A-Z0-9]{4})/);
+  if (khopRSV) return `RSV-${khopRSV[1]}-${khopRSV[2]}`;
   return null;
+}
+
+const chiSo = (x) => String(x || '').replace(/\D/g, '');
+
+/**
+ * Tien vao co dung tai khoan nhan tien da cau hinh khong. SePay gui
+ * accountNumber (tai khoan chinh) va subAccount (tai khoan ao / VA - mot so
+ * ngan hang nhu BIDV, OCB nhan tien qua VA). Khop mot trong hai la duoc.
+ * Chua cau hinh tai khoan, hoac ben gui khong kem so tai khoan -> khong chan.
+ */
+async function dungTaiKhoanNhan(dsSoTaiKhoan) {
+  const tk = await layTaiKhoanNhan().catch(() => null);
+  const cauHinh = chiSo(tk && tk.soTaiKhoan);
+  const gui = dsSoTaiKhoan.map(chiSo).filter(Boolean);
+  if (!cauHinh || !gui.length) return true;
+  return gui.includes(cauHinh);
+}
+
+/**
+ * Phien QR da HET HAN / bi huy ma khach van chuyen khoan dung ma: mo lai de
+ * gan tien vao hoa don, NEU don van con no it nhat bang so tien cua QR do.
+ * Don da tra bang cach khac (tien mat, the...) thi KHONG mo lai - tranh thu
+ * hai lan; giao dich do cho thu ngan xu ly (hoan lai cho khach).
+ * @returns {Promise<{moLai:boolean, lyDo?:string}>}
+ */
+async function moLaiPhienDeGanTien(p) {
+  if (p.status !== 'failed') return { moLai: false, lyDo: `Phiên đang ở trạng thái ${p.status}` };
+  let conNo = 0;
+  try {
+    const hd = await layHoaDon(p.sesis, { goiY: false });
+    conNo = Number(hd && hd.tien && hd.tien.con_phai_tra) || 0;
+  } catch (e) { conNo = 0; }
+  if (conNo < Number(p.amount)) {
+    return { moLai: false, lyDo: `Đơn chỉ còn nợ ${conNo}đ (QR cũ ${Number(p.amount)}đ) - có thể đã trả bằng cách khác, cần thu ngân kiểm tra` };
+  }
+  const [kq] = await db.query(
+    `UPDATE payments SET status = 'pending', updated_at = NOW(),
+            notes = TRIM(CONCAT(COALESCE(notes,''), ' | mở lại: khách chuyển khoản sau khi QR hết hạn/hủy'))
+      WHERE id = ? AND status = 'failed'`, [p.id]);
+  return { moLai: kq.affectedRows === 1 };
 }
 
 /**
@@ -840,7 +882,7 @@ function rutMaDoiSoat(noiDung) {
  */
 async function ghiNhanGiaoDichNganHang(gd) {
   const {
-    ma_tham_chieu, cong_thanh_toan, so_tai_khoan, so_tien,
+    ma_tham_chieu, cong_thanh_toan, so_tai_khoan, tai_khoan_phu = null, so_tien,
     loai = 'in', noi_dung, thoi_diem, du_lieu_tho,
   } = gd;
 
@@ -865,6 +907,15 @@ async function ghiNhanGiaoDichNganHang(gd) {
     return { trungLap: false, khop: false, giaoDichId };
   }
 
+  // Tien vao TAI KHOAN KHAC (tai khoan SePay lien ket nhieu so TK) khong phai
+  // tien khach tra cho nha hang - khong duoc danh dau hoa don da thanh toan.
+  if (!(await dungTaiKhoanNhan([so_tai_khoan, tai_khoan_phu]))) {
+    await db.query(
+      "UPDATE giao_dich_ngan_hang SET trang_thai = 'bo_qua', ghi_chu = ? WHERE id = ?",
+      [`Tiền vào tài khoản ${so_tai_khoan || ''}${tai_khoan_phu ? '/' + tai_khoan_phu : ''} - không phải tài khoản nhận tiền đã cấu hình`, giaoDichId]);
+    return { trungLap: false, khop: false, giaoDichId, lyDo: 'sai_tai_khoan' };
+  }
+
   const ch = await layCauHinh();
   const ma = rutMaDoiSoat(noi_dung);
   if (!ma) {
@@ -879,6 +930,22 @@ async function ghiNhanGiaoDichNganHang(gd) {
     const [dsRsv] = await db.query('SELECT * FROM reservations WHERE reservation_code = ? LIMIT 1', [ma]);
     if (dsRsv.length > 0) {
       const r = dsRsv[0];
+      // Khong tu ghi nhan coc khi: luot da ket thuc / huy (tien phai hoan tay),
+      // da nhan coc roi (giao dich thua), hoac chuyen THIEU so coc yeu cau -
+      // truoc day 1.000d cung thanh "da coc" va luot dat duoc tu xac nhan.
+      const canCoc = Math.round(Number(r.deposit_amount) || 0);
+      let khongNhan = null;
+      if (['CANCELLED', 'REJECTED', 'NO_SHOW', 'COMPLETED'].includes(r.status)) {
+        khongNhan = `Lượt đặt ${r.reservation_code} đang ở trạng thái ${r.status} - cần hoàn tiền thủ công`;
+      } else if (r.deposit_status === 'PAID') {
+        khongNhan = `Lượt đặt ${r.reservation_code} đã nhận cọc trước đó - giao dịch thừa, cần hoàn`;
+      } else if (canCoc > 0 && tien < canCoc) {
+        khongNhan = `Chuyển thiếu cọc: nhận ${tien}đ / cần ${canCoc}đ (lượt ${r.reservation_code})`;
+      }
+      if (khongNhan) {
+        await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'khong_khop', ghi_chu = ? WHERE id = ?", [khongNhan, giaoDichId]);
+        return { trungLap: false, khop: false, giaoDichId, ma, lyDo: 'coc_khong_hop_le' };
+      }
       await reservationService.luuCoc(r.id, {
         amount: tien,
         status: 'PAID',
@@ -890,10 +957,29 @@ async function ghiNhanGiaoDichNganHang(gd) {
     }
   }
 
-  const [phien] = await db.query(
+  let [phien] = await db.query(
     "SELECT * FROM payments WHERE ma_doi_soat = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
     [ma]
   );
+  if (!phien.length) {
+    // Khach tra SAU khi QR het han (mac dinh 15 phut) / bi huy: mo lai phien
+    // neu don van con no - neu khong tien da vao ma hoa don van "chua tra".
+    const [[cu]] = await db.query(
+      "SELECT * FROM payments WHERE ma_doi_soat = ? AND status = 'failed' ORDER BY id DESC LIMIT 1", [ma]);
+    if (cu) {
+      const mo = tien < Number(cu.amount)
+        ? { moLai: false, lyDo: `Chuyển thiếu: nhận ${tien}đ / cần ${Number(cu.amount)}đ` }
+        : await moLaiPhienDeGanTien(cu);
+      if (mo.moLai) {
+        [phien] = await db.query('SELECT * FROM payments WHERE id = ?', [cu.id]);
+      } else {
+        await db.query(
+          "UPDATE giao_dich_ngan_hang SET payment_id = ?, trang_thai = 'khong_khop', ghi_chu = ? WHERE id = ?",
+          [cu.id, `Mã ${ma} thuộc phiên đã hết hạn/hủy. ${mo.lyDo || ''}`.trim(), giaoDichId]);
+        return { trungLap: false, khop: false, giaoDichId, ma, lyDo: 'phien_het_han' };
+      }
+    }
+  }
   if (!phien.length) {
     await db.query(
       "UPDATE giao_dich_ngan_hang SET trang_thai = 'khong_khop', ghi_chu = ? WHERE id = ?",
@@ -953,6 +1039,15 @@ async function doiSoatThuCong(giaoDichId, paymentId, nhanVienId = null) {
   const [[gd]] = await db.query('SELECT * FROM giao_dich_ngan_hang WHERE id = ? LIMIT 1', [giaoDichId]);
   if (!gd) throw new Error('Không tìm thấy giao dịch ngân hàng');
   if (gd.trang_thai === 'da_khop') throw new Error('Giao dịch này đã được đối soát');
+  if (gd.loai !== 'in') throw new Error('Đây là giao dịch tiền ra, không ghép vào hóa đơn được');
+
+  // Phien da het han / bi huy (khach tra muon): mo lai neu don van con no.
+  const [[p]] = await db.query('SELECT * FROM payments WHERE id = ? LIMIT 1', [paymentId]);
+  if (!p) throw new Error('Không tìm thấy phiên thanh toán #' + paymentId);
+  if (p.status === 'failed') {
+    const mo = await moLaiPhienDeGanTien(p);
+    if (!mo.moLai) throw new Error('Không ghép được: ' + (mo.lyDo || 'phiên không mở lại được'));
+  }
 
   const kq = await xacNhan(paymentId, {
     maGiaoDich: gd.ma_tham_chieu,
