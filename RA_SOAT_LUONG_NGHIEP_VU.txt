@@ -298,6 +298,22 @@ ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
     chờ thanh toán không xác nhận tay được.
   - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
 
+17/11/2026 - GỘP NHÁNH main (PR #3, #4 của nhánh doan) VÀO bao
+  - Giải quyết 6 file xung đột: giữ logic nghiệp vụ của bao, thêm tính năng
+    của main (đặt bàn realtime, phiếu boarding pass, giờ cao điểm nhiều khung,
+    25 bàn 2 người, giao diện mobile / khung iPhone).
+  - Chọn bàn: áp CẢ luật quy mô bàn (bao) VÀ luật giờ cao điểm (main);
+    nhân viên xếp ngoại lệ bỏ qua cả hai.
+  - Vá lỗi của main: khách đến không được gán đè lên bàn đang có khách khác.
+  - Script test của main (npm run test:automation) sửa cho khớp luật bảo mật
+    mới: tạm tắt bắt đổi mật khẩu nhân viên trong lúc chạy (luôn bật lại),
+    khách test dùng mật khẩu riêng, xóa loại món bằng POST.
+  - Kết quả: npm test 35/35, npm run test:automation 175/175.
+  - Sự cố máy: MySQL XAMPP hỏng 6 bảng hệ thống (global_priv, db, event,
+    procs_priv, proxies_priv, roles_mapping) do tắt đột ngột -> đã sửa bằng
+    aria_chk và tạo lại tài khoản root (mật khẩu rỗng). Dữ liệu gs_restaurant
+    không ảnh hưởng.
+
 (chưa commit) - CÁC MỤC DANG DỞ
   - Nhân viên dùng mật khẩu mặc định 123456 phải đổi trước khi vào các trang
     nhân viên / KDS / quản trị (API, chấm công không bị chặn); không cho đặt

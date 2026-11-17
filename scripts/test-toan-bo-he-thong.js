@@ -18,6 +18,33 @@ const querystring = require('querystring');
 const fs = require('fs');
 const path = require('path');
 
+// Tai khoan test dung mat khau mac dinh 123456. He thong bat NHAN VIEN doi mat
+// khau mac dinh (cau_hinh bao_mat.bat_doi_mk_nhan_vien) -> tam tat trong luc
+// chay bo test va LUON bat lai truoc khi thoat (xem tamTatDoiMatKhau).
+// Khach test dang ky bang mat khau rieng vi khach dung 123456 cung bi bat doi.
+const MK_KHACH_TEST = 'KhachTest@2026';
+let khoiPhucCoDoiMk = async () => {};
+async function tamTatDoiMatKhau() {
+  try {
+    require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+    const db = require('../config/db');
+    const KHOA = 'bao_mat.bat_doi_mk_nhan_vien';
+    const [[r]] = await db.query('SELECT gia_tri FROM cau_hinh WHERE khoa = ?', [KHOA]);
+    if (!r) return;
+    await db.query("UPDATE cau_hinh SET gia_tri = '0' WHERE khoa = ?", [KHOA]);
+    khoiPhucCoDoiMk = async () => {
+      await db.query('UPDATE cau_hinh SET gia_tri = ? WHERE khoa = ?', [r.gia_tri, KHOA]).catch(() => {});
+      await db.end().catch(() => {});
+      khoiPhucCoDoiMk = async () => {};
+    };
+  } catch (e) {
+    console.log('  (Khong tam tat duoc luat doi mat khau mac dinh: ' + e.message + ')');
+  }
+}
+for (const tinHieu of ['SIGINT', 'SIGTERM']) {
+  process.on(tinHieu, () => { khoiPhucCoDoiMk().finally(() => process.exit(130)); });
+}
+
 const BASE_HOST = '127.0.0.1';
 const BASE_PORT = 3000;
 const BASE_URL = `http://${BASE_HOST}:${BASE_PORT}`;
@@ -230,6 +257,7 @@ async function loginCustomer(phone, password = '123456') {
 // ====================================================================================
 
 async function runMasterTestSuite() {
+  await tamTatDoiMatKhau();
   const suiteStartTime = Date.now();
   console.log(`\n${C.bold}${C.magenta}================================================================================${C.reset}`);
   console.log(`${C.bold}${C.magenta}   🌟 KHỞI CHẠY MASTER AUTOMATION TEST SUITE TOÀN BỘ HỆ THỐNG NHÀ HÀNG 🌟${C.reset}`);
@@ -363,8 +391,8 @@ async function runMasterTestSuite() {
         sodienthoai: testPhone,
         email: `${testPhone}@testrestaurant.vn`,
         diachi: '123 Đường Test, Quận 1, TP.HCM',
-        passwords: '123456',
-        repass: '123456'
+        passwords: MK_KHACH_TEST,
+        repass: MK_KHACH_TEST
       });
       const ok = regRes.statusCode === 302 || regRes.statusCode === 200;
       logTest('CUST_AUTH', `Đăng ký tài khoản khách hàng mới (SĐT: ${testPhone})`, ok, `Status: ${regRes.statusCode}`, regRes.duration);
@@ -374,7 +402,7 @@ async function runMasterTestSuite() {
 
     try {
       // Đăng nhập với tài khoản vừa tạo
-      const auth = await loginCustomer(testPhone, '123456');
+      const auth = await loginCustomer(testPhone, MK_KHACH_TEST);
       const ok = auth.statusCode === 302 && !!auth.cookie;
       custCookie = auth.cookie;
       logTest('CUST_AUTH', `Đăng nhập tài khoản khách hàng thành công (Redirect -> ${auth.location})`, ok, `Status: ${auth.statusCode}`, auth.duration);
@@ -1058,7 +1086,8 @@ async function runMasterTestSuite() {
 
       try {
         // 4. Xóa dọn dẹp
-        const delRes = await request({ path: `/admin/catdel/${createdCatId}` }, null, adminCookie);
+        // Xoa di bang POST (chong CSRF) - GET /admin/catdel/:id khong con.
+        const delRes = await request({ path: `/admin/catdel/${createdCatId}`, method: 'POST' }, {}, adminCookie);
         const ok = delRes.statusCode === 302 && delRes.headers['location'] === '/admin/catlist';
         logTest('ADMIN_CRUD', `4. Xóa dọn dẹp dữ liệu loại món test (ID: #${createdCatId})`, ok, `Status: ${delRes.statusCode}`, delRes.duration);
       } catch (e) {
@@ -1199,9 +1228,11 @@ async function runMasterTestSuite() {
 
   if (masterResults.failedTests === 0) {
     console.log(`${C.bold}${C.bgGreen}${C.white} 🌟 HOÀN HẢO! 100% TẤT CẢ CÁC CHỨC NĂNG CỦA HỆ THỐNG ĐỀU HOẠT ĐỘNG CHUẨN XÁC! 🌟 ${C.reset}\n`);
+    await khoiPhucCoDoiMk();
     process.exit(0);
   } else {
     console.log(`${C.bold}${C.bgRed}${C.white} ⚠️ CẢNH BÁO: CÓ ${masterResults.failedTests} TEST CASE THẤT BẠI. XEM CHI TIẾT TRONG BÁO CÁO! ⚠️ ${C.reset}\n`);
+    await khoiPhucCoDoiMk();
     process.exit(1);
   }
 }
