@@ -1,0 +1,479 @@
+/*
+ * TU DONG SINH boi scripts/taoCheDoToi.js - DUNG SUA TAY.
+ * Sua giao dien xong thi chay lai: npm run giaodien:toi
+ * Muon chinh rieng mot cho: viet vao css/nhahang.css (nap SAU file nay).
+ */
+/* ---- views/booking.ejs ---- */
+[data-theme="dark"] .gh-search-input-group { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .gh-search-input::placeholder { color: var(--nh-muted); }
+[data-theme="dark"] .gh-btn-clear { color: var(--nh-muted); }
+[data-theme="dark"] .gh-btn-clear:hover { color: #fca5a5; }
+[data-theme="dark"] .gh-suggestions-list { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .gh-suggestion-item { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .gh-suggestion-item:hover,
+[data-theme="dark"] .gh-suggestion-item.active { background: var(--nh-surface-2); }
+[data-theme="dark"] .gh-suggestion-item .gh-sug-title { color: var(--nh-ink); }
+[data-theme="dark"] .gh-suggestion-item .gh-sug-sub { color: var(--nh-muted); }
+[data-theme="dark"] .gh-fee-card { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .gh-fee-item__val { color: var(--nh-ink); }
+[data-theme="dark"] .gh-fee-item__lbl { color: var(--nh-muted); }
+[data-theme="dark"] .gh-fee-card--loi { background: var(--nh-surface-2); color: #fca5a5; border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .gh-fee-card--loi .gh-fee-item__val { color: #fca5a5; }
+[data-theme="dark"] .gh-fee-card--loi .gh-fee-item__icon { background: rgba(239, 68, 68, .12); color: #fca5a5; }
+[data-theme="dark"] .giao-hang-badge { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] [style^="color:#c0392b"],
+[data-theme="dark"] [style*="; color:#c0392b"],
+[data-theme="dark"] [style*=";color:#c0392b"],
+[data-theme="dark"] [style^="color: #c0392b"],
+[data-theme="dark"] [style*="; color: #c0392b"],
+[data-theme="dark"] [style*=";color: #c0392b"] { color: #fca5a5 !important; }
+[data-theme="dark"] [style^="color:#777"],
+[data-theme="dark"] [style*="; color:#777"],
+[data-theme="dark"] [style*=";color:#777"],
+[data-theme="dark"] [style^="color: #777"],
+[data-theme="dark"] [style*="; color: #777"],
+[data-theme="dark"] [style*=";color: #777"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#2e7d32"],
+[data-theme="dark"] [style*="; color:#2e7d32"],
+[data-theme="dark"] [style*=";color:#2e7d32"],
+[data-theme="dark"] [style^="color: #2e7d32"],
+[data-theme="dark"] [style*="; color: #2e7d32"],
+[data-theme="dark"] [style*=";color: #2e7d32"] { color: #86efac !important; }
+
+/* ---- views/cart.ejs ---- */
+[data-theme="dark"] .gh-phi-chi-tiet { color: var(--nh-muted); border-left-color: var(--nh-border); }
+[data-theme="dark"] .gh-phi-chi-tiet em { color: #86efac; }
+[data-theme="dark"] .gh-phi-mien { color: #86efac; }
+[data-theme="dark"] .gh-phi-goi-y { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .gh-chinh-sach { background: var(--nh-surface-2); color: var(--nh-ink); border-color: var(--nh-border); }
+[data-theme="dark"] .gh-chinh-sach__dong-y a { color: #fcd34d; }
+[data-theme="dark"] .gh-box { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .gh-box__title { border-bottom-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .gh-search-group { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .gh-search-input { color: var(--nh-ink); }
+[data-theme="dark"] .gh-chip-addr { background: var(--nh-surface-2); color: var(--nh-ink); }
+[data-theme="dark"] .gh-chip-addr:hover { background: rgba(245, 158, 11, .12); color: var(--nh-ink); box-shadow: none; }
+[data-theme="dark"] .gh-sug-box { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .gh-sug-item { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .gh-sug-item:hover { background: var(--nh-surface-2); }
+[data-theme="dark"] .gh-sug-title { color: var(--nh-ink); }
+[data-theme="dark"] .gh-sug-sub { color: var(--nh-muted); }
+[data-theme="dark"] .gh-fee-badge { background: var(--nh-surface-2); border-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .gh-pay-card { background: var(--nh-surface); border-color: var(--nh-border); }
+[data-theme="dark"] .gh-pay-card:hover { background: var(--nh-surface); }
+[data-theme="dark"] .gh-pay-card.active { background: rgba(245, 158, 11, .12); box-shadow: none; }
+[data-theme="dark"] .gh-pay-card__text { color: var(--nh-ink); }
+[data-theme="dark"] .gh-modal-box { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .gh-modal-icon { background: rgba(245, 158, 11, .12); border-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .gh-modal-desc { color: var(--nh-muted); }
+[data-theme="dark"] .gh-modal-summary { background: var(--nh-surface-2); border-color: var(--nh-border); }
+[data-theme="dark"] .gh-btn-modal-cancel { background: rgba(245, 158, 11, .12); color: var(--nh-muted); border-color: var(--nh-border); }
+[data-theme="dark"] [style*="background:#ffffff"],
+[data-theme="dark"] [style*="background: #ffffff"] { background: var(--nh-surface) !important; }
+[data-theme="dark"] [style^="color:#888"],
+[data-theme="dark"] [style*="; color:#888"],
+[data-theme="dark"] [style*=";color:#888"],
+[data-theme="dark"] [style^="color: #888"],
+[data-theme="dark"] [style*="; color: #888"],
+[data-theme="dark"] [style*=";color: #888"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style*="background:#fffdf8"],
+[data-theme="dark"] [style*="background: #fffdf8"] { background: var(--nh-surface) !important; }
+[data-theme="dark"] [style^="color:#666"],
+[data-theme="dark"] [style*="; color:#666"],
+[data-theme="dark"] [style*=";color:#666"],
+[data-theme="dark"] [style^="color: #666"],
+[data-theme="dark"] [style*="; color: #666"],
+[data-theme="dark"] [style*=";color: #666"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#241a14"],
+[data-theme="dark"] [style*="; color:#241a14"],
+[data-theme="dark"] [style*=";color:#241a14"],
+[data-theme="dark"] [style^="color: #241a14"],
+[data-theme="dark"] [style*="; color: #241a14"],
+[data-theme="dark"] [style*=";color: #241a14"] { color: var(--nh-ink) !important; }
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"] { background: var(--nh-surface) !important; }
+[data-theme="dark"] [style^="color:#444"],
+[data-theme="dark"] [style*="; color:#444"],
+[data-theme="dark"] [style*=";color:#444"],
+[data-theme="dark"] [style^="color: #444"],
+[data-theme="dark"] [style*="; color: #444"],
+[data-theme="dark"] [style*=";color: #444"] { color: var(--nh-ink) !important; }
+[data-theme="dark"] [style^="color:#555"],
+[data-theme="dark"] [style*="; color:#555"],
+[data-theme="dark"] [style*=";color:#555"],
+[data-theme="dark"] [style^="color: #555"],
+[data-theme="dark"] [style*="; color: #555"],
+[data-theme="dark"] [style*=";color: #555"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#999"],
+[data-theme="dark"] [style*="; color:#999"],
+[data-theme="dark"] [style*=";color:#999"],
+[data-theme="dark"] [style^="color: #999"],
+[data-theme="dark"] [style*="; color: #999"],
+[data-theme="dark"] [style*=";color: #999"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#333"],
+[data-theme="dark"] [style*="; color:#333"],
+[data-theme="dark"] [style*=";color:#333"],
+[data-theme="dark"] [style^="color: #333"],
+[data-theme="dark"] [style*="; color: #333"],
+[data-theme="dark"] [style*=";color: #333"] { color: var(--nh-ink) !important; }
+
+/* ---- views/chat.ejs ---- */
+[data-theme="dark"] .ct-vo { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .ct-than { background: var(--nh-surface-2); }
+[data-theme="dark"] .ct-dong--ho  .ct-bong { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .ct-xuong { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .ct-chan { background: var(--nh-surface); }
+[data-theme="dark"] .ct-xem-truoc { background: var(--nh-surface-2); }
+[data-theme="dark"] .ct-xem-truoc__thumb { background: var(--nh-surface); }
+[data-theme="dark"] .ct-nut-tep { background: var(--nh-surface-2); }
+[data-theme="dark"] .ct-nhap { background: var(--nh-surface-2); }
+[data-theme="dark"] .ct-nhap:focus { background: var(--nh-surface); }
+[data-theme="dark"] .ct-anh-dinh-kem { background: var(--nh-surface-2); }
+
+/* ---- views/chinh-sach-giao-hang.ejs ---- */
+[data-theme="dark"] .cs-wrap { color: var(--nh-ink); }
+[data-theme="dark"] .cs-muc { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .cs-muc h2 { color: var(--nh-ink); }
+[data-theme="dark"] .cs-bang th,
+[data-theme="dark"] .cs-bang td { border-color: var(--nh-border); }
+[data-theme="dark"] .cs-bang th { background: rgba(245, 158, 11, .12); color: var(--nh-ink); }
+[data-theme="dark"] .cs-the--giam { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .cs-o--khach { background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .cs-o--khach h3 { color: #fca5a5; }
+[data-theme="dark"] .cs-o--nh { background: rgba(34, 197, 94, .12); border-color: rgba(34, 197, 94, .4); }
+[data-theme="dark"] .cs-o--nh h3 { color: #86efac; }
+[data-theme="dark"] .cs-vd { background: var(--nh-surface-2); }
+[data-theme="dark"] [style^="color:#7a6b5c"],
+[data-theme="dark"] [style*="; color:#7a6b5c"],
+[data-theme="dark"] [style*=";color:#7a6b5c"],
+[data-theme="dark"] [style^="color: #7a6b5c"],
+[data-theme="dark"] [style*="; color: #7a6b5c"],
+[data-theme="dark"] [style*=";color: #7a6b5c"] { color: var(--nh-muted) !important; }
+
+/* ---- views/combos.ejs ---- */
+[data-theme="dark"] .nh-combo-page { background: var(--nh-surface); }
+[data-theme="dark"] .nh-combo-filter-btn { background: var(--nh-surface); }
+[data-theme="dark"] .nh-combo-filter-btn:hover { background: var(--nh-surface); }
+[data-theme="dark"] .nh-combo-card { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .nh-combo-card__desc { color: var(--nh-muted); }
+[data-theme="dark"] .nh-combo-card__dishes { background: var(--nh-surface-2); }
+[data-theme="dark"] .nh-combo-card__dish-thumb { background: var(--nh-surface-2); }
+[data-theme="dark"] .nh-combo-card__price-val { color: #fca5a5; }
+[data-theme="dark"] .nh-combo-card__action--delivery { background: var(--nh-surface); }
+[data-theme="dark"] [style*="background:#eee"],
+[data-theme="dark"] [style*="background: #eee"] { background: var(--nh-surface-2) !important; }
+
+/* ---- views/contract.ejs ---- */
+@media print {
+  [data-theme="dark"] .nh-section { background: var(--nh-surface); }
+}
+@media print {
+  [data-theme="dark"] .nh-receipt { border-color: var(--nh-border); }
+}
+@media print {
+  [data-theme="dark"] .nh-receipt__head { background: var(--nh-surface); color: var(--nh-ink); }
+}
+@media print {
+  [data-theme="dark"] .nh-receipt__head h2,
+[data-theme="dark"] .nh-receipt__head .nh-eyebrow { color: var(--nh-ink); }
+}
+
+/* ---- views/dat-ban-chon.ejs ---- */
+[data-theme="dark"] .cdb__the { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .cdb__gio { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .cdb__sosanh { background: var(--nh-surface); box-shadow: none; }
+
+/* ---- views/error.ejs ---- */
+[data-theme="dark"] .hop { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .ma { color: var(--nh-ink); }
+[data-theme="dark"] p.thong-diep { color: var(--nh-muted); }
+[data-theme="dark"] .chuc-danh { background: var(--nh-surface-2); color: var(--nh-ink); }
+[data-theme="dark"] .nut-phu { background: var(--nh-surface-2); color: var(--nh-ink); }
+
+/* ---- views/menu.ejs ---- */
+[data-theme="dark"] [style*="background:#fffdf7"],
+[data-theme="dark"] [style*="background: #fffdf7"] { background: var(--nh-surface) !important; }
+[data-theme="dark"] [style*="background:linear-gradient(135deg,"],
+[data-theme="dark"] [style*="background: linear-gradient(135deg,"] { background: var(--nh-surface) !important; }
+
+/* ---- views/my-orders.ejs ---- */
+[data-theme="dark"] .nh-order-tab-btn.active { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .badge--PENDING { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .badge--WAITLIST { background: rgba(99, 102, 241, .14); color: #a5b4fc; border-color: rgba(99, 102, 241, .45); }
+[data-theme="dark"] .badge--CONFIRMED { background: rgba(99, 102, 241, .14); color: #a5b4fc; border-color: rgba(99, 102, 241, .45); }
+[data-theme="dark"] .badge--ARRIVED { background: rgba(99, 102, 241, .14); color: #a5b4fc; border-color: rgba(99, 102, 241, .45); }
+[data-theme="dark"] .badge--SEATED { background: rgba(34, 197, 94, .12); color: #86efac; border-color: rgba(34, 197, 94, .4); }
+[data-theme="dark"] .badge--COMPLETED { background: var(--nh-surface-2); color: var(--nh-muted); border-color: rgba(99, 102, 241, .45); }
+[data-theme="dark"] .badge--CANCELLED { background: rgba(239, 68, 68, .12); color: #fca5a5; border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .badge--NO_SHOW { background: rgba(245, 158, 11, .12); color: #fcd34d; border-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .badge--REJECTED { background: rgba(239, 68, 68, .12); color: #fca5a5; border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .nh-modal-box { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] [style*="background:#fffbeb"],
+[data-theme="dark"] [style*="background: #fffbeb"] { background: rgba(245, 158, 11, .12) !important; }
+[data-theme="dark"] [style^="color:#92400e"],
+[data-theme="dark"] [style*="; color:#92400e"],
+[data-theme="dark"] [style*=";color:#92400e"],
+[data-theme="dark"] [style^="color: #92400e"],
+[data-theme="dark"] [style*="; color: #92400e"],
+[data-theme="dark"] [style*=";color: #92400e"] { color: #fcd34d !important; }
+[data-theme="dark"] [style*="background:#fef2f2"],
+[data-theme="dark"] [style*="background: #fef2f2"] { background: rgba(239, 68, 68, .12) !important; }
+[data-theme="dark"] [style^="color:#991b1b"],
+[data-theme="dark"] [style*="; color:#991b1b"],
+[data-theme="dark"] [style*=";color:#991b1b"],
+[data-theme="dark"] [style^="color: #991b1b"],
+[data-theme="dark"] [style*="; color: #991b1b"],
+[data-theme="dark"] [style*=";color: #991b1b"] { color: #fca5a5 !important; }
+
+/* ---- views/partials/goi-y-mon.ejs ---- */
+[data-theme="dark"] .goi-y-box { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .goi-y-tieu-de { color: var(--nh-ink); }
+[data-theme="dark"] .goi-y-mo-ta { color: var(--nh-muted); }
+[data-theme="dark"] .goi-y-nhan { background: rgba(99, 102, 241, .14); color: #a5b4fc; }
+[data-theme="dark"] .goi-y-the { background: var(--nh-surface); border-color: var(--nh-border); }
+[data-theme="dark"] .goi-y-anh { background: var(--nh-surface-2); }
+[data-theme="dark"] .goi-y-ten { color: var(--nh-ink); }
+[data-theme="dark"] .goi-y-ten-phu { color: var(--nh-muted); }
+[data-theme="dark"] .goi-y-gia { color: #fca5a5; }
+[data-theme="dark"] .goi-y-vi-sao { background: var(--nh-surface); color: var(--nh-muted); }
+[data-theme="dark"] .goi-y-vi-sao b { color: #a5b4fc; }
+
+/* ---- views/partials/header.ejs ---- */
+[data-theme="dark"] .nh-menu-mobile--vach { border-top-color: var(--nh-border); }
+
+/* ---- views/partials/so-do-dat-ban.ejs ---- */
+[data-theme="dark"] .sdb__goiy-cuon { color: var(--nh-muted); }
+[data-theme="dark"] .sdb__khung { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .sdb__khung--tai { color: var(--nh-muted); }
+[data-theme="dark"] .sdb__khu__dai { color: var(--nh-ink); }
+[data-theme="dark"] .sdb__khu__dem { color: var(--nh-muted); }
+[data-theme="dark"] .sdb__moc { color: var(--nh-ink); }
+[data-theme="dark"] .sdb__chuthich { background: var(--nh-surface); }
+[data-theme="dark"] .sdb__ct { color: var(--nh-muted); }
+[data-theme="dark"] .sdb__tab { background: var(--nh-surface); color: var(--nh-ink); }
+[data-theme="dark"] .sdb__tomtat { background: rgba(245, 158, 11, .12); }
+[data-theme="dark"] .sdb__tomtat b { color: var(--nh-ink); }
+[data-theme="dark"] .sdb__tomtat--thieu { background: rgba(239, 68, 68, .12); color: #fca5a5; }
+[data-theme="dark"] .sdb__tomtat--du { background: rgba(34, 197, 94, .12); color: #86efac; }
+@media print {
+  [data-theme="dark"] .sdb__khung { background: var(--nh-surface); box-shadow: none; }
+}
+
+/* ---- views/profile.ejs ---- */
+[data-theme="dark"] .nh-card { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .nh-field input:focus { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .nh-field input:disabled { background: var(--nh-surface-2); color: var(--nh-muted); }
+[data-theme="dark"] .nh-quick-list a.is-danger { color: #fca5a5; }
+[data-theme="dark"] .nh-quick-list a.is-danger i { color: #fca5a5; }
+[data-theme="dark"] .nh-quick-list a.is-danger:hover { background: var(--nh-surface-2); color: #fca5a5; }
+
+/* ---- views/qr-menu.ejs ---- */
+[data-theme="dark"] .dish-het { color: #fca5a5; }
+[data-theme="dark"] .ct-nl__ds span.la-di-ung::before { color: #fcd34d; }
+
+/* ---- views/reservation-tra-cuu.ejs ---- */
+[data-theme="dark"] .tc-bao--loi { background: rgba(239, 68, 68, .12); color: #fca5a5; }
+[data-theme="dark"] .tc-bao--nhac { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .tc-bao--ok { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .tc-hop { background: var(--nh-surface); box-shadow: none; }
+
+/* ---- views/reservation-xong.ejs ---- */
+[data-theme="dark"] .vip-ticket { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .vip-info-icon { background: var(--nh-surface-2); border-color: var(--nh-border); }
+[data-theme="dark"] .vip-info-label { color: var(--nh-muted); }
+[data-theme="dark"] .vip-info-val { color: var(--nh-ink); }
+[data-theme="dark"] .vip-ticket__divider::before,
+[data-theme="dark"] .vip-ticket__divider::after { background: rgba(245, 158, 11, .12); box-shadow: none; }
+[data-theme="dark"] .vip-ticket__stub { background: var(--nh-surface-2); }
+[data-theme="dark"] .stub-tag { color: var(--nh-ink); }
+[data-theme="dark"] .stub-hint { color: var(--nh-muted); }
+[data-theme="dark"] .vip-ticket__footer { background: var(--nh-surface-2); color: var(--nh-muted); border-top-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .vip-ticket__footer strong { color: var(--nh-ink); }
+[data-theme="dark"] .action-btn--outline { background: var(--nh-surface); color: var(--nh-ink); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .action-btn--outline:hover { background: var(--nh-surface-2); }
+[data-theme="dark"] .timeline-card { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .timeline-title { color: var(--nh-ink); }
+[data-theme="dark"] .step-num { background: var(--nh-surface-2); }
+[data-theme="dark"] .step-content strong { color: var(--nh-ink); }
+[data-theme="dark"] .step-content p { color: var(--nh-muted); }
+@media print {
+  [data-theme="dark"] .ticket-section { background: var(--nh-surface); }
+}
+@media print {
+  [data-theme="dark"] .vip-code-box { background: rgba(245, 158, 11, .12); color: var(--nh-ink); }
+}
+@media print {
+  [data-theme="dark"] .vip-code-value { color: var(--nh-ink); }
+}
+[data-theme="dark"] [style*="background:#fffcf5"],
+[data-theme="dark"] [style*="background: #fffcf5"] { background: var(--nh-surface) !important; }
+
+/* ---- views/reservation.ejs ---- */
+[data-theme="dark"] .db-buoc__o { background: var(--nh-surface); }
+[data-theme="dark"] .db-buoc__o[data-xong="1"] { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .db-gio__o input:disabled + span { background: var(--nh-surface); }
+[data-theme="dark"] .db-gio__caodiem { color: #fcd34d; }
+[data-theme="dark"] .db-gio__caodiem small { color: #fcd34d; }
+[data-theme="dark"] .db-coc { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .db-bao--loi { background: rgba(239, 68, 68, .12); color: #fca5a5; }
+[data-theme="dark"] .db-bao--nhac { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .db-bao--ok { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .db-goiy button { background: var(--nh-surface); color: #fcd34d; }
+[data-theme="dark"] .db-goiy button:hover { background: rgba(245, 158, 11, .12); }
+[data-theme="dark"] .db-combo-section { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .db-combo-card { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .db-combo-card.is-recommended { background: var(--nh-surface); }
+[data-theme="dark"] .db-combo-for { color: #fcd34d; }
+[data-theme="dark"] .db-combo-btn { background: var(--nh-surface); }
+[data-theme="dark"] .db-loai-btn { background: var(--nh-surface); }
+[data-theme="dark"] .db-dish-card { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .db-dish-card .db-dish-thumb { background: var(--nh-surface); }
+[data-theme="dark"] .db-dish-body { background: var(--nh-surface); }
+[data-theme="dark"] .db-dish-qty button { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .db-selected-tray { background: var(--nh-surface); }
+[data-theme="dark"] .db-selected-item { background: var(--nh-surface); }
+[data-theme="dark"] .db-selected-item button { color: #fca5a5; }
+[data-theme="dark"] .db-cs-card { background: var(--nh-surface); }
+[data-theme="dark"] .db-cs-card--highlight { background: var(--nh-surface); }
+[data-theme="dark"] .db-cs-badge--green { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .db-cs-price { color: #fcd34d; }
+[data-theme="dark"] .db-cs-price--free { color: #86efac; }
+[data-theme="dark"] .db-cs-note { background: var(--nh-surface); color: #fcd34d; }
+[data-theme="dark"] .db-cs-table { background: var(--nh-surface); }
+[data-theme="dark"] .db-cs-table th { background: var(--nh-surface-2); }
+[data-theme="dark"] .db-cs-agree { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .db-cs-live { background: rgba(245, 158, 11, .12); color: #fcd34d; }
+[data-theme="dark"] .db-cs-live--free { background: rgba(34, 197, 94, .12); color: #86efac; }
+[data-theme="dark"] .db-modal { background: var(--nh-surface); box-shadow: none; }
+[data-theme="dark"] .db-modal__close { background: var(--nh-surface); }
+[data-theme="dark"] [style*="background:#e0f2fe"],
+[data-theme="dark"] [style*="background: #e0f2fe"] { background: rgba(99, 102, 241, .14) !important; }
+[data-theme="dark"] [style^="color:#0369a1"],
+[data-theme="dark"] [style*="; color:#0369a1"],
+[data-theme="dark"] [style*=";color:#0369a1"],
+[data-theme="dark"] [style^="color: #0369a1"],
+[data-theme="dark"] [style*="; color: #0369a1"],
+[data-theme="dark"] [style*=";color: #0369a1"] { color: #a5b4fc !important; }
+[data-theme="dark"] [style^="color:#15803d"],
+[data-theme="dark"] [style*="; color:#15803d"],
+[data-theme="dark"] [style*=";color:#15803d"],
+[data-theme="dark"] [style^="color: #15803d"],
+[data-theme="dark"] [style*="; color: #15803d"],
+[data-theme="dark"] [style*=";color: #15803d"] { color: #86efac !important; }
+[data-theme="dark"] [style^="color:#b45309"],
+[data-theme="dark"] [style*="; color:#b45309"],
+[data-theme="dark"] [style*=";color:#b45309"],
+[data-theme="dark"] [style^="color: #b45309"],
+[data-theme="dark"] [style*="; color: #b45309"],
+[data-theme="dark"] [style*=";color: #b45309"] { color: #fcd34d !important; }
+[data-theme="dark"] [style^="color:#b91c1c"],
+[data-theme="dark"] [style*="; color:#b91c1c"],
+[data-theme="dark"] [style*=";color:#b91c1c"],
+[data-theme="dark"] [style^="color: #b91c1c"],
+[data-theme="dark"] [style*="; color: #b91c1c"],
+[data-theme="dark"] [style*=";color: #b91c1c"] { color: #fca5a5 !important; }
+
+/* ---- views/thanh-toan-dat-ban.ejs ---- */
+[data-theme="dark"] .spf-top-card { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .spf-card { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .spf-card-title { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .spf-info-table { background: var(--nh-surface); border-color: var(--nh-border); }
+[data-theme="dark"] .spf-info-table tr { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .spf-btn-copy { background: var(--nh-surface); color: var(--nh-muted); border-color: var(--nh-border); }
+[data-theme="dark"] .spf-btn-copy:hover { background: var(--nh-surface-2); color: var(--nh-ink); }
+[data-theme="dark"] .spf-live-status { background: rgba(34, 197, 94, .12); color: #86efac; border-color: rgba(34, 197, 94, .4); }
+[data-theme="dark"] .spf-item-row { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .spf-item-name { color: var(--nh-ink); }
+[data-theme="dark"] .spf-item-qty { color: var(--nh-muted); }
+[data-theme="dark"] .spf-item-price { color: var(--nh-ink); }
+[data-theme="dark"] .spf-total-summary { background: var(--nh-surface); border-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .spf-sum-row { color: var(--nh-muted); }
+[data-theme="dark"] .spf-sum-final { border-top-color: rgba(245, 158, 11, .4); }
+[data-theme="dark"] .spf-sim-box { background: rgba(245, 158, 11, .12); }
+[data-theme="dark"] [style*="background:#f9fafb"],
+[data-theme="dark"] [style*="background: #f9fafb"] { background: var(--nh-surface) !important; }
+[data-theme="dark"] [style^="color:#854d0e"],
+[data-theme="dark"] [style*="; color:#854d0e"],
+[data-theme="dark"] [style*=";color:#854d0e"],
+[data-theme="dark"] [style^="color: #854d0e"],
+[data-theme="dark"] [style*="; color: #854d0e"],
+[data-theme="dark"] [style*=";color: #854d0e"] { color: #fcd34d !important; }
+[data-theme="dark"] [style^="color:#a16207"],
+[data-theme="dark"] [style*="; color:#a16207"],
+[data-theme="dark"] [style*=";color:#a16207"],
+[data-theme="dark"] [style^="color: #a16207"],
+[data-theme="dark"] [style*="; color: #a16207"],
+[data-theme="dark"] [style*=";color: #a16207"] { color: #fcd34d !important; }
+[data-theme="dark"] [style*="background:#f0fdf4"],
+[data-theme="dark"] [style*="background: #f0fdf4"] { background: rgba(34, 197, 94, .12) !important; }
+[data-theme="dark"] [style^="color:#14532d"],
+[data-theme="dark"] [style*="; color:#14532d"],
+[data-theme="dark"] [style*=";color:#14532d"],
+[data-theme="dark"] [style^="color: #14532d"],
+[data-theme="dark"] [style*="; color: #14532d"],
+[data-theme="dark"] [style*=";color: #14532d"] { color: #86efac !important; }
+[data-theme="dark"] [style^="color:#16a34a"],
+[data-theme="dark"] [style*="; color:#16a34a"],
+[data-theme="dark"] [style*=";color:#16a34a"],
+[data-theme="dark"] [style^="color: #16a34a"],
+[data-theme="dark"] [style*="; color: #16a34a"],
+[data-theme="dark"] [style*=";color: #16a34a"] { color: #86efac !important; }
+
+/* ---- views/thanh-toan-don-hang.ejs ---- */
+[data-theme="dark"] .spf-timer-pill { background: rgba(239, 68, 68, .12); color: #fca5a5; border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .spf-info-row { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .spf-info-label { color: var(--nh-muted); }
+[data-theme="dark"] .spf-diem-box { background: rgba(245, 158, 11, .12); }
+[data-theme="dark"] .spf-chinh-sach { background: var(--nh-surface); color: var(--nh-ink); border-color: rgba(99, 102, 241, .45); }
+[data-theme="dark"] .spf-chinh-sach a { color: #fcd34d; }
+[data-theme="dark"] [style^="color:#6b7280"],
+[data-theme="dark"] [style*="; color:#6b7280"],
+[data-theme="dark"] [style*=";color:#6b7280"],
+[data-theme="dark"] [style^="color: #6b7280"],
+[data-theme="dark"] [style*="; color: #6b7280"],
+[data-theme="dark"] [style*=";color: #6b7280"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#4b5563"],
+[data-theme="dark"] [style*="; color:#4b5563"],
+[data-theme="dark"] [style*=";color:#4b5563"],
+[data-theme="dark"] [style^="color: #4b5563"],
+[data-theme="dark"] [style*="; color: #4b5563"],
+[data-theme="dark"] [style*=";color: #4b5563"] { color: var(--nh-muted) !important; }
+[data-theme="dark"] [style^="color:#0284c7"],
+[data-theme="dark"] [style*="; color:#0284c7"],
+[data-theme="dark"] [style*=";color:#0284c7"],
+[data-theme="dark"] [style^="color: #0284c7"],
+[data-theme="dark"] [style*="; color: #0284c7"],
+[data-theme="dark"] [style*=";color: #0284c7"] { color: #a5b4fc !important; }
+
+/* ---- views/thanh-toan-qr.ejs ---- */
+[data-theme="dark"] .mon { border-bottom-color: var(--nh-border); }
+
+/* ---- views/thanh-vien.ejs ---- */
+[data-theme="dark"] .tv-the__hang { color: #fcd34d; }
+[data-theme="dark"] .tv-the__diem { color: var(--nh-ink); }
+[data-theme="dark"] .tv-the__diem small { color: var(--nh-muted); }
+[data-theme="dark"] .tv-the__quy { color: var(--nh-muted); }
+[data-theme="dark"] .tv-tiendo { background: var(--nh-surface-2); }
+[data-theme="dark"] .tv-tiendo__nhan { color: var(--nh-ink); }
+[data-theme="dark"] .tv-tiendo__moc { color: var(--nh-muted); }
+[data-theme="dark"] .tv-bang th,
+[data-theme="dark"] .tv-bang td { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .tv-bang th { color: var(--nh-muted); }
+[data-theme="dark"] .tv-cong { color: #86efac; }
+[data-theme="dark"] .tv-tru { color: #fca5a5; }
+[data-theme="dark"] .tv-hang { background: var(--nh-surface); border-color: var(--nh-border); }
+[data-theme="dark"] .tv-hang__moc { color: var(--nh-muted); }
+[data-theme="dark"] .tv-buoc p { color: var(--nh-muted); }
+
+/* ---- views/theo-doi-giao-hang.ejs ---- */
+[data-theme="dark"] .hero-icon-ring::after { border-color: var(--nh-border); }
+[data-theme="dark"] .step-item.active .step-label { color: #86efac; }
+[data-theme="dark"] .info-sub { border-top-color: var(--nh-border); }
+[data-theme="dark"] .item-row { border-bottom-color: var(--nh-border); }
+[data-theme="dark"] .total-row { border-top-color: var(--nh-border); }
+[data-theme="dark"] [style^="color:#10b981"],
+[data-theme="dark"] [style*="; color:#10b981"],
+[data-theme="dark"] [style*=";color:#10b981"],
+[data-theme="dark"] [style^="color: #10b981"],
+[data-theme="dark"] [style*="; color: #10b981"],
+[data-theme="dark"] [style*=";color: #10b981"] { color: #86efac !important; }

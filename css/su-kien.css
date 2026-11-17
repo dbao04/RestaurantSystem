@@ -276,12 +276,12 @@
    RESPONSIVE
    ===================================================================== */
 @media (max-width: 992px) {
-  .kg-khu { grid-template-columns: 1fr; gap: 1.6rem; padding: 2.4rem 0; }
+  .kg-khu { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; padding: 2.4rem 0; }
   .kg-khu--dao .kg-gallery { order: 0; }
   .dt-loai { grid-template-columns: repeat(2, 1fr); }
-  .dt-sanh, .dt-menus { grid-template-columns: repeat(2, 1fr); }
+  .dt-sanh, .dt-menus { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dt-steps { grid-template-columns: repeat(2, 1fr); }
-  .dt-form-wrap { grid-template-columns: 1fr; }
+  .dt-form-wrap { grid-template-columns: minmax(0, 1fr); }
   .dt-tom { position: static; }
 }
 @media (max-width: 600px) {
@@ -290,8 +290,8 @@
   .dt-loai__card { aspect-ratio: 4 / 5; }
   .dt-loai__body { padding: .85rem; }
   .dt-loai__body p { display: none; }
-  .dt-sanh, .dt-menus, .dt-steps { grid-template-columns: 1fr; }
-  .dt-grid { grid-template-columns: 1fr; }
+  .dt-sanh, .dt-menus, .dt-steps { grid-template-columns: minmax(0, 1fr); }
+  .dt-grid { grid-template-columns: minmax(0, 1fr); }
   .kg-stats { gap: .45rem; }
   .kg-stat b { font-size: 1.2rem; }
   .dt-card { padding: 1.2rem; }

@@ -690,8 +690,9 @@ body::-webkit-scrollbar {
 .nh-muc--tim:hover { background: var(--nh-gold-soft); color: var(--nh-espresso); }
 
 @media (max-width: 640px) {
-  .nh-thanh-mon { margin-inline: -4vw; border-radius: 0; }
-  .nh-thanh-mon__trong { padding-inline: 4vw; }
+  /* Thanh nam NGOAI .nh-container (rong het man hinh) nen khong can le am -
+     le am cu (-4vw) lam no lo ra hai ben va ca trang keo ngang duoc. */
+  .nh-thanh-mon { margin-inline: 0; border-radius: 0; }
   .nh-muc { font-size: .84rem; padding: .45rem .8rem; }
   /* Bo hai nut mui ten tren dien thoai: chung an mat ~82px trong 390px, tuc gan
      mot muc danh muc. Vuot ngang la thao tac tu nhien tren man hinh cham, mui
@@ -3167,4 +3168,140 @@ body.nh,
   .nh-dish__cta { min-height: 40px; padding: .5rem .9rem .5rem 0; margin-bottom: -.4rem; }
   .nh-slider-nav__cham button { padding: 18px 5px; }
   .nh-crumbs a { display: inline-block; padding: .35rem 0; }
+}
+
+/* =========================================================================
+   CHE DO TOI - VA CAC KHOI NEN SANG GHI CUNG TRONG TUNG TRANG
+   -------------------------------------------------------------------------
+   O che do toi, --nh-espresso / --nh-ink doi thanh mau KEM SANG (dung lam mau
+   chu). Nhieu trang lai ghi cung nen #fff cho the/hop rieng cua minh, nen ra
+   ket qua: nen trang + chu kem nhat -> loa mat va gan nhu khong doc duoc.
+   Khoi nay keo cac nen do ve mau be mat toi. Dung [data-theme="dark"] de
+   luon thang <style> rieng cua tung view du no nap sau.
+   Kiem lai bang script ra soat dien thoai (sang/toi, 360-375px).
+   ========================================================================= */
+
+/* Ngan keo menu dien thoai: nen dang dung var(--nh-espresso) -> sang choi o che do toi. */
+@media (max-width: 1260px) {
+  [data-theme="dark"] .nh-nav__links {
+    background: #17110d;
+    border-left: 1px solid var(--nh-border);
+  }
+}
+
+/* --- Gio hang / dat giao hang / theo doi don (views/cart.ejs) --- */
+[data-theme="dark"] .gh-box,
+[data-theme="dark"] .gh-pay-card,
+[data-theme="dark"] .gh-modal-box,
+[data-theme="dark"] .gh-sug-box {
+  background: var(--nh-surface);
+  border-color: var(--nh-border);
+  box-shadow: none;
+}
+[data-theme="dark"] .gh-box__title { border-bottom-color: var(--nh-line); }
+[data-theme="dark"] .gh-search-group { background: var(--nh-surface-2); }
+[data-theme="dark"] .gh-search-input { color: var(--nh-ink); }
+[data-theme="dark"] .gh-search-input::placeholder { color: var(--nh-muted); }
+[data-theme="dark"] .gh-chip-addr,
+[data-theme="dark"] .gh-fee-badge,
+[data-theme="dark"] .gh-chinh-sach,
+[data-theme="dark"] .gh-modal-summary,
+[data-theme="dark"] .gh-modal-icon {
+  background: var(--nh-surface-2);
+  border-color: var(--nh-border);
+  color: var(--nh-ink);
+}
+[data-theme="dark"] .gh-chip-addr:hover,
+[data-theme="dark"] .gh-sug-item:hover,
+[data-theme="dark"] .gh-pay-card:hover { background: #2e241c; color: var(--nh-ink); }
+[data-theme="dark"] .gh-pay-card.active { background: rgba(212, 175, 55, .12); border-color: var(--nh-gold); }
+[data-theme="dark"] .gh-sug-item { border-bottom-color: var(--nh-line); }
+[data-theme="dark"] .gh-sug-title,
+[data-theme="dark"] .gh-pay-card__text,
+[data-theme="dark"] .gh-fee-badge b { color: var(--nh-ink); }
+[data-theme="dark"] .gh-sug-sub,
+[data-theme="dark"] .gh-modal-desc,
+[data-theme="dark"] .gh-phi-chi-tiet { color: var(--nh-muted); }
+[data-theme="dark"] .gh-phi-chi-tiet { border-left-color: var(--nh-line); }
+[data-theme="dark"] .gh-phi-goi-y { background: rgba(251, 191, 36, .1); border-color: rgba(251, 191, 36, .45); color: #fcd34d; }
+[data-theme="dark"] .gh-phi-mien,
+[data-theme="dark"] .gh-phi-chi-tiet em { color: #4ade80; }
+[data-theme="dark"] .gh-chinh-sach__dong-y a { color: #f59e0b; }
+[data-theme="dark"] .gh-map-box { border-color: var(--nh-border); background: var(--nh-surface-2); }
+[data-theme="dark"] .gh-btn-modal-cancel { background: var(--nh-surface-2); color: var(--nh-ink); border-color: var(--nh-border); }
+
+/* --- Chinh sach giao hang (views/chinh-sach-giao-hang.ejs) --- */
+[data-theme="dark"] .cs-wrap { color: var(--nh-ink); }
+[data-theme="dark"] .cs-muc { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .cs-muc h2 { color: var(--nh-ink); }
+[data-theme="dark"] .cs-bang th { background: var(--nh-surface-2); color: var(--nh-gold-soft); }
+[data-theme="dark"] .cs-bang th,
+[data-theme="dark"] .cs-bang td { border-color: var(--nh-line); }
+[data-theme="dark"] .cs-vd { background: var(--nh-surface-2); color: var(--nh-ink); }
+[data-theme="dark"] .cs-o--khach { background: rgba(239, 68, 68, .1); border-color: rgba(239, 68, 68, .4); }
+[data-theme="dark"] .cs-o--khach h3 { color: #fca5a5; }
+[data-theme="dark"] .cs-o--nh { background: rgba(34, 197, 94, .1); border-color: rgba(34, 197, 94, .4); }
+[data-theme="dark"] .cs-o--nh h3 { color: #86efac; }
+[data-theme="dark"] .cs-the--giam { background: rgba(34, 197, 94, .15); color: #86efac; }
+[data-theme="dark"] .cs-hanh-trinh li::before { background: var(--nh-gold); color: #17110d; }
+
+/* --- Chinh sach dat ban + modal (views/reservation.ejs) --- */
+[data-theme="dark"] .db-cs-card,
+[data-theme="dark"] .db-cs-card--highlight {
+  background: var(--nh-surface);
+  border-color: var(--nh-border);
+}
+[data-theme="dark"] .db-cs-card--highlight { background: linear-gradient(135deg, #241c16 0%, #2d2215 100%); }
+[data-theme="dark"] .db-cs-badge { color: var(--nh-gold-soft); }
+[data-theme="dark"] .db-cs-badge--green { background: rgba(34, 197, 94, .15); color: #86efac; }
+[data-theme="dark"] .db-cs-badge--gold { background: rgba(212, 175, 55, .16); color: var(--nh-gold-soft); }
+[data-theme="dark"] .db-cs-price { color: #f59e0b; }
+[data-theme="dark"] .db-cs-price--free { color: #4ade80; }
+[data-theme="dark"] .db-cs-note { background: rgba(255, 255, 255, .05); color: #fdba74; }
+[data-theme="dark"] .db-cs-table { background: var(--nh-surface); border-color: var(--nh-line); }
+[data-theme="dark"] .db-cs-table th { background: var(--nh-surface-2); color: var(--nh-gold-soft); }
+[data-theme="dark"] .db-cs-table td { color: var(--nh-ink); }
+[data-theme="dark"] .db-cs-agree { background: rgba(34, 197, 94, .1); border-color: rgba(34, 197, 94, .4); color: #bbf7d0; }
+[data-theme="dark"] .db-cs-live { background: rgba(245, 158, 11, .1); border-color: rgba(245, 158, 11, .4); color: #fcd34d; }
+[data-theme="dark"] .db-cs-live--free { background: rgba(34, 197, 94, .1); border-color: rgba(34, 197, 94, .4); color: #bbf7d0; }
+[data-theme="dark"] .db-modal { background: var(--nh-surface); }
+[data-theme="dark"] .db-modal__close { background: var(--nh-surface-2); color: var(--nh-ink); border-color: var(--nh-border); }
+
+/* --- Goi y mon (views/partials/goi-y-mon.ejs, nam o /menu) --- */
+[data-theme="dark"] .goi-y-box,
+[data-theme="dark"] .goi-y-the { background: var(--nh-surface); border-color: var(--nh-border); box-shadow: none; }
+[data-theme="dark"] .goi-y-anh { background-color: var(--nh-surface-2); }
+[data-theme="dark"] .goi-y-tieu-de,
+[data-theme="dark"] .goi-y-ten { color: var(--nh-ink); }
+[data-theme="dark"] .goi-y-mo-ta,
+[data-theme="dark"] .goi-y-ten-phu { color: var(--nh-muted); }
+[data-theme="dark"] .goi-y-vi-sao { background: var(--nh-surface-2); color: var(--nh-muted); }
+[data-theme="dark"] .goi-y-nhan { background: rgba(129, 140, 248, .15); color: #c7d2fe; }
+[data-theme="dark"] .goi-y-vi-sao b { color: #a5b4fc; }
+[data-theme="dark"] .goi-y-gia { color: #f87171; }
+
+/* --- Nhan nen vang: chu phai toi o ca hai che do (--nh-espresso doi sang kem o che do toi) --- */
+[data-theme="dark"] .nh-about__badge,
+[data-theme="dark"] .nh-about__badge b,
+[data-theme="dark"] .nh-about__badge span,
+[data-theme="dark"] .nh-tag { color: #17110d; }
+
+/* Bang hoan coc o buoc chinh sach dat ban: mau ghi thang trong the (inline). */
+[data-theme="dark"] .db-cs-table td[style*="#b91c1c"] { color: #f87171 !important; }
+[data-theme="dark"] .db-cs-table td[style*="#b45309"] { color: #fbbf24 !important; }
+[data-theme="dark"] [style*="color:#14532d"] { color: #86efac !important; }
+
+/* Link dang ky / dang nhap: vang nhat tren nen trang chi dat tuong phan 2.4. */
+/* !important vi trang dang nhap / dang ky ghi style="color: var(--nh-gold)" thang trong the. */
+html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
+
+/* Ban do Leaflet: anh nen sang choi giua trang toi -> giam sang, giu nguyen mau de van nhan ra duong. */
+[data-theme="dark"] .leaflet-tile-pane { filter: brightness(.72) contrast(1.08) saturate(.85); }
+[data-theme="dark"] .leaflet-container { background: #1c1510; }
+/* Ban do Google nhung (iframe) o chan trang: chi lam diu duoc bang filter. */
+[data-theme="dark"] iframe[src*="google.com/maps"], [data-theme="dark"] iframe[src*="maps.google"] { filter: brightness(.75) contrast(1.05); }
+
+/* Dien thoai: nut co chu dai (vd "Dat ban tai Phong VIP ...") khong duoc vuot man hinh. */
+@media (max-width: 600px) {
+  .nh-btn { white-space: normal; max-width: 100%; justify-content: center; text-align: center; }
 }

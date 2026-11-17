@@ -64,7 +64,7 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
 
 <style>
   .hd { display: grid; grid-template-columns: 230px 1fr; gap: 2.6rem; align-items: start; }
-  @media (max-width: 900px) { .hd { grid-template-columns: 1fr; gap: 1.4rem; } }
+  @media (max-width: 900px) { .hd { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; } }
 
   .hd__muc { position: sticky; top: 96px; }
   @media (max-width: 900px) { .hd__muc { position: static; } }
@@ -89,6 +89,9 @@ var coCoc = quyTacCoc.some(function (q) { return q.amount_type !== 'NONE' && Num
   .hd__bang thead th { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em;
     color: var(--nh-muted, #5c5148); font-weight: 800; background: rgba(0,0,0,0.02); }
   .hd__bang tbody tr:last-child td { border-bottom: 0; }
+  /* Dien thoai: bang 3 cot rong hon man hinh -> cho cuon ngang trong khung, khong day ca trang. */
+  @media (max-width: 600px) { .hd__bang { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: .86rem; }
+    .hd__bang th, .hd__bang td { padding: .55rem .6rem; } }
   .hd__bang td:first-child { font-weight: 650; color: var(--nh-espresso, #2b1a12); }
   .hd__bang .so { font-variant-numeric: tabular-nums; white-space: nowrap; }
 

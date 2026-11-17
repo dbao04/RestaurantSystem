@@ -51,3 +51,8 @@ public/uploads/
 
 # Goi du lieu that de chuyen len VPS (CSDL, anh khuon mat) - KHONG dua len GitHub
 deploy/goi/
+
+# Chay online tren may ca nhan (Cloudflare tunnel)
+bin/
+logs/
+.qr-tunnel
