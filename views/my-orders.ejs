@@ -81,7 +81,7 @@
     width: 100vw !important;
     height: 100vh !important;
     background: rgba(24, 14, 9, 0.75) !important;
-    display: none;
+    display: none !important;
     align-items: center !important;
     justify-content: center !important;
     z-index: 999999 !important;
@@ -217,6 +217,7 @@
                     data-occasion="<%= r.occasion || t('don.thong_thuong') %>"
                     data-deposit="<%= Number(r.deposit_amount) > 0 ? (Number(r.deposit_amount).toLocaleString('vi-VN') + ' ₫ (' + r.deposit_status + ')') : t('don.khong_yeu_cau_coc') %>"
                     data-requests="<%= r.special_requests || t('don.khong_co') %>"
+                    data-dishes="<%= (r.mon_dat_truoc && r.mon_dat_truoc.length > 0) ? r.mon_dat_truoc.map(function(m){ return (m.dish_name || m.name || 'Món') + ' (x' + (m.quantity || 1) + ')'; }).join(', ') : '' %>"
                     data-status="<%= r.nhan_trang_thai || r.status || '' %>"
                     data-raw-status="<%= r.status || 'PENDING' %>">
                     <i class="fas fa-eye"></i> <%= t('don.xem_chi_tiet_btn') %>
@@ -285,7 +286,10 @@
           <%= t('don.ma') %>: <strong id="mMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
         </div>
       </div>
-      <span id="mTrangThaiBadge" class="nh-reservation-badge"></span>
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span id="mTrangThaiBadge" class="nh-reservation-badge"></span>
+        <button type="button" class="btn-dong-modal-x" onclick="dongChiTiet()" style="background:none; border:none; font-size:1.45rem; line-height:1; cursor:pointer; color:var(--nh-muted); padding:0.2rem 0.5rem; border-radius:6px;" title="<%= t('chung.dong') %>">&times;</button>
+      </div>
     </div>
 
     <dl class="nh-modal-grid">
@@ -321,7 +325,7 @@
     </dl>
 
     <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.5rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
-      <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="dongChiTiet()">
+      <button type="button" class="nh-btn nh-btn--dark nh-btn--sm btn-dong-chi-tiet" onclick="dongChiTiet()">
         <i class="fas fa-times"></i> <%= t('chung.dong') %>
       </button>
     </div>
@@ -496,6 +500,8 @@ function moModalChiTiet(btn) {
   document.getElementById('mDip').textContent = d.occasion || TXT_THONG_THUONG;
   document.getElementById('mTienCoc').textContent = d.deposit || TXT_KHONG_YEU_CAU_COC;
   document.getElementById('mYeuCau').textContent = d.requests || TXT_KHONG_CO;
+  var monEl = document.getElementById('mMonGoiTruoc');
+  if (monEl) monEl.textContent = d.dishes || TXT_KHONG_CO_MON;
 
   var badge = document.getElementById('mTrangThaiBadge');
   if (badge) {
@@ -555,6 +561,13 @@ function moModalHuyDatBan(btn) {
 
 // Xu ly su kien click delegated tren toan bo document de phong ngua
 document.addEventListener('click', function(e) {
+  var btnDong = e.target.closest('.btn-dong-chi-tiet, .btn-dong-modal-x');
+  if (btnDong) {
+    e.preventDefault();
+    e.stopPropagation();
+    dongChiTiet();
+    return;
+  }
   var btnSua = e.target.closest('.btn-mo-sua');
   if (btnSua) {
     e.preventDefault();
@@ -579,17 +592,29 @@ document.addEventListener('click', function(e) {
 
 function dongChiTiet() {
   var modal = document.getElementById('modalChiTietDatBan');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.removeProperty('display');
+    modal.style.display = 'none';
+  }
 }
 
 function dongSuaDatBan() {
   var modal = document.getElementById('modalSuaDatBan');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.removeProperty('display');
+    modal.style.display = 'none';
+  }
 }
 
 function dongHuyDatBan() {
   var modal = document.getElementById('modalHuyDatBan');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.removeProperty('display');
+    modal.style.display = 'none';
+  }
 }
 
 function xuLyLuuSua(e) {
@@ -681,6 +706,14 @@ function xuLyHuyDatBan(e) {
     btn.innerHTML = '<i class="fas fa-trash-alt"></i> ' + TXT_XAC_NHAN_HUY;
   });
 }
+// Dong modal bang Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+    dongChiTiet();
+    dongSuaDatBan();
+    dongHuyDatBan();
+  }
+});
 </script>
 
 <%- include('partials/footer') %>

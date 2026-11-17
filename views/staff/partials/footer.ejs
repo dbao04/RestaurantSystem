@@ -9,7 +9,33 @@
         </div>
       </div>
     </footer>
+    <!-- Thanh Home Bar cho iPhone Simulator -->
+    <div class="sim-home-indicator"></div>
   </div><!-- End of Content Wrapper -->
+
+  <!-- Mobile App Bottom Navigation Bar -->
+  <nav class="mobile-app-bottom-bar" id="mobileBottomNav">
+    <a href="/staff" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='dashboard') ? 'active' : '' %>">
+      <i class="fas fa-house-chimney"></i>
+      <span>Tổng quan</span>
+    </a>
+    <a href="/so-do-ban" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='sodoban') ? 'active' : '' %>">
+      <i class="fas fa-chair"></i>
+      <span>Sơ đồ bàn</span>
+    </a>
+    <a href="/staff/bookings" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='bookings') ? 'active' : '' %>">
+      <i class="fas fa-receipt"></i>
+      <span>Đơn bàn</span>
+    </a>
+    <a href="/kds" class="mbb-item <%= (typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds')) ? 'active' : '' %>">
+      <i class="fas fa-bell-concierge"></i>
+      <span>Bếp KDS</span>
+    </a>
+    <a href="javascript:void(0)" class="mbb-item" onclick="toggleStaffMobileDrawer()">
+      <i class="fas fa-bars"></i>
+      <span>Menu</span>
+    </a>
+  </nav>
 </div><!-- End of #wrapper -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -18,6 +44,30 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
 
 <script>
+  function toggleStaffMobileDrawer() {
+    document.body.classList.toggle('sb-mo');
+  }
+
+  function toggleMobileSimulator() {
+    document.body.classList.toggle('mobile-simulator-active');
+    var isActive = document.body.classList.contains('mobile-simulator-active');
+    var simBar = document.getElementById('simControlBar');
+    if (simBar) simBar.style.display = isActive ? 'flex' : 'none';
+    try {
+      localStorage.setItem('staff_sim_active', isActive ? '1' : '0');
+    } catch(e) {}
+  }
+
+  (function() {
+    try {
+      if (window.innerWidth >= 768 && localStorage.getItem('staff_sim_active') === '1') {
+        document.body.classList.add('mobile-simulator-active');
+        var simBar = document.getElementById('simControlBar');
+        if (simBar) simBar.style.display = 'flex';
+      }
+    } catch(e) {}
+  })();
+
   /*
     Ngan keo thanh ben tren dien thoai - xem khoi @media 767.98px trong
     staff/partials/header.ejs de biet vi sao phai lam.

@@ -79,7 +79,7 @@ const KHU_VUC = [
     thu_tu: 1,
     ghi_chu: 'Tầng trệt - khu phục vụ chính',
     ten_cu: ['Sảnh', 'Sanh', 'Sảnh '],
-    so_cho: [2, 2, 4, 4, 4, 4, 4, 4, 6, 6, 4, 4, 6, 6],
+    so_cho: [2, 2, 4, 4, 4, 4, 4, 4, 6, 6, 4, 4, 6, 6, 2, 2, 2, 2, 2, 2, 2],
   },
   {
     ma: 'V',
@@ -87,7 +87,7 @@ const KHU_VUC = [
     thu_tu: 2,
     ghi_chu: 'Ngoài trời, có mái che',
     ten_cu: [],
-    so_cho: [4, 4, 4, 6, 6, 6, 8, 8, 4, 4],
+    so_cho: [4, 4, 4, 6, 6, 6, 8, 8, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2],
   },
   {
     ma: 'T',
@@ -95,7 +95,7 @@ const KHU_VUC = [
     thu_tu: 3,
     ghi_chu: 'Khu gia đình / nhóm đông',
     ten_cu: [],
-    so_cho: [4, 4, 6, 6, 6, 8, 8, 10, 10, 6],
+    so_cho: [4, 4, 6, 6, 6, 8, 8, 10, 10, 6, 2, 2, 2, 2, 2, 2, 2, 2],
   },
   {
     ma: 'P',
@@ -103,7 +103,7 @@ const KHU_VUC = [
     thu_tu: 4,
     ghi_chu: 'Phòng riêng, có cách âm',
     ten_cu: ['Vip', 'VIP'],
-    so_cho: [8, 8, 10, 10, 12, 12],
+    so_cho: [8, 8, 10, 10, 12, 12, 2, 2],
   },
 ];
 

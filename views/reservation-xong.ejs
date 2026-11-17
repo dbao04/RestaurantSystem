@@ -1,119 +1,915 @@
 <%- include('partials/header', { title: t('dat_ban_moi.xong_tieu_de') }) %>
 <%
 /*
-  TRANG XAC NHAN.
-
-  Co dia chi rieng (/dat-ban/xong?ma=...&dt=...) chu khong phai mot the bao hien
-  ra tren trang dat ban. Ly do: khach can luu lai duoc, gui cho nguoi di cung
-  duoc, va mo lai duoc sau khi dong tab. Mot thong bao noi tren trang cu bien
-  mat cung voi lan tai trang ke tiep.
-
-  Ma dat ban duoc in TO va tach chu: khach se phai doc no qua dien thoai. Bang
-  chu sinh ma da bo I, O, 0, 1 (xem reservationRules.taoMa) chinh vi luc nay.
+  TRANG XÁC NHẬN ĐẶT BÀN HOÀNG GIA (LUXURY DINING RESERVATION PASS).
+  Thiết kế chuẩn boarding pass / voucher sự kiện 5 sao sang trọng,
+  tích hợp mã QR check-in tiếp đón tại quầy lễ tân.
 */
 var dangCho = r.status === 'WAITLIST';
 var canCoc = Number(r.deposit_amount) > 0 && r.deposit_status !== 'PAID';
+
+function formatNgay(dateStr) {
+  try {
+    if (!dateStr) return '';
+    var parts = dateStr.split('-');
+    if (parts.length === 3) {
+      var d = new Date(parts[0], parts[1] - 1, parts[2]);
+      var days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      var thu = days[d.getDay()] || '';
+      return thu + ', ' + parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+  } catch(e) {}
+  return dateStr;
+}
+
+var ngayDep = formatNgay(r.reservation_date);
+var tenBan = (r.ban && r.ban.length) ? r.ban.join(', ') : (r.table_names || 'Xếp khi đến');
+var qrUrl = (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) ? qrCodeDataUrl : '';
 %>
 
-<section class="nh-section nh-section--cream" style="padding-top:calc(70px + clamp(2.5rem,6vw,5rem))">
-  <div class="nh-container-narrow">
+<style>
+  /* =========================================================================
+     LUXURY DINING TICKET / RESERVATION PASS STYLING
+     ========================================================================= */
+  .ticket-section {
+    padding-top: calc(75px + clamp(2rem, 5vw, 4rem));
+    padding-bottom: 5rem;
+    background: radial-gradient(circle at 50% 20%, rgba(200, 162, 75, 0.08), transparent 70%),
+                linear-gradient(180deg, #faf6ef 0%, #f4ede2 100%);
+    min-height: 100vh;
+  }
 
-    <div class="nh-panel" style="text-align:center;padding:clamp(1.8rem,4vw,3rem)">
-      <div style="width:78px;height:78px;border-radius:50%;margin:0 auto 1.2rem;display:grid;place-content:center;
-                  background:<%= dangCho ? '#fffbeb' : '#f0fdf4' %>;
-                  border:2px solid <%= dangCho ? 'rgba(217,119,6,.4)' : 'rgba(22,163,74,.4)' %>">
-        <i class="fas <%= dangCho ? 'fa-list-ol' : 'fa-check-circle' %>"
-           style="font-size:2rem;color:<%= dangCho ? '#d97706' : '#16a34a' %>"></i>
+  .ticket-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  /* Success Message Header */
+  .success-banner {
+    text-align: center;
+    margin-bottom: 2.2rem;
+  }
+  .success-icon-badge {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: <%= dangCho ? '#fffbeb' : '#f0fdf4' %>;
+    border: 2px solid <%= dangCho ? 'rgba(217, 119, 6, 0.4)' : 'rgba(22, 163, 74, 0.4)' %>;
+    color: <%= dangCho ? '#d97706' : '#16a34a' %>;
+    box-shadow: 0 8px 24px <%= dangCho ? 'rgba(217, 119, 6, 0.15)' : 'rgba(22, 163, 74, 0.18)' %>;
+    animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .ticket-eyebrow {
+    font-family: var(--nh-brand-font, 'Dancing Script', cursive);
+    font-size: 1.45rem;
+    color: var(--nh-gold, #c8a24b);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  .ticket-main-title {
+    font-family: var(--nh-serif, 'Playfair Display', Georgia, serif);
+    font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+    font-weight: 700;
+    color: var(--nh-espresso, #2b1a12);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+  }
+  .ticket-lead-desc {
+    color: var(--nh-muted, #5c5148);
+    font-size: 0.96rem;
+    max-width: 580px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* =========================================================================
+     THE VIP TICKET (BOARDING PASS) CONTAINER
+     ========================================================================= */
+  .vip-ticket {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1.5px solid #e7ded0;
+    box-shadow: 0 20px 50px -15px rgba(43, 26, 18, 0.12), 0 0 0 1px rgba(200, 162, 75, 0.15);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  /* Ticket Header Banner */
+  .vip-ticket__header {
+    background: linear-gradient(135deg, #241a14 0%, #3a271c 55%, #1c130e 100%);
+    color: #ffffff;
+    padding: 1.25rem 1.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #c8a24b;
+    position: relative;
+  }
+  .vip-ticket__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .vip-ticket__logo {
+    width: 36px;
+    height: 36px;
+    filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+  }
+  .vip-ticket__brand-name {
+    font-family: var(--nh-serif, 'Playfair Display', Georgia, serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #f7f3ec;
+    line-height: 1.2;
+  }
+  .vip-ticket__brand-sub {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #c8a24b;
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* Luxury Status Badge */
+  .vip-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .status--confirmed {
+    background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+    color: #dcfce7;
+    border: 1px solid #4ade80;
+  }
+  .status--waitlist {
+    background: linear-gradient(135deg, #9a3412 0%, #c2410c 100%);
+    color: #ffedd5;
+    border: 1px solid #fb923c;
+  }
+
+  /* Main Ticket Body Grid (Main details + QR Stub) */
+  .vip-ticket__body {
+    display: flex;
+    position: relative;
+  }
+  @media (max-width: 768px) {
+    .vip-ticket__body {
+      flex-direction: column;
+    }
+  }
+
+  /* Left Side: Main Reservation Details */
+  .vip-ticket__main {
+    flex: 1;
+    padding: 2rem 2.2rem;
+  }
+  @media (max-width: 576px) {
+    .vip-ticket__main {
+      padding: 1.4rem 1.2rem;
+    }
+  }
+
+  /* Reservation Code Box */
+  .vip-code-box {
+    background: linear-gradient(135deg, #241a14 0%, #1e1510 100%);
+    border: 1px solid rgba(200, 162, 75, 0.4);
+    border-radius: 14px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 8px 20px -8px rgba(36, 26, 20, 0.4);
+  }
+  .vip-code-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(233, 224, 211, 0.65);
+    margin-bottom: 3px;
+  }
+  .vip-code-value {
+    font-family: var(--nh-serif, 'Playfair Display', Georgia, serif);
+    font-size: clamp(1.3rem, 3.8vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #e9c878;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    line-height: 1.1;
+  }
+  .btn-copy-code {
+    background: rgba(200, 162, 75, 0.15);
+    border: 1px solid rgba(200, 162, 75, 0.4);
+    color: #e9c878;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .btn-copy-code:hover {
+    background: #c8a24b;
+    color: #241a14;
+    transform: translateY(-1px);
+  }
+
+  /* 2-Column Info Grid */
+  .vip-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem 1.5rem;
+  }
+  @media (max-width: 576px) {
+    .vip-info-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .vip-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .vip-info-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #fbf7f0;
+    border: 1px solid #e7ded0;
+    color: #a8822f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .vip-info-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #8c7b6e;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .vip-info-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #241a14;
+    line-height: 1.35;
+  }
+
+  /* Perforation Line & Scallops (Đường xé vé chuẩn Boarding Pass) */
+  .vip-ticket__divider {
+    width: 2px;
+    background-image: linear-gradient(to bottom, #d5c4ae 50%, rgba(255, 255, 255, 0) 0%);
+    background-position: right;
+    background-size: 2px 14px;
+    background-repeat: repeat-y;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .vip-ticket__divider::before,
+  .vip-ticket__divider::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: #f4ede2;
+    border-radius: 50%;
+    left: -11px;
+    z-index: 5;
+    box-shadow: inset 0 0 0 1.5px #e7ded0;
+  }
+  .vip-ticket__divider::before { top: -12px; }
+  .vip-ticket__divider::after { bottom: -12px; }
+
+  @media (max-width: 768px) {
+    .vip-ticket__divider {
+      width: 100%;
+      height: 2px;
+      background-image: linear-gradient(to right, #d5c4ae 50%, rgba(255, 255, 255, 0) 0%);
+      background-position: bottom;
+      background-size: 14px 2px;
+      background-repeat: repeat-x;
+    }
+    .vip-ticket__divider::before {
+      top: -11px;
+      left: -12px;
+    }
+    .vip-ticket__divider::after {
+      top: -11px;
+      bottom: auto;
+      right: -12px;
+      left: auto;
+    }
+  }
+
+  /* Right Side: QR Check-in Stub */
+  .vip-ticket__stub {
+    width: 260px;
+    background: linear-gradient(180deg, #faf7f2 0%, #f4ede2 100%);
+    padding: 2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  @media (max-width: 768px) {
+    .vip-ticket__stub {
+      width: 100%;
+      padding: 1.8rem 1.4rem;
+    }
+  }
+
+  .qr-frame {
+    background: #ffffff;
+    border: 2px solid #c8a24b;
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(36, 26, 20, 0.08);
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .qr-frame img {
+    width: 145px;
+    height: 145px;
+    display: block;
+    border-radius: 8px;
+  }
+  .stub-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #241a14;
+    margin-bottom: 4px;
+  }
+  .stub-hint {
+    font-size: 0.78rem;
+    color: #6b5f54;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+
+  /* Ticket Footer Bar */
+  .vip-ticket__footer {
+    background: #fbf9f5;
+    border-top: 1px solid #f0e9dd;
+    padding: 1rem 1.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #6b5f54;
+  }
+  .vip-ticket__footer strong {
+    color: #241a14;
+  }
+
+  /* =========================================================================
+     ACTION BUTTONS TOOLBAR
+     ========================================================================= */
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 2.2rem;
+  }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    cursor: pointer;
+    border: none;
+  }
+  .action-btn--primary {
+    background: linear-gradient(135deg, #241a14 0%, #3d2b21 100%);
+    color: #e9c878 !important;
+    border: 1px solid #c8a24b;
+    box-shadow: 0 4px 15px rgba(36, 26, 20, 0.2);
+  }
+  .action-btn--primary:hover {
+    background: #4a3428;
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(36, 26, 20, 0.3);
+  }
+  .action-btn--gold {
+    background: linear-gradient(135deg, #c8a24b 0%, #a8822f 100%);
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(200, 162, 75, 0.3);
+  }
+  .action-btn--gold:hover {
+    background: #b78f35;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(200, 162, 75, 0.45);
+  }
+  .action-btn--outline {
+    background: #ffffff;
+    color: #241a14 !important;
+    border: 1px solid #e7ded0;
+    box-shadow: 0 2px 8px rgba(36, 26, 20, 0.04);
+  }
+  .action-btn--outline:hover {
+    background: #faf8f5;
+    border-color: #c8a24b;
+    color: #a8822f !important;
+    transform: translateY(-2px);
+  }
+
+  /* Next Steps Timeline Card */
+  .timeline-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e7ded0;
+    padding: 1.6rem 2rem;
+    box-shadow: 0 8px 25px rgba(36, 26, 20, 0.04);
+  }
+  .timeline-title {
+    font-family: var(--nh-serif, 'Playfair Display', Georgia, serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #241a14;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .timeline-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    position: relative;
+  }
+  @media (max-width: 768px) {
+    .timeline-list {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+  .timeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fbf7f0;
+    border: 1.5px solid #c8a24b;
+    color: #a8822f;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-content strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #241a14;
+    margin-bottom: 2px;
+  }
+  .step-content p {
+    font-size: 0.82rem;
+    color: #6b5f54;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* Toast Notification */
+  #ticketToast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #241a14;
+    color: #ffffff;
+    border-left: 4px solid #c8a24b;
+    padding: 12px 24px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    font-size: 0.88rem;
+    z-index: 999999;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #ticketToast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* =========================================================================
+     PRINT STYLING (BẢN IN VÉ CHUẨN VIP)
+     ========================================================================= */
+  @media print {
+    .nh-nav, .nh-footer, .action-bar, .timeline-card, #ticketToast, .success-banner {
+      display: none !important;
+    }
+    body, .ticket-section {
+      background: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .ticket-wrapper {
+      max-width: 100% !important;
+      padding: 0 !important;
+    }
+    .vip-ticket {
+      box-shadow: none !important;
+      border: 2px solid #241a14 !important;
+      page-break-inside: avoid;
+    }
+    .vip-ticket__header {
+      background: #241a14 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .vip-code-box {
+      background: #f4eee3 !important;
+      color: #241a14 !important;
+      border: 1px solid #c8a24b !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .vip-code-value {
+      color: #241a14 !important;
+    }
+    .btn-copy-code {
+      display: none !important;
+    }
+  }
+</style>
+
+<!-- Floating Toast -->
+<div id="ticketToast"><i class="fas fa-check-circle text-success"></i> <span id="toastMsg">Đã sao chép!</span></div>
+
+<section class="ticket-section">
+  <div class="ticket-wrapper">
+
+    <!-- Top Gratitude Header -->
+    <div class="success-banner">
+      <div class="success-icon-badge">
+        <i class="fas <%= dangCho ? 'fa-list-ol' : 'fa-check' %>"></i>
       </div>
-
-      <span class="nh-eyebrow nh-eyebrow--sm"><%= t('dat_ban_moi.cam_on') %></span>
-      <h1 style="font-size:clamp(1.7rem,4vw,2.4rem)">
-        <%= dangCho ? t('dat_ban_moi.xong_danh_sach_cho') : t('dat_ban_moi.xong_tieu_de') %>
+      <span class="ticket-eyebrow">Cảm ơn bạn đã lựa chọn</span>
+      <h1 class="ticket-main-title">
+        <%= dangCho ? 'Đã Nhận Yêu Cầu Danh Sách Chờ' : 'Xác Nhận Đặt Bàn Thành Công' %>
       </h1>
-      <p class="nh-lead" style="margin-top:.7rem">
-        <%= dangCho ? t('dat_ban_moi.xong_cho_mo_ta') : t('dat_ban_moi.xong_mo_ta') %>
+      <p class="ticket-lead-desc">
+        <%= dangCho 
+            ? 'Bàn trong khung giờ này hiện đang kín. Nhà hàng đã ghi nhận vào hàng chờ ưu tiên và sẽ liên hệ ngay khi có bàn trống phù hợp.' 
+            : 'Yêu cầu đặt bàn của bạn đã được hệ thống xác nhận. Vui lòng xuất trình Phiếu Đặt Bàn bên dưới khi đến nhà hàng.' %>
       </p>
-
-      <div style="margin:1.8rem auto;max-width:340px;padding:1.1rem;border-radius:14px;
-                  background:var(--nh-espresso);color:var(--nh-cream)">
-        <div style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;opacity:.7">
-          <%= t('dat_ban_moi.ma_dat_ban') %>
-        </div>
-        <div style="font-family:var(--nh-serif);font-size:clamp(1.5rem,5vw,2rem);font-weight:700;
-                    letter-spacing:.12em;color:var(--nh-gold-soft);word-break:break-all">
-          <%= r.reservation_code %>
-        </div>
-      </div>
     </div>
 
-    <div class="nh-panel">
-      <h3 class="nh-panel__title"><i class="fas fa-info-circle"></i> <%= t('dat_ban_moi.chi_tiet') %></h3>
-      <div class="db-xemlai" style="display:grid;grid-template-columns:160px 1fr;gap:.55rem 1rem;font-size:.95rem">
-        <dt><%= t('dat_ban_moi.ho_ten') %></dt><dd><%= r.customer_name %></dd>
-        <dt><%= t('dat_ban_moi.dien_thoai') %></dt><dd><%= r.phone %></dd>
-        <dt><%= t('dat_ban_moi.thoi_gian') %></dt>
-        <dd><%= r.gio %> – <%= r.gio_ket_thuc %> · <%= r.reservation_date.split('-').reverse().join('/') %></dd>
-        <dt><%= t('dat_ban_moi.so_khach') %></dt><dd><%= r.guest_count %> <%= t('dat_ban_moi.khach') %></dd>
-        <% if (r.area_name) { %>
-          <dt><%= t('dat_ban_moi.khu_vuc') %></dt><dd><%= r.area_name %></dd>
-        <% } %>
-        <% if (r.ban && r.ban.length) { %>
-          <dt><%= t('dat_ban_moi.ban') %></dt><dd><%= r.ban.join(', ') %></dd>
-        <% } %>
-        <dt><%= t('dat_ban_moi.trang_thai') %></dt>
-        <dd><%= r.nhan_trang_thai %></dd>
-        <% if (r.special_requests) { %>
-          <dt><%= t('dat_ban_moi.ghi_chu') %></dt><dd><%= r.special_requests %></dd>
-        <% } %>
+    <!-- ==================== THE VIP RESERVATION TICKET ==================== -->
+    <div class="vip-ticket" id="vipTicketCard">
+      
+      <!-- Ticket Header -->
+      <div class="vip-ticket__header">
+        <div class="vip-ticket__brand">
+          <img src="/logo.svg" alt="Logo" class="vip-ticket__logo">
+          <div>
+            <span class="vip-ticket__brand-name">Nhà Hàng Bảo Đoàn</span>
+            <span class="vip-ticket__brand-sub">Premium Dining Ticket &bull; Thẻ Đón Khách VIP</span>
+          </div>
+        </div>
+        <div>
+          <% if (dangCho) { %>
+            <span class="vip-status-badge status--waitlist">
+              <i class="fas fa-hourglass-half"></i> Danh Sách Chờ
+            </span>
+          <% } else { %>
+            <span class="vip-status-badge status--confirmed">
+              <i class="fas fa-circle-check"></i> Đã Xác Nhận Bàn
+            </span>
+          <% } %>
+        </div>
       </div>
-    </div>
 
+      <!-- Ticket Body -->
+      <div class="vip-ticket__body">
+        
+        <!-- Main Details (Left) -->
+        <div class="vip-ticket__main">
+          
+          <!-- Code Box -->
+          <div class="vip-code-box">
+            <div>
+              <div class="vip-code-label">MÃ ĐẶT BÀN / RESERVATION CODE</div>
+              <div class="vip-code-value" id="resCodeVal"><%= r.reservation_code %></div>
+            </div>
+            <button type="button" class="btn-copy-code" onclick="copyReservationCode('<%= r.reservation_code %>')">
+              <i class="fas fa-copy"></i> <span>Sao chép</span>
+            </button>
+          </div>
+
+          <!-- 2-Column Info Grid -->
+          <div class="vip-info-grid">
+            
+            <!-- Khách hàng -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-user-tie"></i></div>
+              <div>
+                <div class="vip-info-label">Khách hàng</div>
+                <div class="vip-info-val"><%= r.customer_name %></div>
+              </div>
+            </div>
+
+            <!-- Điện thoại -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-phone"></i></div>
+              <div>
+                <div class="vip-info-label">Số điện thoại</div>
+                <div class="vip-info-val">
+                  <a href="tel:<%= r.phone %>" style="color:inherit; text-decoration:none;"><%= r.phone %></a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thời gian dùng bữa -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-calendar-day"></i></div>
+              <div>
+                <div class="vip-info-label">Ngày dùng bữa</div>
+                <div class="vip-info-val"><%= ngayDep %></div>
+              </div>
+            </div>
+
+            <!-- Khung giờ -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-clock"></i></div>
+              <div>
+                <div class="vip-info-label">Khung giờ</div>
+                <div class="vip-info-val">
+                  <%= r.gio %> &ndash; <%= r.gio_ket_thuc %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Số khách -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-users"></i></div>
+              <div>
+                <div class="vip-info-label">Số lượng khách</div>
+                <div class="vip-info-val">
+                  <span class="badge badge-warning text-dark font-weight-bold px-2 py-1" style="font-size:0.9rem;">
+                    <%= r.guest_count %> Khách
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vị trí bàn -->
+            <div class="vip-info-item">
+              <div class="vip-info-icon"><i class="fas fa-chair"></i></div>
+              <div>
+                <div class="vip-info-label">Vị trí bàn tiệc</div>
+                <div class="vip-info-val">
+                  <% if (tenBan && tenBan !== 'Xếp khi đến') { %>
+                    <span class="badge badge-success px-2 py-1" style="font-size:0.9rem;">
+                      Bàn <%= tenBan %>
+                    </span>
+                  <% } else { %>
+                    <span class="badge badge-light border text-muted px-2 py-1">Xếp khi đến</span>
+                  <% } %>
+                  <% if (r.area_name) { %>
+                    <small class="text-muted d-block mt-1 font-weight-normal"><%= r.area_name %></small>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <% if (r.special_requests) { %>
+              <div class="vip-info-item" style="grid-column: 1 / -1;">
+                <div class="vip-info-icon"><i class="fas fa-note-sticky"></i></div>
+                <div>
+                  <div class="vip-info-label">Ghi chú &amp; Yêu cầu</div>
+                  <div class="vip-info-val text-muted font-italic" style="font-size:0.88rem;">
+                    &ldquo;<%= r.special_requests %>&rdquo;
+                  </div>
+                </div>
+              </div>
+            <% } %>
+
+          </div>
+        </div>
+
+        <!-- Perforation Divider -->
+        <div class="vip-ticket__divider"></div>
+
+        <!-- QR Check-in Stub (Right) -->
+        <div class="vip-ticket__stub">
+          <div class="stub-tag"><i class="fas fa-qrcode text-warning mr-1"></i> Mã Check-in Tiếp Đón</div>
+          <div class="qr-frame">
+            <% if (qrUrl) { %>
+              <img src="<%= qrUrl %>" alt="QR Check-in" id="ticketQrImg">
+            <% } else { %>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=<%= encodeURIComponent(r.reservation_code) %>" alt="QR Code" id="ticketQrImg">
+            <% } %>
+          </div>
+          <div class="stub-hint">
+            Xuất trình mã này cho Lễ tân khi đến nhà hàng để nhận bàn ngay lập tức.
+          </div>
+          <button type="button" class="btn btn-xs btn-outline-secondary" onclick="taiMaQR()" style="font-size:0.75rem; border-radius:6px; padding:3px 8px;">
+            <i class="fas fa-download mr-1"></i> Tải mã QR
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Ticket Footer -->
+      <div class="vip-ticket__footer">
+        <div>
+          <i class="fas fa-circle-exclamation text-warning mr-1"></i>
+          Nhà hàng sẽ giữ bàn tối đa <strong>15 phút</strong> so với giờ hẹn. Quý khách vui lòng liên hệ nếu đến trễ.
+        </div>
+        <div>
+          <i class="fas fa-phone-volume text-success mr-1"></i>
+          Hotline hỗ trợ: <strong class="text-dark">0388 062 048</strong>
+        </div>
+      </div>
+
+    </div>
+    <!-- ==================== END VIP RESERVATION TICKET ==================== -->
+
+    <!-- Cảnh báo tiền cọc nếu có -->
     <% if (canCoc) { %>
-      <div class="nh-panel" style="border-left:4px solid #d97706">
-        <h3 class="nh-panel__title"><i class="fas fa-wallet"></i> <%= t('dat_ban_moi.tien_coc') %></h3>
-        <p style="font-size:1.5rem;font-weight:700;color:var(--nh-espresso);margin:.3rem 0">
-          <%= Number(r.deposit_amount).toLocaleString('vi-VN') %>đ
-        </p>
-        <p class="nh-hint"><%= t('dat_ban_moi.coc_huong_dan') %></p>
-        <div style="margin-top:1rem;">
-          <a href="/thanh-toan/dat-ban/<%= encodeURIComponent(r.reservation_code) %>?dt=<%= encodeURIComponent(r.phone) %>" class="nh-btn nh-btn--gold">
-            <i class="fas fa-qrcode"></i> <%= t('don.thanh_toan_vietqr') %>
+      <div class="alert alert-warning shadow-sm border mb-4 p-3" style="border-radius:14px; background:#fffcf5; border-color:#f59e0b !important;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <h5 class="font-weight-bold text-dark mb-1" style="font-size:1.05rem;">
+              <i class="fas fa-wallet text-warning mr-2"></i> Yêu cầu đặt cọc giữ bàn: 
+              <span class="text-danger"><%= Number(r.deposit_amount).toLocaleString('vi-VN') %>đ</span>
+            </h5>
+            <small class="text-muted"><%= t('dat_ban_moi.coc_huong_dan') %></small>
+          </div>
+          <a href="/thanh-toan/dat-ban/<%= encodeURIComponent(r.reservation_code) %>?dt=<%= encodeURIComponent(r.phone) %>" class="action-btn action-btn--gold py-2 px-3" style="font-size:0.88rem;">
+            <i class="fas fa-qrcode"></i> Thanh toán cọc VietQR
           </a>
         </div>
       </div>
     <% } %>
 
-    <div class="nh-panel">
-      <h3 class="nh-panel__title"><i class="fas fa-tasks"></i> <%= t('dat_ban_moi.tiep_theo') %></h3>
-      <ul style="padding-left:1.1rem;line-height:2;color:var(--nh-muted);font-size:.95rem">
-        <li><%= t('dat_ban_moi.buoc_goi_lai') %></li>
-        <li><%- t('dat_ban_moi.buoc_giu_ban') %></li>
-        <li><%- t('dat_ban_moi.buoc_tra_cuu') %></li>
-      </ul>
+    <!-- Action Buttons Bar -->
+    <div class="action-bar">
+      <button type="button" class="action-btn action-btn--primary" onclick="window.print()">
+        <i class="fas fa-print"></i> <span>In Phiếu Đặt Bàn</span>
+      </button>
 
-      <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.4rem">
-        <a class="nh-btn nh-btn--gold" href="/my-orders">
-          <i class="fas fa-calendar-check"></i> <%= t('dieu_huong.don_cua_toi') %>
-        </a>
-        <a class="nh-btn nh-btn--outline" href="/menu">
-          <i class="fas fa-utensils"></i> <%= t('dieu_huong.thuc_don') %>
-        </a>
-        <button type="button" class="nh-btn nh-btn--outline" onclick="window.print()">
-          <i class="fas fa-print"></i> <%= t('dat_ban_moi.in_phieu') %>
-        </button>
+      <button type="button" class="action-btn action-btn--outline" onclick="chiaSeVe()">
+        <i class="fas fa-share-nodes"></i> <span>Chia Sẻ Vé</span>
+      </button>
+
+      <a href="/menu" class="action-btn action-btn--outline">
+        <i class="fas fa-utensils"></i> <span>Xem Thực Đơn</span>
+      </a>
+
+      <a href="https://maps.google.com/?q=Nhà+Hàng+Bảo+Đoàn" target="_blank" class="action-btn action-btn--outline">
+        <i class="fas fa-location-dot"></i> <span>Chỉ Đường</span>
+      </a>
+    </div>
+
+    <!-- Timeline 3 Bước Tiếp Theo -->
+    <div class="timeline-card">
+      <div class="timeline-title">
+        <i class="fas fa-route text-warning"></i>
+        <span>Hành trình trải nghiệm tiếp theo của bạn</span>
+      </div>
+
+      <div class="timeline-list">
+        <div class="timeline-step">
+          <div class="step-num"><i class="fas fa-check"></i></div>
+          <div class="step-content">
+            <strong>1. Xác nhận giữ chỗ</strong>
+            <p>Hệ thống tự động bảo lưu bàn tiệc đẹp nhất theo yêu cầu của bạn.</p>
+          </div>
+        </div>
+
+        <div class="timeline-step">
+          <div class="step-num"><i class="fas fa-bell-concierge"></i></div>
+          <div class="step-content">
+            <strong>2. Chuẩn bị chu đáo</strong>
+            <p>Nhà hàng vệ sinh bàn ăn, chuẩn bị menu và nguyên liệu chế biến trước giờ hẹn.</p>
+          </div>
+        </div>
+
+        <div class="timeline-step">
+          <div class="step-num"><i class="fas fa-glass-cheers"></i></div>
+          <div class="step-content">
+            <strong>3. Đón tiếp &amp; Thưởng thức</strong>
+            <p>Đưa mã QR cho lễ tân, nhân viên sẽ hướng dẫn bạn và người thân vào vị trí bàn.</p>
+          </div>
+        </div>
       </div>
     </div>
+
   </div>
 </section>
 
-<style>
-  /* Ban in: bo dieu huong, chan trang va nut bam - chi con thong tin luot dat. */
-  @media print {
-    .nh-nav, .nh-footer, .nh-btn, .nh-chatbot, .nh-cta { display: none !important; }
-    .nh-section { padding: 0 !important; }
-    .nh-panel { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
-    body { background: #fff !important; }
+<script>
+  // Sao chép mã đặt bàn với Toast đẹp mắt
+  function copyReservationCode(code) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        hienThiToast('Đã sao chép mã đặt bàn: ' + code);
+      });
+    } else {
+      const el = document.createElement('textarea');
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      hienThiToast('Đã sao chép mã đặt bàn: ' + code);
+    }
   }
-</style>
+
+  // Chia sẻ vé
+  function chiaSeVe() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Phiếu Đặt Bàn — Nhà Hàng Bảo Đoàn',
+        text: 'Phiếu đặt bàn của tôi tại Nhà Hàng Bảo Đoàn (Mã: <%= r.reservation_code %>)',
+        url: url
+      }).catch(() => {});
+    } else {
+      copyReservationCode(url);
+      hienThiToast('Đã sao chép liên kết vé đặt bàn vào bộ nhớ tạm!');
+    }
+  }
+
+  // Tải ảnh mã QR về máy
+  function taiMaQR() {
+    const img = document.getElementById('ticketQrImg');
+    if (!img) return;
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'QR_DatBan_<%= r.reservation_code %>.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    hienThiToast('Đang tải mã QR check-in về máy...');
+  }
+
+  // Toast Helper
+  function hienThiToast(msg) {
+    const t = document.getElementById('ticketToast');
+    const msgEl = document.getElementById('toastMsg');
+    if (!t) return;
+    if (msgEl) msgEl.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => {
+      t.classList.remove('show');
+    }, 3200);
+  }
+</script>
 
 <%- include('partials/footer') %>

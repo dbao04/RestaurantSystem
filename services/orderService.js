@@ -229,7 +229,21 @@ const orderService = {
     return rows[0].count > 0;
   },
 
-  getAllBookings: async () => {
+  getBookingStats: async () => {
+    const [stats] = await db.query(`
+      SELECT 
+        COUNT(DISTINCT sesis) as tong_don,
+        COUNT(DISTINCT CASE WHEN tinhtrang IN (5, 6) THEN sesis END) as dang_phuc_vu,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 1 THEN sesis END) as da_xac_nhan,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 0 THEN sesis END) as cho_xac_nhan,
+        COUNT(DISTINCT CASE WHEN tinhtrang = 3 THEN sesis END) as da_thanh_toan
+      FROM hopdong
+    `);
+    return stats[0] || { tong_don: 0, dang_phuc_vu: 0, da_xac_nhan: 0, cho_xac_nhan: 0, da_thanh_toan: 0 };
+  },
+
+  getAllBookings: async (limit = 150) => {
+    const safeLimit = Math.max(10, Math.min(parseInt(limit) || 150, 500));
     const [rows] = await db.query(`
       SELECT 
         h.sesis, 
@@ -249,9 +263,11 @@ const orderService = {
       INNER JOIN khach_hang k ON h.id_user = k.id
       LEFT JOIN ban b ON h.id_ban = b.Id_ban
       LEFT JOIN qr_tables q ON h.sesis = q.active_sesis
+      WHERE h.tinhtrang IN (0, 1, 5, 6) OR h.id >= (SELECT MAX(id) - 4000 FROM hopdong)
       GROUP BY h.sesis
-      ORDER BY max_id DESC
-    `);
+      ORDER BY (CASE WHEN MAX(h.tinhtrang) IN (0, 1, 5, 6) THEN 0 ELSE 1 END), max_id DESC
+      LIMIT ?
+    `, [safeLimit]);
     return rows;
   },
 
@@ -556,13 +572,7 @@ const orderService = {
   // ============ MENU & STATS ============
   getTopDishes: async (limit = 10) => {
     const [rows] = await db.query(`
-      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, COALESCE(SUM(h.soluong), 0) as total
-      FROM monan m
-      LEFT JOIN hopdong h ON m.id_mon = h.id_mon
-      WHERE m.tinhtrang = 1
-      GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images
-      ORDER BY total DESC
-      LIMIT ?
+      SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, COALESCE(top.total, 0) as total\n      FROM monan m\n      LEFT JOIN (\n        SELECT id_mon, SUM(soluong) as total\n        FROM hopdong\n        WHERE id_mon > 0\n        GROUP BY id_mon\n      ) top ON m.id_mon = top.id_mon\n      WHERE m.tinhtrang = 1\n      ORDER BY total DESC\n      LIMIT ?
     `, [limit]);
     return rows;
   },

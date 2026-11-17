@@ -1711,10 +1711,12 @@ app.get('/staff/reservations', (req, res) => res.redirect(301, '/staff/dat-ban')
 
 app.get('/staff/bookings', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
   try {
-    const bookings = await orderService.getAllBookings();
+    const stats = await orderService.getBookingStats();
+    const bookings = await orderService.getAllBookings(150);
     const qrCodes = await orderService.getAllQRCodes();
     res.render('staff/bookings', {
       title: 'Quản lý Đặt bàn & Gọi món',
+      stats,
       bookings,
       qrCodes,
       msg: req.query.msg || '',
@@ -1725,6 +1727,16 @@ app.get('/staff/bookings', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (r
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
+  }
+});
+
+app.get('/staff/bookings/api/data', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
+  try {
+    const stats = await orderService.getBookingStats();
+    const bookings = await orderService.getAllBookings(150);
+    res.json({ success: true, stats, bookings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -1750,11 +1762,13 @@ app.post('/staff/bookings/create', requireRole(['Phuc vu', 'Quay', 'Quan ly']), 
     }
     const sesis = await orderService.createStaffBooking(req.body);
 
-    // Notify Kitchen Real-time
+    // Notify Kitchen & Staff Real-time
     io.to('kitchen_room').emit('new-order-to-kitchen', {
       message: `Nhân viên [${req.session.staffName}] vừa tạo 1 đơn bàn mới!`,
       sesis: sesis
     });
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'create' });
+    io.to('staff_room').emit('so-do-thay-doi');
 
     res.redirect('/staff/bookings');
   } catch (err) {
@@ -1766,6 +1780,8 @@ app.post('/staff/bookings/create', requireRole(['Phuc vu', 'Quay', 'Quan ly']), 
 app.post('/staff/bookings/edit/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
   try {
     await orderService.updateBooking(req.params.sesis, req.body);
+    io.to('staff_room').emit('booking-updated', { sesis: req.params.sesis, action: 'edit' });
+    io.to('staff_room').emit('so-do-thay-doi');
     res.redirect('/staff/bookings');
   } catch (err) {
     console.error(err);
@@ -1775,14 +1791,6 @@ app.post('/staff/bookings/edit/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly
 
 /**
  * Duong dan thanh toan CU - nay chi con chuyen huong sang man hinh thu ngan.
- *
- * Ban cu goi orderService.payBill(), tuc la chi `UPDATE hopdong SET tinhtrang = 3`:
- * don duoc danh dau "da thanh toan" ma KHONG co dong nao trong bang `payments`.
- * Hau qua: khong biet thu bao nhieu, bang hinh thuc gi, ai thu, khong in duoc
- * bien lai, va bao cao doanh thu khong khop voi tien thuc te trong ket.
- *
- * Khong xoa han duong dan de trang nao con giu bookmark hoac form cu khong bi
- * loi 404 - nhung tu day moi viec thu tien deu phai di qua /staff/thanh-toan.
  */
 app.post('/staff/bookings/pay/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), (req, res) => {
   res.redirect(303, '/staff/thanh-toan/' + encodeURIComponent(req.params.sesis));
@@ -1816,6 +1824,8 @@ app.post('/staff/bookings/confirm/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan
     if (!kq.affectedRows) {
       return veDanhSachDon(res, `Không thể xác nhận: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
     }
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'confirm' });
+    io.to('staff_room').emit('so-do-thay-doi');
     veDanhSachDon(res, 'Đã xác nhận đơn.', 'success');
   } catch (err) {
     console.error(err);
@@ -1838,16 +1848,36 @@ app.post('/staff/bookings/arrive/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan 
       return veDanhSachDon(res, `Không thể nhận khách: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
     }
     if (table_id) {
-      const [[qr]] = await db.query('SELECT table_id FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
+      const [[qr]] = await db.query('SELECT table_id, table_name FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
       if (!qr) return veDanhSachDon(res, 'Mã QR bàn không tồn tại.');
+      // Ban dich dang phuc vu phien KHAC thi khong ghi de (mat lien ket don cua khach dang ngoi).
+      const [[banDich]] = await db.query('SELECT sesis_hien_tai FROM ban WHERE number_ban = ? LIMIT 1', [qr.table_name]);
+      if (banDich && banDich.sesis_hien_tai && banDich.sesis_hien_tai !== sesis) {
+        return veDanhSachDon(res, `Bàn ${qr.table_name} đang có khách khác - chọn bàn trống hoặc dùng chuyển / gộp bàn.`);
+      }
     }
 
     await db.query('UPDATE hopdong SET tinhtrang = 5 WHERE sesis = ? AND tinhtrang = 1', [sesis]);
-    // Go lien ket QR cu cua don roi gan ban vua chon.
+    // Go lien ket QR + ban cu cua don roi gan ban vua chon.
     await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
+    await db.query('UPDATE ban SET trangthai = 0, sesis_hien_tai = NULL WHERE sesis_hien_tai = ?', [sesis]);
     if (table_id) {
       await db.query('UPDATE qr_tables SET active_sesis = ? WHERE table_id = ?', [sesis, table_id]);
+      const [qrRows] = await db.query('SELECT id, table_id, table_name FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
+      if (qrRows.length > 0) {
+        const tableName = qrRows[0].table_name;
+        const [banRows] = await db.query('SELECT Id_ban, number_ban FROM ban WHERE number_ban = ? LIMIT 1', [tableName]);
+        if (banRows.length > 0) {
+          const idBan = banRows[0].Id_ban;
+          await db.query('UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?', [sesis, idBan]);
+          await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ?', [idBan, sesis]);
+        }
+      }
     }
+    io.to('staff_room').emit('ban-cap-nhat');
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'arrive' });
+    io.to('kitchen_room').emit('ban-cap-nhat');
     veDanhSachDon(res, 'Đã ghi nhận khách đến.', 'success');
   } catch (err) {
     console.error(err);
@@ -2625,11 +2655,14 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Quay', 'Qua
 
     await orderService.addDishToOrder(sesis, id_mon, qty);
 
-    // Thông báo bếp
+    // Thông báo bếp và phòng nhân viên
     io.to('kitchen_room').emit('new-order-to-kitchen', {
       message: `Nhân viên [${req.session.staffName}] vừa thêm món vào đơn ${sesis.substring(0,6).toUpperCase()}!`,
       sesis
     });
+    io.to('staff_room').emit('ban-cap-nhat');
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'add-dish' });
 
     if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
       return res.json({ success: true });
