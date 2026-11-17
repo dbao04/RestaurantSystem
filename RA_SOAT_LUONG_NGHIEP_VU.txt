@@ -419,3 +419,47 @@ vốn; nhưng chỉ 13 lượt đặt bàn, 6 đánh giá, 19 khách có tài kh
                khách RFM, phân tích cảm xúc đánh giá (làm theo quy tắc trước).
   [ĐÃ LÀM]    Nút hủy món trên sơ đồ bàn; chuyển bàn khách đặt trước cập
                nhật reservation_tables; bắt nhân viên đổi mật khẩu 123456.
+
+================================================================================
+6. RÀ SOÁT KẾ TOÁN (09/11/2026)
+================================================================================
+Hiện có: Lương (tính tự động, gửi duyệt, chi), Báo cáo thu chi tháng, Quản lý
+chi phí, Chấm công, Nghỉ phép, Sổ quỹ thu chi, Đối soát thanh toán, Chốt ca,
+Công nợ NCC, Báo cáo lãi lỗ.
+
+MỨC CAO
+  [CHỜ] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
+        bị xóa ở commit 1ac9e70 (17/10/2026). Gửi duyệt xong kẹt mãi ở "chờ
+        duyệt". Dữ liệu T10/2026: 75 bảng lương "đã chi" nhưng 0đ.
+  [CHỜ] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
+        đè số tiền và đưa về nháp -> mất dấu vết, có thể chi hai lần.
+  [CHỜ] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
+        không lưu ngày chi, hình thức, người chi; cho chi bảng lương 0đ.
+  [CHỜ] K4. Doanh thu (báo cáo thu chi + báo cáo lãi lỗ) tính theo giá món gốc:
+        chưa trừ mã giảm giá / điểm thưởng, chưa cộng phí phục vụ, VAT chưa
+        tách ra thành thuế phải nộp -> doanh thu bị thổi phồng khi có khuyến mãi.
+MỨC VỪA
+  [CHỜ] K5. Tính lương sơ sài: ngày công = số ngày có chấm công (quên chấm ra
+        vẫn đủ công - 6/16 dòng hiện thiếu giờ ra); không dùng giờ công, nghỉ
+        phép có lương, tăng ca, đi muộn; phụ cấp 500k và 26 công cứng trong
+        code; không khấu trừ BHXH 10,5% / thuế TNCN.
+  [CHỜ] K6. Hai sổ chi phí song song: "Quản lý chi phí" (chi_phi_khac) và phiếu
+        chi trong Sổ quỹ. Chi phí nhập ở trang kế toán không danh mục, không
+        vào sổ quỹ; xóa cứng không lưu vết; không chặn số tiền âm.
+  [CHỜ] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
+        mặt + chuyển khoản một số dư -> không khớp được với két / sao kê.
+  [CHỜ] K8. Quyền: Kế toán bị chặn (403) ở "Đối soát thanh toán", "Lịch sử chốt
+        ca" dù menu có link; ngược lại Kế toán lại "xóa" (cho nghỉ) được nhân viên.
+MỨC THẤP
+  [CHỜ] K9. Ngày mặc định theo giờ UTC: trước 7h sáng trang chấm công hiện hôm qua.
+  [CHỜ] K10. Lỗi trả về alert()/trang 500 trần; chưa có kiểm thử tự động cho lương.
+
+PHÁT TRIỂN THÊM (đề xuất)
+  - Duyệt lương nhiều cấp: Kế toán lập -> Quản lý / Kế toán trưởng duyệt ->
+    Kế toán chi; khóa sau duyệt, điều chỉnh bằng phiếu điều chỉnh có lý do.
+  - Chi lương sinh phiếu chi, xuất file chuyển khoản ngân hàng, nhân viên xem
+    phiếu lương của mình trên trang cá nhân.
+  - Lương theo giờ công thật + nghỉ phép + tăng ca + BHXH/TNCN theo cấu hình.
+  - Một sổ quỹ duy nhất, số dư đầu kỳ, tách quỹ tiền mặt / tài khoản ngân hàng.
+  - Doanh thu thuần + báo cáo VAT đầu ra; KHÓA SỔ cuối tháng (không sửa / hủy
+    chứng từ của tháng đã khóa).
