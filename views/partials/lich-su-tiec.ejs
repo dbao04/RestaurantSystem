@@ -1,0 +1,321 @@
+<%
+/*
+  TAB "LICH SU DAT TIEC" trong /my-orders.
+  Du lieu: `tiecs` tu datTiecService.lichSuKhach (khop tai khoan hoac SDT).
+  Danh sach ve bang EJS; modal chi tiet ve bang JS tu khoi JSON #duLieuTiec
+  de khong phai nhoi hang chuc data-* vao moi nut.
+*/
+var dsTiec = (typeof tiecs !== 'undefined' && tiecs) ? tiecs : [];
+var vndT = function (n) { return Number(n || 0).toLocaleString('vi-VN') + ' ₫'; };
+var ptCoc = 30;
+var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); return s === k ? tt : s; };
+%>
+<% if (dsTiec.length > 0) { %>
+  <div class="nh-orders">
+    <% dsTiec.forEach(function (d, i) { %>
+      <article class="nh-order nh-reveal" data-delay="<%= (i % 3) + 1 %>">
+        <div class="nh-order__head">
+          <div>
+            <div class="nh-order__when">
+              <i class="fas <%= d.icon_loai %>" style="color:var(--nh-gold); font-size:.9rem"></i>
+              <%= d.ngay %> &nbsp;·&nbsp; <%= d.gio %> (<%= dichNd(d.ten_buoi) %>)
+            </div>
+            <div class="nh-order__code"><%= t('lich_su_tiec.ma_tiec') %>: <strong style="color:var(--nh-espresso)"><%= d.ma_tiec %></strong></div>
+          </div>
+          <span class="nh-reservation-badge tiec-badge--<%= d.trang_thai %>" style="margin-left:auto">
+            <%= nhanTT(d.trang_thai) %>
+          </span>
+        </div>
+
+        <div class="nh-order__body">
+          <div class="nh-order__fact"><%= t('lich_su_tiec.loai_tiec') %>: <b><%= dichNd(d.ten_loai) %></b></div>
+          <div class="nh-order__fact"><%= t('lich_su_tiec.sanh') %>: <b><%= d.ten_sanh ? dichNd(d.ten_sanh) : '—' %></b></div>
+          <div class="nh-order__fact"><%= t('lich_su_tiec.so_khach') %>: <b><%= d.so_khach %> <%= t('lich_su_tiec.khach') %> · <%= d.so_ban %> <%= t('lich_su_tiec.ban') %></b></div>
+          <div class="nh-order__fact"><%= t('lich_su_tiec.thuc_don') %>: <b><%= d.ten_thuc_don ? dichNd(d.ten_thuc_don) : '—' %></b></div>
+          <div class="nh-order__fact">
+            <%= d.tong_thuc_te != null ? t('lich_su_tiec.tong_thuc_te') : t('lich_su_tiec.du_toan') %>:
+            <b style="color:var(--nh-gold)"><%= vndT(d.tong_thuc_te != null ? d.tong_thuc_te : d.tong_du_toan) %></b>
+          </div>
+          <% if (d.da_thu > 0) { %>
+            <div class="nh-order__fact"><%= t('lich_su_tiec.da_thu') %>: <b><%= vndT(d.da_thu) %></b></div>
+          <% } %>
+
+          <div class="nh-order__actions" style="margin-top:0.9rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="moChiTietTiec(<%= i %>)">
+              <i class="fas fa-eye"></i> <%= t('lich_su_tiec.xem_chi_tiet') %>
+            </button>
+            <% if (d.trang_thai === 'MOI' && !(d.da_thu > 0)) { %>
+              <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" style="color:#ef4444; border-color:#fca5a5;"
+                onclick="moHuyTiec('<%= d.ma_tiec %>')">
+                <i class="fas fa-calendar-times"></i> <%= t('lich_su_tiec.huy_nut') %>
+              </button>
+            <% } %>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="nh-empty nh-reveal">
+    <i class="fas fa-champagne-glasses" style="font-size:3rem; color:var(--nh-gold); margin-bottom:1rem"></i>
+    <h3><%= t('lich_su_tiec.chua_co') %></h3>
+    <p class="nh-lead" style="margin:.6rem auto 1.8rem; max-width:480px"><%= t('lich_su_tiec.chua_co_mo_ta') %></p>
+    <a href="/dat-tiec" class="nh-btn nh-btn--gold"><i class="fas fa-glass-cheers"></i> <%= t('lich_su_tiec.dat_tiec_ngay') %></a>
+  </div>
+<% } %>
+
+<!-- MODAL CHI TIET DON TIEC -->
+<div class="nh-modal-overlay" id="modalChiTietTiec" onclick="if(event.target===this) dongChiTietTiec()">
+  <div class="nh-modal-box" style="max-width:680px">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <span class="nh-eyebrow nh-eyebrow--sm"><%= t('chung.ten_nha_hang') %></span>
+        <h3 style="font-size:1.35rem; margin-top:.2rem; color:var(--nh-espresso);">
+          <i id="tIcon" class="fas fa-glass-cheers" style="color:var(--nh-gold); margin-right:.4rem;"></i> <%= t('lich_su_tiec.chi_tiet') %>
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          <%= t('lich_su_tiec.ma_tiec') %>: <strong id="tMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span id="tBadge" class="nh-reservation-badge"></span>
+        <button type="button" onclick="dongChiTietTiec()" style="background:none; border:none; font-size:1.45rem; line-height:1; cursor:pointer; color:var(--nh-muted); padding:0.2rem 0.5rem; border-radius:6px;" title="<%= t('chung.dong') %>">&times;</button>
+      </div>
+    </div>
+
+    <ol class="tiec-buoc" id="tBuoc"></ol>
+    <div class="tiec-ghichu" id="tMoTa"></div>
+
+    <dl class="nh-modal-grid">
+      <dt><%= t('lich_su_tiec.loai_tiec') %></dt><dd id="tLoai"></dd>
+      <dt id="tNhanVatNhan"><%= t('lich_su_tiec.nhan_vat') %></dt><dd id="tNhanVat"></dd>
+      <dt><%= t('lich_su_tiec.thoi_gian') %></dt><dd id="tThoiGian"></dd>
+      <dt><%= t('lich_su_tiec.sanh') %></dt><dd id="tSanh"></dd>
+      <dt><%= t('lich_su_tiec.so_khach') %></dt><dd id="tSoKhach"></dd>
+      <dt><%= t('lich_su_tiec.nguoi_dat') %></dt><dd id="tNguoiDat"></dd>
+      <dt><%= t('lich_su_tiec.lien_he') %></dt><dd id="tLienHe"></dd>
+      <dt><%= t('lich_su_tiec.ngay_gui') %></dt><dd id="tNgayGui"></dd>
+      <dt id="tGhiChuNhan"><%= t('lich_su_tiec.ghi_chu') %></dt><dd id="tGhiChu" style="font-style:italic; color:var(--nh-muted);"></dd>
+      <dt id="tLyDoNhan"><%= t('lich_su_tiec.ly_do_huy') %></dt><dd id="tLyDo" style="color:#991b1b;"></dd>
+    </dl>
+
+    <h4 class="tiec-muc"><i class="fas fa-utensils"></i> <%= t('lich_su_tiec.thuc_don') %>: <span id="tThucDon"></span></h4>
+    <div id="tMon" class="tiec-mon"></div>
+    <div id="tBaoGom" class="tiec-baogom"></div>
+
+    <h4 class="tiec-muc"><i class="fas fa-concierge-bell"></i> <%= t('lich_su_tiec.dich_vu') %></h4>
+    <div id="tDichVu"></div>
+
+    <h4 class="tiec-muc"><i class="fas fa-receipt"></i> <%= t('lich_su_tiec.chi_phi') %></h4>
+    <table class="tiec-bang" id="tChiPhi"></table>
+
+    <h4 class="tiec-muc"><i class="fas fa-money-bill-wave"></i> <%= t('lich_su_tiec.lich_su_tt') %></h4>
+    <div id="tThanhToan"></div>
+
+    <div class="tiec-ho-tro"><i class="fas fa-headset"></i> <%= t('lich_su_tiec.ho_tro') %></div>
+
+    <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.2rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+      <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="dongChiTietTiec()">
+        <i class="fas fa-times"></i> <%= t('chung.dong') %>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KHACH TU HUY TIEC (chi don "Yeu cau moi") -->
+<div class="nh-modal-overlay" id="modalHuyTiec" onclick="if(event.target===this) dongHuyTiec()">
+  <div class="nh-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; border-bottom:1px solid var(--nh-line); padding-bottom:1rem;">
+      <div>
+        <h3 style="font-size:1.3rem; color:#991b1b;">
+          <i class="fas fa-calendar-times" style="margin-right:.4rem;"></i> <%= t('lich_su_tiec.huy_tieu_de') %>
+        </h3>
+        <div style="font-size:.85rem; color:var(--nh-muted); margin-top:.2rem;">
+          <%= t('lich_su_tiec.ma_tiec') %>: <strong id="huyTiecMa" style="color:var(--nh-espresso); letter-spacing:.05em;"></strong>
+        </div>
+      </div>
+      <button type="button" onclick="dongHuyTiec()" style="background:none; border:none; font-size:1.45rem; line-height:1; cursor:pointer; color:var(--nh-muted);" title="<%= t('chung.dong') %>">&times;</button>
+    </div>
+    <p class="tiec-ghichu tiec-ghichu--HUY" style="margin:1rem 0;"><%= t('lich_su_tiec.huy_mo_ta') %></p>
+    <form id="formHuyTiec" onsubmit="guiHuyTiec(event)">
+      <div class="nh-field">
+        <label for="huyTiecLyDo"><%= t('lich_su_tiec.huy_ly_do') %> <span style="color:#ef4444">*</span></label>
+        <textarea id="huyTiecLyDo" class="nh-input" rows="3" maxlength="200" required style="width:100%; box-sizing:border-box; resize:vertical;"
+          placeholder="<%= t('lich_su_tiec.huy_ly_do_goi_y') %>"></textarea>
+      </div>
+      <div id="huyTiecLoi" style="display:none; margin-top:.8rem; padding:.7rem 1rem; border-radius:8px; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; font-size:.85rem;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.2rem; border-top:1px solid var(--nh-line); padding-top:1rem;">
+        <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" onclick="dongHuyTiec()"><%= t('lich_su_tiec.huy_giu_lai') %></button>
+        <button type="submit" id="huyTiecNut" class="nh-btn nh-btn--sm" style="background:#ef4444; color:#fff; border-color:#ef4444;">
+          <i class="fas fa-trash-alt"></i> <%= t('lich_su_tiec.huy_xac_nhan') %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%
+  // Ban dich san cho JS (du lieu dong dich bang dichNd o may chu).
+  var duLieuTiec = dsTiec.map(function (d) {
+    return {
+      ma: d.ma_tiec, trang_thai: d.trang_thai, nhan_tt: nhanTT(d.trang_thai), icon: d.icon_loai,
+      loai: dichNd(d.ten_loai), nhan_vat_nhan: d.nhan_vat_loai ? dichNd(d.nhan_vat_loai) : '', nhan_vat: d.ten_nhan_vat || '',
+      thoi_gian: d.ngay + ' · ' + d.gio + ' (' + dichNd(d.ten_buoi) + ')',
+      sanh: d.ten_sanh ? dichNd(d.ten_sanh) : '—',
+      so_khach: d.so_khach + ' ' + t('lich_su_tiec.khach') + ' · ' + d.so_ban + ' ' + t('lich_su_tiec.ban'),
+      ho_ten: d.ho_ten, lien_he: d.so_dien_thoai + (d.email ? ' · ' + d.email : ''),
+      ngay_gui: d.created_at ? new Date(d.created_at).toLocaleString('vi-VN', { hour12: false }) : '',
+      ghi_chu: d.ghi_chu || '', ly_do_huy: d.ly_do_huy || '',
+      thuc_don: d.ten_thuc_don ? dichNd(d.ten_thuc_don) : '—',
+      mon: (d.mon_thuc_don || []).map(function (m) { return { nhom: dichNd(m.nhom || ''), ten: dichNd(m.ten || '') }; }),
+      bao_gom: (d.bao_gom || []).map(function (b) { return dichNd(b); }),
+      dich_vu: (d.dich_vu || []).map(function (v) { return { ten: dichNd(v.ten), so_luong: v.so_luong, don_gia: v.don_gia, thanh_tien: v.thanh_tien }; }),
+      tien_thuc_don: d.tien_thuc_don, tien_dich_vu: d.tien_dich_vu, tong_du_toan: d.tong_du_toan,
+      tong_thuc_te: d.tong_thuc_te, da_thu: d.da_thu, con_lai: d.con_lai, coc_toi_thieu: d.coc_toi_thieu,
+      thanh_toan: (d.thanh_toan || []).map(function (p) {
+        return { so_tien: p.so_tien, hoan: p.trang_thai === 'refunded', loai: p.loai, phuong_thuc: dichNd(p.phuong_thuc),
+                 luc: p.luc ? new Date(p.luc).toLocaleString('vi-VN', { hour12: false }) : '' };
+      }),
+    };
+  });
+  var chuTiec = {};
+  ['tong_thuc_te', 'du_toan', 'da_thu', 'con_lai', 'tien_thuc_don', 'tien_dich_vu', 'chua_tt', 'loai_coc', 'loai_tt',
+   'da_hoan', 'khong_dich_vu', 'buoc_MOI', 'buoc_DA_LIEN_HE', 'buoc_DA_XAC_NHAN', 'buoc_DA_COC', 'buoc_HOAN_THANH',
+   'mo_ta_MOI', 'mo_ta_DA_LIEN_HE', 'mo_ta_DA_COC', 'mo_ta_HOAN_THANH', 'mo_ta_HUY', 'bao_gom']
+    .forEach(function (k) { chuTiec[k] = t('lich_su_tiec.' + k); });
+  chuTiec.mo_ta_DA_XAC_NHAN = t('lich_su_tiec.mo_ta_DA_XAC_NHAN', { pt: ptCoc });
+  chuTiec.coc_toi_thieu = t('lich_su_tiec.coc_toi_thieu', { pt: ptCoc });
+  ['huy_can_ly_do', 'huy_thanh_cong', 'huy_loi'].forEach(function (k) { chuTiec[k] = t('lich_su_tiec.' + k); });
+%>
+<script type="application/json" id="duLieuTiec"><%- JSON.stringify({ ds: duLieuTiec, chu: chuTiec }).replace(/</g, '\\u003c') %></script>
+<script>
+(function () {
+  var goc = JSON.parse(document.getElementById('duLieuTiec').textContent);
+  var DS = goc.ds, CHU = goc.chu;
+  var BUOC = ['MOI', 'DA_LIEN_HE', 'DA_XAC_NHAN', 'DA_COC', 'HOAN_THANH'];
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function vnd(n) { return Number(n || 0).toLocaleString('vi-VN') + ' ₫'; }
+  function hien(id, co) { $(id).style.display = co ? '' : 'none'; }
+
+  window.moChiTietTiec = function (i) {
+    var d = DS[i];
+    if (!d) return;
+    $('tMa').textContent = d.ma;
+    $('tIcon').className = 'fas ' + (d.icon || 'fa-glass-cheers');
+    $('tBadge').className = 'nh-reservation-badge tiec-badge--' + d.trang_thai;
+    $('tBadge').textContent = d.nhan_tt;
+
+    // Thanh tien trinh; don huy thi chi hien dong mo ta.
+    var viTri = BUOC.indexOf(d.trang_thai);
+    $('tBuoc').innerHTML = d.trang_thai === 'HUY' ? '' : BUOC.map(function (b, k) {
+      return '<li class="' + (k < viTri ? 'xong' : k === viTri ? 'dang' : '') + '"><span>' + (k + 1) + '</span>' + esc(CHU['buoc_' + b]) + '</li>';
+    }).join('');
+    hien('tBuoc', d.trang_thai !== 'HUY');
+    $('tMoTa').className = 'tiec-ghichu tiec-ghichu--' + d.trang_thai;
+    $('tMoTa').textContent = CHU['mo_ta_' + d.trang_thai] || '';
+
+    $('tLoai').textContent = d.loai;
+    if (d.nhan_vat_nhan) $('tNhanVatNhan').textContent = d.nhan_vat_nhan;
+    $('tNhanVat').textContent = d.nhan_vat;
+    hien('tNhanVatNhan', !!d.nhan_vat); hien('tNhanVat', !!d.nhan_vat);
+    $('tThoiGian').textContent = d.thoi_gian;
+    $('tSanh').textContent = d.sanh;
+    $('tSoKhach').textContent = d.so_khach;
+    $('tNguoiDat').textContent = d.ho_ten;
+    $('tLienHe').textContent = d.lien_he;
+    $('tNgayGui').textContent = d.ngay_gui;
+    $('tGhiChu').textContent = d.ghi_chu;
+    hien('tGhiChuNhan', !!d.ghi_chu); hien('tGhiChu', !!d.ghi_chu);
+    $('tLyDo').textContent = d.ly_do_huy;
+    hien('tLyDoNhan', !!d.ly_do_huy); hien('tLyDo', !!d.ly_do_huy);
+
+    // Thuc don: gom mon theo nhom (khai vi, mon chinh...).
+    $('tThucDon').textContent = d.thuc_don;
+    var nhom = [], theoNhom = {};
+    d.mon.forEach(function (m) {
+      var n = m.nhom || '';
+      if (!theoNhom[n]) { theoNhom[n] = []; nhom.push(n); }
+      theoNhom[n].push(m.ten);
+    });
+    $('tMon').innerHTML = nhom.map(function (n) {
+      return '<div class="tiec-mon__nhom">' + (n ? '<b>' + esc(n) + '</b>' : '') + '<ul>' +
+        theoNhom[n].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+    $('tBaoGom').innerHTML = d.bao_gom.length
+      ? '<b>' + esc(CHU.bao_gom) + ':</b> ' + d.bao_gom.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('')
+      : '';
+
+    $('tDichVu').innerHTML = d.dich_vu.length
+      ? '<table class="tiec-bang">' + d.dich_vu.map(function (v) {
+          return '<tr><td>' + esc(v.ten) + ' <small>× ' + esc(v.so_luong) + '</small></td><td>' + vnd(v.thanh_tien) + '</td></tr>';
+        }).join('') + '</table>'
+      : '<p class="tiec-trong">' + esc(CHU.khong_dich_vu) + '</p>';
+
+    var dong = [
+      [CHU.tien_thuc_don, vnd(d.tien_thuc_don)],
+      [CHU.tien_dich_vu, vnd(d.tien_dich_vu)],
+      [CHU.du_toan, vnd(d.tong_du_toan), 'tong'],
+    ];
+    if (d.tong_thuc_te != null) dong.push([CHU.tong_thuc_te, vnd(d.tong_thuc_te), 'tong']);
+    if (['MOI', 'DA_LIEN_HE', 'DA_XAC_NHAN'].indexOf(d.trang_thai) >= 0) dong.push([CHU.coc_toi_thieu, vnd(d.coc_toi_thieu)]);
+    dong.push([CHU.da_thu, vnd(d.da_thu)]);
+    if (d.trang_thai !== 'HUY') dong.push([CHU.con_lai, vnd(d.con_lai), 'nhan']);
+    $('tChiPhi').innerHTML = dong.map(function (r) {
+      return '<tr class="' + (r[2] || '') + '"><td>' + esc(r[0]) + '</td><td>' + r[1] + '</td></tr>';
+    }).join('');
+
+    $('tThanhToan').innerHTML = d.thanh_toan.length
+      ? '<table class="tiec-bang">' + d.thanh_toan.map(function (p) {
+          var loai = p.loai === 'dat_coc' ? CHU.loai_coc : CHU.loai_tt;
+          return '<tr' + (p.hoan ? ' class="hoan"' : '') + '><td>' + esc(loai) + (p.phuong_thuc ? ' · ' + esc(p.phuong_thuc) : '') +
+            '<br><small>' + esc(p.luc) + (p.hoan ? ' · ' + esc(CHU.da_hoan) : '') + '</small></td><td>' + vnd(p.so_tien) + '</td></tr>';
+        }).join('') + '</table>'
+      : '<p class="tiec-trong">' + esc(CHU.chua_tt) + '</p>';
+
+    $('modalChiTietTiec').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+  window.dongChiTietTiec = function () {
+    $('modalChiTietTiec').classList.remove('active');
+    document.body.style.overflow = '';
+  };
+  // --- Khach tu huy (don MOI) ---
+  var maDangHuy = '';
+  window.moHuyTiec = function (ma) {
+    maDangHuy = ma;
+    $('huyTiecMa').textContent = ma;
+    $('huyTiecLyDo').value = '';
+    $('huyTiecLoi').style.display = 'none';
+    $('huyTiecNut').disabled = false;
+    $('modalHuyTiec').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('huyTiecLyDo').focus(); }, 50);
+  };
+  window.dongHuyTiec = function () {
+    $('modalHuyTiec').classList.remove('active');
+    document.body.style.overflow = '';
+  };
+  function baoLoiHuy(s) { $('huyTiecLoi').textContent = s; $('huyTiecLoi').style.display = ''; }
+  window.guiHuyTiec = function (e) {
+    e.preventDefault();
+    var lyDo = $('huyTiecLyDo').value.trim();
+    if (lyDo.length < 3) return baoLoiHuy(CHU.huy_can_ly_do);
+    $('huyTiecNut').disabled = true;
+    fetch('/api/dat-tiec/' + encodeURIComponent(maDangHuy) + '/huy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ ly_do: lyDo }),
+    })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (j) {
+        if (!j.ok) { $('huyTiecNut').disabled = false; return baoLoiHuy(j.thong_bao || CHU.huy_loi); }
+        location.href = '/my-orders?tab=tiec&msgType=success&msg=' +
+          encodeURIComponent(CHU.huy_thanh_cong.split('{ma}').join(maDangHuy));
+      })
+      .catch(function () { $('huyTiecNut').disabled = false; baoLoiHuy(CHU.huy_loi); });
+  };
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.dongChiTietTiec(); window.dongHuyTiec(); } });
+})();
+</script>

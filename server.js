@@ -1237,7 +1237,7 @@ app.get('/contract', requireLogin, async (req, res) => {
 
 app.get('/my-orders', requireLogin, async (req, res) => {
   try {
-    const [kq, reservations, khuVuc, cauHinh, dsMonAn] = await Promise.all([
+    const [kq, reservations, khuVuc, cauHinh, dsMonAn, tiecs] = await Promise.all([
       orderService.getUserOrders(req.session.userId, { trang: req.query.trang }),
       reservationService.lichSuKhachTheoTaiKhoan(req.session.userId, req.session.usersdt, { gioiHan: 50 }).catch((err) => {
         console.error('Fetch reservations error:', err);
@@ -1246,6 +1246,10 @@ app.get('/my-orders', requireLogin, async (req, res) => {
       require('./services/reservationTables').docKhuVuc().catch(() => []),
       require('./services/reservationRules').docCauHinh().catch(() => ({})),
       menuService.getAllDishes().catch(() => []),
+      require('./services/datTiecService').lichSuKhach(req.session.userId, req.session.usersdt, { gioiHan: 50 }).catch((err) => {
+        console.error('Fetch banquets error:', err);
+        return [];
+      }),
     ]);
 
     // /cancel-order chuyen ve day kem ?msg=... - phai truyen vao view thi khach
@@ -1255,6 +1259,8 @@ app.get('/my-orders', requireLogin, async (req, res) => {
       activeNav: 'myorders',
       orders: kq.danhSach,
       reservations: reservations || [],
+      tiecs: tiecs || [],
+      tabMo: req.query.tab === 'tiec' ? 'tiec' : 'ban',
       khuVuc: khuVuc || [],
       cauHinh: cauHinh || {},
       dsMonAn: (dsMonAn || [])

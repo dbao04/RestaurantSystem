@@ -269,6 +269,9 @@ thucDon = thucDon.map(function (m) { var r = dichObj(m, ['ten', 'mo_ta']); r.mon
     <p id="dtOkNoiDung"></p>
     <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1rem">
       <a href="/" class="nh-btn nh-btn--outline"><%= t('dat_tiec.ve_trang_chu') %></a>
+      <% if (khach) { %>
+        <a href="/my-orders?tab=tiec" class="nh-btn nh-btn--outline"><i class="fas fa-history"></i> <%= t('lich_su_tiec.tab_dat_tiec') %></a>
+      <% } %>
       <button type="button" class="nh-btn nh-btn--gold" id="dtOkDong"><%= t('dat_tiec.dong') %></button>
     </div>
   </div>

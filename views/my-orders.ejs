@@ -127,6 +127,43 @@
     .nh-modal-grid { grid-template-columns: 1fr; gap: 0.2rem; }
     .nh-modal-grid dd { margin-bottom: 0.6rem; }
   }
+
+  /* Tab lịch sử đặt tiệc */
+  .tiec-badge--MOI { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .tiec-badge--DA_LIEN_HE { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+  .tiec-badge--DA_XAC_NHAN { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .tiec-badge--DA_COC { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .tiec-badge--HOAN_THANH { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .tiec-badge--HUY { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .tiec-buoc { display: flex; list-style: none; padding: 0; margin: 1.2rem 0 .8rem; gap: .3rem; }
+  .tiec-buoc li { flex: 1; text-align: center; font-size: .74rem; color: var(--nh-muted); position: relative; }
+  .tiec-buoc li span { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin: 0 auto .3rem;
+    border-radius: 50%; background: #f1ece2; color: var(--nh-muted); font-weight: 700; font-size: .8rem; position: relative; z-index: 1; }
+  .tiec-buoc li + li::before { content: ''; position: absolute; top: 13px; right: 50%; width: 100%; height: 2px; background: #eadfca; }
+  .tiec-buoc li.xong span, .tiec-buoc li.dang span { background: var(--nh-gold); color: #fff; }
+  .tiec-buoc li.xong + li::before, .tiec-buoc li.dang::before { background: var(--nh-gold); }
+  .tiec-buoc li.dang { color: var(--nh-espresso); font-weight: 700; }
+  .tiec-ghichu { padding: .7rem 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: .86rem; line-height: 1.5; }
+  .tiec-ghichu--DA_COC, .tiec-ghichu--HOAN_THANH { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .tiec-ghichu--HUY { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .tiec-muc { font-size: 1rem; color: var(--nh-espresso); margin: 1.3rem 0 .6rem; padding-top: .9rem; border-top: 1px dashed var(--nh-line); }
+  .tiec-muc i { color: var(--nh-gold); margin-right: .3rem; }
+  .tiec-mon { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .6rem 1rem; font-size: .88rem; }
+  .tiec-mon__nhom b { display: block; color: var(--nh-gold); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+  .tiec-mon__nhom ul { margin: .2rem 0 0; padding-left: 1.1rem; color: var(--nh-espresso); }
+  .tiec-baogom { margin-top: .7rem; font-size: .84rem; color: var(--nh-muted); display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+  .tiec-baogom span { background: #f7f1e5; border-radius: 999px; padding: .15rem .65rem; color: var(--nh-espresso); }
+  .tiec-bang { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .tiec-bang td { padding: .45rem 0; border-bottom: 1px solid #f1ece2; vertical-align: top; }
+  .tiec-bang td:last-child { text-align: right; white-space: nowrap; font-weight: 600; color: var(--nh-espresso); padding-left: 1rem; }
+  .tiec-bang small { color: var(--nh-muted); }
+  .tiec-bang tr.tong td { font-weight: 700; }
+  .tiec-bang tr.nhan td { color: var(--nh-gold); font-weight: 700; font-size: 1rem; border-bottom: none; }
+  .tiec-bang tr.hoan td { color: #991b1b; text-decoration: line-through; }
+  .tiec-bang tr.hoan small { text-decoration: none; display: inline-block; }
+  .tiec-trong { color: var(--nh-muted); font-size: .88rem; font-style: italic; margin: 0; }
+  .tiec-ho-tro { margin-top: 1.2rem; font-size: .84rem; color: var(--nh-muted); background: #faf7f1; border-radius: 8px; padding: .7rem 1rem; }
+  .tiec-ho-tro i { color: var(--nh-gold); margin-right: .3rem; }
 </style>
 
 <section class="nh-subhero" style="min-height:38vh">
@@ -166,8 +203,28 @@
       </div>
     <% } %>
 
-    <!-- DANH SÁCH THÔNG TIN ĐẶT BÀN -->
-    <div>
+    <%
+      var tabDangMo = (typeof tabMo !== 'undefined' && tabMo === 'tiec') ? 'tiec' : 'ban';
+      var soTiec = (typeof tiecs !== 'undefined' && tiecs) ? tiecs.length : 0;
+    %>
+    <div class="nh-order-tabs" role="tablist">
+      <button type="button" role="tab" class="nh-order-tab-btn <%= tabDangMo === 'ban' ? 'active' : '' %>" data-tab="ban" onclick="chonTabLichSu('ban')">
+        <i class="fas fa-chair"></i> <%= t('lich_su_tiec.tab_dat_ban') %>
+        <span class="badge-count"><%= listDatBan.length %></span>
+      </button>
+      <button type="button" role="tab" class="nh-order-tab-btn <%= tabDangMo === 'tiec' ? 'active' : '' %>" data-tab="tiec" onclick="chonTabLichSu('tiec')">
+        <i class="fas fa-glass-cheers"></i> <%= t('lich_su_tiec.tab_dat_tiec') %>
+        <span class="badge-count"><%= soTiec %></span>
+      </button>
+    </div>
+
+    <!-- TAB LỊCH SỬ ĐẶT TIỆC -->
+    <div class="nh-tab-content <%= tabDangMo === 'tiec' ? 'active' : '' %>" id="tab-tiec" role="tabpanel">
+      <%- include('partials/lich-su-tiec') %>
+    </div>
+
+    <!-- TAB LỊCH SỬ ĐẶT BÀN -->
+    <div class="nh-tab-content <%= tabDangMo === 'ban' ? 'active' : '' %>" id="tab-ban" role="tabpanel">
       <% if (listDatBan.length > 0) { %>
         <div class="nh-orders">
           <% listDatBan.forEach(function (r, i) { %>
@@ -507,6 +564,19 @@
 </div>
 
 <script>
+// Chuyen tab Lich su dat ban / Lich su dat tiec; ghi ?tab= vao URL de tai lai trang van dung tab.
+function chonTabLichSu(tab) {
+  document.querySelectorAll('.nh-order-tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
+  document.querySelectorAll('.nh-tab-content').forEach(function (c) { c.classList.toggle('active', c.id === 'tab-' + tab); });
+  // Phan tu .nh-reveal trong tab vua hien chua duoc observer bat (luc tai trang no dang an).
+  document.querySelectorAll('#tab-' + tab + ' .nh-reveal').forEach(function (el) { el.classList.add('is-in'); });
+  try {
+    var u = new URL(location.href);
+    if (tab === 'tiec') u.searchParams.set('tab', 'tiec'); else u.searchParams.delete('tab');
+    u.searchParams.delete('msg'); u.searchParams.delete('msgType');
+    history.replaceState(null, '', u.pathname + u.search);
+  } catch (e) {}
+}
 var LEAD_MINUTES = <%= (typeof cauHinh !== 'undefined' && cauHinh.minimum_lead_minutes) ? Number(cauHinh.minimum_lead_minutes) : 30 %>;
 var TXT_KHACH = "<%= t('dat_ban_moi.khach') %>";
 var TXT_KHONG_CO_MON = "<%= t('don.khong_co_mon_goi_truoc') %>";

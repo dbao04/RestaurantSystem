@@ -77,6 +77,20 @@ router.post('/api/dat-tiec', bat(async (req, res) => {
   } catch (e) { traLoi(res, e); }
 }));
 
+/** Khach tu huy don tiec cua minh khi con "Yeu cau moi" (trang /my-orders). */
+router.post('/api/dat-tiec/:ma/huy', bat(async (req, res) => {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ ok: false, thong_bao: dich('Vui lòng đăng nhập để hủy tiệc.', req.ngonNgu) });
+  }
+  try {
+    const kq = await dv.huyBoiKhach(req.params.ma, {
+      userId: req.session.userId, phone: req.session.usersdt, lyDo: req.body && req.body.ly_do,
+    });
+    realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_HUY', ma: kq.ma });
+    res.json(kq);
+  } catch (e) { traLoi(res, e); }
+}));
+
 // ------------------------------------------------------------------ nhan vien
 
 const canNhanVien = phanQuyen.canVaiTroCu(['Phuc vu', 'Quay', 'letan', 'Thu ngan', 'Ke toan', 'Quan ly']);

@@ -436,7 +436,133 @@ async function capNhatTrangThai(id, o, nhanVien = {}) {
   return { ok: true, da_hoan: daHoan };
 }
 
+// --------------------------------------------------------------- khach xem lai
+
+/**
+ * Lich su dat tiec cua mot khach (trang /my-orders, tab "Lich su dat tiec").
+ * Khop theo tai khoan HOAC so dien thoai - don dat khi chua dang nhap van
+ * hien neu cung SDT. Kem thuc don (danh sach mon), dich vu va cac khoan
+ * tien da thu / da hoan (payments.sesis = ma tiec).
+ */
+async function lichSuKhach(userId, phone, { gioiHan = 50 } = {}) {
+  await damBaoCotTien();
+  const so = String(phone || '').replace(/[^\d+]/g, '');
+  const cacSo = new Set();
+  if (so) {
+    cacSo.add(so);
+    if (so.startsWith('+84')) cacSo.add('0' + so.slice(3));
+    else if (so.startsWith('0')) { cacSo.add('+84' + so.slice(1)); cacSo.add('84' + so.slice(1)); }
+  }
+  const dsSo = cacSo.size ? [...cacSo] : ['__khong_co__'];
+
+  const [rows] = await db.query(
+    `SELECT t.id, t.ma_tiec, t.ho_ten, t.so_dien_thoai, t.email, t.loai_tiec, t.ten_nhan_vat,
+            DATE_FORMAT(t.ngay_to_chuc, '%Y-%m-%d') AS ngay, TIME_FORMAT(t.gio_bat_dau, '%H:%i') AS gio,
+            t.buoi, t.so_khach, t.so_ban, t.dich_vu, t.tien_thuc_don, t.tien_dich_vu, t.tong_du_toan,
+            t.tien_coc, t.da_thu, t.tong_thuc_te, t.ly_do_huy, t.ghi_chu, t.trang_thai, t.created_at,
+            v.Name_vitri AS ten_sanh, d.ten AS ten_thuc_don, d.gia_ban, d.mon AS mon_thuc_don, d.bao_gom
+       FROM dat_tiec t
+       LEFT JOIN vitri v ON v.id_vitri = t.khu_vuc_id
+       LEFT JOIN thuc_don_tiec d ON d.id = t.thuc_don_id
+      WHERE t.customer_id = ? OR t.so_dien_thoai IN (?)
+      ORDER BY t.created_at DESC, t.id DESC
+      LIMIT ${Math.min(200, Number(gioiHan) || 50)}`,
+    [userId || 0, dsSo]);
+  if (!rows.length) return [];
+
+  const [tien] = await db.query(
+    `SELECT p.sesis, p.amount, p.status, p.loai, p.created_at, p.thanh_cong_luc, pm.name AS ten_phuong_thuc
+       FROM payments p LEFT JOIN payment_methods pm ON pm.id = p.payment_method_id
+      WHERE p.sesis IN (?) AND p.status IN ('success', 'refunded')
+      ORDER BY p.id`,
+    [rows.map((r) => r.ma_tiec)]).catch(() => [[]]);
+  const tienTheoMa = {};
+  for (const p of tien) (tienTheoMa[p.sesis] = tienTheoMa[p.sesis] || []).push({
+    so_tien: Number(p.amount) || 0,
+    trang_thai: p.status,
+    loai: p.loai,
+    phuong_thuc: p.ten_phuong_thuc || '',
+    luc: p.thanh_cong_luc || p.created_at,
+  });
+
+  return rows.map((r) => {
+    const duToan = Number(r.tong_du_toan) || 0;
+    const tongThucTe = r.tong_thuc_te == null ? null : Number(r.tong_thuc_te);
+    const daThu = Number(r.da_thu) || 0;
+    return {
+      ...r,
+      dich_vu: docJson(r.dich_vu, []),
+      mon_thuc_don: docJson(r.mon_thuc_don, []),
+      bao_gom: docJson(r.bao_gom, []),
+      tien_thuc_don: Number(r.tien_thuc_don) || 0,
+      tien_dich_vu: Number(r.tien_dich_vu) || 0,
+      tong_du_toan: duToan,
+      tien_coc: Number(r.tien_coc) || 0,
+      da_thu: daThu,
+      tong_thuc_te: tongThucTe,
+      con_lai: r.trang_thai === 'HUY' ? 0 : Math.max(0, (tongThucTe != null ? tongThucTe : duToan) - daThu),
+      coc_toi_thieu: Math.ceil(duToan * TY_LE_COC),
+      thanh_toan: tienTheoMa[r.ma_tiec] || [],
+      ten_loai: (LOAI_TIEC[r.loai_tiec] || {}).ten || r.loai_tiec,
+      icon_loai: (LOAI_TIEC[r.loai_tiec] || {}).icon || 'fa-glass-cheers',
+      nhan_vat_loai: (LOAI_TIEC[r.loai_tiec] || {}).nhan_vat || '',
+      ten_buoi: (BUOI[r.buoi] || {}).ten || r.buoi,
+      ten_trang_thai: TRANG_THAI[r.trang_thai] || r.trang_thai,
+    };
+  });
+}
+
+/**
+ * Khach tu huy don tiec cua minh - CHI khi don con "Yeu cau moi" (MOI).
+ * Luc nay chua giu sanh, chua thu dong nao nen khong dinh toi tien/hoan coc;
+ * tu DA_LIEN_HE tro di khach phai goi nha hang (nhan vien xu ly qua capNhatTrangThai).
+ * Don thuoc ve khach neu khop tai khoan hoac SDT (giong lichSuKhach).
+ */
+async function huyBoiKhach(maTiec, { userId, phone, lyDo } = {}) {
+  await damBaoCotTien();
+  const ma = String(maTiec || '').trim();
+  const ly = String(lyDo || '').trim().slice(0, 200);
+  if (ly.length < 3) throw new LoiDatTiec('Vui lòng cho biết lý do hủy tiệc.');
+
+  const so = String(phone || '').replace(/[^\d+]/g, '');
+  const cacSo = new Set();
+  if (so) {
+    cacSo.add(so);
+    if (so.startsWith('+84')) cacSo.add('0' + so.slice(3));
+    else if (so.startsWith('0')) { cacSo.add('+84' + so.slice(1)); cacSo.add('84' + so.slice(1)); }
+  }
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [[don]] = await conn.query('SELECT * FROM dat_tiec WHERE ma_tiec = ? FOR UPDATE', [ma]);
+    const cuaKhach = don && ((userId && Number(don.customer_id) === Number(userId)) || cacSo.has(String(don.so_dien_thoai)));
+    if (!cuaKhach) throw new LoiDatTiec('Không tìm thấy đơn tiệc.', 'NOT_FOUND');
+    if (don.trang_thai === 'HUY') throw new LoiDatTiec('Đơn tiệc này đã được hủy trước đó.', 'CONFLICT');
+    if (don.trang_thai !== 'MOI') {
+      throw new LoiDatTiec('Đơn tiệc đã được nhà hàng tiếp nhận, vui lòng gọi Hotline để được hỗ trợ hủy.', 'CONFLICT');
+    }
+    if (Number(don.da_thu) > 0) {
+      throw new LoiDatTiec('Đơn tiệc đã có khoản thanh toán, vui lòng gọi Hotline để được hỗ trợ hủy.', 'CONFLICT');
+    }
+    await conn.query("UPDATE dat_tiec SET trang_thai = 'HUY', ly_do_huy = ? WHERE id = ?", ['Khách tự hủy: ' + ly, don.id]);
+    // Nhat ky trang thai (bang co tu migration 038; thieu bang thi bo qua).
+    await conn.query(
+      `INSERT INTO dat_tiec_lich_su (dat_tiec_id, tu_trang_thai, den_trang_thai, ghi_chu, nguoi_doi)
+       VALUES (?, 'MOI', 'HUY', ?, NULL)`, [don.id, 'Khách tự hủy: ' + ly]).catch(() => {});
+    await conn.commit();
+    return { ok: true, ma: don.ma_tiec };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
 module.exports = {
+  lichSuKhach,
+  huyBoiKhach,
   KHACH_MOI_BAN, DAT_TRUOC_TOI_THIEU_NGAY, DAT_TRUOC_TOI_DA_NGAY, LOAI_TIEC, BUOI, TRANG_THAI, GIU_CHO,
   CHUYEN_TIEC, PHUONG_THUC_TIEC, TY_LE_COC, damBaoCotTien,
   LoiDatTiec, docKhongGian, docSanhTiec, docThucDon, docDichVu, lichDaKin, tinhDuToan, cong,
