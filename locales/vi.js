@@ -30,6 +30,8 @@ module.exports = {
   'chung.huy': 'Hủy',
   'chung.luu': 'Lưu',
   'chung.dong': 'Đóng',
+  'chung.thong_bao': 'Thông báo',
+  'chung.da_hieu': 'Đã hiểu',
   'chung.gui': 'Gửi',
   'chung.tim_kiem': 'Tìm kiếm',
   'chung.tat_ca': 'Tất cả',

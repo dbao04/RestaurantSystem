@@ -325,6 +325,24 @@ const requireLogin = (req, res, next) => {
   next();
 };
 
+/**
+ * Bao loi cho khach roi quay ve trang truoc (form da nhap con nguyen).
+ * Thay cho `<script>alert(...)` tren trang trang: thong bao duoc cat vao
+ * sessionStorage, trang truoc hien bang hop thong bao cua giao dien
+ * (views/partials/thong-bao.ejs). Thong bao tieng Viet duoc dich theo ngon ngu khach.
+ */
+function baoKhachQuayLai(req, res, thongBao, ma = 200) {
+  const noiDung = require('./services/dichThongBao').dich(String(thongBao || ''), req.ngonNgu);
+  const js = JSON.stringify(noiDung).replace(/</g, '\\u003c');
+  res.status(ma).type('html').send(
+    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<script>(function(){var m=' + js + ';' +
+    "try{if(localStorage.getItem('nh_theme')==='dark')document.documentElement.style.background='#17110d'}catch(e){}" +
+    "try{sessionStorage.setItem('nh_tb',m)}catch(e){alert(m)}" +
+    "if(history.length>1)history.back();else location.replace('/cart')})()</script></head><body></body></html>"
+  );
+}
+
 const requireAdmin = (req, res, next) => {
   if (!req.session.adminlogin) {
     return res.redirect('/admin/login');
@@ -907,7 +925,7 @@ app.post('/add-to-cart', async (req, res) => {
   const { monid, soluong } = req.body;
   const sl = orderService.chuanHoaSoLuong(soluong == null || soluong === '' ? 1 : soluong);
   if (!sl) {
-    return res.status(400).send(`<script>alert("Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}."); history.back();</script>`);
+    return baoKhachQuayLai(req, res, `Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}.`, 400);
   }
   try {
     await orderService.addToCart(req.sessionID, monid, sl);
@@ -985,7 +1003,7 @@ app.get('/cart', async (req, res) => {
 app.post('/update-cart', async (req, res) => {
   const { cartid, soluong } = req.body;
   if (!orderService.chuanHoaSoLuong(soluong)) {
-    return res.status(400).send(`<script>alert("Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}."); history.back();</script>`);
+    return baoKhachQuayLai(req, res, `Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_KHACH}.`, 400);
   }
   try {
     await orderService.updateCartQuantity(req.sessionID, cartid, soluong);
@@ -1027,10 +1045,10 @@ app.post('/giao-hang', requireLogin, async (req, res) => {
       vanChuyen.toaDoNhaHang().catch(() => null)
     ]);
     if (!ts.bat) {
-      return res.send('<script>alert("Nhà hàng đang tạm ngưng nhận đơn giao hàng."); history.back();</script>');
+      return baoKhachQuayLai(req, res, 'Nhà hàng đang tạm ngưng nhận đơn giao hàng.');
     }
     if (!String(dia_chi_giao || '').trim()) {
-      return res.send('<script>alert("Hãy nhập địa chỉ giao hàng."); history.back();</script>');
+      return baoKhachQuayLai(req, res, 'Hãy nhập địa chỉ giao hàng.');
     }
 
     // Đảm bảo tọa độ hợp lệ
@@ -1058,7 +1076,7 @@ app.post('/giao-hang', requireLogin, async (req, res) => {
           don_vi: { ten_dv: 'Giao hàng tiêu chuẩn' }
         };
       } else {
-        return res.send(`<script>alert(${JSON.stringify(baoGia.ly_do || 'Không giao được tới địa chỉ này.')}); history.back();</script>`);
+        return baoKhachQuayLai(req, res, baoGia.ly_do || 'Không giao được tới địa chỉ này.');
       }
     }
 
@@ -1119,10 +1137,10 @@ app.post('/datban', requireLogin, async (req, res) => {
     today.setHours(0, 0, 0, 0); // Chỉ so sánh ngày
 
     if (!bookingDate || Number.isNaN(bookingDate.getTime())) {
-      return res.send('<script>alert("Ngày nhận hàng không hợp lệ!"); history.back();</script>');
+      return baoKhachQuayLai(req, res, 'Ngày nhận hàng không hợp lệ!');
     }
     if (bookingDate < today) {
-      return res.send('<script>alert("Ngày nhận hàng không được ở quá khứ!"); history.back();</script>');
+      return baoKhachQuayLai(req, res, 'Ngày nhận hàng không được ở quá khứ!');
     }
 
     const cartItems = await orderService.getCart(req.sessionID);
@@ -1134,23 +1152,21 @@ app.post('/datban', requireLogin, async (req, res) => {
       const vanChuyen = require('./services/vanChuyenService');
       const ts = await vanChuyen.thamSo();
       if (!ts.bat) {
-        return res.send('<script>alert("Nhà hàng đang tạm ngưng nhận đơn giao hàng."); history.back();</script>');
+        return baoKhachQuayLai(req, res, 'Nhà hàng đang tạm ngưng nhận đơn giao hàng.');
       }
       if (!String(diaChiGiao || '').trim()) {
-        return res.send('<script>alert("Hãy nhập địa chỉ giao hàng."); history.back();</script>');
+        return baoKhachQuayLai(req, res, 'Hãy nhập địa chỉ giao hàng.');
       }
       const baoGia = await vanChuyen.tinhPhi(
         viDo, kinhDo, await orderService.getCartTotal(req.sessionID)
       );
       if (!baoGia.giao_duoc) {
-        return res.send(
-          `<script>alert(${JSON.stringify(baoGia.ly_do || 'Không giao được tới địa chỉ này.')}); history.back();</script>`
-        );
+        return baoKhachQuayLai(req, res, baoGia.ly_do || 'Không giao được tới địa chỉ này.');
       }
       // Chinh sach giao hang: khach phai doc va dong y (thanh toan truoc 100%,
       // huy do khach khong hoan, loi nha hang hoan diem).
       if (!req.body.dong_y_chinh_sach) {
-        return res.send('<script>alert("Vui lòng đọc và đồng ý Chính sách giao hàng trước khi đặt đơn."); history.back();</script>');
+        return baoKhachQuayLai(req, res, 'Vui lòng đọc và đồng ý Chính sách giao hàng trước khi đặt đơn.');
       }
     }
 
@@ -1194,7 +1210,7 @@ app.post('/datban', requireLogin, async (req, res) => {
     res.redirect(`/contract?sesis=${uniqueSesis}`);
   } catch (err) {
     if (err instanceof require('./services/tonMonService').LoiHetMon) {
-      return res.send(`<script>alert(${JSON.stringify(err.message)}); history.back();</script>`);
+      return baoKhachQuayLai(req, res, err.message);
     }
     console.error(err);
     res.status(500).send(err.message || 'Server Error');

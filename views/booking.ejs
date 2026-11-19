@@ -1054,6 +1054,14 @@
     nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + I18N.dangGui;
   };
 
+  // Server bao loi roi history.back(): trang ve tu bfcache, nut van xoay - tra lai nhu cu.
+  (function () {
+    var nut = form.querySelector('button[type=submit]');
+    if (!nut) return;
+    var htmlGoc = nut.innerHTML;
+    window.addEventListener('pageshow', function () { nut.disabled = false; nut.innerHTML = htmlGoc; });
+  })();
+
   // Khởi động bản đồ
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', dungBanDo);

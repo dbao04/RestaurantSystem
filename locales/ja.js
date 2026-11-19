@@ -36,6 +36,8 @@ module.exports = {
   'chung.huy': 'キャンセル',
   'chung.luu': '保存',
   'chung.dong': '閉じる',
+  'chung.thong_bao': 'お知らせ',
+  'chung.da_hieu': 'わかりました',
   'chung.gui': '送信',
   'chung.tim_kiem': '検索',
   'chung.tat_ca': 'すべて',

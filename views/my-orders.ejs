@@ -936,8 +936,7 @@ function xuLyLuuMon() {
   .then(function (res) { return res.json(); })
   .then(function (res) {
     if (res.ok) {
-      alert(TXT_CAP_NHAT_MON_OK);
-      window.location.reload();
+      nhThongBao(TXT_CAP_NHAT_MON_OK).then(function () { window.location.reload(); });
     } else {
       if (loiBox) { loiBox.textContent = res.thong_bao || TXT_LOI_MANG; loiBox.style.display = 'block'; }
       btn.disabled = false;
@@ -1010,8 +1009,7 @@ function xuLyLuuSua(e) {
   .then(function(res) { return res.json(); })
   .then(function(res) {
     if (res.ok) {
-      alert(TXT_CAP_NHAT_OK);
-      window.location.reload();
+      nhThongBao(TXT_CAP_NHAT_OK).then(function () { window.location.reload(); });
     } else {
       loiBox.textContent = res.thong_bao || <%- JSON.stringify(t('don.d_loi_doi_lich')) %>;
       loiBox.style.display = 'block';
@@ -1051,8 +1049,7 @@ function xuLyHuyDatBan(e) {
   .then(function(res) { return res.json(); })
   .then(function(res) {
     if (res.ok) {
-      alert(TXT_HUY_OK);
-      window.location.reload();
+      nhThongBao(TXT_HUY_OK).then(function () { window.location.reload(); });
     } else {
       loiBox.textContent = res.thong_bao || <%- JSON.stringify(t('don.d_loi_huy')) %>;
       loiBox.style.display = 'block';

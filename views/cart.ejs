@@ -1068,6 +1068,7 @@
 
   // Báo giá cước phí theo tọa độ
   var henPhi = null;
+  var baoGiaHienTai = null; // ket qua bao gia gan nhat - chan dat don khi ngoai vung giao
   function tinhPhiGiaoHang(lat, lng) {
     clearTimeout(henPhi);
     txtKm.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -1077,6 +1078,7 @@
       fetch('/api/giao-hang/bao-gia?vi_do=' + lat + '&kinh_do=' + lng + '&tien_hang=' + subtotal)
         .then(function(r) { return r.json(); })
         .then(function(d) {
+          baoGiaHienTai = d;
           if (!d.giao_duoc) {
             txtKm.textContent = (d.khoang_cach_km ? d.khoang_cach_km + ' km' : <%- JSON.stringify(t('gio_hang.g_js_ngoai_vung')) %>);
             txtPhi.textContent = <%- JSON.stringify(t('gio_hang.g_js_khong_ho_tro')) %>;
@@ -1275,6 +1277,18 @@
       return false;
     }
 
+    // Ban do con dang tim dia chi (o dia chi dang la chu cho): doi xong moi dat.
+    if (laChuCho(oDiaChi.value.trim())) {
+      alert(oDiaChi.value.trim());
+      return false;
+    }
+
+    // Dia chi ngoai vung giao: bao ngay, khong gui form roi moi bi tra ve.
+    if (baoGiaHienTai && !baoGiaHienTai.giao_duoc) {
+      alert(baoGiaHienTai.ly_do || <%- JSON.stringify(t('gio_hang.g_js_ngoai_ban_kinh')) %>);
+      return false;
+    }
+
     // Điền thông tin vào Modal xác nhận
     var chiTiet = (document.getElementById('o-chi-tiet-dc') ? document.getElementById('o-chi-tiet-dc').value.trim() : '');
     var dcFull = chiTiet ? (chiTiet + ', ' + oDiaChi.value.trim()) : oDiaChi.value.trim();
@@ -1305,6 +1319,20 @@
       if (modalDat) modalDat.style.display = 'none';
     };
   }
+
+  // Server tu choi don (vd ngoai vung giao) se history.back() ve day: trinh duyet
+  // khoi phuc trang tu bfcache voi nut van "Dang gui don..." xoay mai. Tra lai
+  // trang thai ban dau de khach sua roi dat tiep.
+  var nutChinhBanDau = document.getElementById('nut-dat-hang');
+  var htmlNutChinh = nutChinhBanDau ? nutChinhBanDau.innerHTML : '';
+  var htmlNutDongY = nutModalDongY ? nutModalDongY.innerHTML : '';
+  window.addEventListener('pageshow', function () {
+    if (!daXacNhan) return;
+    daXacNhan = false;
+    if (modalDat) modalDat.style.display = 'none';
+    if (nutModalDongY) { nutModalDongY.disabled = false; nutModalDongY.innerHTML = htmlNutDongY; }
+    if (nutChinhBanDau) { nutChinhBanDau.disabled = false; nutChinhBanDau.innerHTML = htmlNutChinh; }
+  });
 
   // Xác nhận đặt hàng thật
   if (nutModalDongY) {

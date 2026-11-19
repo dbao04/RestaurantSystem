@@ -1,0 +1,103 @@
+<%
+/*
+  HOP THONG BAO DUNG CHUNG (thay cho alert() mac dinh cua trinh duyet).
+  - window.nhThongBao(noiDung, { loai: 'loi'|'ok'|'tin', tieuDe }) -> Promise (resolve khi dong).
+  - window.alert bi thay bang hop nay tren cac trang khach.
+  - Server bao loi roi quay lai trang truoc: dat sessionStorage 'nh_tb' roi history.back();
+    trang truoc (ke ca tu bfcache) doc va hien o day - form khach da nhap van con nguyen.
+*/
+%>
+<style>
+  .nh-tb { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center;
+    padding: 16px; background: rgba(23, 17, 13, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    opacity: 0; transition: opacity .18s ease; }
+  .nh-tb.mo { opacity: 1; }
+  .nh-tb__hop { width: 100%; max-width: 420px; background: var(--nh-surface, #fff); color: var(--nh-ink, #2b1a12);
+    border: 1px solid var(--nh-border, rgba(200, 162, 75, .28)); border-radius: 18px; padding: 28px 24px 22px;
+    text-align: center; box-shadow: 0 24px 60px rgba(0, 0, 0, .28); transform: translateY(12px) scale(.97);
+    transition: transform .2s ease; font-family: inherit; }
+  .nh-tb.mo .nh-tb__hop { transform: none; }
+  .nh-tb__icon { width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 1.5rem; background: rgba(200, 162, 75, .14); color: #b08a2e; }
+  .nh-tb--loi .nh-tb__icon { background: rgba(217, 119, 6, .13); color: #c2410c; }
+  .nh-tb--ok .nh-tb__icon { background: rgba(22, 163, 74, .13); color: #15803d; }
+  .nh-tb__tieu-de { margin: 0 0 8px; font-size: 1.15rem; font-weight: 700; color: var(--nh-espresso, #2b1a12);
+    font-family: var(--nh-font-heading, inherit); }
+  .nh-tb__noi-dung { margin: 0; line-height: 1.6; font-size: .97rem; color: var(--nh-muted, #6b5d52);
+    white-space: pre-line; overflow-wrap: anywhere; }
+  .nh-tb__nut { margin-top: 20px; min-width: 140px; padding: 11px 26px; border: 0; border-radius: 999px; cursor: pointer;
+    font-weight: 700; font-size: .95rem; letter-spacing: .02em; color: #17110d;
+    background: linear-gradient(135deg, #e3c77a, #c8a24b); box-shadow: 0 6px 18px rgba(200, 162, 75, .35); }
+  .nh-tb__nut:hover { filter: brightness(1.05); }
+  .nh-tb__nut:focus-visible { outline: 3px solid rgba(200, 162, 75, .45); outline-offset: 2px; }
+  [data-theme="dark"] .nh-tb { background: rgba(0, 0, 0, .62); }
+  [data-theme="dark"] .nh-tb__hop { background: var(--nh-surface, #1c1510); box-shadow: 0 24px 60px rgba(0, 0, 0, .6); }
+  [data-theme="dark"] .nh-tb__icon { color: #e3c77a; }
+  [data-theme="dark"] .nh-tb--loi .nh-tb__icon { color: #fbbf24; background: rgba(251, 191, 36, .14); }
+  [data-theme="dark"] .nh-tb--ok .nh-tb__icon { color: #86efac; background: rgba(134, 239, 172, .14); }
+  @media (prefers-reduced-motion: reduce) { .nh-tb, .nh-tb__hop { transition: none; } }
+</style>
+<script>
+  (function () {
+    var CHU = { tieuDe: <%- JSON.stringify(t('chung.thong_bao')) %>, nut: <%- JSON.stringify(t('chung.da_hieu')) %> };
+    var ICON = { loi: 'fa-exclamation', ok: 'fa-check', tin: 'fa-bell' };
+    var LOI = /không|lỗi|vui lòng|hãy|chưa|ngoài|vượt|sai|thất bại|hết|tạm ngưng|quá|error|fail|please|not |invalid|cannot|exceed|outside|エラー|できません|ください|失敗/i;
+    var OK = /thành công|đã (cập nhật|hủy|lưu|gửi)|success|updated|cancell?ed|saved|完了|しました/i;
+    var hangDoi = [], dangMo = false, alertGoc = window.alert;
+
+    function hien(noiDung, o, xong) {
+      dangMo = true;
+      var loai = o.loai || (LOI.test(noiDung) ? 'loi' : (OK.test(noiDung) ? 'ok' : 'tin'));
+      var nen = document.createElement('div');
+      nen.className = 'nh-tb nh-tb--' + loai;
+      nen.setAttribute('role', 'alertdialog');
+      nen.setAttribute('aria-modal', 'true');
+      nen.innerHTML = '<div class="nh-tb__hop"><div class="nh-tb__icon"><i class="fas ' + ICON[loai] + '"></i></div>' +
+        '<h3 class="nh-tb__tieu-de"></h3><p class="nh-tb__noi-dung"></p>' +
+        '<button type="button" class="nh-tb__nut"></button></div>';
+      nen.querySelector('.nh-tb__tieu-de').textContent = o.tieuDe || CHU.tieuDe;
+      nen.querySelector('.nh-tb__noi-dung').textContent = noiDung;
+      var nut = nen.querySelector('.nh-tb__nut');
+      nut.textContent = o.nut || CHU.nut;
+      var truoc = document.activeElement;
+      function dong() {
+        document.removeEventListener('keydown', phim, true);
+        nen.classList.remove('mo');
+        setTimeout(function () { nen.remove(); }, 180);
+        dangMo = false;
+        if (truoc && truoc.focus) { try { truoc.focus({ preventScroll: true }); } catch (e) {} }
+        xong();
+        if (hangDoi.length) { var k = hangDoi.shift(); hien(k[0], k[1], k[2]); }
+      }
+      function phim(e) {
+        if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); dong(); }
+        else if (e.key === 'Tab') { e.preventDefault(); nut.focus(); }
+      }
+      nut.addEventListener('click', dong);
+      nen.addEventListener('click', function (e) { if (e.target === nen) dong(); });
+      document.addEventListener('keydown', phim, true);
+      document.body.appendChild(nen);
+      requestAnimationFrame(function () { nen.classList.add('mo'); nut.focus({ preventScroll: true }); });
+    }
+
+    window.nhThongBao = function (noiDung, o) {
+      noiDung = String(noiDung == null ? '' : noiDung);
+      o = o || {};
+      return new Promise(function (xong) {
+        if (!document.body) { alertGoc.call(window, noiDung); xong(); return; }
+        if (dangMo) hangDoi.push([noiDung, o, xong]); else hien(noiDung, o, xong);
+      });
+    };
+    window.alert = function (m) { window.nhThongBao(m); };
+
+    // Thong bao server gui kem khi quay lai trang truoc.
+    function docTuServer() {
+      var m = null;
+      try { m = sessionStorage.getItem('nh_tb'); if (m) sessionStorage.removeItem('nh_tb'); } catch (e) {}
+      if (m) window.nhThongBao(m);
+    }
+    window.addEventListener('pageshow', function () {
+      if (document.body) docTuServer(); else document.addEventListener('DOMContentLoaded', docTuServer);
+    });
+  })();
+</script>

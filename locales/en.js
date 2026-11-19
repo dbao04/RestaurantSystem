@@ -27,6 +27,8 @@ module.exports = {
   'chung.huy': 'Cancel',
   'chung.luu': 'Save',
   'chung.dong': 'Close',
+  'chung.thong_bao': 'Notice',
+  'chung.da_hieu': 'Got it',
   'chung.gui': 'Send',
   'chung.tim_kiem': 'Search',
   'chung.tat_ca': 'All',
