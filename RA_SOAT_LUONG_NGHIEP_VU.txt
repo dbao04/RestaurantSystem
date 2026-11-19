@@ -298,6 +298,57 @@ ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
     chờ thanh toán không xác nhận tay được.
   - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
 
+(chưa commit) - RÀ SOÁT & HOÀN THIỆN VAI TRÒ SHIPPER
+  Đã chạy thử nguyên luồng thật (điều phối phân đơn -> shipper nhận -> GPS -> giao xong).
+  - Shipper đăng nhập ở /staff/login giờ vào THẲNG ứng dụng /shipper/ (trước phải tự gõ
+    địa chỉ); menu nhân viên có mục "Ứng dụng giao hàng"; app có nút "Khu nhân viên".
+  - GPS XÁC MINH GIAO HÀNG: bấm "Giao xong" khi cách điểm giao quá 300m (cấu hình
+    giao_hang.ban_kinh_xac_nhan_m) hoặc không có GPS -> phải ghi lý do; nhật ký đơn lưu
+    khoảng cách + lý do làm bằng chứng. App hỏi lý do rồi gửi lại tự động.
+  - Giữ màn hình sáng (Wake Lock) khi đang lấy / giao hàng để GPS không bị trình duyệt dừng.
+  - TIỀN THU HỘ (COD): trước đây giao xong là đơn "đã thanh toán" nhưng KHÔNG có dòng
+    payments -> tiền shipper cầm về không có trong sổ quỹ / chốt ca. Nay: app hiện "Tiền
+    thu hộ đang giữ"; trang điều phối có thẻ tổng; MỚI /staff/giao-hang/thu-ho cho thu ngân
+    / điều phối đếm tiền, chọn đơn, bấm Nhận -> sinh payments tiền mặt đứng tên người nhận
+    (nguồn "shipper") -> vào sổ quỹ và két chốt ca; đếm lệch thì từ chối; không nộp 2 lần.
+  - MỚI: lịch sử 7 ngày trong app shipper (giao xong / thất bại, phí ship, thu hộ đã/chưa nộp).
+  - Sửa lỗi nhãn bếp bị NGƯỢC ("bếp đã xong" khi món đang nấu và ngược lại) ở app shipper,
+    trang điều phối và bản đồ.
+  - Tự đồng bộ trạng thái ca shipper (shipper3 kẹt "đang giao" dù hết đơn -> không được phân).
+  - Kiểm thử: luồng shipper đầy đủ; helper test không còn phụ thuộc mật khẩu thật 123456.
+    npm test 37/37, npm run test:automation 175/175.
+
+(chưa commit) - SẴN SÀNG ĐẤU SePay (CHUYỂN KHOẢN THẬT)
+  - Rà webhook /api/webhook/ngan-hang (đã theo định dạng SePay) và vá 5 chỗ:
+    + Kiểm tra TÀI KHOẢN NHẬN: tiền vào số TK khác (kể cả TK ảo subAccount) bị bỏ qua.
+    + Cọc đặt bàn: chuyển thiếu cọc / lượt đã hủy / đã cọc rồi -> không ghi nhận, để hoàn
+      tay (trước đây 1.000đ cũng thành "đã cọc" và tự xác nhận lượt).
+    + Mã RSV-... chấp nhận khi ngân hàng bỏ dấu "-" (RSV123456ABCD).
+    + Khách trả SAU khi QR hết hạn: tự mở lại phiên nếu đơn còn nợ đủ số tiền; thu ngân
+      đối soát tay được cả phiên đã hết hạn (trước đây báo lỗi).
+    + So khóa webhook bằng so sánh thời gian hằng.
+  - MỚI: thẻ "Giả lập giao dịch SePay" ở /admin/thanh-toan: chọn phiên VietQR đang chờ,
+    gửi webhook mẫu THẬT vào hệ thống (qua xác thực Apikey). Mã tham chiếu GIALAP-...,
+    cổng "SePay (giả lập)", ghi audit_logs. Dùng để demo khi mất mạng.
+  - Kiểm thử mới: webhook SePay (sai khóa, sai TK, trả muộn, cọc thiếu/đủ/thừa, nút giả lập).
+    npm test 36/36, npm run test:automation 175/175.
+
+17/11/2026 - GỘP NHÁNH main (PR #3, #4 của nhánh doan) VÀO bao
+  - Giải quyết 6 file xung đột: giữ logic nghiệp vụ của bao, thêm tính năng
+    của main (đặt bàn realtime, phiếu boarding pass, giờ cao điểm nhiều khung,
+    25 bàn 2 người, giao diện mobile / khung iPhone).
+  - Chọn bàn: áp CẢ luật quy mô bàn (bao) VÀ luật giờ cao điểm (main);
+    nhân viên xếp ngoại lệ bỏ qua cả hai.
+  - Vá lỗi của main: khách đến không được gán đè lên bàn đang có khách khác.
+  - Script test của main (npm run test:automation) sửa cho khớp luật bảo mật
+    mới: tạm tắt bắt đổi mật khẩu nhân viên trong lúc chạy (luôn bật lại),
+    khách test dùng mật khẩu riêng, xóa loại món bằng POST.
+  - Kết quả: npm test 35/35, npm run test:automation 175/175.
+  - Sự cố máy: MySQL XAMPP hỏng 6 bảng hệ thống (global_priv, db, event,
+    procs_priv, proxies_priv, roles_mapping) do tắt đột ngột -> đã sửa bằng
+    aria_chk và tạo lại tài khoản root (mật khẩu rỗng). Dữ liệu gs_restaurant
+    không ảnh hưởng.
+
 (chưa commit) - CÁC MỤC DANG DỞ
   - Nhân viên dùng mật khẩu mặc định 123456 phải đổi trước khi vào các trang
     nhân viên / KDS / quản trị (API, chấm công không bị chặn); không cho đặt
@@ -419,3 +470,47 @@ vốn; nhưng chỉ 13 lượt đặt bàn, 6 đánh giá, 19 khách có tài kh
                khách RFM, phân tích cảm xúc đánh giá (làm theo quy tắc trước).
   [ĐÃ LÀM]    Nút hủy món trên sơ đồ bàn; chuyển bàn khách đặt trước cập
                nhật reservation_tables; bắt nhân viên đổi mật khẩu 123456.
+
+================================================================================
+6. RÀ SOÁT KẾ TOÁN (09/11/2026)
+================================================================================
+Hiện có: Lương (tính tự động, gửi duyệt, chi), Báo cáo thu chi tháng, Quản lý
+chi phí, Chấm công, Nghỉ phép, Sổ quỹ thu chi, Đối soát thanh toán, Chốt ca,
+Công nợ NCC, Báo cáo lãi lỗ.
+
+MỨC CAO
+  [CHỜ] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
+        bị xóa ở commit 1ac9e70 (17/10/2026). Gửi duyệt xong kẹt mãi ở "chờ
+        duyệt". Dữ liệu T10/2026: 75 bảng lương "đã chi" nhưng 0đ.
+  [CHỜ] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
+        đè số tiền và đưa về nháp -> mất dấu vết, có thể chi hai lần.
+  [CHỜ] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
+        không lưu ngày chi, hình thức, người chi; cho chi bảng lương 0đ.
+  [CHỜ] K4. Doanh thu (báo cáo thu chi + báo cáo lãi lỗ) tính theo giá món gốc:
+        chưa trừ mã giảm giá / điểm thưởng, chưa cộng phí phục vụ, VAT chưa
+        tách ra thành thuế phải nộp -> doanh thu bị thổi phồng khi có khuyến mãi.
+MỨC VỪA
+  [CHỜ] K5. Tính lương sơ sài: ngày công = số ngày có chấm công (quên chấm ra
+        vẫn đủ công - 6/16 dòng hiện thiếu giờ ra); không dùng giờ công, nghỉ
+        phép có lương, tăng ca, đi muộn; phụ cấp 500k và 26 công cứng trong
+        code; không khấu trừ BHXH 10,5% / thuế TNCN.
+  [CHỜ] K6. Hai sổ chi phí song song: "Quản lý chi phí" (chi_phi_khac) và phiếu
+        chi trong Sổ quỹ. Chi phí nhập ở trang kế toán không danh mục, không
+        vào sổ quỹ; xóa cứng không lưu vết; không chặn số tiền âm.
+  [CHỜ] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
+        mặt + chuyển khoản một số dư -> không khớp được với két / sao kê.
+  [CHỜ] K8. Quyền: Kế toán bị chặn (403) ở "Đối soát thanh toán", "Lịch sử chốt
+        ca" dù menu có link; ngược lại Kế toán lại "xóa" (cho nghỉ) được nhân viên.
+MỨC THẤP
+  [CHỜ] K9. Ngày mặc định theo giờ UTC: trước 7h sáng trang chấm công hiện hôm qua.
+  [CHỜ] K10. Lỗi trả về alert()/trang 500 trần; chưa có kiểm thử tự động cho lương.
+
+PHÁT TRIỂN THÊM (đề xuất)
+  - Duyệt lương nhiều cấp: Kế toán lập -> Quản lý / Kế toán trưởng duyệt ->
+    Kế toán chi; khóa sau duyệt, điều chỉnh bằng phiếu điều chỉnh có lý do.
+  - Chi lương sinh phiếu chi, xuất file chuyển khoản ngân hàng, nhân viên xem
+    phiếu lương của mình trên trang cá nhân.
+  - Lương theo giờ công thật + nghỉ phép + tăng ca + BHXH/TNCN theo cấu hình.
+  - Một sổ quỹ duy nhất, số dư đầu kỳ, tách quỹ tiền mặt / tài khoản ngân hàng.
+  - Doanh thu thuần + báo cáo VAT đầu ra; KHÓA SỔ cuối tháng (không sửa / hủy
+    chứng từ của tháng đã khóa).

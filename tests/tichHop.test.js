@@ -1037,6 +1037,209 @@ test('kiem ke: dem thieu / thua, nguoi lap khong tu chot, chot sinh phieu dieu c
   }
 });
 
+test('webhook SePay: xac thuc, dung tai khoan, tra muon sau het han, coc dat ban; nut gia lap cua admin', async () => {
+  const tt = require('../services/thanhToanService');
+  const ch = await tt.layCauHinh(true);
+  const tk = await tt.layTaiKhoanNhan();
+  assert.ok(tk && tk.soTaiKhoan, 'can cau hinh tai khoan nhan tien VietQR');
+  const khoaCu = ch.webhook_api_key, tuDongCu = ch.tu_dong_doi_soat;
+  const KHOA = 'KIEMTHU_' + Date.now().toString(36);
+  await tt.luuCauHinh({ webhook_api_key: KHOA, tu_dong_doi_soat: 1 });
+  const maGd = [];
+  const guiWebhook = async ({ tien, noiDung, stk = tk.soTaiKhoan, khoa = KHOA }) => {
+    const ref = 'KT-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    maGd.push(ref);
+    const r = await fetch(BASE + '/api/webhook/ngan-hang', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Apikey ' + khoa },
+      body: JSON.stringify({ id: Date.now(), gateway: 'KiemThu', transactionDate: null, accountNumber: stk,
+        content: noiDung, transferType: 'in', transferAmount: tien, referenceCode: ref }),
+    });
+    const [[gd]] = await db.query('SELECT trang_thai, ghi_chu, payment_id FROM giao_dich_ngan_hang WHERE ma_tham_chieu = ?', [ref]);
+    return { status: r.status, body: await r.json().catch(() => ({})), gd };
+  };
+  const maRsv = 'RSV-' + String(Date.now()).slice(-6) + '-' + Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, 'X');
+  try {
+    // 1. Sai khoa -> 401, khong ghi gi.
+    let k = await guiWebhook({ tien: 1000, noiDung: 'abc', khoa: 'SAI' });
+    assert.equal(k.status, 401);
+    assert.equal(k.gd, undefined);
+
+    // Don that + phien VietQR.
+    const mon = await monCoCongThuc();
+    const [ban] = await haiBanTrong();
+    const PV = await dangNhapNhanVien('phucvu');
+    const sesis = await goiMonChoBan(PV, ban.Id_ban, mon.id_mon, 1);
+    const hd = await tt.layHoaDon(sesis);
+    const { payment: p } = await tt.taoPhien({ sesis, soTien: hd.tien.con_phai_tra, maPhuongThuc: 'vietqr' });
+    const tien = Number(p.amount);
+
+    // 2. Dung ma nhung tien vao TAI KHOAN KHAC -> bo qua, phien van cho.
+    k = await guiWebhook({ tien, noiDung: 'CK ' + p.ma_doi_soat, stk: '999' + Date.now() });
+    assert.equal(k.gd.trang_thai, 'bo_qua', JSON.stringify(k.gd));
+    assert.equal((await db.query('SELECT status FROM payments WHERE id = ?', [p.id]))[0][0].status, 'pending');
+
+    // 3. Khach tra SAU khi QR het han -> mo lai phien, ghi nhan da tra.
+    await db.query('UPDATE payments SET het_han_luc = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE id = ?', [p.id]);
+    await tt.donPhienHetHan();
+    assert.equal((await db.query('SELECT status FROM payments WHERE id = ?', [p.id]))[0][0].status, 'failed');
+    k = await guiWebhook({ tien, noiDung: 'NGUYEN VAN A chuyen tien ' + p.ma_doi_soat });
+    assert.equal(k.gd.trang_thai, 'da_khop', JSON.stringify(k.gd));
+    assert.equal((await db.query('SELECT status FROM payments WHERE id = ?', [p.id]))[0][0].status, 'success');
+    assert.equal((await db.query('SELECT tinhtrang FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]))[0][0].tinhtrang, 3);
+
+    // 4. Chuyen lai lan nua cung ma (don da tra du) -> khong khop, cho hoan tay.
+    k = await guiWebhook({ tien, noiDung: 'CK ' + p.ma_doi_soat });
+    assert.notEqual(k.gd.trang_thai, 'da_khop');
+
+    // 5. Coc dat ban: ngan hang bo dau '-'; chuyen THIEU -> khong ghi coc; du -> ghi coc; lan hai -> thua.
+    const ngay = require('../utils/thoiGian').ngayCucBo();
+    await db.query(
+      `INSERT INTO reservations (reservation_code, customer_name, phone, reservation_date, start_time, expected_end_time,
+                                 duration_minutes, guest_count, status, deposit_amount, deposit_status)
+       VALUES (?, 'Kiem Thu Coc', '0900000005', ?, '19:00:00', '20:30:00', 90, 6, 'PENDING', 600000, 'PENDING_PAYMENT')`,
+      [maRsv, ngay]);
+    const lienTuc = maRsv.replace(/-/g, '');
+    k = await guiWebhook({ tien: 1000, noiDung: 'COC ' + lienTuc });
+    assert.equal(k.gd.trang_thai, 'khong_khop', 'coc thieu khong duoc ghi nhan');
+    let [[r]] = await db.query('SELECT status, deposit_status FROM reservations WHERE reservation_code = ?', [maRsv]);
+    assert.equal(r.deposit_status, 'PENDING_PAYMENT');
+    assert.equal(r.status, 'PENDING');
+    k = await guiWebhook({ tien: 600000, noiDung: 'COC ' + lienTuc });
+    assert.equal(k.gd.trang_thai, 'da_khop', JSON.stringify(k.gd));
+    [[r]] = await db.query('SELECT status, deposit_status FROM reservations WHERE reservation_code = ?', [maRsv]);
+    assert.equal(r.deposit_status, 'PAID');
+    assert.equal(r.status, 'CONFIRMED');
+    k = await guiWebhook({ tien: 600000, noiDung: 'COC ' + maRsv });
+    assert.equal(k.gd.trang_thai, 'khong_khop', 'coc lan hai la giao dich thua');
+
+    // 6. Nut gia lap cua admin di qua webhook that.
+    const [[ad]] = await db.query("SELECT id_admin FROM tb_admin WHERE adminuser = 'admin'");
+    await giuMatKhau('tb_admin', 'id_admin', ad.id_admin, 'adminpass');
+    const A = client();
+    const dn = await A('/admin/login', form({ adminuser: 'admin', adminpass: MK }));
+    assert.equal(dn.status, 302);
+    const sesis2 = await goiMonChoBan(PV, ban.Id_ban, mon.id_mon, 1);
+    const hd2 = await tt.layHoaDon(sesis2);
+    const { payment: p2 } = await tt.taoPhien({ sesis: sesis2, soTien: hd2.tien.con_phai_tra, maPhuongThuc: 'vietqr' });
+    const gl = await (await A('/admin/thanh-toan/gia-lap-sepay', json({ so_tien: String(p2.amount), noi_dung: 'GIA LAP ' + p2.ma_doi_soat }))).json();
+    maGd.push(gl.ma_tham_chieu);
+    assert.equal(gl.khop, true, JSON.stringify(gl));
+    assert.match(gl.ma_tham_chieu, /^GIALAP-/);
+    assert.equal((await db.query('SELECT status FROM payments WHERE id = ?', [p2.id]))[0][0].status, 'success');
+    // Khong dang nhap admin thi khong goi duoc.
+    const la = await client()('/admin/thanh-toan/gia-lap-sepay', json({ so_tien: '5000', noi_dung: 'x' }));
+    assert.notEqual(la.status, 200);
+  } finally {
+    await tt.luuCauHinh({ webhook_api_key: khoaCu, tu_dong_doi_soat: tuDongCu });
+    if (maGd.filter(Boolean).length) await db.query('DELETE FROM giao_dich_ngan_hang WHERE ma_tham_chieu IN (?)', [maGd.filter(Boolean)]);
+    const [[rs]] = await db.query('SELECT id FROM reservations WHERE reservation_code = ?', [maRsv]);
+    if (rs) {
+      for (const bang of ['reservation_deposits', 'reservation_status_logs', 'reservation_notifications']) {
+        await db.query(`DELETE FROM ${bang} WHERE reservation_id = ?`, [rs.id]).catch(() => {});
+      }
+      await db.query('DELETE FROM reservations WHERE id = ?', [rs.id]);
+    }
+  }
+});
+
+test('shipper: dang nhap vao app, nhan don, GPS, xac minh vi tri khi giao, lich su, nop tien thu ho vao so quy', async () => {
+  const vc = require('../services/vanChuyenService');
+  const [[sp]] = await db.query(
+    "SELECT s.id_shipper, s.trang_thai, n.username FROM shipper s JOIN nhan_vien n ON n.id_nv = s.id_nv WHERE n.trangthai = 1 ORDER BY s.id_shipper LIMIT 1");
+  assert.ok(sp, 'can mot shipper');
+  const caCu = sp.trang_thai;
+  const [[kh]] = await db.query("SELECT id FROM khach_hang WHERE sodienthoai LIKE 'QR\\_%' LIMIT 1");
+  const sesis = await taoDonThu({ tinhtrang: 1, loaiDon: 'giao_hang', idUser: kh.id });
+  const [[hd]] = await db.query('SELECT thanhtien FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
+  const thuHo = Number(hd.thanhtien) + 15000;
+  // Diem giao cach nha hang ~1km.
+  const [kq] = await db.query(
+    `INSERT INTO don_giao_hang (sesis, ma_giao, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao, vi_do, kinh_do,
+                                khoang_cach_km, phi_giao, tien_thu_ho, trang_thai)
+     VALUES (?, ?, 'Kiem thu', '0900000010', 'Dia chi kiem thu', 10.7400, 106.7100, 1.2, 15000, ?, 'cho_phan')`,
+    [sesis, 'KS' + Date.now().toString(36).slice(-6).toUpperCase(), thuHo]);
+  const idGiao = kq.insertId;
+  let idPay = null;
+  try {
+    // 1. Shipper dang nhap -> vao thang ung dung giao hang.
+    const S = await dangNhapNhanVien(sp.username);
+    const dn = await client()('/staff/login', form({ username: sp.username, password: MK }));
+    assert.match(String(dn.headers.get('location')), /^\/(shipper\/|staff\/profile)/, 'shipper vao app (hoac doi mat khau truoc)');
+
+    // 2. Dieu phoi phan don -> shipper thay don.
+    const D = await dangNhapNhanVien('trolyquanly');
+    await D(`/staff/giao-hang/${idGiao}/phan`, form({ id_shipper: String(sp.id_shipper) }));
+    let d = await (await S('/api/shipper/don-cua-toi', { headers: { Accept: 'application/json' } })).json();
+    assert.ok(d.don.some((g) => g.id_giao === idGiao), 'shipper thay don duoc phan');
+
+    // 3. Bat ca, lay hang, gui GPS -> ban do dieu phoi thay vi tri.
+    await S('/api/shipper/ca', json({ trang_thai: 'san_sang' }));
+    let r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'dang_lay' }))).json();
+    assert.equal(r.ok, true, JSON.stringify(r));
+    r = await (await S('/api/shipper/vi-tri', json({ vi_do: 10.73465, kinh_do: 106.70351, do_chinh_xac_m: 10, pin: 70 }))).json();
+    assert.equal(r.ghi, true);
+    const bd = await (await D('/api/giao-hang/ban-do', { headers: { Accept: 'application/json' } })).json();
+    const tren = (bd.shippers || []).find((x) => Number(x.id_shipper) === Number(sp.id_shipper));
+    assert.ok(tren && Number(tren.vi_do) > 10.7, 'ban do dieu phoi co vi tri shipper');
+
+    // 4. Bep xong -> dang giao. "Giao xong" khi con o nha hang (~1km) -> bi chan, phai ghi ly do.
+    const bepXong = async () => (await (await S('/api/shipper/don-cua-toi', { headers: { Accept: 'application/json' } })).json())
+      .don.find((g) => g.id_giao === idGiao).bep_da_xong;
+    await db.query('UPDATE hopdong SET trangthai_bep = 1 WHERE sesis = ?', [sesis]);
+    assert.equal(await bepXong(), false, 'mon dang nau -> chua xong');
+    await db.query('UPDATE hopdong SET trangthai_bep = 2 WHERE sesis = ?', [sesis]);
+    assert.equal(await bepXong(), true, 'mon xong -> bep da xong');
+    r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'dang_giao' }))).json();
+    assert.equal(r.ok, true, JSON.stringify(r));
+    assert.equal(await bepXong(), true, 'da giao cho shipper (3) van la xong');
+    r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'da_giao', vi_do: 10.73465, kinh_do: 106.70351 }))).json();
+    assert.equal(r.ok, false);
+    assert.equal(r.ma, 'XA_DIEM_GIAO');
+    // Toi dung diem giao -> duoc.
+    r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'da_giao', vi_do: 10.74005, kinh_do: 106.71003 }))).json();
+    assert.equal(r.ok, true, JSON.stringify(r));
+    const [[nk]] = await db.query("SELECT ghi_chu FROM nhat_ky_giao_hang WHERE id_giao = ? AND den_trang_thai = 'da_giao'", [idGiao]);
+    assert.match(nk.ghi_chu, /Giao tại điểm giao/);
+
+    // 5. Tien thu ho dang o shipper; lich su co don.
+    d = await (await S('/api/shipper/don-cua-toi', { headers: { Accept: 'application/json' } })).json();
+    assert.ok(d.dang_giu.tong >= thuHo, 'app hien tien thu ho dang giu');
+    const ls = await (await S('/api/shipper/lich-su?ngay=1', { headers: { Accept: 'application/json' } })).json();
+    assert.ok(ls.don.some((g) => g.id_giao === idGiao && !g.nop_tien_luc));
+    const [[chuaCo]] = await db.query("SELECT COUNT(*) AS n FROM payments WHERE sesis = ? AND status = 'success'", [sesis]);
+    assert.equal(chuaCo.n, 0, 'chua nop thi chua vao so quy');
+
+    // 6. Thu ngan nhan tien: dem sai -> tu choi; dung -> payments tien mat dung ten thu ngan.
+    const TN = await dangNhapNhanVien('thungan');
+    const [[tn]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'thungan'");
+    r = await TN(`/staff/giao-hang/thu-ho/${sp.id_shipper}/nhan`, form({ id_giao: String(idGiao), so_tien_dem: String(thuHo - 1000) }));
+    assert.match(decodeURIComponent(String(r.headers.get('location'))), /không khớp/);
+    r = await TN(`/staff/giao-hang/thu-ho/${sp.id_shipper}/nhan`, form({ id_giao: String(idGiao), so_tien_dem: String(thuHo) }));
+    assert.match(decodeURIComponent(String(r.headers.get('location'))), /Đã nhận/);
+    const [[p]] = await db.query(
+      "SELECT p.id, p.amount, p.processed_by, p.nguon, m.code FROM payments p JOIN payment_methods m ON m.id = p.payment_method_id WHERE p.sesis = ? AND p.status = 'success'", [sesis]);
+    idPay = p.id;
+    assert.equal(Number(p.amount), thuHo);
+    assert.equal(Number(p.processed_by), Number(tn.id_nv), 'tien vao ket thu ngan nhan');
+    assert.equal(p.nguon, 'shipper');
+    assert.equal(p.code, 'tien_mat');
+    // Nop lan hai -> khong co gi de nhan.
+    r = await TN(`/staff/giao-hang/thu-ho/${sp.id_shipper}/nhan`, form({ id_giao: String(idGiao) }));
+    assert.match(decodeURIComponent(String(r.headers.get('location'))), /không có khoản thu hộ/);
+    // Shipper khong tu nhan tien cho minh duoc.
+    r = await S(`/staff/giao-hang/thu-ho/${sp.id_shipper}/nhan`, form({ id_giao: String(idGiao) }));
+    assert.equal(r.status, 403);
+  } finally {
+    if (idPay) await db.query("DELETE FROM audit_logs WHERE action = 'nhan_tien_thu_ho' AND resource_id = ?", [sp.id_shipper]).catch(() => {});
+    for (const b of ['nhat_ky_giao_hang', 'vi_tri_shipper', 'phan_cong_giao']) await db.query(`DELETE FROM ${b} WHERE id_giao = ?`, [idGiao]).catch(() => {});
+    await db.query('DELETE FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+    await db.query(
+      'UPDATE shipper SET trang_thai = ?, tong_don = GREATEST(tong_don - 1, 0), tong_don_thanh_cong = GREATEST(tong_don_thanh_cong - 1, 0) WHERE id_shipper = ?',
+      [caCu, sp.id_shipper]);
+  }
+});
+
 test('bao het mon theo ton kho', async () => {
   const mon = await monCoCongThuc();
   const [ct] = await db.query('SELECT id_nl, so_luong_tieu_hao FROM cong_thuc WHERE id_mon = ? AND so_luong_tieu_hao > 0', [mon.id_mon]);

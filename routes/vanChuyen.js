@@ -199,20 +199,64 @@ function veDieuPhoi(res, duongDan, msg, loai = 'success') {
 /** Bang dieu phoi: don dang chay o tren, shipper ranh o ben canh. */
 router.get('/staff/giao-hang', canXem, bat(async (req, res) => {
   const xemHet = req.query.tat_ca === '1';
-  const [don, dsSp, tk, ts] = await Promise.all([
+  const [don, dsSp, tk, ts, thuHo] = await Promise.all([
     vc.dsDonGiao({ dangChay: !xemHet, ngay: xemHet ? (req.query.ngay || null) : null }),
     vc.dsShipper(),
     vc.thongKe(),
     vc.thamSo(),
+    require('../services/thuHoShipperService').tongHopDangGiu().catch(() => []),
   ]);
   res.render('staff/giao-hang', {
     title: 'Điều phối giao hàng',
     activePage: 'giao-hang',
-    don, dsSp, thongKe: tk, thamSo: ts, TT: vc.TT,
+    don, dsSp, thongKe: tk, thamSo: ts, TT: vc.TT, thuHo,
     xemHet, ngay: req.query.ngay || '',
     msg: req.query.msg || null,
     msgType: req.query.msgType || 'success',
   });
+}));
+
+/**
+ * NHAN TIEN THU HO tu shipper (services/thuHoShipperService.js).
+ * Ai nhan: dieu phoi (giao_hang.phan_cong), thu ngan, quan ly - nguoi DUNG KET.
+ * Tien vao so quy va chot ca dung ten nguoi bam nhan.
+ */
+const canNhanTienThuHo = (req, res, next) => {
+  if (req.session && req.session.adminlogin) {
+    return res.status(403).send('Đăng nhập bằng tài khoản nhân viên (thu ngân / điều phối) để nhận tiền - tiền phải ghi vào két của một người cụ thể.');
+  }
+  if (!req.session || !req.session.stafflogin) return res.redirect('/staff/login');
+  const vaiTro = String(req.session.staffRole || '');
+  if (['Thu ngan', 'Quan ly'].includes(vaiTro) || (res.locals.coQuyen && res.locals.coQuyen('giao_hang.phan_cong'))) return next();
+  return res.status(403).send('Chỉ thu ngân, điều phối hoặc quản lý mới nhận tiền thu hộ.');
+};
+
+router.get('/staff/giao-hang/thu-ho', canNhanTienThuHo, bat(async (req, res) => {
+  const th = require('../services/thuHoShipperService');
+  const tongHop = await th.tongHopDangGiu();
+  const chiTiet = {};
+  for (const s of tongHop) chiTiet[s.id_shipper] = (await th.tienDangGiu(s.id_shipper)).don;
+  res.render('staff/giao-hang-thu-ho', {
+    title: 'Nhận tiền thu hộ từ shipper', activePage: 'giao-hang',
+    tongHop, chiTiet,
+    msg: req.query.msg || null, msgType: req.query.msgType || 'success',
+  });
+}));
+
+router.post('/staff/giao-hang/thu-ho/:id/nhan', laSo, canNhanTienThuHo, bat(async (req, res) => {
+  const th = require('../services/thuHoShipperService');
+  const ids = [].concat(req.body.id_giao || []).map(Number).filter(Boolean);
+  try {
+    const kq = await th.nhanTien(Number(req.params.id), ids.length ? ids : null,
+      { id_nv: req.session.staffId, ten: req.session.staffName || '' },
+      { soTienDem: String(req.body.so_tien_dem || '').replace(/[^\d]/g, '') || null });
+    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+    veDieuPhoi(res, '/staff/giao-hang/thu-ho',
+      `Đã nhận ${kq.tong.toLocaleString('vi-VN')}đ thu hộ của ${kq.so_don} đơn (${kq.ma.join(', ')}). Tiền đã vào sổ quỹ đứng tên bạn.`);
+  } catch (e) {
+    if (e.name !== 'LoiThuHo') throw e;
+    veDieuPhoi(res, '/staff/giao-hang/thu-ho', e.message, 'danger');
+  }
 }));
 
 /** Ban do thoi gian thuc. Trang rong; du lieu vao qua API + socket. */
@@ -521,7 +565,16 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
       ma_khu_vuc: g.ma_khu_vuc || null,
     })),
     hom_nay: { so_don: Number(lai.n || 0), tien_phi: Number(lai.phi || 0) },
+    // Tien mat da thu cua khach, chua nop ve quay.
+    dang_giu: await require('../services/thuHoShipperService').tienDangGiu(req.shipper.id_shipper)
+      .then((g) => ({ tong: g.tong, so_don: g.don.length })).catch(() => ({ tong: 0, so_don: 0 })),
   });
+}));
+
+/** Lich su don da ket thuc cua chinh shipper (mac dinh 7 ngay). */
+router.get('/api/shipper/lich-su', canShipper, bat(async (req, res) => {
+  const kq = await require('../services/thuHoShipperService').lichSu(req.shipper.id_shipper, req.query.ngay);
+  res.json({ ok: true, ...kq, TT: vc.TT });
 }));
 
 /** Cac mon cua mot don - shipper mo ra doi chieu truoc khi roi bep. */
@@ -570,13 +623,14 @@ router.post('/api/shipper/don/:id/trang-thai', laSo, canShipper, bat(async (req,
       id_nv: req.shipper.id_nv,
       ten: String(req.session.staffName || req.shipper.ten || '').trim(),
       id_shipper: req.shipper.id_shipper,
-    }, { ly_do: b.ly_do, vi_do: b.vi_do, kinh_do: b.kinh_do });
+    }, { ly_do: b.ly_do, vi_do: b.vi_do, kinh_do: b.kinh_do, ly_do_ngoai_vung: b.ly_do_ngoai_vung });
 
     realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
     realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
     res.json({ ok: true, trang_thai: don.trang_thai, nhan: don.tt.nhan });
   } catch (e) {
-    res.status(400).json({ ok: false, thong_bao: e.message });
+    // `ma` (XA_DIEM_GIAO / CHUA_CO_GPS) de ung dung hoi ly do roi gui lai.
+    res.status(400).json({ ok: false, thong_bao: e.message, ma: e.ma || null });
   }
 }));
 

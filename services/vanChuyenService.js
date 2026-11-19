@@ -713,7 +713,7 @@ const CHON_DON = `
          (SELECT SUM(h.thanhtien) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS tien_hang,
          (SELECT COUNT(*) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS so_mon,
          (SELECT MIN(h.tinhtrang) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS tinhtrang_don,
-         (SELECT MIN(h.trangthai_bep) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS bep_xong,
+         (SELECT MIN(h.trangthai_bep) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8) AND h.id_mon > 0 AND h.soluong > 0) AS bep_xong,
          v.vi_do AS shipper_vi_do, v.kinh_do AS shipper_kinh_do, v.luc AS shipper_luc,
          TIMESTAMPDIFF(MINUTE, v.luc, NOW()) AS shipper_phut_truoc
   FROM don_giao_hang g
@@ -736,7 +736,9 @@ function tomTat(r) {
     da_xong: DA_XONG.includes(r.trang_thai),
     // Bep da lam xong het chua - dieu phoi khong nen phan shipper di lay hang
     // khi bep con dang nau; xe cho truoc cua bep 20 phut la lang phi mot chuyen.
-    bep_da_xong: Number(r.bep_xong) === 1,
+    // trangthai_bep: 0 cho, 1 dang nau, 2 xong, 3 da giao cho shipper. Truoc day so
+    // sanh "=== 1" nen nhan bi NGUOC (dang nau hien "bep da xong").
+    bep_da_xong: r.bep_xong !== null && r.bep_xong !== undefined && Number(r.bep_xong) >= 2,
     tong_thu: Number(r.tien_hang || 0) + Number(r.phi_giao || 0),
     chuyen_duoc: CHUYEN_DUOC[r.trang_thai] || [],
   };
@@ -918,6 +920,29 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
     }
   }
 
+  // XAC MINH VI TRI khi SHIPPER bam "Giao xong": phai dang o gan diem giao.
+  // Truoc day shipper dung ngay tai nha hang van bam "giao xong" duoc. O xa
+  // (hoac khong co GPS) thi van cho, nhung BAT ghi ly do - ly do nay vao nhat
+  // ky don, la bang chung khi khach bao "chua nhan duoc hang".
+  let ghiChuViTri = null;
+  if (moi === 'da_giao' && nguoi.id_shipper && !tuyChon.laDieuPhoi && so(don.vi_do) !== null && so(don.kinh_do) !== null) {
+    const kt = await kiemTraViTriGiao(don, nguoi.id_shipper, tuyChon);
+    if (!kt.hopLe) {
+      const lyDo = String(tuyChon.ly_do_ngoai_vung || '').trim();
+      if (lyDo.length < 5) {
+        const e = new Error(kt.coViTri
+          ? `Bạn đang cách điểm giao khoảng ${kt.khoangCachM}m (cho phép ${kt.banKinhM}m). Nếu đã giao cho khách ở chỗ khác, hãy ghi rõ lý do.`
+          : 'Chưa có vị trí GPS của bạn để xác nhận đã tới điểm giao. Bật định vị, hoặc ghi rõ lý do nếu đã giao xong.');
+        e.ma = kt.coViTri ? 'XA_DIEM_GIAO' : 'CHUA_CO_GPS';
+        throw e;
+      }
+      ghiChuViTri = (kt.coViTri ? `Xác nhận giao khi cách điểm giao ${kt.khoangCachM}m` : 'Xác nhận giao khi không có GPS')
+        + ` - lý do: ${lyDo.slice(0, 200)}`;
+    } else {
+      ghiChuViTri = `Giao tại điểm giao (cách ${kt.khoangCachM}m)`;
+    }
+  }
+
   // Moc thoi gian di kem tung trang thai. Ghi trong cung mot cau lenh voi
   // trang thai de hai thu khong bao gio lech nhau.
   const dat = ['trang_thai = ?'];
@@ -963,7 +988,7 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
     await db.query('UPDATE shipper SET tong_don = tong_don + 1 WHERE id_shipper = ?', [don.id_shipper]);
   }
 
-  await ghiNhatKy(idGiao, cu, moi, nguoi, tuyChon.ly_do || tuyChon.ghi_chu || null,
+  await ghiNhatKy(idGiao, cu, moi, nguoi, tuyChon.ly_do || tuyChon.ghi_chu || ghiChuViTri || null,
                   tuyChon.vi_do, tuyChon.kinh_do);
   if (don.id_shipper) await capNhatCaShipper(don.id_shipper);
   let ketQuaHuy = null;
@@ -982,6 +1007,40 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   if (ketQuaHuy) sau.ket_qua_huy = ketQuaHuy;
   return sau;
 };
+
+/**
+ * Shipper co dang o gan diem giao khong.
+ *
+ * Vi tri lay theo thu tu: toa do kem theo luc bam (tuyChon.vi_do/kinh_do), roi
+ * nhip GPS moi nhat trong 5 phut. Ban kinh: cau_hinh giao_hang.ban_kinh_xac_nhan_m
+ * (mac dinh 300m - GPS dien thoai trong hem / chung cu sai so vai chuc toi
+ * tram met, chat qua thi shipper giao dung cho van bi chan).
+ */
+async function kiemTraViTriGiao(don, idShipper, tuyChon = {}) {
+  const c = await docCauHinh(['giao_hang.ban_kinh_xac_nhan_m']);
+  const banKinhM = Math.max(50, Number(c['giao_hang.ban_kinh_xac_nhan_m']) || 300);
+  let viDo = so(tuyChon.vi_do);
+  let kinhDo = so(tuyChon.kinh_do);
+  if (viDo === null || kinhDo === null) {
+    const [[v]] = await db.query(
+      `SELECT vi_do, kinh_do FROM vi_tri_shipper_moi_nhat
+        WHERE id_shipper = ? AND luc >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)`, [idShipper]);
+    if (v) { viDo = so(v.vi_do); kinhDo = so(v.kinh_do); }
+  }
+  if (viDo === null || kinhDo === null) return { hopLe: false, coViTri: false, banKinhM };
+  const khoangCachM = Math.round(khoangCachKm(viDo, kinhDo, so(don.vi_do), so(don.kinh_do)) * 1000);
+  return { hopLe: khoangCachM <= banKinhM, coViTri: true, khoangCachM, banKinhM };
+}
+
+/**
+ * Dong bo trang thai ca cua MOI shipper voi don thuc te (tu sua du lieu lech,
+ * vi du don bi xoa / huy bang tay ma shipper van hien 'dang_giao').
+ */
+async function dongBoCaShipper() {
+  const [ds] = await db.query("SELECT id_shipper FROM shipper WHERE trang_thai <> 'nghi'");
+  for (const s of ds) await capNhatCaShipper(s.id_shipper);
+  return ds.length;
+}
 
 /**
  * Shipper con don nao dang cam khong - neu het thi tra ve 'san_sang'.
@@ -1201,7 +1260,7 @@ module.exports = {
   dsShipper, shipper, shipperCuaNhanVien, themShipper, suaShipper,
   doiCaShipper, xoaShipper, nhanVienChuaLaShipper,
   taoDonGiao, donGiao, donGiaoTheoSesis, donGiaoTheoMa, dsDonGiao, monCuaDon, nhatKy,
-  phanShipper, goShipper, doiTrangThai, ghiNhatKy,
+  phanShipper, goShipper, doiTrangThai, ghiNhatKy, kiemTraViTriGiao, dongBoCaShipper,
   ghiViTri, banDo, vetCuaDon, donVetCu,
   thongKe,
 };

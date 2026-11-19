@@ -284,7 +284,8 @@ function chamDiem(dsBan, soKhach, { soThich = [], laVip = false, chungKhu = true
  */
 function timToHop(dsBan, soKhach, {
   choGhep = true, toiDaBan = 4, chungKhuThoi = true, soThich = [], laVip = false, toiDaKetQua = 6,
-  laCaoDiem = false, hopLe = null,
+  hopLe = null,
+  laCaoDiem = false,
 } = {}) {
   const ungVien = [...dsBan].sort((a, b) => b.so_cho - a.so_cho || a.ten.localeCompare(b.ten));
   const ketQua = [];
@@ -303,10 +304,10 @@ function timToHop(dsBan, soKhach, {
     if (soNut > 40000) return;
     if (tongCho >= soKhach) {
       if (!chungNhom(daChon)) return;
-      const ktr = qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem);
-      if (!ktr.hopLe) return;
-      // Rang buoc quy mo ban (2 khach chi 1 ban <= 4 cho, doan dong khong thua qua nhieu ghe).
+      // Rang buoc quy mo ban (2 khach chi 1 ban <= 4 cho, doan dong khong thua qua nhieu ghe)
+      // + suc chua theo gio cao diem (reservationRules.kiemTraSucChuaHopLe).
       if (hopLe && !hopLe(daChon)) return;
+      if (!qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem).hopLe) return;
       const chungKhu = daChon.every((b) => b.khu_vuc_id === daChon[0].khu_vuc_id);
       ketQua.push({
         ban: [...daChon],
@@ -328,19 +329,17 @@ function timToHop(dsBan, soKhach, {
       if (daChon.length && !ban.co_the_ghep) continue;
       if (daChon.length === 0 && !choGhep) {
         // Khong cho ghep: chi xet phuong an mot ban.
-        if (ban.so_cho >= soKhach && (!hopLe || hopLe([ban]))) {
-          const ktr = qt.kiemTraSucChuaHopLe(ban.so_cho, soKhach, laCaoDiem);
-          if (ktr.hopLe) {
-            ketQua.push({
-              ban: [ban],
-              tong_cho: ban.so_cho,
-              so_ban: 1,
-              ghe_thua: ban.so_cho - soKhach,
-              chung_khu: true,
-              khu_vuc: ban.khu_vuc,
-              diem: chamDiem([ban], soKhach, { soThich, laVip, chungKhu: true }),
-            });
-          }
+        if (ban.so_cho >= soKhach && (!hopLe || hopLe([ban]))
+          && qt.kiemTraSucChuaHopLe(ban.so_cho, soKhach, laCaoDiem).hopLe) {
+          ketQua.push({
+            ban: [ban],
+            tong_cho: ban.so_cho,
+            so_ban: 1,
+            ghe_thua: ban.so_cho - soKhach,
+            chung_khu: true,
+            khu_vuc: ban.khu_vuc,
+            diem: chamDiem([ban], soKhach, { soThich, laVip, chungKhu: true }),
+          });
         }
         continue;
       }
@@ -372,7 +371,7 @@ function timToHop(dsBan, soKhach, {
  */
 async function goiYXepBan(khung, {
   soKhach, areaId = null, dsThe = [], loaiKhach = 'REGULAR', boQuaId = null,
-  banChiDinh = null, client = db, laCaoDiem: optCaoDiem = undefined, boQuaQuyMo = false,
+  banChiDinh = null, client = db, boQuaQuyMo = false, laCaoDiem: optCaoDiem = undefined,
 } = {}) {
   const ch = await qt.docCauHinh();
   const gioCheck = khung.gio || (khung.batDau ? qt.gioNgan(khung.batDau) : '19:00');
@@ -399,7 +398,7 @@ async function goiYXepBan(khung, {
     }
     // Ràng buộc số người và số chỗ ngồi: giờ cao điểm chỉ được ngồi đúng số chỗ; giờ thường 2 người ngồi bàn 4 vẫn được
     const ktrSucChua = qt.kiemTraSucChuaHopLe(tongCho, soKhach, laCaoDiem);
-    if (!ktrSucChua.hopLe) {
+    if (!boQuaQuyMo && !ktrSucChua.hopLe) {
       throw new LoiDatBan(ktrSucChua.lyDo, laCaoDiem ? 'PEAK_HOUR_SEAT_MISMATCH' : 'CAPACITY_MISMATCH');
     }
     if (chon.length > 1 && ch.allow_table_combination === 0) {

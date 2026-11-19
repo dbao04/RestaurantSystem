@@ -1686,6 +1686,12 @@ app.post('/staff/login', async (req, res) => {
       // ve DUNG cho ho dinh toi. Uu tien hon ca buoc moi dang ky khuon mat ben
       // duoi, vi trang /cham-cong/ tu no da co phan dang ky ngay trong trang -
       // chen them mot trang nua vao giua chi khien ho lac duong.
+      // Nguoi co ho so shipper: viec chinh cua ho nam o ung dung /shipper/ chu
+      // khong phai trang tong quan nhan vien (truoc day phai tu go dia chi).
+      try {
+        req.session.laShipper = !!(await require('./services/vanChuyenService').shipperCuaNhanVien(staff.id_nv));
+      } catch (e) { req.session.laShipper = false; }
+
       if (tiep) return res.redirect(tiep);
 
       if (req.session.nvPhaiDoiMatKhau) {
@@ -1693,6 +1699,8 @@ app.post('/staff/login', async (req, res) => {
           'Bạn đang dùng mật khẩu mặc định 123456. Vui lòng đổi mật khẩu mới để tiếp tục.'
         ) + '&msgType=danger');
       }
+
+      if (req.session.laShipper) return res.redirect('/shipper/');
 
       // Lan dau dang nhap ma chua co khuon mat -> dua thang toi trang tu dang ky.
       // Chi kiem tra CSDL (nhanh); trang do tu kiem tra dich vu Python va luon co
@@ -1858,6 +1866,8 @@ app.post('/staff/bookings/confirm/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan
     if (!kq.affectedRows) {
       return veDanhSachDon(res, `Không thể xác nhận: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
     }
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'confirm' });
+    io.to('staff_room').emit('so-do-thay-doi');
     veDanhSachDon(res, 'Đã xác nhận đơn.', 'success');
   } catch (err) {
     console.error(err);
@@ -1880,16 +1890,36 @@ app.post('/staff/bookings/arrive/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan 
       return veDanhSachDon(res, `Không thể nhận khách: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
     }
     if (table_id) {
-      const [[qr]] = await db.query('SELECT table_id FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
+      const [[qr]] = await db.query('SELECT table_id, table_name FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
       if (!qr) return veDanhSachDon(res, 'Mã QR bàn không tồn tại.');
+      // Ban dich dang phuc vu phien KHAC thi khong ghi de (mat lien ket don cua khach dang ngoi).
+      const [[banDich]] = await db.query('SELECT sesis_hien_tai FROM ban WHERE number_ban = ? LIMIT 1', [qr.table_name]);
+      if (banDich && banDich.sesis_hien_tai && banDich.sesis_hien_tai !== sesis) {
+        return veDanhSachDon(res, `Bàn ${qr.table_name} đang có khách khác - chọn bàn trống hoặc dùng chuyển / gộp bàn.`);
+      }
     }
 
     await db.query('UPDATE hopdong SET tinhtrang = 5 WHERE sesis = ? AND tinhtrang = 1', [sesis]);
-    // Go lien ket QR cu cua don roi gan ban vua chon.
+    // Go lien ket QR + ban cu cua don roi gan ban vua chon.
     await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
+    await db.query('UPDATE ban SET trangthai = 0, sesis_hien_tai = NULL WHERE sesis_hien_tai = ?', [sesis]);
     if (table_id) {
       await db.query('UPDATE qr_tables SET active_sesis = ? WHERE table_id = ?', [sesis, table_id]);
+      const [qrRows] = await db.query('SELECT id, table_id, table_name FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
+      if (qrRows.length > 0) {
+        const tableName = qrRows[0].table_name;
+        const [banRows] = await db.query('SELECT Id_ban, number_ban FROM ban WHERE number_ban = ? LIMIT 1', [tableName]);
+        if (banRows.length > 0) {
+          const idBan = banRows[0].Id_ban;
+          await db.query('UPDATE ban SET trangthai = 1, sesis_hien_tai = ? WHERE Id_ban = ?', [sesis, idBan]);
+          await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ?', [idBan, sesis]);
+        }
+      }
     }
+    io.to('staff_room').emit('ban-cap-nhat');
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'arrive' });
+    io.to('kitchen_room').emit('ban-cap-nhat');
     veDanhSachDon(res, 'Đã ghi nhận khách đến.', 'success');
   } catch (err) {
     console.error(err);

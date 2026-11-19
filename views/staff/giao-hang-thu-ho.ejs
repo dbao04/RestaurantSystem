@@ -1,0 +1,79 @@
+<%
+  var activePage = 'giao-hang';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var gio = function (d) { if (!d) return ''; var x = new Date(d); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0') + ' ' + x.getDate() + '/' + (x.getMonth() + 1); };
+%>
+<%- include('partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-sack-dollar text-warning"></i> Nhận tiền thu hộ từ shipper</h1>
+    <div class="small text-muted">Shipper giao xong đơn thu tiền mặt (COD) thì tiền đang nằm ở shipper. Đếm tiền, chọn các đơn, rồi bấm nhận — tiền vào sổ quỹ và két của <b><%= session.staffName %></b>.</div>
+  </div>
+  <a href="/staff/giao-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Điều phối</a>
+</div>
+
+<% if (msg) { %>
+  <div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %> py-2"><%= msg %></div>
+<% } %>
+
+<% if (!tongHop.length) { %>
+  <div class="card shadow"><div class="card-body text-muted">Không shipper nào đang giữ tiền thu hộ.</div></div>
+<% } %>
+
+<% tongHop.forEach(function (s) { var ds = chiTiet[s.id_shipper] || []; %>
+  <div class="card shadow mb-3">
+    <div class="card-header py-2 d-flex flex-wrap justify-content-between align-items-center" style="gap:.5rem">
+      <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-motorcycle"></i> <%= s.ten %>
+        <% if (s.sdt) { %><span class="small text-muted font-weight-normal">· <a href="tel:<%= s.sdt %>"><%= s.sdt %></a></span><% } %></h6>
+      <span>Đang giữ <b class="text-danger"><%= vnd(s.tong) %></b> · <%= s.so_don %> đơn · từ <%= gio(s.tu_luc) %></span>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/staff/giao-hang/thu-ho/<%= s.id_shipper %>/nhan" data-form-thu-ho
+            onsubmit="return confirm('Xác nhận đã nhận đủ tiền mặt từ <%= s.ten %>? Tiền sẽ vào sổ quỹ và két của bạn.')">
+        <div class="table-responsive">
+          <table class="table table-sm mb-2">
+            <thead class="thead-light"><tr><th style="width:32px"><input type="checkbox" checked data-chon-het></th><th>Mã đơn</th><th>Người nhận</th><th>Giao lúc</th><th class="text-right">Tiền thu hộ</th></tr></thead>
+            <tbody>
+              <% ds.forEach(function (d) { %>
+                <tr>
+                  <td><input type="checkbox" name="id_giao" value="<%= d.id_giao %>" data-tien="<%= Math.round(Number(d.tien_thu_ho)) %>" checked></td>
+                  <td><a href="/staff/giao-hang/<%= d.id_giao %>"><%= d.ma_giao %></a></td>
+                  <td><%= d.ten_nguoi_nhan %><div class="small text-muted"><%= d.dia_chi_giao %></div></td>
+                  <td class="small"><%= gio(d.hoan_tat_luc) %></td>
+                  <td class="text-right"><%= vnd(d.tien_thu_ho) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex flex-wrap align-items-center" style="gap:.6rem">
+          <span>Đã chọn: <b data-tong-chon><%= vnd(s.tong) %></b></span>
+          <label class="mb-0 small">Số tiền đếm được
+            <input name="so_tien_dem" inputmode="numeric" class="form-control form-control-sm d-inline-block ml-1" style="width:150px" placeholder="để trống = bằng tổng">
+          </label>
+          <button class="btn btn-sm btn-success ml-auto"><i class="fas fa-hand-holding-dollar"></i> Nhận tiền</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% }) %>
+
+<script>
+document.querySelectorAll('[data-form-thu-ho]').forEach(function (f) {
+  var tinh = function () {
+    var t = 0;
+    f.querySelectorAll('input[name=id_giao]:checked').forEach(function (c) { t += Number(c.dataset.tien); });
+    f.querySelector('[data-tong-chon]').textContent = t.toLocaleString('vi-VN') + 'đ';
+  };
+  f.addEventListener('change', function (e) {
+    if (e.target.matches('[data-chon-het]')) f.querySelectorAll('input[name=id_giao]').forEach(function (c) { c.checked = e.target.checked; });
+    tinh();
+  });
+  f.addEventListener('submit', function (e) {
+    if (!f.querySelector('input[name=id_giao]:checked')) { e.preventDefault(); alert('Chọn ít nhất một đơn.'); }
+  });
+});
+</script>
+
+<%- include('partials/footer') %>

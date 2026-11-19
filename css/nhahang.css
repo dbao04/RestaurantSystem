@@ -385,9 +385,9 @@ body::-webkit-scrollbar {
 }
 
 /* Responsive adjustments */
-/* Menu co 11 muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
-   1481-2000px de van vua mot hang, ke ca khi da dang nhap (co ten nguoi dung). */
-@media (min-width: 1481px) and (max-width: 2000px) {
+/* Menu co nhieu muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
+   1561-2000px de van vua mot hang; <= 1560px dung quy tac bieu tuong ben duoi. */
+@media (min-width: 1561px) and (max-width: 2000px) {
   .nh-nav__links a { padding: .36rem .48rem; font-size: .8rem; }
 }
 @media (max-width: 1560px) {
