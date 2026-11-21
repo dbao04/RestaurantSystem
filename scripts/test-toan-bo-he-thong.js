@@ -39,9 +39,13 @@ async function tamTatDoiMatKhau() {
       'ketoan', 'ketoantruong', 'dieuphoi', 'shipper1'];
     const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
     const [gocAdmin] = await db.query("SELECT id_admin, adminpass FROM tb_admin WHERE adminuser = 'admin'");
+    const [[tbMoc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
     for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
     for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5('123456'), g.id_admin]);
     khoiPhucCoDoiMk = async () => {
+      // Thong bao do thao tac test sinh ra (gui nen) - xoa de khong lan vao chuong that.
+      await new Promise((ok) => setTimeout(ok, 800));
+      await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [tbMoc.m]).catch(() => {});
       for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
       for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [g.adminpass, g.id_admin]).catch(() => {});
       await db.query('UPDATE cau_hinh SET gia_tri = ? WHERE khoa = ?', [r.gia_tri, KHOA]).catch(() => {});

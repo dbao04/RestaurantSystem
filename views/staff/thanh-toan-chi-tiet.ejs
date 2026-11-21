@@ -2,6 +2,10 @@
   var activePage = 'thanh-toan';
   var staffName = session.staffName || 'Nhân viên';
   var t = hoaDon.tien;
+  // Thu ngan order them / dieu chinh mon: chi don AN TAI BAN con mo (co ban,
+  // chua tra du, khong phai don giao hang).
+  var suaOrder = !t.da_tra_du && !t.la_don_giao && !!hoaDon.thongTin.id_ban &&
+    [3, 4].indexOf(Number(hoaDon.thongTin.tinhtrang)) < 0;
   var coThanhToanGiaLap = typeof choPhepThanhToanGiaLap !== 'undefined'
     ? choPhepThanhToanGiaLap
     : false;
@@ -56,15 +60,21 @@
   <!-- ================================================== CỘT TRÁI: hóa đơn -->
   <div class="col-lg-7 mb-4">
     <div class="card shadow">
-      <div class="card-header py-3">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Chi tiết hóa đơn</h6>
+        <% if (suaOrder) { %>
+          <button type="button" class="btn btn-sm btn-success" id="nut-them-mon"
+                  data-ban="<%= hoaDon.thongTin.id_ban %>" data-ten="<%= hoaDon.thongTin.ten_ban || '' %>">
+            <i class="fas fa-plus"></i> Thêm món
+          </button>
+        <% } %>
       </div>
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <thead class="thead-light">
             <tr>
               <th>Món</th>
-              <th class="text-center" style="width:70px">SL</th>
+              <th class="text-center" style="width:<%= suaOrder ? 120 : 70 %>px">SL</th>
               <th class="text-right" style="width:110px">Đơn giá</th>
               <th class="text-right" style="width:120px">Thành tiền</th>
               <% if (!t.da_tra_du) { %><th style="width:44px"></th><% } %>
@@ -79,12 +89,22 @@
                     <span class="badge badge-warning ml-1" title="Bếp chưa làm xong">đang chế biến</span>
                   <% } %>
                 </td>
-                <td class="text-center"><%= m.soluong %></td>
+                <td class="text-center text-nowrap">
+                  <% if (suaOrder) { %>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 nut-huy-mon" title="Giảm / xóa món (phải giải trình)"
+                            data-id="<%= m.id %>" data-ten="<%= m.name_mon %>" data-sl="<%= m.soluong %>" data-bep="<%= m.trangthai_bep %>" data-mot="1"
+                            aria-label="Giảm 1 <%= m.name_mon %>">−</button>
+                    <b class="mx-1"><%= m.soluong %></b>
+                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 nut-them-1"
+                            data-mon="<%= m.id_mon %>" data-ten="<%= m.name_mon %>" title="Gọi thêm 1 phần (phiếu bếp mới)"
+                            aria-label="Thêm 1 <%= m.name_mon %>">+</button>
+                  <% } else { %><%= m.soluong %><% } %>
+                </td>
                 <td class="text-right"><%= formatMoney(m.gia) %></td>
                 <td class="text-right font-weight-bold"><%= formatMoney(m.thanhtien) %></td>
                 <% if (!t.da_tra_du) { %>
                   <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 nut-huy-mon" title="Hủy / trả món"
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 nut-huy-mon" title="Xóa hết món này (phải giải trình)"
                             data-id="<%= m.id %>" data-ten="<%= m.name_mon %>" data-sl="<%= m.soluong %>" data-bep="<%= m.trangthai_bep %>">
                       <i class="fas fa-times"></i>
                     </button>
@@ -118,8 +138,10 @@
             <select class="form-control" id="huy-ma-ly-do" required></select>
           </div>
           <div class="form-group">
-            <label class="small font-weight-bold">Ghi chú <span class="text-muted font-weight-normal">(bắt buộc nếu chọn "Lý do khác")</span></label>
-            <input type="text" class="form-control" id="huy-ghi-chu" maxlength="255">
+            <label class="small font-weight-bold" for="huy-ghi-chu">Giải trình <span class="text-danger">*</span>
+              <span class="text-muted font-weight-normal">(bắt buộc, ít nhất 10 ký tự — gửi tới quản lý và giám sát)</span></label>
+            <textarea class="form-control" id="huy-ghi-chu" maxlength="255" rows="2" required minlength="10"
+                      placeholder="VD: Khách gọi nhầm món, đã báo bếp chưa làm"></textarea>
           </div>
           <div class="text-danger small mb-2" id="huy-loi"></div>
           <div class="d-flex justify-content-end" style="gap:8px">
@@ -481,7 +503,8 @@
       dangHuy = { id: nut.dataset.id, sl: Number(nut.dataset.sl) || 1 };
       $('huy-ten-mon').textContent = nut.dataset.ten + ' · đang có ' + dangHuy.sl + ' phần · ' + TEN_BEP[bep];
       $('huy-so-luong').max = dangHuy.sl;
-      $('huy-so-luong').value = dangHuy.sl;
+      // Nut "−" giam 1 phan; nut "x" xoa het.
+      $('huy-so-luong').value = nut.dataset.mot ? 1 : dangHuy.sl;
       $('huy-ma-ly-do').value = '';
       $('huy-ghi-chu').value = '';
       $('huy-loi').textContent = '';
@@ -502,6 +525,11 @@
     $('form-huy-mon').addEventListener('submit', function (e) {
       e.preventDefault();
       if (!dangHuy) return;
+      if ($('huy-ghi-chu').value.trim().length < 10) {
+        $('huy-loi').textContent = 'Phải nhập giải trình vì sao xóa món (ít nhất 10 ký tự).';
+        $('huy-ghi-chu').focus();
+        return;
+      }
       var nutXn = $('huy-xac-nhan');
       nutXn.disabled = true;
       fetch('/staff/huy-mon/' + dangHuy.id, {
@@ -950,4 +978,30 @@
 })();
 </script>
 
+<% if (suaOrder) { %>
+  <%- include('partials/chon-mon') %>
+  <script>
+  (function () {
+    var nut = document.getElementById('nut-them-mon');
+    var lai = function () { location.reload(); };
+    nut.addEventListener('click', function () {
+      ChonMon.mo({ idBan: nut.dataset.ban, tenBan: nut.dataset.ten || 'Bàn', sauKhiGui: lai });
+    });
+    // + tung mon: goi them 1 phan cung mon (phieu bep moi).
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('.nut-them-1');
+      if (!b) return;
+      b.disabled = true;
+      fetch('/so-do-ban/api/order-mon/' + nut.dataset.ban, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ items: [{ id_mon: Number(b.dataset.mon), soluong: 1 }] }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.ok) { alert(d.loi || 'Không thêm được món.'); b.disabled = false; return; }
+        lai();
+      }).catch(function () { alert('Lỗi mạng, thử lại.'); b.disabled = false; });
+    });
+  })();
+  </script>
+<% } %>
 <%- include('partials/footer') %>

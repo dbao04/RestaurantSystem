@@ -1,0 +1,11 @@
+<% var activePage = 'thong-bao'; %>
+<%- include('partials/header') %>
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-bell text-warning"></i> Thông báo</h1>
+    <div class="small text-muted">Thông báo gửi riêng cho bạn theo chức danh và công việc liên quan.</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="/staff/thong-bao/luong"><i class="fas fa-diagram-project"></i> Ai nhận thông báo gì?</a>
+</div>
+<%- include('../partials/ds-thong-bao', { laTb: 'nv' }) %>
+<%- include('partials/footer') %>

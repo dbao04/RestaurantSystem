@@ -1,0 +1,128 @@
+<%#
+  HOP CHON MON dung chung cho POS thu ngan (danh sach + chi tiet hoa don).
+  Goi:  ChonMon.mo({ idBan: 12, tenBan: 'Bàn S05', sauKhiGui: function (d) {...} })
+  Gui len POST /so-do-ban/api/order-mon/:idBan (cung API voi so do ban cua phuc vu):
+  ban trong thi tu mo phien moi, ban dang co khach thi them mon vao dung don do.
+%>
+<style>
+  #hop-chon-mon { border:none; border-radius:12px; padding:0; width:min(720px, 96vw); max-height:92vh; box-shadow:0 12px 44px rgba(0,0,0,.3); }
+  #hop-chon-mon::backdrop { background:rgba(20,14,10,.45); }
+  .cm-dau { padding:14px 18px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .cm-loc { padding:10px 18px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid #f3f3f3; }
+  .cm-ds { max-height:48vh; overflow-y:auto; padding:6px 18px; }
+  .cm-mon { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px dashed #eee; }
+  .cm-mon__ten { flex:1; min-width:0; }
+  .cm-mon__ten b { display:block; font-size:.9rem; }
+  .cm-mon__ten small { color:#888; }
+  .cm-sl { display:flex; align-items:center; gap:6px; }
+  .cm-sl button { width:30px; height:30px; padding:0; line-height:1; }
+  .cm-sl span { min-width:22px; text-align:center; font-weight:700; }
+  .cm-chan { padding:12px 18px; border-top:1px solid #eee; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+</style>
+<dialog id="hop-chon-mon" aria-labelledby="cm-tieu-de">
+  <div class="cm-dau">
+    <h5 class="m-0" id="cm-tieu-de"><i class="fas fa-utensils text-success"></i> Order món · <span id="cm-ban"></span></h5>
+    <button type="button" class="btn btn-sm btn-light" id="cm-dong" aria-label="Đóng"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="cm-loc">
+    <input type="search" class="form-control form-control-sm" id="cm-tim" placeholder="Tìm món..." style="max-width:240px">
+    <select class="form-control form-control-sm" id="cm-loai" style="max-width:200px"><option value="">Tất cả loại</option></select>
+    <input type="number" class="form-control form-control-sm" id="cm-khach" min="1" max="60" placeholder="Số khách" title="Số khách (chỉ dùng khi mở bàn mới)" style="max-width:110px">
+  </div>
+  <div class="cm-ds" id="cm-ds"><p class="text-muted small my-3">Đang tải thực đơn…</p></div>
+  <div class="cm-chan">
+    <span class="small">Đã chọn: <b id="cm-dem">0</b> món · <b id="cm-tong">0đ</b></span>
+    <span class="text-danger small" id="cm-loi" role="alert"></span>
+    <button type="button" class="btn btn-success ml-auto" id="cm-gui" disabled><i class="fas fa-paper-plane"></i> Gửi order xuống bếp</button>
+  </div>
+</dialog>
+<script>
+window.ChonMon = (function () {
+  var hop = document.getElementById('hop-chon-mon');
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+  var tien = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var thucDon = null, chon = {}, cauHinh = {};
+
+  function taiThucDon() {
+    if (thucDon) return Promise.resolve(thucDon);
+    return fetch('/staff/bookings/dishes', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success) throw new Error(d.message || 'Không tải được thực đơn');
+        thucDon = d.dishes || [];
+        var loai = {};
+        thucDon.forEach(function (m) { loai[m.name_loai] = 1; });
+        $('cm-loai').innerHTML = '<option value="">Tất cả loại</option>' +
+          Object.keys(loai).map(function (l) { return '<option>' + esc(l) + '</option>'; }).join('');
+        return thucDon;
+      });
+  }
+
+  function ve() {
+    var t = $('cm-tim').value.trim().toLowerCase(), l = $('cm-loai').value;
+    var ds = (thucDon || []).filter(function (m) {
+      return (!l || m.name_loai === l) && (!t || String(m.name_mon).toLowerCase().indexOf(t) >= 0);
+    });
+    $('cm-ds').innerHTML = ds.length ? ds.map(function (m) {
+      var sl = chon[m.id_mon] ? chon[m.id_mon].sl : 0;
+      return '<div class="cm-mon"><div class="cm-mon__ten"><b>' + esc(String(m.name_mon).trim()) + '</b><small>' +
+        esc(m.name_loai) + ' · ' + tien(m.gia_mon) + '</small></div>' +
+        '<div class="cm-sl"><button type="button" class="btn btn-outline-danger btn-sm" data-cm="-" data-id="' + m.id_mon + '" aria-label="Bớt">−</button>' +
+        '<span>' + sl + '</span>' +
+        '<button type="button" class="btn btn-outline-success btn-sm" data-cm="+" data-id="' + m.id_mon + '" aria-label="Thêm">+</button></div></div>';
+    }).join('') : '<p class="text-muted small my-3">Không có món phù hợp.</p>';
+    tong();
+  }
+
+  function tong() {
+    var n = 0, t = 0;
+    Object.keys(chon).forEach(function (k) { n += chon[k].sl; t += chon[k].sl * Number(chon[k].mon.gia_mon); });
+    $('cm-dem').textContent = n; $('cm-tong').textContent = tien(t);
+    $('cm-gui').disabled = n === 0;
+  }
+
+  $('cm-ds').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cm]');
+    if (!b) return;
+    var id = Number(b.dataset.id);
+    var mon = thucDon.find(function (m) { return Number(m.id_mon) === id; });
+    var cu = chon[id] ? chon[id].sl : 0;
+    var moi = Math.max(0, Math.min(99, cu + (b.dataset.cm === '+' ? 1 : -1)));
+    if (moi) chon[id] = { mon: mon, sl: moi }; else delete chon[id];
+    b.parentNode.querySelector('span').textContent = moi;
+    tong();
+  });
+  $('cm-tim').addEventListener('input', ve);
+  $('cm-loai').addEventListener('change', ve);
+  $('cm-dong').addEventListener('click', function () { hop.close(); });
+
+  $('cm-gui').addEventListener('click', function () {
+    var items = Object.keys(chon).map(function (k) { return { id_mon: Number(k), soluong: chon[k].sl }; });
+    if (!items.length) return;
+    var nut = this; nut.disabled = true; $('cm-loi').textContent = '';
+    fetch('/so-do-ban/api/order-mon/' + cauHinh.idBan, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ items: items, so_khach: Number($('cm-khach').value) || undefined }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) { $('cm-loi').textContent = d.loi || 'Không gửi được order.'; nut.disabled = false; return; }
+      hop.close();
+      if (cauHinh.sauKhiGui) cauHinh.sauKhiGui(d);
+    }).catch(function () { $('cm-loi').textContent = 'Lỗi mạng, thử lại.'; nut.disabled = false; });
+  });
+
+  return {
+    mo: function (o) {
+      cauHinh = o || {}; chon = {};
+      $('cm-ban').textContent = cauHinh.tenBan || '';
+      $('cm-tim').value = ''; $('cm-loi').textContent = '';
+      $('cm-khach').style.display = cauHinh.banMoi ? '' : 'none';
+      $('cm-khach').value = '';
+      hop.showModal();
+      taiThucDon().then(ve).catch(function (e) { $('cm-ds').innerHTML = '<p class="text-danger small my-3">' + esc(e.message) + '</p>'; });
+      setTimeout(function () { $('cm-tim').focus(); }, 50);
+    },
+  };
+})();
+</script>

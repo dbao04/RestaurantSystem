@@ -18,7 +18,21 @@ const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 const canXem = phanQuyenMw.canVaiTroCu(['Thu ngan', 'Ke toan', 'Quan ly']);
-const canLap = phanQuyenMw.canVaiTroCu(['Thu ngan', 'Quan ly']);
+const canLap = phanQuyenMw.canVaiTroCu(['Thu ngan', 'Ke toan', 'Quan ly']);
+
+/**
+ * Vai tro de ap HAN MUC phieu chi (thuChiService.lapPhieu): chi QUAN LY that
+ * (vai tro Quan ly / quan tri) moi tu duyet; Ke toan (ke ca Ke toan truong)
+ * lap phieu lon van phai cho Quan ly duyet - phan tach trach nhiem.
+ */
+function vaiTroLap(req) {
+  if (req.session.adminlogin || req.session.staffRole === 'Quan ly') return 'quan_ly';
+  if (req.session.staffRole === 'Ke toan' || phanQuyen.dongVaiDuoc(req.hoSo, ['Ke toan'])) return 'ke_toan';
+  return 'thu_ngan';
+}
+function duocDuyetPhieu(req) {
+  return !!(req.session.adminlogin || req.session.staffRole === 'Quan ly' || phanQuyen.dongVaiDuoc(req.hoSo, ['Quan ly']));
+}
 
 function laQuanLy(req) {
   if (req.session.adminlogin) return true;
@@ -66,6 +80,9 @@ router.get('/staff/thu-chi', canXem, bat(async (req, res) => {
     danhMuc: dv.DANH_MUC,
     danhMucLap: dv.DANH_MUC_LAP,
     duocLap: laQuanLy(req) || ['Thu ngan'].includes(req.session.staffRole) || phanQuyen.dongVaiDuoc(req.hoSo, ['Thu ngan']),
+    duocDuyet: duocDuyetPhieu(req),
+    vaiTro: vaiTroLap(req),
+    thamSo: await dv.thamSo(),
     laQuanLy: laQuanLy(req),
     idNv: req.session.staffId || null,
   });
@@ -100,8 +117,9 @@ router.get('/staff/thu-chi/phieu/:id/in', canXem, bat(async (req, res) => {
 
 router.post('/api/staff/thu-chi/phieu', canLap, bat(async (req, res) => {
   try {
-    const kq = await dv.lapPhieu(req.body, req.session.staffId || null);
+    const kq = await dv.lapPhieu(req.body, req.session.staffId || null, { vaiTro: vaiTroLap(req) });
     realtime.doi(realtime.MIEN.CHOT_CA, { su_kien: 'PHIEU_THU_CHI', ma: kq.ma_phieu });
+    // Thong bao phieu chi cho duyet: services/thongBaoNghiepVu.js (boc lapPhieu).
     res.status(201).json({ ok: true, ...kq });
   } catch (e) { traLoi(res, e); }
 }));
@@ -114,6 +132,17 @@ router.post('/api/staff/thu-chi/phieu/:id/huy', canXem, bat(async (req, res) => 
     });
     realtime.doi(realtime.MIEN.CHOT_CA, { su_kien: 'PHIEU_THU_CHI_HUY' });
     res.json({ ok: true });
+  } catch (e) { traLoi(res, e); }
+}));
+
+/** Quan ly duyet phieu chi vuot han muc. */
+router.post('/api/staff/thu-chi/phieu/:id/duyet', canXem, bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy phiếu' });
+  if (!duocDuyetPhieu(req)) return res.status(403).json({ ok: false, thong_bao: 'Chỉ Quản lý duyệt được phiếu chi vượt hạn mức.' });
+  try {
+    const kq = await dv.duyetPhieu(Number(req.params.id), req.session.staffId || null);
+    realtime.doi(realtime.MIEN.CHOT_CA, { su_kien: 'PHIEU_THU_CHI_DUYET', ma: kq.ma_phieu });
+    res.json({ ok: true, ...kq });
   } catch (e) { traLoi(res, e); }
 }));
 

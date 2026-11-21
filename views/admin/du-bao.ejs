@@ -728,7 +728,7 @@ async function veKhach() {
 
   const tong = duBao.reduce((s, r) => s + Number(r.so_khach_du_bao), 0);
   const cao = duBao.reduce((a, b) => Number(a.so_khach_du_bao) > Number(b.so_khach_du_bao) ? a : b);
-  const thu = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][new Date(cao.ngay_du_bao).getDay()];
+  const thu = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][new Date(String(cao.ngay_du_bao).slice(0, 10) + 'T00:00:00').getDay()];
   document.getElementById('insightKhach').innerHTML =
     `<i class="fas fa-lightbulb"></i><span>Dự báo tổng cộng <b>${so(tong)}</b> lượt khách trong <b>${duBao.length} ngày tới</b> (mô hình tối ưu: <b>${cao.mo_hinh}</b>). ` +
     `Ngày cao điểm nhất là <b>${String(cao.ngay_du_bao).slice(0,10)} (${thu})</b> với khoảng <b>${so(cao.so_khach_du_bao)} lượt</b> &mdash; ` +

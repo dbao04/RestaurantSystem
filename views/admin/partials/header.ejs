@@ -120,6 +120,7 @@
                 <h1 class="qt-top__title" id="qtTitle" <%- (typeof title !== 'undefined' && title) ? 'data-custom-title="1"' : '' %>><%= (typeof title !== 'undefined' && title) ? title : 'Bảng điều khiển' %></h1>
             </div>
             <div class="qt-top__right">
+                <%- include('../../partials/chuong-thong-bao', { laTb: 'quan_tri', trangTb: '/admin/thong-bao' }) %>
                 <div class="qt-chip">
                     <span class="qt-chip__ava"><%= (session.adminname || 'A').trim().charAt(0).toUpperCase() %></span>
                     <span class="qt-chip__meta">

@@ -1,0 +1,115 @@
+<%
+  var activePage = 'ke-toan';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var pct = function (x) { return (Number(x || 0) * 100).toFixed(1) + '%'; };
+  var L = db.lai_lo || {}, D = db.dong_tien || { tong_vao: 0, tong_ra: 0, thuan: 0 };
+  var luong = db.luong || {};
+%>
+<%- include('../partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-calculator text-warning"></i> Tổng quan kế toán</h1>
+    <div class="small text-muted">Tháng <%= db.thang %>/<%= db.nam %> (<%= db.tu %> → <%= db.den %>). Thu ngân, phục vụ, bếp tạo dữ liệu; kế toán kiểm soát, đối soát và tổng hợp.</div>
+  </div>
+  <form class="form-inline" method="GET" style="gap:.4rem">
+    <select name="thang" class="form-control form-control-sm" aria-label="Tháng"><% for (var t = 1; t <= 12; t++) { %><option value="<%= t %>" <%= t === db.thang ? 'selected' : '' %>>Tháng <%= t %></option><% } %></select>
+    <input name="nam" type="number" value="<%= db.nam %>" class="form-control form-control-sm" style="width:90px" aria-label="Năm">
+    <button class="btn btn-sm btn-primary">Xem</button>
+  </form>
+</div>
+
+<!-- Viec can lam / canh bao -->
+<div class="card shadow mb-3 <%= db.canh_bao.length ? 'border-left-warning' : 'border-left-success' %>">
+  <div class="card-body py-2">
+    <% if (!db.canh_bao.length) { %>
+      <span class="text-success"><i class="fas fa-circle-check"></i> Không có cảnh báo hay việc tồn đọng.</span>
+    <% } else { %>
+      <div class="font-weight-bold mb-1"><i class="fas fa-bell text-warning"></i> Cần xử lý (<%= db.canh_bao.length %>)</div>
+      <ul class="mb-0 pl-3 small">
+        <% db.canh_bao.forEach(function (c) { %>
+          <li class="<%= c.muc === 'cao' ? 'text-danger' : '' %>"><%= c.noi_dung %> <a href="<%= c.link %>">Xem</a></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>
+
+<!-- KPI ket qua kinh doanh + dong tien -->
+<div class="row">
+  <div class="col-xl-3 col-md-6 mb-3"><div class="card shadow h-100 py-2 border-left-primary"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Doanh thu</div>
+    <div class="h5 mb-0 font-weight-bold"><%= vnd(L.tong_doanh_thu) %></div>
+    <div class="small text-muted"><%= L.so_don || 0 %> đơn · <a href="/staff/bao-cao-lai-lo">lãi lỗ</a></div></div></div></div>
+  <div class="col-xl-3 col-md-6 mb-3"><div class="card shadow h-100 py-2 border-left-success"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Lợi nhuận (ước tính)</div>
+    <div class="h5 mb-0 font-weight-bold <%= (L.loi_nhuan || 0) < 0 ? 'text-danger' : '' %>"><%= vnd(L.loi_nhuan) %></div>
+    <div class="small text-muted">biên lãi gộp <%= pct(L.ty_le_gop) %></div></div></div></div>
+  <div class="col-xl-3 col-md-6 mb-3"><div class="card shadow h-100 py-2 border-left-warning"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Food cost</div>
+    <div class="h5 mb-0 font-weight-bold"><%= pct(L.food_cost) %></div>
+    <div class="small text-muted">mục tiêu ngành 28–35% · <a href="/staff/phan-tich-thuc-don">theo món</a></div></div></div></div>
+  <div class="col-xl-3 col-md-6 mb-3"><div class="card shadow h-100 py-2 border-left-info"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Dòng tiền thuần</div>
+    <div class="h5 mb-0 font-weight-bold <%= D.thuan < 0 ? 'text-danger' : '' %>"><%= (D.thuan < 0 ? '−' : '') + vnd(Math.abs(D.thuan)) %></div>
+    <div class="small text-muted">vào <%= vnd(D.tong_vao) %> · ra <%= vnd(D.tong_ra) %></div></div></div></div>
+</div>
+
+<div class="row">
+  <!-- Quy + cong no + luong -->
+  <div class="col-lg-4 mb-3">
+    <div class="card shadow h-100">
+      <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary">Quỹ, công nợ, lương</h6></div>
+      <div class="card-body small">
+        <% if (db.quy) { %>
+          <div class="d-flex justify-content-between"><span><i class="fas fa-money-bill-wave text-success"></i> Quỹ tiền mặt</span><b><%= vnd(db.quy.tien_mat.cuoi) %></b></div>
+          <div class="d-flex justify-content-between mb-2"><span><i class="fas fa-building-columns text-primary"></i> Tài khoản ngân hàng</span><b><%= vnd(db.quy.ngan_hang.cuoi) %></b></div>
+        <% } %>
+        <div class="d-flex justify-content-between"><span><i class="fas fa-handshake text-warning"></i> Công nợ NCC (<%= db.cong_no.so_ncc %> NCC)</span><b><%= vnd(db.cong_no.tong) %></b></div>
+        <div class="d-flex justify-content-between mb-2"><span class="pl-3">trong đó quá hạn</span><b class="<%= db.cong_no.qua_han ? 'text-danger' : '' %>"><%= vnd(db.cong_no.qua_han) %></b></div>
+        <div class="d-flex justify-content-between"><span><i class="fas fa-money-check-dollar text-info"></i> Quỹ lương tháng</span><b><%= vnd(luong.quy_luong) %></b></div>
+        <div class="text-muted">Dự thảo <%= Number(luong.du_thao || 0) %> · chờ duyệt <%= Number(luong.cho_duyet || 0) %> · chờ chi <%= Number(luong.cho_chi || 0) %> · đã chi <%= Number(luong.da_chi || 0) %></div>
+      </div>
+    </div>
+  </div>
+  <!-- Ngan sach -->
+  <div class="col-lg-4 mb-3">
+    <div class="card shadow h-100">
+      <div class="card-header py-2 d-flex justify-content-between"><h6 class="m-0 font-weight-bold text-primary">Ngân sách tháng</h6><a class="small" href="/staff/ke-toan/ngan-sach?thang=<%= db.thang %>&nam=<%= db.nam %>">Đặt hạn mức</a></div>
+      <div class="card-body small">
+        <% (db.ngan_sach ? db.ngan_sach.ds : []).forEach(function (x) { var mau = x.muc === 'vuot' ? '#b3352c' : x.muc === 'sap_vuot' ? '#eb6834' : x.muc === 'on' ? '#1baf7a' : '#a8a69f'; var pc = x.ty_le === null ? 0 : Math.min(100, Math.round(x.ty_le * 100)); %>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between"><span><%= x.ten %></span><span><%= vnd(x.da_chi) %><%= x.han_muc ? ' / ' + vnd(x.han_muc) : '' %></span></div>
+            <div style="height:7px;background:#f1ece4;border-radius:4px"><div style="height:7px;width:<%= pc %>%;background:<%= mau %>;border-radius:4px"></div></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+  <!-- Mon lai cao / thap -->
+  <div class="col-lg-4 mb-3">
+    <div class="card shadow h-100">
+      <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary">Món lãi cao / thấp</h6></div>
+      <div class="card-body small">
+        <% if (!db.mon_lai_nhat.length) { %><p class="text-muted mb-0">Chưa có món bán ra trong tháng.</p><% } %>
+        <% if (db.mon_lai_nhat.length) { %><div class="font-weight-bold text-success mb-1">Lãi gộp cao nhất</div><% } %>
+        <% db.mon_lai_nhat.forEach(function (m) { %><div class="d-flex justify-content-between"><span><%= String(m.ten).trim() %></span><b><%= vnd(m.lai_gop) %></b></div><% }) %>
+        <% if (db.mon_lai_it_nhat.length) { %><div class="font-weight-bold text-danger mt-2 mb-1">Lãi gộp thấp nhất</div><% } %>
+        <% db.mon_lai_it_nhat.forEach(function (m) { %><div class="d-flex justify-content-between"><span><%= String(m.ten).trim() %></span><b><%= vnd(m.lai_gop) %></b></div><% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loi tat -->
+<div class="card shadow mb-3"><div class="card-body d-flex flex-wrap" style="gap:.5rem">
+  <a class="btn btn-sm btn-outline-primary" href="/staff/ke-toan/chot-so"><i class="fas fa-scale-balanced"></i> Đối soát & chốt sổ</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/thu-chi"><i class="fas fa-book"></i> Sổ quỹ thu chi</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/ke-toan/dong-tien"><i class="fas fa-money-bill-transfer"></i> Dòng tiền</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/bao-cao-lai-lo"><i class="fas fa-chart-line"></i> Lãi lỗ</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/cong-no-ncc"><i class="fas fa-handshake"></i> Công nợ NCC</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i> Bảng lương</a>
+  <a class="btn btn-sm btn-outline-primary" href="/staff/kitchen/kho/kiem-ke"><i class="fas fa-clipboard-list"></i> Kiểm kê & hao hụt</a>
+</div></div>
+
+<%- include('../partials/footer') %>

@@ -115,6 +115,9 @@
             <span><%= t('chung.dat_ban') %></span>
           </a>
 
+          <% if (session.userlogin) { %>
+            <%- include('chuong-thong-bao', { laTb: 'khach', trangTb: '/tai-khoan/thong-bao', toiTb: true }) %>
+          <% } %>
           <!-- Nut chuyen doi che do Sang / Toi -->
           <button type="button" class="nh-theme-btn" id="nh-theme-toggle" title="<%= t('giao_dien.doi_giao_dien') %>" aria-label="<%= t('giao_dien.doi_giao_dien') %>">
             <i class="fas fa-moon" id="nh-theme-icon"></i>

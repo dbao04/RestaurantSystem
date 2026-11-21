@@ -784,24 +784,13 @@ const personnelService = {
   },
 
   // ============ NOTIFICATIONS ============
-  getNotifications: async (staffId) => {
-    const [rows] = await db.query(
-      'SELECT * FROM thong_bao WHERE (id_nv = ? OR id_nv IS NULL) ORDER BY created_at DESC',
-      [staffId]
-    );
-    return rows;
-  },
+  // Thong bao nhan vien: dung services/thongBaoService.js (doi_tuong = 'nv').
+  getNotifications: async (staffId) => require('./thongBaoService').dsCuaToi({ idNv: staffId }, { gioiHan: 200 }),
 
-  countUnread: async (staffId) => {
-    const [rows] = await db.query(
-      'SELECT COUNT(*) as count FROM thong_bao WHERE (id_nv = ? OR id_nv IS NULL) AND da_doc = 0',
-      [staffId]
-    );
-    return rows[0].count || 0;
-  },
+  countUnread: async (staffId) => (staffId ? require('./thongBaoService').demChuaDoc({ idNv: staffId }) : 0),
 
   markNotificationRead: async (notificationId) => {
-    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE id = ?', [notificationId]);
+    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE id_tb = ?', [notificationId]);
   }
 };
 

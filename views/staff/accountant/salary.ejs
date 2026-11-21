@@ -14,6 +14,10 @@
   var paidAmount = sum.paid_amount || 0;
   var msgText = (typeof msg !== 'undefined') ? msg : null;
   var msgStyle = (typeof msgType !== 'undefined') ? msgType : 'success';
+  // Quan ly duyet (ky) bang luong; ke toan lap + chi. Xem services/accountantService.js.
+  var laQuanLyDuyet = !!(session.adminlogin || session.staffRole === 'Quan ly' ||
+    (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly'])));
+  var dsTraVe = sList.filter(function (x) { return Number(x.trang_thai) === 0 && x.ly_do_tra_ve; });
 %>
 <%- include('../partials/header') %>
 
@@ -237,6 +241,9 @@
     </div>
   </div>
 
+  <% if (dsTraVe.length) { %>
+    <div class="alert alert-warning py-2"><i class="fas fa-rotate-left"></i> Quản lý đã trả về <%= dsTraVe.length %> bảng lương - lý do: <b><%= dsTraVe[0].ly_do_tra_ve %></b>. Sửa rồi gửi duyệt lại.</div>
+  <% } %>
   <!-- Thanh Thao tác Hành động Nhanh -->
   <div class="salary-toolbar">
     <div class="d-flex flex-wrap align-items-center gap-2">
@@ -260,11 +267,32 @@
         </form>
       <% } %>
 
-      <!-- Nút Chi lương tất cả -->
-      <% if (approvedCount > 0) { %>
-        <form action="/staff/accountant/salary/pay-all" method="POST" class="d-inline mr-2" onsubmit="return confirm('Xác nhận đã chi trả lương cho <%= approvedCount %> nhân viên đã duyệt trong tháng <%= month %>/<%= year %>?')">
+      <!-- QUAN LY duyet / tra ve bang luong cho duyet -->
+      <% if (pendingCount > 0 && laQuanLyDuyet) { %>
+        <form action="/staff/accountant/salary/approve-all" method="POST" class="d-inline mr-2" onsubmit="return confirm('Duyệt (ký) <%= pendingCount %> bảng lương tháng <%= month %>/<%= year %>? Sau khi duyệt kế toán mới chi được.')">
           <input type="hidden" name="month" value="<%= month %>">
           <input type="hidden" name="year" value="<%= year %>">
+          <button type="submit" class="btn btn-primary font-weight-bold shadow-sm"><i class="fas fa-signature mr-1"></i> Duyệt bảng lương (<%= pendingCount %>)</button>
+        </form>
+        <form action="/staff/accountant/salary/reject-all" method="POST" class="d-inline-flex align-items-center mr-2" style="gap:4px">
+          <input type="hidden" name="month" value="<%= month %>">
+          <input type="hidden" name="year" value="<%= year %>">
+          <input name="ly_do" class="form-control form-control-sm" style="width:220px" placeholder="Lý do trả về (bắt buộc)" required minlength="5" aria-label="Lý do trả về">
+          <button type="submit" class="btn btn-outline-danger btn-sm font-weight-bold">Trả về</button>
+        </form>
+      <% } else if (pendingCount > 0) { %>
+        <span class="badge badge-warning p-2 mr-2"><i class="fas fa-hourglass-half"></i> <%= pendingCount %> bảng lương đang chờ Quản lý duyệt</span>
+      <% } %>
+
+      <!-- Nút Chi lương tất cả -->
+      <% if (approvedCount > 0) { %>
+        <form action="/staff/accountant/salary/pay-all" method="POST" class="d-inline-flex align-items-center mr-2" style="gap:4px" onsubmit="return confirm('Chi lương cho <%= approvedCount %> nhân viên đã duyệt tháng <%= month %>/<%= year %>? Hệ thống sẽ lập một phiếu chi trong sổ quỹ.')">
+          <input type="hidden" name="month" value="<%= month %>">
+          <input type="hidden" name="year" value="<%= year %>">
+          <select name="phuong_thuc" class="form-control form-control-sm" style="width:150px" aria-label="Hình thức chi">
+            <option value="chuyen_khoan">Chuyển khoản</option>
+            <option value="tien_mat">Tiền mặt</option>
+          </select>
           <button type="submit" class="btn text-white font-weight-bold shadow-sm" style="background: #2e7d4f; border-color: #2e7d4f;">
             <i class="fas fa-money-bill-wave mr-1"></i> Thanh toán tất cả (<%= approvedCount %>)
           </button>

@@ -657,6 +657,8 @@ async function hauKyThanhToan(paymentId, { maGiamGia = null, diemDung = 0 } = {}
         await db.query('UPDATE ban SET trangthai = 3, sesis_hien_tai = NULL WHERE Id_ban = ?', [don.id_ban]);
       }
       ketQua.donDaTraDu = true;
+      // Bao phuc vu don ban; khach tu chuyen khoan thi bao ca thu ngan.
+      require('./thongBaoNghiepVu').sauThanhToanTaiBan({ sesis: p.sesis, idBan: don.id_ban, payment: p });
     }
   }
 
@@ -1184,6 +1186,7 @@ async function hoanTatBangTienCoc(sesis, { nhanVienId = null } = {}) {
   await db.query('UPDATE qr_tables SET active_sesis = NULL WHERE active_sesis = ?', [sesis]);
   if (hoaDon.thongTin && hoaDon.thongTin.id_ban) {
     await db.query('UPDATE ban SET trangthai = 3, sesis_hien_tai = NULL WHERE Id_ban = ?', [hoaDon.thongTin.id_ban]);
+    require('./thongBaoNghiepVu').sauThanhToanTaiBan({ sesis, idBan: hoaDon.thongTin.id_ban, payment: { processed_by: nhanVienId || -1 } });
   }
 
   // Đồng bộ trạng thái lượt đặt bàn sang COMPLETED và lưu số tiền hoàn cọc thừa (nếu có)

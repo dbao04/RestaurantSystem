@@ -368,7 +368,9 @@ async function quetQuaHan() {
     try {
       // Tien vua ve dung luc het han thi uu tien xac nhan don.
       const hoaDon = await require('./thanhToanService').layHoaDon(d.sesis, { goiY: false });
-      if (hoaDon.tien.con_phai_tra <= 0) { await sauKhiThanhToan(d.sesis, 0); continue; }
+      // Goi qua module.exports (khong goi ham noi bo) de lop thong bao bat duoc
+      // "don cho phan shipper" ca khi tien ve muon va duoc quet lai o day.
+      if (hoaDon.tien.con_phai_tra <= 0) { await module.exports.sauKhiThanhToan(d.sesis, 0); continue; }
       await huyDon(d.id_giao, { ma_ly_do: 'qua_han_thanh_toan', nguoi: { ten: 'Hệ thống', heThong: true } });
       n++;
     } catch (e) {

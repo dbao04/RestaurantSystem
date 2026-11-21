@@ -192,6 +192,29 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
 
+/*
+ * GHI PHIEN XONG ROI MOI CHUYEN HUONG.
+ *
+ * express-session luu phien o res.end(), nhung no GUI TRUOC dong trang thai +
+ * header (302 + Location) roi moi doi kho luu ghi xong. Trinh duyet thay 302 la
+ * di tiep ngay. Voi MemoryStore ghi tuc thi nen khong sao; voi kho MySQL
+ * (utils/phienMySql.js) ghi mat vai ms - trang dich toi TRUOC khi phien vao DB,
+ * khong thay phien -> nguoi vua dang nhap bi day ve trang dang nhap (loi chap
+ * chon, hay gap luc server ban). Luu phien truoc khi goi redirect that.
+ * express-session boc san save() de ghi nho da luu - cuoi request khong luu lai.
+ */
+app.use((req, res, next) => {
+  const chuyenHuong = res.redirect.bind(res);
+  res.redirect = function (...thamSo) {
+    if (!req.session || typeof req.session.save !== 'function') return chuyenHuong(...thamSo);
+    req.session.save((loi) => {
+      if (loi) console.error('[phien] không lưu được phiên trước khi chuyển hướng:', loi.message);
+      chuyenHuong(...thamSo);
+    });
+  };
+  next();
+});
+
 app.use(async (req, res, next) => {
   // Tạo plain object an toàn thay vì truyền Session object trực tiếp
   // (Session object có internal props như .name gây ra [object Object] trong EJS)
@@ -382,6 +405,10 @@ const requireRole = phanQuyenMw.canVaiTroCu;
 app.use(require('./middleware/baoDoi')());
 
 // --- Cac phan he moi: phan tich du lieu, du bao ML, goi y AI ---
+// Tang luong thong bao: boc cac ham nghiep vu de gui thong bao cho dung vai tro.
+// Phai chay TRUOC khi nap route: route nao cat san tham chieu ham (vd. bang BUOC
+// cua routes/kds.js) se giu ham GOC neu boc sau -> mat thong bao.
+require('./services/thongBaoNghiepVu').cai();
 app.use(['/analytics', '/staff/analytics'], require('./routes/analytics'));
 app.use('/', require('./routes/forecast'));
 // Tro ly ao: widget khach hang + trang quan tri /admin/chatbot.
@@ -427,6 +454,10 @@ app.use('/', require('./routes/nghiPhep'));
 app.use('/', require('./routes/phanTichThucDon'));
 // Bao cao lai lo quan tri
 app.use('/', require('./routes/laiLo'));
+// Ke toan mo rong: dashboard, doi soat & chot so, dong tien, ngan sach - routes/keToanTongHop.js
+app.use('/', require('./routes/keToanTongHop'));
+// Thong bao moi vai tro (chuong, trang thong bao, luong) - routes/thongBao.js
+app.use('/', require('./routes/thongBao'));
 // Bep: thong ke, xuat nhap kho, mua hang NVL - routes/khoBep.js
 app.use('/', require('./routes/khoBep'));
 
@@ -2672,7 +2703,7 @@ app.post('/staff/qr-codes/delete/:id', requireRole(['Quay', 'Quan ly']), async (
 // ============================================================
 
 // Lấy danh sách món để staff chọn (API JSON)
-app.get('/staff/bookings/dishes', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
+app.get('/staff/bookings/dishes', requireRole(['Phuc vu', 'Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
     const categories = await menuService.getAllCategories();
     const [dishes] = await db.query(
@@ -2697,6 +2728,8 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Quay', 'Qua
     if (!qty) return res.json({ success: false, message: `Số lượng phải từ 1 đến ${orderService.SO_LUONG_TOI_DA_NHAN_VIEN}!` });
 
     await orderService.addDishToOrder(sesis, id_mon, qty);
+    // Phuc vu goi mon cho ban -> nhan thong bao "mon xong" cua ban nay.
+    await require('./services/thongBaoNghiepVu').ghiNhanPhucVu(sesis, req.session.staffId);
 
     // Thông báo bếp và phòng nhân viên
     io.to('kitchen_room').emit('new-order-to-kitchen', {
@@ -2752,6 +2785,34 @@ app.post('/staff/huy-mon/:id', requireRole(['Phuc vu', 'Quay', 'Thu ngan', 'Quan
     }
     console.error('Lỗi hủy món:', err);
     res.status(500).json({ success: false, message: 'Lỗi hệ thống khi hủy món.' });
+  }
+});
+
+/**
+ * NHAT KY XOA MON cho quan ly / giam sat - cung nhom nguoi nhan thong bao xoa
+ * mon (huyMonService.nguoiNhanThongBao): Quan ly, Tro ly quan ly, cac Giam sat.
+ */
+function laQuanLyHoacGiamSat(req) {
+  if (laQuanLyPhien(req)) return true;
+  const hs = req.hoSo || {};
+  return /^Giám sát/.test(String(hs.ten_cd || '')) || (hs.ten_bp === 'Điều hành' && Number(hs.cap_bac) <= 2);
+}
+app.get('/staff/huy-mon/nhat-ky', requireStaff, async (req, res) => {
+  if (!laQuanLyHoacGiamSat(req)) return res.status(403).send('Chỉ quản lý và giám sát xem được nhật ký xóa món.');
+  try {
+    const { ngayCucBo } = require('./utils/thoiGian');
+    const hn = ngayCucBo();
+    const hop = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) ? String(s) : null);
+    const tuNgay = hop(req.query.tu) || hn;
+    const denNgay = hop(req.query.den) || hn;
+    const kq = await require('./services/huyMonService').nhatKy({ tuNgay, denNgay, idNv: req.query.nv || null });
+    res.render('staff/huy-mon-nhat-ky', {
+      title: 'Nhật ký xóa món', activePage: 'huy-mon-nhat-ky',
+      ...kq, tuNgay, denNgay, nv: req.query.nv || '',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 

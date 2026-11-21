@@ -187,6 +187,7 @@
       <h1><%= hoTen %></h1>
       <p><%= shipper.ten_dv %><%= shipper.bien_so ? ' · ' + shipper.bien_so : '' %></p>
     </div>
+    <%- include('partials/chuong-thong-bao', { laTb: 'nv', trangTb: '/staff/thong-bao', toiTb: true }) %>
     <button class="ca <%= shipper.trang_thai === 'nghi' ? 'ca--tat' : 'ca--bat' %>" id="nut-ca">
       <%= shipper.trang_thai === 'nghi' ? 'Vào ca' : 'Tan ca' %>
     </button>

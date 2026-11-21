@@ -209,11 +209,88 @@ async function testGiaoHang(nv) {
     ok('Không hủy lại đơn đã hủy', /loi=/.test(khHuy.location));
   } else ok('Tạo đơn thứ 3 (hủy do nhà hàng)', false);
 
+  // Don 4: di HET luong giao hang - kiem tra THONG BAO cho tung vai tro o moi buoc.
+  await kichBanThongBaoGiaoHang(kh, dp);
+
   const shipperXem = await (await dangNhapNV('phucvu')).goi('/staff/giao-hang/dieu-phoi');
   ok('RBAC: Phục vụ không vào được trang điều phối giao hàng', shipperXem.status !== 200, `HTTP ${shipperXem.status}`);
 }
 
 // ====================================================================== B
+/**
+ * Thong bao theo luong giao hang: tra tien -> dieu phoi biet; phan don -> shipper
+ * biet; shipper nhan -> dieu phoi biet; bep xong mon cuoi -> shipper den lay;
+ * dang giao / da giao -> khach + dieu phoi biet.
+ */
+async function kichBanThongBaoGiaoHang(kh, dp) {
+  const [[moc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
+  const choTb = async (loai, dk = () => true) => {
+    for (let i = 0; i < 30; i++) {
+      const [r] = await db.query(
+        `SELECT t.*, n.username FROM thong_bao t LEFT JOIN nhan_vien n ON n.id_nv = t.id_nv
+          WHERE t.id_tb > ? AND t.loai = ?`, [moc.m, loai]);
+      const loc = r.filter(dk);
+      if (loc.length) return loc;
+      await new Promise((ok2) => setTimeout(ok2, 150));
+    }
+    return [];
+  };
+  const d4 = await datDonGiao(kh);
+  if (!d4.sesis) { ok('Tạo đơn thứ 4 (luồng thông báo giao hàng)', false); return; }
+  await kh.goi(`/thanh-toan/don-hang/${encodeURIComponent(d4.sesis)}/gia-lap`, { method: 'POST', json: {} });
+  let g4 = await donGiao(d4.sesis);
+  let tb = await choTb('don_giao_moi', (x) => x.tieu_de.includes(g4.ma_giao) && x.username === 'dieuphoi');
+  ok('TB: khách trả tiền đơn giao → Điều phối nhận "chờ phân shipper"', tb.some((x) => x.username === 'dieuphoi'), tb.map((x) => x.username).join(','));
+
+  const sp = await dangNhapNV('shipper1');
+  const [[s1]] = await db.query("SELECT s.id_shipper, s.id_nv FROM shipper s JOIN nhan_vien n ON n.id_nv = s.id_nv WHERE n.username = 'shipper1'");
+  const phan = await dp.goi(`/staff/giao-hang/${g4.id_giao}/phan`, { method: 'POST', form: { id_shipper: String(s1.id_shipper) } });
+  g4 = await donGiao(d4.sesis);
+  ok('Điều phối phân đơn cho shipper1', Number(g4.id_shipper) === Number(s1.id_shipper), `${phan.status} ${g4.trang_thai}`);
+  tb = await choTb('don_giao_phan', (x) => Number(x.id_nv) === Number(s1.id_nv) && x.tieu_de.includes(g4.ma_giao));
+  ok('TB: shipper được phân nhận "Bạn được phân đơn" (link app shipper)', tb.length === 1 && tb[0].link === '/shipper/', tb[0] && tb[0].tieu_de);
+
+  await sp.goi(`/api/shipper/don/${g4.id_giao}/xac-nhan`, { method: 'POST', json: {} });
+  tb = await choTb('don_giao_nhan', (x) => x.tieu_de.includes(g4.ma_giao) && x.username === 'dieuphoi');
+  ok('TB: shipper xác nhận nhận đơn → Điều phối biết', tb.some((x) => x.username === 'dieuphoi'));
+
+  // Bep lam xong TUNG mon: chi mon CUOI moi bao shipper den lay (1 lan).
+  const bep = await dangNhapNV('daubep');
+  const [mon] = await db.query('SELECT id FROM hopdong WHERE sesis = ? AND id_mon > 0 AND soluong > 0', [d4.sesis]);
+  for (const m of mon) await bep.goi(`/kds/api/hoan-thanh/${m.id}`, { method: 'POST', json: {} });
+  // Cho RIENG tung nguoi nhan: thong bao ghi lan luot tung dong.
+  const bxDp = await choTb('don_giao_bep_xong', (x) => x.tieu_de.includes(g4.ma_giao) && x.username === 'dieuphoi');
+  tb = await choTb('don_giao_bep_xong', (x) => x.tieu_de.includes(g4.ma_giao) && Number(x.id_nv) === Number(s1.id_nv));
+  ok('TB: bếp xong món cuối đơn giao → shipper được báo đến lấy + Điều phối',
+    tb.length === 1 && bxDp.length === 1, `${mon.length} món, shipper ${tb.length}, điều phối ${bxDp.length}`);
+  const [phucVu] = await db.query("SELECT t.id_tb FROM thong_bao t WHERE t.id_tb > ? AND t.loai = 'mon_xong'", [moc.m]);
+  ok('TB: món của đơn giao KHÔNG báo nhầm cho phục vụ bàn', phucVu.length === 0);
+
+  // Shipper di lay -> giao -> giao xong (toa do dung diem giao de qua kiem tra GPS).
+  const viTri = { vi_do: String(g4.vi_do), kinh_do: String(g4.kinh_do) };
+  const buoc = async (tt) => (await sp.goi(`/api/shipper/don/${g4.id_giao}/trang-thai`, { method: 'POST', json: { trang_thai: tt, ...viTri } })).data || {};
+  let r = await buoc('dang_lay');
+  tb = await choTb('don_giao_nhan', (x) => /đang đến lấy/.test(x.tieu_de) && x.tieu_de.includes(g4.ma_giao) && x.username === 'dieuphoi');
+  ok('TB: shipper "đang lấy hàng" → Điều phối biết', r.ok && tb.some((x) => x.username === 'dieuphoi'), r.thong_bao);
+  await sp.goi(`/api/shipper/don/${g4.id_giao}/kiem-hang`, { method: 'POST', json: { mon_ids: mon.map((m) => m.id), niem_phong: true } });
+  r = await buoc('dang_giao');
+  const [[khDb]] = await db.query('SELECT id FROM khach_hang WHERE sodienthoai = ?', [kh.kh.sodienthoai]);
+  tb = await choTb('don_giao_khach', (x) => Number(x.id_kh) === Number(khDb.id) && /đang trên đường/.test(x.tieu_de));
+  ok('TB: đang giao → khách nhận "đơn đang trên đường giao"', r.ok && tb.length === 1, r.thong_bao);
+  await sp.goi(`/api/shipper/don/${g4.id_giao}/den-noi`, { method: 'POST', json: viTri });
+  const [[ma]] = await db.query('SELECT ma_nhan_hang FROM don_giao_hang WHERE id_giao = ?', [g4.id_giao]);
+  r = (await sp.goi(`/api/shipper/don/${g4.id_giao}/trang-thai`, { method: 'POST',
+    json: { trang_thai: 'da_giao', ...viTri, ma_nhan_hang: ma && ma.ma_nhan_hang } })).data || {};
+  g4 = await donGiao(d4.sesis);
+  ok('Shipper giao thành công đơn 4', g4.trang_thai === 'da_giao', r.thong_bao);
+  tb = await choTb('don_giao_hoan_thanh', (x) => x.tieu_de.includes(g4.ma_giao) && x.username === 'dieuphoi');
+  ok('TB: giao xong → Điều phối nhận "đã giao xong"', tb.some((x) => x.username === 'dieuphoi'));
+  tb = await choTb('don_giao_khach', (x) => Number(x.id_kh) === Number(khDb.id) && /giao thành công/.test(x.tieu_de));
+  ok('TB: giao xong → khách nhận "đã giao thành công"', tb.length === 1);
+  const chuong = await kh.goi('/api/thong-bao?la=khach');
+  ok('Chuông khách hàng hiện thông báo đơn giao', chuong.data && chuong.data.ds && chuong.data.ds.some((x) => x.loai === 'don_giao_khach'));
+}
+
 async function testQuyMoBan() {
   nhom('B. Ràng buộc quy mô bàn (đặt bàn)');
   const ch = await rules.docCauHinh();
@@ -372,7 +449,11 @@ async function testThuChi() {
   }
   const ktLap = await kt.goi('/api/staff/thu-chi/phieu', { method: 'POST', json: hl });
   if (ktLap.data && ktLap.data.id) DON_DEP.phieu.push(ktLap.data.id);
-  ok('RBAC: Kế toán chỉ xem, không lập phiếu thu chi', ktLap.status !== 201, `HTTP ${ktLap.status}`);
+  // Tai lieu chuc nang ke toan: KE TOAN lap phieu chi; thu ngan chi lap khoan nho tai quay.
+  ok('RBAC: Kế toán lập được phiếu thu chi', ktLap.status === 201, `HTTP ${ktLap.status}`);
+  const tnLon = await tn.goi('/api/staff/thu-chi/phieu', { method: 'POST', json: { ...hl, loai: 'chi', danh_muc: 'vat_tu', so_tien: '50000000' } });
+  if (tnLon.data && tnLon.data.id) DON_DEP.phieu.push(tnLon.data.id);
+  ok('RBAC: Thu ngân không lập phiếu chi lớn (vượt hạn mức quầy)', tnLon.status === 403, `HTTP ${tnLon.status}`);
   const pv = await (await dangNhapNV('phucvu')).goi('/staff/thu-chi');
   ok('RBAC: Phục vụ không xem được sổ thu chi', pv.status !== 200, `HTTP ${pv.status}`);
   const cc = await tn.goi('/staff/chot-ca/tong-hop');
@@ -563,6 +644,8 @@ async function donDep() {
     const [ma] = await db.query('SELECT reservation_code FROM reservations WHERE id IN (?)', [DON_DEP.rsv]);
     const q2 = (sql, v) => db.query(sql, [v]).catch((e) => console.warn('  (dọn dẹp)', e.message));
     if (ma.length) await q2('DELETE FROM hopdong WHERE sesis IN (?)', ma.map((x) => x.reservation_code));
+    // Coc dat ban dong bo sang payments theo ma dat ban - xoa kem (khong de tien coc ao).
+    if (ma.length) await q2('DELETE FROM payments WHERE sesis IN (?)', ma.map((x) => x.reservation_code));
     for (const t of ['reservation_preorders', 'reservation_tables', 'reservation_history']) await q2(`DELETE FROM ${t} WHERE reservation_id IN (?)`, DON_DEP.rsv);
     await q2('DELETE FROM reservations WHERE id IN (?)', DON_DEP.rsv);
   }
@@ -585,15 +668,18 @@ async function donDep() {
  * that (vd quanly) da doi mat khau rieng. Trong luc chay: tam tat luat doi mat
  * khau + tam dat 123456; KET THUC luon tra lai dung nhu cu.
  */
-const TK_TEST = ['beptruong', 'daubep', 'dieuphoi', 'ketoan', 'letan', 'phucvu', 'quanly', 'thungan'];
+const TK_TEST = ['beptruong', 'daubep', 'dieuphoi', 'ketoan', 'letan', 'phucvu', 'quanly', 'shipper1', 'thungan'];
 async function chuanBiTaiKhoan() {
   const md5 = require('md5');
   const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
   const [[co]] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
   const [[kh]] = await db.query('SELECT COALESCE(MAX(id), 0) AS m FROM khach_hang');
+  const [[tbMoc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
   for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
   if (co) await db.query("UPDATE cau_hinh SET gia_tri = '0' WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
   return async () => {
+    await new Promise((ok) => setTimeout(ok, 800));   // thong bao gui nen ghi xong
+    await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [tbMoc.m]).catch(() => {});
     for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
     if (co) await db.query("UPDATE cau_hinh SET gia_tri = ? WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'", [co.gia_tri]).catch(() => {});
     // Khach AUTOTEST do lan chay nay dang ky (taoKhach) + MOI don / thanh toan

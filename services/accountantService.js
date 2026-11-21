@@ -1,5 +1,29 @@
 const db = require('../config/db');
 
+/**
+ * LUONG: ke toan LAP -> gui duyet -> QUAN LY duyet (ky) -> ke toan CHI.
+ *   0 du thao   ke toan tinh / sua tu do
+ *   1 cho duyet KHOA sua; quan ly duyet hoac tra ve du thao (kem ly do)
+ *   2 da duyet  KHOA sua; ke toan chi
+ *   3 da chi    KHOA; da sinh phieu chi trong so quy (danh muc luong)
+ * Nguoi gui duyet khong tu duyet (Ke toan truong cung dong vai Quan ly).
+ */
+class LoiLuong extends Error { constructor(m) { super(m); this.name = 'LoiLuong'; } }
+let daDamBaoLuong = false;
+async function damBaoCotLuong() {
+  if (daDamBaoLuong) return;
+  const [cot] = await db.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'luong'`);
+  const co = new Set(cot.map((c) => c.COLUMN_NAME));
+  const them = [
+    ['id_nv_gui', 'INT NULL'], ['gui_luc', 'DATETIME NULL'], ['id_nv_duyet', 'INT NULL'],
+    ['ly_do_tra_ve', 'VARCHAR(255) NULL'], ['ngay_chi', 'DATETIME NULL'], ['id_nv_chi', 'INT NULL'],
+    ['phuong_thuc_chi', 'VARCHAR(20) NULL'], ['id_phieu_chi', 'INT NULL'],
+  ];
+  for (const [ten, kieu] of them) if (!co.has(ten)) await db.query(`ALTER TABLE luong ADD COLUMN ${ten} ${kieu}`);
+  daDamBaoLuong = true;
+}
+
 const accountantService = {
   getAttendance: async (id, year, month) => {
     let query = `SELECT * FROM cham_cong WHERE id_nv = ?`;
@@ -215,11 +239,20 @@ const accountantService = {
     const cPhat = parseFloat(phat || 0);
     const tong_luong = cLuongCung + cThuong + cPhuCap - cPhat;
 
+    if ([cLuongCung, cCong, cThuong, cPhuCap, cPhat].some((v) => !Number.isFinite(v) || v < 0)) {
+      throw new LoiLuong('Các khoản lương, ngày công, thưởng, phụ cấp, phạt không được âm.');
+    }
+    if (tong_luong < 0) throw new LoiLuong('Tổng lương không được âm (phạt lớn hơn thu nhập).');
     const [existing] = await db.query(
-      "SELECT id_luong FROM luong WHERE id_nv = ? AND thang = ? AND nam = ?",
+      "SELECT id_luong, trang_thai FROM luong WHERE id_nv = ? AND thang = ? AND nam = ?",
       [id_nv, thang, nam]
     );
     if (existing.length > 0) {
+      // Da gui duyet / da duyet / da chi thi KHOA - truoc day ghi de va dua ve du thao,
+      // sua duoc ca bang luong da chi (mat dau vet, co the chi hai lan).
+      if (Number(existing[0].trang_thai) !== 0) {
+        throw new LoiLuong('Bảng lương này đã gửi duyệt hoặc đã chi, không sửa được. Quản lý phải trả về dự thảo trước.');
+      }
       await db.query(
         "UPDATE luong SET luong_cung = ?, so_ngay_cong = ?, thuong = ?, phu_cap = ?, phat = ?, tong_luong = ?, trang_thai = 0 WHERE id_luong = ?",
         [cLuongCung, cCong, cThuong, cPhuCap, cPhat, tong_luong, existing[0].id_luong]
@@ -232,49 +265,109 @@ const accountantService = {
     }
   },
 
-  // Gửi duyệt tất cả bảng lương dự thảo trong tháng
-  submitAllSalaries: async (month, year) => {
+  // Gui duyet bang luong du thao trong thang (ke toan). Ghi ai gui de chan tu duyet.
+  submitAllSalaries: async (month, year, idNvGui = null) => {
+    await damBaoCotLuong();
     const [res] = await db.query(
-      "UPDATE luong SET trang_thai = 1 WHERE thang = ? AND nam = ? AND (trang_thai = 0 OR trang_thai = 'tam_tinh')",
-      [month, year]
+      "UPDATE luong SET trang_thai = 1, id_nv_gui = ?, gui_luc = NOW(), ly_do_tra_ve = NULL WHERE thang = ? AND nam = ? AND trang_thai = 0",
+      [idNvGui, month, year]
     );
     return res.affectedRows;
   },
 
-  // Phê duyệt tất cả bảng lương chờ duyệt trong tháng (Admin / Manager)
-  approveAllSalaries: async (month, year) => {
+  /**
+   * QUAN LY duyet (ky) bang luong cho duyet cua thang.
+   * Khong duyet cac dong do CHINH nguoi duyet gui len (phan tach trach nhiem).
+   */
+  approveAllSalaries: async (month, year, idNvDuyet = null) => {
+    await damBaoCotLuong();
+    const [[tuGui]] = await db.query(
+      'SELECT COUNT(*) AS n FROM luong WHERE thang = ? AND nam = ? AND trang_thai = 1 AND id_nv_gui IS NOT NULL AND id_nv_gui = ?',
+      [month, year, idNvDuyet]);
+    if (idNvDuyet && Number(tuGui.n) > 0) {
+      throw new LoiLuong(`Bạn đã gửi duyệt ${tuGui.n} bảng lương này - người gửi không tự duyệt. Cần quản lý khác duyệt.`);
+    }
     const [res] = await db.query(
-      "UPDATE luong SET trang_thai = 2, ngay_duyet = NOW() WHERE thang = ? AND nam = ? AND (trang_thai = 1 OR trang_thai = 'gui_duyet')",
-      [month, year]
+      "UPDATE luong SET trang_thai = 2, ngay_duyet = NOW(), id_nv_duyet = ? WHERE thang = ? AND nam = ? AND trang_thai = 1",
+      [idNvDuyet, month, year]
     );
     return res.affectedRows;
   },
 
-  // Trả về dự thảo tất cả bảng lương trong tháng
-  rejectAllSalaries: async (month, year) => {
+  // Quan ly tra ve du thao (bat buoc ly do) de ke toan sua.
+  rejectAllSalaries: async (month, year, lyDo = '', idNvDuyet = null) => {
+    await damBaoCotLuong();
+    const ly = String(lyDo || '').trim();
+    if (ly.length < 5) throw new LoiLuong('Phải ghi lý do trả về để kế toán biết cần sửa gì.');
     const [res] = await db.query(
-      "UPDATE luong SET trang_thai = 0 WHERE thang = ? AND nam = ? AND (trang_thai = 1 OR trang_thai = 'gui_duyet')",
-      [month, year]
+      "UPDATE luong SET trang_thai = 0, ly_do_tra_ve = ?, id_nv_duyet = ? WHERE thang = ? AND nam = ? AND trang_thai = 1",
+      [ly.slice(0, 255), idNvDuyet, month, year]
     );
     return res.affectedRows;
   },
 
-  // Chi lương hàng loạt cho tất cả nhân viên đã được duyệt trong tháng
-  payAllSalaries: async (month, year) => {
-    const [res] = await db.query(
-      "UPDATE luong SET trang_thai = 3 WHERE thang = ? AND nam = ? AND (trang_thai = 2 OR trang_thai = 'da_duyet')",
-      [month, year]
-    );
-    return res.affectedRows;
+  /**
+   * Ke toan CHI luong da duyet: doi sang "da chi" VA sinh MOT phieu chi (danh muc
+   * luong) trong so quy cho ca dot - truoc day chi doi trang thai, so quy khong
+   * thay tien luong ra. Bang luong 0d khong chi (thuong do thieu cham cong).
+   * @param {number[]|null} ids  null = moi bang luong da duyet cua thang
+   */
+  paySalaries: async (month, year, { ids = null, phuongThuc = 'chuyen_khoan', idNvChi = null } = {}) => {
+    await damBaoCotLuong();
+    if (!['tien_mat', 'chuyen_khoan'].includes(phuongThuc)) throw new LoiLuong('Hình thức chi không hợp lệ.');
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      const loc = Array.isArray(ids) && ids.length ? ' AND l.id_luong IN (?)' : '';
+      const [ds] = await conn.query(
+        `SELECT l.id_luong, l.tong_luong, n.ten FROM luong l JOIN nhan_vien n ON n.id_nv = l.id_nv
+          WHERE l.thang = ? AND l.nam = ? AND l.trang_thai = 2${loc} FOR UPDATE`,
+        loc ? [month, year, ids.map(Number)] : [month, year]);
+      if (!ds.length) throw new LoiLuong('Không có bảng lương đã duyệt nào để chi.');
+      const khong = ds.filter((d) => !(Number(d.tong_luong) > 0));
+      if (khong.length) {
+        throw new LoiLuong(`Không chi được bảng lương 0đ: ${khong.slice(0, 5).map((d) => String(d.ten).trim()).join(', ')}${khong.length > 5 ? '…' : ''}. Kiểm tra chấm công / thiết lập lương rồi tính lại.`);
+      }
+      const tong = Math.round(ds.reduce((t, d) => t + Number(d.tong_luong), 0));
+      const thuChi = require('./thuChiService');
+      const ma = await thuChi.taoMaPhieu(conn, 'chi');
+      const [pc] = await conn.query(
+        `INSERT INTO phieu_thu_chi (ma_phieu, loai, danh_muc, so_tien, phuong_thuc, doi_tuong, noi_dung, so_chung_tu, thoi_diem, id_nv)
+         VALUES (?, 'chi', 'luong', ?, ?, ?, ?, ?, NOW(), ?)`,
+        [ma, tong, phuongThuc, `${ds.length} nhân viên`,
+          `Chi lương tháng ${month}/${year} cho ${ds.length} nhân viên`, `LUONG-${year}-${String(month).padStart(2, '0')}`, idNvChi]);
+      await conn.query(
+        `UPDATE luong SET trang_thai = 3, ngay_chi = NOW(), id_nv_chi = ?, phuong_thuc_chi = ?, id_phieu_chi = ?
+          WHERE id_luong IN (?) AND trang_thai = 2`,
+        [idNvChi, phuongThuc, pc.insertId, ds.map((d) => d.id_luong)]);
+      await conn.query(
+        `INSERT INTO audit_logs (action, actor_type, actor_id, resource_type, resource_id, status, details)
+         VALUES ('chi_luong', 'staff', ?, 'phieu_thu_chi', ?, 'success', ?)`,
+        [idNvChi, pc.insertId, JSON.stringify({ thang: month, nam: year, so_nv: ds.length, tong, ma_phieu: ma })]).catch(() => {});
+      await conn.commit();
+      return { so_nv: ds.length, tong, ma_phieu: ma };
+    } catch (e) {
+      await conn.rollback().catch(() => {});
+      throw e;
+    } finally {
+      conn.release();
+    }
   },
 
-  submitSalaryForApproval: async (id) => {
-    await db.query("UPDATE luong SET trang_thai = 1 WHERE id_luong = ? AND (trang_thai = 0 OR trang_thai = 'tam_tinh')", [id]);
+  payAllSalaries: async (month, year, o = {}) => (await accountantService.paySalaries(month, year, o)).so_nv,
+
+  submitSalaryForApproval: async (id, idNvGui = null) => {
+    await damBaoCotLuong();
+    await db.query("UPDATE luong SET trang_thai = 1, id_nv_gui = ?, gui_luc = NOW(), ly_do_tra_ve = NULL WHERE id_luong = ? AND trang_thai = 0", [idNvGui, id]);
   },
 
-  paySalary: async (id) => {
-    await db.query("UPDATE luong SET trang_thai = 3 WHERE id_luong = ? AND (trang_thai = 2 OR trang_thai = 'da_duyet')", [id]);
+  paySalary: async (id, o = {}) => {
+    const [[l]] = await db.query('SELECT thang, nam FROM luong WHERE id_luong = ?', [id]);
+    if (!l) throw new LoiLuong('Không tìm thấy bảng lương.');
+    return accountantService.paySalaries(l.thang, l.nam, { ...o, ids: [Number(id)] });
   },
+
+  LoiLuong,
 
   getPendingSalaries: async (month, year) => {
     let query = `

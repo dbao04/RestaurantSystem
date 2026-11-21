@@ -109,12 +109,22 @@ def _du_bao_de_quy(
     cot_dac_trung: list[str],
     so_ngay: int,
 ) -> pd.DataFrame:
-    """Du bao `so_ngay` ngay tiep theo bang cach lan luot noi dai chuoi."""
+    """Du bao `so_ngay` ngay KE TU HOM NAY bang cach lan luot noi dai chuoi.
+
+    Neu du lieu lich su dung truoc hom nay (nha hang chua nhap don moi, CSDL
+    demo cu...), khoang trong giua ngay cuoi cua du lieu va hom nay cung duoc
+    du bao de quy (gia dinh van hanh binh thuong) roi bo di - chi tra ve cac
+    ngay tu hom nay. Truoc day moc la ngay cuoi cua du lieu nen du bao co the
+    roi hoan toan vao qua khu va trang /du-bao khong con gi de ve.
+    """
     lam_viec = lich_su[["ngay", cot_muc_tieu]].copy()
     ngay_goc = pd.to_datetime(lam_viec["ngay"].min())
     ket_qua = []
+    hom_nay = _hom_nay()
+    khoang_trong = max(0, (hom_nay - pd.to_datetime(lam_viec["ngay"].max())).days - 1)
+    khoang_trong = min(khoang_trong, SO_NGAY_BU_TOI_DA)
 
-    for _ in range(so_ngay):
+    for _ in range(so_ngay + khoang_trong):
         ngay_moi = lam_viec["ngay"].max() + pd.Timedelta(days=1)
         # Chi can lay 35 dong cuoi (du cho cua so truot 28 ngay) de tinh nhanh
         cua_so = lam_viec.tail(35)
@@ -137,7 +147,18 @@ def _du_bao_de_quy(
             ignore_index=True,
         )
 
-    return pd.DataFrame(ket_qua)
+    kq = pd.DataFrame(ket_qua)
+    return kq[kq["ngay"] >= hom_nay].head(so_ngay).reset_index(drop=True) if khoang_trong else kq
+
+
+# Bu toi da 1 nam khoang trong; xa hon nua thi du bao vo nghia, chap nhan du
+# bao bat dau tu ngay cuoi du lieu + 1 nam.
+SO_NGAY_BU_TOI_DA = 366
+
+
+def _hom_nay() -> pd.Timestamp:
+    """Ngay hom nay theo gio Viet Nam (server co the dat mui gio UTC)."""
+    return pd.Timestamp.now(tz="Asia/Ho_Chi_Minh").tz_localize(None).normalize()
 
 
 # --------------------------------------------------------------------------
@@ -303,7 +324,8 @@ def du_bao_nguyen_lieu(so_ngay: int = 7, toi_thieu_ngay: int = 90, luu_db: bool 
             du_bao = pd.DataFrame(
                 {
                     "ngay": pd.date_range(
-                        chuoi["ngay"].max() + pd.Timedelta(days=1), periods=so_ngay, freq="D"
+                        max(chuoi["ngay"].max() + pd.Timedelta(days=1), _hom_nay()),
+                        periods=so_ngay, freq="D",
                     ),
                     "du_bao": tb,
                 }

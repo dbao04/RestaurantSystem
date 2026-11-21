@@ -35,17 +35,72 @@ const DANH_MUC = {
     dien_nuoc: 'Điện, nước, internet',
     nop_tien: 'Nộp tiền về công ty / ngân hàng',
     tra_ncc: 'Trả tiền nhà cung cấp',
+    luong: 'Lương nhân viên',
+    mat_bang: 'Thuê mặt bằng',
+    marketing: 'Marketing, quảng cáo',
     chi_khac: 'Chi khác',
   },
 };
-/** Danh muc thu ngan duoc chon khi lap phieu (khong gom muc tu dong). */
+/**
+ * Nhom chi phi cho bao cao ke toan: nguyen lieu, nhan su, mat bang, marketing,
+ * van hanh. nop_tien / hoan_tien khong phai chi phi (chuyen quy / tra lai khach).
+ */
+const NHOM_CHI = {
+  nguyen_lieu: 'nguyen_lieu', tra_ncc: 'nguyen_lieu',
+  luong: 'nhan_su', tam_ung: 'nhan_su',
+  mat_bang: 'mat_bang',
+  marketing: 'marketing',
+  vat_tu: 'van_hanh', van_chuyen: 'van_hanh', sua_chua: 'van_hanh', dien_nuoc: 'van_hanh', chi_khac: 'van_hanh',
+};
+const TEN_NHOM_CHI = { nguyen_lieu: 'Nguyên liệu', nhan_su: 'Nhân sự', mat_bang: 'Mặt bằng', marketing: 'Marketing', van_hanh: 'Vận hành' };
+/** Danh muc duoc chon khi lap phieu tay (khong gom muc tu dong). */
 const DANH_MUC_LAP = {
   thu: Object.keys(DANH_MUC.thu).filter((k) => !['ban_hang', 'dat_coc'].includes(k)),
-  // tra_ncc chi sinh tu trang Cong no NCC (gan voi phieu nhap) - khong lap tay.
-  chi: Object.keys(DANH_MUC.chi).filter((k) => !['hoan_tien', 'tra_ncc'].includes(k)),
+  // tra_ncc sinh tu Cong no NCC, luong sinh tu Bang luong - khong lap tay.
+  chi: Object.keys(DANH_MUC.chi).filter((k) => !['hoan_tien', 'tra_ncc', 'luong'].includes(k)),
 };
 const PHUONG_THUC = { tien_mat: 'Tiền mặt', chuyen_khoan: 'Chuyển khoản', the: 'Thẻ' };
 const TOI_DA = 500000000;
+
+/**
+ * HAN MUC & DUYET (tai lieu chuc nang ke toan):
+ *   - Thu ngan chi lap phieu CHI nho tai quay (<= thu_chi.han_muc_chi_thu_ngan,
+ *     mac dinh 500.000d); khoan lon hon do ke toan lap (phan tach trach nhiem:
+ *     nguoi thu tien khong phai nguoi ghi so chi).
+ *   - Phieu chi > thu_chi.han_muc_duyet (mac dinh 5.000.000d) do ke toan / thu
+ *     ngan lap -> 'cho_duyet', CHUA tinh vao so quy cho toi khi Quan ly duyet.
+ *     Quan ly tu lap thi hop le ngay. Nguoi lap khong tu duyet.
+ * QUY: tien mat (phuong thuc tien_mat) va tai khoan ngan hang (chuyen khoan,
+ * the) theo doi rieng, co so du dau ky = so du khai bao + moi giao dich truoc ky.
+ */
+let daDamBaoCot = false;
+async function damBaoCot() {
+  if (daDamBaoCot) return;
+  const [[c]] = await db.query(
+    "SELECT COLUMN_TYPE AS t FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phieu_thu_chi' AND COLUMN_NAME = 'trang_thai'");
+  if (c && !/cho_duyet/.test(c.t)) {
+    await db.query("ALTER TABLE phieu_thu_chi MODIFY trang_thai ENUM('hop_le','da_huy','cho_duyet') NOT NULL DEFAULT 'hop_le'");
+  }
+  const [cot] = await db.query(
+    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phieu_thu_chi'");
+  const co = new Set(cot.map((x) => x.COLUMN_NAME));
+  if (!co.has('duyet_boi')) await db.query('ALTER TABLE phieu_thu_chi ADD COLUMN duyet_boi INT NULL');
+  if (!co.has('duyet_luc')) await db.query('ALTER TABLE phieu_thu_chi ADD COLUMN duyet_luc DATETIME NULL');
+  daDamBaoCot = true;
+}
+
+async function thamSo() {
+  const [rows] = await db.query(
+    "SELECT khoa, gia_tri FROM cau_hinh WHERE khoa IN ('thu_chi.han_muc_duyet','thu_chi.han_muc_chi_thu_ngan','thu_chi.so_du_dau_tien_mat','thu_chi.so_du_dau_ngan_hang')");
+  const c = {}; rows.forEach((r) => { c[r.khoa] = Number(r.gia_tri); });
+  const so = (v, md) => (Number.isFinite(v) && v >= 0 ? v : md);
+  return {
+    han_muc_duyet: so(c['thu_chi.han_muc_duyet'], 5000000),
+    han_muc_chi_thu_ngan: so(c['thu_chi.han_muc_chi_thu_ngan'], 500000),
+    so_du_dau_tien_mat: so(c['thu_chi.so_du_dau_tien_mat'], 0),
+    so_du_dau_ngan_hang: so(c['thu_chi.so_du_dau_ngan_hang'], 0),
+  };
+}
 
 class LoiThuChi extends Error {
   constructor(msg, ma = 'INVALID') { super(msg); this.name = 'LoiThuChi'; this.ma = ma; }
@@ -124,7 +179,8 @@ async function dongTien({ tu, den, idNv = null }) {
       noi_dung: r.noi_dung + (r.doi_tuong ? ` – ${r.loai === 'chi' ? 'người nhận' : 'người nộp'}: ${r.doi_tuong}` : '') +
         (r.so_chung_tu ? ` (CT: ${r.so_chung_tu})` : ''),
       phuong_thuc: r.phuong_thuc, nguoi: r.nguoi || 'Quản trị', so_tien: Number(r.so_tien), tip: 0,
-      huy: r.trang_thai === 'da_huy', ly_do_huy: r.ly_do_huy, nguoi_huy: r.nguoi_huy, id_nv: r.id_nv,
+      huy: r.trang_thai === 'da_huy', cho_duyet: r.trang_thai === 'cho_duyet',
+      ly_do_huy: r.ly_do_huy, nguoi_huy: r.nguoi_huy, id_nv: r.id_nv,
     });
   }
   return ds.sort((a, b) => new Date(a.thoi_diem) - new Date(b.thoi_diem));
@@ -135,11 +191,46 @@ function ngayChuoi(d) {
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
 }
 
+/**
+ * So du dau ky / thu / chi / cuoi ky cua QUY TIEN MAT va TAI KHOAN NGAN HANG.
+ * Dau ky = so du khai bao (cau_hinh) + moi giao dich hop le TRUOC ngay bat dau.
+ */
+async function soDuQuy(tu, hopLeTrongKy) {
+  const ts = await thamSo();
+  const [[a]] = await db.query(
+    `SELECT COALESCE(SUM(CASE WHEN pm.type = 'cash' THEN p.amount END), 0) AS thu_tm,
+            COALESCE(SUM(CASE WHEN pm.type <> 'cash' THEN p.amount END), 0) AS thu_nh
+       FROM payments p JOIN payment_methods pm ON pm.id = p.payment_method_id
+      WHERE p.status IN ('success','refunded') AND COALESCE(p.thanh_cong_luc, p.created_at) < ?`, [tu]);
+  const [[h]] = await db.query(
+    `SELECT COALESCE(SUM(CASE WHEN pm.type = 'cash' THEN p.amount END), 0) AS hoan_tm,
+            COALESCE(SUM(CASE WHEN pm.type <> 'cash' THEN p.amount END), 0) AS hoan_nh
+       FROM payments p JOIN payment_methods pm ON pm.id = p.payment_method_id
+      WHERE p.status = 'refunded' AND p.updated_at < ?`, [tu]);
+  const [[ph]] = await db.query(
+    `SELECT COALESCE(SUM(CASE WHEN phuong_thuc = 'tien_mat' THEN IF(loai = 'thu', so_tien, -so_tien) END), 0) AS tm,
+            COALESCE(SUM(CASE WHEN phuong_thuc <> 'tien_mat' THEN IF(loai = 'thu', so_tien, -so_tien) END), 0) AS nh
+       FROM phieu_thu_chi WHERE trang_thai = 'hop_le' AND thoi_diem < ?`, [tu]);
+  const quy = (dauKhaiBao, thuTruoc, hoanTruoc, phieuTruoc, laTienMat) => {
+    const dau = dauKhaiBao + Number(thuTruoc) - Number(hoanTruoc) + Number(phieuTruoc);
+    const trong = hopLeTrongKy.filter((d) => (d.phuong_thuc === 'tien_mat') === laTienMat);
+    const thu = trong.filter((d) => d.loai === 'thu').reduce((t, d) => t + d.so_tien, 0);
+    const chi = trong.filter((d) => d.loai === 'chi').reduce((t, d) => t + d.so_tien, 0);
+    return { dau: Math.round(dau), thu, chi, cuoi: Math.round(dau + thu - chi) };
+  };
+  return {
+    tien_mat: quy(ts.so_du_dau_tien_mat, a.thu_tm, h.hoan_tm, ph.tm, true),
+    ngan_hang: quy(ts.so_du_dau_ngan_hang, a.thu_nh, h.hoan_nh, ph.nh, false),
+  };
+}
+
 /** Bao cao day du cho mot khoang ngay. */
 async function baoCao({ tuNgay, denNgay, idNv = null }) {
+  await damBaoCot();
   const { tu, den } = khoang(tuNgay, denNgay);
   const ds = await dongTien({ tu, den, idNv });
-  const hopLe = ds.filter((d) => !d.huy);
+  // Phieu cho duyet chua phai tien that ra khoi quy.
+  const hopLe = ds.filter((d) => !d.huy && !d.cho_duyet);
 
   const cong = (loc) => hopLe.filter(loc).reduce((s, d) => s + d.so_tien, 0);
   const tongThu = cong((d) => d.loai === 'thu');
@@ -168,10 +259,12 @@ async function baoCao({ tuNgay, denNgay, idNv = null }) {
     });
   }
 
-  // So quy: so du luy ke (chi tinh phieu hop le).
-  let soDu = 0;
+  // Quy tien mat / ngan hang: so du dau ky (chi khi xem toan nha hang).
+  const quy = idNv ? null : await soDuQuy(tu, hopLe);
+  // So quy: so du luy ke tu so du dau ky (chi tinh phieu hop le).
+  let soDu = quy ? quy.tien_mat.dau + quy.ngan_hang.dau : 0;
   const soQuy = ds.map((d) => {
-    if (!d.huy) soDu += d.loai === 'thu' ? d.so_tien : -d.so_tien;
+    if (!d.huy && !d.cho_duyet) soDu += d.loai === 'thu' ? d.so_tien : -d.so_tien;
     return {
       ...d, so_du: soDu,
       ten_danh_muc: DANH_MUC[d.loai][d.danh_muc] || d.danh_muc,
@@ -183,6 +276,8 @@ async function baoCao({ tuNgay, denNgay, idNv = null }) {
     tu_ngay: tuNgay, den_ngay: denNgay,
     tong_thu: tongThu, tong_chi: tongChi, chenh_lech: tongThu - tongChi,
     so_giao_dich: hopLe.length, so_phieu_huy: ds.filter((d) => d.huy).length,
+    so_cho_duyet: ds.filter((d) => d.cho_duyet).length,
+    quy,
     tien_tip: hopLe.reduce((s, d) => s + (d.tip || 0), 0),
     theo_phuong_thuc: theoPt,
     thu_theo_nguon: gom('thu'),
@@ -201,7 +296,8 @@ async function taoMaPhieu(conn, loai) {
   return `${tienTo}-${String(Number(r.n) + 1).padStart(3, '0')}`;
 }
 
-async function lapPhieu(body, idNv) {
+async function lapPhieu(body, idNv, { vaiTro = 'quan_ly' } = {}) {
+  await damBaoCot();
   const loai = String(body.loai || '');
   const danhMuc = String(body.danh_muc || '');
   const soTien = Math.round(Number(String(body.so_tien || '').replace(/[^\d]/g, '')));
@@ -215,16 +311,22 @@ async function lapPhieu(body, idNv) {
   if (!['tien_mat', 'chuyen_khoan'].includes(pt)) throw new LoiThuChi('Phương thức không hợp lệ.');
   if (noiDung.length < 3) throw new LoiThuChi('Vui lòng ghi rõ nội dung thu / chi.');
 
+  const ts = await thamSo();
+  if (loai === 'chi' && vaiTro === 'thu_ngan' && soTien > ts.han_muc_chi_thu_ngan) {
+    throw new LoiThuChi('Thu ngân chỉ lập phiếu chi nhỏ tại quầy (tối đa ' + ts.han_muc_chi_thu_ngan.toLocaleString('vi-VN') + 'đ). Khoản lớn hơn do kế toán lập.', 'FORBIDDEN');
+  }
+  const trangThai = loai === 'chi' && vaiTro !== 'quan_ly' && soTien > ts.han_muc_duyet ? 'cho_duyet' : 'hop_le';
+
   // Ma phieu tang theo ngay - thu lai neu hai thu ngan lap cung luc trung ma.
   for (let lan = 0; lan < 5; lan++) {
     const ma = await taoMaPhieu(db, loai);
     try {
       const [kq] = await db.query(
-        `INSERT INTO phieu_thu_chi (ma_phieu, loai, danh_muc, so_tien, phuong_thuc, doi_tuong, noi_dung, so_chung_tu, thoi_diem, id_nv)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)`,
+        `INSERT INTO phieu_thu_chi (ma_phieu, loai, danh_muc, so_tien, phuong_thuc, doi_tuong, noi_dung, so_chung_tu, thoi_diem, id_nv, trang_thai)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
         [ma, loai, danhMuc, soTien, pt, String(body.doi_tuong || '').trim().slice(0, 150) || null,
-          noiDung.slice(0, 500), String(body.so_chung_tu || '').trim().slice(0, 60) || null, idNv || null]);
-      return { id: kq.insertId, ma_phieu: ma };
+          noiDung.slice(0, 500), String(body.so_chung_tu || '').trim().slice(0, 60) || null, idNv || null, trangThai]);
+      return { id: kq.insertId, ma_phieu: ma, trang_thai: trangThai, han_muc_duyet: ts.han_muc_duyet };
     } catch (e) {
       if (e.code !== 'ER_DUP_ENTRY') throw e;
     }
@@ -243,6 +345,9 @@ async function huyPhieu(id, { lyDo, idNv, laQuanLy }) {
   const [[p]] = await db.query('SELECT * FROM phieu_thu_chi WHERE id = ?', [id]);
   if (!p) throw new LoiThuChi('Không tìm thấy phiếu.', 'NOT_FOUND');
   if (p.trang_thai === 'da_huy') throw new LoiThuChi('Phiếu đã hủy trước đó.');
+  // Ky da chot so (khoaSoService): khong sua so lieu cua ky do.
+  try { await require('./khoaSoService').kiemTraKhoa(p.thoi_diem, 'hủy phiếu'); }
+  catch (e) { if (e.name === 'LoiKhoaSo') throw new LoiThuChi(e.message, 'FORBIDDEN'); throw e; }
 
   if (!laQuanLy) {
     if (Number(p.id_nv) !== Number(idNv)) throw new LoiThuChi('Bạn chỉ hủy được phiếu do chính mình lập.', 'FORBIDDEN');
@@ -253,7 +358,7 @@ async function huyPhieu(id, { lyDo, idNv, laQuanLy }) {
     }
   }
   const [kqHuy] = await db.query(
-    "UPDATE phieu_thu_chi SET trang_thai = 'da_huy', ly_do_huy = ?, huy_boi = ?, huy_luc = NOW() WHERE id = ? AND trang_thai = 'hop_le'",
+    "UPDATE phieu_thu_chi SET trang_thai = 'da_huy', ly_do_huy = ?, huy_boi = ?, huy_luc = NOW() WHERE id = ? AND trang_thai IN ('hop_le','cho_duyet')",
     [ly.slice(0, 300), idNv || null, id]);
   if (!kqHuy.affectedRows) throw new LoiThuChi('Phiếu vừa được hủy bởi người khác.');
   // Phieu chi tra nha cung cap: huy thi cong no cua phieu nhap tang lai.
@@ -263,6 +368,26 @@ async function huyPhieu(id, { lyDo, idNv, laQuanLy }) {
      VALUES ('huy_phieu_thu_chi', 'staff', ?, 'phieu_thu_chi', ?, 'success', ?)`,
     [idNv || null, id, JSON.stringify({ ma: p.ma_phieu, so_tien: p.so_tien, ly_do: ly })]).catch(() => {});
   return { ok: true };
+}
+
+/** Quan ly duyet phieu chi vuot han muc. Nguoi lap khong tu duyet. */
+async function duyetPhieu(id, idNvDuyet) {
+  await damBaoCot();
+  const [[p]] = await db.query('SELECT * FROM phieu_thu_chi WHERE id = ?', [id]);
+  if (!p) throw new LoiThuChi('Không tìm thấy phiếu.', 'NOT_FOUND');
+  if (p.trang_thai !== 'cho_duyet') throw new LoiThuChi('Phiếu không ở trạng thái chờ duyệt.');
+  // Ky da chot so (khoaSoService): khong sua so lieu cua ky do.
+  try { await require('./khoaSoService').kiemTraKhoa(p.thoi_diem, 'duyệt phiếu'); }
+  catch (e) { if (e.name === 'LoiKhoaSo') throw new LoiThuChi(e.message, 'FORBIDDEN'); throw e; }
+  if (idNvDuyet && Number(p.id_nv) === Number(idNvDuyet)) throw new LoiThuChi('Người lập phiếu không tự duyệt.', 'FORBIDDEN');
+  const [kq] = await db.query(
+    "UPDATE phieu_thu_chi SET trang_thai = 'hop_le', duyet_boi = ?, duyet_luc = NOW() WHERE id = ? AND trang_thai = 'cho_duyet'",
+    [idNvDuyet || null, id]);
+  if (!kq.affectedRows) throw new LoiThuChi('Phiếu vừa được người khác xử lý.');
+  await db.query(
+    "INSERT INTO audit_logs (action, actor_type, actor_id, resource_type, resource_id, status, details) VALUES ('duyet_phieu_chi', 'staff', ?, 'phieu_thu_chi', ?, 'success', ?)",
+    [idNvDuyet || null, id, JSON.stringify({ ma: p.ma_phieu, so_tien: p.so_tien })]).catch(() => {});
+  return { ok: true, ma_phieu: p.ma_phieu };
 }
 
 /** Tong phieu TIEN MAT cua mot thu ngan trong khoang - dung cho chot ca. */
@@ -330,6 +455,6 @@ async function xuatExcel(bc, { tenNguoiXem = '', phamVi = '' } = {}) {
 
 module.exports = {
   taoMaPhieu,
-  DANH_MUC, DANH_MUC_LAP, PHUONG_THUC, LoiThuChi,
-  baoCao, lapPhieu, huyPhieu, phieuTienMatTrongCa, xuatExcel,
+  DANH_MUC, DANH_MUC_LAP, NHOM_CHI, TEN_NHOM_CHI, PHUONG_THUC, LoiThuChi,
+  baoCao, lapPhieu, huyPhieu, duyetPhieu, thamSo, damBaoCot, soDuQuy, phieuTienMatTrongCa, xuatExcel,
 };

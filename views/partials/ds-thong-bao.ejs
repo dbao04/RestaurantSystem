@@ -1,0 +1,66 @@
+<%#
+  Danh sach thong bao day du (dung chung trang nhan vien / quan tri / khach).
+  Bien: ds, chuaDoc, chiChuaDoc, loai, LUONG, goc (duong dan trang), laTb ('nv'|'quan_tri'|'khach')
+%>
+<%
+  var _gio = function (d) { var x = new Date(d); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0') + ' ' + x.getDate() + '/' + (x.getMonth() + 1) + '/' + x.getFullYear(); };
+  var _ICON = { khan: 'fa-triangle-exclamation', quan_trong: 'fa-circle-exclamation', tin: 'fa-bell' };
+  var _MAU = { khan: '#b3352c', quan_trong: '#c4561f', tin: '#2a78d6' };
+  var _cacLoai = {};
+  ds.forEach(function (t) { if (t.loai && LUONG[t.loai]) _cacLoai[t.loai] = LUONG[t.loai].ten; });
+%>
+<style>
+  .dstb-loc { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+  .dstb-muc { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f1ebe2; background: #fff; }
+  .dstb-muc--moi { background: #fffaf0; }
+  .dstb-muc__icon { flex: 0 0 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; }
+  .dstb-muc__than { flex: 1; min-width: 0; }
+  .dstb-muc__tieu-de { font-weight: 700; font-size: .92rem; color: #241a14; }
+  .dstb-muc__noi-dung { font-size: .85rem; color: #4a3f36; margin: 3px 0; white-space: pre-line; overflow-wrap: anywhere; }
+  .dstb-muc__phu { font-size: .75rem; color: #8c8076; }
+</style>
+<div class="dstb-loc">
+  <a class="btn btn-sm <%= !chiChuaDoc ? 'btn-dark' : 'btn-outline-secondary' %>" href="<%= goc %><%= loai ? '?loai=' + loai : '' %>">Tất cả</a>
+  <a class="btn btn-sm <%= chiChuaDoc ? 'btn-dark' : 'btn-outline-secondary' %>" href="<%= goc %>?chua_doc=1<%= loai ? '&loai=' + loai : '' %>">Chưa đọc (<%= chuaDoc %>)</a>
+  <% if (Object.keys(_cacLoai).length || loai) { %>
+    <select class="form-control form-control-sm" style="max-width:260px" aria-label="Lọc theo loại" onchange="location.href='<%= goc %>?' + (this.value ? 'loai=' + this.value : '') + '<%= chiChuaDoc ? '&chua_doc=1' : '' %>'">
+      <option value="">Mọi loại thông báo</option>
+      <% Object.keys(LUONG).forEach(function (k) { if (_cacLoai[k] || k === loai) { %><option value="<%= k %>" <%= k === loai ? 'selected' : '' %>><%= LUONG[k].ten %></option><% } }) %>
+    </select>
+  <% } %>
+  <% if (chuaDoc) { %><button type="button" class="btn btn-sm btn-outline-warning ml-auto" id="dstbDocHet"><i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc</button><% } %>
+</div>
+<div class="card shadow mb-4" style="overflow:hidden">
+  <% if (!ds.length) { %><div class="p-4 text-center text-muted"><i class="fas fa-bell-slash fa-2x mb-2"></i><br>Không có thông báo nào.</div><% } %>
+  <% ds.forEach(function (t) { var md = _ICON[t.muc_do] ? t.muc_do : 'tin'; %>
+    <div class="dstb-muc <%= t.da_doc ? '' : 'dstb-muc--moi' %>">
+      <span class="dstb-muc__icon" style="background:<%= _MAU[md] %>"><i class="fas <%= _ICON[md] %>" aria-hidden="true"></i></span>
+      <div class="dstb-muc__than">
+        <div class="dstb-muc__tieu-de"><%= t.tieu_de %><% if (!t.da_doc) { %> <span class="badge badge-danger">mới</span><% } %></div>
+        <% if (t.noi_dung && t.noi_dung !== t.tieu_de) { %><div class="dstb-muc__noi-dung"><%= t.noi_dung %></div><% } %>
+        <div class="dstb-muc__phu"><%= _gio(t.created_at) %> · <%= t.nhom %><%= t.nguoi_gui ? ' · ' + t.nguoi_gui : '' %></div>
+      </div>
+      <div class="d-flex flex-column align-items-end" style="gap:4px">
+        <% if (t.link) { %><a class="btn btn-sm btn-outline-primary" href="<%= t.link %>" data-dstb-doc="<%= t.id %>">Xem</a><% } %>
+        <% if (!t.da_doc) { %><button type="button" class="btn btn-sm btn-light" data-dstb-doc="<%= t.id %>" data-dstb-o-lai="1">Đã đọc</button><% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<script>
+(function () {
+  var LA = '<%= laTb %>';
+  var goi = function (u) { return fetch(u + (u.indexOf('?') < 0 ? '?' : '&') + 'la=' + LA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: '{}' }); };
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-dstb-doc]');
+    if (!b) return;
+    e.preventDefault();
+    var den = b.getAttribute('href');
+    goi('/api/thong-bao/' + b.getAttribute('data-dstb-doc') + '/doc').catch(function () {}).then(function () {
+      if (den && !b.dataset.dstbOLai) location.href = den; else location.reload();
+    });
+  });
+  var h = document.getElementById('dstbDocHet');
+  if (h) h.addEventListener('click', function () { goi('/api/thong-bao/doc-tat-ca').then(function () { location.reload(); }); });
+})();
+</script>

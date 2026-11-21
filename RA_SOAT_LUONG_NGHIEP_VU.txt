@@ -298,6 +298,49 @@ ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
     chờ thanh toán không xác nhận tay được.
   - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
 
+(chưa commit) - PHÁT TRIỂN ROLE KẾ TOÁN (theo Chuc_nang_role_Ke_toan_Nha_hang.docx)
+  - LƯƠNG: kế toán lập -> gửi duyệt -> QUẢN LÝ duyệt / trả về (bắt buộc lý do) -> kế toán
+    chi. Gửi duyệt rồi thì khóa sửa; người gửi không tự duyệt (Kế toán trưởng cũng vậy);
+    chi lương sinh MỘT phiếu chi danh mục "Lương" trong sổ quỹ (chuyển khoản / tiền mặt);
+    không chi bảng lương 0đ. (Khôi phục chức năng duyệt bị xóa ở commit 1ac9e70.)
+  - THU CHI: kế toán lập phiếu; danh mục mới Lương / Mặt bằng / Marketing, gom 5 nhóm chi
+    (nguyên liệu, nhân sự, mặt bằng, marketing, vận hành). Thu ngân chỉ lập phiếu chi nhỏ
+    tại quầy (<= 500.000đ, cau_hinh thu_chi.han_muc_chi_thu_ngan). Phiếu chi > 5.000.000đ
+    (thu_chi.han_muc_duyet) chờ Quản lý duyệt, chưa vào sổ quỹ; người lập không tự duyệt.
+    Sổ quỹ tách QUỸ TIỀN MẶT / TÀI KHOẢN NGÂN HÀNG, có số dư đầu kỳ - cuối kỳ.
+  - MỚI /staff/ke-toan/chot-so: đối soát doanh thu NGÀY (POS vs thực thu theo phương thức
+    vs chốt ca vs sao kê ngân hàng), chênh lệch phải ghi lý do, CHỐT SỔ ngày / tháng (chỉ
+    ngày đã qua). Sổ đã chốt: không hủy / duyệt phiếu thuộc kỳ; kế toán không tự mở khóa,
+    Quản lý mở khóa bắt buộc lý do; mọi thao tác ghi audit_logs.
+  - MỚI /staff/ke-toan/dong-tien: báo cáo dòng tiền (vào / ra theo nhóm, theo ngày / tháng),
+    xuất Excel. MỚI /staff/ke-toan/ngan-sach: hạn mức chi theo nhóm / tháng, cảnh báo >= 80%
+    và vượt. MỚI /staff/ke-toan: dashboard kế toán (doanh thu, lợi nhuận, food cost, dòng
+    tiền, quỹ, công nợ NCC, lương, ngân sách, món lãi cao / thấp, việc cần xử lý).
+  - Menu Kế toán & Tài chính bổ sung các trang trên + Sổ quỹ thu chi.
+  - Dọn lỗi test: test webhook SePay để lại tiền cọc 600.000đ mỗi lần chạy (payments +
+    hopdong theo mã đặt bàn) -> đã sửa; 17 khoản cọc ảo cũ chờ xác nhận để xóa.
+  - Chưa làm (cần nhà cung cấp ngoài / ngoài phạm vi): hóa đơn điện tử, kê khai VAT,
+    GrabFood/ShopeeFood, công nợ phải thu, quy trình hủy hóa đơn 3 bước.
+  - Kiểm thử: npm test 40/40, test:automation 175/175, test-tinh-nang-moi 120/120.
+
+(chưa commit) - POS THU NGÂN ORDER TẠI BÀN + KIỂM SOÁT XÓA MÓN
+  - POS /staff/thanh-toan: khu "Order tại bàn" hiện sơ đồ bàn; bàn trống -> mở hộp chọn
+    món, gửi order xuống bếp và vào hóa đơn; bàn có khách -> vào hóa đơn.
+  - Hóa đơn tại bàn: nút "Thêm món", nút + (gọi thêm 1 phần, phiếu bếp mới), nút − (giảm
+    1 phần) và x (xóa hết). Thu ngân được lấy thực đơn (trước bị chặn).
+  - XÓA MÓN BẮT BUỘC GIẢI TRÌNH (ít nhất 10 ký tự) ở mọi nơi (POS, sơ đồ bàn). Món bếp
+    đã làm vẫn chỉ Quản lý được xóa.
+  - Mỗi lần xóa: lưu thông báo (bảng thong_bao) + đẩy realtime cho Quản lý nhà hàng, Trợ lý
+    quản lý và các Giám sát (phục vụ, thu ngân); kèm người xóa, bàn, giá trị, lý do,
+    giải trình, trạng thái bếp. Người xóa không tự nhận.
+  - MỚI /staff/huy-mon/nhat-ky (menu "Kiểm soát"): lọc theo ngày / nhân viên, tổng theo
+    nhân viên (số lần, giá trị, số lần xóa món đã nấu).
+  - SỬA LỖI PHIÊN ĐĂNG NHẬP (từ nhánh doan, kho phiên MySQL): chuyển hướng được gửi trước
+    khi phiên ghi xong -> thỉnh thoảng vừa đăng nhập đã bị văng ra. Nay lưu phiên rồi mới
+    chuyển hướng (server.js). Trước sửa: mỗi lần chạy test hỏng ngẫu nhiên 1-9 bài; sau: 38/38
+    ba lần liên tiếp.
+  - Kiểm thử: npm test 38/38, test:automation 175/175, test-tinh-nang-moi 119/119.
+
 (chưa commit) - RÀ SOÁT & HOÀN THIỆN VAI TRÒ SHIPPER
   Đã chạy thử nguyên luồng thật (điều phối phân đơn -> shipper nhận -> GPS -> giao xong).
   - Shipper đăng nhập ở /staff/login giờ vào THẲNG ứng dụng /shipper/ (trước phải tự gõ
@@ -479,12 +522,12 @@ chi phí, Chấm công, Nghỉ phép, Sổ quỹ thu chi, Đối soát thanh to�
 Công nợ NCC, Báo cáo lãi lỗ.
 
 MỨC CAO
-  [CHỜ] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
+  [ĐÃ LÀM] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
         bị xóa ở commit 1ac9e70 (17/10/2026). Gửi duyệt xong kẹt mãi ở "chờ
         duyệt". Dữ liệu T10/2026: 75 bảng lương "đã chi" nhưng 0đ.
-  [CHỜ] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
+  [ĐÃ LÀM] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
         đè số tiền và đưa về nháp -> mất dấu vết, có thể chi hai lần.
-  [CHỜ] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
+  [ĐÃ LÀM] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
         không lưu ngày chi, hình thức, người chi; cho chi bảng lương 0đ.
   [CHỜ] K4. Doanh thu (báo cáo thu chi + báo cáo lãi lỗ) tính theo giá món gốc:
         chưa trừ mã giảm giá / điểm thưởng, chưa cộng phí phục vụ, VAT chưa
@@ -497,7 +540,7 @@ MỨC VỪA
   [CHỜ] K6. Hai sổ chi phí song song: "Quản lý chi phí" (chi_phi_khac) và phiếu
         chi trong Sổ quỹ. Chi phí nhập ở trang kế toán không danh mục, không
         vào sổ quỹ; xóa cứng không lưu vết; không chặn số tiền âm.
-  [CHỜ] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
+  [ĐÃ LÀM] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
         mặt + chuyển khoản một số dư -> không khớp được với két / sao kê.
   [CHỜ] K8. Quyền: Kế toán bị chặn (403) ở "Đối soát thanh toán", "Lịch sử chốt
         ca" dù menu có link; ngược lại Kế toán lại "xóa" (cho nghỉ) được nhân viên.
@@ -514,3 +557,168 @@ PHÁT TRIỂN THÊM (đề xuất)
   - Một sổ quỹ duy nhất, số dư đầu kỳ, tách quỹ tiền mặt / tài khoản ngân hàng.
   - Doanh thu thuần + báo cáo VAT đầu ra; KHÓA SỔ cuối tháng (không sửa / hủy
     chứng từ của tháng đã khóa).
+
+================================================================================
+THÔNG BÁO CHO MỌI VAI TRÒ (21/11/2026)
+================================================================================
+HIỆN TRẠNG TRƯỚC KHI LÀM
+  - Bảng thong_bao chỉ có id_nv/tiêu đề/nội dung; dòng id_nv NULL hiện cho mọi
+    nhân viên nhưng "đã đọc" của một người làm mất chấm đỏ của tất cả.
+  - Không có nút chuông ở khu nhân viên, quản trị, shipper, khách hàng; chỉ có
+    trang /staff/notifications cũ (đánh dấu đọc theo cột id không tồn tại).
+  - Thông báo của quản lý (/api/to-chuc/thong-bao) chỉ đẩy realtime, không lưu:
+    ai không mở trang lúc đó là mất. Hầu hết nghiệp vụ không báo cho ai.
+
+ĐÃ LÀM
+  [ĐÃ LÀM] Nút chuông ở mọi giao diện: khu nhân viên (mọi chức danh), quản trị,
+        app shipper (/shipper/), khách hàng đã đăng nhập. Số chưa đọc, 15 thông
+        báo mới nhất, bấm vào = đánh dấu đọc + mở đúng trang xử lý, "đánh dấu
+        tất cả", realtime qua socket + hỏi lại mỗi 2 phút khi socket rớt.
+  [ĐÃ LÀM] Trang đầy đủ: /staff/thong-bao (lọc chưa đọc / theo loại),
+        /admin/thong-bao, /tai-khoan/thong-bao (khách), /staff/thong-bao/luong
+        (bảng "sự kiện nào báo cho ai"). Đường dẫn cũ /staff/notifications vẫn chạy.
+  [ĐÃ LÀM] services/thongBaoService.js: danh mục 31 luồng (LUONG), người nhận
+        xác định theo CHỨC DANH / BỘ PHẬN trong cơ cấu tổ chức (đổi người giữ chức
+        danh thì thông báo tự đi theo). Mỗi người nhận một dòng riêng
+        (doi_tuong nv | quan_tri | khach) -> đã đọc là của riêng từng người;
+        không đánh dấu hộ thông báo của người khác.
+  [ĐÃ LÀM] services/thongBaoNghiepVu.js: MỘT file gắn thông báo vào nghiệp vụ
+        (bọc hàm service, gửi nền sau khi nghiệp vụ thành công, lỗi thông báo
+        không bao giờ làm hỏng nghiệp vụ). Các luồng:
+        Bán hàng/bếp : xóa món (QL + giám sát + quản trị), món tạm ngưng/bán lại
+                       (phục vụ, thu ngân, lễ tân).
+        Đặt bàn/tiệc : đặt bàn online mới / khách hủy (lễ tân); đặt tiệc mới
+                       (lễ tân + quản lý); tiệc xác nhận/cọc (bếp + quản lý);
+                       khách nhận cập nhật trạng thái đặt bàn / tiệc.
+        Giao hàng    : đơn đã thanh toán chờ phân (điều phối); shipper được phân
+                       đơn; giao thất bại / shipper từ chối (điều phối + QL);
+                       khách nhận "đang giao" / "đã giao"; thu ngân nhận tiền
+                       thu hộ -> shipper nhận xác nhận.
+        Thanh toán   : hoàn tiền (QL + giám sát thu ngân + kế toán + quản trị);
+                       chuyển khoản không khớp hóa đơn (thu ngân + kế toán);
+                       chốt ca (giám sát thu ngân + kế toán, báo mức "quan
+                       trọng" khi lệch tiền) -> duyệt báo lại thu ngân.
+        Kế toán      : phiếu chi vượt hạn mức chờ duyệt (QL + quản trị) -> kết
+                       quả duyệt/hủy về người lập; mở khóa sổ; bảng lương chờ
+                       duyệt / duyệt / trả về (kèm lý do) / đã chi (từng nhân
+                       viên nhận số tiền lương của mình).
+        Nhân sự      : đơn nghỉ phép -> cấp trên trực tiếp (không có thì quản
+                       lý); kết quả -> người xin.
+        Kho          : đơn mua chờ duyệt -> kết quả về người tạo; phiếu kiểm kê
+                       mở; nguyên liệu dưới định mức (quét 15 phút/lần, gom một
+                       thông báo, mỗi nguyên liệu tối đa 1 lần/ngày); công nợ NCC
+                       quá hạn (1 lần/ngày).
+        Chung        : thông báo của quản lý theo bộ phận / chức danh / toàn bộ
+                       nay được LƯU, xem lại được ở chuông.
+        Người gây ra sự kiện không tự nhận thông báo của chính mình.
+  [ĐÃ LÀM] Sửa: ô thả xuống của chuông bị thẻ nội dung đè lên (thanh trên cùng
+        có backdrop-filter) -> gắn vào body, position fixed, không tràn mép
+        trái trên điện thoại.
+  [ĐÃ LÀM] 3 bộ kiểm thử tự xóa thông báo do chính chúng sinh ra (trước đây
+        lần chạy đầu để lại 150 thông báo giả - đã dọn).
+  [ĐÃ LÀM] Kiểm thử: tests/tichHop.test.js "thong bao: luong gui dung vai tro..."
+        (phiếu chi -> QL + quản trị, không gửi người lập; duyệt -> người lập;
+        API chuông, đánh dấu đọc, không đọc hộ; nghỉ phép -> cấp trên; chuông có
+        trên các trang; trang quản trị). npm test 41/41, test:automation 175/175,
+        test-tinh-nang-moi 120/120.
+
+CÒN LẠI / ĐỀ XUẤT
+  [CHỜ] Thông báo đẩy ra ngoài trình duyệt (Web Push / Zalo OA / email) khi
+        nhân viên không mở trang.
+  [CHỜ] Cho từng người tắt bớt loại thông báo không cần (cài đặt cá nhân).
+  [CHỜ] Tự xóa thông báo đã đọc quá 90 ngày.
+
+================================================================================
+DỰ BÁO AI / ML (21/11/2026)
+================================================================================
+  [GIẢI THÍCH] "ML Service chưa kích hoạt" = dịch vụ Python (cổng 8000) chưa
+        chạy, không phải lỗi. Trang vẫn đọc kết quả đã lưu; muốn huấn luyện lại
+        phải bật: python -m uvicorn ml_service.main:app --host 127.0.0.1 --port 8000
+        (hoặc chạy start_all.bat để bật cả MySQL + ML + web).
+  [ĐÃ LÀM] Dự báo lượt khách / nguyên liệu lấy mốc = ngày cuối có đơn hoàn tất.
+        CSDL không có đơn mới (dữ liệu thật dừng 08/2026, chỉ vài đơn test 10/2026)
+        nên dự báo rơi hết vào quá khứ (25/10-07/11) và biểu đồ trống. Nay dự báo
+        luôn bắt đầu TỪ HÔM NAY: khoảng trống giữa dữ liệu cuối và hôm nay được
+        dự báo đệ quy rồi bỏ đi (bù tối đa 366 ngày). ml_service/forecast.py.
+  [ĐÃ LÀM] Ngày dự báo bị lệch sớm 1 ngày (cột DATE trả về dạng giờ UTC, trang
+        cắt chuỗi): nhãn trục và "ngày cao điểm" sai ngày/thứ. Server trả ngày
+        dạng chuỗi YYYY-MM-DD (services/mlService.js duBaoKhachDaLuu).
+  [GHI CHÚ] Đường "thực tế" trên biểu đồ chỉ có vài điểm vì 45 ngày gần nhất
+        không có đơn hoàn tất - sẽ đầy dần khi nhà hàng dùng POS thật.
+
+================================================================================
+THÔNG BÁO VẬN HÀNH: BẾP → PHỤC VỤ, GIAO HÀNG, THANH TOÁN (21/11/2026)
+================================================================================
+RÀ SOÁT
+  - Bếp bấm "xong món" chỉ phát realtime chung 'dish-ready' cho cả phòng nhân
+    viên, không lưu, không biết ai phục vụ bàn đó -> phục vụ không mở trang là mất.
+  - hopdong.id_nv_phuc_vu gần như luôn trống (39/11.294 dòng): không biết bàn
+    nào do ai phục vụ.
+  - [LỖI] routes/kds.js cất hàm vào bảng BUOC lúc nạp, lớp thông báo bọc SAU đó
+    -> mọi thông báo gắn vào bước bếp sẽ không bao giờ chạy. Đã chuyển việc bọc
+    lên TRƯỚC khi nạp route (server.js).
+  - [LỖI] chinhSachGiaoService gọi nội bộ sauKhiThanhToan() khi quét lại đơn
+    trả tiền muộn -> điều phối không được báo. Đã gọi qua module.exports.
+  - Thiếu hẳn: bếp xong đơn giao -> shipper; shipper nhận đơn / giao xong ->
+    điều phối; hủy đơn -> shipper + bếp; khách gọi món QR; bàn trả tiền xong cần
+    dọn; khách tự chuyển khoản; món trễ; khách đặt bàn sắp đến.
+
+ĐÃ LÀM (services/thongBaoNghiepVu.js + danh mục thongBaoService.LUONG, 41 luồng)
+  Vận hành tại bàn
+  [ĐÃ LÀM] Gọi món ở POS / sơ đồ bàn / thêm món: ghi id_nv_phuc_vu = phục vụ đã
+        gọi (chỉ nhân viên bộ phận Phục vụ; thu ngân gọi hộ thì không ghi).
+  [ĐÃ LÀM] mon_xong: bếp bấm xong -> ĐÚNG phục vụ phụ trách bàn nhận "Bàn 5: Bò
+        lúc lắc x2 đã xong" (mức khẩn, link KDS để bấm Đã phục vụ). Bàn chưa có
+        người phụ trách (khách tự gọi QR) -> phục vụ ĐANG TRONG CA (chấm công vào
+        hôm nay, chưa chấm ra); không ai chấm công -> cả bộ phận Phục vụ.
+  [ĐÃ LÀM] goi_mon_qr: khách tự gọi món qua QR -> phục vụ của bàn, kèm danh sách món.
+  [ĐÃ LÀM] ban_can_don: hóa đơn tại bàn trả đủ -> phục vụ dọn bàn.
+        khach_tu_thanh_toan: khách tự chuyển khoản (không nhân viên xử lý, không
+        phải tiền mặt) -> thu ngân + phục vụ biết hóa đơn đã đóng.
+  [ĐÃ LÀM] mon_tre (quét 2 phút/lần): món chờ quá thời gian chuẩn bep.sla_phut
+        -> bếp trưởng/bếp phó/quản lý bếp + giám sát phục vụ, gom 1 thông báo,
+        mỗi món báo 1 lần (bảng chống lặp thong_bao_da_bao).
+  [ĐÃ LÀM] dat_ban_sap_den (quét 2 phút/lần): khách đặt bàn còn ≤15 phút ->
+        lễ tân + phục vụ trong ca, kèm số khách, bàn đã xếp, dịp, yêu cầu.
+  Giao hàng
+  [ĐÃ LÀM] don_giao_nhan: shipper xác nhận đơn / đang đến lấy -> điều phối.
+  [ĐÃ LÀM] don_giao_bep_xong: bếp xong MÓN CUỐI của đơn giao -> shipper được
+        phân "đến lấy hàng" + điều phối (chưa có shipper thì nhắc phân ngay).
+        Món của đơn giao không báo nhầm cho phục vụ bàn.
+  [ĐÃ LÀM] don_giao_hoan_thanh: giao xong -> điều phối; có tiền thu hộ thì thêm
+        thu ngân (số tiền shipper đang giữ, link trang nhận thu hộ).
+  [ĐÃ LÀM] don_giao_huy: hủy đơn -> shipper đang giữ đơn + điều phối; bếp chỉ
+        được báo khi đơn đã vào hàng chờ bếp (đã trả tiền) hoặc đang nấu; khách
+        được báo khi NHÀ HÀNG hủy.
+  [ĐÃ LÀM] Phân lại đơn: phân lại đúng shipper đang giữ thì không báo lại; chuyển
+        sang shipper khác thì báo shipper cũ "đơn đã chuyển cho người khác".
+  Dọn dẹp
+  [ĐÃ LÀM] Chống lặp thông báo định kỳ dùng bảng thong_bao_da_bao (trước đây
+        ghi dòng ẩn vào thong_bao, hiện ra ở trang quản trị) - đã xóa 12 dòng ẩn cũ.
+
+KIỂM THỬ
+  - tests/tichHop.test.js "thong bao van hanh": phục vụ gọi món -> ghi người phụ
+    trách; bếp xong -> chỉ đúng phục vụ đó nhận; trả tiền mặt -> báo dọn bàn,
+    không báo nhầm "khách tự chuyển khoản"; món trễ -> bếp trưởng + giám sát,
+    không báo lặp.
+  - scripts/test-tinh-nang-moi.js: kịch bản đơn giao đi HẾT luồng (trả tiền ->
+    phân -> shipper nhận -> bếp xong -> lấy hàng -> đang giao -> giao xong),
+    kiểm tra thông báo từng bước cho điều phối, shipper, khách (12 kiểm tra).
+  - npm test 42/42, test:automation 175/175, test-tinh-nang-moi 132/132
+    (chạy 3 lần liên tiếp đều đạt).
+CÒN LẠI
+  [CHỜ] Phân khu vực / bàn cố định cho từng phục vụ theo ca (hiện xác định người
+        phụ trách theo người gọi món đầu tiên).
+  [CHỜ] Bar tách riêng màn hình pha chế (hiện đồ uống đi chung KDS bếp).
+
+================================================================================
+CHUẨN BỊ DEMO (21/11/2026)
+================================================================================
+  [ĐÃ LÀM] Dashboard /analytics mặc định 30 ngày tính từ MAX(ngay_dat) của mọi
+        dòng hopdong -> một đơn test lẻ hoặc lượt đặt bàn cho ngày tương lai kéo
+        mốc đi, dashboard gần như trống (1 đơn, 0,7 triệu). Nay mốc = ngày gần
+        nhất có >= 10 đơn hoàn tất và không vượt hôm nay (05/07-03/08/2026:
+        1.466 đơn, 2.024,8 triệu). services/analyticsService.js khoangNgay().
+  [ĐÃ KIỂM] 16 trang chính của kịch bản demo mở được đúng vai trò, không lỗi.
+  [GHI CHÚ] Bàn S01 giữ phiên QR rỗng (QR_TMPM44AJJ_mw7prgya, không có món) -
+        chưa xử lý, demo dùng bàn S07.

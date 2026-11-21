@@ -1,0 +1,9 @@
+<%- include('partials/header') %>
+<div style="padding:0 0 1.5rem">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3" style="gap:.5rem">
+    <p class="mb-0" style="color:var(--qt-muted)">Cảnh báo quan trọng gửi cho quản trị viên: xóa món, hoàn tiền, phiếu chi vượt hạn mức, bảng lương chờ duyệt, mở khóa sổ.</p>
+    <a class="qt-btn qt-btn--ghost qt-btn--sm" href="/staff/thong-bao/luong"><i class="fas fa-diagram-project"></i> Luồng thông báo</a>
+  </div>
+  <%- include('../partials/ds-thong-bao', { laTb: 'quan_tri' }) %>
+</div>
+<%- include('partials/footer') %>

@@ -247,6 +247,8 @@ module.exports = function (io) {
 
     // Đảm bảo id_ban được gắn vào tất cả các dòng của đơn
     await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ? AND (id_ban IS NULL OR id_ban = 0)', [idBan, sesis]);
+    // Phuc vu goi mon cho ban -> nhan thong bao "mon xong" cua ban nay.
+    await require('../services/thongBaoNghiepVu').ghiNhanPhucVu(sesis, req.session.staffId);
 
     // Lấy thông tin bàn mới nhất
     const [banCapNhat] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);

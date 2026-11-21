@@ -159,7 +159,7 @@ const mlService = {
 
   duBaoKhachDaLuu: async (soNgay = 14) => {
     const [rows] = await db.query(
-      `SELECT ngay_du_bao, so_khach_du_bao, can_duoi, can_tren, mo_hinh, tao_luc
+      `SELECT DATE_FORMAT(ngay_du_bao, '%Y-%m-%d') AS ngay_du_bao, so_khach_du_bao, can_duoi, can_tren, mo_hinh, tao_luc
        FROM du_bao_luot_khach
        WHERE ngay_du_bao >= CURDATE()
        ORDER BY ngay_du_bao LIMIT ?`,

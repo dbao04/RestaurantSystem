@@ -742,9 +742,28 @@
         </div>
       <% } %>
 
+      <%
+        // Nhat ky xoa mon: cung nhom voi nguoi nhan thong bao xoa mon (server.js laQuanLyHoacGiamSat).
+        var hsNk = (typeof hoSo !== 'undefined' && hoSo) || {};
+        var xemNhatKyHuy = (typeof session !== 'undefined' && session && (session.adminlogin || session.staffRole === 'Quan ly')) ||
+          (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly'])) ||
+          /^Giám sát/.test(String(hsNk.ten_cd || '')) || (hsNk.ten_bp === 'Điều hành' && Number(hsNk.cap_bac) <= 2);
+      %>
+      <% if (xemNhatKyHuy) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Kiểm soát</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='huy-mon-nhat-ky' ? 'active' : '' %>" href="/staff/huy-mon/nhat-ky" data-match="/staff/huy-mon/nhat-ky"><i class="fas fa-ban"></i><span>Nhật ký xóa món</span></a>
+        </div>
+      <% } %>
+
       <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Ke toan', 'Quan ly'])) { %>
         <div class="qt-side__group">
           <div class="qt-side__label">Kế toán &amp; Tài chính</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='ke-toan' ? 'active' : '' %>" href="/staff/ke-toan" data-match="/staff/ke-toan"><i class="fas fa-calculator"></i><span>Tổng quan kế toán</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='ke-toan-chot-so' ? 'active' : '' %>" href="/staff/ke-toan/chot-so" data-match="/staff/ke-toan/chot-so"><i class="fas fa-scale-balanced"></i><span>Đối soát &amp; chốt sổ</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='thu-chi' ? 'active' : '' %>" href="/staff/thu-chi" data-match="/staff/thu-chi"><i class="fas fa-book"></i><span>Sổ quỹ thu chi</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='ke-toan-dong-tien' ? 'active' : '' %>" href="/staff/ke-toan/dong-tien" data-match="/staff/ke-toan/dong-tien"><i class="fas fa-money-bill-transfer"></i><span>Báo cáo dòng tiền</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='ke-toan-ngan-sach' ? 'active' : '' %>" href="/staff/ke-toan/ngan-sach" data-match="/staff/ke-toan/ngan-sach"><i class="fas fa-bullseye"></i><span>Ngân sách &amp; cảnh báo</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='salary' ? 'active' : '' %>" href="/staff/accountant/salary" data-match="/staff/accountant/salary"><i class="fas fa-money-check-dollar"></i><span>Bảng lương</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='reports' ? 'active' : '' %>" href="/staff/accountant/reports" data-match="/staff/accountant/reports"><i class="fas fa-chart-line"></i><span>Báo cáo Thu chi</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='doi-soat' ? 'active' : '' %>" href="/staff/thanh-toan/doi-soat" data-match="/staff/thanh-toan/doi-soat"><i class="fas fa-file-invoice-dollar"></i><span>Đối soát chốt ca</span></a>
@@ -826,6 +845,7 @@
           <button type="button" class="btn btn-sm btn-outline-warning d-none d-md-inline-flex align-items-center mr-2 shadow-sm" id="btnToggleSim" onclick="toggleMobileSimulator()" style="border-radius:20px; font-size:11.5px; font-weight:700; gap:5px; padding:4px 11px;" title="Bật/Tắt xem trước trên Khung Điện Thoại iPhone">
             <i class="fas fa-mobile-screen"></i> <span>Khung ĐT</span>
           </button>
+          <%- include('../../partials/chuong-thong-bao', { laTb: 'nv', trangTb: '/staff/thong-bao' }) %>
           <div class="qt-chip">
             <span class="qt-chip__ava"><%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %></span>
             <span class="qt-chip__meta">

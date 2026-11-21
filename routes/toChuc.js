@@ -283,17 +283,24 @@ router.post('/api/to-chuc/thong-bao', canDangNhap, canQuyen('dieu_hanh.thong_bao
     return res.status(400).json({ loi: 'Chưa chọn người nhận.' });
   }
 
-  realtime.phat('thong-bao:moi', {
-    noi_dung: String(noi_dung).slice(0, 500),
-    muc_do: muc_do || 'binh_thuong',
-    nguoi_gui: req.hoSo ? `${req.hoSo.ten} (${req.hoSo.ten_cd})` : (req.session.adminname || 'Quản trị'),
-  }, {
-    bp: ma_bp || undefined,
-    cd: ma_cd || undefined,
-    tatCa: Boolean(toan_bo),
+  // Luu + day realtime qua dich vu thong bao trung tam (moi nguoi nhan mot dong,
+  // xem lai duoc o chuong) - truoc day chi day realtime, ai khong mo trang la mat.
+  const tb = require('../services/thongBaoService');
+  let nv = [];
+  if (toan_bo) {
+    const [ds] = await require('../config/db').query('SELECT id_nv FROM nhan_vien WHERE trangthai = 1');
+    nv = ds.map((r) => r.id_nv);
+  }
+  const soNguoi = await tb.gui('thong_bao_chung', {
+    nv, cd: ma_cd ? [ma_cd] : [], bp: ma_bp ? [ma_bp] : [], nhom: [],
+    tieuDe: String(noi_dung).trim().slice(0, 120),
+    noiDung: String(noi_dung).slice(0, 500),
+    mucDo: muc_do === 'khan' ? 'khan' : muc_do === 'quan_trong' ? 'quan_trong' : 'tin',
+    nguoiGui: req.hoSo ? `${req.hoSo.ten} (${req.hoSo.ten_cd})` : (req.session.adminname || 'Quản trị'),
+    truNv: req.session.staffId || null,
   });
 
-  res.json({ ok: true });
+  res.json({ ok: true, so_nguoi: soNguoi });
 }));
 
 /** Doi trang thai lam viec cua chinh minh (dang lam / ban / vang). */
