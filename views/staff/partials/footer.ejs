@@ -48,25 +48,8 @@
     document.body.classList.toggle('sb-mo');
   }
 
-  function toggleMobileSimulator() {
-    document.body.classList.toggle('mobile-simulator-active');
-    var isActive = document.body.classList.contains('mobile-simulator-active');
-    var simBar = document.getElementById('simControlBar');
-    if (simBar) simBar.style.display = isActive ? 'flex' : 'none';
-    try {
-      localStorage.setItem('staff_sim_active', isActive ? '1' : '0');
-    } catch(e) {}
-  }
-
-  (function() {
-    try {
-      if (window.innerWidth >= 768 && localStorage.getItem('staff_sim_active') === '1') {
-        document.body.classList.add('mobile-simulator-active');
-        var simBar = document.getElementById('simControlBar');
-        if (simBar) simBar.style.display = 'flex';
-      }
-    } catch(e) {}
-  })();
+  // Da bo nut "Khung DT": xoa trang thai cu de khong ai bi ket trong khung gia lap.
+  try { localStorage.removeItem('staff_sim_active'); } catch(e) {}
 
   /*
     Ngan keo thanh ben tren dien thoai - xem khoi @media 767.98px trong
