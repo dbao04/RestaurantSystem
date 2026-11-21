@@ -579,14 +579,64 @@ async function donDep() {
   await q('DELETE FROM don_mua_hang WHERE id_dmh IN (?)', DON_DEP.dmh);
 }
 
+/*
+ * Tai khoan test dang nhap bang 123456, nhung he thong BAT nhan vien doi mat
+ * khau mac dinh (cau_hinh bao_mat.bat_doi_mk_nhan_vien) va mot so tai khoan
+ * that (vd quanly) da doi mat khau rieng. Trong luc chay: tam tat luat doi mat
+ * khau + tam dat 123456; KET THUC luon tra lai dung nhu cu.
+ */
+const TK_TEST = ['beptruong', 'daubep', 'dieuphoi', 'ketoan', 'letan', 'phucvu', 'quanly', 'thungan'];
+async function chuanBiTaiKhoan() {
+  const md5 = require('md5');
+  const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
+  const [[co]] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
+  const [[kh]] = await db.query('SELECT COALESCE(MAX(id), 0) AS m FROM khach_hang');
+  for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
+  if (co) await db.query("UPDATE cau_hinh SET gia_tri = '0' WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
+  return async () => {
+    for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
+    if (co) await db.query("UPDATE cau_hinh SET gia_tri = ? WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'", [co.gia_tri]).catch(() => {});
+    // Khach AUTOTEST do lan chay nay dang ky (taoKhach) + MOI don / thanh toan
+    // cua ho - neu khong, don giao thu va payments lan vao doanh thu, so quy that.
+    await xoaKhachAutotest(kh.m).catch((e) => console.warn('  (dọn khách test)', e.message));
+  };
+}
+
+async function xoaKhachAutotest(tuId = 0) {
+  const [ks] = await db.query("SELECT id FROM khach_hang WHERE id > ? AND ten LIKE 'AUTOTEST Khach%'", [tuId]);
+  if (!ks.length) return 0;
+  const ids = ks.map((k) => k.id);
+  const [ss] = await db.query('SELECT DISTINCT sesis FROM hopdong WHERE id_user IN (?)', [ids]);
+  const sesis = ss.map((s) => s.sesis);
+  const q = (sql, v) => db.query(sql, [v]).catch(() => {});
+  if (sesis.length) {
+    const [gs] = await db.query('SELECT id_giao FROM don_giao_hang WHERE sesis IN (?)', [sesis]);
+    const idGiao = gs.map((g) => g.id_giao);
+    if (idGiao.length) {
+      for (const t of ['nhat_ky_giao_hang', 'phan_cong_giao', 'vi_tri_shipper']) await q(`DELETE FROM ${t} WHERE id_giao IN (?)`, idGiao);
+      await q('DELETE FROM don_giao_hang WHERE id_giao IN (?)', idGiao);
+    }
+    const [ps] = await db.query('SELECT id FROM payments WHERE sesis IN (?)', [sesis]);
+    if (ps.length) await q('UPDATE giao_dich_ngan_hang SET payment_id = NULL WHERE payment_id IN (?)', ps.map((p) => p.id));
+    for (const t of ['payments', 'xuat_kho', 'huy_mon']) await q(`DELETE FROM ${t} WHERE sesis IN (?)`, sesis);
+    await q('DELETE FROM hopdong WHERE sesis IN (?)', sesis);
+  }
+  for (const t of ['loyalty_transactions', 'loyalty_points']) await q(`DELETE FROM ${t} WHERE id_kh IN (?)`, ids);
+  await q('DELETE FROM khach_hang WHERE id IN (?)', ids);
+  return ids.length;
+}
+
 (async () => {
   const t0 = Date.now();
   console.log('\x1b[1m🚀 KIỂM THỬ TỰ ĐỘNG CÁC TÍNH NĂNG MỚI\x1b[0m  →  ' + BASE);
+  const traLai = await chuanBiTaiKhoan();
+  process.on('SIGINT', () => { traLai().finally(() => process.exit(130)); });
   const nhomTest = [testGiaoHang, testQuyMoBan, testDatTiec, testThuChi, testKhoBep, testDoiMonDatTruoc];
   for (const f of nhomTest) {
     try { await f(); } catch (e) { ok(`${f.name} chạy không lỗi`, false, e.stack.split('\n').slice(0, 2).join(' ')); }
   }
   await donDep();
+  await traLai();
   console.log(`\n\x1b[1m══ KẾT QUẢ: ${KQ.dat} ĐẠT · ${KQ.hong} HỎNG · ${((Date.now() - t0) / 1000).toFixed(1)}s ══\x1b[0m`);
   if (KQ.loi.length) { console.log('\x1b[31mCác kịch bản hỏng:\x1b[0m'); KQ.loi.forEach((l, i) => console.log(`  ${i + 1}. ${l}`)); }
   process.exit(KQ.hong ? 1 : 0);
