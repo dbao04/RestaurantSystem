@@ -693,9 +693,6 @@
       <div class="qt-side__group">
         <div class="qt-side__label">Chung</div>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>" href="/staff" data-match="/staff"><i class="fas fa-gauge-high"></i><span>Tổng quan</span></a>
-        <% if (typeof session !== 'undefined' && session && session.laShipper) { %>
-          <a class="qt-nav__item" href="/shipper/"><i class="fas fa-motorcycle"></i><span>Ứng dụng giao hàng</span></a>
-        <% } %>
       </div>
 
       <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quay', 'letan', 'Quan ly'])) { %>
@@ -756,7 +753,18 @@
         </div>
       <% } %>
 
-      <% if ((typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) || (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly']))) { %>
+      <%
+        // Shipper (co ho so shipper, KHONG co quyen phan don) chi thay app giao
+        // hang cua minh - khong thay man hinh dieu phoi / ban do ca doi.
+        var laShipperThuan = typeof session !== 'undefined' && session && session.stafflogin && session.laShipper &&
+          !(typeof coQuyen === 'function' && typeof hoSo !== 'undefined' && hoSo && coQuyen('giao_hang.phan_cong'));
+      %>
+      <% if (laShipperThuan) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Giao hàng</div>
+          <a class="qt-nav__item" href="/shipper/"><i class="fas fa-motorcycle"></i><span>Đơn giao của tôi</span></a>
+        </div>
+      <% } else if ((typeof coQuyen === 'function' && coQuyen('giao_hang.xem')) || (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly']))) { %>
         <div class="qt-side__group">
           <div class="qt-side__label">Giao hàng</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>" href="/staff/giao-hang" data-match="/staff/giao-hang"><i class="fas fa-truck-fast"></i><span>Điều phối giao hàng</span></a>

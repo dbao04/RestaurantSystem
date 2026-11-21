@@ -1022,6 +1022,13 @@ module.exports = function (io) {
       du_lieu_tho: b,
     });
 
+    if (!kq.trungLap) sauGhiNhanNganHang(kq);
+
+    res.json({ success: true, matched: !!kq.khop, duplicated: !!kq.trungLap });
+  }));
+
+  /** Phat realtime sau khi ghi nhan mot giao dich ngan hang (webhook lan tu hoi SePay dung chung). */
+  function sauGhiNhanNganHang(kq) {
     if (kq.khop && kq.payment) {
       phat(kq.payment.sesis, 'tt:da-thanh-toan', {
         paymentId: kq.payment.id, sesis: kq.payment.sesis,
@@ -1032,9 +1039,34 @@ module.exports = function (io) {
     } else {
       io.to('thanh_toan').emit('tt:bien-dong-so-du', { khop: false, lyDo: kq.lyDo || null });
     }
+  }
 
-    res.json({ success: true, matched: !!kq.khop, duplicated: !!kq.trungLap });
+  /*
+   * TU HOI SEPAY: chay localhost (khong co dia chi cong khai cho webhook) van
+   * tu xac nhan chuyen khoan that. Chi goi SePay khi da luu API Token.
+   */
+  const sepayTuHoi = require('../services/sepayTuHoi');
+  if (process.env.NODE_ENV !== 'test') sepayTuHoi.batDau(sauGhiNhanNganHang);
+
+  router.post('/admin/thanh-toan/sepay-token', requireAdmin, bat(async (req, res) => {
+    const token = String(req.body.sepay_api_token || '').trim();
+    if (token) {
+      try { await sepayTuHoi.kiemTraToken(token); } catch (e) {
+        return res.redirect('/admin/thanh-toan?tb=' + encodeURIComponent('Chưa lưu - ' + e.message));
+      }
+    }
+    await tt.luuCauHinh({ sepay_api_token: token });
+    sepayTuHoi.datLai();
+    // Hoi ngay mot luot de khach dang cho khong phai doi them.
+    sepayTuHoi.hoiMotLan(sauGhiNhanNganHang).catch(() => {});
+    res.redirect('/admin/thanh-toan?tb=' + encodeURIComponent(token
+      ? 'Đã kết nối SePay - hệ thống sẽ tự hỏi giao dịch mới (khoảng 10 giây/lần khi có đơn chờ).'
+      : 'Đã tắt tự hỏi SePay.'));
   }));
+
+  router.get('/admin/thanh-toan/sepay-trang-thai', requireAdmin, (req, res) => {
+    res.json(sepayTuHoi.trangThai);
+  });
 
   /* ======================================================================== */
   /* ADMIN - CAU HINH                                                         */

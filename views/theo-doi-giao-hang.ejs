@@ -284,6 +284,20 @@
     <div class="cs-hop cs-hop--do"><i class="fas fa-circle-exclamation"></i> <%= loi %></div>
   <% } %>
 
+  <% if (don.den_noi) { %>
+    <div class="cs-hop cs-hop--vang" style="border-color:#20c997;background:rgba(32,201,151,.14)">
+      <strong><i class="fas fa-location-dot"></i> <%= t('theo_doi.shipper_da_den') %></strong><br>
+      <%= t('theo_doi.shipper_da_den_p') %>
+    </div>
+  <% } %>
+  <% if (don.ma_nhan_hang) { %>
+    <div class="cs-hop" style="text-align:center;border:1.5px dashed #c8a951;background:rgba(200,169,81,.1)">
+      <div style="font-size:13px;opacity:.85"><i class="fas fa-key"></i> <%= t('theo_doi.ma_nhan_hang') %></div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:10px;color:#e3c77a;margin:4px 0 2px;font-variant-numeric:tabular-nums"><%= don.ma_nhan_hang %></div>
+      <div style="font-size:12.5px;opacity:.8"><%= t('theo_doi.ma_nhan_hang_p') %></div>
+    </div>
+  <% } %>
+
   <% if (don.trang_thai === 'cho_thanh_toan') { %>
     <div class="cs-hop cs-hop--vang">
       <strong><i class="fas fa-wallet"></i> <%= t('theo_doi.t_cho_tt') %></strong><br>

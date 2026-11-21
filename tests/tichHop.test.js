@@ -1149,6 +1149,8 @@ test('shipper: dang nhap vao app, nhan don, GPS, xac minh vi tri khi giao, lich 
     "SELECT s.id_shipper, s.trang_thai, n.username FROM shipper s JOIN nhan_vien n ON n.id_nv = s.id_nv WHERE n.trangthai = 1 ORDER BY s.id_shipper LIMIT 1");
   assert.ok(sp, 'can mot shipper');
   const caCu = sp.trang_thai;
+  await require('../services/shipperNghiepVu').damBaoCauTruc();
+  const [[{ ca_bat_dau: caBatDauCu }]] = await db.query('SELECT ca_bat_dau FROM shipper WHERE id_shipper = ?', [sp.id_shipper]);
   const [[kh]] = await db.query("SELECT id FROM khach_hang WHERE sodienthoai LIKE 'QR\\_%' LIMIT 1");
   const sesis = await taoDonThu({ tinhtrang: 1, loaiDon: 'giao_hang', idUser: kh.id });
   const [[hd]] = await db.query('SELECT thanhtien FROM hopdong WHERE sesis = ? LIMIT 1', [sesis]);
@@ -1190,8 +1192,27 @@ test('shipper: dang nhap vao app, nhan don, GPS, xac minh vi tri khi giao, lich 
     assert.equal(await bepXong(), false, 'mon dang nau -> chua xong');
     await db.query('UPDATE hopdong SET trangthai_bep = 2 WHERE sesis = ?', [sesis]);
     assert.equal(await bepXong(), true, 'mon xong -> bep da xong');
+    // Chua kiem hang -> chua duoc di giao.
+    r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'dang_giao' }))).json();
+    assert.equal(r.ok, false);
+    assert.equal(r.ma, 'CHUA_KIEM_HANG');
+    // Kiem thieu mon / chua niem phong -> bi chan; du + niem phong -> duoc.
+    const [dsMon] = await db.query('SELECT id FROM hopdong WHERE sesis = ? AND soluong > 0', [sesis]);
+    const idsMon = dsMon.map((m) => m.id);
+    r = await (await S(`/api/shipper/don/${idGiao}/kiem-hang`, json({ mon_ids: idsMon.slice(1), niem_phong: true }))).json();
+    if (idsMon.length > 1) assert.equal(r.ok, false, 'thieu mon thi chua kiem xong');
+    r = await (await S(`/api/shipper/don/${idGiao}/kiem-hang`, json({ mon_ids: idsMon, niem_phong: false }))).json();
+    assert.equal(r.ok, false, 'chua niem phong thi chua kiem xong');
+    r = await (await S(`/api/shipper/don/${idGiao}/kiem-hang`, json({ mon_ids: idsMon, niem_phong: true }))).json();
+    assert.equal(r.ok, true, JSON.stringify(r));
     r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'dang_giao' }))).json();
     assert.equal(r.ok, true, JSON.stringify(r));
+    // Di giao thi don co ma nhan hang 4 so; nhap sai ma -> bi chan.
+    const [[maNh]] = await db.query('SELECT ma_nhan_hang FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+    assert.match(String(maNh.ma_nhan_hang), /^\d{4}$/);
+    const maSai = maNh.ma_nhan_hang === '1234' ? '4321' : '1234';
+    r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'da_giao', ma_nhan_hang: maSai }))).json();
+    assert.equal(r.ma, 'SAI_MA_NHAN_HANG');
     assert.equal(await bepXong(), true, 'da giao cho shipper (3) van la xong');
     r = await (await S(`/api/shipper/don/${idGiao}/trang-thai`, json({ trang_thai: 'da_giao', vi_do: 10.73465, kinh_do: 106.70351 }))).json();
     assert.equal(r.ok, false);
@@ -1235,8 +1256,8 @@ test('shipper: dang nhap vao app, nhan don, GPS, xac minh vi tri khi giao, lich 
     for (const b of ['nhat_ky_giao_hang', 'vi_tri_shipper', 'phan_cong_giao']) await db.query(`DELETE FROM ${b} WHERE id_giao = ?`, [idGiao]).catch(() => {});
     await db.query('DELETE FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
     await db.query(
-      'UPDATE shipper SET trang_thai = ?, tong_don = GREATEST(tong_don - 1, 0), tong_don_thanh_cong = GREATEST(tong_don_thanh_cong - 1, 0) WHERE id_shipper = ?',
-      [caCu, sp.id_shipper]);
+      'UPDATE shipper SET trang_thai = ?, ca_bat_dau = ?, tong_don = GREATEST(tong_don - 1, 0), tong_don_thanh_cong = GREATEST(tong_don_thanh_cong - 1, 0) WHERE id_shipper = ?',
+      [caCu, caBatDauCu, sp.id_shipper]);
   }
 });
 

@@ -170,6 +170,9 @@
             <% } %>
           <% } %>
           <% if (g.ly_do) { %><span class="text-danger"><i class="fas fa-circle-info"></i> <%= g.ly_do %></span><% } %>
+          <% if (g.su_co) { %><span class="badge badge-danger"><i class="fas fa-triangle-exclamation"></i> Sự cố: <%= g.su_co %></span><% } %>
+          <% if (g.trang_thai === 'dang_giao' && g.den_noi_luc) { %><span class="text-info"><i class="fas fa-location-dot"></i> đã đến nơi</span><% } %>
+          <% if (g.hoan_hang === 'dang_mang_ve') { %><span class="badge badge-warning"><i class="fas fa-rotate-left"></i> đang mang hàng về quán</span><% } %>
         </div>
 
         <div class="gh-act">

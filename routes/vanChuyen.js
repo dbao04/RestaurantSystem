@@ -187,9 +187,46 @@ router.post('/admin/van-chuyen/tham-so', canQuanTri, bat(async (req, res) => {
 // KHU DIEU PHOI
 // ===========================================================================
 
-const canXem = phanQuyen.canQuyen('giao_hang.xem');
-const canPhan = phanQuyen.canQuyen('giao_hang.phan_cong');
-const canTheoDoi = phanQuyen.canQuyen(['giao_hang.theo_doi', 'giao_hang.phan_cong']);
+/**
+ * Khu dieu phoi danh cho DIEU PHOI, khong phai shipper.
+ *
+ * `phanQuyen.canQuyen` cho moi phien quan tri di qua. Khi cung mot trinh duyet
+ * vua dang nhap quan tri vua dang nhap tai khoan shipper, shipper se mo duoc
+ * man hinh dieu phoi va phan don cho nguoi khac - nhat ky lai ghi ten shipper.
+ * Nen khi CO phien nhan vien thi xet quyen theo CHUC DANH cua nhan vien do:
+ *   - shipper (co ho so shipper, khong co quyen phan don) -> ve app /shipper/
+ *   - nhan vien khac thieu quyen -> 403
+ * Chi phien quan tri thuan (khong dang nhap nhan vien) moi duoc di thang.
+ */
+const quyenNv = require('../services/phanQuyenService');
+function canQuyenDieuPhoi(ma) {
+  const ds = Array.isArray(ma) ? ma : [ma];
+  return [(req, res, next) => {
+    if (!req.session || !req.session.stafflogin || !req.hoSo) return next();
+    if (quyenNv.coQuyen(req.hoSo, ds)) return next();
+    if (req.session.laShipper) {
+      if (req.method === 'GET' && !req.path.startsWith('/api/')) return res.redirect('/shipper/');
+      return res.status(403).json({ ok: false, thong_bao: 'Shipper không phân / điều phối đơn. Dùng ứng dụng giao hàng của bạn.' });
+    }
+    return res.status(403).render('error', {
+      title: 'Không có quyền truy cập', statusCode: 403, hoSo: req.hoSo,
+      message: `Chức danh "${req.hoSo.ten_cd || 'chưa xác định'}" của bạn không có quyền thực hiện việc này.`,
+    });
+  }, phanQuyen.canQuyen(ma)];
+}
+
+// Shipper co quyen giao_hang.xem (xem don cua minh) nhung KHONG duoc vao bang
+// dieu phoi ca doi: man xem chung cung chan shipper thuan.
+const canXem = [(req, res, next) => {
+  if (req.session && req.session.stafflogin && req.session.laShipper && req.hoSo &&
+      !quyenNv.coQuyen(req.hoSo, ['giao_hang.phan_cong', 'giao_hang.theo_doi'])) {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) return res.redirect('/shipper/');
+    return res.status(403).json({ ok: false, thong_bao: 'Dùng ứng dụng giao hàng của bạn.' });
+  }
+  next();
+}, phanQuyen.canQuyen('giao_hang.xem')];
+const canPhan = canQuyenDieuPhoi('giao_hang.phan_cong');
+const canTheoDoi = canQuyenDieuPhoi(['giao_hang.theo_doi', 'giao_hang.phan_cong']);
 
 function veDieuPhoi(res, duongDan, msg, loai = 'success') {
   const q = msg ? `?msg=${encodeURIComponent(msg)}&msgType=${loai}` : '';
@@ -292,6 +329,15 @@ router.get('/staff/giao-hang/dieu-phoi', canXem, bat(async (req, res) => {
 
 router.get('/api/giao-hang/dieu-phoi', canXem, bat(async (req, res) => {
   res.json({ ok: true, ...(await require('../services/phanCongGiaoService').tongQuan()) });
+}));
+
+/** Gan khu phu trach cho mot shipper (bo trong = giao moi khu). */
+router.post('/staff/giao-hang/dieu-phoi/shipper/:id/khu-vuc', laSo, canPhan, bat(async (req, res) => {
+  const pc = require('../services/phanCongGiaoService');
+  const ma = await pc.ganKhuVuc(Number(req.params.id), (req.body || {}).khu);
+  await pc.phanHangCho().catch(() => {});
+  realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+  res.json({ ok: true, khu: ma });
 }));
 
 router.post('/staff/giao-hang/dieu-phoi/cau-hinh', canPhan, bat(async (req, res) => {
@@ -433,6 +479,28 @@ router.post('/staff/giao-hang/:id/trang-thai', laSo, canPhan, bat(async (req, re
   }
 }));
 
+/** Quay xac nhan da nhan lai hang hoan (giao that bai / bi huy giua duong). */
+router.post('/staff/giao-hang/:id/nhan-lai-hang', laSo, canPhan, bat(async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    await require('../services/shipperNghiepVu').nhanLaiHang(id, nguoiDung(req));
+    const don = await vc.donGiao(id);
+    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+    realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
+    veDieuPhoi(res, `/staff/giao-hang/${id}`, `Đã nhận lại hàng của đơn ${don.ma_giao}.`);
+  } catch (e) {
+    veDieuPhoi(res, `/staff/giao-hang/${id}`, e.message, 'danger');
+  }
+}));
+
+/** Dieu phoi da xu ly xong su co shipper bao - go canh bao. */
+router.post('/staff/giao-hang/:id/xu-ly-su-co', laSo, canPhan, bat(async (req, res) => {
+  const id = Number(req.params.id);
+  await require('../services/shipperNghiepVu').xuLyXongSuCo(id);
+  realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+  veDieuPhoi(res, `/staff/giao-hang/${id}`, 'Đã đánh dấu xử lý xong sự cố.');
+}));
+
 /** Hoan diem MOT PHAN (giao thieu / sai mon, mon hu...) - chi loi nha hang. */
 router.post('/staff/giao-hang/:id/hoan-diem', laSo, canPhan, bat(async (req, res) => {
   const id = Number(req.params.id);
@@ -539,7 +607,15 @@ function laAnToan(req) {
 
 /** Don dang cam cua chinh minh - ung dung goi lai sau moi thao tac. */
 router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
+  const nvGiao = require('../services/shipperNghiepVu');
+  await nvGiao.damBaoCauTruc();
   const don = await vc.dsDonGiao({ idShipper: req.shipper.id_shipper, dangChay: true });
+  // Don da huy nhung hang van tren xe shipper (chua tra ve quay) - van phai hien.
+  const [huyConHang] = await db.query(
+    "SELECT id_giao FROM don_giao_hang WHERE id_shipper = ? AND trang_thai = 'huy' AND hoan_hang = 'dang_mang_ve'",
+    [req.shipper.id_shipper]);
+  for (const h of huyConHang) { const d = await vc.donGiao(h.id_giao); if (d) don.push(d); }
+  const tsNv = await nvGiao.thamSo();
   const phutXN = (await require('../services/phanCongGiaoService').thamSo()).phut_xac_nhan;
   const [[lai]] = await require('../config/db').query(
     `SELECT COUNT(*) AS n, COALESCE(SUM(phi_giao),0) AS phi FROM don_giao_hang
@@ -563,7 +639,17 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
       cho_xac_nhan: g.trang_thai === 'da_phan' && !!g.phan_tu_dong && !g.xac_nhan_luc,
       han_xac_nhan: g.phan_luc ? new Date(new Date(g.phan_luc).getTime() + phutXN * 60000).toISOString() : null,
       ma_khu_vuc: g.ma_khu_vuc || null,
+      // Cac khau nghiep vu (services/shipperNghiepVu.js)
+      da_kiem_hang: !!g.kiem_hang_luc,
+      den_noi_luc: g.den_noi_luc || null,
+      so_lan_goi: Number(g.so_lan_goi || 0),
+      hoan_hang: g.hoan_hang || null,
+      su_co: g.su_co || null,
+      ly_do: g.ly_do || null,
     })),
+    quy_dinh: { phut_cho_khach: tsNv.phutChoKhach, so_lan_goi: tsNv.soLanGoiToiThieu },
+    ly_do_that_bai: Object.entries(nvGiao.LY_DO_THAT_BAI).map(([ma, v]) => ({ ma, nhan: v.nhan, can_den_noi: !!v.canDenNoi, can_ghi_chu: !!v.canGhiChu })),
+    loai_su_co: Object.entries(nvGiao.LOAI_SU_CO).map(([ma, nhan]) => ({ ma, nhan })),
     hom_nay: { so_don: Number(lai.n || 0), tien_phi: Number(lai.phi || 0) },
     // Tien mat da thu cua khach, chua nop ve quay.
     dang_giu: await require('../services/thuHoShipperService').tienDangGiu(req.shipper.id_shipper)
@@ -623,7 +709,10 @@ router.post('/api/shipper/don/:id/trang-thai', laSo, canShipper, bat(async (req,
       id_nv: req.shipper.id_nv,
       ten: String(req.session.staffName || req.shipper.ten || '').trim(),
       id_shipper: req.shipper.id_shipper,
-    }, { ly_do: b.ly_do, vi_do: b.vi_do, kinh_do: b.kinh_do, ly_do_ngoai_vung: b.ly_do_ngoai_vung });
+    }, {
+      ly_do: b.ly_do, vi_do: b.vi_do, kinh_do: b.kinh_do, ly_do_ngoai_vung: b.ly_do_ngoai_vung,
+      ma_ly_do_that_bai: b.ma_ly_do_that_bai, ma_nhan_hang: b.ma_nhan_hang,
+    });
 
     realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
     realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
@@ -649,16 +738,90 @@ router.post('/api/shipper/don/:id/tu-choi', laSo, canShipper, bat(async (req, re
   } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
 }));
 
-/** Shipper tu bat / tat ca truc. */
+/**
+ * Shipper vao ca / tan ca. Tan ca = CHOT CA: tong ket so don, km, phi ship,
+ * tien thu ho; khong cho tan khi con don dang cam, hang hoan chua tra, tien
+ * chua nop (services/shipperNghiepVu.chotCa).
+ */
 router.post('/api/shipper/ca', canShipper, bat(async (req, res) => {
+  const nvGiao = require('../services/shipperNghiepVu');
   try {
     const moi = (req.body || {}).trang_thai === 'san_sang' ? 'san_sang' : 'nghi';
-    await vc.doiCaShipper(req.shipper.id_shipper, moi);
+    let tongKet = null;
+    if (moi === 'san_sang') {
+      await vc.doiCaShipper(req.shipper.id_shipper, moi);
+      await nvGiao.batDauCa(req.shipper.id_shipper);
+    } else {
+      tongKet = await nvGiao.chotCa(req.shipper.id_shipper, (req.body || {}).ghi_chu);
+    }
     realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
-    res.json({ ok: true, ca: moi });
+    res.json({ ok: true, ca: moi, tong_ket: tongKet });
   } catch (e) {
-    res.status(400).json({ ok: false, thong_bao: e.message });
+    res.status(400).json({ ok: false, thong_bao: e.message, ma: e.ma || null });
   }
+}));
+
+/** So lieu ca dang lam (xem truoc khi tan ca). */
+router.get('/api/shipper/ca/tong-ket', canShipper, bat(async (req, res) => {
+  res.json({ ok: true, ...(await require('../services/shipperNghiepVu').tongKetCa(req.shipper.id_shipper)) });
+}));
+
+/** Ten + id nguoi dang thao tac trong app shipper, dung ghi nhat ky. */
+function nguoiShipper(req) {
+  return { id_nv: req.shipper.id_nv, ten: String(req.session.staffName || req.shipper.ten || '').trim() };
+}
+
+/** Phat cho dieu phoi + trang theo doi cua khach sau mot khau nghiep vu. */
+async function phatDon(idGiao) {
+  const don = await vc.donGiao(idGiao);
+  if (!don) return;
+  realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+  realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
+}
+
+/** Kiem hang tai quay: tick du mon + xac nhan niem phong. */
+router.post('/api/shipper/don/:id/kiem-hang', laSo, canShipper, bat(async (req, res) => {
+  try {
+    const b = req.body || {};
+    await require('../services/shipperNghiepVu').kiemHang(Number(req.params.id), req.shipper.id_shipper,
+      { monIds: b.mon_ids, niemPhong: !!b.niem_phong }, nguoiShipper(req));
+    await phatDon(Number(req.params.id));
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+
+/** Da den diem giao - khach thay ngay tren trang theo doi. */
+router.post('/api/shipper/don/:id/den-noi', laSo, canShipper, bat(async (req, res) => {
+  try {
+    const b = req.body || {};
+    await require('../services/shipperNghiepVu').denNoi(Number(req.params.id), req.shipper.id_shipper,
+      { vi_do: b.vi_do, kinh_do: b.kinh_do }, nguoiShipper(req));
+    await phatDon(Number(req.params.id));
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+
+/** Ghi mot lan goi khach (app goi truoc khi mo trinh quay so). */
+router.post('/api/shipper/don/:id/goi', laSo, canShipper, bat(async (req, res) => {
+  try {
+    const kq = await require('../services/shipperNghiepVu').ghiCuocGoi(Number(req.params.id), req.shipper.id_shipper, nguoiShipper(req));
+    res.json(kq);
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+
+/** Bao su co (mot don, hoac moi don dang cam neu khong chi ro). */
+router.post('/api/shipper/su-co', canShipper, bat(async (req, res) => {
+  try {
+    const kq = await require('../services/shipperNghiepVu').baoSuCo(req.shipper.id_shipper, req.body || {}, nguoiShipper(req));
+    for (const id of kq.don) await phatDon(id);
+    const io = realtime.io;
+    if (io) {
+      io.to([realtime.P.bp('GH'), realtime.P.QUAN_LY, realtime.P.QUAN_TRI]).emit('giao-hang:su-co', {
+        ten: nguoiShipper(req).ten, noi_dung: kq.noi_dung, don: kq.don,
+      });
+    }
+    res.json({ ok: true, so_don: kq.so_don });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
 }));
 
 // ---------------------------------------------------------------------------
@@ -912,6 +1075,11 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
     db.query('SELECT id_user FROM hopdong WHERE sesis = ? LIMIT 1', [don.sesis]),
   ]);
   const laChuDon = !!(req.session.userId && chu && Number(chu.id_user) === Number(req.session.userId));
+  // Ma nhan hang chi hien cho CHINH chu don (dang nhap dung tai khoan) - ai co
+  // ma giao cung mo duoc trang nay, khong duoc lo ma cho nguoi la.
+  const maNhanHang = laChuDon && ['da_phan', 'dang_lay', 'dang_giao'].includes(don.trang_thai)
+    ? await require('../services/shipperNghiepVu').layMaNhanHang(don.id_giao).catch(() => null)
+    : null;
 
   res.render('theo-doi-giao-hang', {
     layout: false,
@@ -941,9 +1109,15 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
       dang_chay: don.dang_chay,
       shipper_vi_do: don.dang_chay ? don.shipper_vi_do : null,
       shipper_kinh_do: don.dang_chay ? don.shipper_kinh_do : null,
+      ma_nhan_hang: maNhanHang,
+      den_noi: don.trang_thai === 'dang_giao' && !!don.den_noi_luc,
     },
     mon,
-    lichSu: lichSu.map((n) => ({ nhan: n.tt.nhan, mau: n.tt.mau, icon: n.tt.icon, luc: n.luc, ghi_chu: n.ghi_chu })),
+    // Su kien noi bo (goi khach, su co, quay nhan lai hang) khong cho khach xem.
+    lichSu: lichSu.filter((n) => !n.noi_bo).map((n) => ({
+      nhan: n.tt.nhan, mau: n.tt.mau, icon: n.tt.icon, luc: n.luc,
+      ghi_chu: n.su_kien ? null : n.ghi_chu,
+    })),
     nhaHang: goc,
     // Chinh sach: khach biet minh da tra bao nhieu, co duoc hoan diem khong.
     chinhSach: {

@@ -806,10 +806,13 @@ const nhatKy = async (idGiao) => {
      FROM nhat_ky_giao_hang n LEFT JOIN nhan_vien nv ON nv.id_nv = n.id_nv
      WHERE n.id_giao = ? ORDER BY n.luc, n.id`, [idGiao]
   );
+  const SU_KIEN = require('./shipperNghiepVu').SU_KIEN;
   return rows.map((r) => ({
     ...r,
     ten_nguoi: String(r.ten_nv || r.ten_nguoi || 'Hệ thống').trim(),
-    tt: TT[r.den_trang_thai] || { nhan: r.den_trang_thai, mau: '#6c757d', icon: 'fa-circle' },
+    tt: TT[r.den_trang_thai] || SU_KIEN[r.den_trang_thai] || { nhan: r.den_trang_thai, mau: '#6c757d', icon: 'fa-circle' },
+    su_kien: !!SU_KIEN[r.den_trang_thai],
+    noi_bo: !!(SU_KIEN[r.den_trang_thai] && SU_KIEN[r.den_trang_thai].noiBo),
   }));
 };
 
@@ -884,6 +887,8 @@ const goShipper = async (idGiao, nguoi = {}, lyDo = '') => {
  * day la bang chung duy nhat cho tranh chap "da giao roi ma khach bao chua nhan".
  */
 const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
+  const nv = require('./shipperNghiepVu');
+  await nv.damBaoCauTruc();
   const don = await donGiao(idGiao);
   if (!don) throw new Error('Không tìm thấy đơn giao hàng.');
 
@@ -904,6 +909,12 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   if (moi === 'huy' && !tuyChon.ma_ly_do) {
     throw new Error('Hãy chọn lý do hủy (lỗi do khách hay lỗi do nhà hàng) để áp dụng chính sách hoàn điểm.');
   }
+  const laShipperBam = !!(nguoi.id_shipper && !tuyChon.laDieuPhoi);
+  // SHIPPER bao khong giao duoc: phai chon ly do chuan; "khach khong nghe may"
+  // chi chap nhan khi da den noi, da goi du so lan va cho du so phut.
+  if (moi === 'that_bai' && laShipperBam) {
+    tuyChon.ly_do = await nv.kiemTraThatBai(don, tuyChon.ma_ly_do_that_bai, tuyChon.ly_do);
+  }
   if (moi === 'that_bai' && !String(tuyChon.ly_do || '').trim()) {
     throw new Error('Phải ghi lý do giao thất bại (khách không nghe máy, sai địa chỉ...).');
   }
@@ -918,6 +929,29 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
       const ds = chuaXong.slice(0, 4).map((m) => `${m.name_mon} x${m.soluong}`).join(', ');
       throw new Error(`Bếp chưa làm xong món: ${ds}${chuaXong.length > 4 ? '...' : ''}. Chờ bếp báo hoàn thành rồi mới nhận hàng đi giao.`);
     }
+    // Kiem hang tai quay (tick du mon + niem phong) truoc khi roi nha hang.
+    if (laShipperBam && !don.kiem_hang_luc) {
+      const e = new Error('Hãy kiểm đủ từng món và niêm phong túi trước khi đi giao.');
+      e.ma = 'CHUA_KIEM_HANG';
+      throw e;
+    }
+  }
+
+  // MA NHAN HANG (OTP): khach doc 4 so tren trang theo doi don. Dung ma thi
+  // khong can xac minh vi tri nua - day la bang chung giao hang chac nhat.
+  let xacNhanGiao = null;
+  if (moi === 'da_giao') {
+    const maNhap = String(tuyChon.ma_nhan_hang || '').replace(/\D/g, '');
+    if (laShipperBam && maNhap) {
+      if (!don.ma_nhan_hang || maNhap !== String(don.ma_nhan_hang)) {
+        const e = new Error('Mã nhận hàng không đúng. Hỏi lại khách mã 4 số trên trang theo dõi đơn.');
+        e.ma = 'SAI_MA_NHAN_HANG';
+        throw e;
+      }
+      xacNhanGiao = 'otp';
+    } else if (!laShipperBam) {
+      xacNhanGiao = 'dieu_phoi';
+    }
   }
 
   // XAC MINH VI TRI khi SHIPPER bam "Giao xong": phai dang o gan diem giao.
@@ -925,8 +959,9 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   // (hoac khong co GPS) thi van cho, nhung BAT ghi ly do - ly do nay vao nhat
   // ky don, la bang chung khi khach bao "chua nhan duoc hang".
   let ghiChuViTri = null;
-  if (moi === 'da_giao' && nguoi.id_shipper && !tuyChon.laDieuPhoi && so(don.vi_do) !== null && so(don.kinh_do) !== null) {
+  if (moi === 'da_giao' && laShipperBam && !xacNhanGiao && so(don.vi_do) !== null && so(don.kinh_do) !== null) {
     const kt = await kiemTraViTriGiao(don, nguoi.id_shipper, tuyChon);
+    xacNhanGiao = kt.hopLe ? 'gps' : 'ly_do';
     if (!kt.hopLe) {
       const lyDo = String(tuyChon.ly_do_ngoai_vung || '').trim();
       if (lyDo.length < 5) {
@@ -955,6 +990,28 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
   if (moi === 'huy') {
     dat.push('ma_ly_do = ?', 'ben_loi = ?', 'han_thanh_toan = NULL');
     bien.push(tuyChon.ma_ly_do, tuyChon.ben_loi || null);
+  }
+  // --- Nghiep vu shipper (services/shipperNghiepVu.js) ---
+  if (moi === 'dang_giao') {
+    dat.push('ma_nhan_hang = COALESCE(ma_nhan_hang, ?)');
+    bien.push(String(Math.floor(1000 + Math.random() * 9000)));
+  }
+  if (moi === 'da_giao') {
+    if (!xacNhanGiao && !laShipperBam) xacNhanGiao = 'dieu_phoi';
+    dat.push('xac_nhan_giao = ?', 'su_co = NULL', "hoan_hang = IF(hoan_hang = 'dang_mang_ve', NULL, hoan_hang)");
+    bien.push(xacNhanGiao || (ghiChuViTri ? 'ly_do' : 'khong_gps'));
+  }
+  // Hang da roi quan ma khong giao duoc -> shipper phai mang VE QUAN.
+  if (moi === 'that_bai') {
+    dat.push("hoan_hang = 'dang_mang_ve'", 'hoan_hang_luc = NULL', 'ma_ly_do_that_bai = ?');
+    bien.push(tuyChon.ma_ly_do_that_bai || null);
+  }
+  // Quay lai buoc truoc / giao lai: lam lai cac khau tu dau. Hang da ve quay
+  // thi phai kiem lai; hang con tren xe thi giu ket qua kiem.
+  if (moi === 'da_phan' || moi === 'cho_phan') {
+    dat.push('den_noi_luc = NULL', 'so_lan_goi = 0', 'su_co = NULL',
+      "kiem_hang_luc = IF(hoan_hang = 'dang_mang_ve', kiem_hang_luc, NULL)",
+      "hoan_hang = IF(hoan_hang = 'da_nhan_lai', NULL, hoan_hang)");
   }
 
   // Chi doi khi trang thai VAN la `cu` - shipper va dieu phoi bam cung luc

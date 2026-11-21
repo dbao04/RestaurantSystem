@@ -166,6 +166,58 @@
 
   <!-- ============================================ CỘT PHẢI -->
   <div class="col-lg-5">
+    <%
+      // Cac khau nghiep vu shipper (services/shipperNghiepVu.js)
+      var gioPhut = function (d) { return d ? new Date(d).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : null; };
+      var TEN_XN = { otp: 'Mã nhận hàng (khách đọc)', gps: 'GPS tại điểm giao', ly_do: 'Ngoài vùng GPS — có ghi lý do', dieu_phoi: 'Điều phối xác nhận', khong_gps: 'Không có GPS' };
+      var coTienDo = ['dang_lay','dang_giao','da_giao','that_bai'].indexOf(don.trang_thai) >= 0 || don.hoan_hang || don.su_co;
+    %>
+    <% if (coTienDo) { %>
+      <div class="card shadow mb-3 <%= don.su_co ? 'border-left-danger' : '' %>">
+        <div class="card-header py-2">
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list-check"></i> Tiến độ giao của shipper</h6>
+        </div>
+        <div class="card-body small">
+          <% if (don.su_co) { %>
+            <div class="alert alert-danger py-2 mb-2">
+              <i class="fas fa-triangle-exclamation"></i> <b>Sự cố<%= don.su_co_luc ? ' lúc ' + gioPhut(don.su_co_luc) : '' %>:</b> <%= don.su_co %>
+              <% if (phanCongDuoc) { %>
+                <form action="/staff/giao-hang/<%= don.id_giao %>/xu-ly-su-co" method="POST" class="mt-1">
+                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-check"></i> Đã xử lý xong</button>
+                </form>
+              <% } %>
+            </div>
+          <% } %>
+          <ul class="list-unstyled mb-2" style="line-height:1.9">
+            <li><i class="fas fa-fw <%= don.kiem_hang_luc ? 'fa-circle-check text-success' : 'fa-circle text-gray-400' %>"></i>
+              Kiểm hàng &amp; niêm phong <%= don.kiem_hang_luc ? '— ' + gioPhut(don.kiem_hang_luc) : '' %></li>
+            <li><i class="fas fa-fw <%= don.giao_luc ? 'fa-circle-check text-success' : 'fa-circle text-gray-400' %>"></i>
+              Rời quán đi giao <%= don.giao_luc ? '— ' + gioPhut(don.giao_luc) : '' %></li>
+            <li><i class="fas fa-fw <%= don.den_noi_luc ? 'fa-circle-check text-success' : 'fa-circle text-gray-400' %>"></i>
+              Đến nơi giao <%= don.den_noi_luc ? '— ' + gioPhut(don.den_noi_luc) : '' %></li>
+            <li><i class="fas fa-fw fa-phone text-gray-600"></i> Đã gọi khách <b><%= Number(don.so_lan_goi || 0) %></b> lần</li>
+            <% if (don.trang_thai === 'da_giao') { %>
+              <li><i class="fas fa-fw fa-shield-halved text-success"></i> Xác nhận giao bằng: <b><%= TEN_XN[don.xac_nhan_giao] || 'không rõ' %></b></li>
+            <% } %>
+          </ul>
+          <% if (don.hoan_hang === 'dang_mang_ve') { %>
+            <div class="alert alert-warning py-2 mb-0">
+              <i class="fas fa-rotate-left"></i> <b><%= don.ten_shipper || 'Shipper' %> đang mang hàng về quán.</b>
+              Khi nhận lại đủ hàng, bấm xác nhận.
+              <% if (phanCongDuoc) { %>
+                <form action="/staff/giao-hang/<%= don.id_giao %>/nhan-lai-hang" method="POST" class="mt-2"
+                      onsubmit="return confirm('Xác nhận quầy đã nhận lại đủ hàng của đơn <%= don.ma_giao %>?')">
+                  <button class="btn btn-sm btn-warning" type="submit"><i class="fas fa-box"></i> Đã nhận lại hàng</button>
+                </form>
+              <% } %>
+            </div>
+          <% } else if (don.hoan_hang === 'da_nhan_lai') { %>
+            <div class="alert alert-secondary py-2 mb-0"><i class="fas fa-box"></i> Hàng hoàn đã về quầy
+              <%= don.hoan_hang_luc ? 'lúc ' + gioPhut(don.hoan_hang_luc) : '' %><%= don.nhan_lai_boi ? ' — ' + don.nhan_lai_boi : '' %>.</div>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
     <% if (phanCongDuoc && !don.da_xong) { %>
       <div class="card shadow mb-3">
         <div class="card-header py-2">

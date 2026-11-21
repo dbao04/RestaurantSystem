@@ -209,6 +209,7 @@ app.use(async (req, res, next) => {
     staffId: req.session.staffId || null,
     staffName: req.session.staffName || '',
     staffRole: req.session.staffRole || '',
+    laShipper: !!req.session.laShipper,
   };
   const pathHienTai = req.originalUrl || req.url || req.path || '';
   res.locals.currentPath = pathHienTai;

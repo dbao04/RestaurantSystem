@@ -50,7 +50,8 @@
     "baocao:chimuc": "node config/migrations/043_chi_muc_bao_cao.js",
     "kho:kiemke": "node config/migrations/044_kiem_ke.js",
     "taikhoan:doimk": "node config/migrations/045_doi_mk_nhan_vien.js",
-    "giaodien:toi": "node scripts/taoCheDoToi.js"
+    "giaodien:toi": "node scripts/taoCheDoToi.js",
+    "shipper:nghiepvu": "node config/migrations/046_shipper_nghiep_vu.js"
   },
   "keywords": [],
   "author": "",

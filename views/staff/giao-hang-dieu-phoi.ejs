@@ -62,7 +62,7 @@
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead class="thead-light"><tr><th class="text-center">Lượt kế</th><th>Shipper</th><th>Ca / tín hiệu</th><th class="text-center">Đang cầm</th><th class="text-right">Đơn hôm nay</th><th class="text-right">Đã giao</th><th class="text-right">Phí ship</th><th style="min-width:130px">Tải</th><th class="text-center">Từ chối / hết giờ</th><th>Lần nhận gần nhất</th></tr></thead>
+        <thead class="thead-light"><tr><th class="text-center">Lượt kế</th><th>Shipper</th><th>Ca / tín hiệu</th><th>Khu phụ trách</th><th class="text-center">Đang cầm</th><th class="text-right">Đơn hôm nay</th><th class="text-right">Đã giao</th><th class="text-right">Phí ship</th><th style="min-width:130px">Tải</th><th class="text-center">Từ chối / hết giờ</th><th>Lần nhận gần nhất</th></tr></thead>
         <tbody>
           <% tq.bang.forEach(function (s) { %>
             <tr class="<%= !s.trong_ca ? 'text-muted' : '' %>">
@@ -74,6 +74,15 @@
                 <% } else { %><span class="badge badge-success">Sẵn sàng</span><% } %><br>
                 <span class="dp-cham" style="background:<%= s.online ? '#1f7a4a' : '#b3352c' %>"></span><%= s.online ? 'GPS ' + thoiLuong(s.phut_gps) + ' trước' : (s.phut_gps == null ? 'chưa mở app' : 'mất tín hiệu ' + thoiLuong(s.phut_gps)) %>
               </td>
+              <td class="small" style="min-width:150px">
+                <div class="d-flex flex-wrap" style="gap:.3rem" data-khu-sp="<%= s.id_shipper %>">
+                  <% khu.forEach(function (k) { var co = (s.khu || []).indexOf(k.ma) >= 0; %>
+                    <button type="button" class="btn btn-sm py-0 px-2 <%= co ? 'btn-warning' : 'btn-outline-secondary' %>" data-ma="<%= k.ma %>"
+                            style="font-size:.75rem" <%= duocSua ? '' : 'disabled' %> title="<%= k.ten %>"><%= k.ma %></button>
+                  <% }) %>
+                </div>
+                <span class="text-muted" style="font-size:.72rem" data-khu-chu="<%= s.id_shipper %>"><%= (s.khu || []).length ? 'chỉ nhận đơn khu đã chọn' : 'giao mọi khu' %></span>
+              </td>
               <td class="text-center"><%= s.dang_cam %>/<%= s.so_don_toi_da %></td>
               <td class="text-right font-weight-bold"><%= s.don_hom_nay %></td>
               <td class="text-right"><%= s.da_giao_hom_nay %></td>
@@ -83,7 +92,7 @@
               <td class="small"><%= gio(s.phan_gan_nhat) %></td>
             </tr>
           <% }) %>
-          <% if (!tq.bang.length) { %><tr><td colspan="10" class="text-center text-muted py-4">Chưa có shipper nào thuộc đội giao hàng nội bộ. Thêm ở Quản trị → Đơn vị vận chuyển → Shipper.</td></tr><% } %>
+          <% if (!tq.bang.length) { %><tr><td colspan="11"class="text-center text-muted py-4">Chưa có shipper nào thuộc đội giao hàng nội bộ. Thêm ở Quản trị → Đơn vị vận chuyển → Shipper.</td></tr><% } %>
         </tbody>
       </table>
     </div>
@@ -114,10 +123,11 @@
       <hr>
       <h6 class="font-weight-bold small text-uppercase text-muted">Quy tắc chọn shipper</h6>
       <ol class="small dp-quy pl-3 mb-0">
-        <li><b>Đủ điều kiện:</b> đang trong ca, chưa đầy số đơn tối đa, chưa từ chối / bỏ lỡ đơn này.</li>
+        <li><b>Đủ điều kiện:</b> đang trong ca, chưa đầy số đơn tối đa, chưa từ chối / bỏ lỡ đơn này trong 15 phút qua.</li>
+        <li><b>Đúng khu vực:</b> shipper phụ trách khu của địa chỉ giao trước; không ai rảnh mới tới người “giao mọi khu”.</li>
+        <li><b>Đang mở app</b> (GPS mới) trước người mất tín hiệu.</li>
         <li><b>Ít tải nhất hôm nay</b> (số đơn hoặc phí ship) → chia đều.</li>
         <li>Đang cầm ít đơn hơn → đơn tới tay khách nhanh hơn.</li>
-        <li>Đang online (GPS mới) trước người mất tín hiệu.</li>
         <li>Chờ lâu nhất kể từ lần nhận đơn trước → xoay vòng khi bằng tải.</li>
         <li>Gần nhà hàng hơn.</li>
       </ol>
@@ -223,6 +233,22 @@
       catch (e) { alert(e.message); c.checked = !c.checked; }
     });
   });
+  // Khu phu trach cua tung shipper: bam ma khu de bat / tat.
+  document.querySelectorAll('[data-khu-sp]').forEach(function (hop) {
+    hop.addEventListener('click', async function (e) {
+      var nut = e.target.closest('button[data-ma]'); if (!nut || nut.disabled) return;
+      nut.classList.toggle('btn-warning'); nut.classList.toggle('btn-outline-secondary');
+      var ds = [].slice.call(hop.querySelectorAll('button.btn-warning')).map(function (b) { return b.getAttribute('data-ma'); });
+      var id = hop.getAttribute('data-khu-sp');
+      try {
+        var j = await goi('/staff/giao-hang/dieu-phoi/shipper/' + id + '/khu-vuc', { khu: ds });
+        document.querySelector('[data-khu-chu="' + id + '"]').textContent = (j.khu || []).length ? 'chỉ nhận đơn khu đã chọn' : 'giao mọi khu';
+      } catch (err) {
+        nut.classList.toggle('btn-warning'); nut.classList.toggle('btn-outline-secondary'); alert(err.message);
+      }
+    });
+  });
+
   if ($('chayNgay')) $('chayNgay').addEventListener('click', async function () {
     this.disabled = true;
     try { var j = await goi('/staff/giao-hang/dieu-phoi/chay'); alert('Đã phân ' + (j.da_phan || 0) + ' đơn' + (j.con_cho ? ', còn ' + j.con_cho + ' đơn chờ (chưa có shipper rảnh).' : '.')); location.reload(); }

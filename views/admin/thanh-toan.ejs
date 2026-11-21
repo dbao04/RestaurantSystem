@@ -224,6 +224,34 @@
       </div>
     </div>
 
+    <!-- Tu hoi SePay: xac nhan chuyen khoan that khi chay localhost (khong can webhook) -->
+    <% var coTokenSepay = !!String(cauHinh.sepay_api_token || '').trim(); %>
+    <div class="qt-card" style="margin-top:1.5rem">
+      <div class="qt-card__head"><div><h2>Tự hỏi SePay (chạy localhost)</h2>
+        <p>Hệ thống tự hỏi SePay có tiền vào chưa — chạy <code>localhost</code> vẫn tự xác nhận chuyển khoản thật, không cần webhook hay địa chỉ công khai.</p></div></div>
+      <div class="qt-card__body">
+        <div id="sepay-tt" style="font-size:.85rem;margin-bottom:.8rem;color:var(--qt-muted)">
+          <% if (coTokenSepay) { %><i class="fas fa-circle-notch fa-spin"></i> Đang đọc trạng thái…<% } else { %>
+          <i class="fas fa-circle" style="color:#9ca3af"></i> Chưa kết nối<% } %>
+        </div>
+        <form method="POST" action="/admin/thanh-toan/sepay-token">
+          <label class="qt-label">API Token SePay</label>
+          <input class="qt-input" name="sepay_api_token" type="password" autocomplete="off"
+                 placeholder="<%= coTokenSepay ? 'Đã lưu (••••' + String(cauHinh.sepay_api_token).slice(-4) + ') — dán token mới để thay' : 'Dán API Token tạo ở my.sepay.vn' %>">
+          <div class="qt-field__hint">
+            Tạo tại <b>my.sepay.vn → Cấu hình công ty → API Access → + Thêm API</b>. Tài khoản nhận tiền phía trên phải là tài khoản đã liên kết trong SePay.
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem">
+            <button class="qt-btn qt-btn--primary qt-btn--sm"><i class="fas fa-plug"></i> Kiểm tra &amp; lưu</button>
+            <% if (coTokenSepay) { %>
+              <button class="qt-btn qt-btn--ghost qt-btn--sm" name="sepay_api_token" value="" formnovalidate
+                      onclick="return confirm('Tắt tự hỏi SePay?')"><i class="fas fa-power-off"></i> Tắt</button>
+            <% } %>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Gia lap giao dich SePay: gui webhook mau dung dinh dang vao chinh he thong -->
     <div class="qt-card" style="margin-top:1.5rem">
       <div class="qt-card__head"><div><h2>Giả lập giao dịch SePay</h2>
@@ -282,6 +310,26 @@
 
 <script>
   document.getElementById('url-webhook').value = location.origin + '/api/webhook/ngan-hang';
+
+  // Trang thai tu hoi SePay (lam moi moi 10 giay).
+  (function () {
+    var o = document.getElementById('sepay-tt');
+    if (!o || <%= coTokenSepay ? 'false' : 'true' %>) return;
+    function ve() {
+      fetch('/admin/thanh-toan/sepay-trang-thai', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var luc = d.lanHoiCuoi ? new Date(d.lanHoiCuoi).toLocaleTimeString('vi-VN') : 'chưa hỏi lần nào';
+          if (d.loiCuoi) {
+            o.innerHTML = '<i class="fas fa-circle" style="color:#dc2626"></i> Lỗi: ' + d.loiCuoi.replace(/</g, '&lt;') + ' <span>(lần hỏi cuối ' + luc + ')</span>';
+          } else {
+            o.innerHTML = '<i class="fas fa-circle" style="color:#16a34a"></i> Đang kết nối · lần hỏi cuối ' + luc +
+              ' · đã nhận ' + d.soGiaoDichMoi + ' giao dịch, khớp ' + d.soDaKhop + ' đơn (từ lúc bật server)';
+          }
+        }).catch(function () {});
+    }
+    ve(); setInterval(ve, 10000);
+  })();
 
   (function () {
     var $ = function (id) { return document.getElementById(id); };

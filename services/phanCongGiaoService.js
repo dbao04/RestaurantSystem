@@ -60,8 +60,9 @@ async function luuThamSo(d) {
  */
 async function bangShipper(ts) {
   ts = ts || await thamSo();
+  await require('./shipperNghiepVu').damBaoCauTruc();
   const [rows] = await db.query(`
-    SELECT s.id_shipper, COALESCE(nv.ten, s.ten) AS ten, s.sdt, s.trang_thai, s.so_don_toi_da, s.loai_xe, s.bien_so,
+    SELECT s.id_shipper, COALESCE(nv.ten, s.ten) AS ten, s.sdt, s.trang_thai, s.so_don_toi_da, s.loai_xe, s.bien_so, s.khu_vuc,
            (SELECT COUNT(*) FROM don_giao_hang g WHERE g.id_shipper = s.id_shipper
               AND g.trang_thai IN ('da_phan','dang_lay','dang_giao')) AS dang_cam,
            (SELECT COUNT(*) FROM don_giao_hang g WHERE g.id_shipper = s.id_shipper
@@ -96,8 +97,21 @@ async function bangShipper(ts) {
       con_suc_chua: n(r.dang_cam) < n(r.so_don_toi_da),
       online, km_toi_nha_hang: kmNH,
       tai: ts.tieu_chi === 'thu_nhap' ? n(r.phi_hom_nay) : n(r.don_hom_nay),
+      // Khu phu trach ([] = giao moi khu).
+      khu: String(r.khu_vuc || '').split(',').map((x) => x.trim()).filter(Boolean),
     };
   });
+}
+
+/**
+ * Loc theo KHU VUC cua don: shipper phu trach dung khu do truoc; neu khong ai
+ * trong so do du dieu kien thi moi toi shipper giao moi khu. Shipper chi phu
+ * trach KHU KHAC thi khong nhan don nay.
+ */
+function locTheoKhu(ds, maKhu, ts) {
+  if (!maKhu || !ts.chi_trong_khu_vuc) return ds;
+  const dungKhu = ds.filter((s) => s.khu.includes(maKhu));
+  return dungKhu.length ? dungKhu : ds.filter((s) => !s.khu.length);
 }
 
 /** Sap xep ung vien theo quy tac o dau file. Tra ve [] neu khong ai du dieu kien. */
@@ -105,9 +119,11 @@ function xepHang(ds, loaiTru = new Set()) {
   return ds
     .filter((s) => s.trong_ca && s.con_suc_chua && !loaiTru.has(Number(s.id_shipper)))
     .sort((a, b) =>
+      // Nguoi DANG MO APP (GPS moi) truoc: phan cho nguoi khong cam may chi
+      // lam don mat 3 phut cho xac nhan roi lai chuyen.
+      Number(b.online) - Number(a.online) ||
       a.tai - b.tai ||
       a.dang_cam - b.dang_cam ||
-      Number(b.online) - Number(a.online) ||
       (a.phan_gan_nhat ? new Date(a.phan_gan_nhat).getTime() : 0) - (b.phan_gan_nhat ? new Date(b.phan_gan_nhat).getTime() : 0) ||
       (a.km_toi_nha_hang ?? 99) - (b.km_toi_nha_hang ?? 99) ||
       a.id_shipper - b.id_shipper);
@@ -125,8 +141,16 @@ function lyDoChon(s, ts, soUngVien) {
   return `Chọn trong ${soUngVien} người: ${p.join(' · ')}`.slice(0, 300);
 }
 
+/**
+ * Shipper da tu choi / bo lo don nay GAN DAY. Chi tinh 15 phut gan nhat: truoc
+ * day loai tru vinh vien, nen khi ca doi deu da bo lo mot luot thi don ket mai
+ * o "Cho phan" du shipper da quay lai cam may.
+ */
 async function nguoiDaLoaiTru(idGiao) {
-  const [r] = await db.query("SELECT DISTINCT id_shipper FROM phan_cong_giao WHERE id_giao = ? AND ket_qua IN ('tu_choi','het_han')", [idGiao]);
+  const [r] = await db.query(
+    `SELECT DISTINCT id_shipper FROM phan_cong_giao
+      WHERE id_giao = ? AND ket_qua IN ('tu_choi','het_han') AND COALESCE(phan_hoi_luc, tao_luc) > NOW() - INTERVAL 15 MINUTE`,
+    [idGiao]);
   return new Set(r.map((x) => Number(x.id_shipper)));
 }
 
@@ -158,16 +182,21 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
   const ts = await thamSo();
   if (!ts.tu_dong && !batBuoc) return { phan: false, ly_do: 'Đang tắt tự động phân đơn.' };
   return voiKhoa(async () => {
-    const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+    const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper, ma_khu_vuc FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
     if (!don) return { phan: false, ly_do: 'Không tìm thấy đơn.' };
     if (don.trang_thai !== 'cho_phan' || don.id_shipper) return { phan: false, ly_do: 'Đơn đã có người nhận.' };
 
     const ds = await bangShipper(ts);
-    const ung = xepHang(ds, await nguoiDaLoaiTru(idGiao));
+    const loaiTru = await nguoiDaLoaiTru(idGiao);
+    // Thu trong shipper dung khu truoc; khong ai ranh moi toi shipper giao moi khu.
+    let ung = xepHang(locTheoKhu(ds, don.ma_khu_vuc, ts), loaiTru);
+    if (!ung.length && don.ma_khu_vuc && ts.chi_trong_khu_vuc) {
+      ung = xepHang(ds.filter((s) => !s.khu.length), loaiTru);
+    }
     if (!ung.length) return { phan: false, ly_do: 'Không có shipper nào rảnh – đơn vào hàng chờ.' };
 
     const chon = ung[0];
-    const lyDo = lyDoChon(chon, ts, ung.length);
+    const lyDo = (chon.khu.includes(don.ma_khu_vuc) ? `Phụ trách khu ${don.ma_khu_vuc} · ` : '') + lyDoChon(chon, ts, ung.length);
     await vc.phanShipper(idGiao, chon.id_shipper, HE_THONG);
     await db.query('UPDATE don_giao_hang SET phan_tu_dong = 1, xac_nhan_luc = NULL WHERE id_giao = ?', [idGiao]);
     await db.query(
@@ -311,7 +340,16 @@ function batDau() {
   if (henGio.unref) henGio.unref();
 }
 
+/** Gan khu phu trach cho shipper. `dsMa` rong = giao moi khu. */
+async function ganKhuVuc(idShipper, dsMa) {
+  await require('./shipperNghiepVu').damBaoCauTruc();
+  const hopLe = new Set((await require('./khuVucGiaoService').dsKhuVuc({ boDem: true })).map((k) => k.ma));
+  const ma = [...new Set((Array.isArray(dsMa) ? dsMa : String(dsMa || '').split(',')).map((x) => String(x).trim()).filter((x) => hopLe.has(x)))];
+  await db.query('UPDATE shipper SET khu_vuc = ? WHERE id_shipper = ?', [ma.length ? ma.join(',') : null, idShipper]);
+  return ma;
+}
+
 module.exports = {
-  thamSo, luuThamSo, bangShipper, xepHang, tuDongPhan, phanHangCho, ghiPhanTay,
+  thamSo, luuThamSo, bangShipper, xepHang, locTheoKhu, ganKhuVuc, tuDongPhan, phanHangCho, ghiPhanTay,
   xacNhan, tuChoi, quetHetHan, tongQuan, batDau,
 };
