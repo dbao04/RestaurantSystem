@@ -939,3 +939,5 @@ party-1, party-3). Da chay tren DB nay; may khac chay: node config/migrations/04
   (ghep ten mon tiec -> monan qua tiecVanHanhService.ghepMon; 95/98 mon co anh).
 - Tuy chinh: bam the mon de Bo / Giu lai (lop "Da bo"); them mon bang luoi the co anh,
   loc theo ten + loai, mon an truoc do uong; danh sach mon them co anh nho.
+  Cap nhat: anh thu 4 tu them khi server khoi dong (services/anhKhongGian.damBao, goi trong
+  server.js) - khong can chay migration tay; migration 048 chi con la loi tat goi cung ham.

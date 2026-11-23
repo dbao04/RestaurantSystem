@@ -2941,6 +2941,9 @@ function inBangDiaChi(dsLan, coHttps) {
   // Phan quyen kho: thu kho nhap/xuat/kiem ke, quan ly chot & duyet (chay 1 lan).
   try {
     if (await require('./services/phanQuyenKho').damBao()) console.log('[phan-quyen] Đã áp dụng phân quyền kho mới.');
+    // Trang /khong-gian: moi khu du 4 anh nho (tu them, khong can chay migration tay).
+    const soKhuThemAnh = await require('./services/anhKhongGian').damBao();
+    if (soKhuThemAnh) console.log(`[khong-gian] Đã bổ sung ảnh thứ 4 cho ${soKhuThemAnh} khu.`);
     if (await require('./services/phanQuyenVaiTro').damBao()) console.log('[phan-quyen] Đã rà soát vai trò: chỉ Ban điều hành đóng vai Quản lý.');
     await require('./services/phanQuyenVaiTro').damBaoLan2();
     if (await require('./services/phanQuyenKho').damBaoQuyenNhap()) console.log('[phan-quyen] Đã áp dụng quyền duyệt phiếu nhập (QC, đối chiếu, duyệt cuối).');
