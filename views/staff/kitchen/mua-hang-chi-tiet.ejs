@@ -40,16 +40,16 @@
         <% if (duocDuyet && !laNguoiTao) { %>
           <button class="btn btn-success btn-sm" data-buoc="duyet"><i class="fas fa-check-double"></i> Duyệt đơn</button>
         <% } else if (duocDuyet && laNguoiTao) { %>
-          <span class="small text-muted align-self-center"><i class="fas fa-circle-info"></i> Bạn là người lập đơn – cần một người duyệt khác (bếp trưởng / quản lý).</span>
+          <span class="small text-muted align-self-center"><i class="fas fa-circle-info"></i> Bạn là người lập đơn – cần một người duyệt khác (quản lý nhà hàng).</span>
         <% } else { %>
-          <span class="small text-muted align-self-center"><i class="fas fa-hourglass-half"></i> Đang chờ bếp trưởng / quản lý duyệt.</span>
+          <span class="small text-muted align-self-center"><i class="fas fa-hourglass-half"></i> Đang chờ quản lý nhà hàng duyệt.</span>
         <% } %>
       <% } %>
-      <% if (don.trang_thai === 'da_duyet') { %><button class="btn btn-primary btn-sm" data-buoc="dat_hang"><i class="fas fa-phone"></i> Đã đặt hàng với NCC</button><% } %>
-      <% if (['da_duyet', 'da_dat', 'nhan_mot_phan'].indexOf(don.trang_thai) >= 0) { %>
+      <% if (don.trang_thai === 'da_duyet' && (typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).deXuatMua) { %><button class="btn btn-primary btn-sm" data-buoc="dat_hang"><i class="fas fa-phone"></i> Đã đặt hàng với NCC</button><% } %>
+      <% if (['da_duyet', 'da_dat', 'nhan_mot_phan'].indexOf(don.trang_thai) >= 0 && (typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap) { %>
         <a class="btn btn-warning btn-sm font-weight-bold" href="/staff/kitchen/kho/nhap/moi?don=<%= don.id_dmh %>"><i class="fas fa-truck-ramp-box"></i> Nhận hàng → lập phiếu nhập</a>
       <% } %>
-      <% if (['nhap', 'cho_duyet', 'da_duyet', 'da_dat'].indexOf(don.trang_thai) >= 0) { %>
+      <% if (['nhap', 'cho_duyet', 'da_duyet', 'da_dat'].indexOf(don.trang_thai) >= 0 && ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).deXuatMua || duocDuyet)) { %>
         <button class="btn btn-outline-danger btn-sm" id="moHuy"><i class="fas fa-ban"></i> Hủy đơn</button>
       <% } %>
     </div>

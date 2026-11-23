@@ -6,11 +6,13 @@ const express = require('express');
 const router = express.Router();
 const loyaltyService = require('../services/loyaltyService');
 
+// Chi Ban dieu hanh (QL nha hang, tro ly QL) - services/phanQuyenVaiTro.js. Truoc day
+// cap <= 2 / vai tro 'ke toan' cung vao duoc (bep truong, ke toan truong...).
 const canQuanLyOrAdmin = (req, res, next) => {
-  if (req.session && req.session.adminlogin) return next();
+  if (require('../services/phanQuyenVaiTro').laDieuHanh(req.session || {}, req.hoSo)) return next();
   if (req.session && req.session.stafflogin) {
-    const vaiTro = (req.session.staffRole || '').toLowerCase();
-    if (/quan ly|quanly|manager|ke toan|ketoan/.test(vaiTro) || (req.hoSo && req.hoSo.cap_bac <= 2)) return next();
+    return res.status(403).render('error', { title: 'Không có quyền truy cập', statusCode: 403, hoSo: res.locals.hoSo || null,
+      message: 'Chức năng này dành cho Ban điều hành (Quản lý nhà hàng, Trợ lý quản lý).' });
   }
   return res.redirect(req.originalUrl.startsWith('/staff') ? '/staff/login' : '/admin/login');
 };

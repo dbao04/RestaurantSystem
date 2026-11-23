@@ -8,7 +8,8 @@
 var dsTiec = (typeof tiecs !== 'undefined' && tiecs) ? tiecs : [];
 var vndT = function (n) { return Number(n || 0).toLocaleString('vi-VN') + ' ₫'; };
 var ptCoc = 30;
-var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); return s === k ? tt : s; };
+var TEN_TT_MOI = { CHO_BAO_GIA: 'Chờ nhà hàng báo giá', CHO_COC: 'Chờ thanh toán cọc', CHO_THANH_TOAN: 'Chờ thanh toán phần còn lại', HET_HAN: 'Hết hạn giữ chỗ' };
+var nhanTT = function (tt) { if (TEN_TT_MOI[tt]) return TEN_TT_MOI[tt]; var k = 'lich_su_tiec.tt_' + tt; var s = t(k); return s === k ? tt : s; };
 %>
 <% if (dsTiec.length > 0) { %>
   <div class="nh-orders">
@@ -44,9 +45,16 @@ var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); retu
             <button type="button" class="nh-btn nh-btn--dark nh-btn--sm" onclick="moChiTietTiec(<%= i %>)">
               <i class="fas fa-eye"></i> <%= t('lich_su_tiec.xem_chi_tiet') %>
             </button>
-            <% if (d.trang_thai === 'MOI' && !(d.da_thu > 0)) { %>
+            <% if (d.khoan_can_tra) { %>
+              <a class="nh-btn nh-btn--gold nh-btn--sm" href="/dat-tiec/thanh-toan/<%= d.ma_tiec %>">
+                <i class="fas fa-qrcode"></i> <%= d.khoan_can_tra.loai === 'dat_coc' ? 'Đặt cọc ' : 'Thanh toán phần còn lại ' %><%= vndT(d.khoan_can_tra.so_tien) %>
+              </a>
+            <% } else if (['CHO_BAO_GIA','DA_COC','DA_XAC_NHAN','HOAN_THANH','HUY'].includes(d.trang_thai)) { %>
+              <a class="nh-btn nh-btn--outline nh-btn--sm" href="/dat-tiec/thanh-toan/<%= d.ma_tiec %>"><i class="fas fa-file-invoice"></i> Trang tiệc &amp; chính sách</a>
+            <% } %>
+            <% if (d.tu_huy_duoc) { %>
               <button type="button" class="nh-btn nh-btn--outline nh-btn--sm" style="color:#ef4444; border-color:#fca5a5;"
-                onclick="moHuyTiec('<%= d.ma_tiec %>')">
+                onclick="moHuyTiec('<%= d.ma_tiec %>', <%= d.da_thu > 0 ? d.phan_tram_hoan_neu_huy : -1 %>, <%= Math.round(d.da_thu || 0) %>)">
                 <i class="fas fa-calendar-times"></i> <%= t('lich_su_tiec.huy_nut') %>
               </button>
             <% } %>
@@ -137,6 +145,7 @@ var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); retu
       <button type="button" onclick="dongHuyTiec()" style="background:none; border:none; font-size:1.45rem; line-height:1; cursor:pointer; color:var(--nh-muted);" title="<%= t('chung.dong') %>">&times;</button>
     </div>
     <p class="tiec-ghichu tiec-ghichu--HUY" style="margin:1rem 0;"><%= t('lich_su_tiec.huy_mo_ta') %></p>
+    <p class="tiec-ghichu" id="huyTiecHoan" style="margin:0 0 1rem; display:none;"></p>
     <form id="formHuyTiec" onsubmit="guiHuyTiec(event)">
       <div class="nh-field">
         <label for="huyTiecLyDo"><%= t('lich_su_tiec.huy_ly_do') %> <span style="color:#ef4444">*</span></label>
@@ -192,7 +201,7 @@ var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); retu
 (function () {
   var goc = JSON.parse(document.getElementById('duLieuTiec').textContent);
   var DS = goc.ds, CHU = goc.chu;
-  var BUOC = ['MOI', 'DA_LIEN_HE', 'DA_XAC_NHAN', 'DA_COC', 'HOAN_THANH'];
+  var BUOC = ['CHO_COC', 'DA_COC', 'CHO_THANH_TOAN', 'HOAN_THANH'];
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function vnd(n) { return Number(n || 0).toLocaleString('vi-VN') + ' ₫'; }
@@ -282,9 +291,18 @@ var nhanTT = function (tt) { var k = 'lich_su_tiec.tt_' + tt; var s = t(k); retu
   };
   // --- Khach tu huy (don MOI) ---
   var maDangHuy = '';
-  window.moHuyTiec = function (ma) {
+  window.moHuyTiec = function (ma, ptHoan, daThu) {
     maDangHuy = ma;
     $('huyTiecMa').textContent = ma;
+    // Da coc: bao truoc so tien duoc hoan theo chinh sach (moc ngay truoc tiec).
+    var hoan = $('huyTiecHoan');
+    if (hoan) {
+      if (ptHoan >= 0 && daThu > 0) {
+        hoan.style.display = '';
+        hoan.textContent = 'Quý khách đã thanh toán ' + vnd(daThu) + '. Hủy hôm nay được hoàn ' + ptHoan + '% = ' + vnd(Math.round(daThu * ptHoan / 100)) +
+          ' theo chính sách đặt tiệc (chuyển khoản trong 3–5 ngày làm việc).';
+      } else hoan.style.display = 'none';
+    }
     $('huyTiecLyDo').value = '';
     $('huyTiecLoi').style.display = 'none';
     $('huyTiecNut').disabled = false;

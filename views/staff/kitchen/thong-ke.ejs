@@ -25,7 +25,7 @@
     <div class="kb-phu"><%= tu === den ? 'Ngày ' + ngayVN(tu) : ngayVN(tu) + ' → ' + ngayVN(den) %><% if (bc) { %> · <%= bc.so_ngay %> ngày, so sánh với <%= ngayVN(bc.ky_truoc.tu) %> → <%= ngayVN(bc.ky_truoc.den) %><% } %></div>
   </div>
   <div class="kb-nut kb-khong-in">
-    <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-heart-crack"></i> Báo hư hỏng</a>
+    <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-heart-crack"></i> Báo hư hỏng</a><% } %>
     <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cart-flatbed"></i> Mua hàng</a>
     <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print"></i> In</button>
   </div>

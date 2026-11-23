@@ -19,18 +19,48 @@
       <i class="fas fa-house-chimney"></i>
       <span>Tổng quan</span>
     </a>
+    <%# Nut giua theo bo phan: van hanh (bep, phuc vu, thu ngan, quan ly, dieu phoi)
+        thay so do ban / KDS; bo phan Kho thay trang kho (routes/kds.js duocXemVanHanh). %>
+    <% var _dv = (typeof dongVaiDuoc === 'function') ? dongVaiDuoc : function () { return false; };
+       // Khop routes/kds.js duocXemVanHanh: so do ban (phuc vu, le tan, thu ngan), KDS (bep, phuc vu, dieu phoi).
+       var _hsF = (typeof hoSo !== 'undefined' && hoSo) || {};
+       var _xemSoDo = _dv(['Phuc vu', 'Quay', 'letan', 'Thu ngan', 'Quan ly']);
+       var _xemKds = _dv(['Bep', 'Phuc vu', 'Quan ly']) || _hsF.ma_cd === 'DPGH';
+       var _vanHanh = _xemSoDo || _xemKds;
+       var _kho = !_vanHanh && typeof coQuyen === 'function' && coQuyen('kho.xem'); %>
+    <% if (_vanHanh) { %>
+    <% if (_xemSoDo) { %>
     <a href="/so-do-ban" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='sodoban') ? 'active' : '' %>">
       <i class="fas fa-chair"></i>
       <span>Sơ đồ bàn</span>
     </a>
+    <% } %>
+    <% if (_dv(['Phuc vu', 'Quay', 'Quan ly'])) { %>
     <a href="/staff/bookings" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='bookings') ? 'active' : '' %>">
       <i class="fas fa-receipt"></i>
       <span>Đơn bàn</span>
     </a>
+    <% } %>
+    <% if (_xemKds) { %>
     <a href="/kds" class="mbb-item <%= (typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds')) ? 'active' : '' %>">
       <i class="fas fa-bell-concierge"></i>
       <span>Bếp KDS</span>
     </a>
+    <% } %>
+    <% } else if (_kho) { %>
+    <a href="/staff/kitchen/inventory" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='inventory') ? 'active' : '' %>">
+      <i class="fas fa-boxes-stacked"></i>
+      <span>Tồn kho</span>
+    </a>
+    <a href="/staff/kitchen/kho" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='kho-bep') ? 'active' : '' %>">
+      <i class="fas fa-right-left"></i>
+      <span>Xuất nhập</span>
+    </a>
+    <a href="/staff/kitchen/kho/kiem-ke" class="mbb-item <%= (typeof activePage !== 'undefined' && activePage==='kiem-ke') ? 'active' : '' %>">
+      <i class="fas fa-clipboard-list"></i>
+      <span>Kiểm kê</span>
+    </a>
+    <% } %>
     <a href="javascript:void(0)" class="mbb-item" onclick="toggleStaffMobileDrawer()">
       <i class="fas fa-bars"></i>
       <span>Menu</span>

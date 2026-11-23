@@ -34,6 +34,7 @@ const NHOM = {
   BEP_QUAN_LY:  { cd: ['QLBEP', 'BEPTRUONG', 'BEPPHO'] },
   BEP:          { bp: ['BEP'] },
   BAR:          { bp: ['BAR'] },
+  QC_NHAP:      { cd: ['QLBEP', 'BEPTRUONG', 'BEPPHO', 'TRUONGBAR'] },
   KHO:          { cd: ['THUKHO', 'NVKHO'] },
   THU_KHO:      { cd: ['THUKHO'] },
   KE_TOAN:      { cd: ['KTTRUONG', 'NVKT'] },
@@ -47,6 +48,7 @@ const TEN_NHOM = {
   TRUONG_LE_TAN: 'Trưởng lễ tân', BEP_QUAN_LY: 'Quản lý bếp, Bếp trưởng, Bếp phó', BEP: 'Bộ phận Bếp', BAR: 'Bộ phận Bar',
   KHO: 'Thủ kho, Nhân viên kho', THU_KHO: 'Thủ kho', KE_TOAN: 'Kế toán trưởng, Kế toán viên', KE_TOAN_TRUONG: 'Kế toán trưởng',
   DIEU_PHOI: 'Điều phối giao hàng', SHIPPER: 'Nhân viên giao hàng',
+  QC_NHAP: 'Quản lý bếp, Bếp trưởng, Bếp phó, Trưởng bar',
 };
 
 /**
@@ -60,6 +62,8 @@ const LUONG = {
   huy_mon:            { nhom: 'Bán hàng & bếp', ten: 'Xóa món đã order (kèm giải trình)', nhan: ['QUAN_LY', 'GIAM_SAT_PV', 'GIAM_SAT_TN'], quan_tri: true, muc_do: 'khan' },
   mon_tam_ngung:      { nhom: 'Bán hàng & bếp', ten: 'Món tạm ngưng / bán lại', nhan: ['PHUC_VU', 'THU_NGAN', 'LE_TAN'], muc_do: 'quan_trong' },
   // ---- Van hanh tai ban (phuc vu): ai can biet ngay de lam viec
+  mon_moi_bep:        { nhom: 'Vận hành tại bàn', ten: 'Có món mới cần chế biến (bàn / POS / QR / đơn giao)', nhan: ['BEP_CA'], muc_do: 'khan' },
+  mon_moi_bar:        { nhom: 'Vận hành tại bàn', ten: 'Có đồ uống mới cần pha chế', nhan: ['BAR_CA'], muc_do: 'khan' },
   mon_xong:           { nhom: 'Vận hành tại bàn', ten: 'Bếp làm xong món - mang ra bàn', nhan: ['PHUC_VU_BAN'], muc_do: 'khan' },
   goi_mon_qr:         { nhom: 'Vận hành tại bàn', ten: 'Khách tự gọi món qua QR tại bàn', nhan: ['PHUC_VU_BAN'], muc_do: 'quan_trong' },
   mon_tre:            { nhom: 'Vận hành tại bàn', ten: 'Món chờ quá lâu chưa ra (quá thời gian chuẩn)', nhan: ['BEP_QUAN_LY', 'GIAM_SAT_PV'], muc_do: 'quan_trong' },
@@ -79,6 +83,7 @@ const LUONG = {
   don_giao_nhan:      { nhom: 'Giao hàng', ten: 'Shipper nhận đơn / đang đến lấy hàng', nhan: ['DIEU_PHOI'], muc_do: 'tin' },
   don_giao_bep_xong:  { nhom: 'Giao hàng', ten: 'Bếp làm xong đơn giao - shipper đến lấy', nhan: ['SHIPPER_DON', 'DIEU_PHOI'], muc_do: 'khan' },
   don_giao_hoan_thanh:{ nhom: 'Giao hàng', ten: 'Giao hàng thành công (kèm tiền thu hộ phải nộp)', nhan: ['DIEU_PHOI', 'THU_NGAN_THU_HO'], muc_do: 'tin' },
+  don_giao_ket:       { nhom: 'Giao hàng', ten: 'Đơn giao không ai nhận sau nhiều lần tự phân - cần điều phối xử lý', nhan: ['DIEU_PHOI'], muc_do: 'khan' },
   don_giao_huy:       { nhom: 'Giao hàng', ten: 'Đơn giao bị hủy', nhan: ['SHIPPER_DON', 'DIEU_PHOI', 'BEP_QUAN_LY'], muc_do: 'khan' },
   don_giao_su_co:     { nhom: 'Giao hàng', ten: 'Giao thất bại / shipper từ chối đơn', nhan: ['DIEU_PHOI'], muc_do: 'khan' },
   don_giao_khach:     { nhom: 'Giao hàng', ten: 'Đơn giao của khách: đang giao / đã giao', nhan: ['KHACH'], muc_do: 'tin' },
@@ -98,10 +103,14 @@ const LUONG = {
   nghi_phep_moi:      { nhom: 'Lương & nhân sự', ten: 'Đơn xin nghỉ phép chờ duyệt', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'quan_trong' },
   nghi_phep_ket_qua:  { nhom: 'Lương & nhân sự', ten: 'Đơn nghỉ phép được duyệt / từ chối', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'tin' },
   // ---- Kho & mua hang
-  don_mua_cho_duyet:  { nhom: 'Kho & mua hàng', ten: 'Đơn mua hàng chờ duyệt', nhan: ['QUAN_LY', 'BEP_QUAN_LY'], muc_do: 'quan_trong' },
+  don_mua_cho_duyet:  { nhom: 'Kho & mua hàng', ten: 'Đơn mua hàng chờ duyệt', nhan: ['QUAN_LY'], muc_do: 'quan_trong' },
   don_mua_ket_qua:    { nhom: 'Kho & mua hàng', ten: 'Đơn mua hàng được duyệt / hủy', nhan: ['NGUOI_LIEN_QUAN', 'THU_KHO'], muc_do: 'tin' },
   ton_kho_thap:       { nhom: 'Kho & mua hàng', ten: 'Nguyên liệu xuống dưới định mức', nhan: ['BEP_QUAN_LY', 'THU_KHO'], muc_do: 'quan_trong' },
-  kiem_ke_cho_chot:   { nhom: 'Kho & mua hàng', ten: 'Phiếu kiểm kê chờ chốt', nhan: ['BEP_QUAN_LY'], muc_do: 'tin' },
+  nhap_kho_cho_qc:    { nhom: 'Kho & mua hàng', ten: 'Hàng về – phiếu nhập chờ kiểm tra chất lượng', nhan: ['QC_NHAP'], muc_do: 'khan' },
+  nhap_kho_cho_doi_chieu: { nhom: 'Kho & mua hàng', ten: 'Phiếu nhập chờ kế toán đối chiếu hóa đơn', nhan: ['KE_TOAN'], muc_do: 'quan_trong' },
+  nhap_kho_cho_duyet: { nhom: 'Kho & mua hàng', ten: 'Phiếu nhập chờ quản lý duyệt cuối', nhan: ['QUAN_LY'], muc_do: 'quan_trong' },
+  nhap_kho_ket_qua:   { nhom: 'Kho & mua hàng', ten: 'Phiếu nhập đã duyệt / trả hàng', nhan: ['NGUOI_LIEN_QUAN', 'THU_KHO'], muc_do: 'tin' },
+  kiem_ke_cho_chot:   { nhom: 'Kho & mua hàng', ten: 'Phiếu kiểm kê chờ chốt', nhan: ['QUAN_LY'], muc_do: 'tin' },
   cong_no_qua_han:    { nhom: 'Kho & mua hàng', ten: 'Công nợ nhà cung cấp đến hạn / quá hạn', nhan: ['KE_TOAN'], muc_do: 'quan_trong' },
   // ---- Chung
   thong_bao_chung:    { nhom: 'Chung', ten: 'Thông báo do quản lý gửi', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'tin' },
@@ -281,6 +290,8 @@ const NHAN_DAC_BIET = {
   KHACH: 'Khách hàng của đơn',
   PHUC_VU_BAN: 'Phục vụ phụ trách bàn (chưa có thì phục vụ đang trong ca)',
   PHUC_VU_CA: 'Phục vụ đang trong ca',
+  BEP_CA: 'Bộ phận Bếp đang trong ca (chưa ai chấm công thì cả bộ phận)',
+  BAR_CA: 'Bộ phận Bar đang trong ca (chưa ai chấm công thì cả bộ phận)',
   SHIPPER_DON: 'Shipper được phân đơn',
   THU_NGAN_THU_HO: 'Thu ngân (khi có tiền thu hộ)',
 };

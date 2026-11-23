@@ -1,0 +1,122 @@
+<%
+  var activePage = 'phieu-nhap';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var tgVN = function (d) { if (!d) return '—'; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); };
+  var cho = function (p) { if (p == null) return ''; return p < 60 ? p + ' phút' : p < 1440 ? Math.floor(p / 60) + ' giờ' : Math.floor(p / 1440) + ' ngày'; };
+  var LOP = { cho_qc: 'cam', cho_doi_chieu: 'lam', cho_duyet: 'tim', da_duyet: 'xanh', tra_hang: 'do' };
+  var qk = (typeof quyenKho !== 'undefined' && quyenKho) ? quyenKho : {};
+  // Viec CUA TOI: buoc dang cho dung quyen cua nguoi xem.
+  var cuaToi = function (p) {
+    return (p.trang_thai_duyet === 'cho_qc' && qk.qcNhap) || (p.trang_thai_duyet === 'cho_doi_chieu' && qk.doiChieuNhap) || (p.trang_thai_duyet === 'cho_duyet' && qk.duyetNhap);
+  };
+  // Duyet loat: bo phieu ma nguoi xem la nguoi lap / nguoi QC / nguoi lap don mua (tach nhiem vu).
+  var duyetDuoc = function (p) {
+    return p.trang_thai_duyet === 'cho_duyet' && qk.duyetNhap && !(idNv && (Number(p.id_nv) === Number(idNv) || Number(p.id_nv_qc) === Number(idNv) || Number(p.id_nv_tao_don) === Number(idNv)));
+  };
+  var soDuyetDuoc = ds.filter(duyetDuoc).length;
+%>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+<style>
+  .kb-nhan.tim { background: #f0e9fb; color: #6d28d9; }
+  .pn-dem { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+  .pn-dem a { display: block; padding: .8rem 1rem; border-radius: 12px; background: #fff; border: 1px solid #ebe3d6; color: inherit; text-decoration: none; }
+  .pn-dem a.is-on { border-color: #c8a24b; box-shadow: 0 0 0 2px rgba(200,162,75,.25); }
+  .pn-dem b { display: block; font-size: 1.5rem; font-family: 'Playfair Display', serif; }
+  .pn-dem small { color: #6b5f54; }
+  .pn-viec { background: #fff8e6; }
+  .pn-quy { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; font-size: .78rem; color: #6b5f54; }
+  .pn-quy span { padding: .2rem .55rem; border-radius: 999px; background: #f6f1ea; }
+  @media (max-width: 640px) { .pn-an-dt { display: none; } }
+</style>
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-clipboard-check text-warning"></i> Duyệt phiếu nhập kho</h1>
+    <div class="pn-quy mt-1">
+      <span>1. Thủ kho lập</span><i class="fas fa-chevron-right"></i>
+      <span><%= ch.bat_qc ? '2. Bếp trưởng / Trưởng bar kiểm tra chất lượng' : '2. (tắt QC)' %></span><i class="fas fa-chevron-right"></i>
+      <span><%= ch.bat_doi_chieu ? '3. Kế toán đối chiếu hóa đơn' : '3. (tắt đối chiếu)' %></span><i class="fas fa-chevron-right"></i>
+      <span>4. Quản lý duyệt (trên <%= vnd(ch.nguong_duyet) %>)</span>
+    </div>
+  </div>
+  <div class="kb-nut">
+    <% if (qk.nhap) { %><a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Lập phiếu nhận hàng</a><% } %>
+    <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-right-left"></i> Sổ xuất nhập</a>
+  </div>
+</div>
+
+<div class="pn-dem">
+  <a href="/staff/kitchen/kho/phieu-nhap" class="<%= !trangThai ? 'is-on' : '' %>"><b><%= dem.cho_qc + dem.cho_doi_chieu + dem.cho_duyet %></b><small>Đang xử lý</small></a>
+  <a href="?trang_thai=cho_qc" class="<%= trangThai === 'cho_qc' ? 'is-on' : '' %>"><b style="color:#b45309"><%= dem.cho_qc %></b><small>Chờ kiểm tra chất lượng</small></a>
+  <a href="?trang_thai=cho_doi_chieu" class="<%= trangThai === 'cho_doi_chieu' ? 'is-on' : '' %>"><b style="color:#2563eb"><%= dem.cho_doi_chieu %></b><small>Chờ kế toán đối chiếu</small></a>
+  <a href="?trang_thai=cho_duyet" class="<%= trangThai === 'cho_duyet' ? 'is-on' : '' %>"><b style="color:#7c3aed"><%= dem.cho_duyet %></b><small>Chờ quản lý duyệt</small></a>
+  <a href="?trang_thai=da_duyet" class="<%= trangThai === 'da_duyet' ? 'is-on' : '' %>"><b style="color:#15803d">✓</b><small>Đã duyệt</small></a>
+  <a href="?trang_thai=tra_hang" class="<%= trangThai === 'tra_hang' ? 'is-on' : '' %>"><b style="color:#b91c1c">↩</b><small>Trả hàng toàn bộ</small></a>
+</div>
+
+<div class="kb-the p-0">
+  <% if (soDuyetDuoc) { %>
+    <div class="d-flex flex-wrap align-items-center p-3 border-bottom" style="gap:.5rem">
+      <label class="mb-0 small"><input type="checkbox" id="chonHet"> Chọn tất cả phiếu tôi duyệt được (<%= soDuyetDuoc %>)</label>
+      <button type="button" class="btn btn-sm btn-success ml-auto" id="duyetLoat" disabled><i class="fas fa-check-double"></i> Duyệt <span id="soChon">0</span> phiếu</button>
+    </div>
+  <% } %>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="thead-light"><tr>
+        <% if (soDuyetDuoc) { %><th style="width:34px"></th><% } %>
+        <th>Phiếu</th><th>Nhà cung cấp</th><th class="pn-an-dt">Chứng từ</th><th>Trạng thái</th><th class="text-right">Giá trị</th><th class="pn-an-dt">Người lập</th><th></th>
+      </tr></thead>
+      <tbody>
+        <% ds.forEach(function (p) { var viec = cuaToi(p); %>
+          <tr class="<%= viec ? 'pn-viec' : '' %>">
+            <% if (soDuyetDuoc) { %><td><% if (duyetDuoc(p)) { %><input type="checkbox" class="chon-pn" value="<%= p.id_pn %>" aria-label="Chọn <%= p.ma_phieu %>"><% } %></td><% } %>
+            <td><a href="/staff/kitchen/kho/phieu-nhap/<%= p.id_pn %>" class="kb-ma"><%= p.ma_phieu %></a><br><small class="text-muted"><%= tgVN(p.thoi_diem) %> · <%= p.so_dong %> dòng</small></td>
+            <td><%= p.ten_ncc %><%= p.mua_le ? '' : '' %></td>
+            <td class="pn-an-dt small"><%= p.so_chung_tu || '— không có' %></td>
+            <td><span class="kb-nhan <%= LOP[p.trang_thai_duyet] %>"><%= p.ten_trang_thai %></span>
+              <% if (['cho_qc','cho_doi_chieu','cho_duyet'].indexOf(p.trang_thai_duyet) >= 0 && p.phut_cho != null) { %><br><small class="<%= p.phut_cho > 1440 ? 'text-danger' : 'text-muted' %>">chờ <%= cho(p.phut_cho) %></small><% } %></td>
+            <td class="text-right"><b><%= vnd(p.trang_thai_duyet === 'cho_qc' ? p.tong_giao : p.tong_tien) %></b><% if (p.trang_thai_duyet === 'cho_qc') { %><br><small class="text-muted">giá trị giao</small><% } %></td>
+            <td class="pn-an-dt small"><%= p.nguoi_lap || '—' %></td>
+            <td class="text-right"><a class="btn btn-sm <%= viec ? 'btn-warning font-weight-bold' : 'btn-light' %>" href="/staff/kitchen/kho/phieu-nhap/<%= p.id_pn %>"><%= viec ? 'Xử lý' : 'Xem' %></a></td>
+          </tr>
+        <% }) %>
+        <% if (!ds.length) { %><tr><td colspan="8" class="kb-rong">Không có phiếu nào<%= trangThai ? '' : ' đang chờ xử lý' %>.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="small text-muted mt-2"><i class="fas fa-circle-info"></i> Dòng tô vàng là việc đang chờ bạn. Hàng đạt kiểm tra chất lượng vào kho ngay; phiếu chỉ được thanh toán sau khi <b>Đã duyệt</b>.</p>
+<div class="alert alert-danger" id="loi" hidden></div>
+
+<script>
+(function () {
+  var nut = document.getElementById('duyetLoat');
+  if (!nut) return;
+  var hop = Array.prototype.slice.call(document.querySelectorAll('.chon-pn'));
+  var dem = function () { var n = hop.filter(function (c) { return c.checked; }).length; document.getElementById('soChon').textContent = n; nut.disabled = !n; };
+  hop.forEach(function (c) { c.addEventListener('change', dem); });
+  document.getElementById('chonHet').addEventListener('change', function () { var on = this.checked; hop.forEach(function (c) { c.checked = on; }); dem(); });
+  nut.addEventListener('click', async function () {
+    var ids = hop.filter(function (c) { return c.checked; }).map(function (c) { return Number(c.value); });
+    if (!ids.length) return;
+    nut.disabled = true;
+    try {
+      var r = await fetch('/api/kitchen/kho/nhap/duyet-loat', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ ids: ids }) });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không duyệt được');
+      if (j.bo_qua && j.bo_qua.length) {
+        var loi = document.getElementById('loi');
+        loi.textContent = 'Đã duyệt ' + j.da_duyet.length + ' phiếu. Bỏ qua: ' + j.bo_qua.map(function (b) { return b.ly_do; }).join(' · ');
+        loi.hidden = false;
+        setTimeout(function () { location.reload(); }, 2500);
+      } else location.reload();
+    } catch (e) {
+      var l = document.getElementById('loi'); l.textContent = e.message; l.hidden = false; nut.disabled = false;
+    }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

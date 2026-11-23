@@ -77,6 +77,66 @@ async function ghiNhanPhucVu(sesis, idNv) {
     await db.query('UPDATE hopdong SET id_nv_phuc_vu = ? WHERE sesis = ? AND id_mon > 0 AND id_nv_phuc_vu IS NULL', [idNv, sesis]);
   } catch (e) { console.error('[thong-bao] ghi nhan phuc vu:', e.message); }
 }
+
+// ------------------------------------------------- mon moi -> bep / bar
+/** Nhom `nhom` (BEP/BAR) dang trong ca; chua ai cham cong thi ca bo phan. */
+async function boPhanTrongCa(nhom) {
+  const tatCa = await tb.idNhanVien({ nhom: [nhom] });
+  const ca = await trongCa(tatCa);
+  return ca.length ? ca : tatCa;
+}
+// Do uong (theo ten loai mon) -> Bar pha che; con lai -> Bep.
+const LA_DO_UONG = /DRINK|SAKE|BEER|BIA|RƯỢU|RUOU|ĐỒ UỐNG|DO UONG|NƯỚC|NUOC|BAR/i;
+// POS / so do ban goi addDishToOrder TUNG MON mot: gom cac mon cua cung mot
+// don trong vai giay thanh MOT thong bao, khong bao 5 lan cho 5 mon.
+const GOM_MS = Number(process.env.TB_GOM_MON_MS) || 2500;
+const hangMonMoi = new Map();   // sesis -> { mon: Map(id_mon -> qty), hen }
+function gomMonMoi(sesis, dong, nguon) {
+  if (!sesis || !dong.length) return;
+  let h = hangMonMoi.get(sesis);
+  if (!h) { h = { mon: new Map(), nguon }; hangMonMoi.set(sesis, h); }
+  for (const { id, qty } of dong) {
+    if (Number(id) > 0 && Number(qty) > 0) h.mon.set(Number(id), (h.mon.get(Number(id)) || 0) + Number(qty));
+  }
+  clearTimeout(h.hen);
+  h.hen = setTimeout(() => {
+    hangMonMoi.delete(sesis);
+    nen(() => guiMonMoi(sesis, h.mon, h.nguon));
+  }, GOM_MS);
+  if (h.hen.unref) h.hen.unref();
+}
+async function guiMonMoi(sesis, monMap, nguon) {
+  if (!monMap.size) return;
+  const don = await motDong(
+    `SELECT h.loai_don, DATE_FORMAT(h.ngay_dat, '%Y-%m-%d') AS ngay, b.number_ban
+       FROM hopdong h LEFT JOIN ban b ON b.Id_ban = h.id_ban WHERE h.sesis = ? LIMIT 1`, [sesis]);
+  if (!don) return;
+  // Mon goi truoc cho luot dat ngay khac: bep chua lam bay gio, khong bao.
+  const homNay = (await motDong("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS d")).d;
+  if (don.ngay && don.ngay > homNay) return;
+  const [mon] = await db.query(
+    'SELECT m.id_mon, m.name_mon, l.name_loai FROM monan m LEFT JOIN loai_mon l ON l.id_loai = m.id_loai WHERE m.id_mon IN (?)',
+    [[...monMap.keys()]]);
+  const noi = don.number_ban ? `Bàn ${don.number_ban}`
+    : (don.loai_don === 'giao_hang' || /^GH|giao/i.test(don.loai_don || '') ? 'Đơn giao hàng' : 'Đơn mang về');
+  const nhomMon = { bep: [], bar: [] };
+  for (const m of mon) {
+    (LA_DO_UONG.test(m.name_loai || '') ? nhomMon.bar : nhomMon.bep)
+      .push(`${String(m.name_mon).trim()} x${monMap.get(Number(m.id_mon))}`);
+  }
+  const gui1 = async (loai, nhom, ds, viec) => {
+    if (!ds.length) return;
+    await tb.gui(loai, {
+      nv: await boPhanTrongCa(nhom), nhom: [],
+      tieuDe: `${noi}: ${ds.length} món mới cần ${viec}`,
+      noiDung: ds.join(', ') + (nguon ? ` · ${nguon}` : ''),
+      link: '/kds', nguoiGui: nguon || 'Gọi món',
+    });
+  };
+  await gui1('mon_moi_bep', 'BEP', nhomMon.bep, 'chế biến');
+  await gui1('mon_moi_bar', 'BAR', nhomMon.bar, 'pha chế');
+}
+
 async function tenBan(sesis) {
   const r = await motDong('SELECT b.number_ban FROM hopdong h JOIN ban b ON b.Id_ban = h.id_ban WHERE h.sesis = ? AND h.id_ban > 0 LIMIT 1', [sesis]);
   return r && r.number_ban ? `Bàn ${r.number_ban}` : null;
@@ -185,9 +245,17 @@ function cai() {
       });
     }
     const idKh = await khachThat(t.customer_id);
-    const TEN = { DA_XAC_NHAN: 'đã được xác nhận', DA_COC: 'đã nhận tiền cọc', HOAN_THANH: 'đã hoàn tất', HUY: 'đã bị hủy' };
+    const TEN = {
+      DA_XAC_NHAN: 'đã được xác nhận', DA_COC: 'đã nhận tiền cọc', HOAN_THANH: 'đã hoàn tất', HUY: 'đã bị hủy',
+      CHO_COC: 'đã có báo giá - mời quý khách đặt cọc để giữ sảnh',
+      CHO_THANH_TOAN: 'đã chốt hóa đơn - mời quý khách thanh toán phần còn lại',
+    };
     if (idKh && TEN[t.trang_thai]) {
-      await tb.gui('dat_tiec_khach', { kh: [idKh], tieuDe: `Tiệc ${t.ma_tiec} ${TEN[t.trang_thai]}`, link: '/my-orders', nguoiGui: 'Nhà hàng Bảo Đoàn' });
+      const canTra = ['CHO_COC', 'CHO_THANH_TOAN'].includes(t.trang_thai);
+      await tb.gui('dat_tiec_khach', {
+        kh: [idKh], tieuDe: `Tiệc ${t.ma_tiec} ${TEN[t.trang_thai]}`, nguoiGui: 'Nhà hàng Bảo Đoàn',
+        link: canTra ? `/dat-tiec/thanh-toan/${t.ma_tiec}` : '/my-orders?tab=tiec', mucDo: canTra ? 'quan_trong' : undefined,
+      });
     }
   });
 
@@ -195,6 +263,11 @@ function cai() {
   const cs = require('./chinhSachGiaoService');
   boc(cs, 'sauKhiThanhToan', async (kq, [sesis]) => {
     const g = await motDong("SELECT id_giao, ma_giao, dia_chi_giao, trang_thai FROM don_giao_hang WHERE sesis = ? LIMIT 1", [sesis]);
+    if (g) {
+      // Don giao da tra tien -> bep bat dau nau (mon da nam tren KDS).
+      const [mg] = await db.query('SELECT id_mon AS id, soluong AS qty FROM hopdong WHERE sesis = ? AND id_mon > 0 AND soluong > 0 AND trangthai_bep = 0', [sesis]);
+      gomMonMoi(sesis, mg, `Đơn giao ${g.ma_giao}`);
+    }
     if (!g || g.trang_thai !== 'cho_phan') return;
     await tb.gui('don_giao_moi', { tieuDe: `Đơn giao ${g.ma_giao} đã thanh toán, chờ phân shipper`, noiDung: g.dia_chi_giao, link: `/staff/giao-hang/${g.id_giao}` });
   });
@@ -462,7 +535,12 @@ function cai() {
     });
   });
   const os = require('./orderService');
+  // Mon moi -> chuong Bep / Bar (gom theo don, xem gomMonMoi).
+  boc(os, 'addDishToOrder', async (kq, [sesis, idMon, qty]) => {
+    gomMonMoi(sesis, [{ id: idMon, qty }], 'Nhân viên gọi món');
+  });
   boc(os, 'addMultipleDishesToOrder', async (kq, [sesis, items = []]) => {
+    gomMonMoi(sesis, items.map((it) => ({ id: it.id || it.id_mon, qty: it.qty })), 'Khách gọi qua QR');
     const ids = items.map((it) => Number(it.id || it.id_mon)).filter(Boolean);
     const [mon] = ids.length ? await db.query('SELECT id_mon, name_mon FROM monan WHERE id_mon IN (?)', [ids]) : [[]];
     const ten = new Map(mon.map((m) => [Number(m.id_mon), String(m.name_mon).trim()]));
@@ -591,7 +669,10 @@ let henGio = null;
 function batDinhKy() {
   if (henGio || process.env.NODE_ENV === 'test') return;
   const loi = (ten) => (e) => console.error(`[thong-bao] ${ten}:`, e.message);
-  const cham = () => { quetTonKho().catch(loi('ton kho')); quetCongNo().catch(loi('cong no')); };
+  const cham = () => {
+    quetTonKho().catch(loi('ton kho')); quetCongNo().catch(loi('cong no'));
+    require('./duyetNhapKhoService').quetPhieuTon().catch(loi('phieu nhap ton'));
+  };
   const nhanh = () => { quetMonTre().catch(loi('mon tre')); quetDatBanSapDen().catch(loi('dat ban sap den')); };
   setTimeout(cham, 30 * 1000);
   setTimeout(nhanh, 20 * 1000);
@@ -601,6 +682,7 @@ function batDinhKy() {
 }
 
 module.exports = {
+  daBao,
   cai, boc, quetTonKho, quetCongNo, quetMonTre, quetDatBanSapDen,
   sauThanhToanTaiBan, ghiNhanPhucVu, phucVuCuaDon, phucVuTrongCa,
 };

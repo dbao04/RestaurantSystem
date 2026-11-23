@@ -75,7 +75,7 @@
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
           <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
           <li><a href="/my-orders" class="<%= (typeof activeNav !== 'undefined' && activeNav==='myorders') ? 'is-active' : '' %>"><%= t('dieu_huong.don_cua_toi') %></a></li>
-          <li><a href="/chat" class="<%= (typeof activeNav !== 'undefined' && activeNav==='chat') ? 'is-active' : '' %>"><i class="fas fa-headset" style="font-size:0.85rem; margin-right:4px;"></i><%= t('chat.tieu_de') || 'Chat Nhân Viên' %></a></li>
+          <%# Chat voi nhan vien: vao tu khung chatbot (nut "Chat voi nhan vien") - khong chiem cho tren menu. %>
 
           <%# Chi hien trong ngan keo tren dien thoai - xem chu thich .nh-menu-mobile o tren %>
           <li class="nh-menu-mobile nh-menu-mobile--vach">
@@ -86,9 +86,6 @@
           </li>
           <li class="nh-menu-mobile">
             <a href="/datban"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
-          </li>
-          <li class="nh-menu-mobile">
-            <a href="/chat" style="color:var(--nh-gold-soft); font-weight:700;"><i class="fas fa-headset"></i> <%= t('chat.tieu_de') || 'Chat Với Nhân Viên' %></a>
           </li>
           <% if (session.username) { %>
             <li class="nh-menu-mobile">

@@ -341,7 +341,8 @@ async function testDatTiec() {
   const [sanhDs, tdDs] = await Promise.all([dv.docSanhTiec(), dv.docThucDon()]);
   ok('Có sảnh tiệc và thực đơn tiệc trong CSDL', sanhDs.length > 0 && tdDs.length > 0, `${sanhDs.length} sảnh, ${tdDs.length} thực đơn`);
   if (!sanhDs.length || !tdDs.length) return;
-  const sanh = sanhDs[0]; const td = tdDs[0];
+  // Dat tiec online chi o Sanh Gala (services/datTiecQuyTrinh.js).
+  const sanh = await require(path.join(__dirname, '..', 'services', 'datTiecQuyTrinh')).sanhGala(); const td = tdDs[0];
 
   // Chon mot ngay xa con trong buoi TOI cho sanh nay
   let ngay = null;
@@ -352,7 +353,7 @@ async function testDatTiec() {
   }
   const hopLe = { ho_ten: 'AUTOTEST Đặt tiệc', so_dien_thoai: '0971112233', email: 'autotest@gmail.com',
     loai_tiec: 'SINH_NHAT', ngay_to_chuc: ngay, buoi: 'TOI', gio_bat_dau: '18:00',
-    so_khach: sanh.tiec_toi_thieu, khu_vuc_id: sanh.id, thuc_don_id: td.id, ghi_chu: 'AUTOTEST' };
+    so_khach: sanh.tiec_toi_thieu, thuc_don_id: td.id, ghi_chu: 'AUTOTEST', dong_y_chinh_sach: true };
 
   const loi = async (ten, sua) => {
     const r = await k.goi('/api/dat-tiec', { method: 'POST', json: { ...hopLe, ...sua } });
@@ -364,37 +365,37 @@ async function testDatTiec() {
   await loi('Từ chối giờ không thuộc buổi', { gio_bat_dau: '11:00' });
   await loi('Từ chối số khách vượt sức chứa sảnh', { so_khach: sanh.tiec_toi_da + 1 });
   await loi('Từ chối loại tiệc không tồn tại', { loai_tiec: 'XYZ' });
+  await loi('Từ chối khi chưa đồng ý chính sách đặt tiệc', { dong_y_chinh_sach: false });
+  await loi('Ít hơn số khách tối thiểu → không đủ điều kiện, mời đặt bàn', { so_khach: sanh.tiec_toi_thieu - 1 });
 
   const r = await k.goi('/api/dat-tiec', { method: 'POST', json: hopLe });
   const ma = r.data && r.data.ma;
-  ok('Tạo yêu cầu đặt tiệc hợp lệ (201) kèm dự toán & số bàn', r.status === 201 && !!ma && r.data.tong_du_toan > 0
+  ok('Tạo yêu cầu đặt tiệc hợp lệ (201) kèm dự toán & số bàn, giữ sảnh chờ cọc', r.status === 201 && !!ma && r.data.tong_du_toan > 0 && r.data.trang_thai === 'CHO_COC'
     && r.data.so_ban === Math.ceil(hopLe.so_khach / dv.KHACH_MOI_BAN), ma && `${ma} · ${r.data.so_ban} bàn · ${r.data.tong_du_toan}đ`);
   if (!r.data || !r.data.id) return;
   DON_DEP.tiec.push(r.data.id);
 
-  // Don thu 2 cung sanh, cung buoi -> van cho tao (yeu cau MOI chua giu cho) nhung khong duoc xac nhan trung
+  // Don thu 2 cung sanh, cung buoi -> bi chan ngay (don dau dang giu sanh cho coc).
   const r2 = await k.goi('/api/dat-tiec', { method: 'POST', json: { ...hopLe, ho_ten: 'AUTOTEST Tiệc 2' } });
   if (r2.data && r2.data.id) DON_DEP.tiec.push(r2.data.id);
+  ok('Khách khác đặt trùng sảnh + buổi đang giữ chỗ → bị chặn ngay', r2.status === 409, r2.data && r2.data.thong_bao);
 
   const lt = await dangNhapNV('letan');
   const ds = await lt.goi('/staff/dat-tiec');
   ok('Nhân viên xem danh sách đặt tiệc (GET /staff/dat-tiec)', ds.status === 200 && ds.text.includes(ma));
-  await lt.goi(`/api/staff/dat-tiec/${r.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'DA_LIEN_HE' } });
-  const xn = await lt.goi(`/api/staff/dat-tiec/${r.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'DA_XAC_NHAN', ghi_chu_noi_bo: 'AUTOTEST' } });
-  ok('Xác nhận đơn tiệc → giữ sảnh', xn.status === 200 && xn.data.ok);
+  const xn = await lt.goi(`/api/staff/dat-tiec/${r.data.id}/trang-thai`, { method: 'POST',
+    json: { trang_thai: 'DA_COC', so_tien: r.data.tien_coc, phuong_thuc: 'tien_mat', ghi_chu_noi_bo: 'AUTOTEST' } });
+  ok('Lễ tân thu cọc tại quầy → giữ sảnh chính thức', xn.status === 200 && xn.data.ok, xn.data && xn.data.thong_bao);
 
   const lich = await k.goi(`/api/dat-tiec/lich?ngay=${ngay}`);
-  ok('Lịch sảnh báo buổi đã kín sau khi xác nhận', lich.data && lich.data.kin.some((x) => Number(x.khu_vuc_id) === Number(sanh.id) && x.buoi === 'TOI'));
+  ok('Lịch sảnh báo buổi tối đã kín (giờ tô đỏ) sau khi cọc', lich.data && lich.data.kin.some((x) => Number(x.khu_vuc_id) === Number(sanh.id) && x.buoi === 'TOI')
+    && lich.data.buoi.find((b) => b.ma === 'TOI').gio.every((g) => !g.trong));
 
   const r3 = await k.goi('/api/dat-tiec', { method: 'POST', json: { ...hopLe, ho_ten: 'AUTOTEST Tiệc 3' } });
   if (r3.data && r3.data.id) DON_DEP.tiec.push(r3.data.id);
   ok('Chặn đặt tiệc trùng sảnh + buổi đã giữ chỗ (CONFLICT)', r3.status === 409 || (r3.data && r3.data.ma === 'CONFLICT'), r3.data && r3.data.thong_bao);
 
-  if (r2.data && r2.data.id) {
-    await lt.goi(`/api/staff/dat-tiec/${r2.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'DA_LIEN_HE' } });
-    const xn2 = await lt.goi(`/api/staff/dat-tiec/${r2.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'DA_XAC_NHAN' } });
-    ok('Không xác nhận được đơn thứ 2 trùng lịch sảnh', xn2.status >= 400 && xn2.data && xn2.data.ok === false, xn2.data && xn2.data.thong_bao);
-  }
+
   const sai = await lt.goi(`/api/staff/dat-tiec/${r.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'ABC' } });
   ok('Từ chối trạng thái không hợp lệ', sai.status === 400);
   const an = await new Phien().goi(`/api/staff/dat-tiec/${r.data.id}/trang-thai`, { method: 'POST', json: { trang_thai: 'HUY' } });
@@ -463,13 +464,20 @@ async function testThuChi() {
 // ====================================================================== E
 async function testKhoBep() {
   nhom('E. Kho bếp: phiếu nhập / xuất, đơn mua hàng');
+  // Phan quyen kho (services/phanQuyenKho.js): THU KHO nhap / xuat / nhan hang,
+  // bep truong chi de xuat don mua, quan ly duyet.
   const bt = await dangNhapNV('beptruong');
+  const tk = await dangNhapNV('thukho');
   const ql = await dangNhapNV('quanly');
-  ok('Đăng nhập Bếp trưởng & Quản lý', bt.ok && ql.ok);
+  ok('Đăng nhập Bếp trưởng, Thủ kho & Quản lý', bt.ok && tk.ok && ql.ok);
+  const btNhap = await bt.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { dong: [] } });
+  ok('RBAC: Bếp trưởng không tự lập phiếu nhập kho (403)', btNhap.status === 403, `HTTP ${btNhap.status}`);
+  const btForm = await bt.goi('/staff/kitchen/kho/xuat/moi');
+  ok('RBAC: Bếp trưởng không mở được form lập phiếu xuất (403)', btForm.status === 403, `HTTP ${btForm.status}`);
 
   for (const [u, ten] of [['/staff/kitchen/kho', 'Sổ kho'], ['/staff/kitchen/mua-hang', 'Mua hàng'], ['/staff/kitchen/thong-ke', 'Thống kê bếp'],
     ['/staff/kitchen/kho/nhap/moi', 'Lập phiếu nhập'], ['/staff/kitchen/kho/xuat/moi', 'Lập phiếu xuất']]) {
-    const r = await bt.goi(u);
+    const r = await (u.includes('thong-ke') ? bt : tk).goi(u);
     ok(`Trang ${ten} (GET ${u})`, r.status === 200, `HTTP ${r.status}`);
   }
 
@@ -479,19 +487,26 @@ async function testKhoBep() {
   const ton = async () => Number((await db.query('SELECT so_luong FROM nguyen_lieu WHERE id_nl = ?', [nl.id_nl]))[0][0].so_luong);
 
   try {
-    const pnSai = await bt.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { dong: [{ id_nl: nl.id_nl, so_luong: 0, don_gia: 1000 }] } });
+    const pnSai = await tk.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { dong: [{ id_nl: nl.id_nl, so_luong: 0, don_gia: 1000 }] } });
     ok('Phiếu nhập số lượng 0 bị từ chối', pnSai.status === 400);
-    const pn = await bt.goi('/api/kitchen/kho/nhap', { method: 'POST', json: {
-      ghi_chu: 'AUTOTEST', dong: [{ id_nl: nl.id_nl, so_luong: 3, don_gia: Math.max(1000, Math.round(Number(nl.gia_von)) || 1000), so_lo: 'AUTOTEST', han_su_dung: ngayCong(2) }] } });
+    // Quy trinh duyet phieu nhap (duyetNhapKhoService): thieu chung tu bi chan;
+    // hang chi vao kho sau khi bep truong kiem chat luong.
+    const pnKhongCt = await tk.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { dong: [{ id_nl: nl.id_nl, so_luong: 1, don_gia: 1000 }] } });
+    ok('Phiếu nhập thiếu số hóa đơn và lý do bị từ chối', pnKhongCt.status === 400, pnKhongCt.data && pnKhongCt.data.thong_bao);
+    const pn = await tk.goi('/api/kitchen/kho/nhap', { method: 'POST', json: {
+      ghi_chu: 'AUTOTEST', so_chung_tu: 'AUTOTEST-HD', dong: [{ id_nl: nl.id_nl, so_luong: 3, don_gia: Math.max(1000, Math.round(Number(nl.gia_von)) || 1000), so_lo: 'AUTOTEST', han_su_dung: ngayCong(2) }] } });
     if (pn.data && pn.data.id) DON_DEP.pn.push(pn.data.id);
+    const t0 = await ton();
+    ok('Thủ kho lập phiếu nhận hàng → chờ QC, tồn CHƯA tăng', pn.status === 201 && pn.data.trang_thai_duyet === 'cho_qc' && Math.abs(t0 - tonTruoc) < 1e-6, `${tonTruoc} → ${t0}`);
+    const qc = await bt.goi(`/api/kitchen/kho/nhap/${pn.data && pn.data.id}/qc`, { method: 'POST', json: { dong: [] } });
     const t1 = await ton();
-    ok(`Nhập kho 3 ${nl.ten_nl} → tồn tăng đúng 3`, pn.status === 201 && Math.abs(t1 - tonTruoc - 3) < 1e-6, `${tonTruoc} → ${t1} (${pn.data && pn.data.ma_phieu})`);
+    ok(`Bếp trưởng QC đạt → nhập kho 3 ${nl.ten_nl}, tồn tăng đúng 3`, qc.status === 200 && Math.abs(t1 - tonTruoc - 3) < 1e-6, `${tonTruoc} → ${t1} (${pn.data && pn.data.ma_phieu})`);
 
-    const xSai = await bt.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'hu_hong', dong: [{ id_nl: nl.id_nl, so_luong: 1 }] } });
+    const xSai = await tk.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'hu_hong', dong: [{ id_nl: nl.id_nl, so_luong: 1 }] } });
     ok('Xuất hủy/hư hỏng bắt buộc ghi nguyên nhân', xSai.status === 400);
-    const xVuot = await bt.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'dung_noi_bo', dong: [{ id_nl: nl.id_nl, so_luong: t1 + 1000 }] } });
+    const xVuot = await tk.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'dung_noi_bo', dong: [{ id_nl: nl.id_nl, so_luong: t1 + 1000 }] } });
     ok('Xuất vượt tồn kho bị chặn', xVuot.status === 400 && /tồn kho/i.test((xVuot.data && xVuot.data.thong_bao) || ''));
-    const px = await bt.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'hu_hong', ghi_chu: 'AUTOTEST hư hỏng', dong: [{ id_nl: nl.id_nl, so_luong: 1 }] } });
+    const px = await tk.goi('/api/kitchen/kho/xuat', { method: 'POST', json: { ly_do: 'hu_hong', ghi_chu: 'AUTOTEST hư hỏng', dong: [{ id_nl: nl.id_nl, so_luong: 1 }] } });
     if (px.data && px.data.id) DON_DEP.px.push(px.data.id);
     const t2 = await ton();
     ok('Xuất kho 1 → tồn giảm đúng 1', px.status === 201 && Math.abs(t1 - t2 - 1) < 1e-6, `${t1} → ${t2}`);
@@ -499,7 +514,7 @@ async function testKhoBep() {
     ok('FEFO: trừ lô hết hạn sớm nhất trước (lô AUTOTEST HSD +2 ngày)', lo && Number(lo.so_luong_con_lai) <= 2,
       `lô AUTOTEST còn ${lo && lo.so_luong_con_lai}`);
     if (px.data) {
-      const inP = await bt.goi(`/staff/kitchen/kho/phieu/xuat/${px.data.id}`);
+      const inP = await tk.goi(`/staff/kitchen/kho/phieu/xuat/${px.data.id}`);
       ok('In phiếu xuất kho', inP.status === 200 && inP.text.includes(px.data.ma_phieu));
     }
 
@@ -511,7 +526,7 @@ async function testKhoBep() {
     if (dm.data && dm.data.id) {
       DON_DEP.dmh.push(dm.data.id);
       const id = dm.data.id;
-      const nhanSom = await bt.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { id_dmh: id, dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 1000 }] } });
+      const nhanSom = await tk.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { id_dmh: id, dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 1000 }] } });
       ok('Không nhận hàng cho đơn chưa duyệt', nhanSom.status === 400);
       const tuDuyet = await bt.goi(`/api/kitchen/mua-hang/${id}/duyet`, { method: 'POST', json: {} });
       ok('Người lập không được tự duyệt đơn mua (403)', tuDuyet.status === 403);
@@ -521,10 +536,12 @@ async function testKhoBep() {
       ok('Quản lý duyệt đơn mua', duyet.status === 200);
       const dat = await bt.goi(`/api/kitchen/mua-hang/${id}/dat_hang`, { method: 'POST', json: {} });
       ok('Đánh dấu đã đặt hàng NCC', dat.status === 200);
-      const nhan = await bt.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { id_dmh: id, ghi_chu: 'AUTOTEST', dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 1000 }] } });
+      const nhan = await tk.goi('/api/kitchen/kho/nhap', { method: 'POST', json: { id_dmh: id, ghi_chu: 'AUTOTEST', so_chung_tu: 'AUTOTEST-HD2', dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 1000 }] } });
       if (nhan.data && nhan.data.id) DON_DEP.pn.push(nhan.data.id);
+      // Don mua chi tinh "da nhan" phan hang DAT kiem tra chat luong.
+      const qcDon = await bt.goi(`/api/kitchen/kho/nhap/${nhan.data && nhan.data.id}/qc`, { method: 'POST', json: { dong: [] } });
       const [[d]] = await db.query('SELECT trang_thai FROM don_mua_hang WHERE id_dmh = ?', [id]);
-      ok('Nhận đủ hàng → đơn mua chuyển "đã nhận"', nhan.status === 201 && d.trang_thai === 'da_nhan', d.trang_thai);
+      ok('Nhận hàng + QC đạt → đơn mua chuyển "đã nhận"', nhan.status === 201 && qcDon.status === 200 && d.trang_thai === 'da_nhan', d.trang_thai);
       const huy = await bt.goi(`/api/kitchen/mua-hang/${id}/huy`, { method: 'POST', json: { ly_do: 'AUTOTEST' } });
       ok('Không hủy được đơn đã nhận hàng', huy.status === 400);
       const ct = await bt.goi(`/staff/kitchen/mua-hang/${id}`);
@@ -609,7 +626,11 @@ async function testDoiMonDatTruoc() {
     `client gửi 1đ → lưu ${pg && pg.price}đ (giá thật ${mon[0].gia_mon}đ)`);
 
   // Luot dat sat gio (trong 24h) -> qua han voi khach, nhan vien van sua duoc
-  const gan = new Date(Date.now() + 3 * 36e5);
+  let gan = new Date(Date.now() + 3 * 36e5);
+  if (gan.getHours() >= 20 || gan.getHours() < 10) {
+    gan = new Date(Date.now() + 24 * 36e5); gan.setHours(11, 0, 0, 0);
+    if (gan.getTime() - Date.now() > 23 * 36e5) gan = new Date(gan.getTime() - 24 * 36e5);
+  }
   const gioGan = `${String(gan.getHours()).padStart(2, '0')}:${gan.getMinutes() < 30 ? '00' : '30'}`;
   const ngayGan = `${gan.getFullYear()}-${String(gan.getMonth() + 1).padStart(2, '0')}-${String(gan.getDate()).padStart(2, '0')}`;
   const r2 = await tao(ngayGan, gioGan);
@@ -650,6 +671,11 @@ async function donDep() {
     await q2('DELETE FROM reservations WHERE id IN (?)', DON_DEP.rsv);
   }
   const q = (sql, ids) => (ids.length ? db.query(sql, [ids]).catch((e) => console.warn('  (dọn dẹp)', e.message)) : null);
+  // Tien coc / thanh toan tiec nam trong payments (sesis = ma tiec) - xoa truoc khi xoa don.
+  if (DON_DEP.tiec.length) {
+    const [maTiec] = await db.query('SELECT ma_tiec FROM dat_tiec WHERE id IN (?)', [DON_DEP.tiec]).catch(() => [[]]);
+    if (maTiec.length) await q('DELETE FROM payments WHERE sesis IN (?)', maTiec.map((x) => x.ma_tiec));
+  }
   await q('DELETE FROM dat_tiec_thanh_toan WHERE dat_tiec_id IN (?)', DON_DEP.tiec);
   await q('DELETE FROM dat_tiec_lich_su WHERE dat_tiec_id IN (?)', DON_DEP.tiec);
   await q('DELETE FROM dat_tiec WHERE id IN (?)', DON_DEP.tiec);
@@ -668,7 +694,7 @@ async function donDep() {
  * that (vd quanly) da doi mat khau rieng. Trong luc chay: tam tat luat doi mat
  * khau + tam dat 123456; KET THUC luon tra lai dung nhu cu.
  */
-const TK_TEST = ['beptruong', 'daubep', 'dieuphoi', 'ketoan', 'letan', 'phucvu', 'quanly', 'shipper1', 'thungan'];
+const TK_TEST = ['beptruong', 'daubep', 'dieuphoi', 'ketoan', 'letan', 'phucvu', 'quanly', 'shipper1', 'thukho', 'thungan'];
 async function chuanBiTaiKhoan() {
   const md5 = require('md5');
   const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
@@ -678,7 +704,7 @@ async function chuanBiTaiKhoan() {
   for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
   if (co) await db.query("UPDATE cau_hinh SET gia_tri = '0' WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'");
   return async () => {
-    await new Promise((ok) => setTimeout(ok, 800));   // thong bao gui nen ghi xong
+    await new Promise((ok) => setTimeout(ok, 3500));  // thong bao gui nen ghi xong (gom mon moi -> bep 2,5s)
     await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [tbMoc.m]).catch(() => {});
     for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
     if (co) await db.query("UPDATE cau_hinh SET gia_tri = ? WHERE khoa = 'bao_mat.bat_doi_mk_nhan_vien'", [co.gia_tri]).catch(() => {});

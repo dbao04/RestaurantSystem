@@ -13,8 +13,8 @@ const { ngayCucBo } = require('../utils/thoiGian');
 const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const canTheoVaiTro = phanQuyenMw.canVaiTroCu(['Ke toan', 'Quan ly']);
+// Ke toan + Ban dieu hanh (truoc day ca cap <= 2: bep truong, quan ly bep).
 function canXem(req, res, next) {
-  if (req.hoSo && Number(req.hoSo.cap_bac) <= 2) return next();
   return canTheoVaiTro(req, res, next);
 }
 

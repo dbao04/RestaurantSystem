@@ -144,6 +144,12 @@ function ipMayChu() {
  * trang so do ban thi ve hang chuc ma mot luc. Nho ket qua 2 giay la du de tat
  * mo tunnel co hieu luc gan nhu tuc thi ma khong dong vao dia lien tuc.
  */
+function conSong(pid) {
+  // Tep doi cu (chua co pid) khong kiem chung duoc -> coi nhu da chet.
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+}
+
 function gocTunnel() {
   const gio = Date.now();
   if (gio - tunnel.docLuc < 2000) return tunnel.url;
@@ -151,7 +157,10 @@ function gocTunnel() {
   try {
     const doc = JSON.parse(fs.readFileSync(TEP_TUNNEL, 'utf8'));
     const url = String(doc.url || '').trim().replace(/\/+$/, '');
-    tunnel.url = /^https?:\/\//i.test(url) ? url : '';
+    // Tep con sot khi `npm run qr:online` bi tat ngang (dong cua so) -> tunnel
+    // da chet nhung tep van con, ma QR tro vao ten mien khong ton tai va dien
+    // thoai quet khong mo duoc. Tien trinh ghi tep khong con song thi bo qua.
+    tunnel.url = /^https?:\/\//i.test(url) && conSong(doc.pid) ? url : '';
   } catch {
     // Khong co tep (tunnel dang tat) hoac tep dang duoc ghi do: coi nhu khong co.
     tunnel.url = '';

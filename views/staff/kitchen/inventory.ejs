@@ -23,8 +23,8 @@
         <h1 class="h3 mb-0 text-gray-800">Quản lý Kho nguyên liệu</h1>
     </div>
     <div class="col-md-4 text-right">
-        <button class="btn btn-primary" data-toggle="modal" data-target="#addIngredientModal"><i class="fas fa-plus mr-1"></i> Thêm nguyên liệu</button>
-        <button class="btn btn-success" data-toggle="modal" data-target="#stockInModal"><i class="fas fa-download mr-1"></i> Nhập kho</button>
+        <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).danhMuc) { %><button class="btn btn-primary" data-toggle="modal" data-target="#addIngredientModal"><i class="fas fa-plus mr-1"></i> Thêm nguyên liệu</button><% } %>
+        <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap) { %><button class="btn btn-success" data-toggle="modal" data-target="#stockInModal"><i class="fas fa-download mr-1"></i> Nhập kho</button><% } %>
     </div>
 </div>
 
@@ -32,8 +32,8 @@
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Tồn kho hiện tại</h6>
         <div class="d-flex flex-wrap" style="gap:.4rem">
-            <a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Phiếu nhập</a>
-            <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Xuất hủy / hao hụt</a>
+            <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap) { %><a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Phiếu nhập</a><% } %>
+            <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Xuất hủy / hao hụt</a><% } %>
             <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-info">Sổ xuất nhập kho</a>
         </div>
     </div>
@@ -75,6 +75,7 @@
                             <% } %>
                         </td>
                         <td>
+                          <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).danhMuc) { %>
                             <button class="btn btn-sm btn-outline-primary mr-1" title="Sửa"
                               data-toggle="modal" data-target="#editIngModal<%= i.id_nl %>">
                               <i class="fas fa-edit"></i>
@@ -83,6 +84,7 @@
                               onclick="return confirm('Xóa nguyên liệu này?')" title="Xóa">
                               <i class="fas fa-trash"></i>
                             </a>
+                          <% } else { %><span class="text-muted small">Chỉ xem</span><% } %>
                         </td>
                     </tr>
                     <!-- Edit Modal for ingredient -->

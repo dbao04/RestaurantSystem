@@ -9,19 +9,24 @@ const auditService = require('../services/auditService');
 const personnelService = require('../services/personnelService');
 
 // Middleware kiểm tra nhân sự đăng nhập
+const vaiTro = require('../services/phanQuyenVaiTro');
+const phanQuyen = require('../services/phanQuyenService');
+// Bao cao ca phuc vu: bo phan Phuc vu (va Ban dieu hanh). Truoc day moi nhan vien
+// dang nhap (ke toan, kho, bep...) deu mo duoc.
 const canNhanSu = (req, res, next) => {
-  if (req.session && req.session.stafflogin) return next();
-  return res.redirect('/staff/login');
+  if (!req.session || !req.session.stafflogin) return res.redirect('/staff/login');
+  if (vaiTro.laDieuHanh(req.session, req.hoSo) || req.session.staffRole === 'Phuc vu'
+    || phanQuyen.dongVaiDuoc(req.hoSo, ['Phuc vu'])) return next();
+  return res.status(403).render('error', {
+    title: 'Không có quyền truy cập', statusCode: 403, hoSo: res.locals.hoSo || null,
+    message: 'Báo cáo ca phục vụ dành cho bộ phận Phục vụ.',
+  });
 };
 
 // Middleware kiểm tra vai trò Quản lý / Admin
-const laQuanLy = (req) => {
-  if (req.session && req.session.adminlogin) return true;
-  const vaiTro = (req.session && req.session.staffRole) ? String(req.session.staffRole).toLowerCase() : '';
-  if (/quan ly|quanly|manager|giam sat|giamsat|admin/.test(vaiTro)) return true;
-  if (req.hoSo && req.hoSo.cap_bac <= 3 && !/ke toan|ketoan|bep/.test(vaiTro)) return true;
-  return false;
-};
+// Duyet bao cao: Ban dieu hanh hoac Giam sat phuc vu. Truoc day moi chuc danh
+// cap <= 3 (ca Truong le tan, Giam sat thu ngan) deu duyet duoc bao cao phuc vu.
+const laQuanLy = (req) => vaiTro.laDieuHanh(req.session || {}, req.hoSo) || vaiTro.laGiamSat(req.hoSo, 'PV');
 
 /**
  * 1. Màn hình Tạo báo cáo cuối ngày / Giao ca của Phục vụ

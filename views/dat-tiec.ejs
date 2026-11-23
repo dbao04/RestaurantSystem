@@ -1,278 +1,303 @@
 <%- include('partials/header', { title: t('dat_tiec.tieu_de') }) %>
 <%
 /*
-  DAT TIEC - tiec cuoi, sinh nhat, party, hop mat.
+  DAT TIEC ONLINE - Sanh Gala (services/datTiecQuyTrinh.js).
 
-  Mot trang, nam khoi: loai tiec -> sanh -> thuc don -> dich vu -> form.
-  Ba khoi tren chi la cach CHON nhanh bang hinh; nguon su that duy nhat la
-  bien `S` trong script cuoi trang, form va bang du toan deu ve lai tu no.
-
-  Du toan tinh tren trinh duyet chi de khach xem; may chu tinh lai tu gia
-  trong CSDL khi luu (services/datTiecService.tinhDuToan).
+  Sau buoc, moi buoc mo khi buoc truoc hop le:
+    1 Chinh sach (bat buoc dong y) -> 2 Loai tiec + so khach (it hon toi thieu -> sang Dat ban)
+    -> 3 Ngay (lich thang, ngay kin to do) + gio (gio trong xanh, gio da co tiec do)
+    -> 4 Thuc don co san / tuy chinh -> 5 Dich vu -> 6 Lien he & xac nhan.
+  Du toan tren trinh duyet chi de xem; may chu tinh lai tu CSDL khi luu.
 */
-var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
-var dsLoai = Object.keys(loaiTiec);
-var loaiDau = chon.loai || dsLoai[0];
-var donVi = { GOI: t('dat_tiec.dv_goi'), BAN: t('dat_tiec.dv_ban'), KHACH: t('dat_tiec.dv_khach') };
-// Ban dich cua du lieu (loai tiec, buoi, sanh, thuc don, dich vu) - dung chung cho HTML va cac khoi JSON ben duoi.
-var dichObj = function (o, truong) { var r = Object.assign({}, o); truong.forEach(function (k) { if (r[k]) r[k] = dichNd(r[k]); }); return r; };
-loaiTiec = (function () { var o = {}; Object.keys(loaiTiec).forEach(function (k) { o[k] = dichObj(loaiTiec[k], ['ten', 'mo_ta', 'nhan_vat']); }); return o; })();
-buoi = (function () { var o = {}; Object.keys(buoi).forEach(function (k) { o[k] = dichObj(buoi[k], ['ten']); }); return o; })();
-sanh = sanh.map(function (s) { return dichObj(s, ['ten', 'mo_ta']); });
-dichVu = dichVu.map(function (d) { return dichObj(d, ['ten', 'mo_ta']); });
-thucDon = thucDon.map(function (m) { var r = dichObj(m, ['ten', 'mo_ta']); r.mon = (m.mon || []).map(function (x) { return { nhom: dichNd(x.nhom), ten: dichNd(x.ten) }; }); r.bao_gom = (m.bao_gom || []).map(dichNd); return r; });
+var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
 %>
-<link rel="stylesheet" href="/su-kien.css">
+<style>
+  .dtw { --dt-ok: #1f7a4a; --dt-ok-nen: #e7f4ec; --dt-do: #b3352c; --dt-do-nen: #fbe9e7; --dt-cam: #b45309; --dt-cam-nen: #fff1dc; }
+  [data-theme="dark"] .dtw { --dt-ok: #4ade80; --dt-ok-nen: rgba(74,222,128,.12); --dt-do: #f87171; --dt-do-nen: rgba(248,113,113,.14); --dt-cam: #fbbf24; --dt-cam-nen: rgba(251,191,36,.13); }
+  .dtw { padding: 2.2rem 0 4rem; }
+  .dtw__luoi { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.6rem; align-items: start; }
+  .dtw__buoc { list-style: none; display: flex; gap: .4rem; padding: 0; margin: 0 0 1.4rem; overflow-x: auto; }
+  .dtw__buoc li { flex: 1 0 auto; min-width: 92px; text-align: center; font-size: .78rem; color: var(--nh-muted); }
+  .dtw__buoc li b { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin: 0 auto .3rem; border-radius: 50%;
+    border: 2px solid var(--nh-line); background: var(--nh-surface); color: var(--nh-muted); font-size: .85rem; }
+  .dtw__buoc li.xong b { background: var(--nh-gold); border-color: var(--nh-gold); color: #fff; }
+  .dtw__buoc li.dang { color: var(--nh-ink); font-weight: 700; }
+  .dtw__buoc li.dang b { border-color: var(--nh-gold); color: var(--nh-gold); }
+  .dtw__the { background: var(--nh-surface); border: 1px solid var(--nh-line); border-radius: 16px; padding: 1.4rem 1.5rem; }
+  .dtw__the h2 { font-family: var(--nh-serif); font-size: 1.45rem; margin: 0 0 .3rem; color: var(--nh-ink); }
+  .dtw__the > p.phu { color: var(--nh-muted); margin: 0 0 1.1rem; }
+  .dtw__buoc-nd[hidden] { display: none !important; }
+  .dtw__nav { display: flex; justify-content: space-between; gap: .6rem; margin-top: 1.4rem; flex-wrap: wrap; }
+  .dtw__btn { border: 0; border-radius: 10px; padding: .7rem 1.3rem; font-weight: 700; cursor: pointer; font-size: .95rem; }
+  .dtw__btn--chinh { background: var(--nh-gold); color: #fff; }
+  .dtw__btn--chinh:disabled { opacity: .45; cursor: not-allowed; }
+  .dtw__btn--phu { background: transparent; color: var(--nh-ink); border: 1px solid var(--nh-line); }
+  .dtw__btn:focus-visible, .dtw button:focus-visible { outline: 2px solid var(--nh-gold); outline-offset: 2px; }
+  /* chinh sach */
+  .cs-muc { border: 1px solid var(--nh-line); border-radius: 12px; margin-bottom: .6rem; overflow: hidden; }
+  .cs-muc summary { cursor: pointer; padding: .8rem 1rem; font-weight: 700; color: var(--nh-ink); list-style: none; display: flex; justify-content: space-between; }
+  .cs-muc summary::after { content: '+'; color: var(--nh-gold); font-size: 1.2rem; line-height: 1; }
+  .cs-muc[open] summary::after { content: '–'; }
+  .cs-muc ul { margin: 0; padding: 0 1rem 1rem 2.1rem; color: var(--nh-ink); line-height: 1.6; font-size: .93rem; }
+  .cs-dongy { display: flex; gap: .6rem; align-items: flex-start; margin-top: 1rem; padding: .9rem 1rem; border-radius: 12px; background: var(--nh-surface-subtle, rgba(0,0,0,.03)); }
+  .cs-dongy input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--nh-gold); }
+  /* loai tiec */
+  .lt-luoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .7rem; }
+  .lt { text-align: left; border: 2px solid var(--nh-line); background: var(--nh-surface); border-radius: 12px; padding: .9rem; cursor: pointer; color: var(--nh-ink); }
+  .lt i { color: var(--nh-gold); font-size: 1.2rem; }
+  .lt b { display: block; margin: .35rem 0 .2rem; }
+  .lt small { color: var(--nh-muted); line-height: 1.4; display: block; }
+  .lt[aria-checked="true"] { border-color: var(--nh-gold); box-shadow: 0 0 0 3px rgba(200,162,75,.2); }
+  .o-nhap { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .8rem; margin-top: 1rem; }
+  .o-nhap label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: .3rem; color: var(--nh-ink); }
+  .o-nhap input, .o-nhap textarea, .o-nhap select { width: 100%; padding: .6rem .75rem; border: 1px solid var(--nh-line); border-radius: 10px; background: var(--nh-bg); color: var(--nh-ink); font: inherit; }
+  .bao { padding: .85rem 1rem; border-radius: 12px; margin-top: 1rem; line-height: 1.5; font-size: .93rem; }
+  .bao--do { background: var(--dt-do-nen); color: var(--dt-do); }
+  .bao--ok { background: var(--dt-ok-nen); color: var(--dt-ok); }
+  .bao--cam { background: var(--dt-cam-nen); color: var(--dt-cam); }
+  .bao a.dtw__btn { display: inline-block; margin-top: .6rem; text-decoration: none; }
+  /* lich */
+  .lich-dau { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+  .lich-dau b { font-family: var(--nh-serif); font-size: 1.15rem; color: var(--nh-ink); }
+  .lich-dau button { border: 1px solid var(--nh-line); background: var(--nh-surface); color: var(--nh-ink); border-radius: 8px; width: 38px; height: 34px; cursor: pointer; }
+  .lich { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .lich .th { text-align: center; font-size: .72rem; color: var(--nh-muted); font-weight: 700; padding: .2rem 0; }
+  .lich button.ng { height: 54px; border: 1px solid var(--nh-line); border-radius: 9px; background: var(--nh-surface); color: var(--nh-ink); cursor: pointer;
+    font-weight: 600; font-size: .92rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; }
+  .lich button.ng small { font-size: .6rem; font-weight: 600; }
+  .lich .ng--trong small { color: var(--dt-ok); }
+  .lich .ng--mot_buoi { background: var(--dt-cam-nen); }
+  .lich .ng--mot_buoi small { color: var(--dt-cam); }
+  .lich .ng--kin { background: var(--dt-do-nen); color: var(--dt-do); border-color: transparent; cursor: not-allowed; }
+  .lich .ng--khong_nhan { opacity: .35; cursor: not-allowed; }
+  .lich .ng.chon { outline: 3px solid var(--nh-gold); outline-offset: -1px; }
+  .chu-giai { display: flex; flex-wrap: wrap; gap: .9rem; font-size: .78rem; color: var(--nh-muted); margin-top: .6rem; }
+  .chu-giai span::before { content: ''; display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 1px solid var(--nh-line); }
+  .chu-giai .c1::before { background: var(--nh-surface); } .chu-giai .c2::before { background: var(--dt-cam-nen); } .chu-giai .c3::before { background: var(--dt-do-nen); } .chu-giai .c4::before { opacity: .35; }
+  .buoi-luoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .8rem; margin-top: 1rem; }
+  .buoi { border: 1px solid var(--nh-line); border-radius: 12px; padding: .9rem; }
+  .buoi--kin { background: var(--dt-do-nen); border-color: transparent; }
+  .buoi h4 { margin: 0 0 .2rem; font-size: 1rem; color: var(--nh-ink); }
+  .buoi p { margin: 0 0 .6rem; font-size: .8rem; color: var(--nh-muted); }
+  .gio-luoi { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .gio { border: 1.5px solid var(--dt-ok); color: var(--dt-ok); background: var(--dt-ok-nen); border-radius: 8px; padding: .4rem .7rem; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .gio[aria-pressed="true"] { background: var(--dt-ok); color: #fff; }
+  .gio:disabled { border-color: var(--dt-do); color: var(--dt-do); background: transparent; cursor: not-allowed; text-decoration: line-through; }
+  /* thuc don */
+  .td-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .9rem; }
+  .td { text-align: left; border: 2px solid var(--nh-line); background: var(--nh-surface); border-radius: 14px; padding: 0; cursor: pointer; color: var(--nh-ink); overflow: hidden; display: flex; flex-direction: column; }
+  .td[aria-checked="true"] { border-color: var(--nh-gold); box-shadow: 0 0 0 3px rgba(200,162,75,.22); }
+  .td__anh { position: relative; aspect-ratio: 16 / 10; background: var(--nh-line); }
+  .td__anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .td__chon { position: absolute; top: .55rem; right: .55rem; width: 30px; height: 30px; border-radius: 50%; background: var(--nh-gold); color: #fff; display: none; align-items: center; justify-content: center; font-size: .85rem; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .td[aria-checked="true"] .td__chon { display: flex; }
+  .td[hidden] { display: none !important; }
+  .td-them { margin-top: .8rem; }
+  .td__dai { display: flex; gap: 3px; padding: 3px; background: var(--nh-surface); }
+  .td__dai img { flex: 1; min-width: 0; height: 38px; object-fit: cover; border-radius: 5px; }
+  .td__than { padding: .7rem .85rem .85rem; }
+  .td b { display: block; font-size: .98rem; } .td .gia { color: var(--nh-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .td small { color: var(--nh-muted); display: block; }
+  .mon-nhom { margin-top: .9rem; }
+  .mon-nhom > b { display: block; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--nh-gold); margin-bottom: .45rem; }
+  .mon-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
+  .mon { position: relative; border: 1px solid var(--nh-line); border-radius: 12px; overflow: hidden; background: var(--nh-surface); color: var(--nh-ink); text-align: left; padding: 0; font: inherit; }
+  button.mon { cursor: pointer; }
+  .mon__anh { aspect-ratio: 4 / 3; background: var(--nh-surface-subtle, rgba(0,0,0,.05)); display: flex; align-items: center; justify-content: center; color: var(--nh-gold); font-size: 1.4rem; }
+  .mon__anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mon__ten { padding: .45rem .55rem .55rem; font-size: .84rem; line-height: 1.35; font-weight: 600; }
+  .mon__ten small { display: block; color: var(--nh-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .mon.bo .mon__anh::after { content: 'Đã bỏ'; position: absolute; inset: 0 0 auto 0; aspect-ratio: 4 / 3; background: rgba(20,12,8,.62); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; letter-spacing: .05em; }
+  .mon.bo .mon__ten { text-decoration: line-through; color: var(--nh-muted); }
+  .mon__nut { position: absolute; top: .4rem; right: .4rem; border: 0; border-radius: 999px; padding: .2rem .55rem; font-size: .72rem; font-weight: 700; background: rgba(255,255,255,.92); color: #1f1a17; }
+  .mon.bo .mon__nut { background: var(--nh-gold); color: #fff; }
+  .mon__them { display: block; width: calc(100% - 1.1rem); margin: 0 .55rem .55rem; border: 1px solid var(--nh-gold); background: transparent; color: var(--nh-gold); border-radius: 8px; padding: .3rem; font-weight: 700; cursor: pointer; font-size: .8rem; }
+  .mon__them:disabled { background: var(--nh-gold); color: #fff; cursor: default; }
+  .td-ct { margin-top: 1rem; border: 1px dashed var(--nh-line); border-radius: 12px; padding: 1rem; }
+  .td-mon { list-style: none; padding: 0; margin: .4rem 0 0; display: grid; gap: .3rem; }
+  .td-mon label { display: flex; gap: .5rem; align-items: center; font-size: .9rem; color: var(--nh-ink); }
+  .td-mon .bo { text-decoration: line-through; color: var(--nh-muted); }
+  .td-mon em { font-style: normal; color: var(--nh-muted); font-size: .75rem; min-width: 70px; }
+  .tc-bat { display: flex; align-items: center; gap: .5rem; margin-top: .9rem; font-weight: 600; color: var(--nh-ink); }
+  .tc-bat input { width: 18px; height: 18px; accent-color: var(--nh-gold); }
+  .them-mon { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+  .them-mon input, .them-mon select { padding: .5rem .65rem; border: 1px solid var(--nh-line); border-radius: 8px; background: var(--nh-bg); color: var(--nh-ink); font: inherit; }
+  .them-mon input[type=search] { flex: 1 1 220px; }
+  .ds-them { list-style: none; padding: 0; margin: .6rem 0 0; display: grid; gap: .35rem; }
+  .ds-them li { display: flex; justify-content: space-between; gap: .6rem; align-items: center; font-size: .88rem; padding: .4rem .6rem; border-radius: 10px; background: var(--nh-surface-subtle, rgba(0,0,0,.03)); color: var(--nh-ink); }
+  .ds-them li img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: 0 0 auto; }
+  .ds-them li .tt-mon { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+  .them-luoi { margin-top: .7rem; max-height: 520px; overflow: auto; padding-right: 2px; }
+  .ds-them button { border: 0; background: none; color: var(--dt-do); cursor: pointer; font-size: 1rem; }
+  .goi-y { list-style: none; margin: .3rem 0 0; padding: 0; max-height: 210px; overflow: auto; border: 1px solid var(--nh-line); border-radius: 8px; }
+  .goi-y button { width: 100%; text-align: left; border: 0; background: var(--nh-surface); color: var(--nh-ink); padding: .45rem .7rem; cursor: pointer; display: flex; justify-content: space-between; font-size: .86rem; }
+  .goi-y button:hover { background: var(--nh-surface-subtle, rgba(0,0,0,.04)); }
+  /* dich vu */
+  .dv-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .6rem; }
+  .dv { display: flex; gap: .65rem; align-items: flex-start; border: 1px solid var(--nh-line); border-radius: 12px; padding: .75rem .85rem; cursor: pointer; color: var(--nh-ink); }
+  .dv input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--nh-gold); }
+  .dv b { display: block; font-size: .92rem; }
+  .dv small { color: var(--nh-muted); display: block; line-height: 1.4; }
+  .dv .gia { color: var(--nh-gold); font-weight: 700; font-size: .85rem; }
+  .dv:has(input:checked) { border-color: var(--nh-gold); background: rgba(200,162,75,.07); }
+  /* tom tat */
+  .tt { position: sticky; top: 90px; background: var(--nh-surface); border: 1px solid var(--nh-line); border-radius: 16px; padding: 1.1rem 1.2rem; }
+  .tt h3 { font-family: var(--nh-serif); margin: 0 0 .7rem; font-size: 1.15rem; color: var(--nh-ink); }
+  .tt dl { margin: 0; display: grid; gap: .45rem; font-size: .88rem; }
+  .tt dl div { display: flex; justify-content: space-between; gap: .6rem; }
+  .tt dt { color: var(--nh-muted); } .tt dd { margin: 0; text-align: right; color: var(--nh-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tt .tong { border-top: 1px dashed var(--nh-line); padding-top: .6rem; margin-top: .3rem; font-size: 1rem; }
+  .tt .tong dd { color: var(--nh-gold); font-size: 1.15rem; }
+  .tt .coc dd { color: var(--dt-ok); }
+  .tt p { font-size: .76rem; color: var(--nh-muted); margin: .7rem 0 0; line-height: 1.45; }
+  .xn-bang { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: .6rem; }
+  .xn-bang td { padding: .4rem 0; border-bottom: 1px solid var(--nh-line); color: var(--nh-ink); }
+  .xn-bang td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  @media (max-width: 960px) { .dtw__luoi { grid-template-columns: 1fr; } .tt { position: static; } }
+  @media (max-width: 560px) { .dtw__the { padding: 1.1rem; } .lich button.ng { height: 42px; } .lich button.ng small { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .dtw * { transition: none !important; } }
+</style>
 
 <section class="nh-subhero">
   <div class="nh-subhero__bg" style="background-image:url('/images/khong-gian/gala-2.jpg')"></div>
   <div class="nh-subhero__veil"></div>
   <div class="nh-container nh-subhero__inner">
-    <span class="nh-eyebrow"><%= t('dat_tiec.eyebrow') %></span>
-    <h1><%= t('dat_tiec.h1') %></h1>
-    <div class="nh-crumbs">
-      <a href="/"><%= t('khong_gian.crumb') %></a> &nbsp;/&nbsp; <a href="/khong-gian"><%= t('dat_tiec.crumb_kg') %></a> &nbsp;/&nbsp; <span><%= t('dat_tiec.tieu_de') %></span>
-    </div>
+    <span class="nh-eyebrow">Tiệc lớn tại <%= sanh ? sanh.ten : 'Sảnh Gala' %></span>
+    <h1>Đặt tiệc</h1>
+    <div class="nh-crumbs"><a href="/">Trang chủ</a> &nbsp;/&nbsp; <a href="/khong-gian">Không gian</a> &nbsp;/&nbsp; <span>Đặt tiệc</span></div>
   </div>
 </section>
 
-<div class="sk">
+<div class="dtw">
+  <div class="nh-container">
+    <ol class="dtw__buoc" id="thanhBuoc" aria-label="Các bước đặt tiệc">
+      <li data-b="1"><b>1</b>Chính sách</li><li data-b="2"><b>2</b>Loại tiệc</li><li data-b="3"><b>3</b>Ngày &amp; giờ</li>
+      <li data-b="4"><b>4</b>Thực đơn</li><li data-b="5"><b>5</b>Dịch vụ</li><li data-b="6"><b>6</b>Xác nhận</li>
+    </ol>
 
-  <!-- ========================================= 1. LOAI TIEC -->
-  <section class="sk-section sk-section--cream">
-    <div class="nh-container">
-      <div class="sk-head">
-        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_1') %></span>
-        <h2><%= t('dat_tiec.h2_loai') %></h2>
-        <p><%= t('dat_tiec.loai_mo_ta') %></p>
-      </div>
-      <div class="dt-loai" role="radiogroup" aria-label="<%= t('dat_tiec.nhan_loai') %>">
-        <% dsLoai.forEach(function (ma) { var l = loaiTiec[ma]; %>
-          <button type="button" class="dt-loai__card" data-chon-loai="<%= ma %>" role="radio" aria-checked="false">
-            <img src="<%= l.anh %>" alt="" loading="lazy">
-            <span class="dt-loai__check"><i class="fas fa-check"></i></span>
-            <div class="dt-loai__body">
-              <div class="dt-loai__icon"><i class="fas <%= l.icon %>"></i></div>
-              <h3><%= l.ten %></h3>
-              <p><%= l.mo_ta %></p>
-            </div>
-          </button>
-        <% }) %>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================= 2. SANH -->
-  <section class="sk-section">
-    <div class="nh-container">
-      <div class="sk-head">
-        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_2') %></span>
-        <h2><%= t('dat_tiec.h2_sanh') %></h2>
-        <p><%= t('dat_tiec.sanh_mo_ta') %> <a href="/khong-gian" style="color:var(--nh-gold);font-weight:600"><%= t('dat_tiec.xem_anh_khu') %></a></p>
-      </div>
-      <div class="dt-sanh" role="radiogroup" aria-label="<%= t('dat_tiec.nhan_sanh') %>">
-        <% sanh.forEach(function (s) { %>
-          <button type="button" class="dt-sanh__card" data-chon-sanh="<%= s.id %>" role="radio" aria-checked="false">
-            <img src="<%= (s.thu_vien_anh && s.thu_vien_anh[0]) || '/images/khong-gian/gala-1.jpg' %>" alt="<%= s.ten %>" loading="lazy">
-            <div class="dt-sanh__body">
-              <h3><%= s.ten %></h3>
-              <p><%= s.mo_ta %></p>
-              <span class="dt-sanh__cap"><i class="fas fa-user-friends"></i> <%= t('dat_tiec.khach_tu_den', { tu: s.tiec_toi_thieu, den: s.tiec_toi_da }) %></span>
-            </div>
-          </button>
-        <% }) %>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================= 3. THUC DON -->
-  <section class="sk-section sk-section--cream" id="thuc-don">
-    <div class="nh-container">
-      <div class="sk-head">
-        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_3') %></span>
-        <h2><%= t('dat_tiec.h2_td') %></h2>
-        <p><%= t('dat_tiec.td_mo_ta', { n: khachMoiBan }) %></p>
-      </div>
-      <div class="dt-tabs" role="tablist">
-        <% dsLoai.forEach(function (ma) { var l = loaiTiec[ma]; %>
-          <button type="button" class="dt-tab" role="tab" data-tab="<%= ma %>"><i class="fas <%= l.icon %>"></i> <%= l.ten %></button>
-        <% }) %>
-      </div>
-      <% dsLoai.forEach(function (ma) { %>
-        <div class="dt-menus" data-menus="<%= ma %>" role="tabpanel" hidden>
-          <% thucDon.filter(function (t) { return t.loai_tiec === ma; }).forEach(function (t) {
-               var nhom = [];
-               t.mon.forEach(function (m) {
-                 var g = nhom.filter(function (x) { return x.ten === m.nhom; })[0];
-                 if (!g) { g = { ten: m.nhom, mon: [] }; nhom.push(g); }
-                 g.mon.push(m.ten);
-               }); %>
-            <article class="dt-menu <%= t.noi_bat ? 'dt-menu--hot' : '' %>" data-menu="<%= t.id %>">
-              <% if (t.noi_bat) { %><span class="dt-menu__ribbon"><i class="fas fa-star"></i> <%= locals.t('dat_tiec.duoc_chon') %></span><% } %>
-              <div class="dt-menu__img"><img src="<%= t.hinh_anh %>" alt="<%= t.ten %>" loading="lazy"></div>
-              <div class="dt-menu__body">
-                <h3><%= t.ten %></h3>
-                <div class="dt-menu__gia"><b><%= vnd(t.gia_ban) %></b><span><%= locals.t('dat_tiec.gia_ban_khach', { n: khachMoiBan, gia: vnd(t.gia_khach) }) %></span></div>
-                <div class="dt-menu__mota"><%= t.mo_ta %></div>
-                <% nhom.forEach(function (g) { %>
-                  <div class="dt-menu__nhom"><%= g.ten %></div>
-                  <ul class="dt-menu__mon"><% g.mon.forEach(function (x) { %><li><%= x %></li><% }) %></ul>
-                <% }) %>
-                <% if (t.bao_gom.length) { %>
-                  <div class="dt-menu__baogom">
-                    <% t.bao_gom.forEach(function (b) { %><div><i class="fas fa-check-circle"></i><%= b %></div><% }) %>
-                  </div>
-                <% } %>
-                <button type="button" class="nh-btn nh-btn--gold dt-menu__btn" data-chon-menu="<%= t.id %>"><i class="fas fa-hand-pointer"></i> <span><%= locals.t('dat_tiec.chon_td') %></span></button>
-              </div>
-            </article>
+    <div class="dtw__luoi">
+      <div>
+        <!-- 1. CHINH SACH -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="1">
+          <h2>Chính sách đặt tiệc</h2>
+          <p class="phu">Vui lòng đọc trước khi đặt. Chính sách này cũng được ghi trong trang thanh toán và lịch sử đặt tiệc của quý khách.</p>
+          <% chinhSach.forEach(function (m, i) { %>
+            <details class="cs-muc" <%= i < 3 ? 'open' : '' %>>
+              <summary><%= m.tieu_de %></summary>
+              <ul><% m.muc.forEach(function (x) { %><li><%= x %></li><% }) %></ul>
+            </details>
           <% }) %>
-        </div>
-      <% }) %>
-    </div>
-  </section>
+          <label class="cs-dongy"><input type="checkbox" id="dongY"><span>Tôi đã đọc và đồng ý với chính sách đặt tiệc, đặt cọc và hoàn cọc của nhà hàng.</span></label>
+          <div class="dtw__nav"><span></span><button type="button" class="dtw__btn dtw__btn--chinh" data-tiep="1" disabled>Tiếp tục</button></div>
+        </section>
 
-  <!-- ========================================= 4. DICH VU -->
-  <section class="sk-section">
-    <div class="nh-container">
-      <div class="sk-head">
-        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_4') %></span>
-        <h2><%= t('dat_tiec.h2_dv') %></h2>
-        <p><%= t('dat_tiec.dv_mo_ta') %></p>
-      </div>
-      <div class="dt-dv">
-        <% dichVu.forEach(function (d) { %>
-          <label class="dt-dv__item">
-            <input type="checkbox" name="dich_vu" value="<%= d.id %>" form="formDatTiec">
-            <span class="dt-dv__icon"><i class="fas <%= d.icon || 'fa-star' %>"></i></span>
-            <span>
-              <b><%= d.ten %></b>
-              <small><%= d.mo_ta %></small>
-              <span class="dt-dv__gia"><%= vnd(d.gia) %> <%= donVi[d.don_vi] %></span>
-            </span>
-          </label>
-        <% }) %>
-      </div>
-    </div>
-  </section>
+        <!-- 2. LOAI TIEC + SO KHACH -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="2" hidden>
+          <h2>Loại tiệc &amp; số khách</h2>
+          <p class="phu">Đặt tiệc online dành cho tiệc lớn tại <%= sanh ? sanh.ten : 'Sảnh Gala' %>: <b><%= ch.khach_toi_thieu %>–<%= ch.khach_toi_da %> khách</b>.</p>
+          <div class="lt-luoi" role="radiogroup" aria-label="Loại tiệc">
+            <% Object.keys(loaiTiec).forEach(function (ma) { var l = loaiTiec[ma]; %>
+              <button type="button" class="lt" role="radio" aria-checked="false" data-loai="<%= ma %>"><i class="fas <%= l.icon %>"></i><b><%= l.ten %></b><small><%= l.mo_ta %></small></button>
+            <% }) %>
+          </div>
+          <div class="o-nhap">
+            <div><label for="soKhach">Số khách dự kiến</label><input type="number" id="soKhach" min="1" max="<%= ch.khach_toi_da %>" inputmode="numeric" placeholder="VD: 120"></div>
+            <div><label for="nhanVat" id="nhanVatNhan">Tên nhân vật chính (không bắt buộc)</label><input id="nhanVat" maxlength="150" placeholder="VD: Minh Anh & Quốc Bảo"></div>
+          </div>
+          <div id="baoSoKhach"></div>
+          <div class="dtw__nav"><button type="button" class="dtw__btn dtw__btn--phu" data-lui="2">Quay lại</button><button type="button" class="dtw__btn dtw__btn--chinh" data-tiep="2" disabled>Chọn ngày</button></div>
+        </section>
 
-  <!-- ========================================= QUY TRINH -->
-  <section class="sk-section sk-section--cream" style="padding-bottom:2rem">
-    <div class="nh-container">
-      <div class="sk-head" style="margin-bottom:1.6rem">
-        <span class="sk-eyebrow"><%= t('dat_tiec.don_gian') %></span>
-        <h2><%= t('dat_tiec.h2_qt') %></h2>
-      </div>
-      <div class="dt-steps">
-        <div class="dt-step"><div class="dt-step__so">1</div><b><%= t('dat_tiec.qt1') %></b><p><%= t('dat_tiec.qt1_mo_ta') %></p></div>
-        <div class="dt-step"><div class="dt-step__so">2</div><b><%= t('dat_tiec.qt2') %></b><p><%= t('dat_tiec.qt2_mo_ta') %></p></div>
-        <div class="dt-step"><div class="dt-step__so">3</div><b><%= t('dat_tiec.qt3') %></b><p><%= t('dat_tiec.qt3_mo_ta') %></p></div>
-        <div class="dt-step"><div class="dt-step__so">4</div><b><%= t('dat_tiec.qt4') %></b><p><%= t('dat_tiec.qt4_mo_ta') %></p></div>
-      </div>
-    </div>
-  </section>
+        <!-- 3. NGAY & GIO -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="3" hidden>
+          <h2>Ngày &amp; giờ tổ chức</h2>
+          <p class="phu">Mỗi buổi sảnh chỉ nhận một tiệc. Ngày tô đỏ đã kín cả hai buổi.</p>
+          <div class="lich-dau"><button type="button" id="thangTruoc" aria-label="Tháng trước">‹</button><b id="tenThang">–</b><button type="button" id="thangSau" aria-label="Tháng sau">›</button></div>
+          <div class="lich" id="lich" aria-live="polite"></div>
+          <div class="chu-giai"><span class="c1">Còn trống</span><span class="c2">Còn 1 buổi</span><span class="c3">Kín lịch</span><span class="c4">Không nhận đặt</span></div>
+          <div id="chiTietNgay"></div>
+          <div class="dtw__nav"><button type="button" class="dtw__btn dtw__btn--phu" data-lui="3">Quay lại</button><button type="button" class="dtw__btn dtw__btn--chinh" data-tiep="3" disabled>Chọn thực đơn</button></div>
+        </section>
 
-  <!-- ========================================= 5. FORM -->
-  <section class="sk-section sk-section--cream" id="form-dat-tiec" style="padding-top:2rem;scroll-margin-top:80px">
-    <div class="nh-container">
-      <div class="sk-head" style="margin-bottom:1.8rem">
-        <span class="sk-eyebrow"><%= t('dat_tiec.buoc_5') %></span>
-        <h2><%= t('dat_tiec.h2_gui') %></h2>
-      </div>
-      <div class="dt-form-wrap">
-        <form class="dt-card" id="formDatTiec" novalidate>
-          <h3><i class="fas fa-calendar-alt"></i> <%= t('dat_tiec.tt_tiec') %></h3>
-          <div class="dt-grid">
-            <div class="dt-field">
-              <label for="fLoai"><%= t('dat_tiec.nhan_loai') %> <em>*</em></label>
-              <select id="fLoai" name="loai_tiec" required>
-                <% dsLoai.forEach(function (ma) { %><option value="<%= ma %>"><%= loaiTiec[ma].ten %></option><% }) %>
-              </select>
-            </div>
-            <div class="dt-field">
-              <label for="fSanh"><%= t('dat_tiec.nhan_sanh') %> <em>*</em></label>
-              <select id="fSanh" name="khu_vuc_id" required>
-                <% sanh.forEach(function (s) { %><option value="<%= s.id %>"><%= s.ten %> (<%= t('dat_tiec.khach_tu_den', { tu: s.tiec_toi_thieu, den: s.tiec_toi_da }) %>)</option><% }) %>
-              </select>
-            </div>
-            <div class="dt-field">
-              <label for="fNgay"><%= t('dat_tiec.ngay') %> <em>*</em></label>
-              <input type="date" id="fNgay" name="ngay_to_chuc" min="<%= ngayMin %>" max="<%= ngayMax %>" required>
-              <small><%= t('dat_tiec.dat_truoc') %></small>
-            </div>
-            <div class="dt-field">
-              <label for="fSoKhach"><%= t('dat_tiec.so_khach') %> <em>*</em></label>
-              <input type="number" id="fSoKhach" name="so_khach" inputmode="numeric" required>
-              <small id="fSoKhachGoiY"></small>
-            </div>
-            <div class="dt-field">
-              <label><%= t('dat_tiec.buoi') %> <em>*</em></label>
-              <div class="dt-buoi">
-                <% Object.keys(buoi).forEach(function (b, i) { %>
-                  <label><input type="radio" name="buoi" value="<%= b %>" <%= i === 1 ? 'checked' : '' %>><span><%= buoi[b].ten %><small><%= buoi[b].khung %></small></span></label>
-                <% }) %>
+        <!-- 4. THUC DON -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="4" hidden>
+          <h2>Thực đơn</h2>
+          <p class="phu">Giá tính theo bàn <%= khachMoiBan %> khách. Chọn một thực đơn có sẵn, có thể tùy chỉnh thêm.</p>
+          <div class="td-luoi" id="dsThucDon" role="radiogroup" aria-label="Thực đơn">
+            <% thucDon.forEach(function (m) { %>
+              <% var anhMon = (m.mon || []).filter(function (x) { return x.anh; }).slice(0, 4); %>
+              <button type="button" class="td" role="radio" aria-checked="false" data-td="<%= m.id %>" data-loai-td="<%= m.loai_tiec || '' %>">
+                <span class="td__anh"><img src="<%= m.hinh_anh || '/images/khong-gian/tiec-cuoi-1.jpg' %>" alt="" loading="lazy"><span class="td__chon"><i class="fas fa-check"></i></span></span>
+                <% if (anhMon.length) { %><span class="td__dai"><% anhMon.forEach(function (x) { %><img src="<%= x.anh %>" alt="" loading="lazy"><% }) %></span><% } %>
+                <span class="td__than"><b><%= m.ten %></b><span class="gia"><%= vnd(m.gia_ban) %>/bàn</span><small><%= (m.mon || []).length %> món · <%= vnd(m.gia_khach) %>/khách</small></span>
+              </button>
+            <% }) %>
+          </div>
+          <button type="button" class="dtw__btn dtw__btn--phu td-them" id="xemThemTd" hidden></button>
+          <div class="td-ct" id="tdChiTiet" hidden>
+            <b id="tdTen"></b>
+            <div id="tdMon"></div>
+            <label class="tc-bat"><input type="checkbox" id="batTuyChinh">Tùy chỉnh thực đơn (bỏ món, thêm món, yêu cầu riêng)</label>
+            <div id="khoiTuyChinh" hidden>
+              <div class="bao bao--cam">Thực đơn tùy chỉnh: nhà hàng báo giá trong <%= ch.giu_cho_bao_gia_gio %> giờ (sảnh được giữ trong thời gian này), quý khách đặt cọc sau khi nhận báo giá. Bấm vào món ở trên để bỏ món.</div>
+              <ul class="ds-them" id="dsThem"></ul>
+              <p style="margin:1rem 0 .3rem;font-weight:700;color:var(--nh-ink)">Thêm món từ thực đơn nhà hàng</p>
+              <div class="them-mon">
+                <input type="search" id="timMon" placeholder="Tìm món: sashimi, tempura, lẩu..." aria-label="Tìm món để thêm" autocomplete="off">
+                <select id="locLoai" aria-label="Loại món"><option value="">Tất cả loại món</option></select>
+                <select id="soPhan" aria-label="Số phần mỗi bàn"><option value="1">1 phần/bàn</option><option value="2">2 phần/bàn</option><option value="3">3 phần/bàn</option></select>
               </div>
-            </div>
-            <div class="dt-field">
-              <label for="fGio"><%= t('dat_tiec.gio') %> <em>*</em></label>
-              <select id="fGio" name="gio_bat_dau" required></select>
-            </div>
-            <div class="dt-field dt-full">
-              <label for="fMenu"><%= t('dat_tiec.thuc_don') %> <em>*</em></label>
-              <select id="fMenu" name="thuc_don_id" required></select>
-            </div>
-            <div class="dt-field dt-full">
-              <label for="fNhanVat" id="fNhanVatNhan"><%= t('dat_tiec.nhan_vat') %></label>
-              <input type="text" id="fNhanVat" name="ten_nhan_vat" maxlength="150">
-            </div>
-
-            <hr class="dt-sep">
-
-            <div class="dt-field">
-              <label for="fTen"><%= t('dat_tiec.ho_ten') %> <em>*</em></label>
-              <input type="text" id="fTen" name="ho_ten" maxlength="150" autocomplete="name" required value="<%= khach ? khach.ten : '' %>">
-            </div>
-            <div class="dt-field">
-              <label for="fSdt"><%= t('dat_tiec.sdt') %> <em>*</em></label>
-              <input type="tel" id="fSdt" name="so_dien_thoai" maxlength="15" autocomplete="tel" required value="<%= khach ? khach.sdt : '' %>">
-            </div>
-            <div class="dt-field dt-full">
-              <label for="fEmail">Email</label>
-              <input type="email" id="fEmail" name="email" maxlength="190" autocomplete="email">
-            </div>
-            <div class="dt-field dt-full">
-              <label for="fGhiChu"><%= t('dat_tiec.yeu_cau') %></label>
-              <textarea id="fGhiChu" name="ghi_chu" rows="3" maxlength="2000" placeholder="<%= t('dat_tiec.yeu_cau_goi_y') %>"></textarea>
+              <div class="them-luoi"><div class="mon-luoi" id="luoiThem"></div></div>
+              <div class="o-nhap"><div style="grid-column:1/-1"><label for="yeuCau">Yêu cầu riêng cho bếp</label><textarea id="yeuCau" rows="3" maxlength="1000" placeholder="VD: 10 bàn chay, không dùng hành tỏi; thêm 1 bàn trẻ em"></textarea></div></div>
             </div>
           </div>
-        </form>
+          <div class="dtw__nav"><button type="button" class="dtw__btn dtw__btn--phu" data-lui="4">Quay lại</button><button type="button" class="dtw__btn dtw__btn--chinh" data-tiep="4" disabled>Chọn dịch vụ</button></div>
+        </section>
 
-        <aside class="dt-card dt-tom" aria-live="polite">
-          <h3><i class="fas fa-file-invoice-dollar"></i> <%= t('dat_tiec.du_toan') %></h3>
-          <div id="tomTat"></div>
-          <div class="dt-tom__tong"><span><%= t('dat_tiec.tong_du_toan') %></span><b id="tomTong">0đ</b></div>
-          <p class="dt-tom__note"><%= t('dat_tiec.du_toan_note') %></p>
-          <div class="dt-loi" id="dtLoi"></div>
-          <button type="submit" form="formDatTiec" class="nh-btn nh-btn--gold dt-submit" id="dtGui"><i class="fas fa-paper-plane"></i> <%= t('dat_tiec.nut_gui') %></button>
-        </aside>
+        <!-- 5. DICH VU -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="5" hidden>
+          <h2>Dịch vụ thêm</h2>
+          <p class="phu">Không bắt buộc. Giá theo gói, theo bàn hoặc theo khách.</p>
+          <div class="dv-luoi">
+            <% dichVu.forEach(function (d) { %>
+              <label class="dv"><input type="checkbox" value="<%= d.id %>" class="chon-dv"><span><b><%= d.ten %></b><small><%= d.mo_ta || '' %></small><span class="gia"><%= vnd(d.gia) %>/<%= donVi[d.don_vi] || d.don_vi %></span></span></label>
+            <% }) %>
+          </div>
+          <div class="dtw__nav"><button type="button" class="dtw__btn dtw__btn--phu" data-lui="5">Quay lại</button><button type="button" class="dtw__btn dtw__btn--chinh" data-tiep="5">Xác nhận thông tin</button></div>
+        </section>
+
+        <!-- 6. XAC NHAN -->
+        <section class="dtw__the dtw__buoc-nd" data-buoc="6" hidden>
+          <h2>Thông tin liên hệ &amp; xác nhận</h2>
+          <form id="formTiec" novalidate>
+            <div class="o-nhap">
+              <div><label for="hoTen">Họ tên người đặt</label><input id="hoTen" maxlength="150" autocomplete="name" value="<%= khach ? khach.ten : '' %>" required></div>
+              <div><label for="sdt">Số điện thoại</label><input id="sdt" inputmode="tel" autocomplete="tel" value="<%= khach ? khach.sdt : '' %>" required></div>
+              <div><label for="email">Email (nhận xác nhận)</label><input id="email" type="email" autocomplete="email"></div>
+              <div style="grid-column:1/-1"><label for="ghiChu">Ghi chú thêm</label><textarea id="ghiChu" rows="2" maxlength="2000" placeholder="VD: cần khu vực để xe đẩy cho người lớn tuổi"></textarea></div>
+            </div>
+            <table class="xn-bang" id="bangXacNhan"></table>
+            <div id="baoGui"></div>
+            <div class="dtw__nav"><button type="button" class="dtw__btn dtw__btn--phu" data-lui="6">Quay lại</button><button type="submit" class="dtw__btn dtw__btn--chinh" id="nutGui">Gửi yêu cầu đặt tiệc</button></div>
+          </form>
+        </section>
       </div>
-    </div>
-  </section>
-</div>
 
-<div class="sk dt-ok" id="dtOk" hidden role="dialog" aria-modal="true" aria-labelledby="dtOkTieuDe">
-  <div class="dt-ok__box">
-    <div class="dt-ok__icon"><i class="fas fa-check"></i></div>
-    <h3 id="dtOkTieuDe"><%= t('dat_tiec.ok_h3') %></h3>
-    <p><%= t('dat_tiec.ok_ma') %></p>
-    <div class="dt-ok__ma" id="dtOkMa"></div>
-    <p id="dtOkNoiDung"></p>
-    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1rem">
-      <a href="/" class="nh-btn nh-btn--outline"><%= t('dat_tiec.ve_trang_chu') %></a>
-      <% if (khach) { %>
-        <a href="/my-orders?tab=tiec" class="nh-btn nh-btn--outline"><i class="fas fa-history"></i> <%= t('lich_su_tiec.tab_dat_tiec') %></a>
-      <% } %>
-      <button type="button" class="nh-btn nh-btn--gold" id="dtOkDong"><%= t('dat_tiec.dong') %></button>
+      <aside class="tt" aria-label="Tóm tắt dự toán">
+        <h3>Tóm tắt tiệc</h3>
+        <dl>
+          <div><dt>Loại tiệc</dt><dd id="tLoai">–</dd></div>
+          <div><dt>Số khách</dt><dd id="tKhach">–</dd></div>
+          <div><dt>Ngày giờ</dt><dd id="tNgay">–</dd></div>
+          <div><dt>Thực đơn</dt><dd id="tThucDon">–</dd></div>
+          <div><dt>Món thêm</dt><dd id="tThem">0đ</dd></div>
+          <div><dt>Dịch vụ</dt><dd id="tDichVu">0đ</dd></div>
+          <div class="tong"><dt>Dự toán</dt><dd id="tTong">0đ</dd></div>
+          <div class="coc"><dt>Cọc <%= ch.ty_le_coc %>%</dt><dd id="tCoc">0đ</dd></div>
+        </dl>
+        <p>Dự toán chưa gồm món, đồ uống phát sinh trong tiệc. Hóa đơn cuối tính theo số bàn thực tế đã chốt.</p>
+      </aside>
     </div>
   </div>
 </div>
@@ -281,237 +306,260 @@ thucDon = thucDon.map(function (m) { var r = dichObj(m, ['ten', 'mo_ta']); r.mon
 (function () {
   var LOAI = <%- JSON.stringify(loaiTiec).replace(/</g, '\\u003c') %>;
   var BUOI = <%- JSON.stringify(buoi).replace(/</g, '\\u003c') %>;
-  var SANH = <%- JSON.stringify(sanh.map(function (s) { return { id: s.id, ten: s.ten, min: s.tiec_toi_thieu, max: s.tiec_toi_da }; })).replace(/</g, '\\u003c') %>;
-  var MENU = <%- JSON.stringify(thucDon.map(function (t) { return { id: t.id, loai: t.loai_tiec, ten: t.ten, gia: t.gia_ban }; })).replace(/</g, '\\u003c') %>;
-  var DV = <%- JSON.stringify(dichVu.map(function (d) { return { id: d.id, ten: d.ten, gia: d.gia, don_vi: d.don_vi }; })).replace(/</g, '\\u003c') %>;
-  var MOI_BAN = <%= khachMoiBan %>;
-  var NN = <%- JSON.stringify({
-    nhanVat: t('dat_tiec.nhan_vat'), ban: t('dat_tiec.js_ban'), daChon: t('dat_tiec.js_da_chon'), chon: t('dat_tiec.chon_td'),
-    nhanKhach: t('dat_tiec.js_nhan_khach'), kinBuoi: t('dat_tiec.js_kin_buoi'),
-    loai: t('dat_tiec.nhan_loai'), sanh: t('dat_tiec.nhan_sanh'), soKhach: t('dat_tiec.js_so_khach'),
-    khachBan: t('dat_tiec.js_khach_ban'), dvThem: t('dat_tiec.js_dv_them'), chuaChon: t('dat_tiec.js_chua_chon'),
-    loiNgay: t('dat_tiec.js_loi_ngay'), loiKin: t('dat_tiec.js_loi_kin'), loiSoKhach: t('dat_tiec.js_loi_so_khach'),
-    loiTen: t('dat_tiec.js_loi_ten'), loiSdt: t('dat_tiec.js_loi_sdt'), dangGui: t('dat_tiec.js_dang_gui'),
-    loiGui: t('dat_tiec.js_loi_gui'), okNoiDung: t('dat_tiec.js_ok_noi_dung'), nutGui: t('dat_tiec.nut_gui')
-  }).replace(/</g, '\\u003c') %>;
-  var tt = function (s, b) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return b[k] != null ? b[k] : ''; }); };
-
+  var THUC_DON = <%- JSON.stringify(thucDon.map(function (m) { return { id: m.id, ten: m.ten, gia: m.gia_ban, mon: m.mon }; })).replace(/</g, '\\u003c') %>;
+  var DICH_VU = <%- JSON.stringify(dichVu.map(function (d) { return { id: d.id, ten: d.ten, gia: d.gia, don_vi: d.don_vi }; })).replace(/</g, '\\u003c') %>;
+  var MON_LE = <%- JSON.stringify(monLe).replace(/</g, '\\u003c') %>;
+  var CH = { min: <%= ch.khach_toi_thieu %>, max: <%= ch.khach_toi_da %>, moiBan: <%= khachMoiBan %>, coc: <%= ch.ty_le_coc %> };
+  var NGAY_MIN = '<%= ngayMin %>';
   var $ = function (id) { return document.getElementById(id); };
-  var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
-  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var form = $('formDatTiec');
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var bo = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); };
+  var S = { buoc: 1, dongY: false, loai: '<%= chon.loai %>', soKhach: 0, ngay: '', buoi: '', gio: '', thucDon: null, tuyChinh: false, boMon: [], themMon: [], dichVu: [] };
+  var THANG = NGAY_MIN.slice(0, 7);
 
-  // Nguon su that duy nhat
-  var S = {
-    loai: '<%= loaiDau %>',
-    sanh: String('<%= chon.sanh %>' || (SANH[0] && SANH[0].id) || ''),
-    menu: '',
-    kin: []          // [{ khu_vuc_id, buoi }] cua ngay dang chon
-  };
-
-  function sanhHienTai() { return SANH.filter(function (s) { return String(s.id) === String(S.sanh); })[0]; }
-
-  // ---------------------------------------------------------- chon loai
-  function datLoai(ma, cuon) {
-    S.loai = ma;
-    document.querySelectorAll('[data-chon-loai]').forEach(function (c) {
-      var on = c.getAttribute('data-chon-loai') === ma;
-      c.classList.toggle('is-active', on); c.setAttribute('aria-checked', on);
-    });
-    document.querySelectorAll('[data-tab]').forEach(function (t) {
-      var on = t.getAttribute('data-tab') === ma;
-      t.classList.toggle('is-active', on); t.setAttribute('aria-selected', on);
-    });
-    document.querySelectorAll('[data-menus]').forEach(function (p) { p.hidden = p.getAttribute('data-menus') !== ma; });
-    $('fLoai').value = ma;
-    $('fNhanVatNhan').textContent = (LOAI[ma] && LOAI[ma].nhan_vat) || NN.nhanVat;
-
-    // Danh sach thuc don trong form chi gom thuc don cua loai nay
-    var ds = MENU.filter(function (m) { return m.loai === ma; });
-    $('fMenu').innerHTML = ds.map(function (m) {
-      return '<option value="' + m.id + '">' + esc(m.ten) + ' — ' + vnd(m.gia) + '/' + NN.ban + '</option>';
-    }).join('');
-    if (!ds.some(function (m) { return String(m.id) === String(S.menu); })) {
-      var hot = document.querySelector('[data-menus="' + ma + '"] .dt-menu--hot');
-      S.menu = hot ? hot.getAttribute('data-menu') : (ds[0] ? String(ds[0].id) : '');
-    }
-    datMenu(S.menu);
-    if (cuon) $('thuc-don').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function datMenu(id, cuon) {
-    S.menu = String(id);
-    $('fMenu').value = S.menu;
-    document.querySelectorAll('[data-menu]').forEach(function (m) {
-      var on = m.getAttribute('data-menu') === S.menu;
-      m.classList.toggle('is-active', on);
-      var b = m.querySelector('[data-chon-menu] span');
-      if (b) b.textContent = on ? NN.daChon : NN.chon;
-    });
-    tinh();
-    if (cuon) $('form-dat-tiec').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function datSanh(id) {
-    S.sanh = String(id);
-    $('fSanh').value = S.sanh;
-    document.querySelectorAll('[data-chon-sanh]').forEach(function (c) {
-      var on = c.getAttribute('data-chon-sanh') === S.sanh;
-      c.classList.toggle('is-active', on); c.setAttribute('aria-checked', on);
-    });
-    var s = sanhHienTai();
-    if (s) {
-      var k = $('fSoKhach');
-      k.min = s.min; k.max = s.max;
-      k.placeholder = s.min + ' – ' + s.max;
-      $('fSoKhachGoiY').textContent = tt(NN.nhanKhach, { sanh: s.ten, min: s.min, max: s.max, moi: MOI_BAN });
-      var v = Number(k.value);
-      if (!v || v < s.min || v > s.max) k.value = s.max >= 100 ? 100 : s.min;
-    }
-    capNhatBuoi();
-    tinh();
-  }
-
-  // ---------------------------------------------------------- buoi & gio
-  function capNhatBuoi() {
-    var dsBuoi = form.querySelectorAll('input[name="buoi"]');
-    dsBuoi.forEach(function (r) {
-      var kin = S.kin.some(function (k) { return String(k.khu_vuc_id) === String(S.sanh) && k.buoi === r.value; });
-      r.disabled = kin;
-      r.parentNode.title = kin ? NN.kinBuoi : '';
-    });
-    var chon = form.querySelector('input[name="buoi"]:checked');
-    if (!chon || chon.disabled) {
-      var conTrong = Array.prototype.filter.call(dsBuoi, function (r) { return !r.disabled; })[0];
-      if (conTrong) conTrong.checked = true;
-    }
-    veGio();
-  }
-  function veGio() {
-    var b = form.querySelector('input[name="buoi"]:checked');
-    var gioCu = $('fGio').value;
-    var ds = b ? BUOI[b.value].gio : [];
-    $('fGio').innerHTML = ds.map(function (g) { return '<option>' + g + '</option>'; }).join('');
-    if (ds.indexOf(gioCu) >= 0) $('fGio').value = gioCu;
-    else if (ds.length) $('fGio').value = ds[Math.min(1, ds.length - 1)];
-  }
-  async function taiLich() {
-    S.kin = [];
-    var ngay = $('fNgay').value;
-    if (ngay) {
-      try {
-        var r = await fetch('/api/dat-tiec/lich?ngay=' + encodeURIComponent(ngay));
-        var j = await r.json();
-        S.kin = j.kin || [];
-      } catch (_) { /* van cho gui, may chu se kiem tra lai */ }
-    }
-    capNhatBuoi();
-  }
-
-  // ---------------------------------------------------------- du toan
+  function soBan() { return Math.ceil((S.soKhach || 0) / CH.moiBan); }
   function tinh() {
-    var soKhach = Math.max(0, Math.floor(Number($('fSoKhach').value) || 0));
-    var soBan = Math.ceil(soKhach / MOI_BAN);
-    var menu = MENU.filter(function (m) { return String(m.id) === String(S.menu); })[0];
-    var s = sanhHienTai();
-    var html = '';
-    var tong = 0;
-    html += '<div class="dt-tom__dong"><span>' + esc(NN.loai) + '</span><span>' + esc((LOAI[S.loai] || {}).ten || '—') + '</span></div>';
-    html += '<div class="dt-tom__dong"><span>' + esc(NN.sanh) + '</span><span>' + esc(s ? s.ten : '—') + '</span></div>';
-    html += '<div class="dt-tom__dong"><span>' + esc(NN.soKhach) + '</span><span>' + (soKhach ? tt(NN.khachBan, { khach: soKhach, ban: soBan }) : '—') + '</span></div>';
-    if (menu) {
-      var tm = menu.gia * soBan; tong += tm;
-      html += '<div class="dt-tom__dong"><span>' + esc(menu.ten) + '<br><small>' + vnd(menu.gia) + ' × ' + soBan + ' ' + NN.ban + '</small></span><span>' + vnd(tm) + '</span></div>';
-    }
-    var chon = Array.prototype.map.call(document.querySelectorAll('input[name="dich_vu"]:checked'), function (i) { return i.value; });
-    chon.forEach(function (id) {
-      var d = DV.filter(function (x) { return String(x.id) === String(id); })[0];
-      if (!d) return;
-      var sl = d.don_vi === 'BAN' ? soBan : d.don_vi === 'KHACH' ? soKhach : 1;
-      var tt = d.gia * sl; tong += tt;
-      html += '<div class="dt-tom__dong"><span>' + esc(d.ten) + (sl > 1 ? '<br><small>' + vnd(d.gia) + ' × ' + sl + '</small>' : '') + '</span><span>' + vnd(tt) + '</span></div>';
+    var b = soBan(), td = THUC_DON.filter(function (t) { return t.id === S.thucDon; })[0];
+    var tienTd = td ? td.gia * b : 0;
+    var tienThem = S.tuyChinh ? S.themMon.reduce(function (s, m) { return s + m.gia * m.so_phan * b; }, 0) : 0;
+    var tienDv = S.dichVu.reduce(function (s, id) {
+      var d = DICH_VU.filter(function (x) { return x.id === id; })[0]; if (!d) return s;
+      return s + d.gia * (d.don_vi === 'BAN' ? b : d.don_vi === 'KHACH' ? S.soKhach : 1);
+    }, 0);
+    var tong = tienTd + tienThem + tienDv;
+    return { b: b, td: td, tienTd: tienTd, tienThem: tienThem, tienDv: tienDv, tong: tong, coc: Math.ceil(tong * CH.coc / 100) };
+  }
+  function veTomTat() {
+    var t = tinh();
+    $('tLoai').textContent = S.loai ? LOAI[S.loai].ten : '–';
+    $('tKhach').textContent = S.soKhach ? S.soKhach + ' khách · ' + t.b + ' bàn' : '–';
+    $('tNgay').textContent = S.ngay ? S.ngay.split('-').reverse().join('/') + (S.gio ? ' · ' + S.gio : '') : '–';
+    $('tThucDon').textContent = t.td ? t.td.ten + (S.tuyChinh ? ' (tùy chỉnh)' : '') : '–';
+    $('tThem').textContent = vnd(t.tienThem); $('tDichVu').textContent = vnd(t.tienDv);
+    $('tTong').textContent = vnd(t.tong); $('tCoc').textContent = S.tuyChinh ? 'sau báo giá' : vnd(t.coc);
+  }
+
+  // --- dieu huong buoc
+  function hopLe(b) {
+    if (b === 1) return S.dongY;
+    if (b === 2) return !!S.loai && S.soKhach >= CH.min && S.soKhach <= CH.max;
+    if (b === 3) return !!S.ngay && !!S.gio;
+    if (b === 4) return !!S.thucDon;
+    return true;
+  }
+  function den(b) {
+    S.buoc = b;
+    document.querySelectorAll('.dtw__buoc-nd').forEach(function (el) { el.hidden = Number(el.getAttribute('data-buoc')) !== b; });
+    document.querySelectorAll('#thanhBuoc li').forEach(function (li) {
+      var n = Number(li.getAttribute('data-b')); li.classList.toggle('xong', n < b); li.classList.toggle('dang', n === b);
     });
-    if (!chon.length) html += '<div class="dt-tom__dong"><span>' + esc(NN.dvThem) + '</span><span class="dt-tom__trong">' + esc(NN.chuaChon) + '</span></div>';
-    $('tomTat').innerHTML = html;
-    $('tomTong').textContent = vnd(tong);
+    if (b === 3) veLich();
+    if (b === 4) locThucDon(false);
+    if (b === 6) veXacNhan();
+    capNhatNut();
+    var top = document.querySelector('.dtw').getBoundingClientRect().top + window.scrollY - 80;
+    if (window.scrollY > top) window.scrollTo({ top: top, behavior: 'smooth' });
   }
-
-  // ---------------------------------------------------------- su kien
-  document.querySelectorAll('[data-chon-loai]').forEach(function (c) {
-    c.addEventListener('click', function () { datLoai(c.getAttribute('data-chon-loai'), true); });
-  });
-  document.querySelectorAll('[data-tab]').forEach(function (t) {
-    t.addEventListener('click', function () { datLoai(t.getAttribute('data-tab'), false); });
-  });
-  document.querySelectorAll('[data-chon-menu]').forEach(function (b) {
-    b.addEventListener('click', function () { datMenu(b.getAttribute('data-chon-menu'), true); });
-  });
-  document.querySelectorAll('[data-chon-sanh]').forEach(function (c) {
-    c.addEventListener('click', function () { datSanh(c.getAttribute('data-chon-sanh')); });
-  });
-  $('fLoai').addEventListener('change', function () { datLoai(this.value, false); });
-  $('fMenu').addEventListener('change', function () { datMenu(this.value, false); });
-  $('fSanh').addEventListener('change', function () { datSanh(this.value); });
-  $('fNgay').addEventListener('change', taiLich);
-  $('fSoKhach').addEventListener('input', tinh);
-  form.querySelectorAll('input[name="buoi"]').forEach(function (r) { r.addEventListener('change', veGio); });
-  document.querySelectorAll('input[name="dich_vu"]').forEach(function (i) { i.addEventListener('change', tinh); });
-
-  function baoLoi(msg) {
-    var e = $('dtLoi');
-    e.textContent = msg || '';
-    e.classList.toggle('is-show', !!msg);
+  function capNhatNut() {
+    document.querySelectorAll('[data-tiep]').forEach(function (n) { n.disabled = !hopLe(Number(n.getAttribute('data-tiep'))); });
+    veTomTat();
   }
+  document.querySelectorAll('[data-tiep]').forEach(function (n) { n.addEventListener('click', function () { var b = Number(n.getAttribute('data-tiep')); if (hopLe(b)) den(b + 1); }); });
+  document.querySelectorAll('[data-lui]').forEach(function (n) { n.addEventListener('click', function () { den(Number(n.getAttribute('data-lui')) - 1); }); });
 
-  form.addEventListener('submit', async function (ev) {
-    ev.preventDefault();
-    baoLoi('');
-    var s = sanhHienTai();
-    var soKhach = Number($('fSoKhach').value);
-    var b = form.querySelector('input[name="buoi"]:checked');
-    if (!$('fNgay').value) { baoLoi(NN.loiNgay); $('fNgay').focus(); return; }
-    if (!b) { baoLoi(NN.loiKin); return; }
-    if (s && (!soKhach || soKhach < s.min || soKhach > s.max)) { baoLoi(tt(NN.loiSoKhach, { sanh: s.ten, min: s.min, max: s.max })); $('fSoKhach').focus(); return; }
-    if ($('fTen').value.trim().length < 2) { baoLoi(NN.loiTen); $('fTen').focus(); return; }
-    if (!/^(\+?84|0)\d{9,10}$/.test($('fSdt').value.replace(/[\s.-]/g, ''))) { baoLoi(NN.loiSdt); $('fSdt').focus(); return; }
+  // --- 1
+  $('dongY').addEventListener('change', function () { S.dongY = this.checked; capNhatNut(); });
 
-    var duLieu = {
-      loai_tiec: S.loai, khu_vuc_id: S.sanh, thuc_don_id: S.menu,
-      ngay_to_chuc: $('fNgay').value, buoi: b.value, gio_bat_dau: $('fGio').value, so_khach: soKhach,
-      ten_nhan_vat: $('fNhanVat').value, ho_ten: $('fTen').value, so_dien_thoai: $('fSdt').value,
-      email: $('fEmail').value, ghi_chu: $('fGhiChu').value,
-      dich_vu: Array.prototype.map.call(document.querySelectorAll('input[name="dich_vu"]:checked'), function (i) { return Number(i.value); })
-    };
-    var nut = $('dtGui');
-    nut.disabled = true;
-    nut.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + esc(NN.dangGui);
+  // --- 2
+  document.querySelectorAll('[data-loai]').forEach(function (n) {
+    n.addEventListener('click', function () {
+      S.loai = n.getAttribute('data-loai');
+      document.querySelectorAll('[data-loai]').forEach(function (x) { x.setAttribute('aria-checked', String(x === n)); });
+      $('nhanVatNhan').textContent = (LOAI[S.loai].nhan_vat || 'Tên nhân vật chính') + ' (không bắt buộc)';
+      capNhatNut();
+    });
+    if (n.getAttribute('data-loai') === S.loai) n.click();
+  });
+  $('soKhach').addEventListener('input', function () {
+    S.soKhach = Math.floor(Number(this.value) || 0);
+    var bao = $('baoSoKhach');
+    if (!S.soKhach) bao.innerHTML = '';
+    else if (S.soKhach < CH.min) {
+      bao.innerHTML = '<div class="bao bao--do"><b>' + S.soKhach + ' khách chưa đủ điều kiện đặt tiệc.</b> Đặt tiệc online dành cho tiệc lớn từ ' + CH.min +
+        ' khách tại sảnh Gala. Với nhóm nhỏ, quý khách vui lòng đặt bàn như bình thường (có phòng VIP và bàn ghép cho nhóm).<br>' +
+        '<a class="dtw__btn dtw__btn--chinh" href="/dat-ban?so_khach=' + S.soKhach + '">Đặt bàn cho ' + S.soKhach + ' khách</a></div>';
+    } else if (S.soKhach > CH.max) bao.innerHTML = '<div class="bao bao--do">Sảnh nhận tối đa ' + CH.max + ' khách. Tiệc lớn hơn vui lòng gọi Hotline để được tư vấn riêng.</div>';
+    else bao.innerHTML = '<div class="bao bao--ok">' + S.soKhach + ' khách ≈ <b>' + soBan() + ' bàn</b> (' + CH.moiBan + ' khách/bàn).</div>';
+    capNhatNut();
+  });
+
+  // --- 3 lich
+  var TEN_TRANG = { trong: 'trống', mot_buoi: 'còn 1 buổi', kin: 'kín', khong_nhan: '' };
+  async function veLich() {
+    $('tenThang').textContent = 'Tháng ' + Number(THANG.slice(5)) + '/' + THANG.slice(0, 4);
+    $('thangTruoc').disabled = THANG <= NGAY_MIN.slice(0, 7);
+    var o = $('lich');
+    o.innerHTML = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(function (x) { return '<div class="th">' + x + '</div>'; }).join('');
     try {
-      var r = await fetch('/api/dat-tiec', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(duLieu) });
-      var j = await r.json();
-      if (!j.ok) throw new Error(j.thong_bao || NN.loiGui);
-      $('dtOkMa').textContent = j.ma;
-      var d = j.ngay.split('-');
-      var mn = MENU.filter(function (m) { return String(m.id) === String(S.menu); })[0];
-      $('dtOkNoiDung').innerHTML = tt(NN.okNoiDung, {
-        menu: esc(mn ? mn.ten : j.thuc_don), ban: j.so_ban, sanh: esc(s ? s.ten : j.sanh),
-        buoi: esc((BUOI[b.value] || {}).ten || j.buoi), gio: j.gio, ngay: d[2] + '/' + d[1] + '/' + d[0], tong: vnd(j.tong_du_toan)
+      var r = await fetch('/api/dat-tiec/lich-thang?thang=' + THANG); var j = await r.json();
+      var dau = (new Date(THANG + '-01T00:00:00').getDay() + 6) % 7;
+      var html = '';
+      for (var i = 0; i < dau; i++) html += '<div></div>';
+      j.ngay.forEach(function (n) {
+        var khoa = n.trang === 'kin' || n.trang === 'khong_nhan';
+        html += '<button type="button" class="ng ng--' + n.trang + (n.ngay === S.ngay ? ' chon' : '') + '" data-ngay="' + n.ngay + '"' + (khoa ? ' aria-disabled="true"' : '') +
+          ' aria-label="Ngày ' + n.ngay.split('-').reverse().join('/') + ' ' + TEN_TRANG[n.trang] + '">' + Number(n.ngay.slice(8)) +
+          (TEN_TRANG[n.trang] ? '<small>' + TEN_TRANG[n.trang] + '</small>' : '') + '</button>';
       });
-      $('dtOk').hidden = false;
-      $('dtOkDong').focus();
-    } catch (e) {
-      baoLoi(e.message);
-      if (/đã có tiệc/.test(e.message)) taiLich();
-    } finally {
-      nut.disabled = false;
-      nut.innerHTML = '<i class="fas fa-paper-plane"></i> ' + esc(NN.nutGui);
+      o.insertAdjacentHTML('beforeend', html);
+    } catch (e) { o.insertAdjacentHTML('beforeend', '<div class="bao bao--do" style="grid-column:1/-1">Không tải được lịch. Vui lòng thử lại.</div>'); }
+  }
+  function doiThang(d) { var t = new Date(THANG + '-01T00:00:00'); t.setMonth(t.getMonth() + d); THANG = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0'); veLich(); }
+  $('thangTruoc').addEventListener('click', function () { doiThang(-1); });
+  $('thangSau').addEventListener('click', function () { doiThang(1); });
+  $('lich').addEventListener('click', async function (e) {
+    var n = e.target.closest('button.ng'); if (!n) return;
+    var ngay = n.getAttribute('data-ngay');
+    S.ngay = ngay; S.buoi = ''; S.gio = '';
+    document.querySelectorAll('#lich .ng').forEach(function (x) { x.classList.toggle('chon', x === n); });
+    var ct = $('chiTietNgay'); ct.innerHTML = '<p class="phu" style="margin-top:1rem">Đang kiểm tra lịch...</p>';
+    try {
+      var j = await (await fetch('/api/dat-tiec/lich?ngay=' + ngay)).json();
+      if (!j.nhan || j.het_cho) { S.ngay = ''; ct.innerHTML = '<div class="bao bao--do"><b>Ngày ' + ngay.split('-').reverse().join('/') + ' không đặt được.</b> ' + esc(j.ly_do || '') + '</div>'; capNhatNut(); return; }
+      ct.innerHTML = '<div class="buoi-luoi">' + j.buoi.map(function (b) {
+        return '<div class="buoi' + (b.kin ? ' buoi--kin' : '') + '"><h4>' + esc(b.ten) + '</h4><p>' + esc(b.khung) + (b.kin ? ' · <b style="color:var(--dt-do)">Đã có tiệc</b>' : ' · còn trống') + '</p><div class="gio-luoi">' +
+          b.gio.map(function (g) { return '<button type="button" class="gio" data-buoi="' + b.ma + '" data-gio="' + g.gio + '" aria-pressed="false"' + (g.trong ? '' : ' disabled title="Đã có tiệc"') + '>' + g.gio + '</button>'; }).join('') + '</div></div>';
+      }).join('') + '</div>';
+    } catch (e2) { ct.innerHTML = '<div class="bao bao--do">Không kiểm tra được lịch ngày này.</div>'; }
+    capNhatNut();
+  });
+  $('chiTietNgay').addEventListener('click', function (e) {
+    var g = e.target.closest('button.gio'); if (!g || g.disabled) return;
+    S.buoi = g.getAttribute('data-buoi'); S.gio = g.getAttribute('data-gio');
+    document.querySelectorAll('#chiTietNgay .gio').forEach(function (x) { x.setAttribute('aria-pressed', String(x === g)); });
+    capNhatNut();
+  });
+
+  // --- 4 thuc don
+  var anhMon = function (a) { return a ? '<img src="' + esc(a) + '" alt="" loading="lazy">' : '<i class="fas fa-utensils" aria-hidden="true"></i>'; };
+  function veMon() {
+    var td = THUC_DON.filter(function (t) { return t.id === S.thucDon; })[0]; if (!td) return;
+    $('tdChiTiet').hidden = false; $('tdTen').textContent = td.ten + ' · ' + (td.mon || []).length + ' món';
+    var nhom = [];
+    (td.mon || []).forEach(function (m) { var g = nhom.filter(function (x) { return x.ten === m.nhom; })[0]; if (!g) nhom.push(g = { ten: m.nhom || 'Món', ds: [] }); g.ds.push(m); });
+    $('tdMon').innerHTML = nhom.map(function (g) {
+      return '<div class="mon-nhom"><b>' + esc(g.ten) + '</b><div class="mon-luoi">' + g.ds.map(function (m) {
+        var boM = S.boMon.indexOf(m.ten) >= 0;
+        var the = S.tuyChinh ? 'button type="button" data-bo="' + esc(m.ten) + '" aria-pressed="' + boM + '" aria-label="' + (boM ? 'Giữ lại' : 'Bỏ') + ' món ' + esc(m.ten) + '"' : 'div';
+        return '<' + the + ' class="mon' + (boM ? ' bo' : '') + '"><span class="mon__anh">' + anhMon(m.anh) + '</span>' +
+          (S.tuyChinh ? '<span class="mon__nut">' + (boM ? 'Giữ lại' : 'Bỏ món') + '</span>' : '') +
+          '<span class="mon__ten">' + esc(m.ten) + '</span></' + (S.tuyChinh ? 'button' : 'div') + '>';
+      }).join('') + '</div></div>';
+    }).join('');
+  }
+  // Loai mon cho bo loc them mon.
+  (function () {
+    var ds = []; MON_LE.forEach(function (m) { if (m.loai && ds.indexOf(m.loai) < 0) ds.push(m.loai); });
+    $('locLoai').insertAdjacentHTML('beforeend', ds.map(function (l) { return '<option value="' + esc(l) + '">' + esc(l.replace(/^\d+\.\s*/, '')) + '</option>'; }).join(''));
+  })();
+  function veLuoiThem() {
+    var tu = bo($('timMon').value).trim(), loai = $('locLoai').value;
+    // Mon an len truoc, do uong (Drink / Sake - Beer) xuong cuoi - tiec chu yeu them mon.
+    var laUong = function (m) { return /DRINK|SAKE|BEER/i.test(m.loai || ''); };
+    var kq = MON_LE.filter(function (m) { return (!loai || m.loai === loai) && (!tu || bo(m.ten).indexOf(tu) >= 0); })
+      .sort(function (a, b) { return laUong(a) - laUong(b); }).slice(0, 48);
+    $('luoiThem').innerHTML = kq.length ? kq.map(function (m) {
+      var da = S.themMon.some(function (x) { return x.id === m.id; });
+      return '<div class="mon"><span class="mon__anh">' + anhMon(m.anh) + '</span><span class="mon__ten">' + esc(m.ten.replace(/^[A-Z0-9]+-/, '')) + '<small>' + vnd(m.gia) + '/phần</small></span>' +
+        '<button type="button" class="mon__them" data-them="' + m.id + '"' + (da ? ' disabled' : '') + '>' + (da ? '✓ Đã thêm' : '+ Thêm') + '</button></div>';
+    }).join('') : '<p class="phu" style="grid-column:1/-1">Không có món phù hợp.</p>';
+  }
+  document.querySelectorAll('[data-td]').forEach(function (n) {
+    n.addEventListener('click', function () {
+      S.thucDon = Number(n.getAttribute('data-td')); S.boMon = [];
+      document.querySelectorAll('[data-td]').forEach(function (x) { x.setAttribute('aria-checked', String(x === n)); });
+      veMon(); capNhatNut();
+      $('tdChiTiet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  // Buoc 4: hien thuc don dung loai tiec truoc; "Xem them" mo cac thuc don khac.
+  function locThucDon(hetCa) {
+    var the = Array.prototype.slice.call(document.querySelectorAll('[data-td]'));
+    var dung = the.filter(function (x) { return x.getAttribute('data-loai-td') === S.loai; });
+    var hien = hetCa || !dung.length;
+    the.forEach(function (x) { x.hidden = !hien && dung.indexOf(x) < 0 && x.getAttribute('aria-checked') !== 'true'; });
+    var an = the.filter(function (x) { return x.hidden; }).length;
+    $('xemThemTd').hidden = !an;
+    $('xemThemTd').textContent = 'Xem thêm ' + an + ' thực đơn khác';
+  }
+  $('xemThemTd').addEventListener('click', function () { locThucDon(true); });
+  $('batTuyChinh').addEventListener('change', function () { S.tuyChinh = this.checked; $('khoiTuyChinh').hidden = !this.checked; veMon(); if (this.checked) veLuoiThem(); capNhatNut(); });
+  $('tdMon').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bo]'); if (!b) return;
+    var t = b.getAttribute('data-bo'), i = S.boMon.indexOf(t);
+    if (i < 0) S.boMon.push(t); else S.boMon.splice(i, 1);
+    veMon();
+  });
+  function veThem() {
+    $('dsThem').innerHTML = S.themMon.map(function (m, i) {
+      return '<li><span class="tt-mon">' + (m.anh ? '<img src="' + esc(m.anh) + '" alt="">' : '') + '<span>' + esc(m.ten) + '<br><small style="color:var(--nh-muted)">' + m.so_phan + ' phần/bàn × ' + soBan() + ' bàn</small></span></span><span>' + vnd(m.gia * m.so_phan * soBan()) + ' <button type="button" data-xoa="' + i + '" aria-label="Bỏ ' + esc(m.ten) + '">×</button></span></li>';
+    }).join('');
+    if (!$('khoiTuyChinh').hidden) veLuoiThem();
+    capNhatNut();
+  }
+  $('timMon').addEventListener('input', veLuoiThem);
+  $('locLoai').addEventListener('change', veLuoiThem);
+  $('luoiThem').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-them]'); if (!b || b.disabled) return;
+    var m = MON_LE.filter(function (x) { return x.id === Number(b.getAttribute('data-them')); })[0];
+    if (m && !S.themMon.some(function (x) { return x.id === m.id; })) S.themMon.push({ id: m.id, ten: m.ten.replace(/^[A-Z0-9]+-/, ''), gia: m.gia, anh: m.anh, so_phan: Number($('soPhan').value) });
+    veThem();
+  });
+  $('dsThem').addEventListener('click', function (e) { var b = e.target.closest('[data-xoa]'); if (b) { S.themMon.splice(Number(b.getAttribute('data-xoa')), 1); veThem(); } });
+
+  // --- 5 dich vu
+  document.querySelectorAll('.chon-dv').forEach(function (c) {
+    c.addEventListener('change', function () { S.dichVu = Array.prototype.slice.call(document.querySelectorAll('.chon-dv:checked')).map(function (x) { return Number(x.value); }); capNhatNut(); });
+  });
+
+  // --- 6 xac nhan & gui
+  function veXacNhan() {
+    var t = tinh(), dong = [
+      ['Loại tiệc', LOAI[S.loai].ten], ['Ngày giờ', S.ngay.split('-').reverse().join('/') + ' · ' + BUOI[S.buoi].ten + ' ' + S.gio],
+      ['Số khách', S.soKhach + ' khách (' + t.b + ' bàn)'], ['Thực đơn', t.td.ten + ' · ' + vnd(t.td.gia) + '/bàn × ' + t.b + ' = ' + vnd(t.tienTd)]];
+    if (S.tuyChinh) {
+      if (S.boMon.length) dong.push(['Bỏ món', S.boMon.join(', ')]);
+      if (S.themMon.length) dong.push(['Món thêm', vnd(t.tienThem)]);
+      if ($('yeuCau').value.trim()) dong.push(['Yêu cầu riêng', $('yeuCau').value.trim()]);
+    }
+    if (S.dichVu.length) dong.push(['Dịch vụ', vnd(t.tienDv)]);
+    dong.push(['Dự toán', vnd(t.tong)]);
+    dong.push(S.tuyChinh ? ['Bước tiếp theo', 'Nhà hàng báo giá thực đơn tùy chỉnh, sau đó quý khách đặt cọc ' + CH.coc + '%'] : ['Cọc giữ sảnh (' + CH.coc + '%)', vnd(t.coc)]);
+    $('bangXacNhan').innerHTML = dong.map(function (d) { return '<tr><td>' + esc(d[0]) + '</td><td>' + esc(d[1]) + '</td></tr>'; }).join('');
+  }
+  $('formTiec').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var bao = $('baoGui'); bao.innerHTML = '';
+    var body = {
+      dong_y_chinh_sach: S.dongY, loai_tiec: S.loai, so_khach: S.soKhach, ten_nhan_vat: $('nhanVat').value,
+      ngay_to_chuc: S.ngay, buoi: S.buoi, gio_bat_dau: S.gio, thuc_don_id: S.thucDon, dich_vu: S.dichVu,
+      tuy_chinh: S.tuyChinh ? { bo_mon: S.boMon, them_mon: S.themMon.map(function (m) { return { id_mon: m.id, so_phan: m.so_phan }; }), yeu_cau: $('yeuCau').value } : null,
+      ho_ten: $('hoTen').value, so_dien_thoai: $('sdt').value, email: $('email').value, ghi_chu: $('ghiChu').value,
+    };
+    var nut = $('nutGui'); nut.disabled = true; nut.textContent = 'Đang gửi...';
+    try {
+      var r = await fetch('/api/dat-tiec', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không gửi được yêu cầu.');
+      location.href = '/dat-tiec/thanh-toan/' + encodeURIComponent(j.ma) + '?dt=' + encodeURIComponent(body.so_dien_thoai);
+    } catch (err) {
+      bao.innerHTML = '<div class="bao bao--do">' + esc(err.message) + '</div>';
+      nut.disabled = false; nut.textContent = 'Gửi yêu cầu đặt tiệc';
     }
   });
-  $('dtOkDong').addEventListener('click', function () { $('dtOk').hidden = true; });
 
-  // ---------------------------------------------------------- khoi tao
-  datSanh(S.sanh);
-  datLoai(S.loai, false);
-  veGio();
+  den(1);
 })();
 </script>
 

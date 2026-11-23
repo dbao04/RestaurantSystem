@@ -1208,7 +1208,10 @@ async function taiThucDon() {
 
 async function moModalOrder() {
   if (!banDangChon) return;
-  dongHop(); // đóng popup nhỏ
+  // Chi AN popup nho, KHONG goi dongHop(): dongHop() xoa banDangChon = null
+  // lam dong ngay duoi (banDangChon.number_ban) loi va nut goi mon "chet".
+  $('lop').style.display = 'none';
+  dongHuyMonSdb();
   monDangChonOrder = {};
   $('orderTieuDe').textContent = 'Gọi món - Bàn ' + banDangChon.number_ban;
   $('orderPhuDe').textContent = banDangChon.sesis_hien_tai 
@@ -1354,6 +1357,12 @@ async function doiTrangThai(tt) {
     });
     const kq = await r.json();
     if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    // Mo ban trong (chua co phien) -> vao thang man goi mon cho ban do.
+    // Phien don duoc tao khi gui mon dau tien (/so-do-ban/api/order-mon).
+    if (Number(tt) === 1 && !banDangChon.sesis_hien_tai) {
+      await tai();
+      return moModalOrder();
+    }
     dongHop();
     await tai();
   } catch (e) {

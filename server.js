@@ -2757,8 +2757,11 @@ app.post('/staff/bookings/add-dish/:sesis', requireRole(['Phuc vu', 'Quay', 'Qua
 // Mon bep chua lam: phuc vu / quay / thu ngan huy duoc. Mon da vao bep: chi
 // Quan ly (vai tro cu hoac chuc danh dong vai Quan ly).
 function laQuanLyPhien(req) {
+  const vt = require('./services/phanQuyenVaiTro');
+  // Giam sat phuc vu / thu ngan dung san tai san -> duyet xoa mon da nau duoc.
   return !!(req.session.adminlogin || req.session.staffRole === 'Quan ly'
-    || require('./services/phanQuyenService').dongVaiDuoc(req.hoSo, ['Quan ly']));
+    || require('./services/phanQuyenService').dongVaiDuoc(req.hoSo, ['Quan ly'])
+    || vt.laGiamSat(req.hoSo, 'PV') || vt.laGiamSat(req.hoSo, 'TN'));
 }
 
 app.post('/staff/huy-mon/:id', requireRole(['Phuc vu', 'Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
@@ -2935,6 +2938,16 @@ function inBangDiaChi(dsLan, coHttps) {
 }
 
 (async () => {
+  // Phan quyen kho: thu kho nhap/xuat/kiem ke, quan ly chot & duyet (chay 1 lan).
+  try {
+    if (await require('./services/phanQuyenKho').damBao()) console.log('[phan-quyen] Đã áp dụng phân quyền kho mới.');
+    if (await require('./services/phanQuyenVaiTro').damBao()) console.log('[phan-quyen] Đã rà soát vai trò: chỉ Ban điều hành đóng vai Quản lý.');
+    await require('./services/phanQuyenVaiTro').damBaoLan2();
+    if (await require('./services/phanQuyenKho').damBaoQuyenNhap()) console.log('[phan-quyen] Đã áp dụng quyền duyệt phiếu nhập (QC, đối chiếu, duyệt cuối).');
+    await require('./services/duyetNhapKhoService').damBaoCauTruc();
+    const soNvKho = await require('./services/phanQuyenKho').damBaoVaiTroKho();
+    if (soNvKho) console.log(`[phan-quyen] Bộ phận Kho bỏ vai trò Bếp (${soNvKho} tài khoản).`);
+  } catch (e) { console.error('[phan-quyen] kho:', e.message); }
   /*
     Cong 3000 dang bi giu -> BAO RO, dung de nem loi tho.
 

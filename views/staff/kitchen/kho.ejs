@@ -20,8 +20,9 @@
     <div class="kb-phu">Phiếu nhập theo lô & hạn dùng, phiếu xuất hư hỏng / hao hụt / nội bộ, theo dõi lô sắp hết hạn.</div>
   </div>
   <div class="kb-nut">
-    <a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Lập phiếu nhập</a>
-    <a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Lập phiếu xuất</a>
+    <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap) { %><a href="/staff/kitchen/kho/nhap/moi" class="btn btn-sm btn-success"><i class="fas fa-file-import"></i> Lập phiếu nhập</a><% } %>
+    <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><a href="/staff/kitchen/kho/xuat/moi" class="btn btn-sm btn-danger"><i class="fas fa-file-export"></i> Lập phiếu xuất</a><% } %>
+    <% if (!(typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap && !(typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><span class="small text-muted align-self-center"><i class="fas fa-circle-info"></i> Nhập / xuất kho do Thủ kho phụ trách</span><% } %>
     <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cart-flatbed"></i> Mua hàng</a>
   </div>
 </div>
@@ -64,12 +65,13 @@
           <% soKho.forEach(function (p) { %>
             <tr>
               <td class="text-nowrap"><%= tgVN(p.thoi_diem) %></td>
-              <td><span class="kb-ma"><%= p.ma_phieu %></span><% if (p.ma_don) { %><br><small class="text-muted">từ đơn <%= p.ma_don %></small><% } %></td>
-              <td><span class="kb-nhan <%= p.loai %>"><%= p.loai === 'nhap' ? 'NHẬP' : 'XUẤT' %></span> <% if (p.loai === 'xuat') { %><small><%= p.ten_loai %></small><% } %></td>
+              <td><% if (p.loai === 'nhap') { %><a class="kb-ma" href="/staff/kitchen/kho/phieu-nhap/<%= p.id %>"><%= p.ma_phieu %></a><% } else { %><span class="kb-ma"><%= p.ma_phieu %></span><% } %><% if (p.ma_don) { %><br><small class="text-muted">từ đơn <%= p.ma_don %></small><% } %></td>
+              <td><span class="kb-nhan <%= p.loai %>"><%= p.loai === 'nhap' ? 'NHẬP' : 'XUẤT' %></span> <% if (p.loai === 'xuat') { %><small><%= p.ten_loai %></small><% } %>
+                <% var _tt = { cho_qc: ['cam', 'Chờ QC'], cho_doi_chieu: ['lam', 'Chờ đối chiếu'], cho_duyet: ['cam', 'Chờ duyệt'], tra_hang: ['do', 'Trả hàng'] }[p.trang_thai_duyet]; if (p.loai === 'nhap' && _tt) { %><br><span class="kb-nhan <%= _tt[0] %>"><%= _tt[1] %></span><% } %></td>
               <td class="small"><%= p.ten_ncc || '' %><%= p.ten_ncc && p.ghi_chu ? ' · ' : '' %><span class="text-muted"><%= p.ghi_chu || '' %></span></td>
               <td class="small"><%= p.nguoi || '—' %></td>
               <td class="so"><%= p.so_dong %></td>
-              <td class="so font-weight-bold <%= p.loai === 'nhap' ? 'text-success' : 'text-danger' %>"><%= vnd(p.gia_tri) %></td>
+              <td class="so font-weight-bold <%= p.loai === 'nhap' ? 'text-success' : 'text-danger' %>"><%= vnd(p.loai === 'nhap' && p.trang_thai_duyet === 'cho_qc' ? p.tong_giao : p.gia_tri) %><% if (p.loai === 'nhap' && p.trang_thai_duyet === 'cho_qc') { %><br><small class="text-muted font-weight-normal">chưa vào kho</small><% } %></td>
               <td><a class="btn btn-sm btn-light" href="/staff/kitchen/kho/phieu/<%= p.loai %>/<%= p.id %>" target="_blank" title="Xem / in phiếu" aria-label="Xem phiếu <%= p.ma_phieu %>"><i class="fas fa-print"></i></a></td>
             </tr>
           <% }) %>
@@ -101,7 +103,7 @@
                 <% if (het) { %><span class="kb-nhan do">Quá hạn <%= -l.con_ngay %> ngày</span><% } else if (sap) { %><span class="kb-nhan cam"><%= l.con_ngay === 0 ? 'Hết hạn hôm nay' : 'Còn ' + l.con_ngay + ' ngày' %></span><% } else if (l.con_ngay != null) { %><span class="kb-nhan xanh">Còn <%= l.con_ngay %> ngày</span><% } %></td>
               <td class="so"><b><%= soVN(l.so_luong_con_lai) %></b> <span class="text-muted small"><%= l.ten_dvt %></span></td>
               <td class="so"><%= vnd(l.so_luong_con_lai * l.gia_nhap) %></td>
-              <td><% if (het || sap) { %><a class="btn btn-sm btn-outline-danger text-nowrap" href="/staff/kitchen/kho/xuat/moi?nl=<%= l.id_nl %>&ly_do=<%= het ? 'het_han' : 'hu_hong' %>&sl=<%= l.so_luong_con_lai %>"><i class="fas fa-trash"></i> Xuất hủy</a><% } %></td>
+              <td><% if ((het || sap) && (typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><a class="btn btn-sm btn-outline-danger text-nowrap" href="/staff/kitchen/kho/xuat/moi?nl=<%= l.id_nl %>&ly_do=<%= het ? 'het_han' : 'hu_hong' %>&sl=<%= l.so_luong_con_lai %>"><i class="fas fa-trash"></i> Xuất hủy</a><% } %></td>
             </tr>
           <% }) %>
           <% if (!lo.length) { %><tr data-tim-bo-qua><td colspan="8" class="kb-rong">Chưa có lô hàng nào còn tồn. Lô được tạo khi lập <a href="/staff/kitchen/kho/nhap/moi">phiếu nhập</a> (có số lô và hạn dùng).</td></tr><% } %>
@@ -134,8 +136,8 @@
               <td class="so"><%= vnd(n.gia_von) %></td>
               <td class="so"><%= vnd(Math.max(0, n.so_luong) * n.gia_von) %></td>
               <td class="text-nowrap">
-                <a class="btn btn-sm btn-light" href="/staff/kitchen/kho/nhap/moi?nl=<%= n.id_nl %>" title="Nhập thêm" aria-label="Nhập thêm <%= n.ten_nl %>"><i class="fas fa-plus text-success"></i></a>
-                <a class="btn btn-sm btn-light" href="/staff/kitchen/kho/xuat/moi?nl=<%= n.id_nl %>" title="Xuất hủy / hao hụt" aria-label="Xuất <%= n.ten_nl %>"><i class="fas fa-minus text-danger"></i></a>
+                <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).nhap) { %><a class="btn btn-sm btn-light" href="/staff/kitchen/kho/nhap/moi?nl=<%= n.id_nl %>" title="Nhập thêm" aria-label="Nhập thêm <%= n.ten_nl %>"><i class="fas fa-plus text-success"></i></a><% } %>
+                <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).xuat) { %><a class="btn btn-sm btn-light" href="/staff/kitchen/kho/xuat/moi?nl=<%= n.id_nl %>" title="Xuất hủy / hao hụt" aria-label="Xuất <%= n.ten_nl %>"><i class="fas fa-minus text-danger"></i></a><% } %>
               </td>
             </tr>
           <% }) %>

@@ -831,6 +831,9 @@ function rutMaDoiSoat(noiDung) {
   // "RSV123456ABCD" hoac "RSV 123456 ABCD" -> chap nhan ca ba, quy ve dang goc.
   const khopRSV = s.match(/RSV[-\s.]?([0-9]{6})[-\s.]?([A-Z0-9]{4})/);
   if (khopRSV) return `RSV-${khopRSV[1]}-${khopRSV[2]}`;
+  // Tiec: ma "TC" + yymmdd + 4 ky tu (datTiecService.taoMa), noi dung CK "TIEC <ma>".
+  const khopTC = s.match(/(?:^|[^A-Z0-9])(TC[0-9]{6}[A-Z0-9]{4})(?![A-Z0-9])/);
+  if (khopTC) return khopTC[1];
   return null;
 }
 
@@ -923,6 +926,21 @@ async function ghiNhanGiaoDichNganHang(gd) {
   if (!ma) {
     await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'khong_khop', ghi_chu = 'Nội dung CK không chứa mã đối soát' WHERE id = ?", [giaoDichId]);
     return { trungLap: false, khop: false, giaoDichId, lyDo: 'khong_co_ma' };
+  }
+
+  // Truong hop ma la tiec (TC...): coc hoac phan con lai (services/datTiecQuyTrinh.js).
+  if (/^TC\d{6}[A-Z0-9]{4}$/.test(ma)) {
+    try {
+      const kq = await require('./datTiecQuyTrinh').ghiNhanChuyenKhoan(ma, tien, { maGiaoDich: ma_tham_chieu, nguon: 'webhook' });
+      try { require('./realtime').doi(require('./realtime').MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_THANH_TOAN', ma }); } catch (_) { /* realtime chua san sang */ }
+      await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'da_khop', ghi_chu = ? WHERE id = ?",
+        [`Đã khớp ${kq.loai === 'dat_coc' ? 'tiền cọc' : 'thanh toán phần còn lại'} tiệc ${ma}`, giaoDichId]);
+      return { trungLap: false, khop: true, giaoDichId, ma, tiec: kq };
+    } catch (e) {
+      await db.query("UPDATE giao_dich_ngan_hang SET trang_thai = 'khong_khop', ghi_chu = ? WHERE id = ?",
+        [String(e.message || 'Không khớp tiệc').slice(0, 250), giaoDichId]);
+      return { trungLap: false, khop: false, giaoDichId, ma, lyDo: 'tiec_' + (e.ma || 'loi') };
+    }
   }
 
   // Truong hop ma la RSV (Dat ban)

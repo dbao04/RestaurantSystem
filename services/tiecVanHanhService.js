@@ -53,8 +53,12 @@ const giao = (a1, a2, b1, b2) => a1 < b2 && b1 < a2;
 async function sanhBiGiu(ngay, batDau, ketThuc) {
   let rows = [];
   try {
+    // Cung dieu kien giu sanh voi dat tiec online (datTiecQuyTrinh.DIEU_KIEN_GIU): don da chot
+    // / da coc, va don dang cho coc / cho bao gia con han giu cho - khong cho dat ban thuong chen vao.
+    const qtTiec = require('./datTiecQuyTrinh');
+    await qtTiec.hetHanGiuCho();
     [rows] = await db.query(
-      'SELECT ma_tiec, khu_vuc_id, buoi FROM dat_tiec WHERE ngay_to_chuc = ? AND trang_thai IN (?)', [ngay, GIU_CHO]);
+      `SELECT t.ma_tiec, t.khu_vuc_id, t.buoi FROM dat_tiec t WHERE t.ngay_to_chuc = ? AND ${qtTiec.DIEU_KIEN_GIU}`, [ngay]);
   } catch (e) { if (e.code === 'ER_NO_SUCH_TABLE') return new Map(); throw e; }
   const ra = new Map();
   for (const r of rows) {

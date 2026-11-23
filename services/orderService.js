@@ -50,6 +50,28 @@ function chuanHoaSoLuong(giaTri, toiDa = SO_LUONG_TOI_DA_KHACH) {
   return n;
 }
 
+
+/**
+ * Goi mon cho mot luot dat ban ma khach DA DEN (ARRIVED) nhung le tan chua bam
+ * "Xep ban" -> khach that su dang ngoi an, nen tu chuyen sang SEATED. Khong co
+ * buoc nay ban van "Trong" tren so do du bep da nau va phuc vu da len mon.
+ * Loi o day khong duoc lam hong viec goi mon.
+ */
+async function tuXepBanKhiGoiMon(sesis, nhanVienId = null) {
+  try {
+    const [[r]] = await db.query(
+      "SELECT id FROM reservations WHERE reservation_code = ? AND status = 'ARRIVED' LIMIT 1", [sesis]);
+    if (!r) return false;
+    await require('./reservationService').doiTrangThai(r.id, 'SEATED', {
+      nhanVienId, ghiChu: 'Tự xếp bàn khi gọi món',
+    });
+    return true;
+  } catch (e) {
+    console.error('[orderService] Tu xep ban khi goi mon loi:', e.message);
+    return false;
+  }
+}
+
 const orderService = {
   chuanHoaSoLuong,
   SO_LUONG_TOI_DA_KHACH,
@@ -637,6 +659,7 @@ const orderService = {
        chuanHoaGio(order.gio_dat) || chuanHoaGio(order.tg) || chuanHoaGio(gioCucBo()),
        order.id_ban || null]
     );
+    await tuXepBanKhiGoiMon(sesis);
   },
 
   /**
@@ -696,6 +719,7 @@ const orderService = {
     } finally {
       connection.release();
     }
+    await tuXepBanKhiGoiMon(sesis);
   },
 
   /**
@@ -709,6 +733,8 @@ const orderService = {
    * ban, id ban) deu phai di qua day, khong duoc lay tu tham so nguoi dung
    * gui len - xem ghi chu o `createQROrder`.
    */
+  tuXepBanKhiGoiMon,
+
   layBanQR: async (tableId) => {
     if (!tableId) return null;
     const [rows] = await db.query(

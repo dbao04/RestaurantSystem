@@ -337,6 +337,9 @@
       <a href="/staff" class="btn-staff-back"><i class="fas fa-arrow-left"></i> Khu vực Nhân sự</a>
       <a href="/staff/kitchen/recipes"><i class="fas fa-scroll"></i> Công thức món</a>
       <a href="/staff/kitchen/inventory"><i class="fas fa-boxes-stacked"></i> Tồn kho</a>
+      <%# Man bep la trang rieng (khong dung header chung) -> gan chuong o day,
+          bep/bar nhan "mon moi" ngay tren man hinh dang lam viec. %>
+      <%- include('../partials/chuong-thong-bao', { laTb: 'nv', trangTb: '/staff/thong-bao', toiTb: true }) %>
       <a href="/staff/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
     </nav>
   </header>

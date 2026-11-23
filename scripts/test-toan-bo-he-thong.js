@@ -44,7 +44,7 @@ async function tamTatDoiMatKhau() {
     for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5('123456'), g.id_admin]);
     khoiPhucCoDoiMk = async () => {
       // Thong bao do thao tac test sinh ra (gui nen) - xoa de khong lan vao chuong that.
-      await new Promise((ok) => setTimeout(ok, 800));
+      await new Promise((ok) => setTimeout(ok, 3500));  // gom mon moi -> bep 2,5s
       await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [tbMoc.m]).catch(() => {});
       for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
       for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [g.adminpass, g.id_admin]).catch(() => {});

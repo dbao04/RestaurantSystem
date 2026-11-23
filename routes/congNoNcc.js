@@ -19,7 +19,7 @@ const canKeToan = phanQuyenMw.canVaiTroCu(['Ke toan', 'Quan ly']);
 
 function traLoi(res, e) {
   if (e && e.name === 'LoiCongNo') {
-    return res.status(e.ma === 'NOT_FOUND' ? 404 : 400).json({ ok: false, thong_bao: e.message });
+    return res.status(e.ma === 'NOT_FOUND' ? 404 : e.ma === 'CHUA_DUYET' ? 409 : 400).json({ ok: false, thong_bao: e.message });
   }
   console.error('[cong-no-ncc]', e);
   return res.status(500).json({ ok: false, thong_bao: 'Hệ thống đang bận, vui lòng thử lại.' });
@@ -28,13 +28,14 @@ function traLoi(res, e) {
 router.get('/staff/cong-no-ncc', canKeToan, bat(async (req, res) => {
   const personnelService = require('../services/personnelService');
   const idNcc = Number(req.query.ncc) || null;
-  const [tongHop, phieu] = await Promise.all([dv.tongHop(), dv.phieuConNo(idNcc)]);
+  const [tongHop, phieu, chuaDuyet] = await Promise.all([dv.tongHop(), dv.phieuConNo(idNcc), dv.phieuChuaDuyet()]);
   res.render('staff/cong-no-ncc', {
     title: 'Công nợ nhà cung cấp',
     activePage: 'cong-no-ncc',
     unread: await personnelService.countUnread(req.session.staffId).catch(() => 0),
     tongHop,
     phieu,
+    chuaDuyet,
     idNcc,
     hanNo: dv.HAN_NO_NGAY,
   });

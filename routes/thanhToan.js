@@ -255,8 +255,10 @@ module.exports = function (io) {
    * mot nguoi vua thu vua tu hoan la lo hong gian lan kinh dien.
    * Tra JSON (khong phai trang loi) vi nut hoan tien goi bang fetch.
    */
+  const vaiTro = require('../services/phanQuyenVaiTro');
   const coQuyenHoanTien = (req) => !!(req.session && (req.session.adminlogin
-    || req.session.staffRole === 'Quan ly' || phanQuyen.dongVaiDuoc(req.hoSo, ['Quan ly'])));
+    || req.session.staffRole === 'Quan ly' || phanQuyen.dongVaiDuoc(req.hoSo, ['Quan ly'])
+    || vaiTro.laGiamSat(req.hoSo, 'TN')));
 
   router.post('/staff/thanh-toan/phien/:id/hoan-tien', requireThuNgan, (req, res, next) => {
     if (coQuyenHoanTien(req)) return next();
@@ -320,7 +322,9 @@ module.exports = function (io) {
    * va phai o vai giam sat tro len - neu khong thi viec doi soat chi la mot
    * bieu mau, ai lap cung la nguoi ky duyet.
    */
-  const requireDuyetChotCa = phanQuyenMw.canVaiTroCu(['Ke toan', 'Quan ly']);
+  const canDuyetCuKeToan = phanQuyenMw.canVaiTroCu(['Ke toan', 'Quan ly']);
+  // Giam sat thu ngan (cap tren truc tiep cua thu ngan) duyet bien ban chot ca.
+  const requireDuyetChotCa = (req, res, next) => (vaiTro.laGiamSat(req.hoSo, 'TN') ? next() : canDuyetCuKeToan(req, res, next));
 
   // Man hinh chot ca cua chinh minh.
   router.get('/staff/chot-ca', requireThuNgan, bat(async (req, res) => {
@@ -378,7 +382,7 @@ module.exports = function (io) {
   // Lich su chot ca. Thu ngan thuong chi thay ca cua minh; nguoi co quyen duyet
   // thay het de con doi chieu giua cac quay.
   router.get('/staff/chot-ca/lich-su', requireThuNgan, bat(async (req, res) => {
-    const xemHet = phanQuyen.dongVaiDuoc(req.hoSo, ['Ke toan', 'Quan ly']) || !!req.session.adminlogin;
+    const xemHet = phanQuyen.dongVaiDuoc(req.hoSo, ['Ke toan', 'Quan ly']) || !!req.session.adminlogin || vaiTro.laGiamSat(req.hoSo, 'TN');
     const lichSu = await chotCa.lichSuChotCa({
       idNv: xemHet ? null : req.session.staffId,
       tuNgay: req.query.tu_ngay || null,
@@ -403,7 +407,7 @@ module.exports = function (io) {
         title: 'Không tìm thấy', statusCode: 404, message: 'Biên bản chốt ca không tồn tại.',
       });
     }
-    const xemHet = phanQuyen.dongVaiDuoc(req.hoSo, ['Ke toan', 'Quan ly']) || !!req.session.adminlogin;
+    const xemHet = phanQuyen.dongVaiDuoc(req.hoSo, ['Ke toan', 'Quan ly']) || !!req.session.adminlogin || vaiTro.laGiamSat(req.hoSo, 'TN');
     if (!xemHet && Number(bienBan.id_nv) !== Number(req.session.staffId)) {
       return res.status(403).render('error', {
         title: 'Không có quyền', statusCode: 403,

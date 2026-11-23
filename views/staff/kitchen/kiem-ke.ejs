@@ -18,7 +18,7 @@
   <div class="kb-nut">
     <% if (dangMo) { %>
       <a href="/staff/kitchen/kho/kiem-ke/<%= dangMo.id_kk %>" class="btn btn-sm btn-warning"><i class="fas fa-pen"></i> Tiếp tục đếm <%= dangMo.ma_phieu %></a>
-    <% } else { %>
+    <% } else if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).kiemKe) { %>
       <button type="button" class="btn btn-sm btn-success" id="taoPhieu"><i class="fas fa-plus"></i> Tạo phiếu kiểm kê</button>
     <% } %>
     <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-right-left"></i> Xuất nhập kho</a>
