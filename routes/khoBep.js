@@ -24,16 +24,31 @@ const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catc
 const canBep = phanQuyenMw.canVaiTroCu(['Bep', 'Quan ly']);
 
 /**
- * Duyet don mua: bep truong / quan ly bep (cap 1-2 thuoc bep), quan ly nha hang,
- * admin. Nguoi tao don KHONG tu duyet don cua minh - tach nguoi de xuat va nguoi
- * chi tien la nguyen tac kiem soat co ban.
+ * Phan quyen kho theo QUYEN cua chuc danh (services/phanQuyenKho.js):
+ * thu kho / nv kho nhap - xuat - kiem ke; bep chi xem + de xuat mua; quan ly
+ * chot kiem ke va duyet don mua. Nguoi tao don / phieu KHONG tu duyet - tach
+ * nguoi de xuat va nguoi chi tien la nguyen tac kiem soat co ban.
  */
-function duocDuyet(req) {
+function co(req, ma) {
   if (req.session.adminlogin) return true;
-  if (req.session.staffRole === 'Quan ly') return true;
-  const h = req.hoSo;
-  return !!(h && h.cap_bac <= 2 && phanQuyen.dongVaiDuoc(h, ['Bep', 'Quan ly']));
+  return phanQuyen.coQuyen(req.hoSo, ma);
 }
+const duocDuyet = (req) => co(req, 'kho.mua.duyet');
+const duocChotKiemKe = (req) => co(req, 'kho.kiem_ke.chot');
+/** Middleware: can quyen `ma`, tra JSON 403 dung dinh dang cua trang kho. */
+const can = (ma, viec) => (req, res, next) => (co(req, ma) ? next()
+  : res.status(403).json({ ok: false, thong_bao: `Chức danh của bạn không được ${viec}. Việc này do ${NGUOI_LAM[ma] || 'người có thẩm quyền'} phụ trách.` }));
+const NGUOI_LAM = {
+  'kho.nhap': 'Thủ kho / Nhân viên kho',
+  'kho.xuat': 'Thủ kho / Nhân viên kho',
+  'kho.kiem_ke': 'Thủ kho / Nhân viên kho',
+  'kho.kiem_ke.chot': 'Quản lý nhà hàng',
+  'kho.mua.de_xuat': 'Quản lý bếp, Bếp trưởng, Thủ kho',
+  'kho.mua.duyet': 'Quản lý nhà hàng',
+  'kho.nhap.qc': 'Quản lý bếp, Bếp trưởng, Trưởng bar',
+  'kho.nhap.doi_chieu': 'Kế toán',
+  'kho.nhap.duyet': 'Quản lý nhà hàng',
+};
 
 function traLoi(res, e) {
   if (e && e.name === 'LoiKho') {
@@ -57,16 +72,24 @@ function khoangNgay(req, macDinhNgay = 30) {
 
 async function chung(req) {
   const personnelService = require('../services/personnelService');
-  return { unread: await personnelService.countUnread(req.session.staffId).catch(() => 0), homNay: ngayCucBo() };
+  return {
+    unread: await personnelService.countUnread(req.session.staffId).catch(() => 0), homNay: ngayCucBo(),
+    // View an/hien nut theo quyen (nut bam van bi API chan neu khong du quyen).
+    quyenKho: {
+      nhap: co(req, 'kho.nhap'), xuat: co(req, 'kho.xuat'), kiemKe: co(req, 'kho.kiem_ke'),
+      chotKiemKe: co(req, 'kho.kiem_ke.chot'), deXuatMua: co(req, 'kho.mua.de_xuat'), duyetMua: co(req, 'kho.mua.duyet'),
+      qcNhap: co(req, 'kho.nhap.qc'), doiChieuNhap: co(req, 'kho.nhap.doi_chieu'), duyetNhap: co(req, 'kho.nhap.duyet'),
+    },
+  };
 }
 
 // Ke toan duoc XEM chi tiet phieu (doi soat cong no nha cung cap - routes/congNoNcc.js),
 // khong duoc lap phieu / xuat kho / mua hang.
-const canXemPhieu = phanQuyenMw.canVaiTroCu(['Bep', 'Quan ly', 'Ke toan']);
-router.use(['/staff/kitchen/thong-ke', '/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/api/kitchen'], (req, res, next) => {
-  const laXemPhieu = req.method === 'GET' && req.originalUrl.split('?')[0].startsWith('/staff/kitchen/kho/phieu/');
-  return (laXemPhieu ? canXemPhieu : canBep)(req, res, next);
-});
+// Kho / mua hang: ai co quyen kho.xem (bep, bar, kho, ke toan, quan ly) moi vao;
+// tung thao tac ghi kiem quyen rieng ben duoi. Thong ke bep van theo vai tro Bep.
+const vaiTroPq = require('../services/phanQuyenVaiTro');
+router.use('/staff/kitchen/thong-ke', vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Thống kê bếp dành cho Ban điều hành và trưởng bộ phận Bếp / Bar.'));
+router.use(['/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/api/kitchen'], phanQuyenMw.canQuyen('kho.xem'));
 
 // ------------------------------------------------------------------ thong ke
 router.get('/staff/kitchen/thong-ke', bat(async (req, res) => {
@@ -103,9 +126,59 @@ router.get('/staff/kitchen/kho', bat(async (req, res) => {
   });
 }));
 
+// ------------------------------------------------------------------ duyet phieu nhap
+// Quy trinh: thu kho lap -> bep truong QC -> ke toan doi chieu -> quan ly duyet.
+// Xem services/duyetNhapKhoService.js.
+const duyetNhap = require('../services/duyetNhapKhoService');
+const nguoiThaoTac = (req) => ({ id: req.session.staffId || null, laAdmin: !!req.session.adminlogin });
+
+router.get('/staff/kitchen/kho/phieu-nhap', bat(async (req, res) => {
+  const trangThai = duyetNhap.TRANG_THAI[req.query.trang_thai] ? req.query.trang_thai : '';
+  const [ds, dem, ch] = await Promise.all([duyetNhap.danhSach({ trangThai }), duyetNhap.demTheoTrangThai(), duyetNhap.cauHinh()]);
+  res.render('staff/kitchen/phieu-nhap-ds', {
+    title: 'Duyệt phiếu nhập', activePage: 'phieu-nhap', ...(await chung(req)),
+    ds, dem, ch, trangThai, TRANG_THAI: duyetNhap.TRANG_THAI, idNv: req.session.staffId || null,
+  });
+}));
+
+router.get('/staff/kitchen/kho/phieu-nhap/:id', bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).send('Không tìm thấy phiếu');
+  const ct = await duyetNhap.chiTiet(Number(req.params.id));
+  if (!ct) return res.status(404).send('Không tìm thấy phiếu');
+  res.render('staff/kitchen/phieu-nhap-ct', {
+    title: 'Phiếu nhập ' + ct.p.ma_phieu, activePage: 'phieu-nhap', ...(await chung(req)),
+    ct, KET_QUA_QC: duyetNhap.KET_QUA_QC, TRANG_THAI: duyetNhap.TRANG_THAI, idNv: req.session.staffId || null,
+  });
+}));
+
+router.post('/api/kitchen/kho/nhap/:id/qc', can('kho.nhap.qc', 'kiểm tra chất lượng hàng nhập'), bat(async (req, res) => {
+  try { res.json({ ok: true, ...(await duyetNhap.kiemTraChatLuong(Number(req.params.id), (req.body || {}).dong, nguoiThaoTac(req))) }); } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kho/nhap/:id/doi-chieu', can('kho.nhap.doi_chieu', 'đối chiếu phiếu nhập'), bat(async (req, res) => {
+  try { res.json({ ok: true, ...(await duyetNhap.doiChieu(Number(req.params.id), req.body || {}, nguoiThaoTac(req))) }); } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kho/nhap/duyet-loat', can('kho.nhap.duyet', 'duyệt phiếu nhập'), bat(async (req, res) => {
+  try { res.json({ ok: true, ...(await duyetNhap.duyetLoat((req.body || {}).ids, nguoiThaoTac(req))) }); } catch (e) { traLoi(res, e); }
+}));
+
+router.post('/api/kitchen/kho/nhap/:id/duyet', can('kho.nhap.duyet', 'duyệt phiếu nhập'), bat(async (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json({ ok: true, ...(await duyetNhap.duyet(Number(req.params.id), { dongY: b.dong_y !== false, ghiChu: b.ghi_chu }, nguoiThaoTac(req))) });
+  } catch (e) { traLoi(res, e); }
+}));
+
 router.get('/staff/kitchen/kho/:loai/moi', bat(async (req, res, next) => {
   if (!['nhap', 'xuat'].includes(req.params.loai)) return next();
   const laNhap = req.params.loai === 'nhap';
+  if (!co(req, laNhap ? 'kho.nhap' : 'kho.xuat')) {
+    return res.status(403).render('error', {
+      title: 'Không có quyền truy cập', statusCode: 403, hoSo: res.locals.hoSo || null,
+      message: `Lập phiếu ${laNhap ? 'nhập' : 'xuất'} kho do Thủ kho / Nhân viên kho phụ trách. Bếp gửi yêu cầu cho thủ kho.`,
+    });
+  }
   const [nvl, ncc] = await Promise.all([kho.danhSachNVL(), kho.danhSachNCC()]);
   let don = null;
   if (laNhap && /^\d+$/.test(String(req.query.don || ''))) {
@@ -138,27 +211,26 @@ router.get('/staff/kitchen/kho/kiem-ke/:id', bat(async (req, res) => {
   if (!ct) return res.status(404).send('Không tìm thấy phiếu');
   res.render('staff/kitchen/kiem-ke-chi-tiet', {
     title: 'Phiếu kiểm kê ' + ct.ma_phieu, activePage: 'kiem-ke', ...(await chung(req)),
-    ct, duocChot: duocDuyet(req), idNv: req.session.staffId || null,
+    ct, duocChot: duocChotKiemKe(req), duocDem: co(req, 'kho.kiem_ke'), idNv: req.session.staffId || null,
   });
 }));
 
-router.post('/api/kitchen/kiem-ke', bat(async (req, res) => {
+router.post('/api/kitchen/kiem-ke', can('kho.kiem_ke', 'lập phiếu kiểm kê'), bat(async (req, res) => {
   try { res.status(201).json({ ok: true, ...(await kiemKe.taoPhieu({ ghiChu: (req.body || {}).ghi_chu }, req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
 }));
 
-router.post('/api/kitchen/kiem-ke/:id/dem', bat(async (req, res) => {
+router.post('/api/kitchen/kiem-ke/:id/dem', can('kho.kiem_ke', 'nhập số đếm kiểm kê'), bat(async (req, res) => {
   try { res.json({ ok: true, ...(await kiemKe.luuSoDem(Number(req.params.id), (req.body || {}).dong)) }); } catch (e) { traLoi(res, e); }
 }));
 
-router.post('/api/kitchen/kiem-ke/:id/chot', bat(async (req, res) => {
+router.post('/api/kitchen/kiem-ke/:id/chot', can('kho.kiem_ke.chot', 'chốt kiểm kê'), bat(async (req, res) => {
   try {
-    if (!duocDuyet(req)) return res.status(403).json({ ok: false, thong_bao: 'Chỉ bếp trưởng, quản lý bếp hoặc quản lý nhà hàng được chốt kiểm kê.' });
     const laQuanLy = !!(req.session.adminlogin || req.session.staffRole === 'Quan ly');
     res.json({ ok: true, ...(await kiemKe.chot(Number(req.params.id), { id: req.session.staffId || null, laQuanLy })) });
   } catch (e) { traLoi(res, e); }
 }));
 
-router.post('/api/kitchen/kiem-ke/:id/huy', bat(async (req, res) => {
+router.post('/api/kitchen/kiem-ke/:id/huy', can('kho.kiem_ke', 'hủy phiếu kiểm kê'), bat(async (req, res) => {
   try { res.json(await kiemKe.huy(Number(req.params.id))); } catch (e) { traLoi(res, e); }
 }));
 
@@ -169,7 +241,7 @@ router.get('/staff/kitchen/kho/phieu/:loai/:id', bat(async (req, res) => {
   res.render('staff/kitchen/kho-phieu-in', { ct });
 }));
 
-router.post('/api/kitchen/kho/nhap', bat(async (req, res) => {
+router.post('/api/kitchen/kho/nhap', can('kho.nhap', 'lập phiếu nhập kho'), bat(async (req, res) => {
   try {
     if (req.body.id_dmh) {
       // Nhan hang tu don: don phai da duyet / da dat.
@@ -183,7 +255,7 @@ router.post('/api/kitchen/kho/nhap', bat(async (req, res) => {
   } catch (e) { traLoi(res, e); }
 }));
 
-router.post('/api/kitchen/kho/xuat', bat(async (req, res) => {
+router.post('/api/kitchen/kho/xuat', can('kho.xuat', 'lập phiếu xuất kho'), bat(async (req, res) => {
   try { res.status(201).json({ ok: true, ...(await kho.taoPhieuXuat(req.body, req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
 }));
 
@@ -208,11 +280,11 @@ router.get('/staff/kitchen/mua-hang/:id', bat(async (req, res) => {
 }));
 
 // Tao don mua NHAP tu goi y theo du bao, gom theo nha cung cap (khoBepService.taoDonTuDong).
-router.post('/api/kitchen/mua-hang/tu-dong', bat(async (req, res) => {
+router.post('/api/kitchen/mua-hang/tu-dong', can('kho.mua.de_xuat', 'lập đơn mua'), bat(async (req, res) => {
   try { res.status(201).json({ ok: true, ...(await kho.taoDonTuDong(req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
 }));
 
-router.post('/api/kitchen/mua-hang', bat(async (req, res) => {
+router.post('/api/kitchen/mua-hang', can('kho.mua.de_xuat', 'lập đơn mua'), bat(async (req, res) => {
   try { res.status(201).json({ ok: true, ...(await kho.taoDonMua(req.body, req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
 }));
 
@@ -220,8 +292,11 @@ router.post('/api/kitchen/mua-hang/:id/:buoc', bat(async (req, res) => {
   try {
     if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy đơn' });
     const buoc = req.params.buoc;
+    if (buoc !== 'duyet' && !co(req, 'kho.mua.de_xuat')) {
+      return res.status(403).json({ ok: false, thong_bao: 'Chức danh của bạn không được cập nhật đơn mua. Việc này do Quản lý bếp, Bếp trưởng, Thủ kho phụ trách.' });
+    }
     if (buoc === 'duyet') {
-      if (!duocDuyet(req)) return res.status(403).json({ ok: false, thong_bao: 'Chỉ bếp trưởng, quản lý bếp hoặc quản lý nhà hàng được duyệt đơn mua.' });
+      if (!duocDuyet(req)) return res.status(403).json({ ok: false, thong_bao: 'Chỉ quản lý nhà hàng được duyệt đơn mua nguyên liệu.' });
       const don = await kho.chiTietDon(Number(req.params.id));
       if (don && req.session.staffId && Number(don.id_nv_tao) === Number(req.session.staffId) && req.session.staffRole !== 'Quan ly') {
         return res.status(403).json({ ok: false, thong_bao: 'Không tự duyệt đơn do chính mình lập – nhờ một người duyệt khác.' });

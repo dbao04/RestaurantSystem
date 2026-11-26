@@ -14,11 +14,9 @@ const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 // Cung dieu kien voi menu (views/staff/partials/header.ejs): cap 1-2 (nhom
 // "Dieu hanh") hoac vai tro Quan ly / Bep (nhom "Khu vuc Bep").
-const canTheoVaiTro = phanQuyenMw.canVaiTroCu(['Quan ly', 'Bep']);
-function canXem(req, res, next) {
-  if (req.hoSo && Number(req.hoSo.cap_bac) <= 2) return next();
-  return canTheoVaiTro(req, res, next);
-}
+// Ban dieu hanh + truong bo phan bep / bar (khong cho dau bep, phu bep, tap vu).
+const vaiTroPq = require('../services/phanQuyenVaiTro');
+const canXem = vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Phân tích thực đơn dành cho Ban điều hành và trưởng bộ phận Bếp / Bar.');
 
 function congNgay(ngay, soNgay) {
   const d = new Date(`${ngay}T00:00:00`);

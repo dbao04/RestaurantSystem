@@ -536,7 +536,9 @@ function showToast(msg) {
     });
   }
 
+  var daBaoXong = false;
   function daThanhToanXong() {
+    if (daBaoXong) return; daBaoXong = true;
     var boxStatus = document.getElementById('spf-box-status');
     if (boxStatus) {
       boxStatus.style.background = '#dcfce7';
@@ -544,13 +546,10 @@ function showToast(msg) {
       boxStatus.style.color = '#15803d';
       boxStatus.innerHTML = '<i class="fas fa-circle-check" style="font-size:18px;"></i> <b>' + <%- JSON.stringify(t('tt_don.js_tt_ok')) %> + '</b>';
     }
-    setTimeout(function() {
-      if (MA_GIAO) {
-        window.location.href = '/theo-doi/' + MA_GIAO;
-      } else {
-        window.location.href = '/cart';
-      }
-    }, 1200);
+    var tiep = MA_GIAO ? '/theo-doi/' + MA_GIAO : '/cart';
+    // Bien lai kieu ngan hang truoc, bam nut moi sang trang theo doi don.
+    if (window.BienLai) BienLai.mo({ ma: SESIS, nutTiep: { chu: MA_GIAO ? 'Theo dõi đơn hàng' : 'Tiếp tục', href: tiep } });
+    else setTimeout(function () { window.location.href = tiep; }, 1200);
   }
 
   if (paymentId) {

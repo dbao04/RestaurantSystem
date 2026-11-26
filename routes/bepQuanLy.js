@@ -11,9 +11,25 @@ const express = require('express');
 
 module.exports = function ({ db, equipmentService, menuService, personnelService, requireRole, upload }) {
   const router = express.Router();
+  // Kho nguyen lieu theo QUYEN chuc danh (services/phanQuyenKho.js): ai co kho.xem
+  // thi xem ton; nhap nhanh can kho.nhap (thu kho); danh muc NL / don vi can
+  // kho.nguyen_lieu.quan_ly.
+  const { canQuyen } = require('../middleware/phanQuyen');
+  // Cong thuc: ai co quyen bep.cong_thuc.xem (khong gom tap vu bep). Chot ca bep:
+  // truong bo phan bep / bar. Ban dieu hanh luon xem duoc.
+  const vaiTroPq = require('../services/phanQuyenVaiTro');
+  const phanQuyenSv = require('../services/phanQuyenService');
+  const canXemCongThuc = vaiTroPq.canHoac((req) => phanQuyenSv.coQuyen(req.hoSo, 'bep.cong_thuc.xem'), 'Công thức món dành cho bộ phận chế biến (bếp, bar).');
+  const canTruongBep = vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Chốt ca bếp dành cho trưởng bộ phận Bếp / Bar.');
+
+  const phanQuyen = require('../services/phanQuyenService');
+  const quyenKho = (req) => {
+    const c = (ma) => !!req.session.adminlogin || phanQuyen.coQuyen(req.hoSo, ma);
+    return { nhap: c('kho.nhap'), xuat: c('kho.xuat'), danhMuc: c('kho.nguyen_lieu.quan_ly') };
+  };
 
   // --- KITCHEN MANAGEMENT (Role: 'Bep') ---
-  router.get('/staff/kitchen/inventory', requireRole(['Bep']), async (req, res) => {
+  router.get('/staff/kitchen/inventory', canQuyen('kho.xem'), async (req, res) => {
     try {
       const ingredients = await menuService.getAllIngredients();
       const units = await menuService.getAllUnits();
@@ -22,7 +38,8 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
         ingredients,
         units,
         unread: await personnelService.countUnread(req.session.staffId),
-        activePage: 'inventory'
+        activePage: 'inventory',
+        quyenKho: quyenKho(req)
       });
     } catch (err) {
       console.error(err);
@@ -30,7 +47,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/ingredient/add', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/ingredient/add', canQuyen('kho.nguyen_lieu.quan_ly'), async (req, res) => {
     try {
       const data = { ...req.body };
       if (data.new_dvt && data.new_dvt.trim()) {
@@ -51,7 +68,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/inventory/stock-in', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/inventory/stock-in', canQuyen('kho.nhap'), async (req, res) => {
     try {
       const { id_nl, so_luong, gia_nhap, han_su_dung } = req.body;
       if (Number(so_luong) <= 0 || Number(gia_nhap) <= 0) {
@@ -65,7 +82,11 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
       */
       const kho = require('../services/khoBepService');
       try {
-        await kho.taoPhieuNhap({
+        // Nhap nhanh cung la mua hang that -> di qua quy trinh duyet (cho bep
+        // truong kiem chat luong roi moi vao kho). Khong co o so hoa don tren
+        // form nhanh nen ghi ly do; can hoa don thi dung trang Lap phieu nhap.
+        var phieuMoi = await kho.taoPhieuNhap({
+          ly_do_khong_chung_tu: 'Nhập nhanh từ trang Kho nguyên liệu (mua lẻ)',
           ghi_chu: 'Nhập nhanh từ trang Kho nguyên liệu',
           dong: [{ id_nl, so_luong, don_gia: gia_nhap, han_su_dung: han_su_dung || '' }],
         }, req.session.staffId);
@@ -75,14 +96,15 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
         }
         throw e;
       }
-      res.redirect('/staff/kitchen/inventory');
+      // Sang trang phieu de thay trang thai (cho kiem tra chat luong...).
+      res.redirect(`/staff/kitchen/kho/phieu-nhap/${phieuMoi.id}`);
     } catch (err) {
       console.error(err);
       res.status(500).send('Server Error');
     }
   });
 
-  router.post('/staff/kitchen/ingredient/edit/:id', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/ingredient/edit/:id', canQuyen('kho.nguyen_lieu.quan_ly'), async (req, res) => {
     try {
       const data = { ...req.body };
       if (data.new_dvt && data.new_dvt.trim()) {
@@ -103,7 +125,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/ingredient/delete/:id', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/ingredient/delete/:id', canQuyen('kho.nguyen_lieu.quan_ly'), async (req, res) => {
     try {
       await menuService.deleteIngredient(req.params.id);
       res.redirect('/staff/kitchen/inventory');
@@ -114,7 +136,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
   });
 
   // Unit CRUD
-  router.post('/staff/kitchen/unit/add', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/unit/add', canQuyen('kho.nguyen_lieu.quan_ly'), async (req, res) => {
     try {
       await menuService.addUnit(req.body.ten_dvt);
       res.redirect('/staff/kitchen/inventory');
@@ -124,7 +146,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/unit/delete/:id', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/unit/delete/:id', canQuyen('kho.nguyen_lieu.quan_ly'), async (req, res) => {
     try {
       await menuService.deleteUnit(req.params.id);
       res.redirect('/staff/kitchen/inventory');
@@ -170,7 +192,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.get('/staff/kitchen/recipes', requireRole(['Bep']), async (req, res) => {
+  router.get('/staff/kitchen/recipes', canXemCongThuc, async (req, res) => {
     try {
       const dishes = await personnelService.getAllProducts();
       const ingredients = await menuService.getAllIngredients();
@@ -296,9 +318,41 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
+  // Tram quan ly mon: Bar chi do uong (loai DRINK / SAKE - BEER), Bep chi mon an, Ban dieu hanh tat ca.
+  const LA_DO_UONG = (tenLoai) => /DRINK|SAKE|BEER/i.test(String(tenLoai || ''));
+  const tramMon = (req) => {
+    const phien = req.session || {};
+    if (phien.adminlogin || phien.staffRole === 'Quan ly' || (req.hoSo && req.hoSo.ma_bp === 'DH')) return null;
+    return req.hoSo && req.hoSo.ma_bp === 'BAR' ? 'bar' : 'bep';
+  };
+  const dungTram = (req, tenLoai) => { const t = tramMon(req); return !t || (t === 'bar') === LA_DO_UONG(tenLoai); };
+  const tenLoaiCuaMon = async (idMon) => { const [[r]] = await db.query('SELECT m.name_mon, l.name_loai FROM monan m LEFT JOIN loai_mon l ON l.id_loai = m.id_loai WHERE m.id_mon = ?', [idMon]); return r || null; };
+  const TU_CHOI_TRAM = (req) => (tramMon(req) === 'bar' ? 'Bar chỉ quản lý đồ uống.' : 'Bếp chỉ quản lý món ăn; đồ uống do Bar quản lý.');
+
+  router.post('/staff/kitchen/dish/:id/trang-thai', requireRole(['Bep']), async (req, res) => {
+    try {
+      const m = await tenLoaiCuaMon(Number(req.params.id));
+      if (!m) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy món.' });
+      if (!dungTram(req, m.name_loai)) return res.status(403).json({ ok: false, thong_bao: TU_CHOI_TRAM(req) });
+      const ban = Number((req.body || {}).tinhtrang) === 1;
+      await personnelService.setTrangThaiMon(Number(req.params.id), ban ? 1 : 0);
+      require('../services/thongBaoService').gui('mon_tam_ngung', {
+        tieuDe: `${String(m.name_mon).trim()} ${ban ? 'đã bán lại' : 'tạm hết'}`,
+        noiDung: ban ? 'Món đã có lại trên thực đơn.' : 'Báo khách khi gọi món này; món đã ẩn khỏi thực đơn.',
+        link: '/staff/kitchen/dishes', mucDo: ban ? 'tin' : 'quan_trong', truNv: req.session.staffId,
+      }).catch(() => {});
+      res.json({ ok: true, tinhtrang: ban ? 1 : 0 });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ ok: false, thong_bao: 'Không cập nhật được, thử lại.' });
+    }
+  });
+
   // Dish manage by Kitchen
   router.post('/staff/kitchen/dish/add', requireRole(['Bep']), upload.single('images'), async (req, res) => {
     try {
+      const [[loai]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [req.body.id_loai]);
+      if (!loai || !dungTram(req, loai.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       const image = req.file ? req.file.filename : null;
       await personnelService.addProduct({ name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon, price: req.body.gia_mon, image });
       res.redirect('/staff/kitchen/dishes');
@@ -310,6 +364,8 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
 
   router.post('/staff/kitchen/dish/delete/:id', requireRole(['Bep']), async (req, res) => {
     try {
+      const m = await tenLoaiCuaMon(Number(req.params.id));
+      if (m && !dungTram(req, m.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       await personnelService.deleteProduct(req.params.id);
       res.redirect('/staff/kitchen/dishes');
     } catch (err) {
@@ -381,10 +437,12 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
 
   router.get('/staff/kitchen/dishes', requireRole(['Bep']), async (req, res) => {
     try {
-      const dishes = await personnelService.getAllProducts();
-      const categories = await personnelService.getAllCategories();
+      const tram = tramMon(req);
+      const dishes = (await personnelService.getAllProducts()).filter((d) => dungTram(req, d.name_loai));
+      const categories = (await personnelService.getAllCategories()).filter((c) => dungTram(req, c.name_loai));
       res.render('staff/kitchen/dishes', {
-        title: 'Quản lý Món ăn',
+        title: tram === 'bar' ? 'Quản lý đồ uống' : 'Quản lý Món ăn',
+        tram,
         dishes,
         categories,
         unread: await personnelService.countUnread(req.session.staffId),
@@ -396,7 +454,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.get('/staff/kitchen/shift', requireRole(['Bep']), async (req, res) => {
+  router.get('/staff/kitchen/shift', canTruongBep, async (req, res) => {
     try {
       const [history] = await db.query(`
         SELECT c.*, n.ten as ten_nv 

@@ -1,0 +1,143 @@
+<%#
+  NUT CHUONG THONG BAO dung chung: khu nhan vien, quan tri, app shipper, khach hang.
+  include('../partials/chuong-thong-bao', { laTb: 'nv' | 'quan_tri' | 'khach', trangTb: '/staff/thong-bao', toiTb: true|false })
+  - laTb: phien nao (API /api/thong-bao?la=...)
+  - toiTb: true khi dat tren nen toi (app shipper)
+%>
+<%
+  var _la = (typeof laTb !== 'undefined' && laTb) ? laTb : 'nv';
+  var _trang = (typeof trangTb !== 'undefined' && trangTb) ? trangTb : '/staff/thong-bao';
+  var _toi = (typeof toiTb !== 'undefined') && !!toiTb;
+%>
+<style>
+  .tb-chuong { position: relative; display: inline-flex; }
+  .tb-chuong__nut { position: relative; width: 38px; height: 38px; border-radius: 10px; border: 1px solid <%= _toi ? 'rgba(255,255,255,.25)' : '#e7ded0' %>;
+    background: <%= _toi ? 'rgba(255,255,255,.08)' : '#fff' %>; color: <%= _toi ? '#fff' : '#6b5f54' %>; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .tb-chuong__nut:hover, .tb-chuong__nut[aria-expanded="true"] { color: #c8a24b; border-color: #c8a24b; }
+  .tb-chuong__nut:focus-visible { outline: 2px solid #c8a24b; outline-offset: 2px; }
+  .tb-chuong__so { position: absolute; top: -6px; right: -6px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px;
+    background: #b3352c; color: #fff; font-size: 11px; font-weight: 700; line-height: 19px; text-align: center; box-shadow: 0 0 0 2px <%= _toi ? '#2c1810' : '#fff' %>; }
+  .tb-chuong__so[hidden] { display: none; }
+  .tb-chuong__khung { position: fixed; right: 12px; top: 64px; width: min(380px, 92vw); max-height: 70vh; display: flex; flex-direction: column;
+    background: #fff; color: #241a14; border: 1px solid #e7ded0; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.18); z-index: 10050; overflow: hidden; text-align: left; }
+  .tb-chuong__khung[hidden] { display: none; }
+  .tb-chuong__dau { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #f0e9df; font-weight: 700; font-size: .92rem; }
+  .tb-chuong__dau button { background: none; border: 0; color: #a9750f; font-size: .78rem; cursor: pointer; padding: 2px 4px; }
+  .tb-chuong__ds { overflow-y: auto; flex: 1; }
+  .tb-muc { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f6f1ea; cursor: pointer; text-decoration: none; color: inherit; }
+  .tb-muc:hover, .tb-muc:focus-visible { background: #fbf7f0; outline: none; }
+  .tb-muc--moi { background: #fffaf0; }
+  .tb-muc__icon { flex: 0 0 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .85rem; }
+  .tb-muc__icon--khan { background: #fbe4e2; color: #b3352c; }
+  .tb-muc__icon--quan_trong { background: #fdecdc; color: #c4561f; }
+  .tb-muc__icon--tin { background: #e8f0fb; color: #2a78d6; }
+  .tb-muc__than { flex: 1; min-width: 0; }
+  .tb-muc__tieu-de { font-weight: 600; font-size: .84rem; line-height: 1.35; }
+  .tb-muc__noi-dung { font-size: .78rem; color: #6b5f54; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+  .tb-muc__luc { font-size: .7rem; color: #9b8f84; margin-top: 3px; }
+  .tb-muc__cham { flex: 0 0 8px; height: 8px; border-radius: 50%; background: #b3352c; margin-top: 6px; }
+  .tb-chuong__trong { padding: 26px 14px; text-align: center; color: #9b8f84; font-size: .85rem; }
+  .tb-chuong__chan { display: block; text-align: center; padding: 9px; font-size: .82rem; font-weight: 600; color: #a9750f; border-top: 1px solid #f0e9df; text-decoration: none; }
+</style>
+<div class="tb-chuong" id="tbChuong" data-la="<%= _la %>">
+  <button type="button" class="tb-chuong__nut" id="tbNut" aria-haspopup="true" aria-expanded="false" aria-controls="tbKhung" aria-label="Thông báo">
+    <i class="fas fa-bell" aria-hidden="true"></i>
+    <span class="tb-chuong__so" id="tbSo" hidden aria-live="polite"></span>
+  </button>
+  <div class="tb-chuong__khung" id="tbKhung" hidden role="region" aria-label="Danh sách thông báo">
+    <div class="tb-chuong__dau"><span>Thông báo</span><button type="button" id="tbDocHet">Đánh dấu tất cả đã đọc</button></div>
+    <div class="tb-chuong__ds" id="tbDs"><div class="tb-chuong__trong">Đang tải…</div></div>
+    <a class="tb-chuong__chan" href="<%= _trang %>">Xem tất cả thông báo</a>
+  </div>
+</div>
+<script>
+(function () {
+  var LA = '<%= _la %>';
+  var nut = document.getElementById('tbNut'), khung = document.getElementById('tbKhung'),
+      so = document.getElementById('tbSo'), ds = document.getElementById('tbDs');
+  if (!nut) return;
+  var ICON = { khan: 'fa-triangle-exclamation', quan_trong: 'fa-circle-exclamation', tin: 'fa-bell' };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+  function truoc(t) {
+    var giay = Math.max(0, (Date.now() - new Date(t).getTime()) / 1000);
+    if (giay < 60) return 'vừa xong';
+    if (giay < 3600) return Math.floor(giay / 60) + ' phút trước';
+    if (giay < 86400) return Math.floor(giay / 3600) + ' giờ trước';
+    var d = new Date(t); return d.getDate() + '/' + (d.getMonth() + 1) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function datSo(n) {
+    n = Number(n) || 0;
+    so.hidden = n <= 0;
+    so.textContent = n > 99 ? '99+' : String(n);
+    nut.setAttribute('aria-label', n ? 'Thông báo, ' + n + ' chưa đọc' : 'Thông báo');
+  }
+  function ve(list) {
+    if (!list.length) { ds.innerHTML = '<div class="tb-chuong__trong"><i class="fas fa-bell-slash"></i><br>Chưa có thông báo nào.</div>'; return; }
+    ds.innerHTML = list.map(function (t) {
+      var md = ICON[t.muc_do] ? t.muc_do : 'tin';
+      return '<a class="tb-muc' + (t.da_doc ? '' : ' tb-muc--moi') + '" href="' + esc(t.link || '<%= _trang %>') + '" data-id="' + t.id + '">' +
+        '<span class="tb-muc__icon tb-muc__icon--' + md + '"><i class="fas ' + ICON[md] + '" aria-hidden="true"></i></span>' +
+        '<span class="tb-muc__than"><span class="tb-muc__tieu-de">' + esc(t.tieu_de) + '</span>' +
+        (t.noi_dung && t.noi_dung !== t.tieu_de ? '<span class="tb-muc__noi-dung">' + esc(t.noi_dung) + '</span>' : '') +
+        '<span class="tb-muc__luc">' + esc(truoc(t.created_at)) + (t.nguoi_gui ? ' · ' + esc(t.nguoi_gui) : '') + '</span></span>' +
+        (t.da_doc ? '' : '<span class="tb-muc__cham" aria-label="chưa đọc"></span>') + '</a>';
+    }).join('');
+  }
+  function tai() {
+    return fetch('/api/thong-bao?la=' + LA + '&gioi_han=15', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (!d || !d.ok) return; datSo(d.chua_doc); ve(d.ds || []); })
+      .catch(function () {});
+  }
+  // Khung gan thang vao <body> + position:fixed: thanh tren cung co backdrop-filter
+  // (tao stacking context) nen khung nam trong do se bi the noi dung de len.
+  if (khung.parentNode !== document.body) document.body.appendChild(khung);
+  function datViTri() {
+    var r = nut.getBoundingClientRect();
+    khung.style.top = Math.round(r.bottom + 8) + 'px';
+    // Canh mep phai theo nut, nhung khong de tran mep trai man hinh (dien thoai).
+    var rong = Math.min(380, window.innerWidth - 16);
+    var trai = Math.max(8, Math.min(Math.round(r.right - rong), window.innerWidth - rong - 8));
+    khung.style.right = 'auto';
+    khung.style.left = trai + 'px';
+    khung.style.width = rong + 'px';
+  }
+  window.addEventListener('resize', function () { if (!khung.hidden) datViTri(); });
+  window.addEventListener('scroll', function () { if (!khung.hidden) datViTri(); }, true);
+  function mo(bat) {
+    if (bat) datViTri();
+    khung.hidden = !bat;
+    nut.setAttribute('aria-expanded', bat ? 'true' : 'false');
+    if (bat) tai();
+  }
+  nut.addEventListener('click', function (e) { e.stopPropagation(); mo(khung.hidden); });
+  document.addEventListener('click', function (e) { if (!khung.hidden && !document.getElementById('tbChuong').contains(e.target) && !khung.contains(e.target)) mo(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !khung.hidden) { mo(false); nut.focus(); } });
+  ds.addEventListener('click', function (e) {
+    var a = e.target.closest('.tb-muc');
+    if (!a) return;
+    e.preventDefault();
+    var den = a.getAttribute('href');
+    fetch('/api/thong-bao/' + a.dataset.id + '/doc?la=' + LA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: '{}' })
+      .catch(function () {}).then(function () { location.href = den; });
+  });
+  document.getElementById('tbDocHet').addEventListener('click', function () {
+    fetch('/api/thong-bao/doc-tat-ca?la=' + LA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: '{}' })
+      .then(function () { tai(); }).catch(function () {});
+  });
+
+  // Realtime: thong bao moi -> tang so ngay (dung lai socket cua RT neu co).
+  function coMoi(d) {
+    if (!d || !d.id) return;   // su kien cu khong luu DB (khong co id) - bo qua dem
+    tai();
+  }
+  // Trang khach / app shipper nap socket.io SAU phan dau trang -> doi trang tai xong.
+  function noiRealtime() {
+    if (window.RT && typeof RT.khi === 'function' && LA === 'nv') RT.khi('thong-bao:moi', coMoi);
+    else if (typeof io !== 'undefined') { try { io({ transports: ['websocket', 'polling'] }).on('thong-bao:moi', coMoi); } catch (e) {} }
+  }
+  if (document.readyState === 'complete') noiRealtime(); else window.addEventListener('load', noiRealtime);
+  tai();
+  setInterval(function () { if (!document.hidden) tai(); }, 120000);   // luoi an toan khi socket roi
+})();
+</script>

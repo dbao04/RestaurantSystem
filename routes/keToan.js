@@ -11,6 +11,16 @@ const express = require('express');
 
 module.exports = function ({ db, personnelService, requireRole }) {
   const router = express.Router();
+  const ktLuong = require('../services/accountantService');
+  const veLuong = (res, m, y, msg, loai = 'success') =>
+    res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(msg)}&msgType=${loai}`);
+  const thangNam = (b) => ({ m: parseInt(b.month || b.thang, 10) || new Date().getMonth() + 1, y: parseInt(b.year || b.nam, 10) || new Date().getFullYear() });
+  /** Loi nghiep vu luong -> hien thong bao; loi khac -> 500. */
+  const xuLyLoiLuong = (res, m, y, err) => {
+    if (err && err.name === 'LoiLuong') return veLuong(res, m, y, err.message, 'danger');
+    console.error(err);
+    return res.status(500).send('Server Error');
+  };
 
   // --- ACCOUNTANT MANAGEMENT (Role: 'Ke toan') ---
 
@@ -117,7 +127,7 @@ module.exports = function ({ db, personnelService, requireRole }) {
       const { month, year } = req.body;
       const m = parseInt(month) || new Date().getMonth() + 1;
       const y = parseInt(year) || new Date().getFullYear();
-      const count = await personnelService.submitAllSalaries(m, y);
+      const count = await ktLuong.submitAllSalaries(m, y, req.session.staffId || null);
       res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(`Đã gửi ${count} bảng lương sang Quản trị viên phê duyệt!`)}&msgType=success`);
     } catch (err) {
       console.error(err);
@@ -133,12 +143,35 @@ module.exports = function ({ db, personnelService, requireRole }) {
       const { month, year } = req.body;
       const m = parseInt(month) || new Date().getMonth() + 1;
       const y = parseInt(year) || new Date().getFullYear();
-      const count = await personnelService.payAllSalaries(m, y);
-      res.redirect(`/staff/accountant/salary?month=${m}&year=${y}&msg=${encodeURIComponent(`Đã xác nhận chi trả lương cho ${count} nhân viên!`)}&msgType=success`);
+      try {
+        const kq = await ktLuong.paySalaries(m, y, { phuongThuc: req.body.phuong_thuc || 'chuyen_khoan', idNvChi: req.session.staffId || null });
+        return veLuong(res, m, y, `Đã chi lương cho ${kq.so_nv} nhân viên, tổng ${kq.tong.toLocaleString('vi-VN')}đ - phiếu chi ${kq.ma_phieu} đã vào sổ quỹ.`);
+      } catch (e) { return xuLyLoiLuong(res, m, y, e); }
     } catch (err) {
       console.error(err);
       res.status(500).send('Server Error: ' + err.message);
     }
+  });
+
+  /*
+   * QUAN LY duyet / tra ve bang luong (truoc day route nay bi xoa o commit
+   * 1ac9e70 -> khong ai duyet duoc). Ke toan KHONG duyet (phan tach trach nhiem);
+   * Ke toan truong dong vai Quan ly nhung khong duyet duoc bang chinh minh gui.
+   */
+  router.post('/staff/accountant/salary/approve-all', requireRole(['Quan ly']), async (req, res) => {
+    const { m, y } = thangNam(req.body);
+    try {
+      const n = await ktLuong.approveAllSalaries(m, y, req.session.staffId || null);
+      veLuong(res, m, y, n ? `Đã duyệt ${n} bảng lương tháng ${m}/${y}. Kế toán có thể chi lương.` : 'Không có bảng lương nào chờ duyệt.', n ? 'success' : 'warning');
+    } catch (e) { xuLyLoiLuong(res, m, y, e); }
+  });
+
+  router.post('/staff/accountant/salary/reject-all', requireRole(['Quan ly']), async (req, res) => {
+    const { m, y } = thangNam(req.body);
+    try {
+      const n = await ktLuong.rejectAllSalaries(m, y, req.body.ly_do, req.session.staffId || null);
+      veLuong(res, m, y, `Đã trả ${n} bảng lương về dự thảo kèm lý do.`, 'warning');
+    } catch (e) { xuLyLoiLuong(res, m, y, e); }
   });
 
   router.get('/staff/accountant/salary/pay-all', (req, res) => res.redirect('/staff/accountant/salary'));
@@ -149,7 +182,7 @@ module.exports = function ({ db, personnelService, requireRole }) {
       if (Number(luong_cung) < 0 || Number(thuong) < 0 || Number(phu_cap) < 0 || Number(phat || 0) < 0) {
         return res.send('<script>alert("Các khoản lương, thưởng, phụ cấp không được nhỏ hơn 0!"); history.back();</script>');
       }
-      await personnelService.upsertSalary(req.body);
+      try { await ktLuong.upsertSalary(req.body); } catch (e) { return xuLyLoiLuong(res, thang, nam, e); }
       res.redirect(`/staff/accountant/salary?month=${thang}&year=${nam}&msg=${encodeURIComponent('Đã lưu thông tin bảng lương!')}&msgType=success`);
     } catch (err) {
       console.error(err);
@@ -348,7 +381,7 @@ module.exports = function ({ db, personnelService, requireRole }) {
   // Gửi duyệt lương
   router.post('/staff/accountant/salary/submit/:id', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
     try {
-      await personnelService.submitSalaryForApproval(req.params.id);
+      await ktLuong.submitSalaryForApproval(req.params.id, req.session.staffId || null);
       res.redirect('/staff/accountant/salary');
     } catch (err) {
       console.error(err);
@@ -359,8 +392,11 @@ module.exports = function ({ db, personnelService, requireRole }) {
   // Chi lương (Thanh toán)
   router.post('/staff/accountant/salary/pay/:id', requireRole(['Ke toan', 'Quan ly']), async (req, res) => {
     try {
-      await personnelService.paySalary(req.params.id);
-      res.redirect('/staff/accountant/salary');
+      const [[l]] = await db.query('SELECT thang, nam FROM luong WHERE id_luong = ?', [req.params.id]);
+      try {
+        const kq = await ktLuong.paySalary(req.params.id, { phuongThuc: req.body.phuong_thuc || 'chuyen_khoan', idNvChi: req.session.staffId || null });
+        return veLuong(res, l.thang, l.nam, `Đã chi ${kq.tong.toLocaleString('vi-VN')}đ - phiếu chi ${kq.ma_phieu}.`);
+      } catch (e) { return xuLyLoiLuong(res, l ? l.thang : '', l ? l.nam : '', e); }
     } catch (err) {
       console.error(err);
       res.status(500).send('Server Error');

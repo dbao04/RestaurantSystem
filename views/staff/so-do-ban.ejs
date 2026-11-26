@@ -560,7 +560,7 @@
     <div class="sdb-nav-links">
       <div class="sdb-date-picker">
         <i class="fas fa-calendar-days" style="color:var(--sdb-gold);"></i>
-        <input type="date" id="chonNgaySDB" class="sdb-date-input" onchange="doiNgayXem(this.value)" />
+        <input type="date" id="chonNgaySDB" data-loc-ngay="mot" class="sdb-date-input" onchange="doiNgayXem(this.value)" />
         <button class="sdb-btn-today" onclick="veHomNay()"><i class="fas fa-rotate-left"></i>Hôm nay</button>
       </div>
       <a class="sdb-link-btn" href="/kds"><i class="fas fa-fire-burner" style="color:var(--sdb-gold);"></i>Màn hình bếp</a>
@@ -641,7 +641,7 @@
       <div style="display:grid; grid-template-columns:80px 1fr; gap:6px; align-items:center;">
         <label class="mb-0">Số lượng</label><input type="number" id="huySdbSl" class="form-control form-control-sm" min="1" step="1">
         <label class="mb-0">Lý do</label><select id="huySdbLyDo" class="form-control form-control-sm"></select>
-        <label class="mb-0">Ghi chú</label><input type="text" id="huySdbGhiChu" class="form-control form-control-sm" maxlength="255" placeholder="Bắt buộc nếu chọn Lý do khác">
+        <label class="mb-0" for="huySdbGhiChu">Giải trình <span style="color:#b3352c">*</span></label><textarea id="huySdbGhiChu" class="form-control form-control-sm" maxlength="255" rows="2" placeholder="Bắt buộc, ít nhất 10 ký tự - gửi tới quản lý và giám sát"></textarea>
       </div>
       <div id="huySdbLoi" style="color:#b3352c; margin-top:6px;"></div>
       <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
@@ -1134,6 +1134,11 @@ async function moHuyMonSdb(m) {
 function dongHuyMonSdb() { monDangHuy = null; const h = $('hopHuyMonSdb'); if (h) h.style.display = 'none'; }
 async function xacNhanHuyMonSdb() {
   if (!monDangHuy) return;
+  if ($('huySdbGhiChu').value.trim().length < 10) {
+    $('huySdbLoi').textContent = 'Phải nhập giải trình vì sao xóa món (ít nhất 10 ký tự).';
+    $('huySdbGhiChu').focus();
+    return;
+  }
   const nut = $('huySdbXacNhan');
   nut.disabled = true;
   try {
@@ -1203,7 +1208,10 @@ async function taiThucDon() {
 
 async function moModalOrder() {
   if (!banDangChon) return;
-  dongHop(); // đóng popup nhỏ
+  // Chi AN popup nho, KHONG goi dongHop(): dongHop() xoa banDangChon = null
+  // lam dong ngay duoi (banDangChon.number_ban) loi va nut goi mon "chet".
+  $('lop').style.display = 'none';
+  dongHuyMonSdb();
   monDangChonOrder = {};
   $('orderTieuDe').textContent = 'Gọi món - Bàn ' + banDangChon.number_ban;
   $('orderPhuDe').textContent = banDangChon.sesis_hien_tai 
@@ -1349,6 +1357,12 @@ async function doiTrangThai(tt) {
     });
     const kq = await r.json();
     if (!r.ok) throw new Error(kq.loi || 'Lỗi');
+    // Mo ban trong (chua co phien) -> vao thang man goi mon cho ban do.
+    // Phien don duoc tao khi gui mon dau tien (/so-do-ban/api/order-mon).
+    if (Number(tt) === 1 && !banDangChon.sesis_hien_tai) {
+      await tai();
+      return moModalOrder();
+    }
     dongHop();
     await tai();
   } catch (e) {

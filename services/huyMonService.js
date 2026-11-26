@@ -71,13 +71,20 @@ async function damBaoBang() {
  * @param {string} [o.ghiChu]
  * @param {{id:number|null, ten:string, laQuanLy:boolean}} o.nhanVien
  */
+/** Giai trinh toi thieu bao nhieu ky tu - ngan "abc", "." cho qua. */
+const GIAI_TRINH_TOI_THIEU = 10;
+
 async function huyMon(idDong, { soLuong, maLyDo, ghiChu = '', nhanVien }) {
   await damBaoBang();
   const id = Number(idDong);
   if (!Number.isInteger(id) || id <= 0) throw new LoiHuyMon('Món không hợp lệ.');
   if (!LY_DO[maLyDo]) throw new LoiHuyMon('Vui lòng chọn lý do hủy món.');
   const ghiChuSach = String(ghiChu || '').trim().slice(0, 255);
-  if (maLyDo === 'khac' && !ghiChuSach) throw new LoiHuyMon('Chọn "Lý do khác" thì phải ghi rõ lý do.');
+  // MOI lan xoa mon deu phai GIAI TRINH (khong chi khi chon "Ly do khac"):
+  // quan ly / giam sat nhan thong bao kem giai trinh nay de kiem soat.
+  if (ghiChuSach.length < GIAI_TRINH_TOI_THIEU) {
+    throw new LoiHuyMon(`Phải nhập giải trình vì sao xóa món (ít nhất ${GIAI_TRINH_TOI_THIEU} ký tự) - quản lý và giám sát sẽ nhận được giải trình này.`, 'CAN_GIAI_TRINH');
+  }
 
   const conn = await db.getConnection();
   try {
@@ -129,17 +136,88 @@ async function huyMon(idDong, { soLuong, maLyDo, ghiChu = '', nhanVien }) {
       `UPDATE payments SET status = 'failed', notes = CONCAT(COALESCE(notes,''), ' | hủy vì đơn có món bị hủy')
        WHERE sesis = ? AND status = 'pending'`, [dong.sesis]);
 
+    const [kqHuy] = await conn.query('SELECT LAST_INSERT_ID() AS id');
     await conn.commit();
-    return {
+    const ketQua = {
       id, sesis: dong.sesis, id_mon: dong.id_mon, name_mon: dong.name_mon,
       so_luong_huy: sl, con_lai: moi, gia_tri: donGia * sl, trangthai_bep: bep,
+      id_huy: kqHuy[0] ? kqHuy[0].id : null,
     };
+    // Thong bao SAU commit, loi thong bao khong duoc lam hong viec huy da xong.
+    ketQua.so_nguoi_nhan = await thongBaoHuyMon(ketQua, { nhanVien, maLyDo, giaiTrinh: ghiChuSach })
+      .catch((e) => { console.error('[huy-mon] không gửi được thông báo:', e.message); return 0; });
+    return ketQua;
   } catch (err) {
     await conn.rollback();
     throw err;
   } finally {
     conn.release();
   }
+}
+
+/**
+ * Nguoi nhan thong bao xoa mon: QUAN LY va GIAM SAT khu phuc vu khach -
+ * chuc danh cap 1-2 bo phan Dieu hanh (Quan ly nha hang, Tro ly quan ly) va
+ * moi chuc danh "Giam sat ..." (phuc vu, thu ngan). Khong tinh nguoi vua huy.
+ */
+async function nguoiNhanThongBao(truIdNv = null) {
+  const [ds] = await db.query(
+    `SELECT DISTINCT n.id_nv FROM nhan_vien n
+       JOIN chuc_danh cd ON cd.id_cd = n.id_cd
+       LEFT JOIN bo_phan bp ON bp.id_bp = cd.id_bp
+      WHERE n.trangthai = 1
+        AND ((bp.ten_bp = 'Điều hành' AND cd.cap_bac <= 2) OR cd.ten_cd LIKE 'Giám sát%')
+        AND (? IS NULL OR n.id_nv <> ?)`, [truIdNv, truIdNv]);
+  return ds.map((r) => r.id_nv);
+}
+
+/** Luu thong bao (bang thong_bao) cho tung nguoi nhan + day realtime toi man hinh ho. */
+async function thongBaoHuyMon(kq, { nhanVien = {}, maLyDo, giaiTrinh }) {
+  const ids = await nguoiNhanThongBao(nhanVien.id || null);
+  const [[don]] = await db.query(
+    `SELECT b.number_ban FROM hopdong h LEFT JOIN ban b ON b.Id_ban = h.id_ban WHERE h.sesis = ? LIMIT 1`, [kq.sesis]);
+  const noiBan = don && don.number_ban ? `Bàn ${don.number_ban}` : `đơn ${String(kq.sesis).slice(0, 16)}`;
+  const tien = Math.round(kq.gia_tri).toLocaleString('vi-VN') + 'đ';
+  const ai = nhanVien.ten || 'Không rõ';
+  const tieuDe = `Xóa món: ${String(kq.name_mon).trim()} x${kq.so_luong_huy} - ${noiBan} (${tien})`.slice(0, 300);
+  const noiDung = [
+    `${ai} đã xóa ${kq.so_luong_huy} phần "${String(kq.name_mon).trim()}" của ${noiBan}, trị giá ${tien}.`,
+    `Lý do: ${LY_DO[maLyDo] || maLyDo}.`,
+    `Giải trình: ${giaiTrinh}`,
+    `Trạng thái bếp lúc xóa: ${TEN_BEP[kq.trangthai_bep] || kq.trangthai_bep}${kq.trangthai_bep >= 1 ? ' (đã làm - nguyên liệu tính hao hụt)' : ''}.`,
+  ].join('\n');
+  // Gui qua dich vu thong bao trung tam (luong 'huy_mon': quan ly + giam sat + quan tri).
+  await require('./thongBaoService').gui('huy_mon', {
+    nv: ids, nhom: [], tieuDe, noiDung, link: '/staff/huy-mon/nhat-ky', nguoiGui: ai,
+  });
+  return ids.length;
+}
+
+/**
+ * Nhat ky xoa mon cho quan ly / giam sat: loc theo khoang ngay va nguoi xoa,
+ * kem tong hop theo nhan vien de thay ai xoa nhieu bat thuong.
+ */
+async function nhatKy({ tuNgay, denNgay, idNv = null } = {}) {
+  await damBaoBang();
+  const dk = ['DATE(m.tao_luc) BETWEEN ? AND ?'];
+  const ts = [tuNgay, denNgay];
+  if (idNv) { dk.push('m.id_nv = ?'); ts.push(Number(idNv)); }
+  const [ds] = await db.query(
+    `SELECT m.*, b.number_ban FROM huy_mon m
+       LEFT JOIN hopdong h ON h.id = m.id_dong
+       LEFT JOIN ban b ON b.Id_ban = h.id_ban
+      WHERE ${dk.join(' AND ')} ORDER BY m.id DESC LIMIT 500`, ts);
+  const [theoNv] = await db.query(
+    `SELECT m.id_nv, COALESCE(m.ten_nv, 'Không rõ') AS ten_nv, COUNT(*) AS so_lan,
+            SUM(m.so_luong) AS so_phan, SUM(m.gia_tri) AS gia_tri,
+            SUM(m.trangthai_bep >= 1) AS da_nau
+       FROM huy_mon m WHERE ${dk.join(' AND ')}
+      GROUP BY m.id_nv, m.ten_nv ORDER BY gia_tri DESC`, ts);
+  return {
+    ds: ds.map((r) => ({ ...r, ten_ly_do: LY_DO[r.ma_ly_do] || r.ma_ly_do, ten_bep: TEN_BEP[r.trangthai_bep] })),
+    theoNv: theoNv.map((r) => ({ ...r, so_lan: Number(r.so_lan), so_phan: Number(r.so_phan), gia_tri: Number(r.gia_tri), da_nau: Number(r.da_nau) })),
+    tong: ds.reduce((s, r) => s + Number(r.gia_tri), 0),
+  };
 }
 
 /** Nhat ky huy mon cua mot don (moi nhat truoc). */
@@ -149,4 +227,4 @@ async function lichSuCuaDon(sesis) {
   return rows.map((r) => ({ ...r, ten_ly_do: LY_DO[r.ma_ly_do] || r.ma_ly_do, ten_bep: TEN_BEP[r.trangthai_bep] }));
 }
 
-module.exports = { huyMon, lichSuCuaDon, LY_DO, LoiHuyMon, damBaoBang };
+module.exports = { huyMon, lichSuCuaDon, nhatKy, nguoiNhanThongBao, LY_DO, LoiHuyMon, damBaoBang, GIAI_TRINH_TOI_THIEU };

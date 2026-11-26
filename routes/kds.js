@@ -34,6 +34,24 @@ function quyenKds(req) {
   };
 }
 
+/**
+ * Ai duoc XEM man bep (KDS) va so do ban: nguoi lam van hanh tai nha hang -
+ * bep / bar, phuc vu / quay / le tan, thu ngan, quan ly, dieu phoi giao hang.
+ * Truoc day moi nhan vien dang nhap deu vao duoc (che do chi xem) nen bo phan
+ * Kho, Ke toan cung thay man bep du khong lien quan. Kho xem ton kho o trang kho.
+ */
+function duocXemVanHanh(req, man = 'kds') {
+  const phien = req.session || {};
+  if (phien.adminlogin) return true;
+  if (!phien.stafflogin) return false;
+  const co = (ds) => ds.includes(phien.staffRole) || phanQuyen.dongVaiDuoc(req.hoSo, ds);
+  if (phien.staffRole === 'Quan ly' || (req.hoSo && req.hoSo.ma_bp === 'DH')) return true;
+  // Man bep: bep / bar, phuc vu (theo doi mon ra), dieu phoi giao hang (don giao xong chua).
+  if (man === 'kds') return co(['Bep', 'Phuc vu']) || !!(req.hoSo && req.hoSo.ma_cd === 'DPGH');
+  // So do ban: phuc vu, le tan (don khach), thu ngan (tinh tien theo ban).
+  return co(['Phuc vu', 'Quay', 'letan', 'Thu ngan']);
+}
+
 /** Buoc nao can quyen nao. */
 const QUYEN_BUOC = {
   'bat-dau': 'bep',
@@ -50,6 +68,19 @@ module.exports = function (io) {
   function requireNhanSu(req, res, next) {
     if (req.session.adminlogin || req.session.stafflogin) return next();
     return res.redirect('/staff/login');
+  }
+
+  /** Man bep / so do ban: chi nguoi lam van hanh (xem duocXemVanHanh). */
+  function requireVanHanh(req, res, next) {
+    if (!req.session.adminlogin && !req.session.stafflogin) return res.redirect('/staff/login');
+    const man = /so-do-ban/.test(req.originalUrl) ? 'so_do' : 'kds';
+    if (duocXemVanHanh(req, man)) return next();
+    const muonJson = req.xhr || req.path.includes('/api/') || (req.headers.accept || '').includes('json');
+    const thongDiep = man === 'kds'
+      ? 'Màn hình bếp dành cho bộ phận Bếp / Bar, Phục vụ và Điều phối giao hàng.'
+      : 'Sơ đồ bàn dành cho bộ phận Phục vụ, Lễ tân và Thu ngân.';
+    if (muonJson) return res.status(403).json({ loi: thongDiep });
+    return res.status(403).render('error', { title: 'Không có quyền truy cập', message: thongDiep, statusCode: 403, hoSo: res.locals.hoSo || null });
   }
 
   /**
@@ -70,15 +101,18 @@ module.exports = function (io) {
   }
 
   // ---------------------------------------------------------------- KDS
-  router.get(['/kds', '/staff/kds', '/staff/kitchen'], requireNhanSu, bat(async (req, res) => {
+  router.get(['/kds', '/staff/kds', '/staff/kitchen'], requireVanHanh, bat(async (req, res) => {
     res.render('staff/kds', {
       tenNguoiDung: req.session.adminname || req.session.staffName || 'Nhân viên',
       vaiTro: req.session.staffRole || (req.session.adminlogin ? 'Admin' : ''),
       quyen: quyenKds(req),
+      // Tram: bar chi do uong, bep chi mon an; mac dinh theo bo phan nguoi dung.
+      tramMacDinh: ['bep', 'bar', 'tat_ca'].includes(req.query.tram) ? req.query.tram
+        : (req.hoSo && req.hoSo.ma_bp === 'BAR') ? 'bar' : (req.hoSo && req.hoSo.ma_bp === 'BEP') ? 'bep' : 'tat_ca',
     });
   }));
 
-  router.get(['/kds/api/don', '/staff/kitchen/api/don'], requireNhanSu, bat(async (req, res) => {
+  router.get(['/kds/api/don', '/staff/kitchen/api/don'], requireVanHanh, bat(async (req, res) => {
     // duKien() doc san danh sach bep (layDonBep) va gan them thoi gian du kien:
     // con_phut (con bao lau xong) va sap_tre (da cho + con lai > cam ket).
     const [duKien, daPhucVu, thongKe] = await Promise.all([
@@ -123,7 +157,7 @@ module.exports = function (io) {
   }));
 
   // ------------------------------------------------------------ So do ban
-  router.get(['/so-do-ban', '/staff/so-do-ban'], requireNhanSu, bat(async (req, res) => {
+  router.get(['/so-do-ban', '/staff/so-do-ban'], requireVanHanh, bat(async (req, res) => {
     res.render('staff/so-do-ban', {
       title: 'Sơ đồ bàn thời gian thực',
       activePage: 'sodoban',
@@ -133,7 +167,7 @@ module.exports = function (io) {
     });
   }));
 
-  router.get('/so-do-ban/api/du-lieu', requireNhanSu, bat(async (req, res) => {
+  router.get('/so-do-ban/api/du-lieu', requireVanHanh, bat(async (req, res) => {
     const ngay = req.query.ngay || null;
     const [ban, viTri, thongKe] = await Promise.all([
       kds.laySoDoBan(ngay),
@@ -143,7 +177,7 @@ module.exports = function (io) {
     res.json({ ban, vi_tri: viTri, thong_ke: thongKe });
   }));
 
-  router.post('/so-do-ban/api/trang-thai/:id', requireNhanSu, bat(async (req, res) => {
+  router.post('/so-do-ban/api/trang-thai/:id', requireVanHanh, bat(async (req, res) => {
     try {
       const ban = await kds.doiTrangThaiBan(
         Number(req.params.id),
@@ -173,7 +207,7 @@ module.exports = function (io) {
   }));
 
   /** Lấy danh sách món hiện tại của bàn */
-  router.get('/so-do-ban/api/mon-cua-ban/:id', requireNhanSu, bat(async (req, res) => {
+  router.get('/so-do-ban/api/mon-cua-ban/:id', requireVanHanh, bat(async (req, res) => {
     const idBan = Number(req.params.id);
     const db = require('../config/db');
     const [banRows] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);
@@ -195,7 +229,7 @@ module.exports = function (io) {
   }));
 
   /** Nhân viên phục vụ gọi món / thêm món trực tiếp cho bàn */
-  router.post('/so-do-ban/api/order-mon/:id', requireNhanSu, bat(async (req, res) => {
+  router.post('/so-do-ban/api/order-mon/:id', requireVanHanh, bat(async (req, res) => {
     const idBan = Number(req.params.id);
     const { items, so_khach, ghi_chu } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
@@ -225,6 +259,18 @@ module.exports = function (io) {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
 
+    // Bàn có lượt đặt mà khách ĐÃ ĐẾN (ARRIVED) nhưng chưa xếp bàn: gọi món
+    // vào chính lượt đặt đó (addDishToOrder sẽ tự chuyển sang SEATED), không
+    // mở phiên vãng lai thứ hai trên cùng bàn.
+    if (!sesis) {
+      const [[luot]] = await db.query(
+        `SELECT r.reservation_code FROM reservations r
+           JOIN reservation_tables rt ON rt.reservation_id = r.id
+          WHERE rt.table_id = ? AND r.status = 'ARRIVED' AND r.reservation_date = CURDATE()
+          ORDER BY r.arrived_at DESC LIMIT 1`, [idBan]);
+      if (luot) sesis = luot.reservation_code;
+    }
+
     // Nếu bàn chưa có phiên (bàn trống), khởi tạo phiên mới
     if (!sesis) {
       sesis = 'TB_' + Date.now().toString(36).toUpperCase();
@@ -247,6 +293,8 @@ module.exports = function (io) {
 
     // Đảm bảo id_ban được gắn vào tất cả các dòng của đơn
     await db.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ? AND (id_ban IS NULL OR id_ban = 0)', [idBan, sesis]);
+    // Phuc vu goi mon cho ban -> nhan thong bao "mon xong" cua ban nay.
+    await require('../services/thongBaoNghiepVu').ghiNhanPhucVu(sesis, req.session.staffId);
 
     // Lấy thông tin bàn mới nhất
     const [banCapNhat] = await db.query('SELECT Id_ban, number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);

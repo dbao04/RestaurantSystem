@@ -110,9 +110,46 @@ async function truLoFIFO(conn, idNl, soLuong) {
 // ------------------------------------------------------------------ phieu nhap
 
 /**
- * @param {{id_ncc, ghi_chu, id_dmh, dong: {id_nl, so_luong, don_gia, so_lo, han_su_dung}[]}} body
+ * Ghi MOT dong phieu nhap vao kho: so luong dat -> lo hang, cong ton, gia von
+ * binh quan gia quyen, cong "da nhan" cua don mua. Dung chung cho nhap truc
+ * tiep (noi bo / tat QC) va buoc kiem tra chat luong (duyetNhapKhoService).
  */
-async function taoPhieuNhap(body, idNv) {
+async function nhapDongVaoKho(conn, { idCt, idNl, soLuong, donGia, idDmh }) {
+  const [[nl]] = await conn.query('SELECT so_luong, gia_von FROM nguyen_lieu WHERE id_nl = ? FOR UPDATE', [idNl]);
+  if (!nl) throw new LoiKho('Nguyên liệu không tồn tại.');
+  await conn.query('UPDATE chi_tiet_phieu_nhap SET so_luong = ?, so_luong_con_lai = ? WHERE id_ct = ?', [soLuong, soLuong, idCt]);
+  const ton = Math.max(0, Number(nl.so_luong));
+  const giaMoi = ton + soLuong > 0 && donGia > 0
+    ? (ton * Number(nl.gia_von) + soLuong * donGia) / (ton + soLuong)
+    : Number(nl.gia_von);
+  await conn.query('UPDATE nguyen_lieu SET so_luong = so_luong + ?, gia_von = ? WHERE id_nl = ?', [soLuong, Math.round(giaMoi * 100) / 100, idNl]);
+  if (idDmh) {
+    await conn.query('UPDATE chi_tiet_don_mua SET so_luong_da_nhan = so_luong_da_nhan + ? WHERE id_dmh = ? AND id_nl = ?', [soLuong, idDmh, idNl]);
+  }
+}
+
+/** Don mua sau mot lan nhan hang: con thieu -> 'nhan_mot_phan', du -> 'da_nhan'. */
+async function capNhatTrangThaiDonSauNhan(conn, idDmh) {
+  const [[con]] = await conn.query(
+    'SELECT SUM(so_luong_da_nhan < so_luong) AS thieu FROM chi_tiet_don_mua WHERE id_dmh = ?', [idDmh]);
+  await conn.query('UPDATE don_mua_hang SET trang_thai = ? WHERE id_dmh = ?', [Number(con.thieu) > 0 ? 'nhan_mot_phan' : 'da_nhan', idDmh]);
+}
+
+/**
+ * Lap phieu nhap.
+ *
+ * Phieu NHAN HANG thuong (thu kho lap) di qua quy trinh duyet
+ * (services/duyetNhapKhoService.js): bat buoc so hoa don / phieu giao hang
+ * (hoac ly do khong co), roi CHO bep truong kiem chat luong - hang CHUA vao kho.
+ * Tat buoc QC trong cau hinh -> vao kho ngay va sang buoc ke toan.
+ *
+ * `noiBo: true` (dieu chinh kiem ke thua...): vao kho ngay, 'da_duyet' - khong
+ * phai mua hang, khong phat sinh cong no.
+ *
+ * @param {{id_ncc, ghi_chu, id_dmh, so_chung_tu, ly_do_khong_chung_tu, anh_chung_tu,
+ *          dong: {id_nl, so_luong, don_gia, so_lo, han_su_dung}[]}} body
+ */
+async function taoPhieuNhap(body, idNv, { noiBo = false } = {}) {
   const dong = (Array.isArray(body.dong) ? body.dong : [])
     .map((d) => ({ id_nl: Number(d.id_nl), so_luong: so(d.so_luong), don_gia: so(d.don_gia), so_lo: String(d.so_lo || '').trim().slice(0, 50), han_su_dung: String(d.han_su_dung || '') }))
     .filter((d) => d.id_nl);
@@ -124,54 +161,61 @@ async function taoPhieuNhap(body, idNv) {
   }
   const idNcc = Number(body.id_ncc) || null;
   const idDmh = Number(body.id_dmh) || null;
-  // Them cot cong no TRUOC transaction: ALTER TABLE trong MySQL tu commit ngam.
+  const soChungTu = String(body.so_chung_tu || '').trim().slice(0, 60);
+  const lyDoKhongCt = String(body.ly_do_khong_chung_tu || '').trim().slice(0, 255);
+  if (!noiBo && !soChungTu && lyDoKhongCt.length < 5) {
+    throw new LoiKho('Nhập số hóa đơn / phiếu giao hàng của nhà cung cấp, hoặc ghi lý do không có chứng từ (vd: mua chợ).');
+  }
+  // Them cot TRUOC transaction: ALTER TABLE trong MySQL tu commit ngam.
   const congNo = require('./congNoNccService');
+  const quyTrinh = require('./duyetNhapKhoService');
   await congNo.damBaoCot();
+  await quyTrinh.damBaoCauTruc();
+  const ch = await quyTrinh.cauHinh();
+  const choQc = !noiBo && ch.bat_qc;
 
   const conn = await db.getConnection();
+  let ma, idPn, tong = 0, trangThai;
   try {
     await conn.beginTransaction();
-    const ma = await sinhMa(conn, 'phieu_nhap', 'ma_phieu', 'PN');
-    const tong = dong.reduce((s, d) => s + d.so_luong * d.don_gia, 0);
+    ma = await sinhMa(conn, 'phieu_nhap', 'ma_phieu', 'PN');
+    const tongGiao = dong.reduce((s, d) => s + d.so_luong * d.don_gia, 0);
+    const anh = noiBo ? null : quyTrinh.luuAnhChungTu(body.anh_chung_tu, ma);
     const [kq] = await conn.query(
-      `INSERT INTO phieu_nhap (ma_phieu, id_ncc, id_nv, ngay_nhap, thoi_diem, tong_tien, ghi_chu, trangthai, id_dmh)
-       VALUES (?, ?, ?, CURDATE(), NOW(), ?, ?, 1, ?)`,
-      [ma, idNcc, idNv || null, Math.round(tong), String(body.ghi_chu || '').slice(0, 500) || null, idDmh]);
-    const idPn = kq.insertId;
-    // Phieu co nha cung cap -> phat sinh cong no, han tra mac dinh.
-    await congNo.datHanTra(conn, idPn, idNcc);
+      `INSERT INTO phieu_nhap (ma_phieu, id_ncc, id_nv, ngay_nhap, thoi_diem, tong_tien, ghi_chu, trangthai, id_dmh,
+                               trang_thai_duyet, so_chung_tu, ly_do_khong_chung_tu, anh_chung_tu, mua_le, tong_giao)
+       VALUES (?, ?, ?, CURDATE(), NOW(), 0, ?, 1, ?, ?, ?, ?, ?, ?, ?)`,
+      [ma, idNcc, idNv || null, String(body.ghi_chu || '').slice(0, 500) || null, idDmh,
+        noiBo ? 'da_duyet' : 'cho_qc', soChungTu || null, soChungTu ? null : (lyDoKhongCt || null), anh,
+        !noiBo && !idNcc ? 1 : 0, Math.round(tongGiao)]);
+    idPn = kq.insertId;
 
     for (const d of dong) {
-      const [[nl]] = await conn.query('SELECT so_luong, gia_von, han_su_dung_ngay FROM nguyen_lieu WHERE id_nl = ? FOR UPDATE', [d.id_nl]);
+      const [[nl]] = await conn.query('SELECT han_su_dung_ngay FROM nguyen_lieu WHERE id_nl = ?', [d.id_nl]);
       if (!nl) throw new LoiKho('Nguyên liệu không tồn tại.');
-      const hsd = d.han_su_dung || null;
-      await conn.query(
-        `INSERT INTO chi_tiet_phieu_nhap (id_pn, id_nl, so_luong, gia_nhap, so_lo, han_su_dung, so_luong_con_lai)
-         VALUES (?, ?, ?, ?, ?, COALESCE(?, CURDATE() + INTERVAL ? DAY), ?)`,
-        [idPn, d.id_nl, d.so_luong, d.don_gia, d.so_lo || ma, hsd, Number(nl.han_su_dung_ngay) || 30, d.so_luong]);
-      const ton = Math.max(0, Number(nl.so_luong));
-      const giaMoi = ton + d.so_luong > 0 && d.don_gia > 0
-        ? (ton * Number(nl.gia_von) + d.so_luong * d.don_gia) / (ton + d.so_luong)
-        : Number(nl.gia_von);
-      await conn.query('UPDATE nguyen_lieu SET so_luong = so_luong + ?, gia_von = ? WHERE id_nl = ?', [d.so_luong, Math.round(giaMoi * 100) / 100, d.id_nl]);
-      if (idDmh) {
-        await conn.query('UPDATE chi_tiet_don_mua SET so_luong_da_nhan = so_luong_da_nhan + ? WHERE id_dmh = ? AND id_nl = ?', [d.so_luong, idDmh, d.id_nl]);
+      const [ct] = await conn.query(
+        `INSERT INTO chi_tiet_phieu_nhap (id_pn, id_nl, so_luong, gia_nhap, so_lo, han_su_dung, so_luong_con_lai, so_luong_giao, ket_qua_qc)
+         VALUES (?, ?, 0, ?, ?, COALESCE(?, CURDATE() + INTERVAL ? DAY), 0, ?, ?)`,
+        [idPn, d.id_nl, d.don_gia, d.so_lo || ma, d.han_su_dung || null, Number(nl.han_su_dung_ngay) || 30, d.so_luong, choQc ? null : 'dat']);
+      if (!choQc) {
+        await nhapDongVaoKho(conn, { idCt: ct.insertId, idNl: d.id_nl, soLuong: d.so_luong, donGia: d.don_gia, idDmh });
+        tong += d.so_luong * d.don_gia;
       }
     }
-
-    if (idDmh) {
-      const [[con]] = await conn.query(
-        'SELECT SUM(so_luong_da_nhan < so_luong) AS thieu FROM chi_tiet_don_mua WHERE id_dmh = ?', [idDmh]);
-      await conn.query('UPDATE don_mua_hang SET trang_thai = ? WHERE id_dmh = ?', [Number(con.thieu) > 0 ? 'nhan_mot_phan' : 'da_nhan', idDmh]);
-    }
+    trangThai = noiBo ? 'da_duyet' : choQc ? 'cho_qc' : quyTrinh.sauNhapKho(ch, tong);
+    await conn.query('UPDATE phieu_nhap SET tong_tien = ?, trang_thai_duyet = ? WHERE id_pn = ?', [Math.round(tong), trangThai, idPn]);
+    // Phieu co nha cung cap -> phat sinh cong no (chi tra duoc sau khi duyet).
+    if (!choQc) await congNo.datHanTra(conn, idPn, idNcc);
+    if (idDmh && !choQc) await capNhatTrangThaiDonSauNhan(conn, idDmh);
     await conn.commit();
-    return { id: idPn, ma_phieu: ma, tong_tien: Math.round(tong) };
   } catch (e) {
     await conn.rollback();
     throw e;
   } finally {
     conn.release();
   }
+  if (!noiBo) quyTrinh.nen(() => quyTrinh.baoBuoc(idPn));
+  return { id: idPn, ma_phieu: ma, tong_tien: Math.round(tong), trang_thai_duyet: trangThai };
 }
 
 // ------------------------------------------------------------------ phieu xuat
@@ -226,8 +270,9 @@ async function taoPhieuXuat(body, idNv) {
 async function soKho({ tuNgay, denNgay, loai = '', lyDo = '' }) {
   const ra = [];
   if (loai !== 'xuat') {
+    await require('./duyetNhapKhoService').damBaoCauTruc();
     const [pn] = await db.query(`
-      SELECT pn.id_pn AS id, pn.ma_phieu, COALESCE(pn.thoi_diem, pn.ngay_nhap) AS thoi_diem, pn.tong_tien AS gia_tri,
+      SELECT pn.id_pn AS id, pn.ma_phieu, COALESCE(pn.thoi_diem, pn.ngay_nhap) AS thoi_diem, pn.tong_tien AS gia_tri, pn.trang_thai_duyet, pn.tong_giao,
              pn.ghi_chu, ncc.ten_ncc, nv.ten AS nguoi, dmh.ma_don,
              (SELECT COUNT(*) FROM chi_tiet_phieu_nhap c WHERE c.id_pn = pn.id_pn) AS so_dong
         FROM phieu_nhap pn
@@ -252,10 +297,14 @@ async function soKho({ tuNgay, denNgay, loai = '', lyDo = '' }) {
 
 async function chiTietPhieu(loai, id) {
   if (loai === 'nhap') {
+    await require('./duyetNhapKhoService').damBaoCauTruc();
     const [[p]] = await db.query(`
-      SELECT pn.*, COALESCE(pn.thoi_diem, pn.ngay_nhap) AS thoi_diem, ncc.ten_ncc, ncc.sodienthoai, nv.ten AS nguoi, dmh.ma_don
+      SELECT pn.*, COALESCE(pn.thoi_diem, pn.ngay_nhap) AS thoi_diem, ncc.ten_ncc, ncc.sodienthoai, nv.ten AS nguoi, dmh.ma_don,
+             qc.ten AS nguoi_qc, kt.ten AS nguoi_doi_chieu, du.ten AS nguoi_duyet
         FROM phieu_nhap pn LEFT JOIN nha_cung_cap ncc ON ncc.id_ncc = pn.id_ncc
         LEFT JOIN nhan_vien nv ON nv.id_nv = pn.id_nv LEFT JOIN don_mua_hang dmh ON dmh.id_dmh = pn.id_dmh
+        LEFT JOIN nhan_vien qc ON qc.id_nv = pn.id_nv_qc LEFT JOIN nhan_vien kt ON kt.id_nv = pn.id_nv_doi_chieu
+        LEFT JOIN nhan_vien du ON du.id_nv = pn.id_nv_duyet
        WHERE pn.id_pn = ?`, [id]);
     if (!p) return null;
     const [dong] = await db.query(`
@@ -541,6 +590,6 @@ async function doiTrangThaiDon(id, buoc, { idNv, lyDo } = {}) {
 
 module.exports = {
   LY_DO_XUAT, LY_DO_BAN_HANG, TRANG_THAI_DON, LoiKho,
-  danhSachNVL, danhSachNCC, loHang, truLoFIFO, taoPhieuNhap, taoPhieuXuat, soKho, chiTietPhieu,
+  danhSachNVL, danhSachNCC, loHang, truLoFIFO, taoPhieuNhap, nhapDongVaoKho, capNhatTrangThaiDonSauNhan, taoPhieuXuat, soKho, chiTietPhieu,
   tieuHaoBinhQuan, goiYMuaHang, thamSoMua, duBaoTieuHao, taoDonTuDong, danhSachDon, chiTietDon, taoDonMua, doiTrangThaiDon,
 };

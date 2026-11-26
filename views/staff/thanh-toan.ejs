@@ -61,6 +61,17 @@
   <% }); %>
 </div>
 
+<!-- ====================================================== Order tại bàn -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3 d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem">
+    <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-utensils"></i> Order tại bàn</h6>
+    <span class="small text-muted">Bàn trống: bấm để mở bàn và gọi món · Bàn có khách: bấm để thêm / điều chỉnh món và tính tiền</span>
+  </div>
+  <div class="card-body">
+    <div id="pos-ban" class="d-flex flex-wrap" style="gap:8px"><span class="text-muted small">Đang tải sơ đồ bàn…</span></div>
+  </div>
+</div>
+
 <!-- ====================================================== Danh sách bàn -->
 <div class="card shadow mb-4">
   <div class="card-header py-3 d-flex align-items-center justify-content-between">
@@ -179,4 +190,40 @@
   })();
 </script>
 
+<%- include('partials/chon-mon') %>
+<script>
+(function () {
+  var hop = document.getElementById('pos-ban');
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+  function tai() {
+    fetch('/so-do-ban/api/du-lieu', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var ds = (d.ban || []).slice().sort(function (a, b) { return String(a.number_ban).localeCompare(String(b.number_ban), 'vi', { numeric: true }); });
+        if (!ds.length) { hop.innerHTML = '<span class="text-muted small">Chưa có bàn nào.</span>'; return; }
+        hop.innerHTML = ds.map(function (b) {
+          var coKhach = !!b.sesis_hien_tai;
+          var bao = Number(b.trangthai) === 4;
+          var lop = coKhach ? 'btn-danger' : (bao ? 'btn-secondary' : (Number(b.trangthai) === 2 ? 'btn-warning' : 'btn-outline-success'));
+          var phu = coKhach ? (b.so_mon || 0) + ' món' : (bao ? 'bảo trì' : (Number(b.trangthai) === 2 ? 'đặt trước' : b.so_cho + ' chỗ'));
+          return '<button type="button" class="btn btn-sm ' + lop + '" style="min-width:86px" ' + (bao ? 'disabled ' : '') +
+            'data-ban="' + b.Id_ban + '" data-ten="' + esc(b.number_ban) + '" data-sesis="' + esc(b.sesis_hien_tai || '') + '">' +
+            '<b>' + esc(b.number_ban) + '</b><br><small>' + esc(phu) + '</small></button>';
+        }).join('');
+      })
+      .catch(function () { hop.innerHTML = '<span class="text-danger small">Không tải được sơ đồ bàn.</span>'; });
+  }
+  hop.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ban]');
+    if (!b) return;
+    if (b.dataset.sesis) { location.href = '/staff/thanh-toan/' + encodeURIComponent(b.dataset.sesis); return; }
+    ChonMon.mo({
+      idBan: b.dataset.ban, tenBan: 'Bàn ' + b.dataset.ten, banMoi: true,
+      sauKhiGui: function (d) { location.href = '/staff/thanh-toan/' + encodeURIComponent(d.sesis); },
+    });
+  });
+  tai();
+  if (window.RT && RT.khi) { RT.khi('so-do-thay-doi', tai); RT.khi('ban-cap-nhat', tai); }
+})();
+</script>
 <%- include('partials/footer') %>

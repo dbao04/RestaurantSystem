@@ -1,0 +1,17 @@
+<%- include('partials/header', { title: 'Thông báo của tôi' }) %>
+<section class="nh-subhero" style="min-height:30vh">
+  <div class="nh-subhero__bg nh-wa-koshi"></div>
+  <div class="nh-subhero__veil"></div>
+  <div class="nh-container nh-subhero__inner">
+    <span class="nh-eyebrow"><%= t('dieu_huong.tai_khoan') %></span>
+    <h1>Thông báo của tôi</h1>
+    <div class="nh-crumbs"><a href="/"><%= t('dieu_huong.trang_chu') %></a> &nbsp;/&nbsp; Thông báo</div>
+  </div>
+</section>
+<section class="nh-section nh-section--cream">
+  <div class="nh-container" style="max-width:860px">
+    <p class="text-muted">Cập nhật về đặt bàn, đặt tiệc và đơn giao hàng của bạn.</p>
+    <%- include('partials/ds-thong-bao', { laTb: 'khach' }) %>
+  </div>
+</section>
+<%- include('partials/footer') %>

@@ -203,8 +203,13 @@ const personnelService = {
 
   // ============ PRODUCTS/DISHES MANAGEMENT ============
   getAllProducts: async () => {
-    const [rows] = await db.query('SELECT * FROM monan');
+    const [rows] = await db.query('SELECT m.*, l.name_loai FROM monan m LEFT JOIN loai_mon l ON l.id_loai = m.id_loai ORDER BY l.name_loai, m.name_mon');
     return rows;
+  },
+
+  /** Tam het (0, nhu 'Ngung phuc vu' cua quan tri) / ban lai (1) - dung cho bep / bar. */
+  setTrangThaiMon: async (id, tinhtrang) => {
+    await db.query('UPDATE monan SET tinhtrang = ? WHERE id_mon = ?', [Number(tinhtrang) === 1 ? 1 : 0, id]);
   },
 
   getProductById: async (id) => {
@@ -225,12 +230,12 @@ const personnelService = {
     if (image) {
       await db.query(
         'UPDATE monan SET name_mon = ?, id_loai = ?, ghichu_mon = ?, gia_mon = ?, images = ?, tinhtrang = ? WHERE id_mon = ?',
-        [name, categoryId, note, price, image, tinhtrang || 1, id]
+        [name, categoryId, note, price, image, (tinhtrang === undefined || tinhtrang === null || tinhtrang === '') ? 1 : tinhtrang, id]
       );
     } else {
       await db.query(
         'UPDATE monan SET name_mon = ?, id_loai = ?, ghichu_mon = ?, gia_mon = ?, tinhtrang = ? WHERE id_mon = ?',
-        [name, categoryId, note, price, tinhtrang || 1, id]
+        [name, categoryId, note, price, (tinhtrang === undefined || tinhtrang === null || tinhtrang === '') ? 1 : tinhtrang, id]
       );
     }
   },
@@ -784,24 +789,13 @@ const personnelService = {
   },
 
   // ============ NOTIFICATIONS ============
-  getNotifications: async (staffId) => {
-    const [rows] = await db.query(
-      'SELECT * FROM thong_bao WHERE (id_nv = ? OR id_nv IS NULL) ORDER BY created_at DESC',
-      [staffId]
-    );
-    return rows;
-  },
+  // Thong bao nhan vien: dung services/thongBaoService.js (doi_tuong = 'nv').
+  getNotifications: async (staffId) => require('./thongBaoService').dsCuaToi({ idNv: staffId }, { gioiHan: 200 }),
 
-  countUnread: async (staffId) => {
-    const [rows] = await db.query(
-      'SELECT COUNT(*) as count FROM thong_bao WHERE (id_nv = ? OR id_nv IS NULL) AND da_doc = 0',
-      [staffId]
-    );
-    return rows[0].count || 0;
-  },
+  countUnread: async (staffId) => (staffId ? require('./thongBaoService').demChuaDoc({ idNv: staffId }) : 0),
 
   markNotificationRead: async (notificationId) => {
-    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE id = ?', [notificationId]);
+    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE id_tb = ?', [notificationId]);
   }
 };
 

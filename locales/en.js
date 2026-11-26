@@ -2403,6 +2403,8 @@ module.exports = {
   'lich_su_tiec.buoc_DA_XAC_NHAN': 'Confirmed',
   'lich_su_tiec.buoc_DA_COC': 'Deposit paid',
   'lich_su_tiec.buoc_HOAN_THANH': 'Completed',
+  'lich_su_tiec.buoc_CHO_COC': 'Requested',
+  'lich_su_tiec.buoc_CHO_THANH_TOAN': 'Final payment',
   'lich_su_tiec.tt_MOI': 'New request',
   'lich_su_tiec.tt_DA_LIEN_HE': 'Consulted',
   'lich_su_tiec.tt_DA_XAC_NHAN': 'Confirmed',

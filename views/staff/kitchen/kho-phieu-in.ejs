@@ -5,6 +5,9 @@
   var ngay = function (d) { if (!d) return ''; var x = new Date(d); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2) + '/' + x.getFullYear(); };
   var t = new Date(p.thoi_diem || p.ngay_nhap);
   var tong = laNhap ? Number(p.tong_tien) : Number(p.tong_gia_tri);
+  var TT = { cho_qc: 'CHỜ KIỂM TRA CHẤT LƯỢNG – hàng chưa vào kho', cho_doi_chieu: 'Đã nhập kho – chờ kế toán đối chiếu', cho_duyet: 'Đã nhập kho – chờ quản lý duyệt', da_duyet: 'ĐÃ DUYỆT', tra_hang: 'TRẢ LẠI TOÀN BỘ HÀNG' };
+  // Hang tra NCC (dong co so luong giao > so luong dat sau QC).
+  var dongTra = laNhap ? ct.dong.filter(function (d) { return d.so_luong_giao != null && Number(d.so_luong_giao) - Number(d.so_luong) > 0.0005 && d.ket_qua_qc; }) : [];
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -43,9 +46,11 @@
     <h1><%= laNhap ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO' %></h1>
     <div class="ngay">Ngày <%= t.getDate() %> tháng <%= t.getMonth() + 1 %> năm <%= t.getFullYear() %></div>
     <div class="so">Số: <b><%= p.ma_phieu %></b><%= p.ma_don ? ' · Theo đơn mua ' + p.ma_don : '' %></div>
+    <% if (laNhap && p.trang_thai_duyet && TT[p.trang_thai_duyet]) { %><div class="so" style="margin-top:-8px">Tình trạng: <b><%= TT[p.trang_thai_duyet] %></b></div><% } %>
 
     <% if (laNhap) { %>
       <div class="dong">Nhà cung cấp: <b><%= p.ten_ncc || 'Mua lẻ' %></b><%= p.sodienthoai ? ' – ĐT: ' + p.sodienthoai : '' %></div>
+      <div class="dong">Theo hóa đơn / phiếu giao hàng số: <b><%= p.so_chung_tu || (p.ly_do_khong_chung_tu ? 'Không có – ' + p.ly_do_khong_chung_tu : '') %></b></div>
     <% } else { %>
       <div class="dong">Lý do xuất: <b><%= p.ten_ly_do %></b></div>
     <% } %>
@@ -53,24 +58,48 @@
     <div class="dong">Người lập: <b><%= p.nguoi || '' %></b></div>
 
     <div class="bang-cuon"><table>
-      <thead><tr><th>STT</th><th>Tên nguyên liệu</th><th>ĐVT</th><% if (laNhap) { %><th>Số lô</th><th>Hạn dùng</th><% } else { %><th>Ghi chú</th><% } %><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+      <thead><tr><th>STT</th><th>Tên nguyên liệu</th><th>ĐVT</th><% if (laNhap) { %><th>Số lô</th><th>Hạn dùng</th><th>SL giao</th><th>SL thực nhập</th><% } else { %><th>Ghi chú</th><th>Số lượng</th><% } %><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
       <tbody>
         <% ct.dong.forEach(function (d, i) { var sl = Number(d.so_luong); var dg = laNhap ? Number(d.gia_nhap) : (sl ? Number(d.gia_tri) / sl : 0); %>
           <tr><td class="s"><%= i + 1 %></td><td><%= d.ten_nl %></td><td><%= d.ten_dvt || '' %></td>
-            <% if (laNhap) { %><td><%= d.so_lo || '' %></td><td><%= ngay(d.han_su_dung) %></td><% } else { %><td><%= d.ghi_chu || '' %></td><% } %>
-            <td class="s"><%= soVN(sl) %></td><td class="s"><%= vnd(dg) %></td><td class="s"><%= vnd(laNhap ? d.thanh_tien : d.gia_tri) %></td></tr>
+            <% if (laNhap) { %><td><%= d.so_lo || '' %></td><td><%= ngay(d.han_su_dung) %></td><td class="s"><%= soVN(d.so_luong_giao != null ? d.so_luong_giao : sl) %></td><td class="s"><%= soVN(sl) %></td>
+            <% } else { %><td><%= d.ghi_chu || '' %></td><td class="s"><%= soVN(sl) %></td><% } %>
+            <td class="s"><%= vnd(dg) %></td><td class="s"><%= vnd(laNhap ? d.thanh_tien : d.gia_tri) %></td></tr>
         <% }) %>
-        <tr><td colspan="<%= laNhap ? 7 : 6 %>" style="text-align:right"><b>Cộng</b></td><td class="s"><b><%= vnd(tong) %></b></td></tr>
+        <tr><td colspan="<%= laNhap ? 8 : 6 %>" style="text-align:right"><b>Cộng</b></td><td class="s"><b><%= vnd(tong) %></b></td></tr>
       </tbody>
     </table></div>
     <div class="dong" style="margin-top:10px">Tổng số tiền: <b><%= vnd(tong) %> đồng</b></div>
 
+    <% if (dongTra.length) { %>
+      <h3 style="font-size:16px;margin:18px 0 4px">BIÊN BẢN TRẢ HÀNG NHÀ CUNG CẤP</h3>
+      <div class="bang-cuon"><table>
+        <thead><tr><th>STT</th><th>Tên nguyên liệu</th><th>SL trả</th><th>Đơn giá</th><th>Thành tiền</th><th>Lý do (kiểm tra chất lượng)</th></tr></thead>
+        <tbody>
+          <% var tongTra = 0; dongTra.forEach(function (d, i) { var tra = Number(d.so_luong_giao) - Number(d.so_luong); tongTra += tra * Number(d.gia_nhap); %>
+            <tr><td class="s"><%= i + 1 %></td><td><%= d.ten_nl %></td><td class="s"><%= soVN(tra) %> <%= d.ten_dvt || '' %></td><td class="s"><%= vnd(d.gia_nhap) %></td><td class="s"><%= vnd(tra * Number(d.gia_nhap)) %></td><td><%= d.ly_do_qc || '' %></td></tr>
+          <% }) %>
+          <tr><td colspan="4" style="text-align:right"><b>Cộng hàng trả</b></td><td class="s"><b><%= vnd(tongTra) %></b></td><td></td></tr>
+        </tbody>
+      </table></div>
+    <% } %>
+
+    <% if (laNhap) { %>
+    <div class="ky">
+      <div><b>Thủ kho (người lập)</b><i>(Ký, họ tên)</i><div class="ten"><%= p.nguoi || '' %></div></div>
+      <div><b>Kiểm tra chất lượng</b><i>(Bếp trưởng / Trưởng bar)</i><div class="ten"><%= p.nguoi_qc || '' %></div></div>
+      <div><b>Kế toán đối chiếu</b><i>(Ký, họ tên)</i><div class="ten"><%= p.nguoi_doi_chieu || '' %></div></div>
+      <div><b>Quản lý duyệt</b><i>(Ký, họ tên)</i><div class="ten"><%= p.nguoi_duyet || (p.trang_thai_duyet === 'da_duyet' && !p.truoc_quy_trinh ? 'Tự duyệt (dưới ngưỡng)' : '') %></div></div>
+    </div>
+    <div class="dong" style="margin-top:14px;font-size:12.5px">Người giao hàng (NCC): ...................................................... (Ký, họ tên)</div>
+    <% } else { %>
     <div class="ky">
       <div><b>Người lập phiếu</b><i>(Ký, họ tên)</i><div class="ten"><%= p.nguoi || '' %></div></div>
-      <div><b><%= laNhap ? 'Người giao hàng' : 'Người nhận / chứng kiến' %></b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
+      <div><b>Người nhận / chứng kiến</b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
       <div><b>Thủ kho</b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
       <div><b>Bếp trưởng</b><i>(Ký, họ tên)</i><div class="ten">&nbsp;</div></div>
     </div>
+    <% } %>
   </div>
 </body>
 </html>

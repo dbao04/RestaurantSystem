@@ -1,0 +1,31 @@
+<%
+  var activePage = 'thong-bao';
+  var nhom = {};
+  bang.forEach(function (l) { (nhom[l.nhom] = nhom[l.nhom] || []).push(l); });
+  var MD = { khan: ['Khẩn', 'badge-danger'], quan_trong: ['Quan trọng', 'badge-warning'], tin: ['Tin', 'badge-info'] };
+%>
+<%- include('partials/header') %>
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-diagram-project text-warning"></i> Luồng thông báo</h1>
+    <div class="small text-muted">Sự kiện nghiệp vụ nào gửi thông báo cho ai. Người nhận xác định theo chức danh / bộ phận trong cơ cấu tổ chức — đổi người giữ chức danh thì thông báo tự đi theo.</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="/staff/thong-bao"><i class="fas fa-arrow-left"></i> Thông báo của tôi</a>
+</div>
+<% Object.keys(nhom).forEach(function (n) { %>
+  <div class="card shadow mb-3">
+    <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary"><%= n %></h6></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm mb-0">
+      <thead class="thead-light"><tr><th style="width:38%">Sự kiện</th><th>Người nhận</th><th style="width:110px">Mức độ</th></tr></thead>
+      <tbody>
+        <% nhom[n].forEach(function (l) { %>
+          <tr><td><%= l.ten %><div class="small text-muted"><code><%= l.khoa %></code></div></td>
+            <td><% l.nguoi_nhan.forEach(function (x) { %><span class="badge badge-light border mr-1 mb-1" style="font-weight:500"><%= x %></span><% }) %></td>
+            <td><span class="badge <%= (MD[l.muc_do] || MD.tin)[1] %>"><%= (MD[l.muc_do] || MD.tin)[0] %></span></td></tr>
+        <% }) %>
+      </tbody>
+    </table></div></div>
+  </div>
+<% }) %>
+<p class="small text-muted">"Người liên quan trực tiếp": người lập phiếu, người gửi duyệt, nhân viên được phân đơn, người xin nghỉ, cấp trên trực tiếp... do nghiệp vụ xác định. Mọi thông báo đều có chuông ở góc trên (nhân viên, quản trị, shipper, khách hàng) và được lưu để xem lại.</p>
+<%- include('partials/footer') %>

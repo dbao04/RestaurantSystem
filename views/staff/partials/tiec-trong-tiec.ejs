@@ -1,0 +1,292 @@
+<%
+  // Tab "Trong tiec" (Dot 2) - nhan: tt (tiecTrongTiecService.trongTiec), tiec.
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var hh = function (d) { if (!d) return ''; var x = new Date(d); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); };
+  var Q = tt.quyenTT, B = tt.ban;
+  var homNayStr = (function () { var n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); })();
+  var thaoTac = ['DA_XAC_NHAN', 'DA_COC', 'CHO_THANH_TOAN'].indexOf(tiec.trang_thai) >= 0 && tiec.ngay <= homNayStr;
+  var psMo = tt.phatSinh.filter(function (p) { return p.trang_thai === 'moi' || p.trang_thai === 'dang_xu_ly'; });
+  var choDuyet = tt.phatSinh.filter(function (p) { return p.duyet === 'cho'; });
+  var mauTT = { moi: 'do', dang_xu_ly: 'cam', da_xu_ly: 'xanh', tu_choi: 'xam' };
+%>
+<style>
+  .tt-thanh { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eadfcf; border-radius: 16px; padding: .9rem 1.1rem; margin-bottom: 1.1rem; }
+  .tt-ban { font-size: .95rem; color: #2b1a12; }
+  .tt-ban b { font-size: 1.1rem; }
+  .tt-ban small { display: block; color: #8a7a6a; font-size: .78rem; }
+  .tt-gio { font-size: .86rem; color: #6c5b4b; }
+  .tt-luoi { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.1rem; align-items: start; }
+  @media (max-width: 991px) { .tt-luoi { grid-template-columns: 1fr; } }
+  .dot { display: flex; gap: .7rem; padding: .7rem .2rem; border-bottom: 1px dashed #efe6d8; align-items: flex-start; }
+  .dot:last-child { border-bottom: 0; }
+  .dot__so { width: 30px; height: 30px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; background: #f1ecea; color: #6c5b4b; }
+  .dot--da_goi .dot__so { background: #fff4dc; color: #8a5a00; animation: nhapDot 1.4s infinite; }
+  .dot--da_ra .dot__so { background: #e7f0ff; color: #2456b5; }
+  .dot--da_len .dot__so { background: #1e9e54; color: #fff; }
+  @keyframes nhapDot { 50% { box-shadow: 0 0 0 6px rgba(200,162,75,.25); } }
+  .dot__nd { flex: 1; min-width: 0; }
+  .dot__nd b { display: block; color: #2b1a12; font-size: .92rem; }
+  .dot__mon { font-size: .78rem; color: #8a7a6a; margin-top: .1rem; }
+  .dot__buoc { display: flex; flex-wrap: wrap; gap: .25rem .7rem; font-size: .74rem; color: #8a7a6a; margin-top: .3rem; }
+  .dot__buoc span.co { color: #1e7b45; font-weight: 600; }
+  .dot__nut { flex: 0 0 auto; }
+  .ps { border: 1px solid #efe6d8; border-radius: 12px; padding: .7rem .8rem; margin-bottom: .55rem; }
+  .ps--khan { border-color: #e7a59c; background: #fff6f5; }
+  .ps--dong { opacity: .7; }
+  .ps__tren { display: flex; gap: .55rem; align-items: flex-start; }
+  .ps__ic { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; background: #f1ecea; color: #4e342e; }
+  .ps--khan .ps__ic { background: #c0392b; color: #fff; }
+  .ps__nd { flex: 1; min-width: 0; }
+  .ps__nd b { display: block; font-size: .88rem; color: #2b1a12; }
+  .ps__meta { font-size: .74rem; color: #8a7a6a; display: flex; flex-wrap: wrap; gap: .2rem .6rem; margin-top: .15rem; }
+  .nhan { font-size: .68rem; font-weight: 700; border-radius: 6px; padding: .08rem .45rem; white-space: nowrap; }
+  .nhan--do { background: #fdecea; color: #c0392b; } .nhan--cam { background: #fff4dc; color: #8a5a00; }
+  .nhan--xanh { background: #e3f6ea; color: #1e7b45; } .nhan--xam { background: #f1ecea; color: #6c5b4b; } .nhan--tim { background: #efe7fb; color: #5b3aa0; }
+  .ps__than { margin: .45rem 0 0 2.4rem; font-size: .82rem; }
+  .ps__than img { max-width: 160px; border-radius: 8px; display: block; margin-top: .3rem; }
+  .ps__nut { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .45rem; align-items: center; }
+  .ps__nut input { flex: 1 1 160px; }
+  .nut-bao { width: 100%; font-weight: 800; font-size: .95rem; padding: .7rem; border-radius: 12px; margin-bottom: .8rem; }
+  .nk { list-style: none; padding: 0; margin: 0; max-height: 420px; overflow-y: auto; }
+  .nk li { display: flex; gap: .6rem; padding: .35rem 0; font-size: .82rem; border-bottom: 1px dotted #efe6d8; }
+  .nk li time { flex: 0 0 42px; color: #a07d2c; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .nk li small { color: #8a7a6a; }
+  /* hop bao phat sinh */
+  .loai-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .4rem; }
+  .loai { border: 1.5px solid #e6dccb; border-radius: 10px; padding: .5rem; background: #fff; text-align: left; font-size: .8rem; font-weight: 600; color: #2b1a12; display: flex; gap: .45rem; align-items: center; }
+  .loai[aria-pressed="true"] { border-color: #c8a24b; background: #fff8e8; }
+  .loai i { color: #a07d2c; width: 16px; text-align: center; }
+  .ps-o { margin-top: .7rem; }
+  .ps-o label { font-size: .76rem; color: #6c5b4b; font-weight: 600; margin-bottom: .2rem; display: block; }
+  .mon-chon-ps { max-height: 220px; overflow-y: auto; border: 1px solid #efe6d8; border-radius: 10px; }
+  .mon-ps { display: flex; align-items: center; gap: .5rem; padding: .35rem .55rem; border-bottom: 1px solid #f6efe4; font-size: .82rem; }
+  .mon-ps span { flex: 1; } .mon-ps small { color: #8a7a6a; }
+  .mon-ps input { width: 64px; }
+</style>
+
+<div class="tt-thanh">
+  <div class="tt-ban">
+    Bàn chốt <b><%= B.ban_chot %></b><% if (B.them) { %> · phát sinh <b class="text-success">+<%= B.them %></b><% } %><% if (B.bot) { %> · bớt <b class="text-danger">−<%= B.bot %></b><% } %> → tính <b><%= B.tinh %> bàn</b>
+    <small><% if (B.tien_phat_sinh) { %>Phát sinh tính tiền đã duyệt: <b><%= vnd(B.tien_phat_sinh) %></b> · <% } %>bớt tối đa <%= B.bot_toi_da %> bàn theo chính sách · giá <%= vnd(tt.giaMotBan) %>/bàn</small>
+  </div>
+  <div class="tt-gio">
+    <% if (tt.ketThuc) { %><i class="fas fa-flag-checkered"></i> Khai tiệc <%= hh(tt.batDau) %> · kết thúc <%= hh(tt.ketThuc) %>
+    <% } else if (tt.batDau) { %><i class="fas fa-circle text-success" style="font-size:.55rem;vertical-align:2px"></i> Khai tiệc lúc <b><%= hh(tt.batDau) %></b>
+      <% if (thaoTac && Q.khaiTiec) { %> <button type="button" class="btn btn-sm btn-outline-secondary ml-2" data-khai="ket_thuc"><i class="fas fa-flag-checkered"></i> Kết thúc tiệc</button><% } %>
+    <% } else { %>Chưa khai tiệc (dự kiến <%= tiec.gio %>)
+      <% if (thaoTac && Q.khaiTiec) { %> <button type="button" class="btn btn-sm btn-success ml-2" data-khai="bat_dau"><i class="fas fa-play"></i> Khai tiệc</button><% } %>
+    <% } %>
+  </div>
+</div>
+<% if (!thaoTac) { %><div class="alert alert-light border small">Bảng điều hành mở thao tác vào ngày diễn ra tiệc (<%= tiec.ngay.split('-').reverse().join('/') %>). Hiện chỉ xem.</div><% } %>
+
+<div class="tt-luoi">
+  <div>
+    <section class="ct-khoi">
+      <h2><span><i class="fas fa-bowl-food text-warning"></i> Lên món theo đợt</span><small class="text-muted"><%= tt.dot.filter(function (d) { return d.trang_thai === 'da_len'; }).length %>/<%= tt.dot.length %> đợt</small></h2>
+      <% tt.dot.forEach(function (d) { %>
+        <div class="dot dot--<%= d.trang_thai %>">
+          <span class="dot__so"><%= d.trang_thai === 'da_len' ? '✓' : d.thu_tu %></span>
+          <div class="dot__nd">
+            <b><%= d.ten_dot %></b>
+            <div class="dot__mon"><%= d.mon.map(function (m) { return m.ten + (m.sl > 1 ? ' ×' + m.sl : ''); }).join(' · ') %></div>
+            <div class="dot__buoc">
+              <span class="<%= d.goi_luc ? 'co' : '' %>">Gọi <%= d.goi_luc ? hh(d.goi_luc) + (d.ten_goi ? ' · ' + d.ten_goi : '') : '–' %></span>
+              <span class="<%= d.ra_luc ? 'co' : '' %>">Bếp ra <%= d.ra_luc ? hh(d.ra_luc) + ' (' + Math.round((new Date(d.ra_luc) - new Date(d.goi_luc)) / 60000) + 'ph)' : '–' %></span>
+              <span class="<%= d.len_luc ? 'co' : '' %>">Lên bàn <%= d.len_luc ? hh(d.len_luc) : '–' %></span>
+            </div>
+          </div>
+          <div class="dot__nut">
+            <% if (thaoTac && d.trang_thai === 'cho' && Q.goiDot) { %><button type="button" class="btn btn-sm btn-warning" data-dot="<%= d.id %>" data-buoc="goi"><i class="fas fa-bell"></i> Gọi đợt</button>
+            <% } else if (thaoTac && d.trang_thai === 'da_goi' && Q.raMon) { %><button type="button" class="btn btn-sm btn-primary" data-dot="<%= d.id %>" data-buoc="ra"><i class="fas fa-fire-burner"></i> Đã ra món</button>
+            <% } else if (thaoTac && d.trang_thai === 'da_ra' && Q.lenBan) { %><button type="button" class="btn btn-sm btn-success" data-dot="<%= d.id %>" data-buoc="len"><i class="fas fa-check"></i> Đã lên bàn</button>
+            <% } else { %><span class="nhan nhan--<%= d.trang_thai === 'da_len' ? 'xanh' : d.trang_thai === 'cho' ? 'xam' : 'cam' %>"><%= tt.TT_DOT[d.trang_thai] %></span><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </section>
+
+    <section class="ct-khoi">
+      <h2><span><i class="fas fa-triangle-exclamation text-warning"></i> Phát sinh &amp; sự cố</span><small class="text-muted"><%= psMo.length %> đang mở<%= choDuyet.length ? ' · ' + choDuyet.length + ' chờ duyệt' : '' %></small></h2>
+      <% if (thaoTac && Q.xem) { %><button type="button" class="btn btn-danger nut-bao" id="moBaoPs"><i class="fas fa-plus"></i> Báo phát sinh</button><% } %>
+      <% if (!tt.phatSinh.length) { %><p class="text-muted small mb-0">Chưa có phát sinh nào.</p><% } %>
+      <% tt.phatSinh.forEach(function (p) { var L = tt.LOAI_PS[p.loai] || {}; var dong = p.trang_thai === 'da_xu_ly' || p.trang_thai === 'tu_choi'; %>
+        <div class="ps <%= p.muc_do === 'khan' && !dong ? 'ps--khan' : '' %> <%= dong ? 'ps--dong' : '' %>" data-ps="<%= p.id %>">
+          <div class="ps__tren">
+            <span class="ps__ic"><i class="fas <%= L.icon %>"></i></span>
+            <div class="ps__nd">
+              <b><%= p.tom_tat %></b>
+              <div class="ps__meta">
+                <span class="nhan nhan--<%= mauTT[p.trang_thai] %>"><%= tt.TT_PS[p.trang_thai] %></span>
+                <% if (p.muc_do !== 'thuong') { %><span class="nhan nhan--<%= p.muc_do === 'khan' ? 'do' : 'cam' %>"><%= tt.MUC_DO[p.muc_do] %></span><% } %>
+                <% if (p.tinh_tien) { %><span class="nhan nhan--tim"><%= vnd(p.so_tien) %> · <%= p.duyet === 'cho' ? 'chờ duyệt' : p.duyet === 'da_duyet' ? 'đã duyệt' : 'không duyệt' %></span><% } %>
+                <span><%= hh(p.created_at) %> · <%= p.ten_bao || '' %></span>
+              </div>
+            </div>
+          </div>
+          <div class="ps__than">
+            <% if (p.anh) { %><a href="<%= p.anh %>" target="_blank"><img src="<%= p.anh %>" alt="Ảnh phát sinh"></a><% } %>
+            <% if (p.ket_qua) { %><div><b><%= p.trang_thai === 'tu_choi' ? 'Lý do:' : 'Kết quả:' %></b> <%= p.ket_qua %><%= p.ten_xu_ly ? ' (' + p.ten_xu_ly + ')' : p.ten_duyet ? ' (' + p.ten_duyet + ')' : '' %></div><% } %>
+            <% if (thaoTac && !dong) { %>
+              <div class="ps__nut">
+                <% if (p.duyet === 'cho' && Q.duyet) { %>
+                  <input type="text" class="form-control form-control-sm" data-o="ket_qua" maxlength="500" placeholder="Ghi chú / lý do từ chối">
+                  <button type="button" class="btn btn-sm btn-success" data-hd="duyet"><i class="fas fa-check"></i> Duyệt <%= vnd(p.so_tien) %></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-hd="tu_choi">Từ chối</button>
+                <% } else if (p.duyet !== 'cho' && p.xu_ly_duoc) { %>
+                  <input type="text" class="form-control form-control-sm" data-o="ket_qua" maxlength="500" placeholder="Kết quả xử lý">
+                  <% if (p.trang_thai === 'moi') { %><button type="button" class="btn btn-sm btn-outline-secondary" data-hd="dang_xu_ly">Nhận xử lý</button><% } %>
+                  <button type="button" class="btn btn-sm btn-success" data-hd="da_xu_ly"><i class="fas fa-check"></i> Đã xử lý</button>
+                <% } else if (p.duyet === 'cho') { %><small class="text-muted">Chờ Giám sát / Quản lý duyệt.</small><% } %>
+              </div>
+            <% } %>
+            <div class="loi" hidden></div>
+          </div>
+        </div>
+      <% }) %>
+    </section>
+  </div>
+
+  <section class="ct-khoi">
+    <h2><span><i class="fas fa-clock-rotate-left text-warning"></i> Nhật ký tiệc</span></h2>
+    <% if (!tt.nhatKy.length) { %><p class="text-muted small mb-0">Chưa có hoạt động.</p><% } %>
+    <ul class="nk">
+      <% tt.nhatKy.forEach(function (k) { %><li><time><%= hh(k.luc) %></time><span><%= k.noi_dung %><% if (k.ten) { %> <small>· <%= k.ten %></small><% } %></span></li><% }) %>
+    </ul>
+  </section>
+</div>
+
+<!-- Hop bao phat sinh -->
+<div class="hop-nen" id="hopPs" hidden role="dialog" aria-modal="true" aria-labelledby="hopPsTen">
+  <div class="hop">
+    <div class="hop__dau"><b id="hopPsTen">Báo phát sinh</b><small>Tiệc <%= tiec.ma_tiec %> · chọn loại rồi điền thông tin</small></div>
+    <div class="hop__ds" style="padding:.8rem 1.1rem">
+      <div class="loai-luoi" id="psLoai">
+        <% Object.keys(tt.LOAI_PS).forEach(function (k) { var L = tt.LOAI_PS[k]; %><button type="button" class="loai" data-loai="<%= k %>" aria-pressed="false"><i class="fas <%= L.icon %>"></i><%= L.ten %></button><% }) %>
+      </div>
+      <div class="ps-o" data-voi="them_mon" hidden>
+        <label>Chọn món (số lượng = tổng phần cho cả tiệc)</label>
+        <input type="search" class="form-control form-control-sm mb-1" id="psTimMon" placeholder="Tìm món, đồ uống..." autocomplete="off">
+        <div class="mon-chon-ps" id="psMon"></div>
+        <small class="text-muted d-block mt-1" id="psTienMon"></small>
+      </div>
+      <div class="ps-o" data-voi="them_ban bot_ban" hidden>
+        <label>Số bàn</label><input type="number" class="form-control form-control-sm" id="psSoBan" min="1" max="30" value="1" style="max-width:120px">
+        <small class="text-muted d-block mt-1" id="psTienBan"></small>
+      </div>
+      <div class="ps-o" data-voi="hu_hong khac" hidden>
+        <label class="d-flex align-items-center" style="gap:.4rem"><input type="checkbox" id="psTinhTien"> Tính tiền khách</label>
+        <input type="number" class="form-control form-control-sm" id="psSoTien" min="0" step="1000" placeholder="Số tiền" style="max-width:180px" hidden>
+      </div>
+      <div class="ps-o" id="psMucDoO" hidden>
+        <label>Mức độ</label>
+        <select class="form-control form-control-sm" id="psMucDo" style="max-width:180px"><option value="thuong">Thường</option><option value="gap">Gấp</option><option value="khan">Khẩn</option></select>
+      </div>
+      <div class="ps-o" id="psMoTaO" hidden>
+        <label>Mô tả</label><textarea class="form-control form-control-sm" id="psMoTa" rows="2" maxlength="1000" placeholder="Chuyện gì, ở bàn nào..."></textarea>
+      </div>
+      <div class="ps-o" id="psAnhO" hidden>
+        <label>Ảnh (không bắt buộc)</label><input type="file" accept="image/*" capture="environment" id="psAnh" class="form-control-file">
+      </div>
+    </div>
+    <div class="hop__chan">
+      <small class="text-muted" id="psGhi">Phát sinh tính tiền cần Giám sát / Quản lý duyệt.</small>
+      <span><button type="button" class="btn btn-sm btn-light" data-dong-ps>Hủy</button> <button type="button" class="btn btn-sm btn-danger" id="psGui" disabled>Gửi</button></span>
+      <div class="loi w-100" id="psLoi" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ID = <%= tiec.id %>, PB = <%= tt.phienBan %>;
+  var MON = <%- JSON.stringify(tt.monLe).replace(/</g, '\\u003c') %>, GIA_BAN = <%= tt.giaMotBan %>;
+  var LOAI = <%- JSON.stringify(tt.LOAI_PS).replace(/</g, '\\u003c') %>;
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  async function goi(url, body) {
+    var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) throw new Error(j.thong_bao || 'Không lưu được, thử lại.');
+    return j;
+  }
+  var tai = function () { location.hash = 'trong-tiec'; location.reload(); };
+  document.querySelectorAll('[data-dot]').forEach(function (b) {
+    b.addEventListener('click', async function () { b.disabled = true; try { await goi('/api/staff/tiec/dot/' + b.getAttribute('data-dot'), { buoc: b.getAttribute('data-buoc') }); tai(); } catch (e) { alert(e.message); b.disabled = false; } });
+  });
+  document.querySelectorAll('[data-khai]').forEach(function (b) {
+    b.addEventListener('click', async function () { b.disabled = true; try { await goi('/api/staff/tiec/' + ID + '/khai', { hanh_dong: b.getAttribute('data-khai') }); tai(); } catch (e) { alert(e.message); b.disabled = false; } });
+  });
+  document.querySelectorAll('[data-ps]').forEach(function (the) {
+    the.addEventListener('click', async function (e) {
+      var b = e.target.closest('[data-hd]'); if (!b) return;
+      var l = the.querySelector('.loi'); l.hidden = true; b.disabled = true;
+      var o = the.querySelector('[data-o="ket_qua"]');
+      try { await goi('/api/staff/tiec/phat-sinh/' + the.getAttribute('data-ps'), { hanh_dong: b.getAttribute('data-hd'), ket_qua: o ? o.value : '' }); tai(); }
+      catch (err) { l.textContent = err.message; l.hidden = false; b.disabled = false; }
+    });
+  });
+
+  // ---- Hop bao phat sinh
+  var hop = document.getElementById('hopPs'), loai = null, chonMon = {};
+  if (!hop) return;
+  var moBtn = document.getElementById('moBaoPs');
+  if (moBtn) moBtn.addEventListener('click', function () { hop.hidden = false; });
+  hop.addEventListener('click', function (e) { if (e.target === hop || e.target.closest('[data-dong-ps]')) hop.hidden = true; });
+  function hienO() {
+    hop.querySelectorAll('[data-voi]').forEach(function (o) { o.hidden = !loai || o.getAttribute('data-voi').split(' ').indexOf(loai) < 0; });
+    ['psMucDoO', 'psMoTaO', 'psAnhO'].forEach(function (id) { document.getElementById(id).hidden = !loai; });
+    if (loai) document.getElementById('psMucDo').value = LOAI[loai].mucDo;
+    document.getElementById('psMucDo').disabled = loai === 'y_te';
+    document.getElementById('psGui').disabled = !loai;
+    tinh();
+  }
+  document.getElementById('psLoai').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-loai]'); if (!b) return;
+    loai = b.getAttribute('data-loai');
+    hop.querySelectorAll('[data-loai]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    hienO(); if (loai === 'them_mon') veMon();
+  });
+  function veMon() {
+    var tu = document.getElementById('psTimMon').value.toLowerCase().trim();
+    var ds = MON.filter(function (m) { return !tu || m.ten.toLowerCase().indexOf(tu) >= 0 || m.loai.toLowerCase().indexOf(tu) >= 0; }).slice(0, 60);
+    document.getElementById('psMon').innerHTML = ds.map(function (m) {
+      return '<div class="mon-ps"><span>' + esc(m.ten.replace(/^[A-Z0-9]+-/, '')) + ' <small>· ' + esc(m.loai) + ' · ' + vnd(m.gia) + '</small></span><input type="number" min="0" max="500" class="form-control form-control-sm" data-mon="' + m.id + '" value="' + (chonMon[m.id] || '') + '" placeholder="0"></div>';
+    }).join('') || '<p class="text-muted small p-2 mb-0">Không có món phù hợp.</p>';
+  }
+  document.getElementById('psTimMon').addEventListener('input', veMon);
+  document.getElementById('psMon').addEventListener('input', function (e) { var i = e.target.closest('[data-mon]'); if (!i) return; var v = Math.floor(Number(i.value) || 0); if (v > 0) chonMon[i.getAttribute('data-mon')] = v; else delete chonMon[i.getAttribute('data-mon')]; tinh(); });
+  document.getElementById('psSoBan').addEventListener('input', tinh);
+  document.getElementById('psTinhTien').addEventListener('change', function () { document.getElementById('psSoTien').hidden = !this.checked; });
+  function tinh() {
+    var t = Object.keys(chonMon).reduce(function (s, id) { var m = MON.filter(function (x) { return String(x.id) === id; })[0]; return s + (m ? m.gia * chonMon[id] : 0); }, 0);
+    document.getElementById('psTienMon').textContent = Object.keys(chonMon).length ? Object.keys(chonMon).length + ' món · tính khách ' + vnd(t) : '';
+    var b = Math.floor(Number(document.getElementById('psSoBan').value) || 0);
+    document.getElementById('psTienBan').textContent = b ? (loai === 'bot_ban' ? 'Giảm ' : 'Tính thêm ') + vnd(b * GIA_BAN) + ' (' + b + ' × ' + vnd(GIA_BAN) + ')' : '';
+  }
+  function nenAnh(file) {
+    return new Promise(function (ok, loi) {
+      var r = new FileReader();
+      r.onload = function () { var img = new Image(); img.onload = function () { var k = Math.min(1, 1280 / Math.max(img.width, img.height)); var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', .78)); }; img.onerror = loi; img.src = r.result; };
+      r.onerror = loi; r.readAsDataURL(file);
+    });
+  }
+  document.getElementById('psGui').addEventListener('click', async function () {
+    var b = this, l = document.getElementById('psLoi'); l.hidden = true; b.disabled = true;
+    try {
+      var f = document.getElementById('psAnh').files[0];
+      var body = { loai: loai, muc_do: document.getElementById('psMucDo').value, mo_ta: document.getElementById('psMoTa').value,
+        so_ban: document.getElementById('psSoBan').value, tinh_tien: document.getElementById('psTinhTien').checked, so_tien: document.getElementById('psSoTien').value,
+        mon: Object.keys(chonMon).map(function (id) { return { id_mon: Number(id), sl: chonMon[id] }; }), anh: f ? await nenAnh(f) : null };
+      await goi('/api/staff/tiec/' + ID + '/phat-sinh', body); tai();
+    } catch (err) { l.textContent = err.message; l.hidden = false; b.disabled = false; }
+  });
+
+  // Tu tai khi co thao tac moi (nguoi khac goi mon, bao phat sinh...) - khong tai khi dang mo hop / dang go.
+  setInterval(function () {
+    var tab = document.querySelector('[data-tab="trong-tiec"]');
+    if ((tab && tab.hidden) || !document.getElementById('hopPs').hidden || document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    fetch('/api/staff/tiec/' + ID + '/phien-ban').then(function (r) { return r.json(); }).then(function (j) { if (j.ok && j.v && j.v !== PB) location.reload(); }).catch(function () {});
+  }, 15000);
+})();
+</script>

@@ -1,0 +1,78 @@
+<%
+  var activePage = 'ke-toan-dong-tien';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var NHOM = ['nguyen_lieu', 'nhan_su', 'mat_bang', 'marketing', 'van_hanh'];
+  var qs = 'tu=' + loc.tu + '&den=' + loc.den + '&nhom=' + loc.nhom;
+%>
+<%- include('../partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-money-bill-transfer text-warning"></i> Báo cáo dòng tiền</h1>
+    <div class="small text-muted">Tiền thực vào / ra theo sổ quỹ (phương pháp trực tiếp). Nộp quỹ / nộp ngân hàng là chuyển tiền giữa các quỹ, không tính vào dòng tiền.</div>
+  </div>
+  <form class="form-inline" method="GET" style="gap:.4rem">
+    <input type="date" name="tu" value="<%= loc.tu %>" class="form-control form-control-sm" aria-label="Từ ngày">
+    <span class="small">→</span>
+    <input type="date" name="den" value="<%= loc.den %>" class="form-control form-control-sm" aria-label="Đến ngày">
+    <select name="nhom" class="form-control form-control-sm" aria-label="Gom theo">
+      <option value="ngay" <%= loc.nhom === 'ngay' ? 'selected' : '' %>>Theo ngày</option>
+      <option value="thang" <%= loc.nhom === 'thang' ? 'selected' : '' %>>Theo tháng</option>
+    </select>
+    <button class="btn btn-sm btn-primary">Xem</button>
+    <a class="btn btn-sm btn-outline-success" href="/staff/ke-toan/dong-tien/excel?<%= qs %>"><i class="fas fa-file-excel"></i> Excel</a>
+  </form>
+</div>
+
+<% if (loi) { %><div class="alert alert-danger"><%= loi %></div><% } else { var T = dt.tong; %>
+<div class="row">
+  <div class="col-md-3 mb-3"><div class="card shadow h-100 py-2 border-left-success"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tiền vào</div><div class="h5 mb-0 font-weight-bold"><%= vnd(T.tong_vao) %></div>
+    <div class="small text-muted">bán hàng <%= vnd(T.vao.ban_hang) %></div></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card shadow h-100 py-2 border-left-danger"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Tiền ra</div><div class="h5 mb-0 font-weight-bold"><%= vnd(T.tong_ra) %></div>
+    <div class="small text-muted">gồm hoàn tiền <%= vnd(T.ra.hoan_tien) %></div></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card shadow h-100 py-2 border-left-primary"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Dòng tiền thuần</div><div class="h5 mb-0 font-weight-bold <%= T.thuan < 0 ? 'text-danger' : '' %>"><%= (T.thuan < 0 ? '−' : '') + vnd(Math.abs(T.thuan)) %></div></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card shadow h-100 py-2 border-left-warning"><div class="card-body py-2">
+    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Số dư cuối kỳ</div>
+    <div class="small">Tiền mặt: <b><%= vnd(dt.quy.tien_mat.cuoi) %></b></div>
+    <div class="small">Ngân hàng: <b><%= vnd(dt.quy.ngan_hang.cuoi) %></b></div></div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-lg-5 mb-3">
+    <div class="card shadow h-100">
+      <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary">Cơ cấu tiền ra theo nhóm</h6></div>
+      <div class="card-body">
+        <% var maxRa = Math.max.apply(null, NHOM.map(function (k) { return T.ra[k]; }).concat([T.ra.hoan_tien, 1])); %>
+        <% NHOM.concat(['hoan_tien']).forEach(function (k) { var v = T.ra[k]; %>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small"><span><%= k === 'hoan_tien' ? 'Hoàn tiền khách' : dt.TEN_NHOM_CHI[k] %></span><b><%= vnd(v) %></b></div>
+            <div style="height:8px;background:#f1ece4;border-radius:4px" role="img" aria-label="<%= k %> <%= vnd(v) %>">
+              <div style="height:8px;width:<%= Math.round(v / maxRa * 100) %>%;background:<%= k === 'hoan_tien' ? '#a8a69f' : '#eb6834' %>;border-radius:4px"></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7 mb-3">
+    <div class="card shadow h-100">
+      <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-primary">Theo <%= loc.nhom === 'thang' ? 'tháng' : 'ngày' %></h6></div>
+      <div class="card-body p-0"><div class="table-responsive" style="max-height:420px;overflow:auto"><table class="table table-sm mb-0">
+        <thead class="thead-light"><tr><th>Kỳ</th><th class="text-right">Vào</th><th class="text-right">Ra</th><th class="text-right">Thuần</th></tr></thead>
+        <tbody>
+          <% if (!dt.theo_ky.length) { %><tr><td colspan="4" class="text-muted small">Không có dòng tiền trong khoảng này.</td></tr><% } %>
+          <% dt.theo_ky.forEach(function (k) { %>
+            <tr><td><%= k.ky %></td><td class="text-right text-success"><%= vnd(k.tong_vao) %></td><td class="text-right text-danger"><%= vnd(k.tong_ra) %></td>
+              <td class="text-right font-weight-bold <%= k.thuan < 0 ? 'text-danger' : '' %>"><%= (k.thuan < 0 ? '−' : '') + vnd(Math.abs(k.thuan)) %></td></tr>
+          <% }) %>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<%- include('../partials/footer') %>

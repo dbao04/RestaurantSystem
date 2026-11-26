@@ -32,11 +32,14 @@
     <input type="search" class="form-control form-control-sm" style="max-width:240px" id="tim" placeholder="Tìm nguyên liệu...">
     <label class="small mb-0"><input type="checkbox" id="chiLech"> Chỉ dòng lệch</label>
     <span class="small text-muted ml-2" id="tomTat"></span>
-    <% if (dangDem) { %>
+    <% if (dangDem && !duocDem && !duocChot) { %>
+      <span class="small text-muted ml-auto"><i class="fas fa-circle-info"></i> Kiểm kê do Thủ kho / Nhân viên kho đếm, Quản lý chốt.</span>
+    <% } %>
+    <% if (dangDem && (duocDem || duocChot)) { %>
       <button type="button" class="btn btn-sm btn-light ml-auto" id="dienSoSach" title="Điền số đếm = sổ sách cho các dòng còn trống">Điền dòng trống = sổ sách</button>
       <button type="button" class="btn btn-sm btn-primary" id="luu"><i class="fas fa-save"></i> Lưu số đếm</button>
       <button type="button" class="btn btn-sm btn-success" id="chot" <%= !duocChot || tuChot ? 'disabled' : '' %>
-        title="<%= !duocChot ? 'Chỉ bếp trưởng / quản lý được chốt' : tuChot ? 'Người lập phiếu không tự chốt' : 'Chốt và sinh phiếu điều chỉnh' %>"><i class="fas fa-lock"></i> Chốt kiểm kê</button>
+        title="<%= !duocChot ? 'Chỉ quản lý nhà hàng được chốt' : tuChot ? 'Người lập phiếu không tự chốt' : 'Chốt và sinh phiếu điều chỉnh' %>"><i class="fas fa-lock"></i> Chốt kiểm kê</button>
       <button type="button" class="btn btn-sm btn-outline-danger" id="huy">Hủy phiếu</button>
     <% } %>
   </div>

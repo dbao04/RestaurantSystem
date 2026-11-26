@@ -137,7 +137,9 @@ async function timCloudflared() {
 /* ------------------------------------------------------------------ */
 
 function ghiTepTunnel(url) {
-  fs.writeFileSync(TEP_TUNNEL, JSON.stringify({ url, luc: new Date().toISOString() }, null, 2));
+  // pid: diaChiQR bo qua tep neu tien trinh nay da chet (dong cua so / tat may
+  // ma khong kip xoa tep) - neu khong ma QR se tro mai vao dia chi tunnel chet.
+  fs.writeFileSync(TEP_TUNNEL, JSON.stringify({ url, pid: process.pid, luc: new Date().toISOString() }, null, 2));
 }
 
 function xoaTepTunnel() {

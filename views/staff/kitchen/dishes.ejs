@@ -6,16 +6,14 @@
 
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1 class="h3 mb-0 text-gray-800">Quản lý Món ăn</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        <button class="btn btn-primary" data-toggle="modal" data-target="#addDishModal"><i class="fas fa-plus mr-1"></i> Thêm món mới</button>
+        <h1 class="h3 mb-0 text-gray-800"><%= tram === 'bar' ? 'Quản lý đồ uống (Bar)' : tram === 'bep' ? 'Quản lý món ăn (Bếp)' : 'Quản lý món ăn & đồ uống' %></h1>
+        <small class="text-muted"><%= tram === 'bar' ? 'Bar chỉ thấy và báo tạm hết các món đồ uống, sake, bia.' : tram === 'bep' ? 'Bếp quản lý món ăn; đồ uống do Bar quản lý.' : 'Ban điều hành thấy tất cả.' %> Báo "Tạm hết" thì món ẩn khỏi thực đơn và phục vụ, thu ngân nhận thông báo.</small>
     </div>
 </div>
 
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary mb-2">Danh sách các món ăn chính</h6>
+        <h6 class="m-0 font-weight-bold text-primary mb-2"><%= dishes.length %> món · <%= dishes.filter(function (d) { return Number(d.tinhtrang) !== 1; }).length %> đang tạm hết</h6>
         <div class="d-flex align-items-center flex-wrap"><div class="input-group input-group-sm" style="max-width:340px"><div class="input-group-prepend"><span class="input-group-text bg-white"><i class="fas fa-search"></i></span></div><input type="search" class="form-control" data-tim-kiem="#bangMonAn" data-tim-dem="#demMonAn" placeholder="Tìm tên món, mã món, loại..." aria-label="Tìm tên món, mã món, loại..."></div><small class="text-muted ml-2" id="demMonAn"></small></div>
     </div>
     <div class="card-body">
@@ -52,7 +50,11 @@
                             <% } %>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-circle btn-primary"><i class="fas fa-edit"></i></button>
+                            <% if (d.tinhtrang == 1) { %>
+                              <button type="button" class="btn btn-sm btn-outline-danger" data-mon-tt="<%= d.id_mon %>" data-tt="0"><i class="fas fa-ban"></i> Tạm hết</button>
+                            <% } else { %>
+                              <button type="button" class="btn btn-sm btn-success" data-mon-tt="<%= d.id_mon %>" data-tt="1"><i class="fas fa-rotate-left"></i> Bán lại</button>
+                            <% } %>
                         </td>
                     </tr>
                     <% }) %>
@@ -62,4 +64,17 @@
     </div>
 </div>
 
+<script>
+document.querySelectorAll('[data-mon-tt]').forEach(function (b) {
+  b.addEventListener('click', async function () {
+    b.disabled = true;
+    try {
+      var r = await fetch('/staff/kitchen/dish/' + b.getAttribute('data-mon-tt') + '/trang-thai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tinhtrang: Number(b.getAttribute('data-tt')) }) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok || !j.ok) throw new Error(j.thong_bao || 'Không cập nhật được.');
+      location.reload();
+    } catch (e) { alert(e.message); b.disabled = false; }
+  });
+});
+</script>
 <%- include('../partials/footer') %>

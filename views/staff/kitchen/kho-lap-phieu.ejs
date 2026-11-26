@@ -11,8 +11,8 @@
 
 <div class="kb-dau">
   <div>
-    <h1 class="h3 text-gray-800"><i class="fas <%= laNhap ? 'fa-file-import text-success' : 'fa-file-export text-danger' %>"></i> <%= laNhap ? (don ? 'Nhận hàng – đơn ' + don.ma_don : 'Lập phiếu nhập kho') : 'Lập phiếu xuất kho' %></h1>
-    <div class="kb-phu"><%= laNhap ? 'Mỗi dòng tạo một lô hàng có hạn dùng. Giá vốn được tính lại theo bình quân gia quyền.' : 'Dùng cho hàng hư hỏng, hết hạn, hao hụt, dùng nội bộ, trả nhà cung cấp hoặc điều chỉnh kiểm kê. Tồn kho và lô hàng bị trừ ngay.' %></div>
+    <h1 class="h3 text-gray-800"><i class="fas <%= laNhap ? 'fa-file-import text-success' : 'fa-file-export text-danger' %>"></i> <%= laNhap ? (don ? 'Nhận hàng – đơn ' + don.ma_don : 'Lập phiếu nhận hàng') : 'Lập phiếu xuất kho' %></h1>
+    <div class="kb-phu"><%= laNhap ? 'Ghi đúng số lượng nhà cung cấp GIAO. Sau khi lưu, bếp trưởng / trưởng bar kiểm tra chất lượng; phần đạt mới vào kho, rồi kế toán đối chiếu hóa đơn và quản lý duyệt.' : 'Dùng cho hàng hư hỏng, hết hạn, hao hụt, dùng nội bộ, trả nhà cung cấp hoặc điều chỉnh kiểm kê. Tồn kho và lô hàng bị trừ ngay.' %></div>
   </div>
   <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Sổ xuất nhập</a>
 </div>
@@ -44,6 +44,28 @@
       </div>
     </div>
 
+    <% if (laNhap) { %>
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="fChungTu" class="small font-weight-bold">Số hóa đơn / phiếu giao hàng NCC <span class="text-danger">*</span></label>
+        <input id="fChungTu" class="form-control" maxlength="60" placeholder="VD: HĐ 0001234 hoặc PGH-5521">
+        <div class="custom-control custom-checkbox mt-1">
+          <input type="checkbox" class="custom-control-input" id="fKhongCt">
+          <label class="custom-control-label small" for="fKhongCt">Không có chứng từ (mua chợ, hàng lẻ)</label>
+        </div>
+      </div>
+      <div class="form-group col-md-4" id="oLyDoCt" hidden>
+        <label for="fLyDoCt" class="small font-weight-bold">Lý do không có chứng từ <span class="text-danger">*</span></label>
+        <input id="fLyDoCt" class="form-control" maxlength="255" placeholder="VD: Mua rau ở chợ Gò Vấp, người bán không xuất phiếu">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="fAnh" class="small font-weight-bold">Ảnh hóa đơn / phiếu giao <span class="text-muted font-weight-normal">(tùy chọn)</span></label>
+        <input type="file" id="fAnh" class="form-control-file" accept="image/jpeg,image/png,image/webp" capture="environment">
+        <small class="text-muted" id="anhInfo"></small>
+      </div>
+    </div>
+    <% } %>
+
     <div class="table-responsive">
       <table class="table kb-dong mb-2 no-cuon">
         <thead class="thead-light"><tr>
@@ -60,7 +82,7 @@
       <div><span class="text-muted">Tổng <%= laNhap ? 'tiền nhập' : 'giá trị xuất (theo giá vốn)' %>:</span> <span class="kb-tong" id="tongTien">0đ</span></div>
       <div class="d-flex" style="gap:.5rem">
         <a href="/staff/kitchen/kho" class="btn btn-light">Hủy</a>
-        <button type="submit" class="btn <%= laNhap ? 'btn-success' : 'btn-danger' %> font-weight-bold" id="nutLuu"><i class="fas fa-check"></i> <%= laNhap ? 'Lưu phiếu nhập' : 'Lưu phiếu xuất' %></button>
+        <button type="submit" class="btn <%= laNhap ? 'btn-success' : 'btn-danger' %> font-weight-bold" id="nutLuu"><i class="fas fa-check"></i> <%= laNhap ? 'Lưu & gửi kiểm tra chất lượng' : 'Lưu phiếu xuất' %></button>
       </div>
     </div>
     <div class="alert alert-danger mt-3 mb-0" id="loi" hidden></div>
@@ -167,6 +189,31 @@
   }
 
   $('themDong').addEventListener('click', function () { dongMoi().querySelector('.o-nl').focus(); });
+
+  // Chung tu: so hoa don bat buoc, tru khi danh dau khong co (kem ly do). Anh tuy chon,
+  // thu nho truoc khi gui (anh dien thoai 4-8MB -> ~300KB).
+  var anhDataUrl = null;
+  if (LA_NHAP) {
+    $('fKhongCt').addEventListener('change', function () {
+      $('oLyDoCt').hidden = !this.checked; $('fChungTu').disabled = this.checked;
+      if (this.checked) $('fLyDoCt').focus();
+    });
+    $('fAnh').addEventListener('change', function () {
+      var f = this.files && this.files[0]; anhDataUrl = null; $('anhInfo').textContent = '';
+      if (!f) return;
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.width, img.height));
+        var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        anhDataUrl = c.toDataURL('image/jpeg', 0.82);
+        $('anhInfo').textContent = 'Đã chọn ảnh (' + Math.round(anhDataUrl.length * 0.75 / 1024) + ' KB)';
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = function () { $('anhInfo').textContent = 'Không đọc được ảnh'; };
+      img.src = url;
+    });
+  }
   (DAU.length ? DAU : [{}]).forEach(dongMoi);
   if (!LA_NHAP) {
     var capNhatBatBuoc = function () { $('batBuocGhiChu').hidden = LY_DO_HAO_HUT.indexOf($('fLyDo').value) < 0; };
@@ -188,16 +235,27 @@
       dong.push(d);
     });
     if (!loi && !dong.length) loi = 'Chưa có dòng nguyên liệu nào.';
+    if (!loi && LA_NHAP) {
+      if ($('fKhongCt').checked) { if ($('fLyDoCt').value.trim().length < 5) loi = 'Ghi lý do không có chứng từ (ít nhất 5 ký tự).'; }
+      else if (!$('fChungTu').value.trim()) loi = 'Nhập số hóa đơn / phiếu giao hàng của nhà cung cấp, hoặc tick "Không có chứng từ".';
+    }
     if (loi) { $('loi').textContent = loi; $('loi').hidden = false; return; }
     var body = { dong: dong, ghi_chu: $('fGhiChu').value };
-    if (LA_NHAP) { body.id_ncc = $('fNcc').value; if (ID_DON) body.id_dmh = ID_DON; } else body.ly_do = $('fLyDo').value;
+    if (LA_NHAP) {
+      body.id_ncc = $('fNcc').value; if (ID_DON) body.id_dmh = ID_DON;
+      if ($('fKhongCt').checked) body.ly_do_khong_chung_tu = $('fLyDoCt').value.trim();
+      else body.so_chung_tu = $('fChungTu').value.trim();
+      if (anhDataUrl) body.anh_chung_tu = anhDataUrl;
+    } else body.ly_do = $('fLyDo').value;
     $('nutLuu').disabled = true;
     try {
       var r = await fetch('/api/kitchen/kho/' + (LA_NHAP ? 'nhap' : 'xuat'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       var j = await r.json();
       if (!j.ok) throw new Error(j.thong_bao || 'Không lưu được phiếu');
-      window.open('/staff/kitchen/kho/phieu/' + (LA_NHAP ? 'nhap' : 'xuat') + '/' + j.id, '_blank');
-      location.href = ID_DON ? '/staff/kitchen/mua-hang/' + ID_DON : '/staff/kitchen/kho';
+      // Phieu nhap -> trang theo doi quy trinh duyet; phieu xuat -> in ngay.
+      if (LA_NHAP) { location.href = '/staff/kitchen/kho/phieu-nhap/' + j.id; return; }
+      window.open('/staff/kitchen/kho/phieu/xuat/' + j.id, '_blank');
+      location.href = '/staff/kitchen/kho';
     } catch (err) {
       $('loi').textContent = err.message; $('loi').hidden = false;
       $('nutLuu').disabled = false;

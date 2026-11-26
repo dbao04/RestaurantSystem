@@ -95,12 +95,20 @@ async function giuKho(idsNl) {
 
 // ---------------------------------------------------------- bat server
 let tienTrinh = null;
+// Thong bao do cac thao tac test sinh ra (gui nen) - xoa het khi ket thuc.
+let mocThongBao = null;
 test.before(async () => {
+  const [[m]] = await db.query("SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao").catch(() => [[{ m: null }]]);
+  mocThongBao = m.m;
   const [qr] = await db.query('SELECT id, active_sesis FROM qr_tables');
   khoiPhuc.qr = qr;
   const dangChay = await fetch(BASE + '/').then((r) => r.ok).catch(() => false);
   if (dangChay) return;
-  tienTrinh = spawn(process.execPath, ['server.js'], { stdio: 'ignore' });
+  tienTrinh = spawn(process.execPath, ['server.js'], {
+    stdio: 'ignore',
+    // Gom mon moi -> bep trong 100ms (mac dinh 2,5s) de thong bao ghi xong truoc khi test.after don.
+    env: { ...process.env, TB_GOM_MON_MS: '100' },
+  });
   for (let i = 0; i < 60; i++) {
     if (await fetch(BASE + '/').then((r) => r.ok).catch(() => false)) return;
     await new Promise((r) => setTimeout(r, 500));
@@ -110,6 +118,10 @@ test.before(async () => {
 
 test.after(async () => {
   try {
+    if (mocThongBao !== null) {
+      await new Promise((r) => setTimeout(r, 3500));  // cho thong bao gui nen ghi xong (gom mon moi -> bep 2,5s khi dung server dang chay)
+      await db.query("DELETE FROM thong_bao WHERE id_tb > ?", [mocThongBao]).catch(() => {});
+    }
     for (const sesis of khoiPhuc.sesis) {
       for (const bang of ['xuat_kho', 'payments', 'huy_mon']) {
         await db.query(`DELETE FROM ${bang} WHERE sesis = ?`, [sesis]).catch(() => {});
@@ -222,6 +234,8 @@ test('nhan vien dung mat khau mac dinh: bi bat doi, API van chay, khong doi lai 
   const [[nv]] = await db.query("SELECT id_nv, passwords FROM nhan_vien WHERE username = 'thungan'");
   await giuMatKhau('nhan_vien', 'id_nv', nv.id_nv, 'passwords');
   t.after(() => db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [nv.passwords, nv.id_nv]));
+  // Mat khau that co the da doi -> dat lai dung mat khau mac dinh cho kich ban nay.
+  await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5(MK), nv.id_nv]);
   const c = client();
   let r = await c('/staff/login', form({ username: 'thungan', password: MK }));
   assert.match(String(r.headers.get('location')), /^\/staff\/profile/);
@@ -288,19 +302,41 @@ test('huy mon: phuc vu huy mon chua nau; mon da nau can quan ly', async () => {
   const sesis = await goiMonChoBan(PV, b1.Id_ban, mon.id_mon, 3);
   const [[dong]] = await db.query('SELECT id FROM hopdong WHERE sesis = ? AND id_mon = ? ORDER BY id DESC LIMIT 1', [sesis, mon.id_mon]);
 
-  let d = await (await PV('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: '' }))).json();
+  const [[tbTruoc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
+  let d = await (await PV('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: '', ly_do: 'Khách gọi nhầm món, bếp chưa làm' }))).json();
   assert.equal(d.success, false, 'phai co ly do');
-  d = await (await PV('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: 'goi_nham' }))).json();
+  d = await (await PV('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: 'goi_nham', ly_do: 'nham' }))).json();
+  assert.equal(d.success, false, 'giai trinh qua ngan bi tu choi');
+  assert.match(d.message, /giải trình/);
+  d = await (await PV('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: 'goi_nham', ly_do: 'Khách gọi nhầm món, bếp chưa làm' }))).json();
   assert.equal(d.success, true, JSON.stringify(d));
+  assert.ok(d.so_nguoi_nhan > 0, 'co nguoi nhan thong bao');
+
+  // Thong bao toi quan ly + giam sat (kem giai trinh), khong toi nguoi vua xoa.
+  const [nhan] = await db.query(
+    "SELECT n.username, t.noi_dung FROM thong_bao t JOIN nhan_vien n ON n.id_nv = t.id_nv WHERE t.id_tb > ? AND t.tieu_de LIKE 'Xóa món:%'", [tbTruoc.m]);
+  const tenNhan = nhan.map((x) => x.username);
+  assert.ok(tenNhan.includes('quanly'), 'quan ly nhan thong bao');
+  assert.ok(tenNhan.includes('giamsattn') && tenNhan.includes('giamsatpv'), 'giam sat nhan thong bao');
+  assert.ok(!tenNhan.includes('phucvu'), 'nguoi xoa khong tu nhan');
+  assert.ok(nhan.every((x) => x.noi_dung.includes('Khách gọi nhầm món, bếp chưa làm')), 'thong bao co giai trinh');
+
+  // Nhat ky xoa mon: giam sat xem duoc, phuc vu khong.
+  const GS = await dangNhapNhanVien('giamsattn');
+  let nk = await GS('/staff/huy-mon/nhat-ky', { headers: { Accept: 'text/html' } });
+  assert.equal(nk.status, 200);
+  assert.match(await nk.text(), /Khách gọi nhầm món, bếp chưa làm/);
+  nk = await PV('/staff/huy-mon/nhat-ky', { headers: { Accept: 'text/html' } });
+  assert.equal(nk.status, 403);
   let [[sau]] = await db.query('SELECT soluong, thanhtien FROM hopdong WHERE id = ?', [dong.id]);
   assert.equal(sau.soluong, 2);
   assert.equal(Number(sau.thanhtien), Number(mon.gia_mon) * 2);
 
   // Bep bat dau nau -> phuc vu khong huy duoc nua, quan ly duoc.
   await db.query('UPDATE hopdong SET trangthai_bep = 1 WHERE id = ?', [dong.id]);
-  let r = await PV('/staff/huy-mon/' + dong.id, json({ ma_ly_do: 'khach_doi_y' }));
+  let r = await PV('/staff/huy-mon/' + dong.id, json({ ma_ly_do: 'khach_doi_y', ly_do: 'Khách đổi ý sau khi bếp nấu' }));
   assert.equal(r.status, 403);
-  d = await (await QL('/staff/huy-mon/' + dong.id, json({ ma_ly_do: 'khach_doi_y' }))).json();
+  d = await (await QL('/staff/huy-mon/' + dong.id, json({ ma_ly_do: 'khach_doi_y', ly_do: 'Khách đổi ý sau khi bếp nấu' }))).json();
   assert.equal(d.success, true, JSON.stringify(d));
   [[sau]] = await db.query('SELECT soluong FROM hopdong WHERE id = ?', [dong.id]);
   assert.equal(sau.soluong, 0);
@@ -310,6 +346,41 @@ test('huy mon: phuc vu huy mon chua nau; mon da nau can quan ly', async () => {
   assert.equal(Number(log.sl), 3);
   const ls = await (await QL('/staff/huy-mon/don/' + encodeURIComponent(sesis))).json();
   assert.equal(ls.lich_su.length, 2);
+  await db.query("DELETE FROM thong_bao WHERE id_tb > ? AND tieu_de LIKE 'Xóa món:%'", [tbTruoc.m]);
+});
+
+test('POS thu ngan: order cho ban trong, them mon, giam mon phai giai trinh', async () => {
+  const mon = await monCoCongThuc();
+  const [b1] = await haiBanTrong();
+  const TN = await dangNhapNhanVien('thungan');
+  const [[tbTruoc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
+  // Thu ngan lay duoc thuc don.
+  const td = await (await TN('/staff/bookings/dishes', { headers: { Accept: 'application/json' } })).json();
+  assert.equal(td.success, true);
+  assert.ok(td.dishes.some((m) => Number(m.id_mon) === Number(mon.id_mon)));
+  // Order cho ban trong -> mo phien moi.
+  const sesis = await goiMonChoBan(TN, b1.Id_ban, mon.id_mon, 2);
+  // Trang chi tiet co nut them mon / giam mon.
+  let r = await TN('/staff/thanh-toan/' + encodeURIComponent(sesis), { headers: { Accept: 'text/html' } });
+  const html = await r.text();
+  assert.equal(r.status, 200);
+  assert.match(html, /id="nut-them-mon"/);
+  assert.match(html, /nut-them-1/);
+  // Them 1 phan (phieu bep moi) vao dung don.
+  let d = await (await TN('/so-do-ban/api/order-mon/' + b1.Id_ban, json({ items: [{ id_mon: mon.id_mon, soluong: 1 }] }))).json();
+  assert.equal(d.ok, true, JSON.stringify(d));
+  assert.equal(d.sesis, sesis, 'them vao dung don dang mo');
+  const [[sl]] = await db.query('SELECT SUM(soluong) AS n FROM hopdong WHERE sesis = ? AND id_mon = ?', [sesis, mon.id_mon]);
+  assert.equal(Number(sl.n), 3);
+  // Giam 1 phan: phai giai trinh.
+  const [[dong]] = await db.query('SELECT id FROM hopdong WHERE sesis = ? AND id_mon = ? AND soluong > 0 ORDER BY id LIMIT 1', [sesis, mon.id_mon]);
+  d = await (await TN('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: 'goi_nham' }))).json();
+  assert.equal(d.success, false, 'khong giai trinh thi khong xoa duoc');
+  d = await (await TN('/staff/huy-mon/' + dong.id, json({ so_luong: 1, ma_ly_do: 'goi_nham', ly_do: 'Thu ngân nhập dư 1 phần' }))).json();
+  assert.equal(d.success, true, JSON.stringify(d));
+  const [[sau]] = await db.query('SELECT SUM(soluong) AS n FROM hopdong WHERE sesis = ? AND id_mon = ?', [sesis, mon.id_mon]);
+  assert.equal(Number(sau.n), 2);
+  await db.query("DELETE FROM thong_bao WHERE id_tb > ? AND tieu_de LIKE 'Xóa món:%'", [tbTruoc.m]);
 });
 
 test('chuyen ban va gop ban', async () => {
@@ -530,14 +601,25 @@ test('nhap kho nhanh di qua phieu nhap: co lo, ton khop tong lo', async () => {
      GROUP BY nl.id_nl, nl.so_luong ORDER BY nl.id_nl LIMIT 1`);
   await giuKho([nl.id_nl]);
   const [[pnTruoc]] = await db.query('SELECT COALESCE(MAX(id_pn), 0) AS m FROM phieu_nhap');
-  const BEP = await dangNhapNhanVien('daubep');
+  // Nhap kho do THU KHO lam (services/phanQuyenKho.js); dau bep chi xem ton.
+  const DB = await dangNhapNhanVien('daubep');
+  assert.equal((await DB('/staff/kitchen/inventory/stock-in', form({ id_nl: nl.id_nl, so_luong: '5', gia_nhap: '1000' }))).status, 403, 'dau bep khong tu nhap kho');
+  const BEP = await dangNhapNhanVien('thukho');
   let idPn = null;
   try {
     const r = await BEP('/staff/kitchen/inventory/stock-in', form({ id_nl: nl.id_nl, so_luong: '5', gia_nhap: '1000' }));
     assert.equal(r.status, 302);
-    const [[pn]] = await db.query('SELECT id_pn, ma_phieu FROM phieu_nhap WHERE id_pn > ? ORDER BY id_pn DESC LIMIT 1', [pnTruoc.m]);
+    const [[pn]] = await db.query('SELECT id_pn, ma_phieu, trang_thai_duyet, mua_le FROM phieu_nhap WHERE id_pn > ? ORDER BY id_pn DESC LIMIT 1', [pnTruoc.m]);
     assert.ok(pn, 'nhap nhanh phai sinh phieu nhap');
     idPn = pn.id_pn;
+    // Quy trinh duyet: hang chua vao kho cho toi khi bep truong kiem chat luong.
+    assert.equal(pn.trang_thai_duyet, 'cho_qc');
+    assert.equal(Number(pn.mua_le), 1, 'nhap nhanh khong NCC = mua le');
+    const [[truocQc]] = await db.query('SELECT so_luong FROM nguyen_lieu WHERE id_nl = ?', [nl.id_nl]);
+    assert.ok(Math.abs(Number(truocQc.so_luong) - Number(nl.so_luong)) < 0.01, 'chua QC -> ton chua tang');
+    const BT = await dangNhapNhanVien('beptruong');
+    const qc = await BT(`/api/kitchen/kho/nhap/${idPn}/qc`, json({ dong: [] }));
+    assert.equal(qc.status, 200, await qc.clone().text());
     const [[sau]] = await db.query(
       `SELECT nl.so_luong, COALESCE(SUM(ct.so_luong_con_lai), 0) AS lo
        FROM nguyen_lieu nl LEFT JOIN chi_tiet_phieu_nhap ct ON ct.id_nl = nl.id_nl WHERE nl.id_nl = ? GROUP BY nl.so_luong`, [nl.id_nl]);
@@ -554,14 +636,14 @@ test('nhap kho nhanh di qua phieu nhap: co lo, ton khop tong lo', async () => {
 test('dat tiec: vong doi dung thu tu, coc va thanh toan ghi tien that, hoan coc chi quan ly', async () => {
   const dv = require('../services/datTiecService');
   await dv.damBaoCotTien();
-  const sanh = (await dv.docSanhTiec())[0];
+  const sanh = await require('../services/datTiecQuyTrinh').sanhGala();
   const thucDon = (await dv.docThucDon())[0];
   assert.ok(sanh && thucDon, 'can co sanh va thuc don tiec');
   const ngayTiec = dv.cong(require('../utils/thoiGian').ngayCucBo(), 300);
   const taoTiec = async (buoi) => dv.taoDonTiec({
-    ho_ten: 'Kiem Thu Tiec', so_dien_thoai: '0900000001', loai_tiec: Object.keys(dv.LOAI_TIEC)[0],
+    ho_ten: 'Kiem Thu Tiec', so_dien_thoai: '0900000001', loai_tiec: Object.keys(dv.LOAI_TIEC)[0], dong_y_chinh_sach: true,
     ngay_to_chuc: ngayTiec, buoi, gio_bat_dau: dv.BUOI[buoi].gio[0],
-    so_khach: sanh.tiec_toi_thieu, khu_vuc_id: sanh.id, thuc_don_id: thucDon.id,
+    so_khach: sanh.tiec_toi_thieu, thuc_don_id: thucDon.id,
   });
   const t1 = await taoTiec('TRUA');
   const t2 = await taoTiec('TOI');
@@ -572,12 +654,12 @@ test('dat tiec: vong doi dung thu tu, coc va thanh toan ghi tien that, hoan coc 
     const LT = await dangNhapNhanVien('letan');
     const QL = await dangNhapNhanVien('quanly');
 
+    // Don online moi: CHO_COC (giu sanh tam). Nhan vien thu coc tai quay.
+    assert.equal(t1.trang_thai, 'CHO_COC');
     let d = await (await capNhat(LT, t1.id, { trang_thai: 'HOAN_THANH' })).json();
-    assert.equal(d.ok, false, 'khong nhay tu MOI sang HOAN_THANH');
-    d = await (await capNhat(LT, t1.id, { trang_thai: 'DA_XAC_NHAN' })).json();
-    assert.equal(d.ok, true, JSON.stringify(d));
+    assert.equal(d.ok, false, 'khong nhay tu CHO_COC sang HOAN_THANH');
 
-    const toiThieu = Math.ceil(t1.tong_du_toan * dv.TY_LE_COC);
+    const toiThieu = t1.tien_coc;
     let r = await capNhat(PV, t1.id, { trang_thai: 'DA_COC', so_tien: toiThieu, phuong_thuc: 'tien_mat' });
     assert.equal(r.status, 403, 'phuc vu khong thu tien');
     d = await (await capNhat(LT, t1.id, { trang_thai: 'DA_COC', so_tien: toiThieu - 1000, phuong_thuc: 'tien_mat' })).json();
@@ -593,7 +675,6 @@ test('dat tiec: vong doi dung thu tu, coc va thanh toan ghi tien that, hoan coc 
     assert.equal(d.ok, false, 'HOAN_THANH la trang thai cuoi');
 
     // Tiec 2: coc roi huy. Le tan khong hoan duoc, quan ly hoan duoc.
-    await capNhat(LT, t2.id, { trang_thai: 'DA_XAC_NHAN' });
     d = await (await capNhat(LT, t2.id, { trang_thai: 'DA_COC', so_tien: toiThieu, phuong_thuc: 'tien_mat' })).json();
     assert.equal(d.ok, true, JSON.stringify(d));
     d = await (await capNhat(LT, t2.id, { trang_thai: 'HUY', ly_do_huy: '' })).json();
@@ -623,22 +704,29 @@ test('tiec giu sanh tren dat ban + ke hoach nguyen lieu + cong vao du bao mua ha
   const qt = require('../services/reservationRules');
   const kho = require('../services/khoBepService');
   await dv.damBaoCotTien();
-  const sanh = (await dv.docSanhTiec())[0];
+  const sanh = await require('../services/datTiecQuyTrinh').sanhGala();
   const thucDon = (await dv.docThucDon())[0];
   const homNay = require('../utils/thoiGian').ngayCucBo();
-  const ngayTiec = dv.cong(homNay, 5);
+  // Tim ngay sanh con trong buoi toi (lich that co the da co tiec).
+  let ngayTiec = null;
+  for (let i = 5; i < 60 && !ngayTiec; i++) {
+    const l = await require('../services/datTiecQuyTrinh').lichNgay(dv.cong(homNay, i));
+    if (l.nhan && !l.buoi.find((b) => b.ma === 'TOI').kin) ngayTiec = l.ngay;
+  }
   const t = await dv.taoDonTiec({
-    ho_ten: 'Kiem Thu Sanh', so_dien_thoai: '0900000002', loai_tiec: Object.keys(dv.LOAI_TIEC)[0],
+    ho_ten: 'Kiem Thu Sanh', so_dien_thoai: '0900000002', loai_tiec: Object.keys(dv.LOAI_TIEC)[0], dong_y_chinh_sach: true,
     ngay_to_chuc: ngayTiec, buoi: 'TOI', gio_bat_dau: dv.BUOI.TOI.gio[0],
-    so_khach: sanh.tiec_toi_thieu, khu_vuc_id: sanh.id, thuc_don_id: thucDon.id,
+    so_khach: sanh.tiec_toi_thieu, thuc_don_id: thucDon.id,
   });
   const khung = (gio) => qt.phanTichKhungGio({ reservation_date: ngayTiec, start_time: gio, guest_count: 2, duration_minutes: 90 });
   const banSanh = async (gio) => (await rt.banKhaDung(khung(gio), { chiChoDat: false })).tatCa
     .filter((b) => Number(b.khu_vuc_id) === Number(sanh.id));
   try {
-    // Moi tao (MOI) chua giu sanh.
-    assert.ok((await banSanh('19:00')).every((b) => !b.ly_do || b.ly_do.ma !== 'EVENT'), 'tiec MOI khong giu sanh');
-    await db.query("UPDATE dat_tiec SET trang_thai = 'DA_XAC_NHAN' WHERE id = ?", [t.id]);
+    // Don online CHO_COC dang giu sanh tam -> ban sanh da khoa; het han giu cho -> nha sanh.
+    assert.ok((await banSanh('19:00')).every((b) => b.ly_do && b.ly_do.ma === 'EVENT'), 'tiec cho coc con han giu sanh');
+    await db.query("UPDATE dat_tiec SET han_giu_cho = NOW() - INTERVAL 1 MINUTE WHERE id = ?", [t.id]);
+    assert.ok((await banSanh('19:00')).every((b) => !b.ly_do || b.ly_do.ma !== 'EVENT'), 'het han giu cho -> nha sanh');
+    await db.query("UPDATE dat_tiec SET trang_thai = 'DA_XAC_NHAN', han_giu_cho = NULL WHERE id = ?", [t.id]);
     const toi = await banSanh('19:00');
     assert.ok(toi.length > 0, 'sanh co ban');
     assert.ok(toi.every((b) => b.ly_do && b.ly_do.ma === 'EVENT'), 'moi ban cua sanh bi khoa buoi toi');
@@ -695,8 +783,15 @@ test('cong no nha cung cap: phieu nhap sinh no, tra mot phan, chong tra vuot, hu
   const [[nvKt]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'ketoan'");
   let idPn = null;
   try {
-    const pn = await kho.taoPhieuNhap({ id_ncc: ncc.id_ncc, dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 100000 }] }, null);
+    const duyetNhap = require('../services/duyetNhapKhoService');
+    const pn = await kho.taoPhieuNhap({ id_ncc: ncc.id_ncc, so_chung_tu: 'HD-KIEM-THU', dong: [{ id_nl: nl.id_nl, so_luong: 2, don_gia: 100000 }] }, null);
     idPn = pn.id;
+    // Chua duyet -> chua phai khoan phai tra.
+    assert.ok(!(await congNo.phieuConNo(ncc.id_ncc)).some((x) => x.id_pn === idPn), 'phieu cho QC chua la cong no');
+    await duyetNhap.kiemTraChatLuong(idPn, [], { laAdmin: true });
+    await assert.rejects(() => congNo.traTien({ idPn, soTien: 50000 }, nvKt.id_nv), /chưa được duyệt/);
+    const dc = await duyetNhap.doiChieu(idPn, {}, { laAdmin: true });
+    assert.equal(dc.trang_thai, 'da_duyet', '200.000d duoi nguong -> duyet luon sau doi chieu');
     const [[p0]] = await db.query('SELECT tong_tien, da_tra, han_thanh_toan FROM phieu_nhap WHERE id_pn = ?', [idPn]);
     assert.equal(Number(p0.tong_tien), 200000);
     assert.equal(Number(p0.da_tra), 0);
@@ -791,8 +886,10 @@ test('phan tich thuc don: quan ly / bep xem duoc, phuc vu khong; loc danh muc', 
   const data = JSON.parse(html.match(/var DATA = (\[.*?\]);/s)[1]);
   assert.ok(data.length > 0 && data.length <= dm.n, 'chi mon cua danh muc');
   assert.ok(data.every((d) => d.loai === dm.name_loai));
-  const BEP = await dangNhapNhanVien('daubep');
+  // Phan quyen vai tro (services/phanQuyenVaiTro.js): truong bep xem duoc, dau bep thi khong.
+  const BEP = await dangNhapNhanVien('beptruong');
   assert.equal((await BEP('/staff/phan-tich-thuc-don')).status, 200);
+  assert.equal((await (await dangNhapNhanVien('daubep'))('/staff/phan-tich-thuc-don')).status, 403, 'dau bep khong xem phan tich thuc don');
   const PV = await dangNhapNhanVien('phucvu');
   assert.equal((await PV('/staff/phan-tich-thuc-don')).status, 403);
 });
@@ -867,7 +964,7 @@ test('du bao nhan su: trang du bao, luu gia dinh, ap dung de xuat chi cho chuc v
     const html = await r.text();
     assert.ok(html.includes('Bản đồ nhiệt') && html.includes('Định mức hiện tại → đề xuất'));
     const PV = await dangNhapNhanVien('phucvu');
-    assert.equal((await PV('/staff/xep-ca/du-bao')).status, 302, 'phuc vu khong vao duoc');
+    assert.equal((await PV('/staff/xep-ca/du-bao')).status, 403, 'phuc vu khong vao duoc');
 
     r = await QL('/staff/xep-ca/du-bao/tham-so', form({ tuan: '2026-11-09', ban_moi_phuc_vu: '4' }));
     assert.equal(r.status, 302);
@@ -894,6 +991,55 @@ test('du bao nhan su: trang du bao, luu gia dinh, ap dung de xuat chi cho chuc v
   }
 });
 
+test('duyet phieu nhap: thu kho lap -> bep truong QC tra mot phan -> ke toan sua gia -> quan ly duyet; tach nhiem vu, chan thanh toan', async () => {
+  const [[ncc]] = await db.query('SELECT id_ncc FROM nha_cung_cap WHERE trangthai = 1 ORDER BY id_ncc LIMIT 1');
+  const [[nl]] = await db.query('SELECT id_nl, so_luong, gia_von FROM nguyen_lieu ORDER BY id_nl LIMIT 1');
+  await giuKho([nl.id_nl]);
+  let idPn = null;
+  try {
+    const TK = await dangNhapNhanVien('thukho');
+    let r = await TK('/api/kitchen/kho/nhap', json({ id_ncc: ncc.id_ncc, dong: [{ id_nl: nl.id_nl, so_luong: 4, don_gia: 440000 }] }));
+    assert.equal(r.status, 400, 'thieu so hoa don va ly do -> tu choi');
+    r = await TK('/api/kitchen/kho/nhap', json({ id_ncc: ncc.id_ncc, so_chung_tu: 'HD-KT-01', dong: [{ id_nl: nl.id_nl, so_luong: 4, don_gia: 440000 }] }));
+    let d = await r.json();
+    assert.equal(d.trang_thai_duyet, 'cho_qc', JSON.stringify(d));
+    idPn = d.id;
+    const [[ct]] = await db.query('SELECT id_ct FROM chi_tiet_phieu_nhap WHERE id_pn = ?', [idPn]);
+
+    assert.equal((await TK(`/api/kitchen/kho/nhap/${idPn}/qc`, json({ dong: [] }))).status, 403, 'thu kho khong tu QC');
+    const BT = await dangNhapNhanVien('beptruong');
+    assert.equal((await BT(`/api/kitchen/kho/nhap/${idPn}/qc`, json({ dong: [{ id_ct: ct.id_ct, so_luong_dat: 3 }] }))).status, 400, 'tra hang phai ghi ly do');
+    d = await (await BT(`/api/kitchen/kho/nhap/${idPn}/qc`, json({ dong: [{ id_ct: ct.id_ct, so_luong_dat: 3, ly_do: '1kg khong tuoi' }] }))).json();
+    assert.equal(d.trang_thai, 'cho_doi_chieu', JSON.stringify(d));
+    const [[sauQc]] = await db.query('SELECT so_luong, gia_von FROM nguyen_lieu WHERE id_nl = ?', [nl.id_nl]);
+    assert.ok(Math.abs(Number(sauQc.so_luong) - Number(nl.so_luong) - 3) < 1e-6, 'chi phan dat (3) vao kho');
+
+    const KT = await dangNhapNhanVien('ketoan');
+    assert.equal((await KT(`/api/staff/cong-no-ncc/phieu/${idPn}/tra`, json({ so_tien: 100000, phuong_thuc: 'chuyen_khoan' }))).status, 409, 'chua duyet -> chua tra tien');
+    assert.equal((await KT(`/api/kitchen/kho/nhap/${idPn}/doi-chieu`, json({ gia: [{ id_ct: ct.id_ct, don_gia: 400000 }] }))).status, 400, 'sua gia phai ghi can cu');
+    d = await (await KT(`/api/kitchen/kho/nhap/${idPn}/doi-chieu`, json({ gia: [{ id_ct: ct.id_ct, don_gia: 400000 }], ghi_chu: 'Theo HD-KT-01' }))).json();
+    assert.equal(d.trang_thai, 'cho_duyet', '1.200.000d > nguong -> quan ly duyet');
+    const [[sauDc]] = await db.query('SELECT gia_von FROM nguyen_lieu WHERE id_nl = ?', [nl.id_nl]);
+    assert.ok(Number(sauDc.gia_von) < Number(sauQc.gia_von), 'giam gia -> gia von giam');
+
+    assert.equal((await BT(`/api/kitchen/kho/nhap/${idPn}/duyet`, json({ dong_y: true }))).status, 403, 'bep truong khong duyet cuoi');
+    const QL = await dangNhapNhanVien('quanly');
+    d = await (await QL(`/api/kitchen/kho/nhap/${idPn}/duyet`, json({ dong_y: true }))).json();
+    assert.equal(d.trang_thai, 'da_duyet', JSON.stringify(d));
+    const [[p]] = await db.query('SELECT tong_tien, tong_giao, trang_thai_duyet FROM phieu_nhap WHERE id_pn = ?', [idPn]);
+    assert.equal(Number(p.tong_tien), 1200000);
+    assert.equal(Number(p.tong_giao), 1760000, 'gia tri giao ghi lai de doi chieu');
+    assert.ok((await require('../services/congNoNccService').phieuConNo(ncc.id_ncc)).some((x) => x.id_pn === idPn), 'da duyet -> vao cong no');
+    const inPhieu = await (await TK(`/staff/kitchen/kho/phieu/nhap/${idPn}`)).text();
+    assert.ok(inPhieu.includes('BIÊN BẢN TRẢ HÀNG') && inPhieu.includes('HD-KT-01'), 'phieu in co bien ban tra hang + so hoa don');
+  } finally {
+    if (idPn) {
+      await db.query('DELETE FROM chi_tiet_phieu_nhap WHERE id_pn = ?', [idPn]);
+      await db.query('DELETE FROM phieu_nhap WHERE id_pn = ?', [idPn]);
+    }
+  }
+});
+
 test('mua hang theo du bao: tao don nhap gom theo NCC, chay lai khong dat trung', async () => {
   const kho = require('../services/khoBepService');
   const [[maxDon]] = await db.query('SELECT COALESCE(MAX(id_dmh), 0) AS m FROM don_mua_hang');
@@ -902,9 +1048,16 @@ test('mua hang theo du bao: tao don nhap gom theo NCC, chay lai khong dat trung'
     assert.ok(Array.isArray(goiY) && goiY.thamSo, 'goi y co tham so du bao');
     for (const g of goiY) {
       assert.ok(g.de_xuat > 0);
-      assert.ok(g.kha_dung + g.dang_ve - g.can_truoc_khi_ve < g.dinh_muc_min + 1e-6, `${g.ten_nl} dung la can dat`);
+      // Can dat vi duoi muc an toan truoc khi hang ve, HOAC vi tiec da giu cho can
+      // (goiYMuaHang tru ca phan tiec roi sau khi hang ve - 'thieu_cho_tiec').
+      // ...hoac sau khi tru phan tiec da giu, ton con lai duoi muc an toan.
+      assert.ok(g.kha_dung + g.dang_ve - g.can_truoc_khi_ve < g.dinh_muc_min + 1e-6 || (g.muc_do === 'thieu_cho_tiec' && g.can_cho_tiec > 0)
+        || (g.can_cho_tiec > 0 && g.kha_dung + g.dang_ve - g.can_truoc_khi_ve - g.can_cho_tiec < g.dinh_muc_min + 1e-6),
+        `${g.ten_nl} dung la can dat`);
     }
-    const BEP = await dangNhapNhanVien('daubep');
+    // Dau bep khong lap don mua; quan ly bep de xuat (services/phanQuyenKho.js).
+    assert.equal((await (await dangNhapNhanVien('daubep'))('/api/kitchen/mua-hang/tu-dong', json({}))).status, 403, 'dau bep khong lap don mua');
+    const BEP = await dangNhapNhanVien('quanlybep');
     const r = await BEP('/api/kitchen/mua-hang/tu-dong', json({}));
     assert.equal(r.status, 201);
     const d = await r.json();
@@ -992,7 +1145,9 @@ test('kiem ke: dem thieu / thua, nguoi lap khong tu chot, chot sinh phieu dieu c
   const [A, B] = nls;
   let id = null, ct = null;
   try {
-    const BEP = await dangNhapNhanVien('daubep');
+    // Thu kho lap phieu va dem; dau bep / bep truong khong dong vao; quan ly chot.
+    assert.equal((await (await dangNhapNhanVien('daubep'))('/api/kitchen/kiem-ke', json({}))).status, 403, 'dau bep khong lap phieu kiem ke');
+    const BEP = await dangNhapNhanVien('thukho');
     let r = await BEP('/api/kitchen/kiem-ke', json({}));
     let d = await r.json();
     assert.equal(r.status, 201, JSON.stringify(d));
@@ -1005,9 +1160,10 @@ test('kiem ke: dem thieu / thua, nguoi lap khong tu chot, chot sinh phieu dieu c
       { id_nl: B.id_nl, ton_thuc_te: String(ssB + 1.5) },
     ] }));
     assert.equal((await r.json()).so_dong, 2);
-    assert.equal((await BEP(`/api/kitchen/kiem-ke/${id}/chot`, json({}))).status, 403, 'dau bep khong chot duoc');
+    assert.equal((await BEP(`/api/kitchen/kiem-ke/${id}/chot`, json({}))).status, 403, 'thu kho khong tu chot');
+    assert.equal((await (await dangNhapNhanVien('beptruong'))(`/api/kitchen/kiem-ke/${id}/chot`, json({}))).status, 403, 'bep truong khong chot');
 
-    const BT = await dangNhapNhanVien('beptruong');
+    const BT = await dangNhapNhanVien('trolyquanly');
     d = await (await BT(`/api/kitchen/kiem-ke/${id}/chot`, json({}))).json();
     assert.equal(d.ok, true, JSON.stringify(d));
     assert.equal(d.so_thieu, 1);
@@ -1140,6 +1296,10 @@ test('webhook SePay: xac thuc, dung tai khoan, tra muon sau het han, coc dat ban
       }
       await db.query('DELETE FROM reservations WHERE id = ?', [rs.id]);
     }
+    // Ghi nhan coc dong bo sang payments + hopdong theo ma dat ban - xoa kem,
+    // neu khong moi lan chay de lai 600.000d tien coc ao trong so quy.
+    await db.query('DELETE FROM payments WHERE sesis = ?', [maRsv]);
+    await db.query('DELETE FROM hopdong WHERE sesis = ?', [maRsv]);
   }
 });
 
@@ -1259,6 +1419,296 @@ test('shipper: dang nhap vao app, nhan don, GPS, xac minh vi tri khi giao, lich 
       'UPDATE shipper SET trang_thai = ?, ca_bat_dau = ?, tong_don = GREATEST(tong_don - 1, 0), tong_don_thanh_cong = GREATEST(tong_don_thanh_cong - 1, 0) WHERE id_shipper = ?',
       [caCu, caBatDauCu, sp.id_shipper]);
   }
+});
+
+test('ke toan: luong ke toan lap - quan ly duyet - ke toan chi (sinh phieu chi), khoa sua sau gui duyet', async () => {
+  const T = 1, N = 2099; // thang thu, khong dung du lieu that
+  const KT = await dangNhapNhanVien('ketoan');
+  const KTT = await dangNhapNhanVien('ketoantruong');
+  const QL = await dangNhapNhanVien('quanly');
+  const [nvs] = await db.query("SELECT id_nv FROM nhan_vien WHERE username IN ('phucvu', 'daubep') ORDER BY id_nv");
+  const maPhieu = [];
+  try {
+    for (const nv of nvs) {
+      const r = await KT('/staff/accountant/salary/upsert', form({ id_nv: nv.id_nv, thang: T, nam: N, luong_cung: 7000000, so_ngay_cong: 26, thuong: 0, phu_cap: 500000, phat: 0 }));
+      assert.equal(r.status, 302);
+    }
+    let r = await KT('/staff/accountant/salary/submit-all', form({ month: T, year: N }));
+    assert.match(viTri(r), /Đã gửi 2/);
+    // Da gui duyet -> khong sua duoc nua.
+    r = await KT('/staff/accountant/salary/upsert', form({ id_nv: nvs[0].id_nv, thang: T, nam: N, luong_cung: 9999999, so_ngay_cong: 26, thuong: 0, phu_cap: 0, phat: 0 }));
+    assert.match(viTri(r), /không sửa được/);
+    // Ke toan vien khong duyet duoc.
+    r = await KT('/staff/accountant/salary/approve-all', form({ month: T, year: N }));
+    assert.ok(!(r.status === 302 && /Đã duyệt/.test(viTri(r))), 'ke toan vien khong duyet duoc');
+    let [[st]] = await db.query('SELECT MAX(trang_thai) AS m FROM luong WHERE thang = ? AND nam = ?', [T, N]);
+    assert.equal(Number(st.m), 1, 'ke toan khong tu duyet');
+    // Quan ly tra ve (bat buoc ly do), ke toan sua, gui lai.
+    r = await QL('/staff/accountant/salary/reject-all', form({ month: T, year: N, ly_do: '' }));
+    assert.match(viTri(r), /lý do/);
+    r = await QL('/staff/accountant/salary/reject-all', form({ month: T, year: N, ly_do: 'Sai phụ cấp tháng này' }));
+    assert.match(viTri(r), /trả 2/);
+    // Ke toan truong gui lai roi tu duyet -> bi chan (nguoi gui khong tu duyet).
+    await KTT('/staff/accountant/salary/submit-all', form({ month: T, year: N }));
+    r = await KTT('/staff/accountant/salary/approve-all', form({ month: T, year: N }));
+    // Ke toan truong khong con dong vai Quan ly -> bi chan ngay o quyen (lương do quan ly duyet).
+    assert.ok(r.status === 403 || /người gửi không tự duyệt|không có quyền/i.test(viTri(r)), `ke toan truong khong duyet luong (${r.status})`);
+    r = await QL('/staff/accountant/salary/approve-all', form({ month: T, year: N }));
+    assert.match(viTri(r), /Đã duyệt 2/);
+    // Ke toan chi -> sinh 1 phieu chi danh muc luong dung tong.
+    r = await KT('/staff/accountant/salary/pay-all', form({ month: T, year: N, phuong_thuc: 'chuyen_khoan' }));
+    assert.match(viTri(r), /Đã chi lương cho 2/);
+    const [[l]] = await db.query('SELECT COUNT(*) AS n, SUM(tong_luong) AS tong, MAX(id_phieu_chi) AS pc FROM luong WHERE thang = ? AND nam = ? AND trang_thai = 3', [T, N]);
+    assert.equal(Number(l.n), 2);
+    const [[pc]] = await db.query('SELECT ma_phieu, so_tien, danh_muc, loai, trang_thai FROM phieu_thu_chi WHERE id = ?', [l.pc]);
+    maPhieu.push(pc.ma_phieu);
+    assert.equal(pc.danh_muc, 'luong');
+    assert.equal(pc.loai, 'chi');
+    assert.equal(Number(pc.so_tien), Number(l.tong));
+    // Da chi -> khong chi lai.
+    r = await KT('/staff/accountant/salary/pay-all', form({ month: T, year: N }));
+    assert.match(viTri(r), /Không có bảng lương đã duyệt/);
+  } finally {
+    if (maPhieu.length) await db.query('DELETE FROM phieu_thu_chi WHERE ma_phieu IN (?)', [maPhieu]);
+    await db.query("DELETE FROM audit_logs WHERE action = 'chi_luong' AND details LIKE ?", [`%"nam":${N}%`]).catch(() => {});
+    await db.query('DELETE FROM luong WHERE thang = ? AND nam = ?', [T, N]);
+  }
+});
+
+test('ke toan: phieu chi theo han muc + quan ly duyet; chot so khoa phieu, chi quan ly mo khoa', async () => {
+  const thuChi = require('../services/thuChiService');
+  const ts = await thuChi.thamSo();
+  const KT = await dangNhapNhanVien('ketoan');
+  const QL = await dangNhapNhanVien('quanly');
+  const TN = await dangNhapNhanVien('thungan');
+  const idPhieu = [];
+  const NGAY = '2001-01-02';
+  let idKy = null;
+  try {
+    // Thu ngan: chi nho duoc, chi lon bi chan.
+    let r = await (await TN('/api/staff/thu-chi/phieu', json({ loai: 'chi', danh_muc: 'vat_tu', so_tien: String(ts.han_muc_chi_thu_ngan + 1000), phuong_thuc: 'tien_mat', noi_dung: 'Mua đá viên' }))).json();
+    assert.equal(r.ok, false);
+    assert.match(r.thong_bao, /kế toán lập/);
+    // Ke toan lap phieu chi vuot han muc -> cho duyet, chua vao so quy.
+    r = await (await KT('/api/staff/thu-chi/phieu', json({ loai: 'chi', danh_muc: 'mat_bang', so_tien: String(ts.han_muc_duyet + 1000000), phuong_thuc: 'chuyen_khoan', noi_dung: 'Tiền thuê mặt bằng tháng' }))).json();
+    assert.equal(r.ok, true, JSON.stringify(r));
+    assert.equal(r.trang_thai, 'cho_duyet');
+    idPhieu.push(r.id);
+    // Ke toan khong duyet duoc; quan ly duyet duoc.
+    let d = await KT(`/api/staff/thu-chi/phieu/${r.id}/duyet`, json({}));
+    assert.equal(d.status, 403);
+    d = await (await QL(`/api/staff/thu-chi/phieu/${r.id}/duyet`, json({}))).json();
+    assert.equal(d.ok, true, JSON.stringify(d));
+    const [[sau]] = await db.query('SELECT trang_thai, duyet_boi FROM phieu_thu_chi WHERE id = ?', [r.id]);
+    assert.equal(sau.trang_thai, 'hop_le');
+    assert.ok(sau.duyet_boi);
+
+    // Chot so: khong chot hom nay; chot mot ngay cu.
+    const homNay = require('../utils/thoiGian').ngayCucBo();
+    r = await KT('/staff/ke-toan/chot-so/ngay', form({ ngay: homNay }));
+    assert.match(viTri(r), /ngày đã qua/);
+    r = await KT('/staff/ke-toan/chot-so/ngay', form({ ngay: NGAY }));
+    assert.match(viTri(r), /Đã chốt sổ ngày/);
+    const [[ky]] = await db.query("SELECT id FROM khoa_so WHERE loai = 'ngay' AND tu_ngay = ? AND trang_thai = 'da_khoa'", [NGAY]);
+    idKy = ky.id;
+    // Phieu thuoc ngay da chot -> khong huy duoc.
+    const [ins] = await db.query(
+      "INSERT INTO phieu_thu_chi (ma_phieu, loai, danh_muc, so_tien, phuong_thuc, noi_dung, thoi_diem, id_nv) VALUES (?, 'chi', 'chi_khac', 50000, 'tien_mat', 'Phiếu ngày cũ', ?, NULL)",
+      ['PCKT' + Date.now().toString(36).toUpperCase(), NGAY + ' 10:00:00']);
+    idPhieu.push(ins.insertId);
+    d = await (await QL(`/api/staff/thu-chi/phieu/${ins.insertId}/huy`, json({ ly_do: 'Thử hủy phiếu đã chốt' }))).json();
+    assert.equal(d.ok, false);
+    assert.match(d.thong_bao, /đã chốt/);
+    // Ke toan khong tu mo khoa; quan ly mo khoa (bat buoc ly do) -> huy duoc.
+    r = await KT(`/staff/ke-toan/chot-so/${idKy}/mo-khoa`, form({ ly_do: 'Kế toán tự mở' }));
+    assert.match(viTri(r), /Chỉ Quản lý/);
+    r = await QL(`/staff/ke-toan/chot-so/${idKy}/mo-khoa`, form({ ly_do: '' }));
+    assert.match(viTri(r), /lý do/);
+    r = await QL(`/staff/ke-toan/chot-so/${idKy}/mo-khoa`, form({ ly_do: 'Điều chỉnh phiếu nhập sai' }));
+    assert.match(viTri(r), /Đã mở khóa/);
+    d = await (await QL(`/api/staff/thu-chi/phieu/${ins.insertId}/huy`, json({ ly_do: 'Hủy sau khi mở khóa' }))).json();
+    assert.equal(d.ok, true, JSON.stringify(d));
+
+    // Trang ke toan: ke toan xem duoc, thu ngan khong.
+    for (const p of ['/staff/ke-toan', '/staff/ke-toan/chot-so?ngay=' + NGAY, '/staff/ke-toan/dong-tien', '/staff/ke-toan/ngan-sach']) {
+      const t = await KT(p, { headers: { Accept: 'text/html' } });
+      assert.equal(t.status, 200, p);
+      const c = await TN(p, { headers: { Accept: 'text/html' } });
+      assert.notEqual(c.status, 200, 'thu ngan khong vao ' + p);
+    }
+    const ex = await KT('/staff/ke-toan/dong-tien/excel');
+    assert.equal(ex.status, 200);
+    assert.match(String(ex.headers.get('content-type')), /spreadsheet/);
+  } finally {
+    if (idPhieu.length) await db.query('DELETE FROM phieu_thu_chi WHERE id IN (?)', [idPhieu]);
+    if (idKy) await db.query('DELETE FROM khoa_so WHERE id = ?', [idKy]);
+    await db.query("DELETE FROM audit_logs WHERE action IN ('duyet_phieu_chi','chot_so_ngay','mo_khoa_so','huy_phieu_thu_chi') AND resource_id IN (?)", [[...idPhieu, idKy || 0]]).catch(() => {});
+  }
+});
+
+test('thong bao: luong gui dung vai tro, chuong + trang thong bao, danh dau da doc, quan tri', async () => {
+  const thuChi = require('../services/thuChiService');
+  const ts = await thuChi.thamSo();
+  const [[moc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
+  const KT = await dangNhapNhanVien('ketoan');
+  const QL = await dangNhapNhanVien('quanly');
+  const PV = await dangNhapNhanVien('phucvu');
+  const [[kt]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'ketoan'");
+  const [[ql]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'quanly'");
+  const [[pv]] = await db.query("SELECT id_nv, id_quan_ly FROM nhan_vien WHERE username = 'phucvu'");
+  // Thong bao gui NEN, tung nguoi nhan mot dong -> cho toi khi du dieu kien `du`
+  // (mac dinh: co it nhat mot dong), khong chi dong dau tien.
+  const cho = async (dk, ts2, du = (r) => r.length > 0) => {
+    let r = [];
+    for (let i = 0; i < 30; i++) {
+      [r] = await db.query(`SELECT * FROM thong_bao WHERE id_tb > ? AND ${dk}`, [moc.m, ...ts2]);
+      if (du(r)) return r;
+      await new Promise((ok) => setTimeout(ok, 150));
+    }
+    return r;
+  };
+  const idPhieu = [];
+  let idNp = null;
+  try {
+    // 1. Phieu chi vuot han muc -> Quan ly + quan tri nhan; nguoi lap khong nhan.
+    let r = await (await KT('/api/staff/thu-chi/phieu', json({ loai: 'chi', danh_muc: 'marketing', so_tien: String(ts.han_muc_duyet + 500000), phuong_thuc: 'chuyen_khoan', noi_dung: 'Quảng cáo Facebook tháng' }))).json();
+    assert.equal(r.trang_thai, 'cho_duyet', JSON.stringify(r));
+    idPhieu.push(r.id);
+    let tb = await cho("loai = 'phieu_chi_cho_duyet' AND tieu_de LIKE ?", [`%${r.ma_phieu}%`],
+      (ds) => ds.some((x) => x.doi_tuong === 'quan_tri') && ds.some((x) => Number(x.id_nv) === Number(ql.id_nv)));
+    assert.ok(tb.some((x) => x.doi_tuong === 'nv' && Number(x.id_nv) === Number(ql.id_nv)), 'quan ly nhan');
+    assert.ok(tb.some((x) => x.doi_tuong === 'quan_tri'), 'quan tri nhan');
+    assert.ok(!tb.some((x) => Number(x.id_nv) === Number(kt.id_nv)), 'nguoi lap khong tu nhan');
+    assert.equal(tb[0].link, '/staff/thu-chi');
+
+    // 2. Quan ly duyet -> nguoi lap nhan ket qua.
+    await QL(`/api/staff/thu-chi/phieu/${r.id}/duyet`, json({}));
+    tb = await cho("loai = 'phieu_chi_ket_qua' AND id_nv = ?", [kt.id_nv]);
+    assert.equal(tb.length, 1, 'ke toan nhan ket qua duyet');
+
+    // 3. Chuong: API dem chua doc + danh sach; danh dau da doc.
+    let api = await (await KT('/api/thong-bao?la=nv', { headers: { Accept: 'application/json' } })).json();
+    assert.equal(api.ok, true);
+    assert.ok(api.chua_doc >= 1);
+    assert.ok(api.ds.some((x) => x.loai === 'phieu_chi_ket_qua'));
+    const truoc = api.chua_doc;
+    let d = await (await KT(`/api/thong-bao/${tb[0].id_tb}/doc?la=nv`, json({}))).json();
+    assert.equal(d.chua_doc, truoc - 1);
+    // Khong danh dau ho thong bao cua nguoi khac.
+    const [[cuaQl]] = await db.query("SELECT id_tb FROM thong_bao WHERE id_tb > ? AND id_nv = ? LIMIT 1", [moc.m, ql.id_nv]);
+    await KT(`/api/thong-bao/${cuaQl.id_tb}/doc?la=nv`, json({}));
+    const [[vanChua]] = await db.query('SELECT da_doc FROM thong_bao WHERE id_tb = ?', [cuaQl.id_tb]);
+    assert.equal(vanChua.da_doc, 0, 'khong doc ho nguoi khac');
+
+    // 4. Nghi phep: nhan vien xin -> cap tren truc tiep nhan; duyet -> nguoi xin nhan.
+    const ngay = require('../utils/thoiGian').ngayCucBo();
+    const xa = new Date(Date.now() + 200 * 86400000).toISOString().slice(0, 10);
+    await PV('/staff/leave/add', form({ ly_do: 'Việc gia đình kiểm thử', ngay_bat_dau: xa, ngay_ket_thuc: xa }));
+    const [[np]] = await db.query("SELECT id_np FROM nghi_phep WHERE id_nv = ? AND ly_do = 'Việc gia đình kiểm thử' ORDER BY id_np DESC LIMIT 1", [pv.id_nv]);
+    assert.ok(np, 'tao duoc don nghi');
+    idNp = np.id_np;
+    const capTren = pv.id_quan_ly || ql.id_nv;
+    tb = await cho("loai = 'nghi_phep_moi'", [], (ds) => ds.some((x) => Number(x.id_nv) === Number(capTren)));
+    assert.ok(tb.some((x) => Number(x.id_nv) === Number(capTren)), 'cap tren truc tiep nhan don nghi');
+    assert.ok(!ngay || true);
+
+    // 5. Trang thong bao, bang luong, chuong co tren cac giao dien.
+    for (const p of ['/staff/thong-bao', '/staff/thong-bao?chua_doc=1', '/staff/thong-bao/luong', '/staff/ke-toan']) {
+      const t = await KT(p, { headers: { Accept: 'text/html' } });
+      assert.equal(t.status, 200, p);
+      const h = await t.text();
+      assert.match(h, /id="tbChuong"/, 'chuong tren ' + p);
+    }
+    const [[ad]] = await db.query("SELECT id_admin FROM tb_admin WHERE adminuser = 'admin'");
+    await giuMatKhau('tb_admin', 'id_admin', ad.id_admin, 'adminpass');
+    await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5(MK), ad.id_admin]);
+    const A = client();
+    await A('/admin/login', form({ adminuser: 'admin', adminpass: MK }));
+    const at = await A('/admin/thong-bao', { headers: { Accept: 'text/html' } });
+    assert.equal(at.status, 200);
+    const ah = await at.text();
+    assert.match(ah, /id="tbChuong"/);
+    const aapi = await (await A('/api/thong-bao?la=quan_tri', { headers: { Accept: 'application/json' } })).json();
+    assert.ok(aapi.ds.some((x) => x.loai === 'phieu_chi_cho_duyet'), 'quan tri thay canh bao phieu chi');
+    // Doc tat ca.
+    await KT('/api/thong-bao/doc-tat-ca?la=nv', json({}));
+    api = await (await KT('/api/thong-bao?la=nv', { headers: { Accept: 'application/json' } })).json();
+    assert.equal(api.chua_doc, 0);
+  } finally {
+    if (idPhieu.length) await db.query('DELETE FROM phieu_thu_chi WHERE id IN (?)', [idPhieu]);
+    if (idNp) await db.query('DELETE FROM nghi_phep WHERE id_np = ?', [idNp]);
+    await db.query("DELETE FROM audit_logs WHERE action = 'duyet_phieu_chi' AND resource_id IN (?)", [idPhieu.length ? idPhieu : [0]]).catch(() => {});
+    await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [moc.m]);
+  }
+});
+
+test('thong bao van hanh: bep xong mon -> phuc vu phu trach ban, thanh toan -> don ban, mon tre -> bep truong', async () => {
+  const nvTb = require('../services/thongBaoNghiepVu');
+  const tt = require('../services/thanhToanService');
+  const [[moc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
+  const cho = async (dk, ts, du = (r) => r.length > 0) => {
+    let r = [];
+    for (let i = 0; i < 30; i++) {
+      [r] = await db.query(`SELECT * FROM thong_bao WHERE id_tb > ? AND ${dk}`, [moc.m, ...ts]);
+      if (du(r)) return r;
+      await new Promise((ok) => setTimeout(ok, 150));
+    }
+    return r;
+  };
+  const mon = await monCoCongThuc();
+  const [b1, b2] = await haiBanTrong();
+  const PV = await dangNhapNhanVien('phucvu');
+  const BEP = await dangNhapNhanVien('daubep');
+  const [[pv]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'phucvu'");
+  const [[bep]] = await db.query("SELECT id_nv FROM nhan_vien WHERE username = 'daubep'");
+
+  // 1. Phuc vu goi mon -> duoc ghi la nguoi phu trach don.
+  const sesis = await goiMonChoBan(PV, b1.Id_ban, mon.id_mon, 2);
+  const [[dong]] = await db.query('SELECT id, id_nv_phuc_vu FROM hopdong WHERE sesis = ? AND id_mon = ? LIMIT 1', [sesis, mon.id_mon]);
+  assert.equal(Number(dong.id_nv_phuc_vu), Number(pv.id_nv), 'ghi nhan phuc vu phu trach');
+
+  // 2. Bep bam "xong" -> DUNG phuc vu do nhan "mon xong, mang ra ban X"; bep khong nhan.
+  const r = await (await BEP(`/kds/api/hoan-thanh/${dong.id}`, json({}))).json();
+  assert.equal(r.ok, true, JSON.stringify(r));
+  let tb = await cho("loai = 'mon_xong' AND tieu_de LIKE ?", [`Bàn ${b1.number_ban}:%`]);
+  assert.equal(tb.length, 1, 'chi phuc vu phu trach nhan');
+  assert.equal(Number(tb[0].id_nv), Number(pv.id_nv));
+  assert.match(tb[0].tieu_de, /đã xong/);
+  assert.equal(tb[0].link, '/kds');
+  assert.equal(tb[0].muc_do, 'khan');
+  // Chuong cua phuc vu thay ngay.
+  const api = await (await PV('/api/thong-bao?la=nv', { headers: { Accept: 'application/json' } })).json();
+  assert.ok(api.ds.some((x) => x.loai === 'mon_xong'));
+
+  // 3. Thu ngan thu tien mat du -> phuc vu nhan "ban can don"; khong bao "khach tu chuyen khoan".
+  const hd = await tt.layHoaDon(sesis);
+  await tt.taoPhien({ sesis, soTien: hd.tien.con_phai_tra, maPhuongThuc: 'tien_mat', tienKhachDua: hd.tien.con_phai_tra });
+  tb = await cho("loai = 'ban_can_don' AND tieu_de LIKE ?", [`Bàn ${b1.number_ban} %`]);
+  assert.ok(tb.some((x) => Number(x.id_nv) === Number(pv.id_nv)), 'phuc vu nhan don ban');
+  const [tuTra] = await db.query("SELECT id_tb FROM thong_bao WHERE id_tb > ? AND loai = 'khach_tu_thanh_toan'", [moc.m]);
+  assert.equal(tuTra.length, 0, 'tien mat khong phai khach tu tra');
+
+  // 4. Mon cho qua thoi gian chuan -> bep truong / giam sat nhan, chi mot lan.
+  const sesis2 = await goiMonChoBan(PV, b2.Id_ban, mon.id_mon, 1);
+  await db.query("UPDATE hopdong SET gio_dat = SUBTIME(CURTIME(), '01:30:00') WHERE sesis = ? AND id_mon > 0", [sesis2]);
+  await nvTb.quetMonTre();
+  tb = await cho("loai = 'mon_tre' AND noi_dung LIKE ?", [`%Bàn ${b2.number_ban}:%`]);
+  assert.ok(tb.length >= 1, 'co canh bao mon tre');
+  const nhan = new Set(tb.map((x) => Number(x.id_nv)));
+  const quanLyBep = await require('../services/thongBaoService').idNhanVien({ nhom: ['BEP_QUAN_LY', 'GIAM_SAT_PV'] });
+  assert.ok(quanLyBep.every((id) => nhan.has(Number(id))), 'bep truong + giam sat deu nhan');
+  assert.ok(!nhan.has(Number(bep.id_nv)) || quanLyBep.map(Number).includes(Number(bep.id_nv)));
+  const truoc = (await cho("loai = 'mon_tre'", [])).length;
+  await nvTb.quetMonTre();
+  await new Promise((ok) => setTimeout(ok, 400));
+  const [sau] = await db.query("SELECT id_tb FROM thong_bao WHERE id_tb > ? AND loai = 'mon_tre'", [moc.m]);
+  assert.equal(sau.length, truoc, 'khong bao lap mon da bao');
+
+  // 5. Quet dat ban sap den chay khong loi.
+  await nvTb.quetDatBanSapDen();
+
+  await db.query("DELETE FROM thong_bao_da_bao WHERE khoa LIKE 'mon_tre:%' AND luc >= NOW() - INTERVAL 10 MINUTE").catch(() => {});
+  await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [moc.m]);
 });
 
 test('bao het mon theo ton kho', async () => {

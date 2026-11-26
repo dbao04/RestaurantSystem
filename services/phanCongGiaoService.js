@@ -38,6 +38,10 @@ async function thamSo() {
     phut_xac_nhan: Math.min(30, Math.max(1, Number(c['giao_hang.phut_cho_xac_nhan']) || 3)),
     phut_mat_tin_hieu: Math.max(2, Number(c['giao_hang.phut_mat_tin_hieu']) || 10),
     chi_trong_khu_vuc: c['giao_hang.chi_trong_khu_vuc'] !== '0',
+    // Chong vong phan lai vo han: sau N lan tu phan ma khong ai nhan, hoac don
+    // da qua X gio ke tu luc tao, dung tu phan va bao dieu phoi xu ly tay.
+    so_lan_toi_da: Math.min(20, Math.max(1, Number(c['giao_hang.so_lan_tu_phan_toi_da']) || 3)),
+    gio_toi_da: Math.min(72, Math.max(1, Number(c['giao_hang.gio_toi_da_tu_phan']) || 12)),
   };
 }
 
@@ -154,6 +158,51 @@ async function nguoiDaLoaiTru(idGiao) {
   return new Set(r.map((x) => Number(x.id_shipper)));
 }
 
+/**
+ * CO NEN DUNG TU PHAN DON NAY KHONG?
+ *
+ * Truoc day: shipper khong bam nhan trong N phut -> go ra, phan nguoi khac; nguoi
+ * bo lo chi bi loai tru 15 phut -> het 15 phut ca doi lai du dieu kien -> vong
+ * phan chay MAI MAI (don GH1107-001 tao tu 07/11 bi phan lai moi 3-8 phut, moi
+ * lan mot thong bao "Ban duoc phan don" cho shipper).
+ *
+ * Dung khi:
+ *   - da co `so_lan_toi_da` lan tu phan lien tiep ket thuc tu choi / qua han
+ *     (tinh tu lan dieu phoi phan tay gan nhat - phan tay = bat dau vong moi), hoac
+ *   - don da tao qua `gio_toi_da` gio (mon da nguoi, khach co the da huy).
+ * Don dung o 'cho_phan' cho dieu phoi; dieu phoi duoc bao MOT lan moi vong.
+ * @returns {Promise<string|null>} ly do dung, null = cu phan tiep
+ */
+async function lyDoDungTuPhan(idGiao, ts) {
+  const [[d]] = await db.query(
+    'SELECT ma_giao, TIMESTAMPDIFF(MINUTE, tao_luc, NOW()) AS phut_tuoi FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+  if (!d) return null;
+  const [[tay]] = await db.query(
+    "SELECT COALESCE(MAX(id), 0) AS id FROM phan_cong_giao WHERE id_giao = ? AND kieu = 'thu_cong'", [idGiao]);
+  const [[lo]] = await db.query(
+    `SELECT COUNT(*) AS n FROM phan_cong_giao
+      WHERE id_giao = ? AND id > ? AND kieu = 'tu_dong' AND ket_qua IN ('tu_choi', 'het_han')`, [idGiao, tay.id]);
+  let lyDo = null;
+  if (Number(lo.n) >= ts.so_lan_toi_da) lyDo = `${lo.n} lần tự phân liên tiếp không shipper nào nhận`;
+  else if (Number(d.phut_tuoi) > ts.gio_toi_da * 60) lyDo = `đơn đã tạo quá ${ts.gio_toi_da} giờ`;
+  if (lyDo) await baoDieuPhoiDonKet(idGiao, d.ma_giao, lyDo, tay.id);
+  return lyDo;
+}
+
+async function baoDieuPhoiDonKet(idGiao, maGiao, lyDo, vong) {
+  try {
+    const nv = require('./thongBaoNghiepVu');
+    if (await nv.daBao(`giao_ket:${idGiao}:${vong}`)) return;   // da bao trong vong nay
+    await require('./thongBaoService').gui('don_giao_ket', {
+      tieuDe: `Đơn giao ${maGiao} cần điều phối xử lý`,
+      noiDung: `Đã dừng tự phân: ${lyDo}. Phân tay cho shipper, gọi khách xác nhận hoặc hủy đơn.`,
+      link: `/staff/giao-hang/${idGiao}`, nguoiGui: HE_THONG.ten,
+    });
+  } catch (e) {
+    console.error('[phan-cong-giao] bao don ket:', e.message);
+  }
+}
+
 async function voiKhoa(fn) {
   const conn = await db.getConnection();
   try {
@@ -185,6 +234,8 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
     const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper, ma_khu_vuc FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
     if (!don) return { phan: false, ly_do: 'Không tìm thấy đơn.' };
     if (don.trang_thai !== 'cho_phan' || don.id_shipper) return { phan: false, ly_do: 'Đơn đã có người nhận.' };
+    const dung = await lyDoDungTuPhan(idGiao, ts);
+    if (dung) return { phan: false, can_xu_ly_tay: true, ly_do: `Dừng tự phân (${dung}) – chờ điều phối xử lý.` };
 
     const ds = await bangShipper(ts);
     const loaiTru = await nguoiDaLoaiTru(idGiao);
@@ -211,7 +262,10 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
 async function phanHangCho() {
   const ts = await thamSo();
   if (!ts.tu_dong) return { da_phan: 0 };
-  const [cho] = await db.query("SELECT id_giao FROM don_giao_hang WHERE trang_thai = 'cho_phan' AND id_shipper IS NULL ORDER BY tao_luc LIMIT 50");
+  const [cho] = await db.query(
+    `SELECT id_giao FROM don_giao_hang
+      WHERE trang_thai = 'cho_phan' AND id_shipper IS NULL AND tao_luc > NOW() - INTERVAL ? HOUR
+      ORDER BY tao_luc LIMIT 50`, [ts.gio_toi_da]);
   let daPhan = 0;
   for (const d of cho) {
     const kq = await tuDongPhan(d.id_giao);

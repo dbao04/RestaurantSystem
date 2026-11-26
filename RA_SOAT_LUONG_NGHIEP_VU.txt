@@ -298,6 +298,49 @@ ede3980 - KHO, CÔNG NỢ, ĐẶT TIỆC, GIAO HÀNG, NHÂN SỰ
     chờ thanh toán không xác nhận tay được.
   - npm test: kiểm thử đơn vị + tích hợp, tự khôi phục dữ liệu sau khi chạy.
 
+(chưa commit) - PHÁT TRIỂN ROLE KẾ TOÁN (theo Chuc_nang_role_Ke_toan_Nha_hang.docx)
+  - LƯƠNG: kế toán lập -> gửi duyệt -> QUẢN LÝ duyệt / trả về (bắt buộc lý do) -> kế toán
+    chi. Gửi duyệt rồi thì khóa sửa; người gửi không tự duyệt (Kế toán trưởng cũng vậy);
+    chi lương sinh MỘT phiếu chi danh mục "Lương" trong sổ quỹ (chuyển khoản / tiền mặt);
+    không chi bảng lương 0đ. (Khôi phục chức năng duyệt bị xóa ở commit 1ac9e70.)
+  - THU CHI: kế toán lập phiếu; danh mục mới Lương / Mặt bằng / Marketing, gom 5 nhóm chi
+    (nguyên liệu, nhân sự, mặt bằng, marketing, vận hành). Thu ngân chỉ lập phiếu chi nhỏ
+    tại quầy (<= 500.000đ, cau_hinh thu_chi.han_muc_chi_thu_ngan). Phiếu chi > 5.000.000đ
+    (thu_chi.han_muc_duyet) chờ Quản lý duyệt, chưa vào sổ quỹ; người lập không tự duyệt.
+    Sổ quỹ tách QUỸ TIỀN MẶT / TÀI KHOẢN NGÂN HÀNG, có số dư đầu kỳ - cuối kỳ.
+  - MỚI /staff/ke-toan/chot-so: đối soát doanh thu NGÀY (POS vs thực thu theo phương thức
+    vs chốt ca vs sao kê ngân hàng), chênh lệch phải ghi lý do, CHỐT SỔ ngày / tháng (chỉ
+    ngày đã qua). Sổ đã chốt: không hủy / duyệt phiếu thuộc kỳ; kế toán không tự mở khóa,
+    Quản lý mở khóa bắt buộc lý do; mọi thao tác ghi audit_logs.
+  - MỚI /staff/ke-toan/dong-tien: báo cáo dòng tiền (vào / ra theo nhóm, theo ngày / tháng),
+    xuất Excel. MỚI /staff/ke-toan/ngan-sach: hạn mức chi theo nhóm / tháng, cảnh báo >= 80%
+    và vượt. MỚI /staff/ke-toan: dashboard kế toán (doanh thu, lợi nhuận, food cost, dòng
+    tiền, quỹ, công nợ NCC, lương, ngân sách, món lãi cao / thấp, việc cần xử lý).
+  - Menu Kế toán & Tài chính bổ sung các trang trên + Sổ quỹ thu chi.
+  - Dọn lỗi test: test webhook SePay để lại tiền cọc 600.000đ mỗi lần chạy (payments +
+    hopdong theo mã đặt bàn) -> đã sửa; 17 khoản cọc ảo cũ chờ xác nhận để xóa.
+  - Chưa làm (cần nhà cung cấp ngoài / ngoài phạm vi): hóa đơn điện tử, kê khai VAT,
+    GrabFood/ShopeeFood, công nợ phải thu, quy trình hủy hóa đơn 3 bước.
+  - Kiểm thử: npm test 40/40, test:automation 175/175, test-tinh-nang-moi 120/120.
+
+(chưa commit) - POS THU NGÂN ORDER TẠI BÀN + KIỂM SOÁT XÓA MÓN
+  - POS /staff/thanh-toan: khu "Order tại bàn" hiện sơ đồ bàn; bàn trống -> mở hộp chọn
+    món, gửi order xuống bếp và vào hóa đơn; bàn có khách -> vào hóa đơn.
+  - Hóa đơn tại bàn: nút "Thêm món", nút + (gọi thêm 1 phần, phiếu bếp mới), nút − (giảm
+    1 phần) và x (xóa hết). Thu ngân được lấy thực đơn (trước bị chặn).
+  - XÓA MÓN BẮT BUỘC GIẢI TRÌNH (ít nhất 10 ký tự) ở mọi nơi (POS, sơ đồ bàn). Món bếp
+    đã làm vẫn chỉ Quản lý được xóa.
+  - Mỗi lần xóa: lưu thông báo (bảng thong_bao) + đẩy realtime cho Quản lý nhà hàng, Trợ lý
+    quản lý và các Giám sát (phục vụ, thu ngân); kèm người xóa, bàn, giá trị, lý do,
+    giải trình, trạng thái bếp. Người xóa không tự nhận.
+  - MỚI /staff/huy-mon/nhat-ky (menu "Kiểm soát"): lọc theo ngày / nhân viên, tổng theo
+    nhân viên (số lần, giá trị, số lần xóa món đã nấu).
+  - SỬA LỖI PHIÊN ĐĂNG NHẬP (từ nhánh doan, kho phiên MySQL): chuyển hướng được gửi trước
+    khi phiên ghi xong -> thỉnh thoảng vừa đăng nhập đã bị văng ra. Nay lưu phiên rồi mới
+    chuyển hướng (server.js). Trước sửa: mỗi lần chạy test hỏng ngẫu nhiên 1-9 bài; sau: 38/38
+    ba lần liên tiếp.
+  - Kiểm thử: npm test 38/38, test:automation 175/175, test-tinh-nang-moi 119/119.
+
 (chưa commit) - RÀ SOÁT & HOÀN THIỆN VAI TRÒ SHIPPER
   Đã chạy thử nguyên luồng thật (điều phối phân đơn -> shipper nhận -> GPS -> giao xong).
   - Shipper đăng nhập ở /staff/login giờ vào THẲNG ứng dụng /shipper/ (trước phải tự gõ
@@ -479,12 +522,12 @@ chi phí, Chấm công, Nghỉ phép, Sổ quỹ thu chi, Đối soát thanh to�
 Công nợ NCC, Báo cáo lãi lỗ.
 
 MỨC CAO
-  [CHỜ] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
+  [ĐÃ LÀM] K1. Luồng lương bị đứt: không ai DUYỆT được. Trang/route duyệt lương
         bị xóa ở commit 1ac9e70 (17/10/2026). Gửi duyệt xong kẹt mãi ở "chờ
         duyệt". Dữ liệu T10/2026: 75 bảng lương "đã chi" nhưng 0đ.
-  [CHỜ] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
+  [ĐÃ LÀM] K2. Sửa được bảng lương đã duyệt / đã chi: form "Thiết lập lương" ghi
         đè số tiền và đưa về nháp -> mất dấu vết, có thể chi hai lần.
-  [CHỜ] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
+  [ĐÃ LÀM] K3. Chi lương không sinh phiếu chi: sổ quỹ không thấy tiền lương ra;
         không lưu ngày chi, hình thức, người chi; cho chi bảng lương 0đ.
   [CHỜ] K4. Doanh thu (báo cáo thu chi + báo cáo lãi lỗ) tính theo giá món gốc:
         chưa trừ mã giảm giá / điểm thưởng, chưa cộng phí phục vụ, VAT chưa
@@ -497,7 +540,7 @@ MỨC VỪA
   [CHỜ] K6. Hai sổ chi phí song song: "Quản lý chi phí" (chi_phi_khac) và phiếu
         chi trong Sổ quỹ. Chi phí nhập ở trang kế toán không danh mục, không
         vào sổ quỹ; xóa cứng không lưu vết; không chặn số tiền âm.
-  [CHỜ] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
+  [ĐÃ LÀM] K7. Sổ quỹ không có số dư đầu kỳ (mỗi lần lọc bắt đầu từ 0) và gộp tiền
         mặt + chuyển khoản một số dư -> không khớp được với két / sao kê.
   [CHỜ] K8. Quyền: Kế toán bị chặn (403) ở "Đối soát thanh toán", "Lịch sử chốt
         ca" dù menu có link; ngược lại Kế toán lại "xóa" (cho nghỉ) được nhân viên.
@@ -514,3 +557,529 @@ PHÁT TRIỂN THÊM (đề xuất)
   - Một sổ quỹ duy nhất, số dư đầu kỳ, tách quỹ tiền mặt / tài khoản ngân hàng.
   - Doanh thu thuần + báo cáo VAT đầu ra; KHÓA SỔ cuối tháng (không sửa / hủy
     chứng từ của tháng đã khóa).
+
+================================================================================
+THÔNG BÁO CHO MỌI VAI TRÒ (21/11/2026)
+================================================================================
+HIỆN TRẠNG TRƯỚC KHI LÀM
+  - Bảng thong_bao chỉ có id_nv/tiêu đề/nội dung; dòng id_nv NULL hiện cho mọi
+    nhân viên nhưng "đã đọc" của một người làm mất chấm đỏ của tất cả.
+  - Không có nút chuông ở khu nhân viên, quản trị, shipper, khách hàng; chỉ có
+    trang /staff/notifications cũ (đánh dấu đọc theo cột id không tồn tại).
+  - Thông báo của quản lý (/api/to-chuc/thong-bao) chỉ đẩy realtime, không lưu:
+    ai không mở trang lúc đó là mất. Hầu hết nghiệp vụ không báo cho ai.
+
+ĐÃ LÀM
+  [ĐÃ LÀM] Nút chuông ở mọi giao diện: khu nhân viên (mọi chức danh), quản trị,
+        app shipper (/shipper/), khách hàng đã đăng nhập. Số chưa đọc, 15 thông
+        báo mới nhất, bấm vào = đánh dấu đọc + mở đúng trang xử lý, "đánh dấu
+        tất cả", realtime qua socket + hỏi lại mỗi 2 phút khi socket rớt.
+  [ĐÃ LÀM] Trang đầy đủ: /staff/thong-bao (lọc chưa đọc / theo loại),
+        /admin/thong-bao, /tai-khoan/thong-bao (khách), /staff/thong-bao/luong
+        (bảng "sự kiện nào báo cho ai"). Đường dẫn cũ /staff/notifications vẫn chạy.
+  [ĐÃ LÀM] services/thongBaoService.js: danh mục 31 luồng (LUONG), người nhận
+        xác định theo CHỨC DANH / BỘ PHẬN trong cơ cấu tổ chức (đổi người giữ chức
+        danh thì thông báo tự đi theo). Mỗi người nhận một dòng riêng
+        (doi_tuong nv | quan_tri | khach) -> đã đọc là của riêng từng người;
+        không đánh dấu hộ thông báo của người khác.
+  [ĐÃ LÀM] services/thongBaoNghiepVu.js: MỘT file gắn thông báo vào nghiệp vụ
+        (bọc hàm service, gửi nền sau khi nghiệp vụ thành công, lỗi thông báo
+        không bao giờ làm hỏng nghiệp vụ). Các luồng:
+        Bán hàng/bếp : xóa món (QL + giám sát + quản trị), món tạm ngưng/bán lại
+                       (phục vụ, thu ngân, lễ tân).
+        Đặt bàn/tiệc : đặt bàn online mới / khách hủy (lễ tân); đặt tiệc mới
+                       (lễ tân + quản lý); tiệc xác nhận/cọc (bếp + quản lý);
+                       khách nhận cập nhật trạng thái đặt bàn / tiệc.
+        Giao hàng    : đơn đã thanh toán chờ phân (điều phối); shipper được phân
+                       đơn; giao thất bại / shipper từ chối (điều phối + QL);
+                       khách nhận "đang giao" / "đã giao"; thu ngân nhận tiền
+                       thu hộ -> shipper nhận xác nhận.
+        Thanh toán   : hoàn tiền (QL + giám sát thu ngân + kế toán + quản trị);
+                       chuyển khoản không khớp hóa đơn (thu ngân + kế toán);
+                       chốt ca (giám sát thu ngân + kế toán, báo mức "quan
+                       trọng" khi lệch tiền) -> duyệt báo lại thu ngân.
+        Kế toán      : phiếu chi vượt hạn mức chờ duyệt (QL + quản trị) -> kết
+                       quả duyệt/hủy về người lập; mở khóa sổ; bảng lương chờ
+                       duyệt / duyệt / trả về (kèm lý do) / đã chi (từng nhân
+                       viên nhận số tiền lương của mình).
+        Nhân sự      : đơn nghỉ phép -> cấp trên trực tiếp (không có thì quản
+                       lý); kết quả -> người xin.
+        Kho          : đơn mua chờ duyệt -> kết quả về người tạo; phiếu kiểm kê
+                       mở; nguyên liệu dưới định mức (quét 15 phút/lần, gom một
+                       thông báo, mỗi nguyên liệu tối đa 1 lần/ngày); công nợ NCC
+                       quá hạn (1 lần/ngày).
+        Chung        : thông báo của quản lý theo bộ phận / chức danh / toàn bộ
+                       nay được LƯU, xem lại được ở chuông.
+        Người gây ra sự kiện không tự nhận thông báo của chính mình.
+  [ĐÃ LÀM] Sửa: ô thả xuống của chuông bị thẻ nội dung đè lên (thanh trên cùng
+        có backdrop-filter) -> gắn vào body, position fixed, không tràn mép
+        trái trên điện thoại.
+  [ĐÃ LÀM] 3 bộ kiểm thử tự xóa thông báo do chính chúng sinh ra (trước đây
+        lần chạy đầu để lại 150 thông báo giả - đã dọn).
+  [ĐÃ LÀM] Kiểm thử: tests/tichHop.test.js "thong bao: luong gui dung vai tro..."
+        (phiếu chi -> QL + quản trị, không gửi người lập; duyệt -> người lập;
+        API chuông, đánh dấu đọc, không đọc hộ; nghỉ phép -> cấp trên; chuông có
+        trên các trang; trang quản trị). npm test 41/41, test:automation 175/175,
+        test-tinh-nang-moi 120/120.
+
+CÒN LẠI / ĐỀ XUẤT
+  [CHỜ] Thông báo đẩy ra ngoài trình duyệt (Web Push / Zalo OA / email) khi
+        nhân viên không mở trang.
+  [CHỜ] Cho từng người tắt bớt loại thông báo không cần (cài đặt cá nhân).
+  [CHỜ] Tự xóa thông báo đã đọc quá 90 ngày.
+
+================================================================================
+DỰ BÁO AI / ML (21/11/2026)
+================================================================================
+  [GIẢI THÍCH] "ML Service chưa kích hoạt" = dịch vụ Python (cổng 8000) chưa
+        chạy, không phải lỗi. Trang vẫn đọc kết quả đã lưu; muốn huấn luyện lại
+        phải bật: python -m uvicorn ml_service.main:app --host 127.0.0.1 --port 8000
+        (hoặc chạy start_all.bat để bật cả MySQL + ML + web).
+  [ĐÃ LÀM] Dự báo lượt khách / nguyên liệu lấy mốc = ngày cuối có đơn hoàn tất.
+        CSDL không có đơn mới (dữ liệu thật dừng 08/2026, chỉ vài đơn test 10/2026)
+        nên dự báo rơi hết vào quá khứ (25/10-07/11) và biểu đồ trống. Nay dự báo
+        luôn bắt đầu TỪ HÔM NAY: khoảng trống giữa dữ liệu cuối và hôm nay được
+        dự báo đệ quy rồi bỏ đi (bù tối đa 366 ngày). ml_service/forecast.py.
+  [ĐÃ LÀM] Ngày dự báo bị lệch sớm 1 ngày (cột DATE trả về dạng giờ UTC, trang
+        cắt chuỗi): nhãn trục và "ngày cao điểm" sai ngày/thứ. Server trả ngày
+        dạng chuỗi YYYY-MM-DD (services/mlService.js duBaoKhachDaLuu).
+  [GHI CHÚ] Đường "thực tế" trên biểu đồ chỉ có vài điểm vì 45 ngày gần nhất
+        không có đơn hoàn tất - sẽ đầy dần khi nhà hàng dùng POS thật.
+
+================================================================================
+THÔNG BÁO VẬN HÀNH: BẾP → PHỤC VỤ, GIAO HÀNG, THANH TOÁN (21/11/2026)
+================================================================================
+RÀ SOÁT
+  - Bếp bấm "xong món" chỉ phát realtime chung 'dish-ready' cho cả phòng nhân
+    viên, không lưu, không biết ai phục vụ bàn đó -> phục vụ không mở trang là mất.
+  - hopdong.id_nv_phuc_vu gần như luôn trống (39/11.294 dòng): không biết bàn
+    nào do ai phục vụ.
+  - [LỖI] routes/kds.js cất hàm vào bảng BUOC lúc nạp, lớp thông báo bọc SAU đó
+    -> mọi thông báo gắn vào bước bếp sẽ không bao giờ chạy. Đã chuyển việc bọc
+    lên TRƯỚC khi nạp route (server.js).
+  - [LỖI] chinhSachGiaoService gọi nội bộ sauKhiThanhToan() khi quét lại đơn
+    trả tiền muộn -> điều phối không được báo. Đã gọi qua module.exports.
+  - Thiếu hẳn: bếp xong đơn giao -> shipper; shipper nhận đơn / giao xong ->
+    điều phối; hủy đơn -> shipper + bếp; khách gọi món QR; bàn trả tiền xong cần
+    dọn; khách tự chuyển khoản; món trễ; khách đặt bàn sắp đến.
+
+ĐÃ LÀM (services/thongBaoNghiepVu.js + danh mục thongBaoService.LUONG, 41 luồng)
+  Vận hành tại bàn
+  [ĐÃ LÀM] Gọi món ở POS / sơ đồ bàn / thêm món: ghi id_nv_phuc_vu = phục vụ đã
+        gọi (chỉ nhân viên bộ phận Phục vụ; thu ngân gọi hộ thì không ghi).
+  [ĐÃ LÀM] mon_xong: bếp bấm xong -> ĐÚNG phục vụ phụ trách bàn nhận "Bàn 5: Bò
+        lúc lắc x2 đã xong" (mức khẩn, link KDS để bấm Đã phục vụ). Bàn chưa có
+        người phụ trách (khách tự gọi QR) -> phục vụ ĐANG TRONG CA (chấm công vào
+        hôm nay, chưa chấm ra); không ai chấm công -> cả bộ phận Phục vụ.
+  [ĐÃ LÀM] goi_mon_qr: khách tự gọi món qua QR -> phục vụ của bàn, kèm danh sách món.
+  [ĐÃ LÀM] ban_can_don: hóa đơn tại bàn trả đủ -> phục vụ dọn bàn.
+        khach_tu_thanh_toan: khách tự chuyển khoản (không nhân viên xử lý, không
+        phải tiền mặt) -> thu ngân + phục vụ biết hóa đơn đã đóng.
+  [ĐÃ LÀM] mon_tre (quét 2 phút/lần): món chờ quá thời gian chuẩn bep.sla_phut
+        -> bếp trưởng/bếp phó/quản lý bếp + giám sát phục vụ, gom 1 thông báo,
+        mỗi món báo 1 lần (bảng chống lặp thong_bao_da_bao).
+  [ĐÃ LÀM] dat_ban_sap_den (quét 2 phút/lần): khách đặt bàn còn ≤15 phút ->
+        lễ tân + phục vụ trong ca, kèm số khách, bàn đã xếp, dịp, yêu cầu.
+  Giao hàng
+  [ĐÃ LÀM] don_giao_nhan: shipper xác nhận đơn / đang đến lấy -> điều phối.
+  [ĐÃ LÀM] don_giao_bep_xong: bếp xong MÓN CUỐI của đơn giao -> shipper được
+        phân "đến lấy hàng" + điều phối (chưa có shipper thì nhắc phân ngay).
+        Món của đơn giao không báo nhầm cho phục vụ bàn.
+  [ĐÃ LÀM] don_giao_hoan_thanh: giao xong -> điều phối; có tiền thu hộ thì thêm
+        thu ngân (số tiền shipper đang giữ, link trang nhận thu hộ).
+  [ĐÃ LÀM] don_giao_huy: hủy đơn -> shipper đang giữ đơn + điều phối; bếp chỉ
+        được báo khi đơn đã vào hàng chờ bếp (đã trả tiền) hoặc đang nấu; khách
+        được báo khi NHÀ HÀNG hủy.
+  [ĐÃ LÀM] Phân lại đơn: phân lại đúng shipper đang giữ thì không báo lại; chuyển
+        sang shipper khác thì báo shipper cũ "đơn đã chuyển cho người khác".
+  Dọn dẹp
+  [ĐÃ LÀM] Chống lặp thông báo định kỳ dùng bảng thong_bao_da_bao (trước đây
+        ghi dòng ẩn vào thong_bao, hiện ra ở trang quản trị) - đã xóa 12 dòng ẩn cũ.
+
+KIỂM THỬ
+  - tests/tichHop.test.js "thong bao van hanh": phục vụ gọi món -> ghi người phụ
+    trách; bếp xong -> chỉ đúng phục vụ đó nhận; trả tiền mặt -> báo dọn bàn,
+    không báo nhầm "khách tự chuyển khoản"; món trễ -> bếp trưởng + giám sát,
+    không báo lặp.
+  - scripts/test-tinh-nang-moi.js: kịch bản đơn giao đi HẾT luồng (trả tiền ->
+    phân -> shipper nhận -> bếp xong -> lấy hàng -> đang giao -> giao xong),
+    kiểm tra thông báo từng bước cho điều phối, shipper, khách (12 kiểm tra).
+  - npm test 42/42, test:automation 175/175, test-tinh-nang-moi 132/132
+    (chạy 3 lần liên tiếp đều đạt).
+CÒN LẠI
+  [CHỜ] Phân khu vực / bàn cố định cho từng phục vụ theo ca (hiện xác định người
+        phụ trách theo người gọi món đầu tiên).
+  [CHỜ] Bar tách riêng màn hình pha chế (hiện đồ uống đi chung KDS bếp).
+
+================================================================================
+CHUẨN BỊ DEMO (21/11/2026)
+================================================================================
+  [ĐÃ LÀM] Dashboard /analytics mặc định 30 ngày tính từ MAX(ngay_dat) của mọi
+        dòng hopdong -> một đơn test lẻ hoặc lượt đặt bàn cho ngày tương lai kéo
+        mốc đi, dashboard gần như trống (1 đơn, 0,7 triệu). Nay mốc = ngày gần
+        nhất có >= 10 đơn hoàn tất và không vượt hôm nay (05/07-03/08/2026:
+        1.466 đơn, 2.024,8 triệu). services/analyticsService.js khoangNgay().
+  [ĐÃ KIỂM] 16 trang chính của kịch bản demo mở được đúng vai trò, không lỗi.
+  [GHI CHÚ] Bàn S01 giữ phiên QR rỗng (QR_TMPM44AJJ_mw7prgya, không có món) -
+        chưa xử lý, demo dùng bàn S07.
+
+================================================================
+[21/11/2026] SUA: BAN DA DAT + DA GOI MON NHUNG SO DO VAN "TRONG" (S20)
+================================================================
+Nguyen nhan: luot dat RSV-261121-CSZ3 dung o ARRIVED ("Khach da den"), le tan
+chua bam "Xep ban" (SEATED). Ban chi chuyen sang "Dang phuc vu" (trangthai=1,
+sesis_hien_tai) khi SEATED, nen du phuc vu goi mon, bep nau, len mon xong ban
+van trong tren so do.
+Sua:
+- orderService.tuXepBanKhiGoiMon(sesis): goi mon (addDishToOrder /
+  addMultipleDishesToOrder - nhan vien, QR, POS) vao luot dat ARRIVED -> tu
+  chuyen SEATED qua reservationService.doiTrangThai (ghi lich su "Tu xep ban
+  khi goi mon"). Loi khong chan viec goi mon.
+- routes/kds.js (POS goi mon): ban chua co phien nhung co luot ARRIVED hom nay
+  -> goi vao chinh luot do, khong mo phien vang lai TB_ thu hai.
+- Du lieu: da chuyen RSV-261121-CSZ3 sang SEATED -> S20 "Dang phuc vu".
+Kiem thu: npm test 42/42.
+
+[21/11/2026] SUA: SO DO BAN - BAM "MO BAN & GOI MON NGAY" KHONG MO DUOC MENU
+Nguyen nhan: moModalOrder() goi dongHop() truoc, ma dongHop() dat
+banDangChon = null -> dong ngay sau (banDangChon.number_ban) nem TypeError,
+nut goi mon tren popup ban khong lam gi.
+Sua (views/staff/so-do-ban.ejs):
+- moModalOrder chi an popup nho, giu banDangChon.
+- Bam "Dat la Dang phuc vu" (mo ban) tren ban chua co phien -> mo thang man
+  goi mon cua ban do; phien don tao khi gui mon dau tien.
+Kiem thu: Chrome headless - mo ban S07 -> hien "Goi mon - Ban S07", khong loi
+JS; da tra S07 ve Trong sau khi thu.
+
+[21/11/2026] SUA: QUET MA QR BAN BANG DIEN THOAI KHONG MO DUOC (DA CHUNG WIFI)
+Nguyen nhan: tep .qr-tunnel con sot tu 17/11 (lan chay `npm run qr:online` bi
+tat ngang nen khong kip xoa tep). diaChiQR uu tien dia chi tunnel -> moi ma QR
+tro vao https://...trycloudflare.com da chet (DNS khong phan giai) thay vi
+http://192.168.98.52:3000.
+Sua: moOnline.js ghi them pid vao .qr-tunnel; diaChiQR.gocTunnel bo qua tep khi
+tien trinh do khong con song (hoac tep cu khong co pid).
+Kiem tra: /staff/qr-codes gio nhung http://192.168.98.52:3000/qr/table/... (0
+link tunnel); URL LAN tra 200.
+
+[21/11/2026] THEM: CHUONG THONG BAO CHO BEP / BAR KHI CO MON MOI
+Nguyen nhan: chua co luong nao bao "mon moi" cho bep (bep chi thay tren KDS qua
+socket), va trang /kds la trang rieng khong co nut chuong.
+Them:
+- Luong mon_moi_bep (Bep trong ca) va mon_moi_bar (Bar trong ca, chua ai cham
+  cong thi ca bo phan), muc do khan, link /kds.
+- Mon goi tu: nhan vien / so do ban / POS (addDishToOrder), khach QR
+  (addMultipleDishesToOrder), don giao da thanh toan (sauKhiThanhToan).
+- Gom cac mon cua cung mot don trong 2,5s (TB_GOM_MON_MS) thanh 1 thong bao.
+- Do uong (loai DRINK / SAKE - BEER...) -> Bar; con lai -> Bep.
+- Mon goi truoc cho luot dat ngay khac: khong bao.
+- views/staff/kds.ejs: gan nut chuong vao header man bep.
+Kiem thu: kich ban tam (3 lan goi = 1 TB bep + 1 TB bar, daubep/phache nhan),
+Chrome headless /kds co chuong; npm test 42/42, khong con TB sot.
+
+[21/11/2026] PHAN QUYEN KHO: TACH NGUOI DUNG HANG (BEP) KHOI NGUOI GIU HANG (KHO)
+Truoc: moi trang kho mo cho vai tro cu 'Bep' -> dau bep, phu bep, tap vu tu lap
+phieu nhap/xuat, kiem ke; bep truong tu chot kiem ke; Nhan vien kho KHONG vao
+duoc; Thu kho vao duoc chi vi tai khoan thukho tinh co mang chucvu 'Bep'.
+Sau (services/phanQuyenKho.js, chay 1 lan luc khoi dong, migration 047):
+  kho.xem            bep, bar, thu kho, nv kho, ke toan, quan ly
+  kho.nhap/xuat      THUKHO, NVKHO, QLNH
+  kho.kiem_ke        THUKHO, NVKHO, QLNH (tao phieu, dem)
+  kho.kiem_ke.chot   QLNH, TLQL (moi)  - nguoi lap khong tu chot
+  kho.mua.de_xuat    QLBEP, BEPTRUONG, BEPPHO, TRUONGBAR, THUKHO, QLNH (moi)
+  kho.mua.duyet      QLNH, TLQL (moi)  - khong tu duyet don minh lap
+- routes/khoBep.js, routes/bepQuanLy.js: kiem theo quyen (canQuyen / can()).
+- View an nut theo quyen; menu trai co nhom rieng "Kho nguyen lieu" (theo kho.xem).
+- Thong bao don_mua_cho_duyet, kiem_ke_cho_chot -> Quan ly nha hang.
+Kiem thu: ma tran 10 tai khoan dung bang tren; npm test 42/42 (them kiem tra
+dau bep / bep truong bi chan), test-tinh-nang-moi 134/134, test:automation 175/175.
+Luu y: tai khoan thukho van mang chucvu cu 'Bep' -> van thay khu Bep (KDS...).
+
+[21/11/2026] CAP NHAT KICH BAN DEMO (artifact UjTM661U211vNUfzqVskT4, ban 2)
+- Man 2: dau bep mo /kds truoc, phuc vu "Mo ban & Goi mon ngay" -> chuong bep bao mon moi.
+- Man 3: chuong bep bao mon QR; buoc tuy chon quet QR bang dien thoai (/staff/qr-codes, dia chi 192.168.x.x).
+- Man 5: chuong bep bao mon don giao ngay khi khach tra tien.
+- MAN 6 MOI "Kho": dau bep chi xem; thukho lap phieu nhap; kiem ke, chi quan ly chot (chot o man 8).
+- Doi so man: Ke toan 7, Quan ly 8; tong 28 phut; so test 42 / 175 / 134.
+- Su co: chuong bep tre ~3s, QR dien thoai, ban da den nhung so do trong. Hoi dap: phan quyen kho.
+
+[21/11/2026] BO PHAN KHO KHONG CON THAY TINH NANG BEP / VAN HANH
+Nguyen nhan: chuc danh THUKHO khai chucvu_legacy = 'Bep' -> tai khoan thukho mang
+vai tro cu 'Bep', vao duoc KDS, cong thuc, chot ca bep, thong ke bep. Ngoai ra
+/kds va /so-do-ban mo cho MOI nhan vien dang nhap (che do chi xem), thanh duoi
+tren dien thoai luon hien So do ban / Don ban / Bep KDS.
+Sua:
+- phanQuyenKho.damBaoVaiTroKho (1 lan, moc phan_quyen.kho_v3_vai_tro; migration
+  047): THUKHO/NVKHO chucvu_legacy va chucvu cua nhan vien -> 'Nhan vien chung'.
+- routes/kds.js requireVanHanh: KDS, so do ban (xem + doi trang thai + goi mon)
+  chi cho bep/bar, phuc vu/quay/le tan, thu ngan, quan ly, bo phan Giao hang.
+- footer.ejs: thanh duoi dien thoai theo bo phan (kho: Ton kho / Xuat nhap / Kiem ke).
+- staff/index.ejs: "Thao tac nhanh" cho bo phan kho.
+Kiem tra: thukho, nhanvienkho, ketoan bi chan /kds, /so-do-ban, cong thuc, chot ca
+bep; bep / phuc vu / le tan / thu ngan / dieu phoi / quan ly van vao duoc.
+npm test 42/42, test:automation 175/175, test-tinh-nang-moi 134/134.
+
+[21/11/2026] SUA: TU PHAN DON GIAO LAP VO HAN (spam "Ban duoc phan don")
+Nguyen nhan: shipper khong xac nhan trong 3 phut -> go don, phan nguoi khac;
+nguoi bo lo chi bi loai tru 15 phut -> ca doi lai du dieu kien -> vong lap mai.
+GH1107-001 (tao 07/11) va GH1117-003 (17/11) bi phan lai 83-84 lan, moi 3-8
+phut mot cap thong bao cho shipper1-4.
+Sua (services/phanCongGiaoService.js):
+- lyDoDungTuPhan: dung tu phan khi da 3 lan tu phan lien tiep bi tu choi / qua
+  han (dem tu lan dieu phoi phan tay gan nhat) hoac don tao qua 12 gio.
+  Cau hinh: giao_hang.so_lan_tu_phan_toi_da (3), giao_hang.gio_toi_da_tu_phan (12).
+- Don dung o 'cho_phan'; dieu phoi nhan MOT thong bao moi vong (luong moi
+  don_giao_ket, chong trung qua thong_bao_da_bao). Phan tay = bat dau vong moi.
+- phanHangCho bo qua don qua 12 gio ngay trong cau truy van.
+Du lieu: KHONG sua don nao; hai don cu tu dung o "Cho phan" cho dieu phoi.
+Kiem tra: tuDongPhan(34) tra "Dung tu phan", khong sinh thong bao moi;
+npm test 42/42, test-tinh-nang-moi 134/134.
+
+[23/11/2026] QUY TRINH DUYET PHIEU NHAP KHO (4 buoc, 2 lop kiem soat)
+Truoc: thu kho luu phieu nhap la cong ton, gia von, phat sinh cong no tra duoc
+ngay - khong ai kiem chat luong, doi chieu gia, duyet.
+Sau (services/duyetNhapKhoService.js):
+  1. Thu kho lap phieu nhan hang: BAT BUOC so hoa don / phieu giao (hoac ly do
+     khong co), anh chung tu tuy chon (luu public/uploads/chung-tu) -> 'cho_qc',
+     hang CHUA vao kho.
+  2. Bep truong / QL bep / Truong bar kiem chat luong tung dong: so luong dat,
+     tra phai ghi ly do. Phan DAT vao kho ngay (lo, gia von, don mua da nhan).
+     Het dat -> 'tra_hang'. Nguoi lap khong tu QC.
+  3. Ke toan doi chieu voi don mua + hoa don: dong lech gia > 5% to do; sua don
+     gia (phai ghi can cu) -> gia von tinh lai, luu gia_nhap_ban_dau.
+     Tong <= 1.000.000d -> tu duyet; > nguong -> 'cho_duyet'.
+  4. Quan ly NH / tro ly duyet (tung phieu hoac ca loat) hoac tra ve ke toan.
+     Khong duyet phieu minh lap / da QC / co don mua minh lap.
+Lop kiem soat tai chinh: congNoNccService chi tinh phieu 'da_duyet'; traTien
+chan phieu chua duyet (409). Phieu mua le (khong NCC) da duyet -> "Chi tien"
+sinh phieu chi trong so quy.
+Vi sao cong ton sau QC (khong doi duyet cuoi): bep dung hang ngay; doi duyet
+thi tonMonService chan khach goi mon du hang da trong tu.
+Cau hinh: kho.nhap.bat_qc, kho.nhap.bat_doi_chieu, kho.nhap.nguong_duyet,
+kho.nhap.lech_gia_pt. Quyen moi: kho.nhap.qc, kho.nhap.doi_chieu; kho.nhap.duyet
+chi con QLNH, TLQL (phanQuyenKho.damBaoQuyenNhap, moc kho_v4_duyet_nhap).
+Thong bao: nhap_kho_cho_qc, _cho_doi_chieu, _cho_duyet, _ket_qua; nhac phieu
+ton (QC > 60 phut, doi chieu / duyet > 24h) moi 15 phut, 1 lan.
+Giao dien: /staff/kitchen/kho/phieu-nhap (danh sach, duyet loat),
+/staff/kitchen/kho/phieu-nhap/:id (QC tren dien thoai, doi chieu, duyet),
+form lap phieu them so hoa don / anh, phieu in co bien ban tra hang + 4 chu ky,
+so kho hien trang thai, menu "Duyet phieu nhap".
+Ngoai le: dieu chinh kiem ke thua (noiBo) vao kho ngay, 'da_duyet'. Nhap nhanh
+o trang ton kho cung qua QC. 55 phieu cu: 'da_duyet', truoc_quy_trinh = 1.
+Test: npm test 43/43 (them test quy trinh day du), test-tinh-nang-moi 136/136,
+test:automation 175/175. Sua test 'mua hang theo du bao' tinh nhu cau tiec.
+Kich ban demo: man 6 moi (thu kho -> bep truong QC tren dien thoai -> ke toan
+sua gia lech -> quan ly duyet), tong 30 phut.
+
+[23/11/2026] GIAO DIEN KHACH: BO MUC "CHAT NHAN VIEN" TREN THANH MENU
+Ly do: chiem cho tren menu va trung voi nut "Chat voi nhan vien" trong khung
+chatbot. Bo o views/partials/header.ejs (menu may tinh + ngan keo dien thoai).
+Trang /chat giu nguyen - vao tu nut trong chatbot va dong lien he o chan trang.
+
+[23/11/2026] RA SOAT PHAN QUYEN TAT CA VAI TRO (artifact 8zi3AobszfFtftkRXd3mew)
+Goc van de: 4 chuc danh khong phai quan ly nha hang khai vai_tro_tuong_duong co
+'Quan ly' (GSPV, GSTN, QLBEP, KTTRUONG; tai khoan quanlybep con chucvu 'Quan ly')
+-> thay & vao MOI trang quan ly. Nhom menu "Dieu hanh & Quan ly" va cac trang
+khuyen mai / thanh vien / xep ca / duyet lich / du bao / analytics mo theo cap <= 2
+hoac chu 'ke toan' -> bep truong, ke toan truong cung vao duoc.
+Sua:
+- services/phanQuyenVaiTro.js (chay 1 lan, moc vai_tro_v1, v2): bo 'Quan ly' khoi 4
+  chuc danh; quanlybep -> 'Bep'; GSPV bo quyen giao_hang.*; tap vu bep bo quyen kho.
+  Helper laDieuHanh / laGiamSat / laTruongBep / canHoac.
+- Trang quan ly (forecast, analytics, xepCa, khuyen mai, thanh vien, duyet lich):
+  chi Ban dieu hanh (QLNH, TLQL), tra 403 ro rang.
+- Giu quyen giam sat: GSPV duyet bao cao ca phuc vu, xoa mon da nau; GSTN duyet
+  chot ca, hoan tien, xem lich su chot ca moi thu ngan, xoa mon da nau.
+- Bao cao ca phuc vu: chi bo phan phuc vu; duyet chi GSPV + dieu hanh (truoc: moi cap <= 3).
+- KDS: bep/bar, phuc vu, dieu phoi. So do ban: phuc vu, le tan, thu ngan.
+- Bep: thong ke, chot ca bep, phan tich thuc don -> truong bep / bar (cap <= 4);
+  cong thuc -> quyen bep.cong_thuc.xem. Lai lo -> ke toan + dieu hanh. Duyet nghi phep -> cap <= 4.
+- Menu: nhom dieu hanh theo laDieuHanh; them "Duyet bao cao ca", "Duyet / lich su chot ca",
+  "Viec can xu ly cua bo phan" cho truong bo phan; thanh duoi dien thoai theo bo phan.
+Do thuc te 25 tai khoan x 37 trang -> bang trong artifact.
+Test: npm test 43/43 (cap nhat 3 test theo quyen moi), test-tinh-nang-moi 136/136, automation 175/175.
+Luu y: ai dang dang nhap phai dang xuat / dang nhap lai (vai tro cu luu trong phien).
+
+[23/11/2026] QUY TRINH DAT TIEC ONLINE MOI (Sanh Gala, coc & thanh toan online)
+Truoc: mot trang chon sanh / thuc don / form; khach tu chon ca khu nho; khong co
+chinh sach, khong xem gio trong; don MOI khong giu sanh (de trung); khach khong tu
+tra coc hay tra phan con lai duoc (chi nhan vien thu tai quay).
+Sau (services/datTiecQuyTrinh.js + views/dat-tiec.ejs 6 buoc):
+  1 Chinh sach (bat buoc tick dong y; noi dung sinh tu cau hinh dat_tiec_cau_hinh)
+  2 Loai tiec + so khach: chi Sanh Gala, >= tiec_toi_thieu (50); it hon -> bao
+    khong du dieu kien + nut sang Dat ban
+  3 Lich thang (ngay trong / con 1 buoi / kin do / khong nhan) -> chon ngay ->
+    tung buoi, tung gio: trong xanh, da co tiec do (khong chon duoc); ngay kin bao ngay
+  4 Thuc don co san hoac tuy chinh (bo mon, them mon le x phan/ban, yeu cau)
+  5 Dich vu them  6 Lien he + xac nhan
+Trang thai: CHO_COC (giu sanh giu_cho_coc_phut=60) | CHO_BAO_GIA (tuy chinh, giu 24h)
+  -> nhan vien bao gia -> CHO_COC -> coc 30% (VietQR "TIEC <ma>", SePay tu khop;
+  gia lap demo; hoac thu tai quay) -> DA_COC -> sau tiec nhan vien chot hoa don
+  -> CHO_THANH_TOAN -> khach tra phan con lai (online / quay) -> HOAN_THANH.
+  Qua han giu cho chua coc -> HET_HAN (nha sanh, lich + dat ban thuong deu thay).
+  Huy: khach tu huy (ca khi da coc), hoan theo moc: >=7 ngay 100%, 3-6 ngay 50%,
+  <3 ngay 0% -> tien_hoan_du_kien, bao Quan ly hoan.
+Khac: GET_LOCK chong 2 khach giu cung buoi; webhook rutMaDoiSoat nhan ma TC...;
+  tiecVanHanhService.sanhBiGiu tinh ca don giu tam (dat ban thuong khong chen);
+  trang /dat-tiec/thanh-toan/:ma (QR, dem nguoc, tu cap nhat); lich su tiec co nut
+  coc / tra phan con lai / huy kem so tien hoan; trang nhan vien co bao gia, chot
+  hoa don, link thanh toan, so tien can hoan.
+Test: kich ban tam 23/23; npm test 43/43; test-tinh-nang-moi 138/138 (sua test tiec
+  theo luong moi, sua test dat ban sat gio phu thuoc gio chay, don payments tiec);
+  automation 175/175.
+
+[23/11/2026] TRANG /khong-gian: MOI KHU DU 4 ANH NHO
+Hang anh nho chia 4 cot nhung VIP, Sanh chinh, San vuon, Tang 2 chi co 3 anh -> trong 1 o.
+Migration 048_anh_khong_gian_4.js them anh thu 4 tu thu vien co san (mon-1, gia-dinh-1,
+party-1, party-3). Da chay tren DB nay; may khac chay: node config/migrations/048_anh_khong_gian_4.js
+
+[23/11/2026] DAT TIEC - BUOC THUC DON CO HINH ANH
+- The thuc don: anh bia (thuc_don_tiec.hinh_anh) + dai 4 anh mon; dau tich chi tren the dang chon.
+- Chi hien thuc don dung loai tiec khach chon, nut "Xem them N thuc don khac"; chon xong tu cuon toi chi tiet.
+- Chi tiet: luoi mon co anh theo nhom. Anh mon lay bang datTiecQuyTrinh.ganAnhThucDon
+  (ghep ten mon tiec -> monan qua tiecVanHanhService.ghepMon; 95/98 mon co anh).
+- Tuy chinh: bam the mon de Bo / Giu lai (lop "Da bo"); them mon bang luoi the co anh,
+  loc theo ten + loai, mon an truoc do uong; danh sach mon them co anh nho.
+  Cap nhat: anh thu 4 tu them khi server khoi dong (services/anhKhongGian.damBao, goi trong
+  server.js) - khong can chay migration tay; migration 048 chi con la loi tat goi cung ham.
+
+[25/11/2026] THANH MENU KHACH: CHU TO, DE DOC HON (css/nhahang.css)
+Truoc: 10 muc ep mot hang, chu ~11.5-13px. Sau: 15px (1700-2000px), 16px (>2000),
+14.4px (1600), 13.8px (1536), 13.1px (1440), 12.8px (1331-1400); duoi 1900px nut
+"Giao tan noi / Dat ban" chi con bieu tuong de nhuong cho; <= 1330px dung nut menu
+(truoc 1260). Da do tieng Viet o 1331-1920px: khong tran, khong de nut ben phai.
+
+[25/11/2026] BO LOC THOI GIAN THONG NHAT (js/loc-ngay.js, nap trong footer nhan vien + /analytics)
+- Moi bo loc "tu ngay - den ngay" co hang nut: Hom nay, Hom qua, Tuan nay, Tuan truoc,
+  Thang nay, Thang truoc (tuan = thu Hai -> Chu nhat); van giu 2 o ngay de chon khoang tu do.
+  Bam nut -> dien ngay va tai lai ngay. 15 trang: lai lo, lich su bao cao phuc vu, lich su
+  chot ca, phan tich dat ban, nhat ky huy mon, dong tien, so kho, kiem ke, thong ke bep,
+  phan tich thuc don, lich su thanh toan, so quy thu chi, dat tiec, /analytics.
+- Trang thu chi & thong ke bep da co nut rieng -> bo sung Hom qua/Tuan nay/Tuan truoc vao
+  hang san co (data-loc-ngay="tat" de khong hien 2 hang).
+- Trang xem theo 1 ngay (cham cong, chot so, dat ban, so do ban, cham cong ke toan): Hom nay, Hom qua.
+- Trang theo thang (luong, bao cao ke toan, tong hop cong, tong quan ke toan, cham cong NV): Thang nay, Thang truoc.
+- Quan ly dat tiec: them o "den ngay" (truoc chi co "tu ngay").
+
+[25/11/2026] DAT TIEC - BUOC THUC DON CHIA 2 HUONG (views/dat-tiec.ejs)
+- "Thuc don co san cua nha hang": chon set, gia tron goi/ban, coc ngay (CHO_COC).
+- "Tu chon thuc don theo y muon": chon tung mon le (toi thieu tu_chon_mon_toi_thieu = 6,
+  cau hinh dat_tiec_cau_hinh), so phan/ban, yeu cau rieng; nut "Lay mon tu thuc don mau"
+  dien san mon cua mot set (mon ghep duoc voi mon le). Don -> CHO_BAO_GIA, nha hang bao gia.
+- Server: body.kieu_thuc_don = 'tu_chon' -> thuc_don_id NULL (cot doi sang NULL tu dong),
+  thuc_don_tuy_chinh.tu_chon = true, tien mon tam tinh vao tien_dieu_chinh; ten hien thi
+  "Thực đơn tự chọn". Ke hoach nguyen lieu tiec (tiecVanHanhService) nay tinh ca mon tu
+  chon / mon them va bo mon khach da bo.
+- Bo "tuy chinh tren set co san" (bo mon/them mon) - gop vao huong tu chon.
+
+[25/11/2026] THUC DON TU CHON: GIA TU DONG, COC NGAY (huong B)
+- Don tu chon -> CHO_COC ngay (khong qua CHO_BAO_GIA), giu sanh giu_cho_coc_phut nhu set co san.
+- Gia = gia mon le x so phan/ban x so ban, tru tu_chon_giam_phan_tram (cau hinh, mac dinh 0, toi da 50).
+- Chinh sach, the huong, tom tat, xac nhan doi chu "bao gia" -> "dat coc ngay".
+- SU CO: luc don du lieu test da xoa nham thong bao (bang thong_bao) cua 3 don tiec that
+  TC261121YNEO, TC261121KT8L, TC261123AIAN (LIKE qua rong). Don, thanh toan khong bi anh huong.
+  Khong khoi phuc duoc (log_bin tat).
+
+[25/11/2026] DAT TIEC - KHACH TU CHINH SO BAN
+- Mac dinh van la phuong an A: so ban = ceil(so khach / 10), ban le tinh tron gia.
+- Buoc 2 co o "So ban" (- / +): chon trong khoang moi ban 8-12 khach (cau hinh
+  khach_moi_ban_it_nhat / khach_moi_ban_nhieu_nhat), toi da so ban sanh bay duoc
+  (khach_toi_da / 10). Hien cach xep (VD 4 ban x 12 + 7 ban x 11). Doi so khach -> ve goi y.
+- Server kiem lai: body.so_ban ngoai khoang -> tu choi; dat_tiec.so_ban luu so ban khach chon,
+  tien thuc don / mon tu chon / dich vu theo ban tinh theo so ban nay.
+- Chinh sach muc "Thuc don & dich vu" ghi ro quy tac + vi du 125 khach: 11-15 ban.
+
+[25/11/2026] DAT TIEC TU CHON: bo o chon chung '1/2/3 phan/ban'; moi mon da chon co nut - so + (1-5 phan/ban, khop gioi han server), hien tong phan va tien tung mon.
+
+[25/11/2026] DAT TIEC TU CHON - LAY MON TU THUC DON MAU: thay o select bang dai the anh thuc don mau; bam the -> xem tung mon theo nhom kem anh, tick chon mon muon lay (mon rieng cua set khong ban le: hien xam, khong tick duoc; mon da co: danh dau). Nut 'Lay N mon da chon'.
+
+[25/11/2026] BAT KHACH DANG NHAP TRUOC KHI DAT BAN / DAT TIEC / GIAO HANG
+- middleware/auth.js canKhachDangNhap: GET /dat-ban, /dat-tiec, /cart (va /giao-hang -> /cart)
+  chua dang nhap -> /login?tiep=<trang>; POST /api/dat-ban, /api/dat-tiec, /datban -> 401 JSON
+  {can_dang_nhap, dang_nhap}; form tren trang tu chuyen sang dang nhap neu het phien giua chung.
+- Trang login hien ly do ("Vui long dang nhap de dat tiec...") + link dang ky; dang nhap xong
+  (ke ca vua dang ky) quay lai dung trang (session.tiepSauDangNhap). Chi chap nhan duong noi bo
+  (bat dau "/", khong "//") - chong chuyen huong ra ngoai.
+- Van mo cong khai: tra cuu dat ban theo ma + SDT, theo doi don giao, trang thanh toan theo link,
+  goi mon QR tai ban, them mon vao gio (chi xem gio / dat hang moi can dang nhap).
+- Test cap nhat: test-tinh-nang-moi (140), test-toan-bo-he-thong (177).
+
+[25/11/2026] BIEN LAI THANH TOAN KIEU NGAN HANG (moi cho khach thanh toan)
+- services/bienLaiService.js + GET /api/bien-lai?ma=<sesis|ma tiec|ma dat ban>: giao dich
+  payments.status='success' cua ma do (so tien, bang chu, gio, loai, noi dung, ma GD, phuong thuc,
+  tai khoan nhan cua nha hang). Khong tra ten / SDT khach.
+- js/bien-lai.js (nap trong footer khach + trang QR tai ban): hop noi bien lai - dau tich xanh,
+  so tien lon, so tien bang chu, mep rang cua; nut "Luu anh" (PNG qua html2canvas, loi thi in) va
+  Dong / nut tiep. Nhieu giao dich (coc + thanh toan) -> chon qua lai.
+- Gan vao: thanh toan tiec (tu mo sau khi tra + nut "Xem bien lai thanh toan"), coc dat ban (bien lai
+  roi "Hoan tat" -> /dat-ban/xong), don giao hang (bien lai roi "Theo doi don hang"), coc goi mon
+  (tu mo + nut xem lai), hoa don QR tai ban (tu mo + nut xem lai).
+- Da thu E2E: tao tiec -> gia lap chuyen khoan -> bien lai tu hien dung so tien; du lieu thu da xoa theo id.
+
+[25/11/2026] LICH SU TIEC (my-orders): thanh tien trinh 4 buoc thieu nhan buoc 1 va 3 -> them 'Gui yeu cau' / 'Thanh toan' (vi/en/ja); map trang thai CHO_BAO_GIA, DA_XAC_NHAN... vao dung buoc.
+
+[25/11/2026] DIEU HANH TIEC - DOT 1 (services/dieuHanhTiecService.js, routes/dieuHanhTiec.js,
+views/staff/tiec.ejs, views/staff/tiec-chi-tiet.ejs; menu "Dieu hanh tiec" nhom Chung)
+- Bang moi: tiec_viec (viec chuan bi theo moc), tiec_nhan_su (phan cong) - tu tao khi chay.
+- Tiec DA_COC / DA_XAC_NHAN tu sinh 12-13 viec: T-7 (nguyen lieu - Bep truong, kiem ton - Kho,
+  dich vu ngoai - Quan ly neu co dich vu), T-3 (chot so khach - Le tan [kiem khoang 8-12 khach/ban],
+  chot nguyen lieu - Bep truong), T-1 (phan cong PV + truong tiec - GSPV, phan cong bep/bar,
+  so do ban, so che, do uong - Bar), ngay tiec (checklist setup sanh - Phuc vu, bep san sang,
+  duyet "Sanh san sang" - GSPV, chi duoc khi setup xong). Tiec dat sat ngay: han = bay gio + 12h.
+- /staff/tiec: Viec cua toi, Tiec hom nay (nhan song Sap bat dau / Dang dien ra / Da ket thuc,
+  tien do chuan bi, tien), Can xu ly (chot hoa don, cho khach tra not + copy link, viec tre),
+  Sap toi 7 ngay. /staff/tiec/:id: viec theo moc (hoan thanh / co van de [bat buoc ghi chu] /
+  mo lai), nhan su tiec (phan cong theo bo phan, chi GSPV/Bep truong/QL).
+- Quyen: Ban dieu hanh + PV, BEP, BAR, KHO, LT, TN; nhan vien thuong chi thay tiec duoc phan cong.
+- Thong bao (job 2 phut): mo moc (gom theo bo phan), qua han -> nhac, +12h -> Quan ly
+  (viec ngay tiec: khan ngay cho QL + GSPV), van de, chot khach, phan cong, sanh san sang,
+  tiec het gio chua chot hoa don -> QL + Thu ngan. 7 loai moi trong /staff/thong-bao/luong.
+- Da thu 23 kich ban tren tiec thu (rang buoc, quyen theo role, thong bao), du lieu thu da xoa theo id.
+
+[25/11/2026] DIEU HANH TIEC - PHAN CONG NHAN SU THEO VI TRI (thay o chon vai tro + 1 nguoi)
+- Moi vi tri mot khoi: Truong tiec, Phuc vu, Le tan don khach, Bep, Bar - hien so nguoi CAN theo quy mo
+  (dinhMuc: truong tiec 1; phuc vu 1/2 ban toi thieu 2; le tan 1, >=150 khach 2; bep 1/40 khach toi
+  thieu 2; bar 1/100 khach), da co / thieu / du, nguoi da phan dang the co nut go; tong "x/y vi tri".
+- "+ Chon nguoi" mo hop chon nhieu nguoi cung bo phan: "Co ca 17:00–21:00" (lich_lam_viec trung gio
+  tiec) xep truoc, "Khong co ca – tang ca", "Dang xin nghi"; khoa kem ly do: nghi phep (da duyet),
+  da co tiec khac cung buoi, dang o vi tri khac cua tiec nay, truong tiec chua du cap (> to truong).
+- API nhan ds_nv (nhieu nguoi); server kiem lai tat ca dieu kien tren. Da thu 31 kich ban.
+
+[25/11/2026] DIEU HANH TIEC - DOT 2: TRONG TIEC (services/tiecTrongTiecService.js,
+views/staff/partials/tiec-trong-tiec.ejs; trang chi tiet co 2 tab "Chuan bi & nhan su" / "Trong tiec")
+- Bang moi: tiec_len_mon, tiec_phat_sinh, tiec_nhat_ky; dat_tiec them bat_dau_thuc_te, ket_thuc_thuc_te.
+- Thanh dau: "Ban chot X · phat sinh +Y → tinh Z ban" (tu phat sinh them/bot ban da duyet; bot toi da
+  dao_dong_so_khach_phan_tram % ban chot), tien phat sinh da duyet, Khai tiec / Ket thuc tiec
+  (ket thuc bi chan khi con phat sinh khan). Bo dem khach (khong anh huong hoa don).
+- Len mon theo dot (nhom mon thuc don; tu chon: theo loai mon, bo do uong): Goi dot (GSPV / truong
+  tiec / QL, tu khai tiec) -> bep nhan chuong khan + khung "Bep tiec" tren /staff/tiec (moi bep/bar
+  thay, ke ca chua phan cong) -> Da ra mon (bep) -> Da len ban (phuc vu). Ghi gio + so phut bep ra.
+- Phat sinh: them mon/do uong (chon mon, tu tinh tien, do uong -> Bar), them/bot ban (gia 1 ban),
+  hu hong / khac (tuy chon tinh tien), khieu nai, ky thuat, y te - an ninh (luon khan). Anh tuy chon
+  (public/uploads/tiec). Tinh tien -> cho GSPV/QL duyet; them mon duyet -> bep/bar lam ngay.
+  Trang thai Moi -> Dang xu ly -> Da xu ly (bat buoc ket qua) / Tu choi (bat buoc ly do).
+- Nhat ky tiec tu ghi moi thao tac; tab tu tai khi co thay doi (15s). The tiec hom nay hien so phat sinh.
+- Thong bao moi: tiec_goi_mon, tiec_ra_mon, tiec_phat_sinh, tiec_phat_sinh_kq.
+- Da thu 25 kich ban tren tiec thu dua ve hom nay; du lieu, thong bao, anh thu da xoa theo id.
+
+[25/11/2026] BAR: KDS tach tram Bep / Bar / Tat ca (mon theo loai DRINK|SAKE|BEER -> bar), mac dinh theo bo phan; menu Bar 'Man hinh Bar (do uong)'. CON LAI: tach quyen quan ly mon (bar chi do uong), Dot 3 dieu hanh tiec.
+
+[26/11/2026] BAR - QUAN LY MON THEO TRAM (routes/bepQuanLy.js, views/staff/kitchen/dishes.ejs)
+- Trang Quan ly mon: Bar chi thay do uong (DRINK / SAKE - BEER), Bep chi mon an, Ban dieu hanh tat ca.
+  Them nut "Tam het" / "Ban lai" (tinhtrang 0/1, gui thong bao mon_tam_ngung); server chan sai tram (403)
+  ca o them / xoa mon. Sua: cot "Loai mon" truoc trong (truy van khong lay ten loai); bo nut "Them mon
+  moi" va nut sua khong hoat dong; updateProduct truoc doi tinhtrang 0 thanh 1 (|| 1).
+- Da thu 10 kich ban (KDS tram mac dinh, loc mon, chan sai tram, tam het / ban lai), tra lai trang thai mon.
+
+[26/11/2026] DIEU HANH TIEC - DOT 3: CHOT HOA DON + SAU TIEC + BAO CAO (services/tiecChotService.js,
+views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
+- Hoa don chot dien san: thuc don = gia ban x ban tinh (chot +/- phat sinh ban); mon tu chon / mon them
+  theo ban; dich vu tinh lai (BAN x ban tinh, KHACH x khach chot, GOI); phat sinh tinh tien da duyet
+  (tru them/bot ban); giam tru bat buoc ly do. Dieu kien: tiec da ket thuc, khong con phat sinh cho duyet.
+  Quan ly / Thu ngan chot -> CHO_THANH_TOAN (khach thanh toan online / tai quay); luu dat_tiec.hoa_don_chot,
+  khach thay chi tiet tren trang thanh toan tiec. Nut copy link thanh toan.
+- Viec "Sau tiec" (tinh tu gio ket thuc): thu don sanh (checklist 5 muc - Phuc vu), kiem dem do uong (Bar),
+  bao nguyen lieu du / hao hut (Bep truong). Ket thuc som -> mo ngay. Thong bao quet ca CHO_THANH_TOAN.
+- Bao cao sau tiec: khach / ban dat - chot - tinh, gio khai / ket thuc vs du kien, phut bep ra tung dot
+  + dot cham nhat, phat sinh theo loai / tien / thoi gian xu ly, viec tre, nhan su; danh gia 1-5 sao
+  (Quan ly / Giam sat PV, bang tiec_danh_gia).
+- Da thu tron vong doi tren tiec thu: 37 kich ban (Dot 2 + 3) + 31 (Dot 1); du lieu thu xoa theo id.

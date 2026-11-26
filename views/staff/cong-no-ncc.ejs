@@ -32,6 +32,16 @@
   <div class="col-md-4 mb-2"><div class="cn-kpi"><div class="small text-muted">Nhà cung cấp còn nợ</div><div class="so"><%= tongHop.length %></div></div></div>
 </div>
 
+<% var _cd = (typeof chuaDuyet !== 'undefined' && chuaDuyet) ? chuaDuyet : []; var _tenTt = { cho_qc: 'chờ kiểm tra chất lượng', cho_doi_chieu: 'chờ kế toán đối chiếu', cho_duyet: 'chờ quản lý duyệt' }; %>
+<% if (_cd.length) { %>
+<div class="alert alert-warning d-flex flex-wrap align-items-center mb-3" style="gap:.5rem">
+  <i class="fas fa-hourglass-half"></i>
+  <span><b>Phiếu nhập chưa duyệt – chưa được thanh toán:</b>
+    <% _cd.forEach(function (c, i) { %><%= i ? ' · ' : ' ' %><%= c.n %> phiếu <%= _tenTt[c.tt] || c.tt %> (<%= vnd(c.tien) %>)<% }) %></span>
+  <a class="btn btn-sm btn-outline-dark ml-auto" href="/staff/kitchen/kho/phieu-nhap">Xem &amp; đối chiếu</a>
+</div>
+<% } %>
+
 <div class="row">
   <div class="col-lg-4 mb-3">
     <div class="card shadow">
@@ -72,7 +82,7 @@
                   <td class="text-right"><b><%= vnd(p.con_no) %></b></td>
                   <td class="text-right">
                     <button type="button" class="btn btn-sm btn-success py-0 nut-tra" data-id="<%= p.id_pn %>"
-                            data-ma="<%= p.ma_phieu %>" data-ncc="<%= p.ten_ncc %>" data-no="<%= Math.round(p.con_no) %>">Trả tiền</button>
+                            data-ma="<%= p.ma_phieu %>" data-ncc="<%= p.ten_ncc %>" data-no="<%= Math.round(p.con_no) %>"><%= p.mua_le ? 'Chi tiền' : 'Trả tiền' %></button>
                   </td>
                 </tr>
               <% }) %>

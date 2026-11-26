@@ -54,6 +54,8 @@ async function damBaoCot() {
   if (!(await coCot('phieu_thu_chi', 'id_pn'))) {
     await db.query('ALTER TABLE phieu_thu_chi ADD COLUMN id_pn INT NULL, ADD COLUMN id_ncc INT NULL, ADD KEY idx_ptc_pn (id_pn)');
   }
+  // Quy trinh duyet phieu nhap: cot trang_thai_duyet, mua_le (duyetNhapKhoService).
+  await require('./duyetNhapKhoService').damBaoCauTruc();
   daCoCot = true;
   return danhDauCu;
 }
@@ -67,6 +69,9 @@ async function datHanTra(conn, idPn, idNcc) {
 }
 
 const CON_NO = '(pn.tong_tien - pn.da_tra)';
+// Chi phieu DA DUYET moi la khoan phai tra (bep truong QC + ke toan doi chieu +
+// quan ly duyet). Phieu dang trong quy trinh chua duoc thanh toan.
+const DA_DUYET = "pn.trang_thai_duyet = 'da_duyet'";
 
 /** Tong cong no theo nha cung cap (chi NCC con no). */
 async function tongHop() {
@@ -78,7 +83,7 @@ async function tongHop() {
             SUM(CASE WHEN pn.han_thanh_toan < CURDATE() THEN ${CON_NO} ELSE 0 END) AS qua_han,
             MIN(pn.han_thanh_toan) AS han_som_nhat
        FROM phieu_nhap pn JOIN nha_cung_cap ncc ON ncc.id_ncc = pn.id_ncc
-      WHERE pn.trangthai = 1 AND ${CON_NO} > 0.5
+      WHERE pn.trangthai = 1 AND ${DA_DUYET} AND ${CON_NO} > 0.5
       GROUP BY ncc.id_ncc, ncc.ten_ncc, ncc.sodienthoai
       ORDER BY qua_han DESC, con_no DESC`);
   return rows.map((r) => ({ ...r, con_no: Number(r.con_no), qua_han: Number(r.qua_han), so_phieu: Number(r.so_phieu) }));
@@ -89,13 +94,27 @@ async function phieuConNo(idNcc = null) {
   await damBaoCot();
   const [rows] = await db.query(
     `SELECT pn.id_pn, pn.ma_phieu, pn.ngay_nhap, pn.han_thanh_toan, pn.tong_tien, pn.da_tra, ${CON_NO} AS con_no,
-            pn.id_ncc, ncc.ten_ncc, (pn.han_thanh_toan < CURDATE()) AS qua_han
-       FROM phieu_nhap pn JOIN nha_cung_cap ncc ON ncc.id_ncc = pn.id_ncc
-      WHERE pn.trangthai = 1 AND ${CON_NO} > 0.5 ${idNcc ? 'AND pn.id_ncc = ?' : ''}
-      ORDER BY pn.han_thanh_toan, pn.id_pn`, idNcc ? [idNcc] : []);
+            pn.id_ncc, pn.mua_le, COALESCE(ncc.ten_ncc, 'Mua lẻ – chi tiền mặt') AS ten_ncc,
+            (pn.han_thanh_toan < CURDATE()) AS qua_han
+       FROM phieu_nhap pn LEFT JOIN nha_cung_cap ncc ON ncc.id_ncc = pn.id_ncc
+      WHERE pn.trangthai = 1 AND ${DA_DUYET} AND ${CON_NO} > 0.5
+        AND ${idNcc ? 'pn.id_ncc = ?' : '(pn.id_ncc IS NOT NULL OR pn.mua_le = 1)'}
+      ORDER BY pn.mua_le DESC, pn.han_thanh_toan, pn.id_pn`, idNcc ? [idNcc] : []);
   return rows.map((r) => ({
     ...r, tong_tien: Number(r.tong_tien), da_tra: Number(r.da_tra), con_no: Number(r.con_no), qua_han: !!Number(r.qua_han),
+    mua_le: !!Number(r.mua_le),
   }));
+}
+
+/** Phieu co NCC / mua le con trong quy trinh duyet - CHUA duoc tra (hien cho ke toan biet). */
+async function phieuChuaDuyet() {
+  await damBaoCot();
+  const [rows] = await db.query(
+    `SELECT pn.trang_thai_duyet AS tt, COUNT(*) AS n, SUM(COALESCE(NULLIF(pn.tong_tien, 0), pn.tong_giao, 0)) AS tien
+       FROM phieu_nhap pn
+      WHERE pn.trang_thai_duyet IN ('cho_qc','cho_doi_chieu','cho_duyet') AND (pn.id_ncc IS NOT NULL OR pn.mua_le = 1)
+      GROUP BY pn.trang_thai_duyet`);
+  return rows.map((r) => ({ tt: r.tt, n: Number(r.n), tien: Number(r.tien) || 0 }));
 }
 
 /** Lich su tra tien cua mot phieu nhap. */
@@ -126,7 +145,11 @@ async function traTien({ idPn, soTien, phuongThuc = 'chuyen_khoan', ghiChu = '' 
       `SELECT pn.*, ncc.ten_ncc FROM phieu_nhap pn LEFT JOIN nha_cung_cap ncc ON ncc.id_ncc = pn.id_ncc
         WHERE pn.id_pn = ? FOR UPDATE`, [idPn]);
     if (!pn) throw new LoiCongNo('Không tìm thấy phiếu nhập.', 'NOT_FOUND');
-    if (!pn.id_ncc) throw new LoiCongNo('Phiếu nhập này không có nhà cung cấp - không phát sinh công nợ.');
+    if (pn.trang_thai_duyet !== 'da_duyet') {
+      const ten = (require('./duyetNhapKhoService').TRANG_THAI[pn.trang_thai_duyet] || {}).ten || pn.trang_thai_duyet;
+      throw new LoiCongNo(`Phiếu nhập ${pn.ma_phieu} chưa được duyệt (${ten}) – chưa được thanh toán.`, 'CHUA_DUYET');
+    }
+    if (!pn.id_ncc && !Number(pn.mua_le)) throw new LoiCongNo('Phiếu nhập này không có nhà cung cấp - không phát sinh công nợ.');
     const conNo = Math.round(Number(pn.tong_tien) - Number(pn.da_tra));
     if (conNo <= 0) throw new LoiCongNo('Phiếu nhập này đã trả đủ.');
     if (tien > conNo) throw new LoiCongNo(`Số tiền vượt số còn nợ (${conNo.toLocaleString('vi-VN')}đ).`);
@@ -139,7 +162,7 @@ async function traTien({ idPn, soTien, phuongThuc = 'chuyen_khoan', ghiChu = '' 
           `INSERT INTO phieu_thu_chi (ma_phieu, loai, danh_muc, so_tien, phuong_thuc, doi_tuong, noi_dung, so_chung_tu,
                                       thoi_diem, id_nv, id_pn, id_ncc)
            VALUES (?, 'chi', 'tra_ncc', ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
-          [ma, tien, phuongThuc, String(pn.ten_ncc || '').slice(0, 150) || null,
+          [ma, tien, phuongThuc, String(pn.ten_ncc || (Number(pn.mua_le) ? 'Mua lẻ' : '')).slice(0, 150) || null,
             `Trả tiền phiếu nhập ${pn.ma_phieu}${ghiChu ? ' - ' + String(ghiChu).trim().slice(0, 300) : ''}`,
             pn.ma_phieu, idNv || null, pn.id_pn, pn.id_ncc]);
         maPhieu = ma;
@@ -167,4 +190,4 @@ async function hoanTacTra(conn, phieuChi) {
     [Number(phieuChi.so_tien) || 0, phieuChi.id_pn]);
 }
 
-module.exports = { HAN_NO_NGAY, LoiCongNo, damBaoCot, datHanTra, tongHop, phieuConNo, lichSuTra, traTien, hoanTacTra };
+module.exports = { HAN_NO_NGAY, LoiCongNo, damBaoCot, datHanTra, tongHop, phieuConNo, phieuChuaDuyet, lichSuTra, traTien, hoanTacTra };

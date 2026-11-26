@@ -22,7 +22,17 @@ function dinhDangNgay(d) {
 /** Chuan hoa khoang ngay; mac dinh 30 ngay gan nhat tinh tu ngay co du lieu. */
 async function khoangNgay(tu, den) {
   if (tu && den) return { tu, den };
-  const [r] = await db.query('SELECT MAX(ngay_dat) AS max_ngay FROM hopdong');
+  // Moc mac dinh = ngay GAN NHAT nha hang thuc su van hanh (>= 10 don hoan tat
+  // trong ngay). Truoc day lay MAX(ngay_dat) cua moi dong hopdong: mot don test
+  // le hoac luot dat ban cho NGAY TUONG LAI keo moc di, dashboard 30 ngay trong
+  // tron. Cung quy tac voi ml_service/forecast.py (_cat_duoi_chua_van_hanh).
+  const [r] = await db.query(
+    `SELECT COALESCE(
+       (SELECT MAX(ngay) FROM (SELECT ngay_dat AS ngay FROM hopdong
+          WHERE tinhtrang = 3 AND id_mon > 0 AND ngay_dat <= CURDATE()
+          GROUP BY ngay_dat HAVING COUNT(DISTINCT sesis) >= 10) v),
+       (SELECT MAX(ngay_dat) FROM hopdong WHERE tinhtrang = 3 AND ngay_dat <= CURDATE())
+     ) AS max_ngay`);
   const maxNgay = r[0].max_ngay ? new Date(r[0].max_ngay) : new Date();
   const denD = dinhDangNgay(maxNgay);
   const tuTruoc = new Date(maxNgay);

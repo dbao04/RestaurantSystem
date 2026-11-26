@@ -141,7 +141,7 @@ async function chot(id, nguoi) {
   if (!ct) throw new LoiKiemKe('Không tìm thấy phiếu kiểm kê.', 'NOT_FOUND');
   if (ct.trang_thai !== 'dang_dem') throw new LoiKiemKe('Phiếu đã chốt hoặc đã hủy.');
   if (nguoi.id && Number(ct.id_nv_tao) === Number(nguoi.id) && !nguoi.laQuanLy) {
-    throw new LoiKiemKe('Người lập phiếu không tự chốt kiểm kê - nhờ bếp trưởng / quản lý khác chốt.', 'FORBIDDEN');
+    throw new LoiKiemKe('Người lập phiếu không tự chốt kiểm kê - nhờ một quản lý khác chốt.', 'FORBIDDEN');
   }
   const daDem = ct.dong.filter((d) => d.ton_thuc_te != null);
   if (!daDem.length) throw new LoiKiemKe('Chưa nhập số đếm cho nguyên liệu nào.');
@@ -174,7 +174,8 @@ async function chot(id, nguoi) {
       const pn = await kho.taoPhieuNhap({
         ghi_chu: `Điều chỉnh kiểm kê (thừa) ${ct.ma_phieu}`,
         dong: thua.map((d) => ({ id_nl: d.id_nl, so_luong: d.chenh, don_gia: d.gia_von, so_lo: 'KIEM-KE' })),
-      }, nguoi.id);
+      // Dieu chinh noi bo (quan ly da chot) - khong phai mua hang, khong qua QC / duyet.
+      }, nguoi.id, { noiBo: true });
       idPn = pn.id; giaTriThua = pn.tong_tien;
     }
   } catch (e) {

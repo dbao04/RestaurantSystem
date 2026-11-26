@@ -20,7 +20,7 @@
           <i class="fas fa-user-check"></i>
         </div>
         <h2 class="nh-auth-title"><%= t('tai_khoan.dang_nhap') %></h2>
-        <p class="nh-auth-subtitle"><%= t('tai_khoan.dang_nhap_mo_ta') %></p>
+        <p class="nh-auth-subtitle"><%= (typeof lyDoDangNhap !== 'undefined' && lyDoDangNhap) ? lyDoDangNhap : t('tai_khoan.dang_nhap_mo_ta') %></p>
       </div>
 
       <% if (typeof error !== 'undefined' && error) { %>

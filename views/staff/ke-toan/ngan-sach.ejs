@@ -1,0 +1,54 @@
+<%
+  var activePage = 'ke-toan-ngan-sach';
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var MAU = { vuot: '#b3352c', sap_vuot: '#eb6834', on: '#1baf7a', chua_dat: '#a8a69f' };
+  var NHAN = { vuot: 'Vượt ngân sách', sap_vuot: 'Sắp vượt (≥ 80%)', on: 'Trong ngân sách', chua_dat: 'Chưa đặt hạn mức' };
+%>
+<%- include('../partials/header') %>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-1 text-gray-800"><i class="fas fa-bullseye text-warning"></i> Ngân sách & cảnh báo</h1>
+    <div class="small text-muted">Đặt hạn mức chi theo nhóm cho từng tháng. Hệ thống so với tiền đã chi thực tế (sổ quỹ) và cảnh báo trên Tổng quan kế toán khi dùng ≥ 80% hoặc vượt.</div>
+  </div>
+  <form class="form-inline" method="GET" style="gap:.4rem">
+    <select name="thang" class="form-control form-control-sm" aria-label="Tháng"><% for (var t = 1; t <= 12; t++) { %><option value="<%= t %>" <%= t === ns.thang ? 'selected' : '' %>>Tháng <%= t %></option><% } %></select>
+    <input name="nam" type="number" value="<%= ns.nam %>" class="form-control form-control-sm" style="width:90px" aria-label="Năm">
+    <button class="btn btn-sm btn-primary">Xem</button>
+  </form>
+</div>
+
+<% if (msg) { %><div class="alert alert-<%= msgType === 'danger' ? 'danger' : 'success' %> py-2"><%= msg %></div><% } %>
+
+<form method="POST" action="/staff/ke-toan/ngan-sach">
+  <input type="hidden" name="thang" value="<%= ns.thang %>">
+  <input type="hidden" name="nam" value="<%= ns.nam %>">
+  <div class="card shadow mb-3">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">Tháng <%= ns.thang %>/<%= ns.nam %></h6>
+      <span class="small">Đã chi <b><%= vnd(ns.tong_da_chi) %></b> / hạn mức <b><%= vnd(ns.tong_han_muc) %></b></span>
+    </div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table mb-0">
+      <thead class="thead-light"><tr><th>Nhóm chi phí</th><th style="width:200px">Hạn mức (đ)</th><th class="text-right">Đã chi</th><th style="width:30%">Mức dùng</th></tr></thead>
+      <tbody>
+        <% ns.ds.forEach(function (x) { var pc = x.ty_le === null ? 0 : Math.min(100, Math.round(x.ty_le * 100)); %>
+          <tr>
+            <td class="font-weight-bold"><%= x.ten %></td>
+            <td><input name="han_muc[<%= x.nhom %>]" value="<%= x.han_muc ? Math.round(x.han_muc) : '' %>" inputmode="numeric" class="form-control form-control-sm" placeholder="0 = không giới hạn" aria-label="Hạn mức <%= x.ten %>"></td>
+            <td class="text-right"><%= vnd(x.da_chi) %></td>
+            <td>
+              <div style="height:10px;background:#f1ece4;border-radius:5px" role="img" aria-label="<%= x.ten %>: <%= NHAN[x.muc] %>">
+                <div style="height:10px;width:<%= x.muc === 'chua_dat' ? 0 : pc %>%;background:<%= MAU[x.muc] %>;border-radius:5px"></div>
+              </div>
+              <div class="small mt-1" style="color:<%= MAU[x.muc] %>"><%= NHAN[x.muc] %><%= x.ty_le !== null ? ' · ' + Math.round(x.ty_le * 100) + '%' : '' %></div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div></div>
+    <div class="card-footer text-right"><button class="btn btn-sm btn-success"><i class="fas fa-save"></i> Lưu ngân sách</button></div>
+  </div>
+</form>
+<p class="small text-muted">Nhóm chi: Nguyên liệu (mua gấp, trả NCC) · Nhân sự (lương, tạm ứng) · Mặt bằng · Marketing · Vận hành (điện nước, vật tư, sửa chữa, vận chuyển, chi khác).</p>
+
+<%- include('../partials/footer') %>

@@ -1,7 +1,9 @@
 <%
   var activePage = 'dattiec';
   var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
-  var mauTT = { MOI: 'warning', DA_LIEN_HE: 'info', DA_XAC_NHAN: 'primary', DA_COC: 'success', HOAN_THANH: 'secondary', HUY: 'danger' };
+  var mauTT = { MOI: 'warning', DA_LIEN_HE: 'info', CHO_BAO_GIA: 'warning', CHO_COC: 'warning', DA_XAC_NHAN: 'primary', DA_COC: 'success',
+    CHO_THANH_TOAN: 'info', HOAN_THANH: 'secondary', HUY: 'danger', HET_HAN: 'dark' };
+  var tgVN = function (d) { return d ? new Date(d).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : ''; };
   var ngayVN = function (s) { if (!s) return ''; var d = s.split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
   var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
 %>
@@ -26,7 +28,8 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-glass-cheers text-warning"></i> Quản lý Đặt tiệc</h1>
-  <a href="/dat-tiec" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Trang đặt tiệc của khách</a>
+  <span><a href="/staff/tiec" class="btn btn-sm btn-warning"><i class="fas fa-champagne-glasses"></i> Điều hành tiệc</a>
+  <a href="/dat-tiec" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Trang đặt tiệc của khách</a></span>
 </div>
 
 <div class="row mb-3">
@@ -46,7 +49,10 @@
         <option value="">Tất cả trạng thái</option>
         <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= loc.trangThai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
       </select>
+      <label class="small mb-0">Tổ chức từ</label>
       <input type="date" name="tu_ngay" value="<%= loc.tuNgay %>" class="form-control form-control-sm" title="Tổ chức từ ngày">
+      <label class="small mb-0">đến</label>
+      <input type="date" name="den_ngay" value="<%= loc.denNgay || '' %>" class="form-control form-control-sm" title="Tổ chức đến ngày">
       <input type="search" name="tim" value="<%= loc.tim %>" class="form-control form-control-sm" placeholder="Mã, tên, SĐT...">
       <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Lọc</button>
       <a href="/staff/dat-tiec" class="btn btn-sm btn-light">Xóa lọc</a>
@@ -70,7 +76,9 @@
             <td><%= d.ten_sanh %></td>
             <td class="text-right"><%= d.so_khach %> / <%= d.so_ban %></td>
             <td class="text-right"><b><%= vnd(d.tong_du_toan) %></b></td>
-            <td><span class="badge badge-<%= mauTT[d.trang_thai] %>"><%= d.ten_trang_thai %></span></td>
+            <td><span class="badge badge-<%= mauTT[d.trang_thai] || 'light' %>"><%= d.ten_trang_thai %></span>
+              <% if (['CHO_COC','CHO_BAO_GIA'].includes(d.trang_thai) && d.han_giu_cho) { %><br><small class="text-muted">giữ sảnh đến <%= tgVN(d.han_giu_cho) %></small><% } %>
+              <% if (d.thuc_don_tuy_chinh) { %><br><small class="text-warning font-weight-bold"><%= d.thuc_don_tuy_chinh.tu_chon ? 'Thực đơn tự chọn' : 'Thực đơn tùy chỉnh' %></small><% } %></td>
           </tr>
           <tr class="tc-detail" data-chi-tiet="<%= d.id %>" hidden>
             <td colspan="8">
@@ -85,7 +93,15 @@
                 </div>
                 <div class="col-md-4 mb-3">
                   <h6>Dự toán</h6>
-                  <div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div>
+                  <% if (!(d.thuc_don_tuy_chinh && d.thuc_don_tuy_chinh.tu_chon)) { %><div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div><% } %>
+                  <% if (d.thuc_don_tuy_chinh) { var tc = d.thuc_don_tuy_chinh; %>
+                    <div class="small border rounded p-2 mb-2" style="background:#fff8e6">
+                      <b><%= tc.tu_chon ? 'Thực đơn khách tự chọn (' + (tc.them_mon || []).length + ' món' + (tc.giam_phan_tram ? ', giảm ' + tc.giam_phan_tram + '%' : '') + ' · ' + vnd(d.tien_dieu_chinh) + ')' : 'Tùy chỉnh của khách' %></b>
+                      <% if (tc.bo_mon && tc.bo_mon.length) { %><div>Bỏ: <%= tc.bo_mon.join(', ') %></div><% } %>
+                      <% (tc.them_mon || []).forEach(function (m) { %><div><%= tc.tu_chon ? '•' : 'Thêm:' %> <%= m.ten %> · <%= m.so_phan %> phần/bàn · <%= vnd(m.thanh_tien) %></div><% }) %>
+                      <% if (tc.yeu_cau) { %><div>Yêu cầu: <%= tc.yeu_cau %></div><% } %>
+                    </div>
+                  <% } %>
                   <% d.dich_vu.forEach(function (v) { %>
                     <div class="tc-kv tc-kv--tien"><span><%= v.ten %><small><%= vnd(v.don_gia) %> × <%= v.so_luong %> <%= donVi[v.don_vi] %></small></span><span><%= vnd(v.thanh_tien) %></span></div>
                   <% }) %>
@@ -95,6 +111,10 @@
                   <div class="tc-kv tc-kv--tien"><span>Tổng đã thu</span><span><b><%= vnd(Number(d.da_thu) || 0) %></b></span></div>
                   <% if (d.tong_thuc_te != null) { %><div class="tc-kv tc-kv--tien"><span>Tổng thực tế</span><span><b><%= vnd(Number(d.tong_thuc_te)) %></b></span></div><% } %>
                   <% if (d.ly_do_huy) { %><div class="tc-kv mt-1"><span>Lý do hủy</span><span class="text-danger"><%= d.ly_do_huy %></span></div><% } %>
+                  <% if (d.trang_thai === 'HUY' && Number(d.tien_hoan_du_kien) > 0) { %><div class="tc-kv"><span>Cần hoàn</span><span class="text-danger font-weight-bold"><%= vnd(d.tien_hoan_du_kien) %> (theo chính sách)</span></div><% } %>
+                  <% if (['CHO_COC','CHO_THANH_TOAN'].includes(d.trang_thai)) { var lk = '/dat-tiec/thanh-toan/' + d.ma_tiec + '?dt=' + encodeURIComponent(d.so_dien_thoai); %>
+                    <div class="tc-kv mt-2"><span>Link thanh toán</span><span><a href="<%= lk %>" target="_blank">Mở trang thanh toán của khách</a></span></div>
+                  <% } %>
                 </div>
                 <div class="col-md-4 mb-3">
                   <h6>Xử lý</h6>
@@ -107,6 +127,15 @@
                     <div data-o="DA_COC" hidden>
                       <input type="number" name="so_tien" class="form-control form-control-sm mb-1" min="<%= Math.ceil(d.tong_du_toan * tyLeCoc) %>" max="<%= d.tong_du_toan %>"
                              value="<%= Math.ceil(d.tong_du_toan * tyLeCoc) %>" placeholder="Số tiền cọc">
+                    </div>
+                    <div data-o="CHO_COC" hidden>
+                      <input type="number" name="tong_bao_gia" class="form-control form-control-sm mb-1" min="1" value="<%= Math.round(d.tong_du_toan) %>" placeholder="Tổng báo giá">
+                      <small class="text-muted d-block mb-2"><%= d.trang_thai === 'CHO_BAO_GIA' ? 'Báo giá thực đơn tùy chỉnh: nhập tổng mới, khách nhận thông báo và đặt cọc online.' : 'Gửi khách link đặt cọc online (giữ sảnh có thời hạn).' %></small>
+                    </div>
+                    <div data-o="CHO_THANH_TOAN" hidden>
+                      <input type="number" name="tong_chot" class="form-control form-control-sm mb-1" min="1" value="<%= Math.round(d.tong_thuc_te != null ? d.tong_thuc_te : d.tong_du_toan) %>" placeholder="Tổng hóa đơn thực tế">
+                      <input type="number" name="so_khach_thuc_te" class="form-control form-control-sm mb-1" min="1" value="<%= d.so_khach %>" placeholder="Số khách thực tế">
+                      <small class="text-muted d-block mb-2">Chốt hóa đơn sau tiệc. Khách thanh toán phần còn lại (tổng − <%= vnd(Number(d.da_thu) || 0) %> đã thu) online hoặc tại quầy.</small>
                     </div>
                     <div data-o="HOAN_THANH" hidden>
                       <input type="number" name="tong_thuc_te" class="form-control form-control-sm mb-1" min="1" value="<%= d.tong_du_toan %>" placeholder="Tổng hóa đơn thực tế">
@@ -123,7 +152,7 @@
                       <% if (Number(d.da_thu) > 0) { %>
                         <label class="small d-block mb-2"><input type="checkbox" name="hoan_coc" value="1" <%= quyen.laQuanLy ? '' : 'disabled' %>>
                           Hoàn lại <%= vnd(Number(d.da_thu)) %> đã thu<%= quyen.laQuanLy ? '' : ' (chỉ Quản lý)' %></label>
-                        <small class="text-muted d-block mb-2">Không chọn = giữ cọc theo chính sách hủy tiệc.</small>
+                        <small class="text-muted d-block mb-2">Chính sách: hủy hôm nay (trước <%= d.hoan.con_ngay %> ngày) hoàn <b><%= d.hoan.phan_tram %>%</b> = <%= vnd(Math.round(Number(d.da_thu) * d.hoan.phan_tram / 100)) %>. Số này được ghi vào đơn để quản lý hoàn.</small>
                       <% } %>
                     </div>
                     <textarea name="ghi_chu_noi_bo" rows="3" class="form-control form-control-sm mb-2" placeholder="Ghi chú nội bộ (đã gọi lúc..., khách hẹn xem sảnh...)"><%= d.ghi_chu_noi_bo || '' %></textarea>
@@ -204,7 +233,9 @@
             trang_thai: f.trang_thai.value,
             ghi_chu_noi_bo: f.ghi_chu_noi_bo.value,
             so_tien: f.so_tien ? f.so_tien.value : null,
-            tong_thuc_te: f.tong_thuc_te ? f.tong_thuc_te.value : null,
+            tong_thuc_te: f.trang_thai.value === 'CHO_THANH_TOAN' ? (f.tong_chot ? f.tong_chot.value : null) : (f.tong_thuc_te ? f.tong_thuc_te.value : null),
+            tong_bao_gia: f.trang_thai.value === 'CHO_COC' && f.tong_bao_gia ? f.tong_bao_gia.value : null,
+            so_khach_thuc_te: f.so_khach_thuc_te ? f.so_khach_thuc_te.value : null,
             phuong_thuc: f.phuong_thuc ? f.phuong_thuc.value : null,
             ly_do_huy: f.ly_do_huy ? f.ly_do_huy.value : null,
             hoan_coc: !!(f.hoan_coc && f.hoan_coc.checked)

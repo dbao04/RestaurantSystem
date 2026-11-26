@@ -43,11 +43,13 @@ async function ganTenTheoNgonNgu(db, ds, nn) {
   });
 }
 
+// Chi Ban dieu hanh (QL nha hang, tro ly QL) - services/phanQuyenVaiTro.js. Truoc day
+// cap <= 2 / vai tro 'ke toan' cung vao duoc (bep truong, ke toan truong...).
 function requireQuanLy(req, res, next) {
-  if (req.session.adminlogin) return next();
+  if (require('../services/phanQuyenVaiTro').laDieuHanh(req.session || {}, req.hoSo)) return next();
   if (req.session.stafflogin) {
-    const vaiTro = (req.session.staffRole || '').toLowerCase();
-    if (/quan ly|quanly|ke toan|ketoan|manager/.test(vaiTro)) return next();
+    return res.status(403).render('error', { title: 'Không có quyền truy cập', statusCode: 403, hoSo: res.locals.hoSo || null,
+      message: 'Chức năng này dành cho Ban điều hành (Quản lý nhà hàng, Trợ lý quản lý).' });
   }
   return res.redirect('/admin/login');
 }

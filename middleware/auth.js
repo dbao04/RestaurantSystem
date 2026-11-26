@@ -11,6 +11,33 @@ const requireCustomerLogin = (req, res, next) => {
   next();
 };
 
+/**
+ * Bat khach dang nhap TRUOC khi bat dau dat ban / dat tiec / giao hang.
+ * Trang (GET) -> /login, luu duong dan de dang nhap xong quay lai dung trang.
+ * API -> 401 JSON (form tren trang tu chuyen sang dang nhap).
+ */
+const LY_DO_DANG_NHAP = [
+  [/^\/dat-tiec/, 'Vui lòng đăng nhập để đặt tiệc.'],
+  [/^\/dat-ban/, 'Vui lòng đăng nhập để đặt bàn.'],
+  [/^\/(cart|giao-hang)/, 'Vui lòng đăng nhập để đặt món giao tận nơi.'],
+];
+const duongTiepHopLe = (u) => (typeof u === 'string' && /^\/(?![\/\\])/.test(u) && !/^\/(login|register|logout)\b/.test(u) ? u.slice(0, 300) : '');
+const lyDoDangNhap = (u) => ((LY_DO_DANG_NHAP.find(([re]) => re.test(u || '')) || [])[1] || 'Vui lòng đăng nhập để tiếp tục.');
+const canKhachDangNhap = (req, res, next) => {
+  if (req.session && req.session.userlogin) return next();
+  const laApi = req.method !== 'GET' || req.originalUrl.startsWith('/api/');
+  // API: quay lai trang dang dung (Referer cung may chu), khong phai duong API.
+  let tiep = req.originalUrl;
+  if (laApi) {
+    try { const r = new URL(req.get('referer') || '', `${req.protocol}://${req.get('host')}`); tiep = r.host === req.get('host') ? r.pathname + r.search : ''; } catch (_) { tiep = ''; }
+  }
+  tiep = duongTiepHopLe(tiep);
+  if (req.session) req.session.tiepSauDangNhap = tiep || null;
+  const dangNhap = '/login' + (tiep ? '?tiep=' + encodeURIComponent(tiep) : '');
+  if (laApi) return res.status(401).json({ ok: false, can_dang_nhap: true, thong_bao: lyDoDangNhap(tiep), dang_nhap: dangNhap });
+  return res.redirect(dangNhap);
+};
+
 const requireCustomerNotLogin = (req, res, next) => {
   if (req.session.userlogin) {
     return res.redirect('/');
@@ -165,6 +192,9 @@ module.exports = {
   // Customer
   requireCustomerLogin,
   requireCustomerNotLogin,
+  canKhachDangNhap,
+  duongTiepHopLe,
+  lyDoDangNhap,
   
   // Admin
   requireAdminLogin,

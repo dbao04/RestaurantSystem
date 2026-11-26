@@ -52,6 +52,7 @@ const kdsService = {
               h.tg, h.ngay_dat, h.gio_dat, h.bep_bat_dau, h.bep_ket_thuc,
               h.noidung, h.ghi_chu_mon, h.so_user, h.id_ban, h.loai_don,
               b.number_ban, dg.ma_giao, dg.trang_thai AS trang_thai_giao,
+              IF(lm.name_loai REGEXP 'DRINK|SAKE|BEER', 'bar', 'bep') AS tram,
               COALESCE(k.ten, 'Khách lẻ') AS ten_khach,
               TIMESTAMPDIFF(MINUTE,
                 COALESCE(h.bep_bat_dau, CONCAT(h.ngay_dat, ' ', COALESCE(h.gio_dat, '00:00:00'))),
@@ -60,6 +61,8 @@ const kdsService = {
        LEFT JOIN khach_hang k    ON k.id = h.id_user
        LEFT JOIN ban b           ON b.Id_ban = h.id_ban
        LEFT JOIN don_giao_hang dg ON dg.sesis = h.sesis
+       LEFT JOIN monan mo ON mo.id_mon = h.id_mon
+       LEFT JOIN loai_mon lm ON lm.id_loai = mo.id_loai
        WHERE h.id_mon > 0 AND h.soluong > 0
          AND h.trangthai_bep < 3
          AND (

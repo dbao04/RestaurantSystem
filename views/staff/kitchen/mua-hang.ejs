@@ -17,7 +17,7 @@
     <div class="kb-phu">Đề xuất → <b>Duyệt</b> (bếp trưởng / quản lý) → <b>Đặt với NCC</b> → <b>Nhận hàng</b> (tự tạo phiếu nhập kho theo lô).</div>
   </div>
   <div class="kb-nut">
-    <button type="button" class="btn btn-sm btn-warning font-weight-bold" id="moFormTrong"><i class="fas fa-plus"></i> Tạo đơn mua</button>
+    <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).deXuatMua) { %><button type="button" class="btn btn-sm btn-warning font-weight-bold" id="moFormTrong"><i class="fas fa-plus"></i> Tạo đơn mua</button><% } %>
     <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-right-left"></i> Xuất nhập kho</a>
   </div>
 </div>
@@ -34,9 +34,9 @@
     <div class="d-flex flex-wrap align-items-center mb-2" style="gap:.5rem">
       <input type="search" class="form-control form-control-sm" style="max-width:260px" data-tim-kiem="#bangGoiY" data-tim-dem="#demGoiY" placeholder="Tìm nguyên liệu, NCC..." aria-label="Tìm gợi ý mua">
       <small class="text-muted" id="demGoiY"></small>
-      <label class="small mb-0 ml-auto"><input type="checkbox" id="chonHet"> Chọn tất cả</label>
+      <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).deXuatMua) { %><label class="small mb-0 ml-auto"><input type="checkbox" id="chonHet"> Chọn tất cả</label>
       <button type="button" class="btn btn-sm btn-primary" id="taoTuGoiY" disabled><i class="fas fa-file-circle-plus"></i> Tạo đơn từ <span id="soChon">0</span> dòng</button>
-      <button type="button" class="btn btn-sm btn-success" id="taoTuDong" title="Gom tất cả gợi ý theo nhà cung cấp gần nhất, tạo đơn chờ duyệt"><i class="fas fa-wand-magic-sparkles"></i> Tạo đơn nháp tự động</button>
+      <button type="button" class="btn btn-sm btn-success" id="taoTuDong" title="Gom tất cả gợi ý theo nhà cung cấp gần nhất, tạo đơn chờ duyệt"><i class="fas fa-wand-magic-sparkles"></i> Tạo đơn nháp tự động</button><% } %>
       <small id="baoTuDong" class="w-100"></small>
     </div>
     <div class="table-responsive">
@@ -190,7 +190,7 @@
     $('formDon').hidden = false;
     $('formDon').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  $('moFormTrong').addEventListener('click', function () { moForm(); });
+  if ($('moFormTrong')) $('moFormTrong').addEventListener('click', function () { moForm(); });
   $('dongForm').addEventListener('click', function () { $('formDon').hidden = true; });
   $('themDongDon').addEventListener('click', function () { dong().querySelector('.o-nl').focus(); });
 

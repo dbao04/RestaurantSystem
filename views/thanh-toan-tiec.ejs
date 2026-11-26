@@ -1,0 +1,199 @@
+<%- include('partials/header', { title: title }) %>
+<%
+  var vnd = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (s) { return String(s || '').split('-').reverse().join('/'); };
+  var tt = don.trang_thai;
+  var tong = don.tong_thuc_te != null ? Number(don.tong_thuc_te) : Number(don.tong_du_toan);
+  var coc = Math.ceil(Number(don.tong_du_toan) * ch.ty_le_coc / 100);
+  var tc = don.thuc_don_tuy_chinh;
+  var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
+%>
+<style>
+  .ttt { --ok: #1f7a4a; --ok-n: #e7f4ec; --do: #b3352c; --do-n: #fbe9e7; --cam: #b45309; --cam-n: #fff1dc; padding: 2.2rem 0 4rem; }
+  [data-theme="dark"] .ttt { --ok: #4ade80; --ok-n: rgba(74,222,128,.12); --do: #f87171; --do-n: rgba(248,113,113,.14); --cam: #fbbf24; --cam-n: rgba(251,191,36,.13); }
+  .ttt__luoi { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.5rem; align-items: start; }
+  .ttt__the { background: var(--nh-surface); border: 1px solid var(--nh-line); border-radius: 16px; padding: 1.3rem 1.4rem; margin-bottom: 1rem; }
+  .ttt h1 { font-family: var(--nh-serif); font-size: 1.7rem; margin: 0 0 .2rem; color: var(--nh-ink); }
+  .ttt h2 { font-family: var(--nh-serif); font-size: 1.2rem; margin: 0 0 .7rem; color: var(--nh-ink); }
+  .ttt .ma { font-family: ui-monospace, Menlo, monospace; color: var(--nh-gold); font-weight: 700; }
+  .nhan { display: inline-block; padding: .25rem .7rem; border-radius: 999px; font-weight: 700; font-size: .8rem; }
+  .nhan--ok { background: var(--ok-n); color: var(--ok); } .nhan--do { background: var(--do-n); color: var(--do); } .nhan--cam { background: var(--cam-n); color: var(--cam); }
+  .bao { padding: .9rem 1rem; border-radius: 12px; line-height: 1.55; margin: .8rem 0 0; font-size: .94rem; }
+  .bao--ok { background: var(--ok-n); color: var(--ok); } .bao--do { background: var(--do-n); color: var(--do); } .bao--cam { background: var(--cam-n); color: var(--cam); }
+  .ttt dl { margin: 0; display: grid; gap: .45rem; font-size: .92rem; }
+  .ttt dl div { display: flex; justify-content: space-between; gap: .8rem; border-bottom: 1px solid var(--nh-line); padding-bottom: .4rem; }
+  .ttt dt { color: var(--nh-muted); } .ttt dd { margin: 0; text-align: right; color: var(--nh-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ttt .can dd { color: var(--nh-gold); font-size: 1.25rem; }
+  .qr { text-align: center; }
+  .qr img { width: 260px; max-width: 100%; border-radius: 12px; border: 1px solid var(--nh-line); background: #fff; padding: 6px; }
+  .qr .so { font-size: 1.6rem; font-weight: 800; color: var(--nh-ink); margin: .6rem 0 .2rem; font-variant-numeric: tabular-nums; }
+  .qr .nd { font-family: ui-monospace, Menlo, monospace; background: var(--nh-surface-subtle, rgba(0,0,0,.04)); padding: .35rem .6rem; border-radius: 8px; display: inline-block; color: var(--nh-ink); }
+  .qr .tk { font-size: .84rem; color: var(--nh-muted); margin-top: .5rem; line-height: 1.5; }
+  .dem { font-variant-numeric: tabular-nums; font-weight: 800; }
+  .ttt__btn { display: inline-block; border: 0; border-radius: 10px; padding: .7rem 1.2rem; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .93rem; }
+  .ttt__btn--chinh { background: var(--nh-gold); color: #fff; } .ttt__btn--phu { background: transparent; border: 1px solid var(--nh-line); color: var(--nh-ink); }
+  .ttt__btn--gl { background: transparent; border: 1px dashed var(--nh-gold); color: var(--nh-gold); margin-top: .8rem; }
+  .nut-hang { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .cs-muc { border-top: 1px solid var(--nh-line); }
+  .cs-muc summary { cursor: pointer; padding: .7rem 0; font-weight: 700; color: var(--nh-ink); }
+  .cs-muc ul { margin: 0 0 .8rem; padding-left: 1.2rem; line-height: 1.6; font-size: .9rem; color: var(--nh-ink); }
+  .ds { margin: .3rem 0 0; padding-left: 1.1rem; font-size: .88rem; color: var(--nh-ink); line-height: 1.55; }
+  .buoc-tiep { counter-reset: b; list-style: none; padding: 0; margin: .4rem 0 0; display: grid; gap: .45rem; }
+  .buoc-tiep li { counter-increment: b; display: flex; gap: .6rem; font-size: .9rem; color: var(--nh-ink); line-height: 1.45; }
+  .buoc-tiep li::before { content: counter(b); flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--nh-gold); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 700; }
+  @media (max-width: 900px) { .ttt__luoi { grid-template-columns: 1fr; } .ttt__thanh-toan { order: -1; } }
+</style>
+
+<div class="ttt">
+  <div class="nh-container">
+    <div class="ttt__luoi">
+      <div>
+        <section class="ttt__the">
+          <h1>Tiệc <span class="ma"><%= don.ma_tiec %></span></h1>
+          <span class="nhan <%= ['DA_COC','HOAN_THANH','DA_XAC_NHAN'].includes(tt) ? 'nhan--ok' : ['HUY','HET_HAN'].includes(tt) ? 'nhan--do' : 'nhan--cam' %>" id="nhanTrangThai"><%= don.ten_trang_thai %></span>
+
+          <% if (tt === 'CHO_COC') { %>
+            <div class="bao bao--cam">Sảnh đang được giữ cho quý khách. Vui lòng chuyển cọc <b><%= vnd(khoan.so_tien) %></b> trước
+              <b class="dem" id="demNguoc" data-han="<%= don.han_giu_cho ? new Date(don.han_giu_cho).toISOString() : '' %>">--:--</b>. Quá hạn, sảnh được nhả cho khách khác.</div>
+          <% } else if (tt === 'CHO_BAO_GIA') { %>
+            <div class="bao bao--cam">Nhà hàng đã nhận yêu cầu thực đơn <%= tc && tc.tu_chon ? 'tự chọn' : 'tùy chỉnh' %> và sẽ báo giá trong <%= ch.giu_cho_bao_gia_gio %> giờ (sảnh được giữ trong thời gian này). Khi có báo giá, quý khách nhận thông báo và quay lại trang này để đặt cọc.</div>
+          <% } else if (tt === 'DA_COC' || tt === 'DA_XAC_NHAN') { %>
+            <div class="bao bao--ok"><b>Tiệc đã được xác nhận.</b> Nhà hàng đã nhận <%= vnd(don.da_thu) %>. Sảnh đã được giữ cho ngày <%= ngayVN(don.ngay) %>.</div>
+            <ol class="buoc-tiep">
+              <li>Chốt số khách / số bàn chậm nhất <%= ch.chot_so_khach_truoc_ngay %> ngày trước tiệc (nhà hàng sẽ gọi xác nhận).</li>
+              <li>Ngày tiệc: nhà hàng chuẩn bị sảnh, thực đơn và dịch vụ đã chọn.</li>
+              <li>Kết thúc tiệc: nhà hàng chốt hóa đơn thực tế, quý khách thanh toán phần còn lại tại trang này hoặc tại quầy.</li>
+            </ol>
+          <% } else if (tt === 'CHO_THANH_TOAN') { %>
+            <div class="bao bao--cam">Cảm ơn quý khách đã tổ chức tiệc tại nhà hàng. Hóa đơn thực tế là <b><%= vnd(tong) %></b>, đã thu <%= vnd(don.da_thu) %>. Vui lòng thanh toán phần còn lại <b><%= vnd(khoan.so_tien) %></b>.</div>
+          <% } else if (tt === 'HOAN_THANH') { %>
+            <div class="bao bao--ok"><b>Tiệc đã thanh toán đủ <%= vnd(don.da_thu) %>.</b> Cảm ơn quý khách, hẹn gặp lại!</div>
+          <% } else if (tt === 'HET_HAN') { %>
+            <div class="bao bao--do">Đã quá thời gian giữ sảnh mà chưa nhận được cọc, sảnh đã được nhả. Quý khách có thể đặt lại nếu ngày này vẫn còn trống.</div>
+            <div class="nut-hang"><a class="ttt__btn ttt__btn--chinh" href="/dat-tiec">Đặt lại tiệc</a></div>
+          <% } else if (tt === 'HUY') { %>
+            <div class="bao bao--do">Tiệc đã hủy. <%= don.ly_do_huy || '' %>
+              <% if (Number(don.tien_hoan_du_kien) > 0) { %><br>Số tiền hoàn theo chính sách: <b><%= vnd(don.tien_hoan_du_kien) %></b>, chuyển về tài khoản quý khách trong 3–5 ngày làm việc.<% } %></div>
+          <% } else { %>
+            <div class="bao bao--cam">Nhà hàng đang xử lý yêu cầu và sẽ liên hệ quý khách.</div>
+          <% } %>
+        </section>
+
+        <section class="ttt__the">
+          <h2>Thông tin tiệc</h2>
+          <dl>
+            <div><dt>Loại tiệc</dt><dd><%= don.ten_loai %><%= don.ten_nhan_vat ? ' · ' + don.ten_nhan_vat : '' %></dd></div>
+            <div><dt>Ngày giờ</dt><dd><%= ngayVN(don.ngay) %> · <%= don.ten_buoi %> <%= don.gio %></dd></div>
+            <div><dt>Sảnh</dt><dd><%= don.ten_sanh %></dd></div>
+            <div><dt>Số khách</dt><dd><%= don.so_khach %> khách · <%= don.so_ban %> bàn</dd></div>
+            <div><dt>Thực đơn</dt><dd><%= don.ten_thuc_don %><% if (!(tc && tc.tu_chon)) { %> · <%= vnd(don.tien_thuc_don) %><% } else { %> · <%= (tc.them_mon || []).length %> món<% } %></dd></div>
+            <% if (Number(don.tien_dieu_chinh) > 0) { %><div><dt>Món thêm</dt><dd><%= vnd(don.tien_dieu_chinh) %></dd></div><% } %>
+            <% if (don.dich_vu.length) { %><div><dt>Dịch vụ</dt><dd><%= vnd(don.tien_dich_vu) %></dd></div><% } %>
+            <div><dt><%= don.tong_thuc_te != null ? 'Hóa đơn thực tế' : 'Dự toán' %></dt><dd><%= vnd(tong) %></dd></div>
+            <div><dt>Đã thanh toán</dt><dd><%= vnd(don.da_thu) %></dd></div>
+          </dl>
+          <% var hdc = (function () { try { return typeof don.hoa_don_chot === 'string' ? JSON.parse(don.hoa_don_chot) : don.hoa_don_chot; } catch (e) { return null; } })(); %>
+          <% if (hdc && hdc.dong) { %>
+            <p style="margin:.9rem 0 .2rem;font-weight:700;color:var(--nh-ink)">Hóa đơn chốt sau tiệc</p>
+            <dl>
+              <% hdc.dong.forEach(function (d) { %><div><dt><%= d.ten %></dt><dd><%= vnd(d.tien) %></dd></div><% }) %>
+              <% if (hdc.giam_tru) { %><div><dt>Giảm trừ<%= hdc.ly_do_giam ? ' (' + hdc.ly_do_giam + ')' : '' %></dt><dd>−<%= vnd(hdc.giam_tru) %></dd></div><% } %>
+              <div><dt><b>Tổng chốt</b></dt><dd><b><%= vnd(hdc.tong) %></b></dd></div>
+            </dl>
+          <% } %>
+          <% if (tc) { %>
+            <p style="margin:.9rem 0 .2rem;font-weight:700;color:var(--nh-ink)"><%= tc.tu_chon ? 'Món quý khách tự chọn' : 'Thực đơn tùy chỉnh' %></p>
+            <ul class="ds">
+              <% if (tc.bo_mon && tc.bo_mon.length) { %><li>Bỏ món: <%= tc.bo_mon.join(', ') %></li><% } %>
+              <% (tc.them_mon || []).forEach(function (m) { %><li><%= tc.tu_chon ? '' : 'Thêm: ' %><%= m.ten %> · <%= m.so_phan %> phần/bàn · <%= vnd(m.thanh_tien) %></li><% }) %>
+              <% if (tc.yeu_cau) { %><li>Yêu cầu: <%= tc.yeu_cau %></li><% } %>
+            </ul>
+          <% } %>
+          <% if (don.dich_vu.length) { %>
+            <p style="margin:.9rem 0 .2rem;font-weight:700;color:var(--nh-ink)">Dịch vụ đã chọn</p>
+            <ul class="ds"><% don.dich_vu.forEach(function (d) { %><li><%= d.ten %> · <%= d.so_luong %> <%= donVi[d.don_vi] || '' %> · <%= vnd(d.thanh_tien) %></li><% }) %></ul>
+          <% } %>
+        </section>
+
+        <section class="ttt__the">
+          <h2>Chính sách đặt tiệc</h2>
+          <% if (!['HUY','HET_HAN','HOAN_THANH','CHO_THANH_TOAN'].includes(tt)) { %>
+            <p style="margin:0 0 .4rem;font-size:.9rem;color:var(--nh-ink)">Nếu hủy hôm nay (trước tiệc <%= hoan.con_ngay %> ngày): hoàn <b><%= hoan.phan_tram %>%</b> tiền cọc đã đóng.</p>
+          <% } %>
+          <% chinhSach.forEach(function (m) { %><details class="cs-muc"><summary><%= m.tieu_de %></summary><ul><% m.muc.forEach(function (x) { %><li><%= x %></li><% }) %></ul></details><% }) %>
+          <div class="nut-hang"><a class="ttt__btn ttt__btn--phu" href="/my-orders?tab=tiec">Lịch sử đặt tiệc</a></div>
+        </section>
+      </div>
+
+      <aside class="ttt__thanh-toan">
+        <section class="ttt__the">
+          <% if (khoan && khoan.so_tien > 0) { %>
+            <h2><%= khoan.ten %></h2>
+            <div class="qr">
+              <% if (qr && qr.anh) { %><img src="<%= qr.anh %>" alt="Mã VietQR thanh toán <%= vnd(khoan.so_tien) %> cho tiệc <%= don.ma_tiec %>"><% } else if (qr && qr.dataUrl) { %><img src="<%= qr.dataUrl %>" alt="Mã VietQR"><% } else { %><p class="bao bao--cam">Nhà hàng chưa cấu hình tài khoản nhận tiền. Vui lòng thanh toán tại quầy.</p><% } %>
+              <div class="so"><%= vnd(khoan.so_tien) %></div>
+              <div>Nội dung chuyển khoản: <span class="nd">TIEC <%= don.ma_tiec %></span></div>
+              <% if (taiKhoan) { %><div class="tk"><%= taiKhoan.tenNganHang || taiKhoan.maNganHang %> · <%= taiKhoan.soTaiKhoan %><br><%= taiKhoan.tenTaiKhoan %></div><% } %>
+              <p class="tk">Quét mã bằng ứng dụng ngân hàng. Hệ thống tự xác nhận khi nhận đủ tiền, trang này sẽ tự cập nhật.</p>
+              <% if (giaLap) { %><button type="button" class="ttt__btn ttt__btn--gl" id="nutGiaLap">Giả lập đã chuyển khoản thành công (Demo)</button><% } %>
+              <p class="bao bao--do" id="loiTT" hidden></p>
+            </div>
+          <% } else { %>
+            <h2>Thanh toán</h2>
+            <dl>
+              <div><dt>Cọc <%= ch.ty_le_coc %>%</dt><dd><%= tt === 'CHO_BAO_GIA' ? 'sau báo giá' : vnd(coc) %></dd></div>
+              <div><dt>Đã thanh toán</dt><dd><%= vnd(don.da_thu) %></dd></div>
+              <div class="can"><dt>Còn lại</dt><dd><%= ['HUY','HET_HAN'].includes(tt) ? vnd(0) : vnd(Math.max(0, tong - don.da_thu)) %></dd></div>
+            </dl>
+            <% if (Number(don.da_thu) > 0) { %><button type="button" class="ttt__btn" id="xemBienLai" style="margin-top:.8rem;width:100%"><i class="fas fa-receipt"></i> Xem biên lai thanh toán</button><% } %>
+            <% if (['DA_COC','DA_XAC_NHAN'].includes(tt)) { %><p class="tk" style="font-size:.84rem;color:var(--nh-muted);margin-top:.7rem">Phần còn lại thanh toán sau khi tiệc kết thúc, theo hóa đơn thực tế.</p><% } %>
+          <% } %>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var MA = <%- JSON.stringify(don.ma_tiec) %>, DT = <%- JSON.stringify(dt || '') %>, TT = <%- JSON.stringify(tt) %>;
+  var q = DT ? '?dt=' + encodeURIComponent(DT) : '';
+  var dem = document.getElementById('demNguoc');
+  if (dem && dem.getAttribute('data-han')) {
+    var han = new Date(dem.getAttribute('data-han')).getTime();
+    var chay = function () {
+      var con = Math.max(0, Math.floor((han - Date.now()) / 1000));
+      dem.textContent = String(Math.floor(con / 60)).padStart(2, '0') + ':' + String(con % 60).padStart(2, '0') + ' (còn lại)';
+      if (con <= 0) { clearInterval(t); setTimeout(function () { location.reload(); }, 1500); }
+    };
+    var t = setInterval(chay, 1000); chay();
+  }
+  // Doi tien ve (webhook) -> trang tu tai lai khi trang thai doi.
+  if (['CHO_COC', 'CHO_THANH_TOAN', 'CHO_BAO_GIA'].indexOf(TT) >= 0) {
+    setInterval(async function () {
+      try { var j = await (await fetch('/api/dat-tiec/' + encodeURIComponent(MA) + '/trang-thai' + q)).json(); if (j.ok && j.trang_thai !== TT) { try { sessionStorage.setItem('bl_mo_' + MA, '1'); } catch (x) {} location.reload(); } } catch (e) {}
+    }, 4000);
+  }
+  // Bien lai: tu mo sau khi vua thanh toan xong (trang tai lai), nut xem lai bat cu luc nao.
+  window.addEventListener('load', function () {
+    if (!window.BienLai) return;
+    var vuaTra = false; try { vuaTra = sessionStorage.getItem('bl_mo_' + MA) === '1'; sessionStorage.removeItem('bl_mo_' + MA); } catch (x) {}
+    if (vuaTra) BienLai.mo({ ma: MA }); else BienLai.tuDongMo({ ma: MA });
+    var nut = document.getElementById('xemBienLai');
+    if (nut) nut.addEventListener('click', function () { BienLai.mo({ ma: MA, thuLai: 1 }); });
+  });
+  var gl = document.getElementById('nutGiaLap');
+  if (gl) gl.addEventListener('click', async function () {
+    gl.disabled = true;
+    try {
+      var r = await fetch('/dat-tiec/thanh-toan/' + encodeURIComponent(MA) + '/gia-lap' + q, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      var j = await r.json();
+      if (!j.ok) throw new Error(j.thong_bao || 'Không ghi nhận được');
+      try { sessionStorage.setItem('bl_mo_' + MA, '1'); } catch (x) {}
+      location.reload();
+    } catch (e) { var l = document.getElementById('loiTT'); l.textContent = e.message; l.hidden = false; gl.disabled = false; }
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

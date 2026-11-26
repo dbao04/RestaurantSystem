@@ -19,7 +19,7 @@ function nguoi(req) {
   return { hoSo: req.hoSo || null, laAdmin: !!(req.session && req.session.adminlogin), id: (req.session && req.session.staffId) || null };
 }
 
-router.get('/staff/duyet-nghi-phep', phanQuyenMw.canDangNhap, bat(async (req, res) => {
+router.get('/staff/duyet-nghi-phep', phanQuyenMw.canDangNhap, phanQuyenMw.canCapBac(4), bat(async (req, res) => {
   const personnelService = require('../services/personnelService');
   const ds = await dv.dsChoNguoiDuyet(req.hoSo, !!req.session.adminlogin);
   res.render('staff/duyet-nghi-phep', {

@@ -18,6 +18,8 @@
   var moc = [
     { ten: 'Hôm nay', tu: homNay, den: homNay },
     { ten: 'Hôm qua', tu: cong(-1), den: cong(-1) },
+    { ten: 'Tuần này', tu: cong(-((d0.getDay() + 6) % 7)), den: homNay },
+    { ten: 'Tuần trước', tu: cong(-((d0.getDay() + 6) % 7) - 7), den: cong(-((d0.getDay() + 6) % 7) - 1) },
     { ten: '7 ngày', tu: cong(-6), den: homNay },
     { ten: 'Tháng này', tu: dauThang, den: homNay },
     { ten: 'Tháng trước', tu: dauThangTruoc, den: cuoiThangTruoc },
@@ -122,7 +124,7 @@
         <a class="tc-moc <%= m.tu === loc.tu && m.den === loc.den ? 'is-on' : '' %>" href="?<%= qs({ tu: m.tu, den: m.den }) %>"><%= m.ten %></a>
       <% }) %>
       <span class="mx-1 text-muted d-none d-md-inline">|</span>
-      <input type="date" name="tu" value="<%= loc.tu %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+      <input type="date" name="tu" data-loc-ngay="tat" value="<%= loc.tu %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
       <span class="text-muted">→</span>
       <input type="date" name="den" value="<%= loc.den %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
       <input type="hidden" name="pham_vi" value="<%= loc.phamVi %>">
@@ -146,6 +148,26 @@
   <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-lech"><div class="tc-kpi__nhan">Chênh lệch thu − chi</div><div class="tc-kpi__so"><%= (bc.chenh_lech < 0 ? '−' : '') + vnd(Math.abs(bc.chenh_lech)) %></div><div class="tc-kpi__phu"><%= bc.tong_thu ? Math.round(bc.tong_chi / bc.tong_thu * 100) + '% thu đã chi ra' : '—' %></div></div></div>
   <div class="col-6 col-lg-3 mb-3"><div class="tc-kpi tc-ket"><div class="tc-kpi__nhan">Tiền mặt thuần (két)</div><div class="tc-kpi__so"><%= (bc.theo_phuong_thuc.tien_mat.thuan < 0 ? '−' : '') + vnd(Math.abs(bc.theo_phuong_thuc.tien_mat.thuan)) %></div><div class="tc-kpi__phu">Tip giữ hộ: <%= vnd(bc.tien_tip) %></div></div></div>
 </div>
+
+<% if (bc.quy) { %>
+<!-- Quy tien mat / tai khoan ngan hang (so du dau ky -> cuoi ky) -->
+<div class="row">
+  <% [["tien_mat", "Quỹ tiền mặt", "fa-money-bill-wave"], ["ngan_hang", "Tài khoản ngân hàng", "fa-building-columns"]].forEach(function (q) { var x = bc.quy[q[0]]; %>
+    <div class="col-lg-6 mb-3"><div class="tc-the">
+      <h6><i class="fas <%= q[2] %> text-warning"></i> <%= q[1] %></h6>
+      <table class="table table-sm mb-0 no-cuon"><tbody>
+        <tr><td>Số dư đầu kỳ (<%= loc.tu %>)</td><td class="text-right"><%= vnd(x.dau) %></td></tr>
+        <tr><td>Thu trong kỳ</td><td class="text-right text-success">+ <%= vnd(x.thu) %></td></tr>
+        <tr><td>Chi trong kỳ</td><td class="text-right text-danger">− <%= vnd(x.chi) %></td></tr>
+        <tr class="font-weight-bold"><td>Số dư cuối kỳ (<%= loc.den %>)</td><td class="text-right"><%= (x.cuoi < 0 ? "−" : "") + vnd(Math.abs(x.cuoi)) %></td></tr>
+      </tbody></table>
+    </div></div>
+  <% }) %>
+</div>
+<% } %>
+<% if (bc.so_cho_duyet) { %>
+  <div class="alert alert-warning py-2"><i class="fas fa-hourglass-half"></i> Có <b><%= bc.so_cho_duyet %></b> phiếu chi vượt hạn mức (<%= vnd(thamSo.han_muc_duyet) %>) đang chờ Quản lý duyệt — chưa tính vào sổ quỹ.</div>
+<% } %>
 
 <!-- Bieu do + phuong thuc -->
 <div class="row">
@@ -225,11 +247,12 @@
         </thead>
         <tbody>
           <% bc.so_quy.forEach(function (d) { %>
-            <tr class="<%= d.huy ? 'da-huy' : '' %>" data-loai="<%= d.loai %>">
+            <tr class="<%= d.huy ? 'da-huy' : (d.cho_duyet ? 'table-warning' : '') %>" data-loai="<%= d.loai %>">
               <td style="white-space:nowrap"><%= loc.tu === loc.den ? gio(d.thoi_diem) : ngayGio(d.thoi_diem) %></td>
               <td><span class="ma"><%= d.ma %></span><br><span class="tc-nhan <%= d.loai %>"><%= d.loai === 'thu' ? 'THU' : 'CHI' %></span></td>
               <td style="min-width:220px"><b><%= d.ten_danh_muc %></b><br><span class="text-muted small"><%= d.noi_dung %></span>
-                <% if (d.huy) { %><br><span class="small text-danger" style="text-decoration:none">Đã hủy: <%= d.ly_do_huy %><%= d.nguoi_huy ? ' (' + d.nguoi_huy + ')' : '' %></span><% } %></td>
+                <% if (d.huy) { %><br><span class="small text-danger" style="text-decoration:none">Đã hủy: <%= d.ly_do_huy %><%= d.nguoi_huy ? ' (' + d.nguoi_huy + ')' : '' %></span><% } %>
+                <% if (d.cho_duyet) { %><br><span class="badge badge-warning">Chờ Quản lý duyệt</span><% } %></td>
               <td style="white-space:nowrap"><%= d.ten_phuong_thuc %></td>
               <td><%= d.nguoi %></td>
               <td class="tien text-success"><%= d.loai === 'thu' ? vnd(d.so_tien) : '' %></td>
@@ -238,6 +261,9 @@
               <td class="thao-tac tc-khong-in" style="white-space:nowrap">
                 <% if (d.nguon === 'phieu') { %>
                   <a class="btn btn-sm btn-light" href="/staff/thu-chi/phieu/<%= d.id %>/in" target="_blank" title="In phiếu" aria-label="In phiếu <%= d.ma %>"><i class="fas fa-print"></i></a>
+                  <% if (d.cho_duyet && duocDuyet && Number(d.id_nv) !== Number(idNv)) { %>
+                    <button type="button" class="btn btn-sm btn-success" data-duyet="<%= d.id %>" data-ma="<%= d.ma %>" title="Duyệt phiếu chi" aria-label="Duyệt phiếu <%= d.ma %>"><i class="fas fa-check"></i></button>
+                  <% } %>
                   <% if (!d.huy && (laQuanLy || Number(d.id_nv) === Number(idNv))) { %>
                     <button type="button" class="btn btn-sm btn-light text-danger" data-huy="<%= d.id %>" data-ma="<%= d.ma %>" title="Hủy phiếu" aria-label="Hủy phiếu <%= d.ma %>"><i class="fas fa-ban"></i></button>
                   <% } %>
@@ -282,6 +308,7 @@
       <div class="form-group">
         <label for="fSoTien" class="small font-weight-bold">Số tiền (đ) *</label>
         <input id="fSoTien" name="so_tien" class="form-control tc-so-tien" inputmode="numeric" autocomplete="off" placeholder="0" required>
+        <div class="small text-muted mt-1"><% if (vaiTro === 'thu_ngan') { %>Thu ngân lập phiếu chi tối đa <%= vnd(thamSo.han_muc_chi_thu_ngan) %>; khoản lớn hơn do kế toán lập.<% } else if (vaiTro === 'ke_toan') { %>Phiếu chi trên <%= vnd(thamSo.han_muc_duyet) %> sẽ chờ Quản lý duyệt.<% } %></div>
         <div class="tc-nhanh">
           <% [50000, 100000, 200000, 500000, 1000000].forEach(function (n) { %><button type="button" data-tien="<%= n %>"><%= n >= 1000000 ? (n / 1000000) + 'tr' : (n / 1000) + 'k' %></button><% }) %>
         </div>
@@ -416,6 +443,7 @@
         var r = await fetch('/api/staff/thu-chi/phieu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(duLieu) });
         var j = await r.json();
         if (!j.ok) throw new Error(j.thong_bao || 'Không lưu được phiếu');
+        if (j.trang_thai === 'cho_duyet') alert('Phiếu ' + j.ma_phieu + ' vượt hạn mức nên đang chờ Quản lý duyệt. Chưa tính vào sổ quỹ.');
         window.open('/staff/thu-chi/phieu/' + j.id + '/in', '_blank');
         location.reload();
       } catch (err) {
@@ -426,6 +454,18 @@
 
   // ---------------------------------------------------- huy phieu
   var idHuy = null;
+  document.querySelectorAll('[data-duyet]').forEach(function (b) {
+    b.addEventListener('click', async function () {
+      if (!confirm('Duyệt phiếu chi ' + b.getAttribute('data-ma') + '? Phiếu sẽ được tính vào sổ quỹ.')) return;
+      b.disabled = true;
+      try {
+        var r = await fetch('/api/staff/thu-chi/phieu/' + b.getAttribute('data-duyet') + '/duyet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        var d = await r.json();
+        if (!d.ok) { alert(d.thong_bao || 'Không duyệt được.'); b.disabled = false; return; }
+        location.reload();
+      } catch (e) { alert('Lỗi mạng, thử lại.'); b.disabled = false; }
+    });
+  });
   document.querySelectorAll('[data-huy]').forEach(function (b) {
     b.addEventListener('click', function () {
       idHuy = b.getAttribute('data-huy');

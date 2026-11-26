@@ -39,9 +39,13 @@ async function tamTatDoiMatKhau() {
       'ketoan', 'ketoantruong', 'dieuphoi', 'shipper1'];
     const [goc] = await db.query('SELECT id_nv, passwords FROM nhan_vien WHERE username IN (?)', [TK_TEST]);
     const [gocAdmin] = await db.query("SELECT id_admin, adminpass FROM tb_admin WHERE adminuser = 'admin'");
+    const [[tbMoc]] = await db.query('SELECT COALESCE(MAX(id_tb), 0) AS m FROM thong_bao');
     for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [md5('123456'), g.id_nv]);
     for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5('123456'), g.id_admin]);
     khoiPhucCoDoiMk = async () => {
+      // Thong bao do thao tac test sinh ra (gui nen) - xoa de khong lan vao chuong that.
+      await new Promise((ok) => setTimeout(ok, 3500));  // gom mon moi -> bep 2,5s
+      await db.query('DELETE FROM thong_bao WHERE id_tb > ?', [tbMoc.m]).catch(() => {});
       for (const g of goc) await db.query('UPDATE nhan_vien SET passwords = ? WHERE id_nv = ?', [g.passwords, g.id_nv]).catch(() => {});
       for (const g of gocAdmin) await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [g.adminpass, g.id_admin]).catch(() => {});
       await db.query('UPDATE cau_hinh SET gia_tri = ? WHERE khoa = ?', [r.gia_tri, KHOA]).catch(() => {});
@@ -288,8 +292,8 @@ async function runMasterTestSuite() {
       { path: '/about', name: 'Trang Giới thiệu nhà hàng (/about)' },
       { path: '/thanh-vien', name: 'Trang Chính sách hội viên (/thanh-vien)' },
       { path: '/blog', name: 'Trang Tin tức & Bài viết (/blog)' },
-      { path: '/huong-dan-dat-ban', name: 'Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)' },
-      { path: '/dat-ban', name: 'Cổng Đặt bàn trực tuyến (/dat-ban)' }
+      { path: '/huong-dan-dat-ban', name: 'Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)' }
+      // /dat-ban, /dat-tiec, /cart: bat dang nhap truoc - kiem o muc 1.2 (chuyen sang /login).
     ];
 
     for (const p of publicPages) {
@@ -306,7 +310,10 @@ async function runMasterTestSuite() {
     const redirects = [
       { from: '/datban', expected: '/dat-ban', name: 'Alias chuyển hướng /datban -> /dat-ban' },
       { from: '/reservation', expected: '/dat-ban', name: 'Redirect 301 chuẩn SEO /reservation -> /dat-ban' },
-      { from: '/reservation/tra-cuu', expected: '/dat-ban/tra-cuu', name: 'Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu' }
+      { from: '/reservation/tra-cuu', expected: '/dat-ban/tra-cuu', name: 'Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu' },
+      { from: '/dat-ban', expected: '/login?tiep=%2Fdat-ban', name: 'Đặt bàn khi chưa đăng nhập -> trang đăng nhập (quay lại /dat-ban)' },
+      { from: '/dat-tiec', expected: '/login?tiep=%2Fdat-tiec', name: 'Đặt tiệc khi chưa đăng nhập -> trang đăng nhập (quay lại /dat-tiec)' },
+      { from: '/cart', expected: '/login?tiep=%2Fcart', name: 'Giỏ hàng giao tận nơi khi chưa đăng nhập -> trang đăng nhập' }
     ];
 
     for (const r of redirects) {

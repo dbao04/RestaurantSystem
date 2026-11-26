@@ -2409,6 +2409,8 @@ module.exports = {
   'lich_su_tiec.buoc_DA_XAC_NHAN': '確定',
   'lich_su_tiec.buoc_DA_COC': '前金',
   'lich_su_tiec.buoc_HOAN_THANH': '完了',
+  'lich_su_tiec.buoc_CHO_COC': '申込',
+  'lich_su_tiec.buoc_CHO_THANH_TOAN': '精算',
   'lich_su_tiec.tt_MOI': '新規申込',
   'lich_su_tiec.tt_DA_LIEN_HE': '相談済み',
   'lich_su_tiec.tt_DA_XAC_NHAN': '確定済み',

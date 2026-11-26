@@ -6,6 +6,7 @@
  *   /staff/dat-tiec, /api/staff/dat-tiec/*  NHAN VIEN  xu ly yeu cau tiec
  */
 const express = require('express');
+const { canKhachDangNhap } = require('../middleware/auth');
 const dv = require('../services/datTiecService');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
@@ -37,24 +38,29 @@ router.get('/khong-gian', bat(async (req, res) => {
   });
 }));
 
-router.get('/dat-tiec', bat(async (req, res) => {
+// Quy trinh dat tiec online: services/datTiecQuyTrinh.js
+const qt = require('../services/datTiecQuyTrinh');
+
+router.get('/dat-tiec', canKhachDangNhap, bat(async (req, res) => {
   const homNay = ngayCucBo();
-  const [sanh, thucDon, dichVu] = await Promise.all([dv.docSanhTiec(), dv.docThucDon(), dv.docDichVu()]);
+  const ch = await qt.cauHinh();
+  const [thucDonGoc, dichVu, monLe] = await Promise.all([dv.docThucDon(), dv.docDichVu(), qt.docMonLe()]);
+  const thucDon = await qt.ganAnhThucDon(thucDonGoc);
   res.render('dat-tiec', {
     title: 'Đặt tiệc',
     activeNav: 'dattiec',
     loaiTiec: dv.LOAI_TIEC,
     buoi: dv.BUOI,
-    sanh,
+    sanh: ch.sanh,
     thucDon,
     dichVu,
+    monLe,
+    ch,
+    chinhSach: qt.chinhSach(ch),
     khachMoiBan: dv.KHACH_MOI_BAN,
-    ngayMin: dv.cong(homNay, dv.DAT_TRUOC_TOI_THIEU_NGAY),
-    ngayMax: dv.cong(homNay, dv.DAT_TRUOC_TOI_DA_NGAY),
-    chon: {
-      loai: dv.LOAI_TIEC[req.query.loai] ? req.query.loai : '',
-      sanh: Number(req.query.sanh) || '',
-    },
+    ngayMin: dv.cong(homNay, ch.dat_truoc_toi_thieu_ngay),
+    ngayMax: dv.cong(homNay, ch.dat_truoc_toi_da_ngay),
+    chon: { loai: dv.LOAI_TIEC[req.query.loai] ? req.query.loai : '' },
     khach: req.session && req.session.userId ? {
       ten: req.session.username || '',
       sdt: req.session.usersdt || '',
@@ -62,14 +68,106 @@ router.get('/dat-tiec', bat(async (req, res) => {
   });
 }));
 
+/** Lich thang cua Sanh Gala: ngay trong / con mot buoi / kin / khong nhan. */
+router.get('/api/dat-tiec/lich-thang', bat(async (req, res) => {
+  res.json({ ok: true, ...(await qt.lichThang(String(req.query.thang || ''))) });
+}));
+
 /** Buoi da kin trong mot ngay - form dung de khoa lua chon. */
 router.get('/api/dat-tiec/lich', bat(async (req, res) => {
   const ngay = String(req.query.ngay || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return res.json({ ok: true, kin: [] });
-  res.json({ ok: true, kin: await dv.lichDaKin(ngay, ngay) });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return res.json({ ok: true, kin: [], nhan: false, ly_do: 'Ngày không hợp lệ.' });
+  // `kin` giu cho trang cu; `buoi` (gio trong / da co tiec) cho buoc chon gio moi.
+  res.json({ ok: true, kin: await dv.lichDaKin(ngay, ngay), ...(await qt.lichNgay(ngay)) });
 }));
 
-router.post('/api/dat-tiec', bat(async (req, res) => {
+// ------------------------------------------------------------------ thanh toan tiec (khach)
+
+/** Don tiec cua khach: khop tai khoan dang nhap hoac so dien thoai (?dt=) da dung khi dat. */
+async function donCuaKhach(req, ma) {
+  await qt.damBaoCauTruc();
+  const [[don]] = await require('../config/db').query(
+    `SELECT t.*, DATE_FORMAT(t.ngay_to_chuc, '%Y-%m-%d') AS ngay, TIME_FORMAT(t.gio_bat_dau, '%H:%i') AS gio,
+            v.Name_vitri AS ten_sanh, COALESCE(d.ten, 'Thực đơn tự chọn') AS ten_thuc_don
+       FROM dat_tiec t LEFT JOIN vitri v ON v.id_vitri = t.khu_vuc_id LEFT JOIN thuc_don_tiec d ON d.id = t.thuc_don_id
+      WHERE t.ma_tiec = ?`, [String(ma || '')]);
+  if (!don) return null;
+  const so = (x) => String(x || '').replace(/\D/g, '').replace(/^84/, '0');
+  const dungTk = req.session && req.session.userId && Number(don.customer_id) === Number(req.session.userId);
+  const dungSo = (req.query.dt && so(req.query.dt) === so(don.so_dien_thoai))
+    || (req.session && req.session.usersdt && so(req.session.usersdt) === so(don.so_dien_thoai));
+  return dungTk || dungSo ? don : null;
+}
+
+function giaLapKhachTiec() {
+  return process.env.NODE_ENV !== 'production' && process.env.PAYMENT_SIMULATION === '1' && process.env.PAYMENT_SIMULATION_KHACH === '1';
+}
+
+router.get('/dat-tiec/thanh-toan/:ma', bat(async (req, res) => {
+  await qt.hetHanGiuCho();
+  const don = await donCuaKhach(req, req.params.ma);
+  if (!don) {
+    return res.status(404).render('error', { title: 'Không tìm thấy', statusCode: 404,
+      message: 'Không tìm thấy đơn tiệc. Đăng nhập đúng tài khoản đã đặt hoặc mở lại đường dẫn trong thông báo.' });
+  }
+  const ch = await qt.cauHinh();
+  const khoan = qt.khoanCanTra(don, ch);
+  let qr = null, taiKhoan = null;
+  if (khoan && khoan.so_tien > 0) {
+    const tt = require('../services/thanhToanService');
+    taiKhoan = await tt.layTaiKhoanNhan().catch(() => null);
+    if (taiKhoan) {
+      qr = await require('../services/vietQR').taoQRChuyenKhoan({
+        maNganHang: taiKhoan.maNganHang, soTaiKhoan: taiKhoan.soTaiKhoan, tenTaiKhoan: taiKhoan.tenTaiKhoan,
+        soTien: khoan.so_tien, noiDung: `TIEC ${don.ma_tiec}`,
+      }, { kichThuoc: 280 }).catch(() => null);
+    }
+  }
+  res.render('thanh-toan-tiec', {
+    title: 'Thanh toán tiệc ' + don.ma_tiec,
+    activeNav: 'dattiec',
+    don: {
+      ...don, dich_vu: (() => { try { return JSON.parse(don.dich_vu || '[]'); } catch (_) { return []; } })(),
+      thuc_don_tuy_chinh: (() => { try { return typeof don.thuc_don_tuy_chinh === 'string' ? JSON.parse(don.thuc_don_tuy_chinh) : don.thuc_don_tuy_chinh; } catch (_) { return null; } })(),
+      ten_loai: (dv.LOAI_TIEC[don.loai_tiec] || {}).ten || don.loai_tiec,
+      ten_buoi: (dv.BUOI[don.buoi] || {}).ten || don.buoi,
+      ten_trang_thai: dv.TRANG_THAI[don.trang_thai] || don.trang_thai,
+    },
+    ch, khoan, qr, taiKhoan,
+    chinhSach: qt.chinhSach(ch),
+    hoan: qt.phanTramHoan(don.ngay, ch),
+    giaLap: giaLapKhachTiec(),
+    dt: req.query.dt || '',
+  });
+}));
+
+/** Trang thai don (trang thanh toan hoi moi vai giay de tu chuyen khi da nhan tien). */
+router.get('/api/dat-tiec/:ma/trang-thai', bat(async (req, res) => {
+  await qt.hetHanGiuCho();
+  const don = await donCuaKhach(req, req.params.ma);
+  if (!don) return res.status(404).json({ ok: false });
+  const ch = await qt.cauHinh();
+  const k = qt.khoanCanTra(don, ch);
+  res.json({ ok: true, trang_thai: don.trang_thai, ten: dv.TRANG_THAI[don.trang_thai], da_thu: Number(don.da_thu) || 0, can_tra: k ? k.so_tien : 0 });
+}));
+
+/** Demo: gia lap khach da chuyen khoan dung so tien (PAYMENT_SIMULATION_KHACH=1). */
+router.post('/dat-tiec/thanh-toan/:ma/gia-lap', bat(async (req, res) => {
+  if (!giaLapKhachTiec()) return res.status(404).json({ ok: false, thong_bao: 'Thanh toán giả lập đang tắt.' });
+  const don = await donCuaKhach(req, req.params.ma);
+  if (!don) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy đơn tiệc.' });
+  const k = qt.khoanCanTra(don, await qt.cauHinh());
+  if (!k || k.so_tien <= 0) return res.status(400).json({ ok: false, thong_bao: 'Đơn tiệc không có khoản nào chờ thanh toán.' });
+  try {
+    const kq = await qt.ghiNhanChuyenKhoan(don.ma_tiec, k.so_tien, { maGiaoDich: 'SIM-TIEC-' + Date.now(), nguon: 'web' });
+    realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_THANH_TOAN', ma: don.ma_tiec });
+    res.json({ ok: true, ...kq });
+  } catch (e) {
+    res.status(400).json({ ok: false, thong_bao: e.message });
+  }
+}));
+
+router.post('/api/dat-tiec', canKhachDangNhap, bat(async (req, res) => {
   try {
     const kq = await dv.taoDonTiec(req.body, { customerId: (req.session && req.session.userId) || null });
     realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_MOI', ma: kq.ma });
@@ -87,6 +185,13 @@ router.post('/api/dat-tiec/:ma/huy', bat(async (req, res) => {
       userId: req.session.userId, phone: req.session.usersdt, lyDo: req.body && req.body.ly_do,
     });
     realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_HUY', ma: kq.ma });
+    if (kq.da_thu > 0) {
+      require('../services/thongBaoService').gui('dat_tiec_moi', {
+        nhom: ['QUAN_LY'], mucDo: 'khan', link: '/staff/dat-tiec',
+        tieuDe: `Khách hủy tiệc ${kq.ma} - cần hoàn ${kq.tien_hoan.toLocaleString('vi-VN')}đ`,
+        noiDung: `Đã thu ${kq.da_thu.toLocaleString('vi-VN')}đ, hoàn ${kq.phan_tram_hoan}% theo chính sách.`,
+      }).catch(() => {});
+    }
     res.json(kq);
   } catch (e) { traLoi(res, e); }
 }));
@@ -119,10 +224,18 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
   const loc = {
     trangThai: String(req.query.trang_thai || ''),
     tuNgay: String(req.query.tu_ngay || ''),
+    denNgay: String(req.query.den_ngay || ''),
     tim: String(req.query.tim || '').trim().slice(0, 60),
   };
   await dv.damBaoCotTien();
-  const [ds, tk] = await Promise.all([dv.danhSach(loc), dv.thongKe()]);
+  await qt.hetHanGiuCho();
+  const ch = await qt.cauHinh();
+  const [dsGoc, tk] = await Promise.all([dv.danhSach(loc), dv.thongKe()]);
+  const ds = dsGoc.map((d) => ({
+    ...d,
+    thuc_don_tuy_chinh: (() => { try { return typeof d.thuc_don_tuy_chinh === 'string' ? JSON.parse(d.thuc_don_tuy_chinh) : d.thuc_don_tuy_chinh; } catch (_) { return null; } })(),
+    hoan: qt.phanTramHoan(d.ngay, ch),
+  }));
   res.render('staff/dat-tiec', {
     title: 'Quản lý Đặt tiệc',
     activePage: 'dattiec',
@@ -133,7 +246,7 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
     trangThai: dv.TRANG_THAI,
     chuyenTiec: dv.CHUYEN_TIEC,
     phuongThuc: dv.PHUONG_THUC_TIEC,
-    tyLeCoc: dv.TY_LE_COC,
+    tyLeCoc: ch.ty_le_coc / 100,
     quyen: quyenTiec(req),
   });
 }));
@@ -155,6 +268,8 @@ router.post('/api/staff/dat-tiec/:id/trang-thai', bat(async (req, res) => {
       ghiChuNoiBo: b.ghi_chu_noi_bo,
       soTien: b.so_tien,
       tongThucTe: b.tong_thuc_te,
+      tongBaoGia: b.tong_bao_gia,
+      soKhachThucTe: b.so_khach_thuc_te,
       phuongThuc: b.phuong_thuc,
       lyDoHuy: b.ly_do_huy,
       hoanCoc: b.hoan_coc === true || b.hoan_coc === '1',
