@@ -7,7 +7,16 @@
     Chart.js (trang quan tri), con trang khach thi bo qua - khong tai them thu
     vien chi de ve mot bieu do hiem khi dung toi.
   */
-  const cbQuyen = (typeof session !== 'undefined' && session.adminlogin) ? 'quan_ly'
+  // Hai kenh tach biet:
+  //   'khach'  (mac dinh, footer trang khach) - LUON la khach, du trinh duyet dang
+  //            dang nhap quan ly/nhan vien. Khong co che do quan ly o day.
+  //   'noi_bo' (footer trang nhan vien / quan tri) - quan ly hoi duoc so lieu.
+  // Ham dich RIENG cho widget: mot so trang dung bien t lam bien dem (vd for (var t = 1...)
+  // o trang ke toan) - EJS chay trong with(locals) nen ghi de mat ham t -> loi 500.
+  const cbT = typeof cbDich === 'function' ? cbDich : (typeof t === 'function' ? t : function (k) { return k; });
+  const cbNoiBo = typeof cbKenh !== 'undefined' && cbKenh === 'noi_bo';
+  const cbQuyen = !cbNoiBo ? 'khach'
+                : (typeof session !== 'undefined' && session.adminlogin) ? 'quan_ly'
                 : (typeof session !== 'undefined' && session.stafflogin
                    && /quan ly|quanly|ke toan|ketoan|manager/i.test(session.staffRole || '')) ? 'quan_ly'
                 : 'khach';
@@ -331,40 +340,169 @@
   [data-theme="dark"] .cb-chan input:focus {
     border-color: #c8a24b; box-shadow: 0 0 0 3px rgba(200, 162, 75, 0.2);
   }
+
+  /* ---------- Trợ lý kiểu Preny: ảnh đại diện, thẻ món, nút liên kết, lời chào chủ động ---------- */
+  .cb-dau__avatar img, .cb-tn__av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .cb-tn--bot { align-items: flex-end; gap: 7px; }
+  .cb-tn__av {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+    background: linear-gradient(135deg, #d4af37, #9a6f20); color: #24140b;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .cb-tn--noi-tiep .cb-tn__av { visibility: hidden; }
+  .cb-tn--noi-tiep { margin-top: -9px; }
+  .cb-tn__noi a.cb-lk-txt { color: #9c6c1b; font-weight: 600; text-decoration: underline; }
+  .cb-anh-kt { display: block; max-width: 100%; border-radius: 12px; margin-top: 9px; border: 1px solid rgba(200,162,75,.25); }
+
+  .cb-tn__noi { min-width: 0; }
+  .cb-tn__noi--the { width: calc(100% - 33px); max-width: none; }
+  /* Dong trang thai "Truc tuyen": cham xanh khong bi bop (truoc day flex co no lai thanh mot vach) */
+  .cb-dau__info small { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; max-width: 100%; margin-top: 3px; }
+  .cb-dau__info small::before {
+    flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, .6); animation: cb-pulse 2s infinite;
+  }
+  .cb-dau__info b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 1px; }
+  .cb-the-mon-hang {
+    max-width: 100%;
+    display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; margin: 10px -4px 0;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  }
+  .cb-the-mon-hang::-webkit-scrollbar { height: 5px; }
+  .cb-the-mon-hang::-webkit-scrollbar-thumb { background: rgba(200,162,75,.35); border-radius: 10px; }
+  .cb-the-mon {
+    flex: 0 0 168px; scroll-snap-align: start; background: #fff; border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(200,162,75,.28); box-shadow: 0 4px 14px rgba(43,26,18,.07);
+    display: flex; flex-direction: column; white-space: normal;
+  }
+  .cb-the-mon--mot { flex-basis: 100%; }
+  .cb-the-mon__anh { position: relative; display: block; aspect-ratio: 4 / 3; background: #f3ece0; }
+  .cb-the-mon__anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cb-the-mon__het {
+    position: absolute; inset: 0; background: rgba(20,12,8,.55); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 12.5px; letter-spacing: .5px;
+  }
+  .cb-the-mon__loai {
+    position: absolute; left: 7px; top: 7px; background: rgba(43,26,18,.78); color: #f1d98f;
+    font-size: 10.5px; padding: 2px 8px; border-radius: 999px; font-weight: 600;
+  }
+  .cb-the-mon__than { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .cb-the-mon__ten { font-weight: 700; font-size: 13px; color: #2b1a12; line-height: 1.3; }
+  .cb-the-mon__en { font-size: 11px; color: #8a7a6b; line-height: 1.3; }
+  .cb-the-mon__gia { font-weight: 800; color: #a5761f; font-size: 13.5px; margin-top: auto; padding-top: 4px; }
+  .cb-the-mon__gia small { font-weight: 500; color: #8a7a6b; font-size: 11px; }
+  .cb-the-mon__nut { display: flex; gap: 6px; margin-top: 6px; }
+  .cb-the-mon__nut a, .cb-the-mon__nut button {
+    flex: 1; border-radius: 8px; font-size: 11.5px; font-weight: 700; padding: 6px 4px; cursor: pointer;
+    text-align: center; text-decoration: none !important; border: 1px solid rgba(200,162,75,.45);
+    background: #fff; color: #6b4a1c !important; font-family: inherit; transition: all .2s;
+  }
+  .cb-the-mon__nut button { background: linear-gradient(135deg, #c8a24b, #a88126); color: #fff !important; border-color: transparent; }
+  .cb-the-mon__nut button:disabled { opacity: .55; cursor: default; }
+  .cb-the-mon__nut a:hover { background: #fbf3e2; }
+
+  .cb-lien-ket { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .cb-lien-ket a {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 10px;
+    background: #fbf3e2; border: 1px solid rgba(200,162,75,.45); color: #6b4a1c !important;
+    font-size: 12.5px; font-weight: 700; text-decoration: none !important; transition: all .2s;
+  }
+  .cb-lien-ket a:hover { background: #c8a24b; color: #fff !important; border-color: #c8a24b; }
+
+  .cb-tn__gio { display: block; font-size: 10.5px; color: #a3968a; margin-top: 4px; }
+  .cb-tn--toi .cb-tn__gio { color: rgba(255,255,255,.75); text-align: right; }
+
+  .cb-moi {
+    position: fixed; right: 24px; bottom: 96px; z-index: 9997; max-width: 270px;
+    background: #fff; color: #2b1a12; border-radius: 16px 16px 4px 16px; padding: 12px 34px 12px 14px;
+    border: 1px solid rgba(200,162,75,.35); box-shadow: 0 14px 34px rgba(43,26,18,.22);
+    font: 500 13.5px/1.5 'Poppins', 'Inter', system-ui, sans-serif; cursor: pointer;
+    animation: cb-fade-in .3s cubic-bezier(.22,.61,.36,1);
+  }
+  .cb-moi b { display: block; color: #9c6c1b; font-size: 12px; margin-bottom: 2px; }
+  .cb-moi__dong {
+    position: absolute; top: 6px; right: 8px; border: 0; background: none; color: #9c8e82;
+    font-size: 17px; cursor: pointer; line-height: 1; padding: 2px;
+  }
+  .cb-nut__so {
+    position: absolute; top: -3px; left: -3px; min-width: 20px; height: 20px; padding: 0 5px;
+    background: #dc2626; color: #fff; border-radius: 999px; font: 700 11px/20px system-ui, sans-serif;
+    border: 2px solid #fff; display: none;
+  }
+  .cb-nut__so.hien { display: block; }
+  .cb-dau__lam-moi {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: #dfb962;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 13px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cb-dau__lam-moi:hover { background: rgba(200,162,75,.25); color: #fff; }
+
+  [data-theme="dark"] .cb-the-mon { background: #251911; border-color: rgba(200,162,75,.25); }
+  [data-theme="dark"] .cb-the-mon__ten { color: #f5eedf; }
+  [data-theme="dark"] .cb-the-mon__nut a, [data-theme="dark"] .cb-lien-ket a { background: #2f1f15; color: #f1d98f !important; }
+  [data-theme="dark"] .cb-moi { background: #251911; color: #f5eedf; }
+  /* Trang nhan vien: goc phai duoi da co nut "Bao viec len cap tren" (loa do, 54px,
+     cach day 22px) -> dat nut chat noi bo ngay phia tren, thang hang voi no. */
+  .cb-nut--noi-bo { right: 19px; bottom: 90px; }
+  .cb-nut--noi-bo ~ .cb-khung { bottom: 162px; max-height: calc(100vh - 182px); }
+  @media (max-width: 640px) {
+    .cb-khung { right: 8px; left: 8px; width: auto; max-width: none; bottom: 88px; height: calc(100vh - 110px); }
+    .cb-moi { right: 16px; bottom: 92px; }
+    /* Dien thoai: nut bao viec (loa) + thanh dieu huong day man hinh -> nang cao hon nua */
+    .cb-nut--noi-bo { bottom: 150px; }
+    .cb-nut--noi-bo ~ .cb-khung { bottom: 216px; height: calc(100vh - 236px); }
+  }
 </style>
 
-<button class="cb-nut" id="cb-nut" aria-label="<%= t('chatbot.mo') %>" title="<%= t('chatbot.tro_ly') %>">
-  <i class="fas fa-comment-dots"></i><span class="cb-nut__cham"></span>
+<%
+  const cbGd = (typeof cbGiaoDien !== 'undefined' && cbGiaoDien) || {};
+  const cbTenBot = cbGd.ten_bot || cbT('chatbot.tro_ly');
+  const cbHotline = cbGd.hotline || '0825 297 297';
+  const cbHotlineSo = cbGd.hotline_so || '0825297297';
+%>
+<% if (cbNoiBo || cbGd.bat !== false) { %>
+<button class="cb-nut<%= cbNoiBo ? ' cb-nut--noi-bo' : '' %>" id="cb-nut" aria-label="<%= cbT('chatbot.mo') %>" title="<%= cbTenBot %>">
+  <i class="fas fa-comment-dots"></i><span class="cb-nut__cham"></span><span class="cb-nut__so" id="cb-nut-so">1</span>
 </button>
 
-<div class="cb-khung" id="cb-khung" role="dialog" aria-label="<%= t('chatbot.tro_ly') %>">
+<div class="cb-moi" id="cb-moi" hidden>
+  <button class="cb-moi__dong" id="cb-moi-dong" aria-label="<%= cbT('chatbot.dong') %>">&times;</button>
+  <b><%= cbTenBot %></b><span id="cb-moi-noi-dung"></span>
+</div>
+
+<div class="cb-khung" id="cb-khung" role="dialog" aria-label="<%= cbTenBot %>">
   <div class="cb-dau">
     <div class="cb-dau__avatar">
-      <i class="fas fa-robot"></i>
+      <% if (cbGd.avatar) { %><img src="<%= cbGd.avatar %>" alt=""><% } else { %><i class="fas fa-robot"></i><% } %>
     </div>
     <div class="cb-dau__info">
-      <b><%= t('chatbot.tro_ly') %></b>
-      <small id="cb-vaitro"><%= cbQuyen === 'quan_ly' ? t('chatbot.che_do_quan_ly') : (t('chung.ten_nha_hang') + ' · ' + t('giao_dien.truc_tuyen')) %></small>
+      <b><%= cbTenBot %></b>
+      <small id="cb-vaitro"><%= cbNoiBo ? ('Trợ lý nội bộ' + (cbQuyen === 'quan_ly' ? ' · ' + cbT('chatbot.che_do_quan_ly') : '')) : (cbGd.chuc_danh || (cbT('chung.ten_nha_hang') + ' · ' + cbT('giao_dien.truc_tuyen'))) %></small>
     </div>
-    <a href="tel:0825297297" class="cb-dau__goi" title="<%= t('giao_dien.goi_hotline') %>">
-      <i class="fas fa-phone-alt"></i> 0825.297.297
-    </a>
-    <button class="cb-dau__dong" id="cb-dong" aria-label="<%= t('chatbot.dong') %>">&times;</button>
+    <%# Nut goi o dau khung da bo: trung voi nut "Goi ..." ngay ben duoi va lam chat cho ten / trang thai. %>
+    <button class="cb-dau__lam-moi" id="cb-lam-moi" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><i class="fas fa-rotate-right"></i></button>
+    <button class="cb-dau__dong" id="cb-dong" aria-label="<%= cbT('chatbot.dong') %>">&times;</button>
   </div>
-  <div class="cb-thanh-lien-he">
-    <a href="tel:0825297297" class="cb-lien-he__nut cb-lien-he__nut--goi" title="<%= t('giao_dien.goi_hotline') %>">
+  <% if (!cbNoiBo && (cbGd.hien_nut_goi !== false || cbGd.hien_nut_nhan_vien !== false)) { %>
+  <div class="cb-thanh-lien-he" style="<%= (cbGd.hien_nut_goi === false || cbGd.hien_nut_nhan_vien === false) ? 'grid-template-columns:1fr' : '' %>">
+    <% if (cbGd.hien_nut_goi !== false) { %>
+    <a href="tel:<%= cbHotlineSo %>" class="cb-lien-he__nut cb-lien-he__nut--goi" title="<%= cbT('giao_dien.goi_hotline') %>">
       <i class="fas fa-phone-volume"></i>
-      <span><%= t('giao_dien.goi_so') %></span>
+      <span>Gọi <%= cbHotline %></span>
     </a>
-    <a href="/chat" class="cb-lien-he__nut cb-lien-he__nut--nv" title="<%= t('giao_dien.sang_chat') %>">
+    <% } %>
+    <% if (cbGd.hien_nut_nhan_vien !== false) { %>
+    <a href="/chat" class="cb-lien-he__nut cb-lien-he__nut--nv" title="<%= cbT('giao_dien.sang_chat') %>">
       <i class="fas fa-headset"></i>
-      <span><%= t('giao_dien.chat_nv') %></span>
+      <span><%= cbT('giao_dien.chat_nv') %></span>
     </a>
+    <% } %>
   </div>
-  <div class="cb-than" id="cb-than"></div>
+  <% } %>
+  <div class="cb-than" id="cb-than" aria-live="polite"></div>
   <form class="cb-chan" id="cb-form" autocomplete="off">
-    <input id="cb-o-nhap" placeholder="<%= t('chatbot.nhap_cau_hoi') %>" maxlength="500" aria-label="<%= t('chatbot.cau_hoi') %>">
-    <button type="submit" id="cb-gui" aria-label="<%= t('chatbot.gui') %>"><i class="fas fa-paper-plane"></i></button>
+    <input id="cb-o-nhap" placeholder="<%= cbT('chatbot.nhap_cau_hoi') %>" maxlength="500" aria-label="<%= cbT('chatbot.cau_hoi') %>">
+    <button type="submit" id="cb-gui" aria-label="<%= cbT('chatbot.gui') %>"><i class="fas fa-paper-plane"></i></button>
   </form>
 </div>
 
@@ -376,54 +514,132 @@
   var form = document.getElementById('cb-form');
   var oNhap = document.getElementById('cb-o-nhap');
   var nutGui = document.getElementById('cb-gui');
+  var moi = document.getElementById('cb-moi');
+  var soMoi = document.getElementById('cb-nut-so');
   var quyen = '<%= cbQuyen %>';
+  var KENH = '<%= cbNoiBo ? 'noi_bo' : 'khach' %>';
+  var GD = <%- JSON.stringify(cbGd) %>;
+  var AVATAR = GD.avatar || '';
   var cbI18n = <%- JSON.stringify({
-    chaoKhach: t('chatbot.chao_khach'), chaoQuanLy: t('chatbot.chao_quan_ly'),
-    khongCoTraLoi: t('chatbot.khong_co_tra_loi'), loiKetNoi: t('chatbot.loi_ket_noi'),
-    huuIch: t('chatbot.huu_ich'), chuaDungY: t('chatbot.chua_dung_y'),
-    hienThiDong: t('chatbot.hien_thi_dong', { n: '{n}' }), duPhong: t('chatbot.du_phong'),
-    dangNhap: t('chatbot.dang_nhap'), dangKy: t('chatbot.dang_ky'), nhanVien: t('chatbot.nhan_vien')
+    chaoKhach: cbT('chatbot.chao_khach'), chaoQuanLy: cbT('chatbot.chao_quan_ly'),
+    khongCoTraLoi: cbT('chatbot.khong_co_tra_loi'), loiKetNoi: cbT('chatbot.loi_ket_noi'),
+    huuIch: cbT('chatbot.huu_ich'), chuaDungY: cbT('chatbot.chua_dung_y'),
+    hienThiDong: cbT('chatbot.hien_thi_dong', { n: '{n}' }), duPhong: cbT('chatbot.du_phong'),
+    dangNhap: cbT('chatbot.dang_nhap'), dangKy: cbT('chatbot.dang_ky'), nhanVien: cbT('chatbot.nhan_vien'),
+    goiSo: cbT('giao_dien.goi_so')
   }) %>;
+  var KHOA_LS = 'cb_lich_su_v2_' + KENH;
+  var lichSu = [];        // [{vai, noi_dung, kem, gio}]
   var daChao = false;
+  var dangBan = false;
 
-  /* Markdown toi gian: **dam**, _nghieng_. Tu escape HTML truoc de noi dung
-     tra ve tu server khong the chen the script vao trang. */
+  /* ---------- tiện ích ---------- */
   function thoat(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+  /* Markdown tối giản: **đậm**, _nghiêng_, xuống dòng. Escape HTML trước nên nội dung
+     từ máy chủ không thể chèn thẻ script vào trang. */
   function dinhDang(s) {
     return thoat(s)
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/_([^_]+)_/g, '<em>$1</em>');
+      .replace(/(^|[\s(])_([^_\n]+)_(?=$|[\s).,!?])/g, '$1<em>$2</em>');
   }
   function laSo(v) { return v !== null && v !== '' && !isNaN(Number(v)); }
   function soVN(v) { return Number(v).toLocaleString('vi-VN'); }
+  function gioNay() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  /* Chỉ cho đường dẫn nội bộ, tel:, mailto: và https - chặn javascript: */
+  function urlAnToan(u) {
+    u = String(u || '').trim();
+    return /^(\/(?!\/)|https:\/\/|tel:|mailto:)/i.test(u) ? u : '#';
+  }
+  function luu() {
+    if (!GD.luu_lich_su && GD.luu_lich_su !== undefined) return;
+    try { sessionStorage.setItem(KHOA_LS, JSON.stringify(lichSu.slice(-40))); } catch (e) {}
+  }
+  function cuonXuong() { than.scrollTop = than.scrollHeight; }
 
-  function themTin(vaiTro, noiDung, kem) {
+  function anhDaiDien() {
+    var av = document.createElement('div');
+    av.className = 'cb-tn__av';
+    av.innerHTML = AVATAR ? '<img src="' + thoat(AVATAR) + '" alt="">' : '<i class="fas fa-robot"></i>';
+    return av;
+  }
+
+  /* ---------- thẻ món ăn kèm ảnh ---------- */
+  function veTheMon(ds) {
+    var hang = document.createElement('div');
+    hang.className = 'cb-the-mon-hang';
+    ds.forEach(function (m) {
+      var the = document.createElement('div');
+      the.className = 'cb-the-mon' + (ds.length === 1 ? ' cb-the-mon--mot' : '');
+      var anh = m.anh
+        ? '<img src="' + thoat(m.anh) + '" alt="' + thoat(m.ten) + '" loading="lazy" onerror="this.onerror=null;this.src=\'/mon-thay-the.svg\'">'
+        : '<img src="/mon-thay-the.svg" alt="">';
+      the.innerHTML =
+        '<a class="cb-the-mon__anh" href="' + urlAnToan(m.link) + '">' + anh +
+          (m.loai ? '<span class="cb-the-mon__loai">' + thoat(m.loai) + '</span>' : '') +
+          (m.con === false ? '<span class="cb-the-mon__het">TẠM HẾT</span>' : '') +
+        '</a>' +
+        '<div class="cb-the-mon__than">' +
+          '<div class="cb-the-mon__ten">' + thoat(m.ten) + (m.ma ? ' <small style="color:#a3968a;font-weight:500">' + thoat(m.ma) + '</small>' : '') + '</div>' +
+          (m.en && m.en.toLowerCase() !== String(m.ten).toLowerCase() ? '<div class="cb-the-mon__en">' + thoat(m.en) + '</div>' : '') +
+          '<div class="cb-the-mon__gia">' + soVN(m.gia) + 'đ <small>/ ' + thoat(m.don_vi || 'phần') + '</small></div>' +
+          '<div class="cb-the-mon__nut">' +
+            '<a href="' + urlAnToan(m.link) + '">Chi tiết</a>' +
+            (KENH === 'khach' && GD.nut_them_gio !== false && m.con !== false ? '<button type="button" data-them="' + Number(m.id) + '"><i class="fas fa-cart-plus"></i> Thêm</button>' : '') +
+          '</div>' +
+        '</div>';
+      hang.appendChild(the);
+    });
+    hang.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-them]');
+      if (!b) return;
+      b.disabled = true;
+      b.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      var body = new URLSearchParams({ monid: b.getAttribute('data-them'), soluong: '1' });
+      fetch('/add-to-cart', { method: 'POST', body: body, redirect: 'manual', credentials: 'same-origin' })
+        .then(function () {
+          b.innerHTML = '<i class="fas fa-check"></i> Đã thêm';
+          var ten = b.closest('.cb-the-mon').querySelector('.cb-the-mon__ten').firstChild.textContent;
+          hienBot({ van_ban: 'Đã thêm **' + ten + '** vào giỏ hàng rồi nha 🛒', lien_ket: [{ nhan: 'Xem giỏ hàng & đặt món', url: '/cart' }] }, true);
+        })
+        .catch(function () { b.disabled = false; b.innerHTML = 'Thử lại'; });
+    });
+    return hang;
+  }
+
+  /* ---------- vẽ một bong bóng ---------- */
+  function veTin(vaiTro, noiDung, kem, gio, noiTiep) {
+    kem = kem || {};
     var d = document.createElement('div');
-    d.className = 'cb-tn cb-tn--' + (vaiTro === 'toi' ? 'toi' : 'bot');
+    d.className = 'cb-tn cb-tn--' + (vaiTro === 'toi' ? 'toi' : 'bot') + (noiTiep ? ' cb-tn--noi-tiep' : '');
+    if (vaiTro !== 'toi') d.appendChild(anhDaiDien());
     var noi = document.createElement('div');
     noi.className = 'cb-tn__noi';
     noi.innerHTML = dinhDang(noiDung);
 
-    if (kem && kem.bang && kem.bang.length && kem.cot && kem.cot.length) {
+    if (kem.anh) {
+      var im = document.createElement('img');
+      im.className = 'cb-anh-kt'; im.src = kem.anh; im.alt = ''; im.loading = 'lazy';
+      noi.appendChild(im);
+    }
+    if (kem.mon && kem.mon.length) { noi.classList.add('cb-tn__noi--the'); noi.appendChild(veTheMon(kem.mon)); }
+
+    if (kem.bang && kem.bang.length && kem.cot && kem.cot.length) {
       var boc = document.createElement('div');
       boc.className = 'cb-bang-cuon';
-      var t = '<table class="cb-bang"><thead><tr>';
-      kem.cot.forEach(function (c) { t += '<th>' + thoat(c.nhan) + '</th>'; });
-      t += '</tr></thead><tbody>';
+      var tb = '<table class="cb-bang"><thead><tr>';
+      kem.cot.forEach(function (c) { tb += '<th>' + thoat(c.nhan) + '</th>'; });
+      tb += '</tr></thead><tbody>';
       kem.bang.slice(0, 25).forEach(function (r) {
-        t += '<tr>';
+        tb += '<tr>';
         kem.cot.forEach(function (c) {
           var v = r[c.khoa];
-          t += laSo(v) ? '<td class="cb-so">' + soVN(v) + '</td>'
-                       : '<td>' + thoat(v == null ? '—' : v) + '</td>';
+          tb += laSo(v) ? '<td class="cb-so">' + soVN(v) + '</td>' : '<td>' + thoat(v == null ? '—' : v) + '</td>';
         });
-        t += '</tr>';
+        tb += '</tr>';
       });
-      t += '</tbody></table>';
-      boc.innerHTML = t;
+      boc.innerHTML = tb + '</tbody></table>';
       noi.appendChild(boc);
       if (kem.bang.length > 25) {
         var ghi = document.createElement('em');
@@ -432,21 +648,43 @@
       }
     }
 
-    if (kem && kem.nguon === 'du_phong') {
-      var nhan = document.createElement('span');
-      nhan.className = 'cb-nhan-ml';
-      nhan.textContent = cbI18n.duPhong;
-      noi.appendChild(nhan);
+    if (kem.lien_ket && kem.lien_ket.length) {
+      var lk = document.createElement('div');
+      lk.className = 'cb-lien-ket';
+      kem.lien_ket.slice(0, 4).forEach(function (l) {
+        var a = document.createElement('a');
+        a.href = urlAnToan(l.url);
+        if (/^https:/i.test(a.getAttribute('href'))) { a.target = '_blank'; a.rel = 'noopener'; }
+        a.innerHTML = '<i class="fas ' + (/^tel:/.test(l.url) ? 'fa-phone' : /maps/.test(l.url) ? 'fa-location-dot' : 'fa-arrow-right') + '"></i> ' + thoat(l.nhan);
+        lk.appendChild(a);
+      });
+      noi.appendChild(lk);
     }
 
-    /* Cham cau tra loi: du lieu nay dung de do do hai long trong bao cao. */
-    if (kem && kem.id_nhat_ky) {
+    if (kem.chuyen_nhan_vien && KENH === 'khach') {
+      var hop = document.createElement('div');
+      hop.className = 'cb-nguoi-that';
+      var them = function (chu, duong, phu) {
+        var a = document.createElement('a'); a.href = duong; a.textContent = chu; if (phu) a.className = 'phu'; hop.appendChild(a);
+      };
+      if (kem.can_dang_nhap) { them(cbI18n.dangNhap, '/login'); them(cbI18n.dangKy, '/register', true); }
+      else if (GD.hien_nut_nhan_vien !== false) them(cbI18n.nhanVien, '/chat');
+      them('📞 ' + (GD.hotline || '0825 297 297'), 'tel:' + (GD.hotline_so || '0825297297'), true);
+      noi.appendChild(hop);
+    }
+
+    if (kem.nguon === 'du_phong') {
+      var nhan = document.createElement('span');
+      nhan.className = 'cb-nhan-ml'; nhan.textContent = cbI18n.duPhong; noi.appendChild(nhan);
+    }
+
+    /* Chấm câu trả lời: dữ liệu đo độ hài lòng ở trang quản trị. */
+    if (kem.id_nhat_ky && GD.cham_diem !== false) {
       var cham = document.createElement('div');
       cham.className = 'cb-cham';
       [['👍', true], ['👎', false]].forEach(function (c) {
         var b = document.createElement('button');
-        b.textContent = c[0];
-        b.title = c[1] ? cbI18n.huuIch : cbI18n.chuaDungY;
+        b.type = 'button'; b.textContent = c[0]; b.title = c[1] ? cbI18n.huuIch : cbI18n.chuaDungY;
         b.onclick = function () {
           fetch('/chatbot/api/danh-gia', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -460,15 +698,12 @@
       noi.appendChild(cham);
     }
 
-    if (kem && kem.goi_y && kem.goi_y.length) {
+    if ((GD.hien_goi_y || KENH === 'noi_bo') && kem.goi_y && kem.goi_y.length) {
       var g = document.createElement('div');
       g.className = 'cb-goiy';
       kem.goi_y.forEach(function (cau) {
         var b = document.createElement('button');
         b.type = 'button';
-        // Câu gợi ý ở giao diện có thể đã được dịch, nhưng bộ nhận diện ý
-        // định hiện chỉ học tiếng Việt. `cau_hoi` là câu chuẩn gửi cho bot;
-        // `nhan` là phần khách nhìn thấy.
         var cauGui = (cau && typeof cau === 'object') ? cau.cau_hoi : cau;
         b.textContent = (cau && typeof cau === 'object') ? cau.nhan : cau;
         b.onclick = function () { gui(cauGui, b.textContent); };
@@ -477,131 +712,178 @@
       noi.appendChild(g);
     }
 
+    var sp = document.createElement('span');
+    sp.className = 'cb-tn__gio'; sp.textContent = gio || gioNay();
+    noi.appendChild(sp);
+
     d.appendChild(noi);
     than.appendChild(d);
-    than.scrollTop = than.scrollHeight;
+    cuonXuong();
     return d;
   }
 
-  /**
-   * Gắn nút dẫn sang nhân viên thật vào cuối một bong bóng trả lời.
-   *
-   * canDangNhap do máy chủ quyết định (theo phiên), không đoán ở đây: khách đã
-   * đăng nhập mà lại mời "đăng ký" thì vừa thừa vừa khó hiểu, còn khách chưa
-   * đăng nhập mà đưa thẳng /chat thì bấm vào chỉ bị đá về trang đăng nhập.
-   */
-  function themNutNguoiThat(bongBong, canDangNhap) {
-    var noi = bongBong && bongBong.querySelector('.cb-tn__noi');
-    if (!noi) return;
-    var hop = document.createElement('div');
-    hop.className = 'cb-nguoi-that';
-
-    function nut(chu, duong, phu) {
-      var a = document.createElement('a');
-      a.href = duong;
-      a.textContent = chu;
-      if (phu) a.className = 'phu';
-      hop.appendChild(a);
-    }
-
-    if (canDangNhap) {
-      nut(cbI18n.dangNhap, '/login');
-      nut(cbI18n.dangKy, '/register', true);
-    } else {
-      nut(cbI18n.nhanVien, '/chat');
-    }
-    nut('📞 ' + <%- JSON.stringify(t('giao_dien.goi_so')) %>, 'tel:0825297297', true);
-    noi.appendChild(hop);
-    than.scrollTop = than.scrollHeight;
+  function themTin(vaiTro, noiDung, kem, noiTiep) {
+    var gio = gioNay();
+    // Lưu bản gọn (bỏ id chấm điểm cũ để không chấm lại câu đã qua phiên).
+    lichSu.push({ vai: vaiTro, noi_dung: noiDung, kem: kem ? JSON.parse(JSON.stringify(kem)) : null, gio: gio, noi_tiep: !!noiTiep });
+    luu();
+    return veTin(vaiTro, noiDung, kem, gio, noiTiep);
   }
 
-  function themDangNghi() {
+  function themDangGo() {
     var d = document.createElement('div');
     d.className = 'cb-tn cb-tn--bot';
-    d.innerHTML = '<div class="cb-tn__noi cb-dangnghi"><span></span><span></span><span></span></div>';
+    d.appendChild(anhDaiDien());
+    var n = document.createElement('div');
+    n.className = 'cb-tn__noi cb-dangnghi';
+    n.innerHTML = '<span></span><span></span><span></span>';
+    d.appendChild(n);
     than.appendChild(d);
-    than.scrollTop = than.scrollHeight;
+    cuonXuong();
     return d;
   }
 
+  function cho(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  /* Nhịp nhắn như người thật (không phải trả lời tức thì kiểu máy):
+       1. đọc tin khách  : im lặng một lúc (tre_doc_ms, dao động ±35%)
+       2. "đang gõ…"     : dài theo số chữ, tối thiểu ~1,2 giây, có dao động
+       3. gửi; đoạn sau  : ngừng một chút rồi mới gõ tiếp */
+  function daoDong(ms, bien) { return ms * (1 - bien + Math.random() * bien * 2); }
+  function thoiGianDoc() {
+    if (GD.hieu_ung_go === false) return 0;
+    return daoDong(GD.tre_doc_ms != null ? GD.tre_doc_ms : 1000, 0.35);
+  }
+  function thoiGianGo(s) {
+    if (GD.hieu_ung_go === false) return 0;
+    var ms = String(s || '').replace(/\*\*/g, '').length * (GD.toc_do_go || 45);
+    return daoDong(Math.max(1200, Math.min(ms, GD.go_toi_da_ms || 4500)), 0.15);
+  }
+
+  /* Đoạn dài tách nhiều bong bóng; phần đính kèm (thẻ món, nút) gắn vào bong bóng cuối. */
+  function hienBot(kq, nhanh) {
+    var vb = String(kq.van_ban || cbI18n.khongCoTraLoi);
+    var doan = (GD.chia_tin !== false && !nhanh) ? vb.split(/\n{2,}/).map(function (x) { return x.trim(); }).filter(Boolean) : [vb];
+    if (doan.length > 3) doan = [doan.slice(0, doan.length - 2).join('\n\n')].concat(doan.slice(-2));
+    var chuoi = Promise.resolve();
+    doan.forEach(function (p, i) {
+      chuoi = chuoi.then(function () {
+        if (nhanh || GD.hieu_ung_go === false) return;
+        // Giữa hai đoạn: ngừng như đang nghĩ câu tiếp theo rồi mới hiện "đang gõ".
+        return cho(i > 0 ? daoDong(700, 0.3) : 0).then(function () {
+          var go = themDangGo();
+          // Kèm thẻ món thì gõ lâu hơn một chút (như đang tìm ảnh gửi).
+          var them = (i === doan.length - 1 && kq.mon && kq.mon.length) ? 800 : 0;
+          return cho(thoiGianGo(p) + them).then(function () { go.remove(); });
+        });
+      }).then(function () {
+        themTin('bot', p, i === doan.length - 1 ? kq : null, i > 0);
+      });
+    });
+    return chuoi;
+  }
+
+  /* ---------- gửi câu hỏi ---------- */
   function gui(cauHoi, hienThi) {
     cauHoi = String(cauHoi || '').trim();
-    if (!cauHoi) return;
-    // Với nút gợi ý đa ngôn ngữ, gửi câu chuẩn tiếng Việt cho mô hình nhưng
-    // vẫn giữ nguyên câu Nhật/Anh mà khách vừa bấm trong bong bóng của khách.
+    if (!cauHoi || dangBan) return;
+    dangBan = true;
     themTin('toi', hienThi || cauHoi);
     oNhap.value = '';
     nutGui.disabled = true;
-    var nghi = themDangNghi();
+    // Hỏi máy chủ ngay, nhưng bot "đọc tin" xong mới bắt đầu gõ - hai việc chạy song song.
+    var yeuCau = fetch('/chatbot/api/hoi', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cau_hoi: cauHoi, kenh: KENH })
+    }).then(function (r) { return r.json(); });
 
-    fetch('/chatbot/api/hoi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cau_hoi: cauHoi })
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (kq) {
-        nghi.remove();
-        var bongBong = themTin('bot', kq.van_ban || cbI18n.khongCoTraLoi, kq);
-        /* Trước đây chỗ này thêm một bong bóng thứ hai chỉ để nói "bạn vào mục
-           Chat" — vừa lặp lại đúng câu máy chủ vừa nói, vừa bắt người dùng tự đi
-           tìm menu. Nay gắn thẳng nút bấm vào ngay câu trả lời. */
-        if (kq.chuyen_nhan_vien) themNutNguoiThat(bongBong, kq.can_dang_nhap);
-      })
+    Promise.all([yeuCau, cho(thoiGianDoc())])
+      .then(function (ds) { return hienBot(ds[0]); })
       .catch(function () {
-        nghi.remove();
-        themTin('bot', cbI18n.loiKetNoi);
+        var go = themDangGo();
+        return cho(900).then(function () { go.remove(); themTin('bot', cbI18n.loiKetNoi); });
       })
-      .finally(function () { nutGui.disabled = false; oNhap.focus(); });
+      .then(function () { dangBan = false; nutGui.disabled = false; oNhap.focus(); });
   }
 
   function chaoLanDau() {
     if (daChao) return;
     daChao = true;
-    fetch('/chatbot/api/cau-hoi-mau')
+    if (lichSu.length) return;
+    var go = themDangGo();
+    fetch('/chatbot/api/khoi-dong?kenh=' + KENH)
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        themTin('bot',
-          quyen === 'quan_ly' ? cbI18n.chaoQuanLy : cbI18n.chaoKhach,
-          { goi_y: d.cau_hoi });
+        go.remove();
+        return hienBot({ van_ban: d.loi_chao || cbI18n.chaoKhach, goi_y: d.goi_y });
       })
-      .catch(function () {
-        themTin('bot', cbI18n.chaoKhach);
-      });
+      .catch(function () { go.remove(); themTin('bot', quyen === 'quan_ly' ? cbI18n.chaoQuanLy : cbI18n.chaoKhach); });
   }
 
-  nut.onclick = function () {
-    khung.classList.toggle('cb-mo');
-    if (khung.classList.contains('cb-mo')) { chaoLanDau(); oNhap.focus(); }
-  };
+  /* ---------- khôi phục cuộc trò chuyện khi chuyển trang ---------- */
+  try {
+    var cu = JSON.parse(sessionStorage.getItem(KHOA_LS) || '[]');
+    if (Array.isArray(cu) && cu.length) {
+      lichSu = cu;
+      cu.forEach(function (m) { veTin(m.vai, m.noi_dung, m.kem, m.gio, m.noi_tiep); });
+    }
+  } catch (e) { lichSu = []; }
+
+  function mo() {
+    khung.classList.add('cb-mo');
+    moi.hidden = true; soMoi.classList.remove('hien');
+    try { sessionStorage.setItem('cb_da_mo', '1'); } catch (e) {}
+    chaoLanDau();
+    setTimeout(cuonXuong, 30);
+    oNhap.focus();
+  }
+  nut.onclick = function () { khung.classList.contains('cb-mo') ? khung.classList.remove('cb-mo') : mo(); };
   document.getElementById('cb-dong').onclick = function () { khung.classList.remove('cb-mo'); };
+  document.getElementById('cb-lam-moi').onclick = function () {
+    lichSu = []; luu(); than.innerHTML = ''; daChao = false;
+    try { sessionStorage.removeItem(KHOA_LS); } catch (e) {}
+    chaoLanDau();
+  };
   form.onsubmit = function (e) { e.preventDefault(); gui(oNhap.value); };
 
+  /* ---------- lời chào chủ động (giống nhân viên mời khách) ---------- */
+  var daMo = false;
+  try { daMo = sessionStorage.getItem('cb_da_mo') === '1' || sessionStorage.getItem('cb_tat_moi') === '1'; } catch (e) {}
+  if (KENH === 'khach' && GD.chao_chu_dong && !daMo && !lichSu.length) {
+    setTimeout(function () {
+      if (khung.classList.contains('cb-mo')) return;
+      document.getElementById('cb-moi-noi-dung').textContent = GD.chao_chu_dong_noi_dung || '';
+      moi.hidden = false;
+      soMoi.classList.add('hien');
+    }, Math.max(2, Number(GD.chao_chu_dong_giay) || 10) * 1000);
+  }
+  moi.onclick = function (e) {
+    if (e.target.id === 'cb-moi-dong') {
+      moi.hidden = true;
+      try { sessionStorage.setItem('cb_tat_moi', '1'); } catch (x) {}
+      return;
+    }
+    mo();
+  };
+
   /*
-    An nut khi cuon xuong, hien khi cuon len - chi tren dien thoai.
-
-    Kiem tra be ngang trong chinh ham xu ly chu khong chi mot lan luc nap: xoay
-    ngang may hay doi cua so thi nguong 640px doi theo, va neu vua ra khoi kho
-    dien thoai phai go lop an di keo nut bien mat han tren may tinh.
-
-    Nguong 8px de rung tay khong lam nut nhap nhay; 160px de o dau trang - noi
-    khach hay bam hoi nhat - nut luon hien.
+    Ẩn nút khi cuộn xuống, hiện khi cuộn lên - chỉ trên điện thoại.
+    Ngưỡng 8px để rung tay không làm nút nhấp nháy; 160px để ở đầu trang nút luôn hiện.
   */
   var mqDienThoai = window.matchMedia('(max-width: 640px)');
   var yTruoc = window.scrollY;
-  var dangCho = false;
+  var dangChoCuon = false;
   window.addEventListener('scroll', function () {
-    if (dangCho) return;
-    dangCho = true;
+    if (dangChoCuon) return;
+    dangChoCuon = true;
     requestAnimationFrame(function () {
-      dangCho = false;
+      dangChoCuon = false;
       if (!mqDienThoai.matches) { nut.classList.remove('cb-nut--an'); return; }
       var yNay = window.scrollY;
       if (Math.abs(yNay - yTruoc) < 8) return;
-      nut.classList.toggle('cb-nut--an',
-        yNay > yTruoc && yNay > 160 && !khung.classList.contains('cb-mo'));
+      nut.classList.toggle('cb-nut--an', yNay > yTruoc && yNay > 160 && !khung.classList.contains('cb-mo'));
       yTruoc = yNay;
     });
   }, { passive: true });
 })();
 </script>
+<% } %>

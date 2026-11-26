@@ -349,6 +349,12 @@ module.exports = {
   'theo_doi.giao_toi': 'Giao tới',
   'theo_doi.don_hang': 'Đơn hàng',
   'theo_doi.dien_bien': 'Diễn biến',
+
+  'theo_doi.da_tim_shipper': 'Đã thử phân shipper {n} lần',
+
+  'theo_doi.hien_them': 'Xem thêm {n} mốc',
+
+  'theo_doi.thu_gon': 'Thu gọn',
   'theo_doi.tu_cap_nhat': 'Trang này tự cập nhật, bạn không cần tải lại.',
   'theo_doi.tra_cuu_khac': 'Tra cứu đơn khác',
   'theo_doi.dang_toi': 'Shipper đang trên đường tới bạn',
@@ -2443,4 +2449,25 @@ module.exports = {
   'lich_su_tiec.huy_xac_nhan': 'Xác nhận hủy tiệc',
   'lich_su_tiec.huy_thanh_cong': 'Đã hủy yêu cầu đặt tiệc {ma}.',
   'lich_su_tiec.huy_loi': 'Không hủy được, vui lòng thử lại.',
+  // The muc coc gon (views/partials/chinh-sach-coc.ejs)
+  'cs_coc.t1_dk': 'Bàn nhỏ · giờ thường',
+  'cs_coc.t1_gia': '0đ',
+  'cs_coc.t1_dv': 'miễn cọc',
+  'cs_coc.t1_y1': '1 – 5 khách, không đặt món trước',
+  'cs_coc.t1_y2': 'Ngoài giờ cao điểm {gcd}',
+  'cs_coc.t2_dk': 'Giờ cao điểm · nhóm 6–{nt1}',
+  'cs_coc.t2_gia': '100.000đ',
+  'cs_coc.t2_dv': '/ khách',
+  'cs_coc.t2_y1': 'Bàn đặt vào giờ cao điểm {gcd}',
+  'cs_coc.t2_y2': 'Hoặc nhóm 6 – {nt1} khách vào giờ thường',
+  'cs_coc.t3_dk': 'Đoàn từ {nt} khách',
+  'cs_coc.t3_gia': '150.000đ',
+  'cs_coc.t3_dv': '/ khách',
+  'cs_coc.t3_y1': 'Áp dụng mọi khung giờ',
+  'cs_coc.t3_y2': 'Dùng món ít hơn mức cọc: hoàn tiền thừa khi thanh toán',
+  'cs_coc.t4_dk': 'Đặt món trước',
+  'cs_coc.t4_gia': '100%',
+  'cs_coc.t4_dv': 'tiền món',
+  'cs_coc.t4_y1': 'Thay cho tiền cọc bàn, không thu thêm',
+  'cs_coc.t4_y2': 'Đoàn từ {nt} khách: tối thiểu 150.000đ / khách',
 };

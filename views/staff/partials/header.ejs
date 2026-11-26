@@ -712,6 +712,7 @@
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-chair"></i><span>Sơ đồ bàn (Đón khách)</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='qr-codes' ? 'active' : '' %>" href="/staff/qr-codes" data-match="/staff/qr-codes"><i class="fas fa-qrcode"></i><span>Mã QR bàn</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='customers' ? 'active' : '' %>" href="/staff/customers" data-match="/staff/customers"><i class="fas fa-address-book"></i><span>Danh sách khách hàng</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>" href="/staff/chat" data-match="/staff/chat"><i class="fas fa-comments"></i><span>Chat với khách hàng</span></a>
         </div>
       <% } %>
 
@@ -720,6 +721,10 @@
           <div class="qt-side__label">Phục vụ bàn</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='sodoban' ? 'active' : '' %>" href="/so-do-ban" data-match="/so-do-ban"><i class="fas fa-utensils"></i><span>Sơ đồ bàn &amp; Gọi món</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bookings' ? 'active' : '' %>" href="/staff/bookings" data-match="/staff/bookings"><i class="fas fa-receipt"></i><span>Đơn gọi món tại bàn</span></a>
+          <%# Phuc vu cung tra loi chat (routes /staff/chat cho Quay, Phuc vu, Quan ly) - chi hien o day neu chua co trong nhom Le tan. %>
+          <% if (!dongVaiDuoc(['Quay', 'letan', 'Quan ly'])) { %>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='chat' ? 'active' : '' %>" href="/staff/chat" data-match="/staff/chat"><i class="fas fa-comments"></i><span>Chat với khách hàng</span></a>
+          <% } %>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && (activePage==='kitchen' || activePage==='kds') ? 'active' : '' %>" href="/kds" data-match="/kds,/staff/kitchen"><i class="fas fa-bell-concierge"></i><span>Theo dõi món ra (KDS)</span></a>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='bao-cao-phuc-vu' ? 'active' : '' %>" href="/staff/phuc-vu/bao-cao" data-match="/staff/phuc-vu/bao-cao"><i class="fas fa-clipboard-check"></i><span>Báo cáo ca phục vụ</span></a>
           <% if (!_dieuHanh) { %>
@@ -814,7 +819,10 @@
         <div class="qt-side__group">
           <div class="qt-side__label">Giao hàng</div>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='giao-hang' ? 'active' : '' %>" href="/staff/giao-hang" data-match="/staff/giao-hang"><i class="fas fa-truck-fast"></i><span>Điều phối giao hàng</span></a>
+          <%# Ban do chi cho nguoi theo doi / phan cong (cung dieu kien voi canTheoDoi trong routes/vanChuyen.js) - truoc day Le tan, Thu ngan thay link nhung bam vao bi 403. %>
+          <% if ((typeof coQuyen === 'function' && (coQuyen('giao_hang.theo_doi') || coQuyen('giao_hang.phan_cong'))) || (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quan ly']))) { %>
           <a class="qt-nav__item" href="/staff/giao-hang/ban-do" data-match="/staff/giao-hang/ban-do"><i class="fas fa-map-location-dot"></i><span>Bản đồ Shipper</span></a>
+          <% } %>
         </div>
       <% } %>
 
@@ -869,6 +877,12 @@
                   style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d4f"></span>
             <span class="small" style="color:#6b5f54; font-size:12px;">thời gian thực</span>
           </div>
+          <% if (typeof session !== 'undefined' && session && session.cheDoDemo) { %>
+          <span title="Tài khoản demo: bỏ qua ràng buộc giờ giấc (nhận khách, giữ bàn, không đến). Các ràng buộc tiền và dữ liệu vẫn áp dụng."
+                style="display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#fff4e0;border:1px solid #f0b75a;color:#9a5b00;font-size:11.5px;font-weight:800;letter-spacing:.04em;">
+            <i class="fas fa-flask"></i> CHẾ ĐỘ DEMO
+          </span>
+          <% } %>
           <%- include('../../partials/chuong-thong-bao', { laTb: 'nv', trangTb: '/staff/thong-bao' }) %>
           <div class="qt-chip">
             <span class="qt-chip__ava"><%= typeof staffName !== 'undefined' && staffName ? staffName.charAt(0).toUpperCase() : 'N' %></span>

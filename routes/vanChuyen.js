@@ -1061,6 +1061,41 @@ router.post('/theo-doi/:ma/huy', bat(async (req, res) => {
   }
 }));
 
+/*
+  Dien bien cho KHACH xem. Tu phan don xoay vong shipper (moi nguoi 3 phut de
+  nhan) ghi moi vong mot cap "Cho phan shipper" / "Da phan shipper" - mot don
+  cho lau co the co hang chuc dong giong nhau, khach doc khong ra gi. Gom ca
+  chuoi cho_phan/da_phan lien tiep thanh MOT dong (lay moc moi nhat) kem so lan
+  doi nguoi; bo dong trung lap lien tiep. Tra ve moi nhat truoc.
+*/
+const VONG_PHAN = new Set(['cho_phan', 'da_phan']);
+function gonDienBienChoKhach(ds) {
+  const kq = [];
+  for (let i = 0; i < ds.length; i++) {
+    const n = ds[i];
+    const ma = n.den_trang_thai;
+    if (VONG_PHAN.has(ma)) {
+      // Doc het chuoi vong phan lien tiep, chi giu dong cuoi.
+      let j = i, soLanPhan = 0;
+      while (j < ds.length && VONG_PHAN.has(ds[j].den_trang_thai)) {
+        if (ds[j].den_trang_thai === 'da_phan') soLanPhan++;
+        j++;
+      }
+      const cuoi = ds[j - 1];
+      kq.push({
+        nhan: cuoi.tt.nhan, mau: cuoi.tt.mau, icon: cuoi.tt.icon, luc: cuoi.luc, bat_dau: n.luc,
+        ghi_chu: null, so_lan_phan: soLanPhan,
+      });
+      i = j - 1;
+      continue;
+    }
+    const truoc = kq[kq.length - 1];
+    if (truoc && truoc.nhan === n.tt.nhan) { truoc.luc = n.luc; continue; }
+    kq.push({ nhan: n.tt.nhan, mau: n.tt.mau, icon: n.tt.icon, luc: n.luc, ghi_chu: n.su_kien ? null : n.ghi_chu });
+  }
+  return kq.reverse();
+}
+
 router.get('/theo-doi/:ma', bat(async (req, res) => {
   const ma = String(req.params.ma || '').trim().toUpperCase();
   const don = await vc.donGiaoTheoMa(ma);
@@ -1114,10 +1149,7 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
     },
     mon,
     // Su kien noi bo (goi khach, su co, quay nhan lai hang) khong cho khach xem.
-    lichSu: lichSu.filter((n) => !n.noi_bo).map((n) => ({
-      nhan: n.tt.nhan, mau: n.tt.mau, icon: n.tt.icon, luc: n.luc,
-      ghi_chu: n.su_kien ? null : n.ghi_chu,
-    })),
+    lichSu: gonDienBienChoKhach(lichSu.filter((n) => !n.noi_bo)),
     nhaHang: goc,
     // Chinh sach: khach biet minh da tra bao nhieu, co duoc hoan diem khong.
     chinhSach: {

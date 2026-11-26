@@ -169,6 +169,12 @@ async function chuyenBan(idNguon, idDich, { nhanVien, lyDo } = {}) {
     await kiemTraDonMo(conn, 'Bàn ' + nguon.ban.number_ban, nguon);
     if (dich.sesis) throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} đang có khách - hãy dùng "Gộp bàn".`);
     if (Number(dich.ban.trangthai) === 2) throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} đã được đặt trước.`);
+    // Ban dich trong nhung sap co luot dat khac (trong occupied_hold_minutes):
+    // chuyen khach sang thi khach dat den se khong con ban.
+    const henDich = await require('./kdsService').luotDatSapToi(dich.ban.Id_ban, nhanVien && nhanVien.id);
+    if (henDich && henDich.reservation_code !== nguon.sesis) {
+      throw new LoiChuyenBan(`Bàn ${dich.ban.number_ban} sắp có khách đặt lúc ${String(henDich.start_time).slice(0, 5)} (mã ${henDich.reservation_code}) - chọn bàn khác.`);
+    }
 
     await dongBoDatBan(conn, nguon, dich);
     await conn.query('UPDATE hopdong SET id_ban = ? WHERE sesis = ?', [dich.ban.Id_ban, nguon.sesis]);

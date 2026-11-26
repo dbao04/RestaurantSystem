@@ -40,9 +40,15 @@ const CAU_HOI = {
 function chuanHoaCauHoi(cauHoi, ngonNgu) {
   const nn = maHopLe(ngonNgu);
   if (nn === 'vi') return String(cauHoi || '');
+  // 1) Cau trong kho kien thuc (da co ban dich) -> hoi bang cau tieng Viet goc.
+  const cauKho = timCauKho(cauHoi, nn);
+  if (cauKho) return cauKho;
+  // 2) Cau nghiep vu ML hieu.
   const cau = thuGon(cauHoi);
   const khop = (CAU_HOI[nn] || []).find(([mau]) => mau.test(cau));
-  return khop ? khop[1] : String(cauHoi || '');
+  if (khop) return khop[1];
+  // 3) Hoi mon: doi ten nguyen lieu EN/JA sang tieng Viet de tim trong thuc don.
+  return dichTuMon(cauHoi, nn);
 }
 
 const CAU_TRA_LOI = {
@@ -170,4 +176,122 @@ function dichPhanHoi(phanHoi, ngonNgu) {
   return kq;
 }
 
-module.exports = { chuanHoaCauHoi, dichPhanHoi };
+// ==========================================================================
+// KHO KIEN THUC + THUC DON bang EN/JA (ban dich san: config/chatbot-ban-dich.js)
+// ==========================================================================
+const BD = require('../config/chatbot-ban-dich');
+const VT = { en: 0, ja: 1 };
+
+// Cau hoi EN/JA -> cau hoi chinh tieng Viet trong kho. Nhieu mau cung khop thi
+// lay mau khop doan dai nhat ("hi, can I book a table" -> dat ban, khong phai chao).
+function timCauKho(cauHoi, nn) {
+  const cau = nn === 'en' ? thuGon(cauHoi) : String(cauHoi || '').trim();
+  let tot = null;
+  let dai = 0;
+  for (const [vi, b] of Object.entries(BD.kien_thuc)) {
+    const m = b[nn] && cau.match(b[nn][0]);
+    if (m && m[0].length > dai) { tot = vi; dai = m[0].length; }
+  }
+  return tot;
+}
+
+function dichTuMon(cauHoi, nn) {
+  let s = nn === 'en' ? thuGon(cauHoi) : String(cauHoi || '').trim();
+  const gia = nn === 'en'
+    ? s.match(/^(?:what(?:'s| is) the price of|how much (?:is|are|does|for)|price of)\s+(?:the |a |an )?(.+?)(?:\s+cost)?\s*\??$/)
+    : s.match(/^(.+?)(?:は|って|の)?(?:いくら|値段|価格|料金)/);
+  // Tieng Nhat viet lien -> chen khoang trang quanh tu da dich de khong dinh chu.
+  const doi = (x) => (BD.tu_mon[nn] || []).reduce((t, [mau, vi]) => t.replace(mau, ` ${vi} `), x).replace(/\s+/g, ' ').trim();
+  if (gia) return `Giá ${doi(gia[1])} bao nhiêu?`;
+  return doi(s);
+}
+
+function nhanDich(cau, nn) {
+  const b = BD.nhan[String(cau || '').trim()];
+  return b ? b[VT[nn]] : cau;
+}
+
+// Thay {ten_khach} theo ngon ngu roi giao cho apDung (bien, emoji) cua kho.
+function apDungNN(vb, nn, apDung, tenKhach) {
+  const ten = String(tenKhach || '').trim();
+  const goi = nn === 'ja' ? (ten ? `${ten}様` : 'お客様') : (ten || 'there');
+  return apDung(String(vb || '').replace(/\{ten_khach\}/g, goi));
+}
+
+function giaTien(n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; }
+
+// Cau dan cho danh sach mon / mot mon (bo may thuc don viet tieng Viet).
+function dichCauMon(kq, nn) {
+  const kieu = String(kq.y_dinh || '').replace(/^mon:/, '');
+  const ds = kq.mon || [];
+  const m = ds[0];
+  const en = nn === 'en';
+  if ((kieu === 'chinh_xac' || kieu === 'ngu_canh') && ds.length === 1 && m) {
+    if (!m.con) return en ? `Sorry, **${m.ten}** is **currently sold out** 😢 Please try another dish in *${m.loai}*!`
+      : `申し訳ございません、**${m.ten}** は**ただいま品切れ**です 😢 *${m.loai}* のほかの料理もご覧ください！`;
+    const ten = `**${m.ten}**${m.ma ? ` (${m.ma})` : ''}${m.en && m.en !== m.ten ? ` – _${m.en}_` : ''}`;
+    return en ? `${ten} costs **${giaTien(m.gia)}**/${m.don_vi} ${m.icon || '🍽️'}\nCategory: **${m.loai}**. Would you like me to add it to your cart?`
+      : `${ten} は **${giaTien(m.gia)}**/${m.don_vi} です ${m.icon || '🍽️'}\nカテゴリー：**${m.loai}**。カートに追加しますか？`;
+  }
+  if (kieu === 'ban_chay') return en ? "These are our guests' favourite dishes 🔥 Tap a photo for details:" : 'お客様に人気の料理はこちらです 🔥 写真をタップすると詳細が見られます：';
+  if (kieu === 'theo_gia') return en ? 'Here are some budget-friendly dishes 💰:' : 'お手頃な料理はこちらです 💰：';
+  if (ds.length === 1) return en ? "Is this the dish you're looking for? 👇" : 'お探しの料理はこちらですか？👇';
+  return en ? `I found ${ds.length} dishes for you 👇` : `${ds.length}品見つかりました 👇`;
+}
+
+const Y_DINH_HE_THONG = { tu_cam: 'tin_tu_cam', de_lai_sdt: 'tin_cam_on_sdt', ngoai_gio: 'tin_ngoai_gio' };
+
+/**
+ * Dich phan hoi cua kho kien thuc / thuc don / cau he thong sang EN/JA.
+ * Phan hoi ML da dich o dichPhanHoi -> chi dich nhan nut con sot.
+ * @param {object} o { cauKho: cau hoi chinh cua dong kho da khop, apDung: fn(vb), tenKhach, sdt }
+ */
+function dichKetQua(kq, ngonNgu, o = {}) {
+  const nn = maHopLe(ngonNgu);
+  if (nn === 'vi' || !kq) return kq;
+  const r = { ...kq };
+  const i = VT[nn];
+  const ad = (vb) => apDungNN(vb, nn, o.apDung || ((x) => x), o.tenKhach);
+  if (r.nguon !== 'ml') {
+    const bdKho = o.cauKho && BD.kien_thuc[o.cauKho] && BD.kien_thuc[o.cauKho][nn];
+    if (r.nguon === 'kien_thuc' && bdKho) r.van_ban = ad(bdKho[1]);
+    else if (String(r.y_dinh || '').startsWith('mon:')) r.van_ban = dichCauMon(r, nn);
+    else if (Y_DINH_HE_THONG[r.y_dinh]) r.van_ban = ad(BD.he_thong[Y_DINH_HE_THONG[r.y_dinh]][i]).replace('{sdt}', o.sdt || '');
+    else if (r.y_dinh === 'goi_y_gan_dung') r.van_ban = ad(BD.he_thong.tin_goi_y_gan_dung[i]);
+    else if (r.y_dinh === 'khong_hieu') r.van_ban = ad(BD.he_thong[r.chuyen_nhan_vien ? 'tin_chuyen_nv' : 'tin_khong_hieu'][i]);
+  }
+  if (Array.isArray(r.goi_y)) {
+    r.goi_y = r.goi_y.map((g) => {
+      const cau = g && typeof g === 'object' ? g.cau_hoi : g;
+      const nhan = g && typeof g === 'object' ? g.nhan : g;
+      return { cau_hoi: cau, nhan: nhanDich(nhan, nn) };
+    });
+  }
+  if (Array.isArray(r.lien_ket)) {
+    r.lien_ket = r.lien_ket.map((l) => {
+      let nhan = nhanDich(l.nhan, nn);
+      const tatCa = /^Xem tất cả món (.+)$/.exec(l.nhan || '');
+      if (tatCa) nhan = nn === 'en' ? `See all ${tatCa[1]}` : `${tatCa[1]}をすべて見る`;
+      return { ...l, nhan };
+    });
+  }
+  return r;
+}
+
+// Loi chao + goi y nhanh luc mo khung chat.
+function dichKhoiDong(loiChao, goiY, ngonNgu, o = {}) {
+  const nn = maHopLe(ngonNgu);
+  if (nn === 'vi') return { loi_chao: loiChao, goi_y: goiY };
+  return {
+    loi_chao: apDungNN(BD.he_thong.loi_chao[VT[nn]], nn, o.apDung || ((x) => x), o.tenKhach),
+    goi_y: (goiY || []).map((c) => ({ cau_hoi: c, nhan: nhanDich(c, nn) })),
+  };
+}
+
+function cauHeThong(khoa, ngonNgu) {
+  const nn = maHopLe(ngonNgu);
+  return nn === 'vi' ? null : (BD.he_thong[khoa] || [])[VT[nn]] || null;
+}
+
+module.exports = { chuanHoaCauHoi, dichPhanHoi, dichKetQua, dichKhoiDong, cauHeThong, timCauKho };
+

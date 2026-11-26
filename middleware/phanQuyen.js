@@ -25,6 +25,9 @@ const phanQuyen = require('../services/phanQuyenService');
  */
 function napHoSo() {
   return async (req, res, next) => {
+    // Phien con mang ca vai quan tri lan nhan vien (dang nhap truoc khi co quy
+    // tac "mot trinh duyet mot vai") -> giu vai cua khu dang mo. Xem utils/phienDangNhap.js.
+    require('../utils/phienDangNhap').gaiQuyetPhienLai(req);
     const phien = req.session || {};
 
     res.locals.hoSo = null;

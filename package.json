@@ -51,7 +51,10 @@
     "kho:kiemke": "node config/migrations/044_kiem_ke.js",
     "taikhoan:doimk": "node config/migrations/045_doi_mk_nhan_vien.js",
     "giaodien:toi": "node scripts/taoCheDoToi.js",
-    "shipper:nghiepvu": "node config/migrations/046_shipper_nghiep_vu.js"
+    "shipper:nghiepvu": "node config/migrations/046_shipper_nghiep_vu.js",
+    "chatbot:kienthuc": "node config/migrations/049_chatbot_kien_thuc.js",
+    "demo:tao": "node scripts/taoTaiKhoanDemo.js",
+    "demo:tat": "node scripts/taoTaiKhoanDemo.js --tat"
   },
   "keywords": [],
   "author": "",

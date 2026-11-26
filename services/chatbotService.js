@@ -13,6 +13,7 @@
  */
 const db = require('../config/db');
 const daNgonNgu = require('./chatbotDaNgonNgu');
+const triThuc = require('./chatbotTriThuc');
 
 const MAC_DINH_URL = 'http://127.0.0.1:8000';
 const TIMEOUT_MS = 15000;        // mot luot hoi phai nhanh; qua lau thi du phong
@@ -56,8 +57,11 @@ async function goi(duongDan, { method = 'GET', body = null, timeout = TIMEOUT_MS
  * tro giu giong `requireQuanLy` trong routes/forecast.js de hai noi khong lech
  * nhau - neu mot ngay nao do doi chinh sach thi phai sua ca hai.
  */
-function suyRaQuyen(session) {
+function suyRaQuyen(session, kenh = 'noi_bo') {
   if (!session) return { quyen: 'khach', id_kh: null, id_nv: null };
+  // Kenh khach (widget tren trang khach hang): LUON la khach, du trinh duyet dang
+  // dang nhap quan ly / nhan vien. Kenh chi ha quyen, khong bao gio nang quyen.
+  if (kenh === 'khach') return { quyen: 'khach', id_kh: session.userId || null, id_nv: null };
   if (session.adminlogin) {
     return { quyen: 'quan_ly', id_kh: null, id_nv: session.staffId || null };
   }
@@ -77,14 +81,7 @@ const chatbotService = {
   suyRaQuyen,
 
   /** Chatbot co dang bat khong (khoa `chatbot.bat` trong bang cau_hinh). */
-  dangBat: async () => {
-    try {
-      const [rows] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'chatbot.bat'");
-      return !rows[0] || String(rows[0].gia_tri) !== '0';
-    } catch {
-      return true;
-    }
-  },
+  dangBat: async () => (await triThuc.docThietLap()).bat,
 
   kiemTra: async () => {
     try {
@@ -100,7 +97,125 @@ const chatbotService = {
    * @param {object} session  req.session - dung de suy ra quyen, KHONG tin body
    * @param {object} nguCanh  { y_dinh_cho, cho_tham_so } luu tu luot truoc
    */
-  hoi: async (cauHoi, session, nguCanh = {}, ngonNgu = 'vi') => {
+  hoi: async (cauHoi, session, nguCanh = {}, ngonNgu = 'vi', phien = null, kenh = 'noi_bo') => {
+    const batDau = Date.now();
+    const laKhach = kenh === 'khach';
+    const boiCanh = suyRaQuyen(session, kenh);
+    const cauDaChuanHoa = daNgonNgu.chuanHoaCauHoi(cauHoi, ngonNgu);
+    const tl = await triThuc.docThietLap();
+    // Tri nho tach theo kenh: hoi o trang nhan vien khong lan sang khung chat khach.
+    const khoaNho = laKhach ? 'chatbotNho' : 'chatbotNhoNoiBo';
+    const nho = (session && session[khoaNho]) || {};
+    const ctx = {
+      quyen: boiCanh.quyen, id_kh: boiCanh.id_kh, phien, nguCanh: nho,
+      // Trang khach chi goi ten tai khoan khach, khong goi ten nhan vien / quan tri.
+      ten_khach: session && (laKhach ? session.username : (session.staffName || session.adminname || session.username)),
+    };
+    const cauKt = ngonNgu === 'vi' ? cauHoi : cauDaChuanHoa;
+
+    // Ghi nho phien: mon vua gioi thieu (hieu "mon do bao nhieu") + so lan khong hieu lien tiep.
+    const nhoLai = (kq) => {
+      if (!session) return;
+      const moi = { ...nho };
+      if (kq.mon && kq.mon.length) moi.mon_truoc = kq.mon.slice(0, 3).map((m) => m.id);
+      moi.khong_hieu_lien = kq.khong_hieu || kq.y_dinh === 'khong_hieu' ? (nho.khong_hieu_lien || 0) + 1 : 0;
+      session[khoaNho] = moi;
+    };
+    const hoanTat = async (kq, { daGhi = false } = {}) => {
+      const sach = { ...kq };
+      // Khach chon EN/JA: kho kien thuc / thuc don tra tieng Viet -> doi sang ban dich san.
+      if (ngonNgu === 'en' || ngonNgu === 'ja') {
+        let cauKho = null;
+        if (sach.id_kien_thuc) {
+          const [[d]] = await db.query('SELECT cau_hoi FROM chatbot_kien_thuc WHERE id = ?', [sach.id_kien_thuc]).catch(() => [[null]]);
+          cauKho = d ? d.cau_hoi : null;
+        }
+        const ctxNN = { ...ctx, menuTk: await triThuc.thongKeMenu() };
+        const sdt = (String(cauHoi).match(/(?:\+?84|0)[\d .-]{8,12}\d/) || [''])[0].replace(/[^\d+]/g, '');
+        Object.assign(sach, daNgonNgu.dichKetQua(sach, ngonNgu, {
+          cauKho, sdt,
+          apDung: (vb) => triThuc.apDung(vb, tl, ctxNN),
+          tenKhach: tl.goi_ten_khach ? ctx.ten_khach : '',
+        }));
+      }
+      const khop = sach._khop;
+      delete sach._khop; delete sach._mon_ids; delete sach._chua_tra_loi; delete sach._goi_y_gan_dung;
+      if (boiCanh.quyen === 'quan_ly' && khop) sach.khop_cau = khop;
+      if (!daGhi) {
+        sach.id_nhat_ky = await triThuc.ghiNhatKy({
+          // 'noi_bo' = nhan vien thuong hoi o trang nhan vien -> tach khoi cau cua khach (tu hoc chi dung cau khach).
+          cau_hoi: cauHoi, y_dinh: sach.y_dinh, tin_cay: sach.tin_cay, quyen: laKhach || boiCanh.quyen === 'quan_ly' ? boiCanh.quyen : 'noi_bo',
+          id_kh: boiCanh.id_kh, id_nv: boiCanh.id_nv, thoi_gian_ms: Date.now() - batDau,
+          khong_hieu: sach.khong_hieu || sach.y_dinh === 'khong_hieu', nguon: sach.nguon,
+          id_kien_thuc: sach.id_kien_thuc, tra_loi: sach.van_ban, phien,
+        });
+      }
+      sach.thoi_gian_ms = Date.now() - batDau;
+      nhoLai(sach);
+      // Tu hoc: cau vua tra loi hong -> doi chieu kho kien thuc, du chac thi hoc
+      // ngay de lan sau tra loi duoc. Chay nen, khong lam cham khach.
+      if (laKhach && (sach.khong_hieu || sach.y_dinh === 'khong_hieu' || sach.y_dinh === 'goi_y_gan_dung')) {
+        setImmediate(() => { triThuc.tuHocMotCau(cauHoi); });
+      }
+      return sach;
+    };
+
+    // Quan ly hoi so lieu -> mo hinh ML truoc (doanh thu, ban trong...), khong hieu moi xuong kho.
+    let ketQuaML = null;
+    const thuML = async () => {
+      // Cong tac 'Dung mo hinh ML' chi ap cho khach; quan ly (kenh noi bo) luon tra duoc so lieu.
+      if (!tl.bat_ml && boiCanh.quyen !== 'quan_ly') return null;
+      try {
+        const kq = await goi('/chatbot/hoi', {
+          method: 'POST',
+          body: {
+            cau_hoi: String(cauDaChuanHoa || '').slice(0, 500), quyen: boiCanh.quyen,
+            id_kh: boiCanh.id_kh, id_nv: boiCanh.id_nv,
+            y_dinh_cho: nguCanh.y_dinh_cho || null, cho_tham_so: nguCanh.cho_tham_so || null,
+          },
+        });
+        return { ...daNgonNgu.dichPhanHoi(kq, ngonNgu), nguon: 'ml' };
+      } catch (err) {
+        return { _loi: err.message };
+      }
+    };
+    const mlHieu = (kq) => kq && !kq._loi && !kq.khong_hieu && kq.y_dinh !== 'khong_hieu';
+
+    if (boiCanh.quyen === 'quan_ly') {
+      ketQuaML = await thuML();
+      if (mlHieu(ketQuaML)) {
+        triThuc.capNhatNhatKyML(ketQuaML.id_nhat_ky, { tra_loi: ketQuaML.van_ban, phien });
+        return hoanTat(ketQuaML, { daGhi: !!ketQuaML.id_nhat_ky });
+      }
+    }
+
+    const kt = await triThuc.traLoi(cauKt, { ...ctx, kenh });
+    if (!kt._chua_tra_loi) {
+      if (kt.nguon === 'ngoai_gio' || kt.nguon === 'lien_he') {
+        kt.can_dang_nhap = !(boiCanh.id_kh || boiCanh.id_nv);
+      }
+      return hoanTat(kt);
+    }
+
+    if (boiCanh.quyen !== 'quan_ly') ketQuaML = await thuML();
+    if (mlHieu(ketQuaML)) {
+      ketQuaML.van_ban = triThuc.apDung(ketQuaML.van_ban, tl, ctx);
+      triThuc.capNhatNhatKyML(ketQuaML.id_nhat_ky, { tra_loi: ketQuaML.van_ban, phien });
+      return hoanTat(ketQuaML, { daGhi: !!ketQuaML.id_nhat_ky });
+    }
+
+    // Khong nguon nao chac chan: goi y cau gan dung, khong hieu nhieu lan -> moi gap nhan vien.
+    const kh = await triThuc.traLoiKhongHieu({ ...ctx, kenh }, kt._goi_y_gan_dung || [], (nho.khong_hieu_lien || 0) + 1);
+    kh.can_dang_nhap = !(boiCanh.id_kh || boiCanh.id_nv);
+    if (ketQuaML && ketQuaML.id_nhat_ky) {
+      triThuc.capNhatNhatKyML(ketQuaML.id_nhat_ky, { nguon: kh.nguon, tra_loi: kh.van_ban, phien });
+      return hoanTat(kh, { daGhi: true });
+    }
+    return hoanTat(kh);
+  },
+
+  /** Ban cu (chi ML + du phong) - giu de doi chieu / kiem thu. */
+  hoiChiML: async (cauHoi, session, nguCanh = {}, ngonNgu = 'vi') => {
     const boiCanh = suyRaQuyen(session);
     const cauDaChuanHoa = daNgonNgu.chuanHoaCauHoi(cauHoi, ngonNgu);
     try {

@@ -52,6 +52,8 @@
 .kb-chon-nl { position: relative; }
 .kb-chon-nl__ds { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid #e7ded0; border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.15); }
 .kb-chon-nl__ds[hidden] { display: none; }
+/* Noi len khoi vung cuon cua bang - toa do do js/kb-chon-nl.js dat. */
+.kb-chon-nl__ds.is-noi { position: fixed; right: auto; z-index: 1060; }
 .kb-chon-nl__ds button { display: flex; justify-content: space-between; gap: .5rem; width: 100%; text-align: left; border: 0; background: none; padding: .5rem .75rem; font-size: .88rem; }
 .kb-chon-nl__ds button:hover, .kb-chon-nl__ds button.is-on { background: #faf3e4; }
 .kb-chon-nl__ds small { color: #8a7d70; white-space: nowrap; }
@@ -83,3 +85,114 @@
   .kb-dong td.kb-dong__nl { grid-column: 1 / -1; }
   .kb-dong td[data-nhan]::before { content: attr(data-nhan); display: block; font-size: .7rem; color: #8a7d70; font-weight: 700; text-transform: uppercase; }
 }
+
+/* =====================================================================
+   LAP PHIEU NHAP / XUAT KHO (kho-lap-phieu.ejs)
+   Bo cuc 2 cot: ben trai la thong tin + bang dong, ben phai la tom tat
+   dinh khi cuon. Mau nhan theo loai phieu: nhap = xanh, xuat = do.
+   ===================================================================== */
+.kb-lp-dau, .kb-lp { --ac: #1f7a4a; --ac-dam: #17633b; }
+.kb-lp-dau.is-xuat, .kb-lp.is-xuat { --ac: #b3352c; --ac-dam: #8f2a22; }
+
+.kb-lp-dau { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1rem; margin: .25rem 0 1.25rem; }
+.kb-lp-dau__trai { display: flex; gap: .95rem; align-items: flex-start; min-width: 0; flex: 1 1 420px; }
+.kb-lp-dau__ico { flex: none; width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; font-size: 1.35rem; color: #fff; background: linear-gradient(140deg, var(--ac), var(--ac-dam)); box-shadow: 0 10px 22px -10px var(--ac); }
+.kb-lp-dau__nho { font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: #a08560; font-weight: 700; }
+.kb-lp-dau h1 { font-family: var(--qt-serif, Georgia, serif); font-size: 1.7rem; font-weight: 700; color: #241d18; margin: .1rem 0 .2rem; line-height: 1.2; }
+.kb-lp-dau .kb-phu { color: #6b5f54; font-size: .86rem; max-width: 640px; }
+.kb-lp-quay { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem .95rem; border-radius: 999px; border: 1px solid #e2d6c3; background: #fff; color: #4e342e; font-size: .85rem; font-weight: 600; text-decoration: none !important; transition: border-color .15s, color .15s; }
+.kb-lp-quay:hover { border-color: #c8a24b; color: #8a6a22; }
+
+.kb-lp { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1.25rem; align-items: start; margin-bottom: 2rem; }
+.kb-lp__chinh { display: grid; gap: 1.25rem; min-width: 0; }
+.kb-lp__the { background: #fff; border: 1px solid #ece3d5; border-radius: 18px; padding: 1.25rem 1.35rem; box-shadow: 0 1px 2px rgba(60,40,20,.04), 0 10px 30px -18px rgba(60,40,20,.18); }
+.kb-lp__tieu { display: flex; align-items: center; gap: .6rem; font-family: var(--qt-serif, Georgia, serif); font-size: 1.08rem; font-weight: 700; color: #241d18; margin: 0 0 1rem; }
+.kb-lp__so { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-family: var(--qt-sans, sans-serif); font-size: .78rem; font-weight: 700; background: #2b1a12; color: #f3dfa6; }
+.kb-lp__dem { margin-left: auto; font-family: var(--qt-sans, sans-serif); font-size: .74rem; font-weight: 600; color: #8a7d70; background: #f6f1e9; padding: .2rem .65rem; border-radius: 999px; }
+
+.kb-lp__luoi { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1rem; }
+.kb-lp__nhan { display: flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 700; color: #5a4a3c; margin-bottom: .4rem; }
+.kb-lp__nhan i { color: #c8a24b; font-size: .8rem; }
+
+/* O nhap thong nhat trong ca phieu */
+.kb-lp .form-control { height: 42px; border-radius: 11px; border: 1px solid #e2d8c9; background: #fdfbf8; font-size: .9rem; color: #2b211a; transition: border-color .15s, box-shadow .15s, background .15s; }
+.kb-lp .form-control-sm { height: 38px; font-size: .86rem; }
+.kb-lp .form-control:hover { border-color: #d3c4ad; }
+.kb-lp .form-control:focus { border-color: #c8a24b; background: #fff; box-shadow: 0 0 0 3px rgba(200,162,75,.2); }
+.kb-lp .form-control::placeholder { color: #b0a393; }
+.kb-lp .form-control.is-invalid { border-color: #d9534f; background: #fff6f5; }
+.kb-lp .input-group-sm > .form-control { height: 38px; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.kb-lp .input-group-text { height: 38px; border-radius: 0 11px 11px 0; border: 1px solid #e2d8c9; border-left: 0; background: #f4eee4; color: #6b5f54; font-size: .78rem; font-weight: 600; min-width: 42px; justify-content: center; }
+
+/* Bang dong */
+.kb-lp__bang thead th { border: 0 !important; background: #faf6ef; color: #8a7d70; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .65rem .6rem; white-space: nowrap; }
+.kb-lp__bang thead th:first-child { border-radius: 10px 0 0 10px; }
+.kb-lp__bang thead th:last-child { border-radius: 0 10px 10px 0; }
+.kb-lp__bang tbody td { border-top: 1px solid #f1eae0; padding: .8rem .6rem; }
+.kb-lp__bang tbody tr:first-child td { border-top: 0; }
+.kb-lp__bang tbody tr { transition: background .15s; }
+.kb-lp__bang tbody tr:hover { background: #fdfaf5; }
+.kb-lp__bang .thong-tin-nl { display: block; margin-top: .35rem; font-size: .74rem; color: #8a7d70 !important; }
+.kb-lp__bang .thong-tin-nl:empty { display: none; }
+.kb-lp__bang .thanh-tien { padding-top: 1.35rem !important; font-family: var(--qt-serif, Georgia, serif); font-size: .98rem; color: #241d18; white-space: nowrap; }
+.kb-lp__bang .ton { padding-top: 1.35rem !important; color: #5a4a3c; white-space: nowrap; }
+.kb-lp__bang .xoa { width: 34px; height: 34px; margin-top: 2px; padding: 0; border-radius: 10px; border: 0; background: transparent; color: #b8a99a !important; transition: background .15s, color .15s; }
+.kb-lp__bang .xoa:hover { background: #fbe9e7; color: #b3352c !important; }
+
+.kb-lp__them { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin-top: .9rem; padding: .7rem; border: 1.5px dashed #d9c9ae; border-radius: 12px; background: #fdfaf4; color: #8a6a22; font-weight: 700; font-size: .88rem; transition: border-color .15s, background .15s; }
+.kb-lp__them:hover { border-color: #c8a24b; background: #faf1dc; }
+.kb-lp__them:focus { outline: none; box-shadow: 0 0 0 3px rgba(200,162,75,.25); }
+
+/* Cot tom tat */
+.kb-lp__tom { position: sticky; top: 1rem; display: grid; gap: 1rem; }
+.kb-lp__tom-the { border-top: 4px solid var(--ac); }
+.kb-lp__tom-nhan { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: #8a7d70; }
+.kb-lp .kb-tong { display: block; font-size: 2rem; color: var(--ac); line-height: 1.2; margin: .3rem 0 .9rem; word-break: break-word; }
+.kb-lp__tom-dong { display: flex; justify-content: space-between; align-items: center; padding: .65rem 0; border-top: 1px dashed #e7ddcf; border-bottom: 1px dashed #e7ddcf; font-size: .86rem; color: #6b5f54; margin-bottom: 1rem; }
+.kb-lp__tom-dong b { font-size: 1rem; color: #241d18; }
+.kb-lp__luu { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; padding: .8rem 1rem; border: 0; border-radius: 12px; background: var(--ac); color: #fff; font-weight: 700; font-size: .95rem; box-shadow: 0 10px 20px -12px var(--ac); transition: background .15s, transform .1s; }
+.kb-lp__luu:hover { background: var(--ac-dam); }
+.kb-lp__luu:active { transform: translateY(1px); }
+.kb-lp__luu:disabled { opacity: .6; cursor: progress; }
+.kb-lp__huy { display: block; text-align: center; margin-top: .55rem; padding: .5rem; border-radius: 10px; color: #8a7d70; font-size: .86rem; font-weight: 600; text-decoration: none !important; }
+.kb-lp__huy:hover { background: #f6f1e9; color: #4e342e; }
+
+.kb-lp__meo { background: #fbf6ec; border: 1px solid #efe3cc; border-radius: 16px; padding: 1rem 1.1rem; font-size: .8rem; color: #6b5a44; }
+.kb-lp__meo-t { font-weight: 700; color: #8a6a22; margin-bottom: .45rem; display: flex; align-items: center; gap: .4rem; }
+.kb-lp__meo ul { margin: 0; padding-left: 1.05rem; }
+.kb-lp__meo li { margin-bottom: .3rem; line-height: 1.45; }
+.kb-lp__meo kbd { background: #fff; color: #4e342e; border: 1px solid #e2d6c3; box-shadow: 0 1px 0 #e2d6c3; font-size: .7rem; padding: .05rem .35rem; border-radius: 5px; }
+
+@media (max-width: 1199.98px) {
+  .kb-lp { grid-template-columns: minmax(0, 1fr); }
+  .kb-lp__tom { position: static; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 767.98px) {
+  .kb-lp__luoi, .kb-lp__tom { grid-template-columns: minmax(0, 1fr); }
+  .kb-lp__the { padding: 1rem; border-radius: 16px; }
+  .kb-lp-dau h1 { font-size: 1.35rem; }
+  .kb-lp-dau__ico { width: 44px; height: 44px; font-size: 1.1rem; border-radius: 13px; }
+}
+@media (max-width: 575.98px) {
+  .kb-lp__bang tbody td { border-top: 0; }
+  .kb-lp__bang .thanh-tien, .kb-lp__bang .ton { padding-top: 0 !important; text-align: left !important; }
+}
+/* Playfair mac dinh dung so kieu cu (1.050.000 nhay len xuong) - ep so thang hang cho de doc tien. */
+.kb-lp .kb-tong, .kb-lp__bang .thanh-tien { font-variant-numeric: lining-nums tabular-nums; }
+.kb-lp__bang td[data-nhan]::before { font-family: var(--qt-sans, sans-serif); }
+
+/* Khoi chung tu nha cung cap (phieu nhan hang) */
+.kb-lp__ct { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px dashed #e7ddcf; }
+.kb-lp__ct-t { display: flex; align-items: center; gap: .45rem; font-size: .8rem; font-weight: 700; color: #8a6a22; margin-bottom: .75rem; }
+.kb-lp__luoi--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kb-lp__tuy { font-weight: 500; color: #a0937f; }
+.kb-lp__tick { display: flex; align-items: center; gap: .45rem; margin: .5rem 0 0; font-size: .8rem; color: #6b5f54; cursor: pointer; }
+.kb-lp__tick input { width: 16px; height: 16px; accent-color: #c8a24b; }
+.kb-lp__anh { display: flex; align-items: center; justify-content: center; gap: .5rem; height: 42px; margin: 0; border: 1.5px dashed #d9c9ae; border-radius: 11px; background: #fdfaf4; color: #8a6a22; font-size: .86rem; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s; }
+.kb-lp__anh:hover { border-color: #c8a24b; background: #faf1dc; }
+.kb-lp__anh-o { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.kb-lp__anh-o:focus + .kb-lp__anh-tt, .kb-lp__anh:focus-within { box-shadow: 0 0 0 3px rgba(200,162,75,.25); }
+.kb-lp__anh-tt { display: block; margin-top: .35rem; font-size: .76rem; color: #1f7a4a; font-weight: 600; }
+.kb-lp .form-control:disabled { background: #f3eee6; color: #a0937f; }
+@media (max-width: 991.98px) { .kb-lp__luoi--3 { grid-template-columns: minmax(0, 1fr); } }
+.kb-lp__luu { white-space: nowrap; }

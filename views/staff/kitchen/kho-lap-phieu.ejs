@@ -8,85 +8,112 @@
 %>
 <%- include('../partials/header') %>
 <link rel="stylesheet" href="/kho-bep.css">
+<script src="/kb-chon-nl.js" defer></script>
 
-<div class="kb-dau">
-  <div>
-    <h1 class="h3 text-gray-800"><i class="fas <%= laNhap ? 'fa-file-import text-success' : 'fa-file-export text-danger' %>"></i> <%= laNhap ? (don ? 'Nhận hàng – đơn ' + don.ma_don : 'Lập phiếu nhận hàng') : 'Lập phiếu xuất kho' %></h1>
-    <div class="kb-phu"><%= laNhap ? 'Ghi đúng số lượng nhà cung cấp GIAO. Sau khi lưu, bếp trưởng / trưởng bar kiểm tra chất lượng; phần đạt mới vào kho, rồi kế toán đối chiếu hóa đơn và quản lý duyệt.' : 'Dùng cho hàng hư hỏng, hết hạn, hao hụt, dùng nội bộ, trả nhà cung cấp hoặc điều chỉnh kiểm kê. Tồn kho và lô hàng bị trừ ngay.' %></div>
+<div class="kb-lp-dau <%= laNhap ? 'is-nhap' : 'is-xuat' %>">
+  <div class="kb-lp-dau__trai">
+    <span class="kb-lp-dau__ico"><i class="fas <%= laNhap ? 'fa-file-import' : 'fa-file-export' %>"></i></span>
+    <div>
+      <div class="kb-lp-dau__nho"><%= laNhap ? 'Kho bếp · Nhập hàng' : 'Kho bếp · Xuất hàng' %></div>
+      <h1><%= laNhap ? (don ? 'Nhận hàng – đơn ' + don.ma_don : 'Lập phiếu nhận hàng') : 'Lập phiếu xuất kho' %></h1>
+      <div class="kb-phu"><%= laNhap ? 'Ghi đúng số lượng nhà cung cấp GIAO. Sau khi lưu, bếp trưởng / trưởng bar kiểm tra chất lượng; phần đạt mới vào kho, rồi kế toán đối chiếu hóa đơn và quản lý duyệt.' : 'Dùng cho hàng hư hỏng, hết hạn, hao hụt, dùng nội bộ, trả nhà cung cấp hoặc điều chỉnh kiểm kê. Tồn kho và lô hàng bị trừ ngay.' %></div>
+    </div>
   </div>
-  <a href="/staff/kitchen/kho" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Sổ xuất nhập</a>
+  <a href="/staff/kitchen/kho" class="kb-lp-quay"><i class="fas fa-arrow-left"></i> Sổ xuất nhập</a>
 </div>
 
-<form id="formPhieu" class="card shadow-sm mb-4" novalidate>
-  <div class="card-body">
-    <div class="form-row">
+<form id="formPhieu" class="kb-lp <%= laNhap ? 'is-nhap' : 'is-xuat' %>" novalidate>
+  <div class="kb-lp__chinh">
+    <section class="kb-lp__the">
+      <h2 class="kb-lp__tieu"><span class="kb-lp__so">1</span> Thông tin phiếu</h2>
+      <div class="kb-lp__luoi">
+        <% if (laNhap) { %>
+          <div>
+            <label for="fNcc" class="kb-lp__nhan"><i class="fas fa-truck-field"></i> Nhà cung cấp</label>
+            <select id="fNcc" class="form-control">
+              <option value="">— Mua lẻ / không xác định —</option>
+              <% ncc.forEach(function (n) { %><option value="<%= n.id_ncc %>" <%= don && don.id_ncc === n.id_ncc ? 'selected' : '' %>><%= n.ten_ncc %></option><% }) %>
+            </select>
+          </div>
+        <% } else { %>
+          <div>
+            <label for="fLyDo" class="kb-lp__nhan"><i class="fas fa-circle-question"></i> Lý do xuất <span class="text-danger">*</span></label>
+            <select id="fLyDo" class="form-control" required>
+              <option value="">— Chọn lý do —</option>
+              <% Object.keys(lyDoXuat).forEach(function (k) { %><option value="<%= k %>" <%= chon.ly_do === k ? 'selected' : '' %>><%= lyDoXuat[k].ten %></option><% }) %>
+            </select>
+          </div>
+        <% } %>
+        <div>
+          <label for="fGhiChu" class="kb-lp__nhan"><i class="fas fa-pen"></i> <%= laNhap ? 'Ghi chú' : 'Nguyên nhân / ghi chú' %> <span id="batBuocGhiChu" class="text-danger" hidden>*</span></label>
+          <input id="fGhiChu" class="form-control" maxlength="500" value="<%= don ? 'Nhận hàng theo đơn ' + don.ma_don : '' %>"
+                 placeholder="<%= laNhap ? 'VD: Hóa đơn GTGT số 0001234' : 'VD: Tủ mát hỏng qua đêm, cá hồi có mùi' %>">
+        </div>
+      </div>
       <% if (laNhap) { %>
-        <div class="form-group col-md-5">
-          <label for="fNcc" class="small font-weight-bold">Nhà cung cấp</label>
-          <select id="fNcc" class="form-control">
-            <option value="">— Mua lẻ / không xác định —</option>
-            <% ncc.forEach(function (n) { %><option value="<%= n.id_ncc %>" <%= don && don.id_ncc === n.id_ncc ? 'selected' : '' %>><%= n.ten_ncc %></option><% }) %>
-          </select>
+      <div class="kb-lp__ct">
+        <div class="kb-lp__ct-t"><i class="fas fa-receipt"></i> Chứng từ nhà cung cấp</div>
+        <div class="kb-lp__luoi kb-lp__luoi--3">
+          <div>
+            <label for="fChungTu" class="kb-lp__nhan">Số hóa đơn / phiếu giao <span class="text-danger">*</span></label>
+            <input id="fChungTu" class="form-control" maxlength="60" placeholder="VD: HĐ 0001234 hoặc PGH-5521">
+            <label class="kb-lp__tick" for="fKhongCt"><input type="checkbox" id="fKhongCt"> Không có chứng từ (mua chợ, hàng lẻ)</label>
+          </div>
+          <div id="oLyDoCt" hidden>
+            <label for="fLyDoCt" class="kb-lp__nhan">Lý do không có chứng từ <span class="text-danger">*</span></label>
+            <input id="fLyDoCt" class="form-control" maxlength="255" placeholder="VD: Mua rau ở chợ, người bán không xuất phiếu">
+          </div>
+          <div>
+            <span class="kb-lp__nhan">Ảnh hóa đơn / phiếu giao <span class="kb-lp__tuy">(tùy chọn)</span></span>
+            <label class="kb-lp__anh" for="fAnh"><i class="fas fa-camera"></i> <span>Chụp / chọn ảnh</span></label>
+            <input type="file" id="fAnh" class="kb-lp__anh-o" accept="image/jpeg,image/png,image/webp" capture="environment">
+            <small class="kb-lp__anh-tt" id="anhInfo"></small>
+          </div>
         </div>
-      <% } else { %>
-        <div class="form-group col-md-5">
-          <label for="fLyDo" class="small font-weight-bold">Lý do xuất *</label>
-          <select id="fLyDo" class="form-control" required>
-            <option value="">— Chọn lý do —</option>
-            <% Object.keys(lyDoXuat).forEach(function (k) { %><option value="<%= k %>" <%= chon.ly_do === k ? 'selected' : '' %>><%= lyDoXuat[k].ten %></option><% }) %>
-          </select>
-        </div>
+      </div>
       <% } %>
-      <div class="form-group col-md-7">
-        <label for="fGhiChu" class="small font-weight-bold"><%= laNhap ? 'Ghi chú' : 'Nguyên nhân / ghi chú' %> <span id="batBuocGhiChu" class="text-danger" hidden>*</span></label>
-        <input id="fGhiChu" class="form-control" maxlength="500" value="<%= don ? 'Nhận hàng theo đơn ' + don.ma_don : '' %>"
-               placeholder="<%= laNhap ? 'VD: Hóa đơn GTGT số 0001234' : 'VD: Tủ mát hỏng qua đêm, cá hồi có mùi' %>">
-      </div>
-    </div>
+    </section>
 
-    <% if (laNhap) { %>
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <label for="fChungTu" class="small font-weight-bold">Số hóa đơn / phiếu giao hàng NCC <span class="text-danger">*</span></label>
-        <input id="fChungTu" class="form-control" maxlength="60" placeholder="VD: HĐ 0001234 hoặc PGH-5521">
-        <div class="custom-control custom-checkbox mt-1">
-          <input type="checkbox" class="custom-control-input" id="fKhongCt">
-          <label class="custom-control-label small" for="fKhongCt">Không có chứng từ (mua chợ, hàng lẻ)</label>
-        </div>
+    <section class="kb-lp__the">
+      <h2 class="kb-lp__tieu"><span class="kb-lp__so">2</span> Nguyên liệu <span class="kb-lp__dem" id="soDongBang">1 dòng</span></h2>
+      <div class="table-responsive">
+        <table class="table kb-dong kb-lp__bang mb-0 no-cuon">
+          <thead><tr>
+            <th style="min-width:240px">Nguyên liệu</th><th style="width:140px">Số lượng</th>
+            <% if (laNhap) { %><th style="width:140px">Đơn giá (đ)</th><th style="width:120px">Số lô</th><th style="width:160px">Hạn dùng</th><th class="text-right" style="width:120px">Thành tiền</th>
+            <% } else { %><th style="width:120px" class="text-right">Tồn hiện có</th><th>Ghi chú dòng</th><th class="text-right" style="width:120px">Giá trị</th><% } %>
+            <th style="width:44px"></th></tr></thead>
+          <tbody id="dsDong"></tbody>
+        </table>
       </div>
-      <div class="form-group col-md-4" id="oLyDoCt" hidden>
-        <label for="fLyDoCt" class="small font-weight-bold">Lý do không có chứng từ <span class="text-danger">*</span></label>
-        <input id="fLyDoCt" class="form-control" maxlength="255" placeholder="VD: Mua rau ở chợ Gò Vấp, người bán không xuất phiếu">
-      </div>
-      <div class="form-group col-md-4">
-        <label for="fAnh" class="small font-weight-bold">Ảnh hóa đơn / phiếu giao <span class="text-muted font-weight-normal">(tùy chọn)</span></label>
-        <input type="file" id="fAnh" class="form-control-file" accept="image/jpeg,image/png,image/webp" capture="environment">
-        <small class="text-muted" id="anhInfo"></small>
-      </div>
-    </div>
-    <% } %>
-
-    <div class="table-responsive">
-      <table class="table kb-dong mb-2 no-cuon">
-        <thead class="thead-light"><tr>
-          <th style="min-width:240px">Nguyên liệu</th><th style="width:130px">Số lượng</th>
-          <% if (laNhap) { %><th style="width:140px">Đơn giá (đ)</th><th style="width:130px">Số lô</th><th style="width:155px">Hạn dùng</th><th class="text-right" style="width:130px">Thành tiền</th>
-          <% } else { %><th style="width:120px" class="text-right">Tồn hiện có</th><th>Ghi chú dòng</th><th class="text-right" style="width:130px">Giá trị</th><% } %>
-          <th style="width:46px"></th></tr></thead>
-        <tbody id="dsDong"></tbody>
-      </table>
-    </div>
-    <button type="button" class="btn btn-sm btn-outline-primary" id="themDong"><i class="fas fa-plus"></i> Thêm dòng</button>
-
-    <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top" style="gap:1rem">
-      <div><span class="text-muted">Tổng <%= laNhap ? 'tiền nhập' : 'giá trị xuất (theo giá vốn)' %>:</span> <span class="kb-tong" id="tongTien">0đ</span></div>
-      <div class="d-flex" style="gap:.5rem">
-        <a href="/staff/kitchen/kho" class="btn btn-light">Hủy</a>
-        <button type="submit" class="btn <%= laNhap ? 'btn-success' : 'btn-danger' %> font-weight-bold" id="nutLuu"><i class="fas fa-check"></i> <%= laNhap ? 'Lưu & gửi kiểm tra chất lượng' : 'Lưu phiếu xuất' %></button>
-      </div>
-    </div>
-    <div class="alert alert-danger mt-3 mb-0" id="loi" hidden></div>
+      <button type="button" class="kb-lp__them" id="themDong"><i class="fas fa-plus"></i> Thêm dòng nguyên liệu</button>
+    </section>
   </div>
+
+  <aside class="kb-lp__tom">
+    <div class="kb-lp__the kb-lp__tom-the">
+      <div class="kb-lp__tom-nhan"><%= laNhap ? 'Tổng tiền nhập' : 'Giá trị xuất (theo giá vốn)' %></div>
+      <div class="kb-tong" id="tongTien">0đ</div>
+      <div class="kb-lp__tom-dong"><span>Nguyên liệu đã chọn</span><b id="soDong">0</b></div>
+      <button type="submit" class="kb-lp__luu" id="nutLuu"><i class="fas fa-check"></i> <%= laNhap ? 'Lưu & gửi kiểm tra' : 'Lưu phiếu xuất' %></button>
+      <a href="/staff/kitchen/kho" class="kb-lp__huy">Hủy</a>
+      <div class="alert alert-danger mt-3 mb-0 small" id="loi" hidden></div>
+    </div>
+    <div class="kb-lp__meo">
+      <div class="kb-lp__meo-t"><i class="fas fa-lightbulb"></i> Mẹo nhanh</div>
+      <ul>
+        <li>Gõ vài chữ để tìm, dùng <kbd>↑</kbd> <kbd>↓</kbd> và <kbd>Enter</kbd> để chọn.</li>
+        <% if (laNhap) { %>
+          <li>Đơn giá và hạn dùng tự điền theo lần nhập gần nhất, sửa lại nếu khác.</li>
+          <li>Để trống <b>Số lô</b> thì hệ thống tự sinh.</li>
+        <% } else { %>
+          <li>Số lượng vượt tồn kho sẽ được tô đỏ.</li>
+          <li>Xuất do hao hụt / hư hỏng bắt buộc ghi nguyên nhân.</li>
+        <% } %>
+        <li><%= laNhap ? 'Lưu xong, phiếu chuyển sang bếp trưởng / trưởng bar kiểm tra chất lượng.' : 'Lưu xong, phiếu in sẽ mở ở tab mới.' %></li>
+      </ul>
+    </div>
+  </aside>
 </form>
 
 <script>
@@ -186,6 +213,10 @@
       if (!LA_NHAP && n) tr.querySelector('.o-sl').classList.toggle('is-invalid', sl > n.ton);
     });
     $('tongTien').textContent = vnd(tong);
+    var soDong = 0;
+    $('dsDong').querySelectorAll('.id-nl').forEach(function (i) { if (i.value) soDong++; });
+    $('soDong').textContent = soDong;
+    $('soDongBang').textContent = $('dsDong').children.length + ' dòng';
   }
 
   $('themDong').addEventListener('click', function () { dongMoi().querySelector('.o-nl').focus(); });
@@ -207,7 +238,7 @@
         var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         anhDataUrl = c.toDataURL('image/jpeg', 0.82);
-        $('anhInfo').textContent = 'Đã chọn ảnh (' + Math.round(anhDataUrl.length * 0.75 / 1024) + ' KB)';
+        $('anhInfo').textContent = '✓ Đã chọn ảnh (' + Math.round(anhDataUrl.length * 0.75 / 1024) + ' KB)';
         URL.revokeObjectURL(url);
       };
       img.onerror = function () { $('anhInfo').textContent = 'Không đọc được ảnh'; };

@@ -247,6 +247,36 @@ var tenMonDich = function (m) {
   .db-cs-card p { font-size: .85rem; color: var(--nh-muted); margin: 0; line-height: 1.5; }
   .db-cs-note { margin-top: .5rem; padding: .5rem .7rem; border-radius: 0 8px 8px 0; background: rgba(255,255,255,0.85); border-left: 3px solid var(--nh-gold); font-size: .81rem; color: #7c2d12; font-weight: 600; }
 
+  /* 4 the muc coc gon (partials/chinh-sach-coc.ejs): bieu tuong + dieu kien + gia to + 2 y ngan */
+  .nh .cs-muc, .cs-muc { display: flex; align-items: center; gap: .5rem; font-family: var(--nh-sans); font-size: 1rem; font-weight: 700;
+    color: var(--nh-espresso); margin: .2rem 0 .9rem; text-transform: none; letter-spacing: 0; }
+  .cs-muc i { color: var(--nh-gold); font-size: .95rem; }
+  .cs-muc--sau { margin-top: 1.8rem; }
+  .cs-coc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .9rem; margin-bottom: 1rem; }
+  @media (max-width: 1100px) { .cs-coc { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .cs-coc { grid-template-columns: 1fr; } }
+  .cs-coc__the { --mau: #b45309; --nen: #fff7ed; background: #fff; border: 1px solid var(--nh-line, #ece4d6); border-top: 3px solid var(--mau);
+    border-radius: 14px; padding: 1.1rem 1.1rem 1rem; display: flex; flex-direction: column; gap: .7rem; }
+  .cs-coc__the--xanh { --mau: #15803d; --nen: #f0fdf4; }
+  .cs-coc__the--cam { --mau: #c2410c; --nen: #fff7ed; }
+  .cs-coc__the--vang { --mau: #a16207; --nen: #fefce8; }
+  .cs-coc__the--lam { --mau: #0369a1; --nen: #f0f9ff; }
+  .cs-coc__dau { display: flex; align-items: center; gap: .6rem; }
+  .cs-coc__icon { width: 34px; height: 34px; border-radius: 10px; background: var(--nen); color: var(--mau);
+    display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; flex: none; }
+  .cs-coc__dk { font-family: var(--nh-sans); font-size: .88rem; font-weight: 700; color: var(--nh-espresso); line-height: 1.3; }
+  .cs-coc__gia { font-family: var(--nh-sans); font-size: 1.55rem; font-weight: 800; color: var(--mau); line-height: 1.1; }
+  .cs-coc__gia small { font-size: .82rem; font-weight: 600; color: var(--nh-muted); }
+  .cs-coc__y { list-style: none; margin: 0; padding: .7rem 0 0; border-top: 1px dashed var(--nh-line, #ece4d6);
+    display: flex; flex-direction: column; gap: .4rem; font-family: var(--nh-sans); font-size: .84rem; color: #57534e; line-height: 1.45; }
+  .cs-coc__y li { position: relative; padding-left: 1.2rem; }
+  .cs-coc__y li::before { content: '\f00c'; font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free'; font-weight: 900; font-size: .7rem;
+    color: var(--mau); position: absolute; left: 0; top: .2rem; }
+  [data-theme="dark"] .cs-coc__the { background: #1f1915; border-color: #3a3029; border-top-color: var(--mau); }
+  [data-theme="dark"] .cs-coc__dk, [data-theme="dark"] .cs-muc { color: #f5ead6; }
+  [data-theme="dark"] .cs-coc__y { color: #d6cfc4; border-top-color: #3a3029; }
+  [data-theme="dark"] .cs-coc__icon { background: rgba(255,255,255,.06); }
+
   .db-cs-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .6rem; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--nh-line); }
   .db-cs-table th, .db-cs-table td { padding: .65rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
   .db-cs-table th { background: #f8f5ee; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--nh-espresso); font-weight: 800; }
@@ -262,6 +292,9 @@ var tenMonDich = function (m) {
   .db-modal-backdrop { position: fixed; inset: 0; background: rgba(24, 17, 13, 0.65); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(3px); }
   .db-modal-backdrop.hien { display: flex; }
   .db-modal { background: #fff; border-radius: 18px; max-width: 780px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 1.6rem 1.8rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1.5px solid var(--nh-gold); position: relative; }
+  /* Modal chi rong 780px: 4 the mot hang qua chat -> 2 cot (1 cot tren dien thoai). */
+  .db-modal .cs-coc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .db-modal .cs-coc { grid-template-columns: 1fr; } }
   .db-modal__close { position: sticky; top: 0; float: right; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--nh-line); background: #fff; color: var(--nh-espresso); cursor: pointer; font-size: 1rem; display: grid; place-content: center; }
   .db-modal__close:hover { background: var(--nh-espresso); color: #fff; }
 </style>
@@ -295,52 +328,14 @@ var tenMonDich = function (m) {
               </a>
             </div>
 
-            <h4 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--nh-espresso); margin: 0 0 0.75rem;">
-              <i class="fas fa-coins" style="color:var(--nh-gold); margin-right:0.35rem;"></i> <%= t('dat_ban_moi.cs_muc1') %>
+            <h4 class="cs-muc">
+              <i class="fas fa-coins"></i> <%= t('dat_ban_moi.cs_muc1') %>
             </h4>
 
-            <div class="db-cs-grid">
-              <!-- Thẻ 1: Giờ thường dưới 6 người -->
-              <div class="db-cs-card">
-                <span class="db-cs-badge db-cs-badge--green"><i class="fas fa-smile"></i> <%= t('dat_ban_moi.cs_the1_nhan') %></span>
-                <h4><%= t('dat_ban_moi.cs_the1_h4') %></h4>
-                <span class="db-cs-price db-cs-price--free"><%= t('dat_ban_moi.cs_mien_coc') %></span>
-                <p><%= t('dat_ban_moi.cs_the1_p', { gcd: cauHinh.gio_cao_diem || '18:00-21:00' }) %></p>
-              </div>
+            <%- include('partials/chinh-sach-coc') %>
 
-              <!-- Thẻ 2: Giờ cao điểm hoặc >= 6 khách giờ thường -->
-              <div class="db-cs-card">
-                <span class="db-cs-badge"><i class="fas fa-fire"></i> <%= t('dat_ban_moi.cs_the2_nhan', { nt1: NT - 1 }) %></span>
-                <h4><%= t('dat_ban_moi.cs_the2_h4', { gcd: cauHinh.gio_cao_diem || '18:00-21:00' }) %></h4>
-                <span class="db-cs-price"><%= t('dat_ban_moi.cs_coc_100') %></span>
-                <p>
-                  <%- t('dat_ban_moi.cs_the2_d1', { gcd: cauHinh.gio_cao_diem || '18:00-21:00' }) %><br>
-                  <%- t('dat_ban_moi.cs_the2_d2', { nt1: NT - 1 }) %>
-                </p>
-              </div>
-
-              <!-- Thẻ 3: Đặt tiệc từ NT (large_group_threshold) người -->
-              <div class="db-cs-card db-cs-card--highlight">
-                <span class="db-cs-badge db-cs-badge--gold"><i class="fas fa-glass-cheers"></i> <%= t('dat_ban_moi.cs_the3_nhan', { nt: NT }) %></span>
-                <h4><%= t('dat_ban_moi.cs_the3_h4', { nt: NT }) %></h4>
-                <span class="db-cs-price"><%= t('dat_ban_moi.cs_coc_150') %></span>
-                <p><%= t('dat_ban_moi.cs_the3_p', { nt: NT }) %></p>
-                <div class="db-cs-note">
-                  <i class="fas fa-hand-holding-usd"></i> <%- t('dat_ban_moi.cs_the3_ck') %>
-                </div>
-              </div>
-
-              <!-- Thẻ 4: Đặt món trước -->
-              <div class="db-cs-card">
-                <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-utensils"></i> <%= t('dat_ban_moi.cs_the4_nhan') %></span>
-                <h4><%= t('dat_ban_moi.cs_the4_h4') %></h4>
-                <span class="db-cs-price" style="color:#0369a1;"><%= t('dat_ban_moi.cs_tt_100') %></span>
-                <p><%- t('dat_ban_moi.cs_the4_p', { nt: NT }) %></p>
-              </div>
-            </div>
-
-            <h4 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--nh-espresso); margin: 1.3rem 0 0.6rem;">
-              <i class="fas fa-undo-alt" style="color:var(--nh-gold); margin-right:0.35rem;"></i> <%= t('dat_ban_moi.cs_muc2') %>
+            <h4 class="cs-muc cs-muc--sau">
+              <i class="fas fa-undo-alt"></i> <%= t('dat_ban_moi.cs_muc2') %>
             </h4>
 
             <table class="db-cs-table">
@@ -655,28 +650,7 @@ var tenMonDich = function (m) {
     <h3 id="dbModalTitle" style="font-size:1.25rem; color:var(--nh-espresso); margin:0 0 0.9rem; display:flex; align-items:center; gap:0.55rem;">
       <i class="fas fa-shield-alt" style="color:var(--nh-gold)"></i> <%= t('dat_ban_moi.cs_tieu_de') %>
     </h3>
-    <div class="db-cs-grid" style="margin-bottom:1rem;">
-      <div class="db-cs-card">
-        <span class="db-cs-badge db-cs-badge--green"><%= t('dat_ban_moi.cs_the1_nhan') %></span>
-        <h4><%= t('dat_ban_moi.cs_mien_coc') %></h4>
-        <p><%= t('dat_ban_moi.cs_m1_p', { gcd: cauHinh.gio_cao_diem || '18:00-21:00' }) %></p>
-      </div>
-      <div class="db-cs-card">
-        <span class="db-cs-badge"><%= t('dat_ban_moi.cs_the2_nhan', { nt1: NT - 1 }) %></span>
-        <h4><%= t('dat_ban_moi.cs_coc_100') %></h4>
-        <p><%= t('dat_ban_moi.cs_m2_p', { gcd: cauHinh.gio_cao_diem || '18:00-21:00', nt1: NT - 1 }) %></p>
-      </div>
-      <div class="db-cs-card db-cs-card--highlight">
-        <span class="db-cs-badge db-cs-badge--gold"><%= t('dat_ban_moi.cs_m3_nhan', { nt: NT }) %></span>
-        <h4><%= t('dat_ban_moi.cs_coc_150') %></h4>
-        <p><%- t('dat_ban_moi.cs_m3_p') %></p>
-      </div>
-      <div class="db-cs-card">
-        <span class="db-cs-badge" style="background:#e0f2fe; color:#0369a1;"><%= t('dat_ban_moi.cs_m4_nhan') %></span>
-        <h4><%= t('dat_ban_moi.cs_tt_100') %></h4>
-        <p><%= t('dat_ban_moi.cs_m4_p', { nt: NT }) %></p>
-      </div>
-    </div>
+    <%- include('partials/chinh-sach-coc') %>
     <table class="db-cs-table">
       <thead>
         <tr>

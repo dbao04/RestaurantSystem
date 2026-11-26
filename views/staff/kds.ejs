@@ -100,6 +100,18 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 14px; padding: 18px 28px 4px;
     }
+    /* Chon tram Bep / Bar / Tat ca - nhom nut lien khoi, cung le 28px voi .chiso va .bang. */
+    .tram-hang { padding: 18px 28px 0; }
+    .tram-chon { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--vien); flex-wrap: wrap; }
+    .tram-chon button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent;
+      color: var(--chu); font: 600 13px var(--font-sans); padding: 7px 16px; border-radius: 999px; cursor: pointer;
+      transition: background .2s ease, color .2s ease; }
+    .tram-chon button small { font-weight: 500; font-size: 12px; opacity: .65; }
+    .tram-chon button:hover { background: rgba(200, 162, 75, 0.14); }
+    .tram-chon button.on { background: var(--gold, #c8a24b); color: #1f1a17; box-shadow: 0 2px 10px rgba(200, 162, 75, .3); }
+    .tram-chon button.on small { opacity: .8; }
+    .tram-hang + .chiso { padding-top: 14px; }
     .chiso .o {
       background: linear-gradient(135deg, #221710 0%, #1a100a 100%);
       border-radius: 14px; padding: 14px 18px;
@@ -344,10 +356,13 @@
     </nav>
   </header>
 
-  <div class="tram-chon" role="group" aria-label="Trạm" style="display:flex;gap:8px;padding:0 20px 10px;flex-wrap:wrap">
-    <% [['bep','fa-fire-burner','Trạm Bếp (món ăn)'],['bar','fa-martini-glass','Trạm Bar (đồ uống)'],['tat_ca','fa-layer-group','Tất cả']].forEach(function (x) { %>
-      <button type="button" data-tram="<%= x[0] %>" style="border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer"><i class="fas <%= x[1] %>"></i> <%= x[2] %></button>
-    <% }) %>
+  <%# Hang chon tram: cung le 28px voi header / .chiso / .bang de thang cot. %>
+  <div class="tram-hang">
+    <div class="tram-chon" role="group" aria-label="Trạm">
+      <% [['bep','fa-fire-burner','Trạm Bếp','món ăn'],['bar','fa-martini-glass','Trạm Bar','đồ uống'],['tat_ca','fa-layer-group','Tất cả','']].forEach(function (x) { %>
+        <button type="button" data-tram="<%= x[0] %>"><i class="fas <%= x[1] %>"></i> <%= x[2] %><% if (x[3]) { %> <small><%= x[3] %></small><% } %></button>
+      <% }) %>
+    </div>
   </div>
   <div class="chiso" id="chiSo"></div>
 
@@ -474,7 +489,7 @@ const MOI_XONG = new Set();
 
 let TRAM = new URLSearchParams(location.search).get('tram') || <%- JSON.stringify(tramMacDinh || 'tat_ca') %>;
 function veTram() {
-  document.querySelectorAll('[data-tram]').forEach((b) => { const on = b.dataset.tram === TRAM; b.style.background = on ? '#c8a24b' : 'transparent'; b.style.color = on ? '#1f1a17' : '#fff'; b.setAttribute('aria-pressed', String(on)); });
+  document.querySelectorAll('[data-tram]').forEach((b) => { const on = b.dataset.tram === TRAM; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   const h = document.querySelector('header h1'); if (h) h.innerHTML = TRAM === 'bar' ? '<i class="fas fa-martini-glass"></i> Màn hình Bar &mdash; Pha chế đồ uống' : '<i class="fas fa-fire-burner"></i> Màn hình bếp &mdash; Kitchen Display System';
 }
 document.querySelectorAll('[data-tram]').forEach((b) => b.addEventListener('click', () => { TRAM = b.dataset.tram; history.replaceState(null, '', '?tram=' + TRAM); veTram(); tai(); }));

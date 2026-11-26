@@ -1,0 +1,189 @@
+<%
+  /* Phan bo sung cho tab "Tong quan" - nguon tra loi, kho kien thuc, cau chua hieu (day bot). */
+  const TEN_NGUON = {
+    kien_thuc: ['Kho kiến thức', '#c8a24b'], thuc_don: ['Thực đơn (gửi món + ảnh)', '#15803d'],
+    ml: ['Mô hình ML', '#1d4ed8'], goi_y: ['Gợi ý câu gần đúng', '#7c3aed'], khong_hieu: ['Chưa hiểu', '#b91c1c'],
+    lien_he: ['Khách để lại SĐT', '#0891b2'], ngoai_gio: ['Ngoài giờ', '#64748b'], tu_cam: ['Từ cấm', '#9f1239'], du_phong: ['Dự phòng', '#b45309'],
+  };
+  const tongNguon = (theoNguon || []).reduce((s, x) => s + x.n, 0) || 1;
+  const lhChua = (lienHe || []).filter((x) => !x.da_xu_ly).length;
+%>
+<div class="nh-grid nh-g2" style="margin-bottom:22px;">
+  <div class="nh-card" style="margin-bottom:0;">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-route"></i> Bot lấy câu trả lời từ đâu? (<%= thongKe.so_ngay %> ngày)</h2>
+      <p class="nh-card__desc">Tỷ lệ càng nhiều ở <b>Kho kiến thức</b> và <b>Thực đơn</b> nghĩa là bot đang tự trả lời tốt. Phần <b>Chưa hiểu</b> là việc cần dạy thêm.</p>
+    </div>
+    <% if (theoNguon && theoNguon.length) { %>
+      <div class="pr-thanh-ds">
+        <% theoNguon.forEach(function (x) { const t = TEN_NGUON[x.nguon] || [x.nguon, '#9ca3af']; const pt = Math.round(x.n * 100 / tongNguon); %>
+          <div class="pr-thanh">
+            <div class="pr-thanh__nhan"><span><i style="background:<%= t[1] %>"></i><%= t[0] %></span><b><%= x.n %> · <%= pt %>%</b></div>
+            <div class="pr-thanh__nen"><div style="width:<%= Math.max(2, pt) %>%;background:<%= t[1] %>"></div></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="nh-card__desc">Chưa có lượt hỏi nào được ghi nhận.</p>
+    <% } %>
+  </div>
+
+  <div class="nh-card" style="margin-bottom:0;">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-book-open"></i> Kho kiến thức</h2>
+      <p class="nh-card__desc">Những cặp hỏi–đáp bot dùng để tự trả lời khách 24/7.</p>
+    </div>
+    <div class="pr-so-kho">
+      <div><b><%= kho.dang_bat %></b><span>chủ đề đang bật</span></div>
+      <div><b><%= kho.so_cach_hoi %></b><span>cách hỏi bot hiểu</span></div>
+      <div><b><%= kho.luot_dung %></b><span>lượt đã trả lời</span></div>
+      <div><b><%= lhChua %></b><span>SĐT chờ gọi lại</span></div>
+    </div>
+    <% if (kho.top && kho.top.length) { %>
+      <div class="pr-nho" style="margin:12px 0 6px;">Được hỏi nhiều nhất</div>
+      <ol class="pr-top">
+        <% kho.top.forEach(function (r) { %><li><span><%= r.cau_hoi %></span><b><%= r.so_lan_dung %></b></li><% }) %>
+      </ol>
+    <% } %>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button class="nh-btn" type="button" data-sang-tab="kho"><i class="fas fa-book"></i> Quản lý kho</button>
+      <button class="nh-btn ghost" type="button" data-sang-tab="thiet-lap"><i class="fas fa-sliders"></i> Thiết lập AI</button>
+    </div>
+  </div>
+</div>
+
+<%
+  const H = (typeof hoc !== 'undefined' && hoc) || { cho: [], da_hoc: [], vua_tu_hoc: 0, bat: false, nguong: 0.4 };
+  const dsGop = H.cho.filter((r) => r.de_xuat.kieu === 'gop');
+%>
+<div class="nh-card" id="khung-tu-hoc">
+  <div class="nh-card__header" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+    <div>
+      <h2 class="nh-card__title"><i class="fas fa-brain"></i> Bot tự học từ câu chưa trả lời được</h2>
+      <p class="nh-card__desc">
+        Mỗi câu bot trả lời hỏng được đối chiếu với kho kiến thức và thực đơn của nhà hàng.
+        <% if (H.bat) { %>
+          Câu nào bot chắc từ <b><%= Math.round(H.nguong * 100) %>%</b> trở lên thì bot <b>tự học ngay</b> (thêm thành cách hỏi khác của chủ đề đó). Câu chưa đủ chắc nằm ở đây chờ bạn duyệt.
+        <% } else { %>
+          <b style="color:var(--nh-warn)">Tự học đang tắt</b>: bật ở <a href="#" data-sang-tab="thiet-lap">Thiết lập AI → Bộ não</a> để bot tự học các câu đủ chắc.
+        <% } %>
+      </p>
+      <% if (H.vua_tu_hoc) { %>
+        <div class="pr-hoc-bao"><i class="fas fa-wand-magic-sparkles"></i> Bot vừa tự học thêm <b><%= H.vua_tu_hoc %></b> câu.</div>
+      <% } %>
+    </div>
+    <% if (dsGop.length) { %>
+      <button type="button" class="nh-btn" id="hoc-duyet-het"><i class="fas fa-check-double"></i> Duyệt tất cả <%= dsGop.length %> đề xuất</button>
+    <% } %>
+  </div>
+
+  <div class="nh-scroll" style="max-height:520px;">
+    <% if (H.cho.length) { %>
+      <div class="nh-table-wrap">
+        <table class="nh-table pr-bang">
+          <thead><tr><th>Câu khách hỏi</th><th class="so" style="width:70px;">Số lần</th><th>Bot đề xuất</th><th style="width:230px;"></th></tr></thead>
+          <tbody>
+            <% H.cho.forEach(function (r) { const p = r.de_xuat; %>
+              <tr data-cau="<%= r.cau_hoi %>">
+                <td><b><%= r.cau_hoi %></b></td>
+                <td class="so"><span class="pr-the pr-the--do"><%= r.so_lan %></span></td>
+                <td>
+                  <% if (p.kieu === 'gop') { %>
+                    <div>Thuộc chủ đề <b>“<%= p.cau_kt %>”</b> <span class="pr-the <%= p.diem >= 0.35 ? 'pr-the--xanh' : 'pr-the--vang' %>"><%= Math.round(p.diem * 100) %>%</span></div>
+                    <% if (p.khac && p.khac.length) { %>
+                      <div class="pr-phu">Hoặc:
+                        <% p.khac.forEach(function (k, i) { %><a href="#" class="pr-lk-hoc" data-hoc="<%= k.id_kien_thuc %>"><%= k.cau_kt %> (<%= Math.round(k.diem * 100) %>%)</a><%= i < p.khac.length - 1 ? ' · ' : '' %><% }) %>
+                      </div>
+                    <% } %>
+                  <% } else if (p.kieu === 'quan_ly') { %>
+                    <span class="pr-the pr-the--lam">Câu số liệu nội bộ</span>
+                    <div class="pr-phu">Bot chỉ trả lời khi quản lý đăng nhập (qua mô hình ML), không trả lời khách.</div>
+                  <% } else { %>
+                    <span class="pr-the">Chủ đề mới</span>
+                    <div class="pr-phu">Kho chưa có câu nào gần. Bot đã gợi ý sẵn nhóm <b><%= p.nhom %></b> và từ khóa, bạn chỉ cần viết câu trả lời.</div>
+                  <% } %>
+                </td>
+                <td style="text-align:right;white-space:nowrap;">
+                  <% if (p.kieu === 'gop') { %>
+                    <button type="button" class="nh-btn pr-nho-btn" data-hoc="<%= p.id_kien_thuc %>"><i class="fas fa-check"></i> Học</button>
+                  <% } %>
+                  <% if (p.kieu !== 'quan_ly') { %>
+                    <button type="button" class="nh-btn ghost pr-nho-btn" data-day-bot="<%= r.cau_hoi %>" data-nhom="<%= p.nhom || '' %>" data-tu-khoa="<%= p.tu_khoa || '' %>"><i class="fas fa-pen"></i> <%= p.kieu === 'gop' ? 'Trả lời riêng' : 'Dạy bot' %></button>
+                  <% } %>
+                  <button type="button" class="nh-btn ghost pr-nho-btn" data-bo-qua title="Không cần học câu này"><i class="fas fa-xmark"></i></button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div style="text-align:center; padding:26px; color:var(--nh-muted);">
+        <i class="fas fa-face-smile" style="font-size:30px; color:var(--nh-ok); margin-bottom:8px; display:block;"></i>
+        Không còn câu nào chờ duyệt. Bot đã học hết hoặc đang trả lời rất tốt!
+      </div>
+    <% } %>
+  </div>
+
+  <% if (H.da_hoc && H.da_hoc.length) { %>
+    <details class="pr-da-hoc">
+      <summary><i class="fas fa-clock-rotate-left"></i> Bot đã học gần đây (<%= H.da_hoc.length %>)</summary>
+      <table class="nh-table pr-bang" style="margin-top:8px;">
+        <tbody>
+          <% H.da_hoc.forEach(function (r) { %>
+            <tr data-cau="<%= r.cau_hoi %>">
+              <td>“<%= r.cau_hoi %>”</td>
+              <td><i class="fas fa-arrow-right" style="color:var(--nh-gold-dark)"></i> <%= r.cau_kt %></td>
+              <td style="text-align:right;width:110px;"><button type="button" class="nh-btn ghost pr-nho-btn" data-hoan-tac="<%= r.hoc_vao %>"><i class="fas fa-rotate-left"></i> Hoàn tác</button></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </details>
+  <% } %>
+</div>
+<script>
+(function () {
+  var khung = document.getElementById('khung-tu-hoc');
+  if (!khung) return;
+  function goi(url, du) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(du) })
+      .then(function (r) { return r.json(); }).then(function (d) { if (d.ok === false) throw new Error(d.loi || 'Lỗi'); return d; });
+  }
+  function bao(msg, loi) { var t = document.getElementById('pr-toast'); if (!t) return alert(msg); t.textContent = msg; t.className = 'pr-toast hien' + (loi ? ' loi' : ''); setTimeout(function () { t.className = 'pr-toast'; }, 2600); }
+  function anDong(tr) { tr.style.transition = 'opacity .3s'; tr.style.opacity = '0'; setTimeout(function () { tr.remove(); }, 300); }
+  khung.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hoc]');
+    if (b) {
+      e.preventDefault();
+      var tr = b.closest('tr');
+      goi('/admin/chatbot/api/hoc', { cau_hoi: tr.dataset.cau, id_kien_thuc: b.dataset.hoc })
+        .then(function (d) { bao('Bot đã học: lần sau trả lời như chủ đề “' + d.cau_kt + '”'); anDong(tr); })
+        .catch(function (er) { bao(er.message, true); });
+      return;
+    }
+    var q = e.target.closest('[data-bo-qua]');
+    if (q) {
+      var tr2 = q.closest('tr');
+      goi('/admin/chatbot/api/hoc/bo-qua', { cau_hoi: tr2.dataset.cau }).then(function () { anDong(tr2); });
+      return;
+    }
+    var h = e.target.closest('[data-hoan-tac]');
+    if (h) {
+      var tr3 = h.closest('tr');
+      goi('/admin/chatbot/api/hoc/hoan-tac', { cau_hoi: tr3.dataset.cau, id_kien_thuc: h.dataset.hoanTac })
+        .then(function () { bao('Đã hoàn tác, câu này quay lại danh sách chờ duyệt'); setTimeout(function () { location.reload(); }, 700); });
+    }
+  });
+  var het = document.getElementById('hoc-duyet-het');
+  if (het) het.onclick = function () {
+    var ds = [];
+    khung.querySelectorAll('tbody tr[data-cau]').forEach(function (tr) {
+      var b = tr.querySelector('button[data-hoc]');
+      if (b) ds.push({ cau_hoi: tr.dataset.cau, id_kien_thuc: b.dataset.hoc });
+    });
+    if (!ds.length || !confirm('Cho bot học tất cả ' + ds.length + ' câu theo chủ đề bot đề xuất?')) return;
+    goi('/admin/chatbot/api/hoc/nhieu', { ds: ds }).then(function (d) { bao('Bot đã học ' + d.so_hoc + ' câu'); setTimeout(function () { location.reload(); }, 800); });
+  };
+})();
+</script>

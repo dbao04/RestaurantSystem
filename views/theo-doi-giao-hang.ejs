@@ -223,6 +223,30 @@
     .timeline-title { font-weight:700; color:#f1f5f9; }
     .timeline-time { font-size:12px; color:#94a3b8; margin-top:2px; }
 
+    /* Dien bien gon: moi nhat tren cung, gom vong phan shipper (routes/vanChuyen.js gonDienBienChoKhach) */
+    .tl { list-style:none; margin:2px 0 0; padding:0; position:relative; }
+    .tl-muc { position:relative; display:flex; gap:12px; padding:0 0 14px; }
+    .tl-muc:last-child { padding-bottom:0; }
+    .tl-muc:not(:last-child)::before { content:''; position:absolute; left:13px; top:28px; bottom:2px; width:2px; background:rgba(255,255,255,.09); border-radius:2px; }
+    .tl-muc.is-an { display:none; }
+    .tl.is-mo .tl-muc.is-an { display:flex; }
+    .tl-cham { flex:none; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-size:11px;
+      color:var(--m); background:rgba(255,255,255,.05); border:1.5px solid color-mix(in srgb, var(--m) 55%, transparent); }
+    .tl-noi { flex:1; min-width:0; padding-top:4px; }
+    .tl-dong { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+    .tl-ten { font-size:13.5px; font-weight:600; color:#cbd5e1; }
+    .tl-gio { flex:none; font-size:11.5px; color:#8b97a8; font-variant-numeric:tabular-nums; }
+    .tl-phu { margin-top:3px; font-size:12px; color:#94a3b8; }
+    .tl-phu i { font-size:10px; margin-right:3px; }
+    .tl-muc.is-moi .tl-cham { color:#1c100b; background:var(--m); border-color:var(--m); box-shadow:0 0 0 4px color-mix(in srgb, var(--m) 22%, transparent); }
+    .tl-muc.is-moi .tl-ten { color:#fff; font-weight:800; font-size:14.5px; }
+    .tl-muc.is-moi .tl-gio { color:#d4af37; font-weight:700; }
+    .tl-them { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin-top:12px; padding:9px;
+      border:1px dashed rgba(212,175,55,.35); border-radius:12px; background:rgba(212,175,55,.06); color:#d4af37; font-size:12.5px; font-weight:700; cursor:pointer; }
+    .tl-them:hover { background:rgba(212,175,55,.12); }
+    .tl-them i { font-size:10px; transition:transform .2s; }
+    .tl-them.is-mo i { transform:rotate(180deg); }
+
     /* Footer */
     .footer-actions {
       text-align:center; font-size:13px; color:#94a3b8; margin-top:24px; line-height:1.8;
@@ -434,15 +458,41 @@
       <i class="fas fa-clock-rotate-left card-icon"></i>
       <h2 class="card-title"><%= t('theo_doi.dien_bien') %></h2>
     </div>
-    <div class="timeline">
-      <% (lichSu || []).forEach(function (n) { %>
-        <div class="timeline-item">
-          <span class="timeline-dot" style="background:<%= n.mau %>"></span>
-          <div class="timeline-title"><%= n.nhan %></div>
-          <div class="timeline-time"><%= new Date(n.luc).toLocaleString('vi-VN') %></div>
-        </div>
+    <%
+      var _p2 = function (x) { return (x < 10 ? '0' : '') + x; };
+      var _moc = function (d) { d = new Date(d); return _p2(d.getHours()) + ':' + _p2(d.getMinutes()) + ' · ' + _p2(d.getDate()) + '/' + _p2(d.getMonth() + 1); };
+      var _ds = lichSu || [], HIEN = 4;
+    %>
+    <ol class="tl" id="tl">
+      <% _ds.forEach(function (n, i) { %>
+        <li class="tl-muc <%= i === 0 ? 'is-moi' : '' %> <%= i >= HIEN ? 'is-an' : '' %>" style="--m:<%= n.mau %>">
+          <span class="tl-cham"><i class="fas <%= n.icon || 'fa-circle' %>"></i></span>
+          <div class="tl-noi">
+            <div class="tl-dong">
+              <span class="tl-ten"><%= n.nhan %></span>
+              <time class="tl-gio"><%= _moc(n.luc) %></time>
+            </div>
+            <% if (n.so_lan_phan > 1) { %><div class="tl-phu"><i class="fas fa-rotate"></i> <%= t('theo_doi.da_tim_shipper', { n: n.so_lan_phan }) %></div><% } %>
+            <% if (n.ghi_chu) { %><div class="tl-phu"><%= n.ghi_chu %></div><% } %>
+          </div>
+        </li>
       <% }) %>
-    </div>
+    </ol>
+    <% if (_ds.length > HIEN) { %>
+      <button type="button" class="tl-them" id="tlThem" data-mo="<%= t('theo_doi.hien_them', { n: _ds.length - HIEN }) %>" data-dong="<%= t('theo_doi.thu_gon') %>">
+        <span><%= t('theo_doi.hien_them', { n: _ds.length - HIEN }) %></span> <i class="fas fa-chevron-down"></i>
+      </button>
+      <script>
+        (function () {
+          var n = document.getElementById('tlThem'), l = document.getElementById('tl');
+          n.addEventListener('click', function () {
+            var mo = l.classList.toggle('is-mo');
+            n.querySelector('span').textContent = mo ? n.dataset.dong : n.dataset.mo;
+            n.classList.toggle('is-mo', mo);
+          });
+        })();
+      </script>
+    <% } %>
   </div>
 
   <!-- Footer Actions -->

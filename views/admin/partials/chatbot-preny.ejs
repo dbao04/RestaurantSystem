@@ -1,0 +1,790 @@
+<%
+  /*
+    Cac tab moi cua trang /admin/chatbot (tro ly kieu Preny AI):
+      kho        - kho kien thuc hoi/dap: them/sua/xoa, nap file Excel/Word/CSV/TXT, xuat Excel
+      thiet-lap  - toan bo thiet lap: tinh cach, bo nao, giao dien chat, gio hoat dong, thu SDT...
+      thu        - khung chat thu nghiem (gia lap khach / quan ly) + nhat ky hoi thoai
+      lien-he    - khach de lai so dien thoai trong khung chat
+  */
+  const tl = thietLap;
+  const sw = (k, nhan, moTa) => `<label class="pr-sw"><input type="checkbox" name="${k}" ${tl[k] ? 'checked' : ''}><span class="pr-sw__nut"></span><span class="pr-sw__chu"><b>${nhan}</b>${moTa ? `<small>${moTa}</small>` : ''}</span></label>`;
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const chu = (k, nhan, moTa, ph) => `<label class="pr-truong"><span>${nhan}</span><input class="nh-input" name="${k}" value="${esc(tl[k])}" placeholder="${esc(ph || '')}">${moTa ? `<small>${moTa}</small>` : ''}</label>`;
+  const vung = (k, nhan, moTa, dong) => `<label class="pr-truong"><span>${nhan}</span><textarea class="nh-input" name="${k}" rows="${dong || 3}">${esc(Array.isArray(tl[k]) ? tl[k].join('\n') : tl[k])}</textarea>${moTa ? `<small>${moTa}</small>` : ''}</label>`;
+  const so = (k, nhan, moTa, min, max, buoc) => `<label class="pr-truong"><span>${nhan}</span><input class="nh-input" type="number" name="${k}" value="${esc(tl[k])}" min="${min}" max="${max}" step="${buoc || 1}">${moTa ? `<small>${moTa}</small>` : ''}</label>`;
+  const truot = (k, nhan, moTa, min, max, buoc) => `<label class="pr-truong"><span>${nhan}: <b data-gia-tri="${k}">${tl[k]}</b></span><input type="range" name="${k}" value="${tl[k]}" min="${min}" max="${max}" step="${buoc}" class="pr-truot">${moTa ? `<small>${moTa}</small>` : ''}</label>`;
+  const chon = (k, nhan, ds, moTa) => `<label class="pr-truong"><span>${nhan}</span><select class="nh-input" name="${k}">${ds.map(([v, t]) => `<option value="${v}" ${String(tl[k]) === v ? 'selected' : ''}>${t}</option>`).join('')}</select>${moTa ? `<small>${moTa}</small>` : ''}</label>`;
+  const TEN_NHOM = { chao_hoi: 'Chào hỏi', thong_tin: 'Thông tin quán', dat_ban: 'Đặt bàn', dat_tiec: 'Đặt tiệc', thuc_don: 'Thực đơn', giao_hang: 'Giao hàng', thanh_toan: 'Thanh toán', khuyen_mai: 'Khuyến mãi', tai_khoan: 'Tài khoản', gop_y: 'Góp ý', khac: 'Khác' };
+%>
+<style>
+  .qt-tabs { display:flex; gap:6px; flex-wrap:wrap; margin: 0 0 22px; border-bottom: 1px solid var(--nh-line); }
+  .qt-tabs button {
+    border:0; background:none; padding: 11px 16px; font: 600 14px var(--nh-sans); color: var(--nh-muted); cursor:pointer;
+    border-bottom: 3px solid transparent; margin-bottom:-1px; display:inline-flex; align-items:center; gap:8px; border-radius: 8px 8px 0 0;
+  }
+  .qt-tabs button:hover { color: var(--nh-ink); background: var(--nh-cream-2); }
+  .qt-tabs button.on { color: var(--nh-espresso); border-bottom-color: var(--nh-gold); }
+  .qt-tabs button .pr-so { background: var(--nh-danger); color:#fff; border-radius:999px; font-size:11px; padding: 1px 7px; }
+  .qt-tab { display:none; }
+  .qt-tab.on { display:block; animation: prHien .2s ease; }
+  @keyframes prHien { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
+
+  .pr-thanh-ds { display:flex; flex-direction:column; gap:12px; }
+  .pr-thanh__nhan { display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; }
+  .pr-thanh__nhan i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:7px; }
+  .pr-thanh__nen { height:8px; background: var(--nh-line-soft); border-radius:99px; overflow:hidden; }
+  .pr-thanh__nen div { height:100%; border-radius:99px; }
+  .pr-so-kho { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+  .pr-so-kho div { background: var(--nh-cream); border:1px solid var(--nh-line); border-radius:10px; padding:10px; text-align:center; }
+  .pr-so-kho b { display:block; font: 800 22px var(--nh-sans); color: var(--nh-espresso); }
+  .pr-so-kho span { font-size:11.5px; color: var(--nh-muted); }
+  .pr-nho { font-size:12px; color: var(--nh-muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+  .pr-top { margin:0; padding-left:20px; font-size:13px; }
+  .pr-top li { padding: 3px 0; }
+  .pr-top li span { display:inline-block; max-width: 80%; }
+  .pr-top li b { float:right; color: var(--nh-gold-dark); }
+  .pr-the { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; background:#f2ece1; color: var(--nh-espresso); }
+  .pr-the--do { background:#fee2e2; color:#991b1b; }
+  .pr-the--xanh { background: var(--nh-ok-bg); color: var(--nh-ok); }
+  .pr-the--lam { background: var(--nh-info-bg); color: var(--nh-info); }
+  .pr-the--vang { background: var(--nh-warn-bg); color: var(--nh-warn); }
+  .pr-nho-btn { padding: 6px 11px !important; font-size: 12px !important; white-space: nowrap; }
+  .nh-btn.do { background: var(--nh-danger); }
+  .pr-hoc-bao { display:inline-flex; gap:8px; align-items:center; margin-top:8px; background: var(--nh-ok-bg); color: var(--nh-ok); border:1px solid var(--nh-ok-border); border-radius:8px; padding:6px 12px; font-size:13px; }
+  .pr-lk-hoc { color: var(--nh-gold-dark); font-weight:600; }
+  .pr-da-hoc { margin-top: 14px; border-top: 1px dashed var(--nh-line); padding-top: 12px; }
+  .pr-da-hoc summary { cursor:pointer; font-weight:700; font-size:13.5px; color: var(--nh-muted); }
+  .nh-btn.nho { padding: 7px 12px; font-size: 12.5px; }
+
+  /* Kho kien thuc */
+  .pr-thanh-cu { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .pr-thanh-cu .nh-input { flex: 1 1 220px; }
+  .pr-thanh-cu select.nh-input { flex: 0 0 170px; }
+  .pr-bang td { vertical-align: top; }
+  .pr-bang .pr-cau { font-weight:700; color: var(--nh-ink); }
+  .pr-bang .pr-phu { font-size:12px; color: var(--nh-muted); margin-top:3px; }
+  .pr-bang .pr-tl { font-size:12.5px; color:#4a3d33; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; max-width: 420px; }
+  .pr-hanh-dong { white-space:nowrap; text-align:right; }
+  .pr-hanh-dong button { border:1px solid var(--nh-line); background:#fff; border-radius:7px; width:30px; height:30px; cursor:pointer; color: var(--nh-muted); }
+  .pr-hanh-dong button:hover { color: var(--nh-espresso); border-color: var(--nh-gold); }
+  .pr-trang { display:flex; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+  .pr-trang button { min-width:34px; height:32px; border:1px solid var(--nh-line); background:#fff; border-radius:7px; cursor:pointer; }
+  .pr-trang button.on { background: var(--nh-gold); color:#241a14; border-color: var(--nh-gold); font-weight:700; }
+  .pr-keo-tha { display:block; margin-top: 12px; border:2px dashed #d9c9a8; border-radius:12px; padding:22px; text-align:center; background:#fffdf8; cursor:pointer; transition: all .2s; }
+  .pr-keo-tha.dang-keo, .pr-keo-tha:hover { border-color: var(--nh-gold); background: #fbf3e2; }
+  .pr-keo-tha i { font-size: 30px; color: var(--nh-gold); display:block; margin-bottom:8px; }
+
+  /* Switch */
+  .pr-sw { display:flex; gap:12px; align-items:flex-start; cursor:pointer; padding: 10px 0; border-bottom: 1px dashed var(--nh-line-soft); }
+  .pr-sw input { position:absolute; opacity:0; pointer-events:none; }
+  .pr-sw__nut { flex-shrink:0; width:42px; height:24px; border-radius:99px; background:#d6cfc5; position:relative; transition: background .2s; margin-top:1px; }
+  .pr-sw__nut::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  .pr-sw input:checked + .pr-sw__nut { background: var(--nh-ok); }
+  .pr-sw input:checked + .pr-sw__nut::after { transform: translateX(18px); }
+  .pr-sw input:focus-visible + .pr-sw__nut { outline: 2px solid var(--nh-gold); outline-offset: 2px; }
+  .pr-sw__chu b { display:block; font-size:13.5px; }
+  .pr-sw__chu small { display:block; font-size:12px; color: var(--nh-muted); margin-top:2px; line-height:1.45; }
+
+  /* Form thiet lap */
+  .pr-tl { display:grid; grid-template-columns: 220px 1fr; gap: 22px; align-items:start; }
+  .pr-tl__menu { position: sticky; top: 100px; display:flex; flex-direction:column; gap:3px; }
+  .pr-tl__menu a { padding:9px 12px; border-radius:8px; color: var(--nh-muted); text-decoration:none; font-weight:600; font-size:13.5px; display:flex; gap:9px; align-items:center; }
+  .pr-tl__menu a:hover { background: var(--nh-cream-2); color: var(--nh-ink); }
+  .pr-tl__menu a i { width:16px; text-align:center; color: var(--nh-gold-dark); }
+  .pr-luoi { display:grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+  .pr-luoi .pr-rong { grid-column: 1 / -1; }
+  .pr-truong { display:flex; flex-direction:column; gap:5px; padding: 8px 0; }
+  .pr-truong > span { font-weight:700; font-size:13px; }
+  .pr-truong small { font-size:12px; color: var(--nh-muted); line-height:1.45; }
+  .pr-truong .nh-input { flex: none; width: 100%; }
+  .pr-truong textarea { resize: vertical; min-height: 60px; font-family: inherit; line-height: 1.5; }
+  .pr-truot { accent-color: var(--nh-gold-dark); width:100%; }
+  .pr-luu {
+    position: sticky; bottom: 0; z-index: 20; display:flex; gap:10px; align-items:center; justify-content:flex-end;
+    background: rgba(251,248,244,.96); backdrop-filter: blur(6px); border-top:1px solid var(--nh-line);
+    padding: 12px 0; margin-top: 10px;
+  }
+  .pr-luu span { margin-right:auto; font-size:13px; color: var(--nh-muted); }
+  .pr-xem-truoc { background: linear-gradient(180deg,#fbf8f2,#f4eee2); border:1px solid var(--nh-line); border-radius: 14px; padding: 14px; }
+  .pr-xem-truoc__dau { display:flex; gap:10px; align-items:center; background:#2b1a12; color:#faf6ef; border-radius:10px; padding:10px 12px; margin-bottom:12px; }
+  .pr-xem-truoc__dau .av { width:34px; height:34px; border-radius:50%; background: linear-gradient(135deg,#d4af37,#9a6f20); color:#24140b; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pr-xem-truoc__dau .av img { width:100%; height:100%; object-fit:cover; }
+  .pr-xem-truoc__dau b { color:#dfb962; font-family: var(--nh-serif); display:block; }
+  .pr-xem-truoc__dau small { color:#e5dacd; font-size:11.5px; }
+  .pr-xem-truoc__tn { background:#fff; border:1px solid rgba(200,162,75,.25); border-radius:14px 14px 14px 4px; padding:10px 13px; font-size:13px; white-space:pre-wrap; line-height:1.55; }
+
+  /* Thu nghiem */
+  .pr-thu { display:grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; }
+  .pr-chat { border:1px solid var(--nh-line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; height: 560px; background:#fff; }
+  .pr-chat__dau { padding: 10px 14px; background: var(--nh-espresso); color: #fff; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .pr-chat__dau select, .pr-chat__dau input { background: rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:7px; padding:5px 8px; font: 13px var(--nh-sans); }
+  .pr-chat__dau select option { color:#000; }
+  .pr-chat__than { flex:1; overflow-y:auto; padding: 14px; background: linear-gradient(180deg,#fbf8f2,#f4eee2); }
+  .pr-chat__chan { display:flex; gap:8px; padding: 10px; border-top:1px solid var(--nh-line); }
+  .pr-tn { margin-bottom: 12px; display:flex; flex-direction:column; }
+  .pr-tn--toi { align-items:flex-end; }
+  .pr-tn__noi { max-width: 85%; padding: 9px 13px; border-radius: 14px; white-space: pre-wrap; font-size: 13.5px; line-height:1.55; }
+  .pr-tn--toi .pr-tn__noi { background: var(--nh-gold); color:#241a14; border-bottom-right-radius:4px; }
+  .pr-tn--bot .pr-tn__noi { background:#fff; border:1px solid var(--nh-line); border-bottom-left-radius:4px; }
+  .pr-tn__meta { font-size: 11.5px; color: var(--nh-muted); margin-top: 5px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .pr-mon-nho { display:flex; gap:8px; overflow-x:auto; margin-top:8px; }
+  .pr-mon-nho div { flex: 0 0 120px; border:1px solid var(--nh-line); border-radius:10px; overflow:hidden; font-size:11.5px; background:#fff; }
+  .pr-mon-nho img { width:100%; height:80px; object-fit:cover; display:block; background:#f3ece0; }
+  .pr-mon-nho p { margin:5px 7px; line-height:1.35; }
+  .pr-goi-y-nho { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+  .pr-goi-y-nho button { border:1px solid #dcc9a2; background:#fff; border-radius:99px; padding:4px 10px; font-size:12px; cursor:pointer; }
+  .pr-chan-doan { border:1px solid var(--nh-line); border-radius:14px; padding: 14px; background:#fff; height:560px; overflow:auto; }
+  .pr-chan-doan h3 { margin: 0 0 10px; font-size: 14px; }
+  .pr-chan-doan dl { margin:0; display:grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px; }
+  .pr-chan-doan dt { color: var(--nh-muted); }
+  .pr-chan-doan dd { margin:0; font-weight:600; word-break: break-word; }
+  .pr-uv { margin-top: 14px; }
+  .pr-uv div { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--nh-line); font-size:12.5px; }
+  .pr-uv b { color: var(--nh-gold-dark); }
+
+  /* Modal */
+  .pr-modal { position:fixed; inset:0; background: rgba(20,12,8,.55); z-index: 1000; display:none; align-items:flex-start; justify-content:center; padding: 40px 16px; overflow-y:auto; }
+  .pr-modal.mo { display:flex; }
+  .pr-modal__hop { background:#fff; border-radius:16px; width: 100%; max-width: 860px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .pr-modal__dau { display:flex; justify-content:space-between; align-items:center; padding: 16px 22px; border-bottom:1px solid var(--nh-line); }
+  .pr-modal__dau h3 { margin:0; font: 700 18px var(--nh-serif); }
+  .pr-modal__dau button { border:0; background:none; font-size: 24px; cursor:pointer; color: var(--nh-muted); }
+  .pr-modal__than { padding: 8px 22px 6px; }
+  .pr-modal__chan { display:flex; justify-content:flex-end; gap:10px; padding: 14px 22px; border-top:1px solid var(--nh-line); align-items:center; }
+  .pr-modal__chan .pr-trai { margin-right:auto; }
+  .pr-xem-file { max-height: 360px; overflow:auto; border:1px solid var(--nh-line); border-radius:10px; margin-top:12px; }
+  .pr-goi-y-bien { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
+  .pr-goi-y-bien code { background:#f2ece1; border-radius:5px; padding:2px 6px; font-size:11.5px; cursor:pointer; }
+
+  .pr-toast { position: fixed; right: 20px; bottom: 20px; z-index: 2000; background: var(--nh-espresso); color:#fff; padding: 12px 18px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: 13.5px; transform: translateY(120%); transition: transform .25s; }
+  .pr-toast.hien { transform: none; }
+  .pr-toast.loi { background: var(--nh-danger); }
+
+  @media (max-width: 1000px) {
+    .pr-tl, .pr-thu { grid-template-columns: 1fr; }
+    .pr-tl__menu { position: static; flex-direction: row; flex-wrap: wrap; }
+    .pr-luoi { grid-template-columns: 1fr; }
+    .pr-so-kho { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<!-- =========================================================== KHO KIEN THUC -->
+<section class="qt-tab" data-tab="kho">
+  <div class="nh-card">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-book"></i> Kho kiến thức hỏi – đáp</h2>
+      <p class="nh-card__desc">
+        Mỗi chủ đề gồm <b>câu hỏi</b>, các <b>cách hỏi khác</b> và <b>từ khóa</b>. Bot so khớp câu khách với tất cả những thứ này, nên khách hỏi
+        kiểu khác, viết tắt hay gõ không dấu bot vẫn hiểu. Hỏi về món ăn thì bot tự tra thực đơn và gửi kèm ảnh, không cần nhập ở đây.
+      </p>
+    </div>
+    <div class="pr-thanh-cu">
+      <input class="nh-input" id="kt-tim" placeholder="Tìm câu hỏi, từ khóa, câu trả lời…">
+      <select class="nh-input" id="kt-nhom"><option value="">Tất cả nhóm</option></select>
+      <button class="nh-btn" type="button" id="kt-them"><i class="fas fa-plus"></i> Thêm câu hỏi</button>
+      <button class="nh-btn ghost" type="button" id="kt-mo-nap"><i class="fas fa-file-arrow-up"></i> Tải file huấn luyện</button>
+      <a class="nh-btn ghost" href="/admin/chatbot/kien-thuc.xlsx"><i class="fas fa-file-excel"></i> Xuất Excel</a>
+    </div>
+    <div class="nh-table-wrap">
+      <table class="nh-table pr-bang">
+        <thead><tr><th style="width:36px;"><input type="checkbox" id="kt-chon-het"></th><th>Câu hỏi &amp; cách hỏi</th><th>Trả lời</th><th style="width:110px;">Nhóm</th><th class="so" style="width:70px;">Đã dùng</th><th style="width:60px;">Bật</th><th style="width:80px;"></th></tr></thead>
+        <tbody id="kt-ds"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--nh-muted)"><i class="fas fa-spinner fa-spin"></i> Đang tải…</td></tr></tbody>
+      </table>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <button class="nh-btn do nho" type="button" id="kt-xoa-chon" disabled><i class="fas fa-trash"></i> Xóa mục đã chọn</button>
+        <button class="nh-btn ghost nho" type="button" id="kt-nap-mau"><i class="fas fa-wand-magic-sparkles"></i> Nạp lại bộ câu mẫu ngành nhà hàng</button>
+      </div>
+      <span class="nh-card__desc" id="kt-tong"></span>
+    </div>
+    <div class="pr-trang" id="kt-trang"></div>
+  </div>
+</section>
+
+<!-- =========================================================== THIET LAP -->
+<section class="qt-tab" data-tab="thiet-lap">
+  <form id="form-tl" autocomplete="off">
+  <div class="pr-tl">
+    <nav class="pr-tl__menu">
+      <a href="#tl-chung"><i class="fas fa-power-off"></i> Bật/tắt &amp; tính cách</a>
+      <a href="#tl-nha-hang"><i class="fas fa-store"></i> Thông tin nhà hàng</a>
+      <a href="#tl-bo-nao"><i class="fas fa-brain"></i> Bộ não trả lời</a>
+      <a href="#tl-giao-dien"><i class="fas fa-comments"></i> Khung chat</a>
+      <a href="#tl-gio"><i class="fas fa-clock"></i> Giờ hoạt động</a>
+      <a href="#tl-khach"><i class="fas fa-user-plus"></i> Khách &amp; nhân viên</a>
+      <a href="#tl-kiem-duyet"><i class="fas fa-shield-halved"></i> Kiểm duyệt</a>
+    </nav>
+    <div>
+      <div class="nh-card" id="tl-chung">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-user-astronaut"></i> Bật/tắt &amp; tính cách</h2>
+          <p class="nh-card__desc">Đặt tên, giọng nói và cách xưng hô để trợ lý nói chuyện như một nhân viên thật của quán.</p></div>
+        <div class="pr-luoi">
+          <div class="pr-rong"><%- sw('bat', 'Bật trợ lý ảo trên website', 'Tắt thì khách chỉ thấy nút gọi hotline / chat với nhân viên.') %></div>
+          <%- chu('ten_bot', 'Tên trợ lý', 'Ví dụ: Hana, Sakura, Bé Sushi…', 'Hana') %>
+          <%- chu('chuc_danh', 'Dòng mô tả dưới tên', '', 'Trợ lý ảo · Trả lời ngay 24/7') %>
+          <%- chu('avatar', 'Ảnh đại diện (đường dẫn)', 'Để trống dùng ảnh mặc định (cô gái mặc kimono). Muốn dùng ảnh riêng: chép ảnh vào thư mục images rồi nhập /ten-anh.png', '/images/...') %>
+          <%- chon('xung_ho', 'Cách xưng hô', [['minh_ban', 'Mình – bạn (thân thiện)'], ['em_anhchi', 'Em – anh/chị (lễ phép)'], ['em_quykhach', 'Em – quý khách (trang trọng)']], 'Bot tự đổi xưng hô trong mọi câu trả lời, kể cả câu mẫu.') %>
+          <div><%- sw('dung_emoji', 'Dùng emoji', 'Thêm biểu tượng cảm xúc cho câu trả lời sinh động.') %></div>
+          <div><%- sw('chao_theo_buoi', 'Chào theo buổi', 'Sáng / trưa / chiều / tối nói câu khác nhau.') %></div>
+          <div class="pr-rong"><%- sw('goi_ten_khach', 'Gọi tên khách đã đăng nhập', 'Ví dụ “Chào bạn Bảo 👋” thay vì “Chào bạn”.') %></div>
+          <div class="pr-rong"><%- vung('loi_chao', 'Lời chào khi khách mở khung chat', 'Dùng được biến <code>{ten_bot}</code> <code>{ten_nha_hang}</code> <code>{ten_khach}</code> <code>{hotline}</code>. In đậm: <code>**chữ**</code>.', 3) %></div>
+          <div class="pr-rong"><%- vung('loi_chao_quan_ly', 'Lời chào khi quản lý mở khung chat', '', 2) %></div>
+          <div class="pr-rong">
+            <div class="pr-nho" style="margin:8px 0;">Xem trước</div>
+            <div class="pr-xem-truoc">
+              <div class="pr-xem-truoc__dau"><div class="av" id="xt-av"><img src="/tro-ly-ao.svg" alt=""></div><div><b id="xt-ten"></b><small id="xt-cd"></small></div></div>
+              <div class="pr-xem-truoc__tn" id="xt-chao"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-nha-hang">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-store"></i> Thông tin nhà hàng</h2>
+          <p class="nh-card__desc">Bot điền các thông tin này vào câu trả lời qua biến <code>{hotline}</code>, <code>{dia_chi}</code>… Sửa một lần ở đây là mọi câu trả lời tự cập nhật.</p></div>
+        <div class="pr-luoi">
+          <%- chu('ten_nha_hang', 'Tên nhà hàng  {ten_nha_hang}') %>
+          <%- chu('hotline', 'Hotline / Zalo  {hotline}') %>
+          <div class="pr-rong"><%- chu('dia_chi', 'Địa chỉ  {dia_chi}') %></div>
+          <%- chu('gio_mo_cua', 'Giờ mở cửa  {gio_mo_cua}') %>
+          <%- chu('email', 'Email  {email}') %>
+          <%- chu('wifi', 'Mật khẩu wifi  {wifi}') %>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-bo-nao">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-brain"></i> Bộ não trả lời</h2>
+          <p class="nh-card__desc">Thứ tự bot tìm câu trả lời: <b>Kho kiến thức → Thực đơn (gửi món + ảnh) → Mô hình ML → Gợi ý câu gần đúng</b>.</p></div>
+        <div class="pr-luoi">
+          <div><%- sw('bat_kien_thuc', 'Trả lời bằng kho kiến thức', 'Dùng các cặp hỏi–đáp ở tab Kho kiến thức.') %></div>
+          <div><%- sw('bat_tim_mon', 'Nhận diện món ăn trong câu hỏi', 'Khách nhắc tên món, nguyên liệu, nhóm món, mức giá → gửi thông tin món.') %></div>
+          <div><%- sw('hien_anh_mon', 'Gửi kèm ảnh món', 'Hiện thẻ món có hình, giá, nhóm món.') %></div>
+          <div><%- sw('nut_them_gio', 'Nút “Thêm vào giỏ” trên thẻ món', 'Khách đặt món ngay trong khung chat.') %></div>
+          <div><%- sw('goi_y_mon_ban_chay', 'Gợi ý món bán chạy', 'Trả lời “có món gì ngon”, “nên ăn gì” bằng món được gọi nhiều nhất.') %></div>
+          <div><%- sw('nho_ngu_canh', 'Nhớ ngữ cảnh', 'Hiểu “món đó giá bao nhiêu”, “còn không” theo món vừa nói.') %></div>
+          <div class="pr-rong"><%- sw('bat_tu_khoa', 'Bắt từ khóa', 'Câu khách có chứa từ khóa của chủ đề nào là bot trả lời theo chủ đề đó, không cần giống cả câu. Hiểu gõ không dấu, viết tắt, từ đồng nghĩa, từ khóa nằm cách nhau trong câu và gõ sai 1 chữ.') %></div>
+          <%- truot('nguong_tu_khoa', 'Độ chắc khi bắt từ khóa', 'Trùng nguyên 1 cụm từ khóa ≈ 1.0, trùng 1 từ đơn ≈ 0.75. Khuyên dùng 0.6. Tăng lên nếu bot bắt nhầm.', 0.3, 1.5, 0.05) %>
+          <div></div>
+          <div class="pr-rong"><%- sw('tu_hoc', 'Tự học từ câu chưa trả lời được', 'Câu khách hỏi mà bot trả lời hỏng được đối chiếu với kho kiến thức; đủ chắc thì bot tự thêm thành cách hỏi khác của chủ đề phù hợp, chưa đủ chắc thì chờ duyệt ở tab Tổng quan.') %></div>
+          <%- truot('nguong_tu_hoc', 'Độ chắc để bot tự học', 'Thấp hơn: tự học nhiều hơn nhưng dễ học nhầm. Cao hơn: chắc chắn hơn, nhiều câu chờ duyệt hơn. Khuyên dùng 0.55.', 0.2, 0.95, 0.01) %>
+          <div></div>
+          <div class="pr-rong"><%- sw('bat_ml', 'Dùng mô hình ML (Python) cho câu còn lại', 'Cần bật dịch vụ ML. Quản lý hỏi số liệu (doanh thu, bàn trống…) luôn đi qua mô hình này.') %></div>
+          <%- truot('nguong_khop', 'Độ chắc chắn để trả lời', 'Cao hơn: bot thận trọng, ít trả lời nhầm. Thấp hơn: trả lời được nhiều câu hơn. Khuyên dùng 0.45–0.6.', 0.2, 0.95, 0.01) %>
+          <%- truot('nguong_goi_y', 'Ngưỡng gợi ý “Có phải bạn muốn hỏi…”', 'Câu khớp trong khoảng này sẽ được gợi ý thay vì trả lời thẳng.', 0.1, 0.9, 0.01) %>
+          <%- so('so_mon_toi_da', 'Số món tối đa trong một lần gửi', '', 1, 12) %>
+          <div></div>
+          <div class="pr-rong"><%- vung('tu_dong_nghia', 'Từ đồng nghĩa (mỗi dòng một nhóm, cách nhau dấu |)', 'Từ đầu dòng là từ chuẩn. Ví dụ: <code>dat ban | book ban | giu cho</code> → khách gõ “giữ chỗ” bot hiểu như “đặt bàn”. Gõ có dấu hay không dấu đều được.', 6) %></div>
+          <div class="pr-rong"><%- vung('tin_khong_hieu', 'Câu trả lời khi không hiểu', '', 2) %></div>
+          <div class="pr-rong"><%- chu('tin_goi_y_gan_dung', 'Câu mở đầu khi gợi ý câu gần đúng') %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-giao-dien">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-comments"></i> Khung chat</h2>
+          <p class="nh-card__desc">Các hiệu ứng giúp cuộc trò chuyện tự nhiên như đang nhắn với người thật.</p></div>
+        <div class="pr-luoi">
+          <div><%- sw('hieu_ung_go', 'Hiệu ứng “đang gõ…”', 'Hiện ba chấm trước khi trả lời, dài ngắn theo độ dài câu.') %></div>
+          <div><%- sw('chia_tin', 'Tách tin dài thành nhiều bong bóng', 'Như người thật nhắn từng đoạn.') %></div>
+          <%- so('toc_do_go', 'Tốc độ gõ (mili giây / ký tự)', 'Càng lớn bot gõ càng chậm. 40–60 giống người thật; 20 là khá nhanh.', 0, 150) %>
+          <%- so('go_toi_da_ms', 'Thời gian gõ tối đa (mili giây)', 'Câu dài nhất cũng chỉ gõ tới mức này.', 0, 10000, 100) %>
+          <%- so('tre_doc_ms', 'Thời gian đọc tin trước khi gõ (mili giây)', 'Bot im lặng như đang đọc tin của khách rồi mới hiện “đang gõ…”. Khoảng 800–1500 trông tự nhiên.', 0, 5000, 100) %>
+          <div></div>
+          <div class="pr-rong"><%- sw('chao_chu_dong', 'Chủ động mời khách trò chuyện', 'Sau vài giây khách vào web, bong bóng lời mời hiện cạnh nút chat.') %></div>
+          <%- so('chao_chu_dong_giay', 'Hiện lời mời sau (giây)', '', 2, 120) %>
+          <%- chu('chao_chu_dong_noi_dung', 'Nội dung lời mời') %>
+          <div class="pr-rong"><%- sw('hien_goi_y', 'Hiện nút gợi ý câu hỏi dưới tin nhắn', 'Tắt (khuyên dùng) để khung chat giống nhắn tin với người thật. Khi tắt, bot hỏi lại bằng lời thay vì hiện nút.') %></div>
+          <div class="pr-rong"><%- vung('goi_y_nhanh', 'Câu gợi ý nhanh (mỗi dòng một câu)', 'Chỉ hiện khi bật nút gợi ý ở trên.', 4) %></div>
+          <div><%- sw('hien_nut_goi', 'Hiện nút gọi hotline', '') %></div>
+          <div><%- sw('hien_nut_nhan_vien', 'Hiện nút “Chat với nhân viên”', '') %></div>
+          <div><%- sw('luu_lich_su', 'Giữ cuộc trò chuyện khi khách chuyển trang', '') %></div>
+          <div><%- sw('cham_diem', 'Cho khách chấm 👍 / 👎 câu trả lời', '') %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-gio">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-clock"></i> Giờ hoạt động</h2>
+          <p class="nh-card__desc">Mặc định trợ lý trả lời 24/7. Chọn khung giờ nếu chỉ muốn bot trực trong giờ nhất định.</p></div>
+        <div class="pr-luoi">
+          <%- chon('gio_hoat_dong', 'Chế độ', [['24_7', 'Trả lời 24/7'], ['khung_gio', 'Chỉ trong khung giờ']]) %>
+          <div style="display:flex;gap:12px;"><%- chu('gio_bat_dau', 'Từ', '', '08:00') %><%- chu('gio_ket_thuc', 'Đến', '', '22:00') %></div>
+          <div class="pr-rong"><%- vung('tin_ngoai_gio', 'Tin nhắn ngoài giờ', '', 2) %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-khach">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-user-plus"></i> Thu thập khách &amp; chuyển nhân viên</h2>
+          <p class="nh-card__desc">Khách nhắn số điện thoại trong khung chat thì bot tự ghi lại và báo cho quản lý, lễ tân.</p></div>
+        <div class="pr-luoi">
+          <div><%- sw('bat_thu_sdt', 'Ghi nhận số điện thoại khách để lại', '') %></div>
+          <div><%- sw('bao_nhan_vien_sdt', 'Thông báo cho quản lý / lễ tân', 'Gửi vào chuông thông báo của nhân viên.') %></div>
+          <div class="pr-rong"><%- vung('tin_cam_on_sdt', 'Câu cảm ơn khi khách để lại số', 'Biến <code>{sdt}</code> là số khách vừa nhập.', 2) %></div>
+          <div><%- sw('tu_dong_chuyen_nv', 'Tự mời gặp nhân viên khi bot bí', '') %></div>
+          <%- so('so_lan_khong_hieu', 'Sau bao nhiêu lần không hiểu liên tiếp', '', 1, 10) %>
+          <div class="pr-rong"><%- vung('tin_chuyen_nv', 'Câu mời gặp nhân viên', '', 2) %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-kiem-duyet">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-shield-halved"></i> Kiểm duyệt</h2></div>
+        <div class="pr-luoi">
+          <div class="pr-rong"><%- vung('tu_cam', 'Từ ngữ không phù hợp (mỗi dòng một từ)', 'Khách dùng các từ này thì bot nhắc nhở lịch sự, không trả lời nội dung.', 3) %></div>
+          <div class="pr-rong"><%- vung('tin_tu_cam', 'Câu nhắc nhở', '', 2) %></div>
+        </div>
+      </div>
+
+      <div class="pr-luu">
+        <span id="tl-trang-thai">Thay đổi có hiệu lực ngay sau khi lưu, không cần khởi động lại.</span>
+        <button class="nh-btn ghost" type="button" id="tl-mac-dinh"><i class="fas fa-rotate-left"></i> Khôi phục mặc định</button>
+        <button class="nh-btn" type="submit"><i class="fas fa-floppy-disk"></i> Lưu thiết lập</button>
+      </div>
+    </div>
+  </div>
+  </form>
+</section>
+
+<!-- =========================================================== THU NGHIEM -->
+<section class="qt-tab" data-tab="thu">
+  <div class="pr-thu">
+    <div class="pr-chat">
+      <div class="pr-chat__dau">
+        <i class="fas fa-vial"></i> <b>Chat thử</b>
+        <select id="thu-vai"><option value="khach">Đóng vai khách</option><option value="quan_ly">Đóng vai quản lý</option></select>
+        <input id="thu-ten" placeholder="Tên khách (tùy chọn)" style="width:150px;">
+        <button class="nh-btn ghost nho" type="button" id="thu-moi" style="margin-left:auto;padding:5px 10px;"><i class="fas fa-rotate-right"></i> Mới</button>
+      </div>
+      <div class="pr-chat__than" id="thu-than">
+        <div class="pr-tn pr-tn--bot"><div class="pr-tn__noi">Gõ thử câu khách hay hỏi, ví dụ: <b>“sashimi cá hồi bao nhiêu”</b>, <b>“có chỗ đậu ô tô k”</b>, <b>“quán mở tới mấy h”</b>, <b>“món dưới 100k”</b>. Bên phải hiện bot đã lấy câu trả lời từ đâu.</div></div>
+      </div>
+      <form class="pr-chat__chan" id="thu-form">
+        <input class="nh-input" id="thu-o" placeholder="Nhập câu hỏi như khách hàng…" maxlength="500">
+        <button class="nh-btn" type="submit"><i class="fas fa-paper-plane"></i></button>
+      </form>
+    </div>
+    <div class="pr-chan-doan" id="thu-cd">
+      <h3><i class="fas fa-magnifying-glass-chart"></i> Phân tích câu trả lời</h3>
+      <p class="nh-card__desc">Gửi một câu để xem bot chọn nguồn nào, độ khớp bao nhiêu và các câu gần nhất trong kho.</p>
+    </div>
+  </div>
+
+  <div class="nh-card" style="margin-top:22px;">
+    <div class="nh-card__header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+      <div>
+        <h2 class="nh-card__title"><i class="fas fa-clock-rotate-left"></i> Hội thoại gần đây</h2>
+        <p class="nh-card__desc">Câu khách hỏi thật và câu bot đã trả lời. Câu trả lời chưa ổn thì bấm <b>Dạy bot</b> để sửa.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="font-size:13px;"><input type="checkbox" id="ht-chi-kh"> Chỉ câu chưa hiểu</label>
+        <button class="nh-btn ghost nho" type="button" id="ht-tai"><i class="fas fa-rotate"></i> Tải lại</button>
+      </div>
+    </div>
+    <div class="nh-table-wrap nh-scroll" style="max-height:480px;">
+      <table class="nh-table pr-bang">
+        <thead><tr><th style="width:120px;">Lúc</th><th>Khách hỏi</th><th>Bot trả lời</th><th style="width:130px;">Nguồn</th><th style="width:50px;"></th><th style="width:100px;"></th></tr></thead>
+        <tbody id="ht-ds"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== LIEN HE -->
+<section class="qt-tab" data-tab="lien-he">
+  <div class="nh-card">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-address-book"></i> Khách để lại số điện thoại</h2>
+      <p class="nh-card__desc">Khách nhắn số điện thoại trong khung chat (ví dụ khi bot chưa trả lời được, hoặc cần tư vấn tiệc). Gọi lại xong thì đánh dấu đã xử lý.</p>
+    </div>
+    <div class="nh-table-wrap">
+      <table class="nh-table">
+        <thead><tr><th style="width:140px;">Lúc</th><th style="width:140px;">Số điện thoại</th><th>Tin nhắn</th><th style="width:130px;">Khách</th><th style="width:150px;">Trạng thái</th></tr></thead>
+        <tbody>
+          <% if (lienHe && lienHe.length) { lienHe.forEach(function (r) { %>
+            <tr data-lh="<%= r.id %>">
+              <td><%= new Date(r.tao_luc).toLocaleString('vi-VN') %></td>
+              <td><a href="tel:<%= r.sdt %>" style="font-weight:700;color:var(--nh-gold-dark);"><i class="fas fa-phone"></i> <%= r.sdt %></a></td>
+              <td><%= r.noi_dung %></td>
+              <td><%= r.ten || (r.id_kh ? ('KH #' + r.id_kh) : 'Khách vãng lai') %></td>
+              <td><label class="pr-sw" style="border:0;padding:0;"><input type="checkbox" data-xu-ly="<%= r.id %>" <%= r.da_xu_ly ? 'checked' : '' %>><span class="pr-sw__nut"></span><span class="pr-sw__chu"><b style="font-size:12.5px;"><%= r.da_xu_ly ? 'Đã gọi lại' : 'Chờ gọi lại' %></b></span></label></td>
+            </tr>
+          <% }) } else { %>
+            <tr><td colspan="5" style="text-align:center;padding:26px;color:var(--nh-muted);">Chưa có khách nào để lại số điện thoại.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== MODAL SUA KIEN THUC -->
+<div class="pr-modal" id="md-kt" role="dialog" aria-modal="true" aria-labelledby="md-kt-td">
+  <form class="pr-modal__hop" id="form-kt">
+    <div class="pr-modal__dau"><h3 id="md-kt-td">Thêm câu hỏi</h3><button type="button" data-dong>&times;</button></div>
+    <div class="pr-modal__than">
+      <input type="hidden" name="id">
+      <input type="hidden" name="nguon">
+      <input type="hidden" name="cau_goc">
+      <div class="pr-luoi">
+        <label class="pr-truong pr-rong"><span>Câu hỏi chính *</span><input class="nh-input" name="cau_hoi" required maxlength="500" placeholder="Ví dụ: Nhà hàng có chỗ đậu ô tô không?"></label>
+        <label class="pr-truong"><span>Cách hỏi khác (mỗi dòng một câu)</span><textarea class="nh-input" name="cau_hoi_khac" rows="5" placeholder="gửi xe ở đâu&#10;có bãi đỗ xe hơi không&#10;đậu ô tô được không"></textarea><small>Càng nhiều cách hỏi, bot càng hiểu được câu tương tự.</small></label>
+        <div>
+          <label class="pr-truong"><span>Từ khóa (cách nhau dấu phẩy)</span><input class="nh-input" name="tu_khoa" placeholder="dau xe, gui xe, o to"><small>Khách nhắc tới từ khóa là bot ưu tiên câu này. Có dấu hay không đều được.</small></label>
+          <label class="pr-truong"><span>Nhóm</span><input class="nh-input" name="nhom" list="dl-nhom" placeholder="thong_tin"></label>
+          <datalist id="dl-nhom"><% Object.keys(TEN_NHOM).forEach(function (k) { %><option value="<%= k %>"><%= TEN_NHOM[k] %></option><% }) %></datalist>
+        </div>
+        <label class="pr-truong pr-rong"><span>Câu trả lời *</span><textarea class="nh-input" name="tra_loi" rows="5" required placeholder="Có ạ 🚗 Nhà hàng có bãi đậu ô tô miễn phí…"></textarea>
+          <small>Viết nhiều cách trả lời cách nhau bằng <code>||</code> để bot trả lời tự nhiên, không lặp lại. In đậm: <code>**chữ**</code>. Bấm để chèn biến:</small>
+          <span class="pr-goi-y-bien" id="kt-bien"><% ['{ten_bot}','{ten_nha_hang}','{hotline}','{dia_chi}','{gio_mo_cua}','{email}','{wifi}','{ten_khach}','{so_mon}','{gia_thap}'].forEach(function (b) { %><code><%= b %></code><% }) %></span>
+        </label>
+        <label class="pr-truong"><span>Gợi ý câu hỏi tiếp (cách nhau dấu |)</span><input class="nh-input" name="goi_y" placeholder="Đặt bàn|Xem thực đơn"></label>
+        <label class="pr-truong"><span>Nút liên kết (Nhãn|đường dẫn ; …)</span><input class="nh-input" name="lien_ket" placeholder="Đặt bàn ngay|/dat-ban"></label>
+        <label class="pr-truong"><span>Ảnh đính kèm (đường dẫn, tùy chọn)</span><input class="nh-input" name="anh" placeholder="/images/bai-xe.jpg"></label>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <label class="pr-truong" style="flex:0 0 110px;"><span>Ưu tiên</span><input class="nh-input" type="number" name="uu_tien" min="-10" max="10" value="0"></label>
+          <label class="pr-sw" style="border:0;"><input type="checkbox" name="bat" checked><span class="pr-sw__nut"></span><span class="pr-sw__chu"><b>Đang bật</b></span></label>
+        </div>
+      </div>
+    </div>
+    <div class="pr-modal__chan">
+      <span class="pr-trai nh-card__desc" id="md-kt-loi" style="color:var(--nh-danger);"></span>
+      <button type="button" class="nh-btn ghost" data-dong>Hủy</button>
+      <button type="submit" class="nh-btn"><i class="fas fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </form>
+</div>
+
+<!-- =========================================================== MODAL NAP FILE -->
+<div class="pr-modal" id="md-nap" role="dialog" aria-modal="true" aria-labelledby="md-nap-td">
+  <div class="pr-modal__hop">
+    <div class="pr-modal__dau"><h3 id="md-nap-td">Tải tài liệu huấn luyện</h3><button type="button" data-dong>&times;</button></div>
+    <div class="pr-modal__than">
+      <p class="nh-card__desc" style="margin-top:8px;">
+        Chuẩn bị file <b>một bên câu hỏi, một bên câu trả lời</b>. Hỗ trợ <b>Excel (.xlsx, .xls), CSV, Word (.docx)</b>, <b>.txt</b> và <b>.json</b>.
+        Câu hỏi trùng với câu đã có thì bot cập nhật câu trả lời mới.
+        <a href="/admin/chatbot/kien-thuc.xlsx?mau=1" style="color:var(--nh-gold-dark);font-weight:700;"><i class="fas fa-download"></i> Tải file mẫu Excel</a>
+      </p>
+      <label class="pr-keo-tha" id="nap-vung">
+        <i class="fas fa-cloud-arrow-up"></i>
+        <b>Kéo thả file vào đây hoặc bấm để chọn</b>
+        <div class="nh-card__desc">Word: bảng 2 cột Hỏi | Đáp, hoặc từng đoạn “Hỏi: … / Đáp: …”. TXT: “Q: … / A: …” hoặc mỗi dòng “câu hỏi | câu trả lời”.</div>
+        <input type="file" id="nap-tep" accept=".xlsx,.xls,.csv,.ods,.docx,.txt,.md,.json" hidden>
+      </label>
+      <div id="nap-ket-qua"></div>
+    </div>
+    <div class="pr-modal__chan">
+      <label class="pr-trai" style="font-size:13px;display:flex;gap:14px;">
+        <span><input type="radio" name="nap-che-do" value="them" checked> Thêm mới &amp; cập nhật câu trùng</span>
+        <span><input type="radio" name="nap-che-do" value="thay"> Xóa toàn bộ kho cũ rồi nạp</span>
+      </label>
+      <button type="button" class="nh-btn ghost" data-dong>Hủy</button>
+      <button type="button" class="nh-btn" id="nap-xac-nhan" disabled><i class="fas fa-graduation-cap"></i> Huấn luyện ngay</button>
+    </div>
+  </div>
+</div>
+
+<div class="pr-toast" id="pr-toast"></div>
+
+<script>
+(function () {
+  var TEN_NHOM = <%- JSON.stringify(TEN_NHOM) %>;
+  var TEN_NGUON = { kien_thuc: ['Kho kiến thức', 'pr-the--vang'], thuc_don: ['Thực đơn', 'pr-the--xanh'], ml: ['Mô hình ML', 'pr-the--lam'], goi_y: ['Gợi ý gần đúng', ''], khong_hieu: ['Chưa hiểu', 'pr-the--do'], lien_he: ['Để lại SĐT', 'pr-the--lam'], ngoai_gio: ['Ngoài giờ', ''], tu_cam: ['Từ cấm', 'pr-the--do'], du_phong: ['Dự phòng', 'pr-the--vang'] };
+  function $(s, g) { return (g || document).querySelector(s); }
+  function $$(s, g) { return Array.prototype.slice.call((g || document).querySelectorAll(s)); }
+  function thoat(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function dd(s) { return thoat(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>'); }
+  function toast(msg, loi) {
+    var t = $('#pr-toast'); t.textContent = msg; t.className = 'pr-toast hien' + (loi ? ' loi' : '');
+    clearTimeout(toast._h); toast._h = setTimeout(function () { t.className = 'pr-toast'; }, 2800);
+  }
+  function api(url, opt) {
+    opt = opt || {};
+    if (opt.json !== undefined) { opt.method = opt.method || 'POST'; opt.headers = { 'Content-Type': 'application/json' }; opt.body = JSON.stringify(opt.json); }
+    return fetch(url, opt).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (!r.ok || d.ok === false) throw new Error(d.loi || ('Lỗi ' + r.status));
+        return d;
+      });
+    });
+  }
+  function nguonThe(n) { var t = TEN_NGUON[n] || [n || '—', '']; return '<span class="pr-the ' + t[1] + '">' + thoat(t[0]) + '</span>'; }
+
+  /* ---------------- TABS ---------------- */
+  var dsTab = $$('.qt-tabs button');
+  function moTab(ten, capNhatUrl) {
+    if (!$('.qt-tab[data-tab="' + ten + '"]')) ten = 'tong-quan';
+    dsTab.forEach(function (b) { b.classList.toggle('on', b.dataset.tab === ten); });
+    $$('.qt-tab').forEach(function (s) { s.classList.toggle('on', s.dataset.tab === ten); });
+    if (capNhatUrl !== false) { var u = new URL(location.href); u.searchParams.set('tab', ten); history.replaceState(null, '', u); }
+    if (ten === 'kho' && !taiKho.daTai) taiKho();
+    if (ten === 'thu' && !taiHoiThoai.daTai) taiHoiThoai();
+  }
+  dsTab.forEach(function (b) { b.onclick = function () { moTab(b.dataset.tab); }; });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sang-tab]'); if (b) moTab(b.dataset.sangTab);
+    var d = e.target.closest('[data-day-bot]');
+    if (d) moSua(null, { cau_hoi: d.dataset.dayBot, cau_goc: d.dataset.dayBot, nguon: 'hoc', nhom: d.dataset.nhom || '', tu_khoa: d.dataset.tuKhoa || '' });
+  });
+  moTab(<%- JSON.stringify(tabMo) %>, false);
+
+  /* ---------------- MODAL ---------------- */
+  function moModal(id) { $(id).classList.add('mo'); }
+  function dongModal(id) { $(id).classList.remove('mo'); }
+  $$('.pr-modal').forEach(function (m) {
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-dong]')) m.classList.remove('mo'); });
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $$('.pr-modal.mo').forEach(function (m) { m.classList.remove('mo'); }); });
+
+  /* ---------------- KHO KIEN THUC ---------------- */
+  var trangKho = 1, duLieuKho = {};
+  function taiKho() {
+    taiKho.daTai = true;
+    var q = encodeURIComponent($('#kt-tim').value.trim()), nhom = encodeURIComponent($('#kt-nhom').value);
+    api('/admin/chatbot/api/kien-thuc?q=' + q + '&nhom=' + nhom + '&trang=' + trangKho).then(function (d) {
+      duLieuKho = {};
+      var sel = $('#kt-nhom'), giu = sel.value;
+      sel.innerHTML = '<option value="">Tất cả nhóm</option>' + d.nhoms.map(function (n) {
+        return '<option value="' + thoat(n.nhom) + '">' + thoat(TEN_NHOM[n.nhom] || n.nhom) + ' (' + n.n + ')</option>';
+      }).join('');
+      sel.value = giu;
+      $('#kt-ds').innerHTML = d.rows.length ? d.rows.map(function (r) {
+        duLieuKho[r.id] = r;
+        var khac = (r.cau_hoi_khac || '').split('\n').filter(Boolean);
+        return '<tr>' +
+          '<td><input type="checkbox" class="kt-chon" value="' + r.id + '"></td>' +
+          '<td><div class="pr-cau">' + thoat(r.cau_hoi) + '</div>' +
+            (khac.length ? '<div class="pr-phu">+' + khac.length + ' cách hỏi: ' + thoat(khac.slice(0, 3).join(' · ')) + (khac.length > 3 ? '…' : '') + '</div>' : '') +
+            (r.tu_khoa ? '<div class="pr-phu"><i class="fas fa-key"></i> ' + thoat(r.tu_khoa) + '</div>' : '') + '</td>' +
+          '<td><div class="pr-tl">' + dd(r.tra_loi.split('||')[0]) + '</div>' + (r.tra_loi.indexOf('||') >= 0 ? '<div class="pr-phu">' + r.tra_loi.split('||').length + ' cách trả lời</div>' : '') + '</td>' +
+          '<td><span class="pr-the">' + thoat(TEN_NHOM[r.nhom] || r.nhom) + '</span>' + (r.nguon === 'file' ? '<div class="pr-phu">từ file</div>' : r.nguon === 'hoc' ? '<div class="pr-phu">dạy từ hội thoại</div>' : '') + '</td>' +
+          '<td class="so">' + r.so_lan_dung + '</td>' +
+          '<td><label class="pr-sw" style="border:0;padding:0;"><input type="checkbox" class="kt-bat" data-id="' + r.id + '"' + (r.bat ? ' checked' : '') + '><span class="pr-sw__nut"></span></label></td>' +
+          '<td class="pr-hanh-dong"><button type="button" title="Sửa" data-sua="' + r.id + '"><i class="fas fa-pen"></i></button> <button type="button" title="Xóa" data-xoa="' + r.id + '"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+      }).join('') : '<tr><td colspan="7" style="text-align:center;padding:26px;color:var(--nh-muted);">Không có câu hỏi nào.</td></tr>';
+      $('#kt-tong').textContent = 'Tổng ' + d.tong + ' chủ đề';
+      var soTrang = Math.ceil(d.tong / d.moiTrang), h = '';
+      if (soTrang > 1) for (var i = 1; i <= soTrang; i++) h += '<button type="button" class="' + (i === d.trang ? 'on' : '') + '" data-trang="' + i + '">' + i + '</button>';
+      $('#kt-trang').innerHTML = h;
+      $('#kt-chon-het').checked = false; capNhatNutXoa();
+    }).catch(function (e) { $('#kt-ds').innerHTML = '<tr><td colspan="7" class="canh-bao">' + thoat(e.message) + '</td></tr>'; });
+  }
+  var hTim;
+  $('#kt-tim').addEventListener('input', function () { clearTimeout(hTim); hTim = setTimeout(function () { trangKho = 1; taiKho(); }, 300); });
+  $('#kt-nhom').onchange = function () { trangKho = 1; taiKho(); };
+  $('#kt-trang').onclick = function (e) { var b = e.target.closest('[data-trang]'); if (b) { trangKho = Number(b.dataset.trang); taiKho(); } };
+  function capNhatNutXoa() { $('#kt-xoa-chon').disabled = !$$('.kt-chon:checked').length; }
+  $('#kt-chon-het').onchange = function () { var c = this.checked; $$('.kt-chon').forEach(function (x) { x.checked = c; }); capNhatNutXoa(); };
+  $('#kt-ds').addEventListener('change', function (e) {
+    if (e.target.classList.contains('kt-chon')) capNhatNutXoa();
+    if (e.target.classList.contains('kt-bat')) {
+      api('/admin/chatbot/api/kien-thuc/' + e.target.dataset.id + '/bat', { json: { bat: e.target.checked } })
+        .then(function () { toast(e.target.checked ? 'Đã bật câu hỏi' : 'Đã tắt câu hỏi'); })
+        .catch(function (er) { toast(er.message, true); });
+    }
+  });
+  $('#kt-ds').addEventListener('click', function (e) {
+    var s = e.target.closest('[data-sua]'); if (s) moSua(duLieuKho[s.dataset.sua]);
+    var x = e.target.closest('[data-xoa]');
+    if (x && confirm('Xóa câu hỏi này khỏi kho kiến thức?')) {
+      api('/admin/chatbot/api/kien-thuc/xoa', { json: { ids: [Number(x.dataset.xoa)] } }).then(function () { toast('Đã xóa'); taiKho(); });
+    }
+  });
+  $('#kt-xoa-chon').onclick = function () {
+    var ids = $$('.kt-chon:checked').map(function (x) { return Number(x.value); });
+    if (!ids.length || !confirm('Xóa ' + ids.length + ' câu hỏi đã chọn?')) return;
+    api('/admin/chatbot/api/kien-thuc/xoa', { json: { ids: ids } }).then(function (d) { toast('Đã xóa ' + d.so_xoa + ' câu hỏi'); taiKho(); });
+  };
+  $('#kt-nap-mau').onclick = function () {
+    if (!confirm('Nạp lại bộ câu mẫu ngành nhà hàng? Câu mẫu đã bị sửa sẽ được ghi đè bằng bản gốc, câu bạn tự thêm giữ nguyên.')) return;
+    api('/admin/chatbot/api/kien-thuc/nap-mau', { method: 'POST' }).then(function (d) { toast('Thêm ' + d.them + ', cập nhật ' + d.cap_nhat + ' câu mẫu'); taiKho(); });
+  };
+  $('#kt-them').onclick = function () { moSua(null); };
+
+  var formKt = $('#form-kt');
+  function moSua(r, macDinh) {
+    r = r || {};
+    macDinh = macDinh || {};
+    formKt.reset();
+    $('#md-kt-td').textContent = r.id ? 'Sửa câu hỏi' : (macDinh.nguon === 'hoc' ? 'Dạy bot câu trả lời mới' : 'Thêm câu hỏi');
+    ['id', 'cau_hoi', 'cau_hoi_khac', 'tu_khoa', 'nhom', 'tra_loi', 'goi_y', 'lien_ket', 'anh', 'uu_tien', 'nguon', 'cau_goc'].forEach(function (k) {
+      var v = r[k] != null ? r[k] : (macDinh[k] != null ? macDinh[k] : '');
+      if (k === 'goi_y') v = String(v || '').split('|').join(' | ');
+      if (k === 'uu_tien' && v === '') v = 0;
+      formKt.elements[k].value = v;
+    });
+    formKt.elements.bat.checked = r.bat === undefined ? true : !!r.bat;
+    $('#md-kt-loi').textContent = '';
+    moModal('#md-kt');
+    setTimeout(function () { formKt.elements[macDinh.cau_hoi ? 'tra_loi' : 'cau_hoi'].focus(); }, 50);
+  }
+  window.prMoSuaKienThuc = moSua;
+  $('#kt-bien').onclick = function (e) {
+    var c = e.target.closest('code'); if (!c) return;
+    var ta = formKt.elements.tra_loi, p = ta.selectionStart || ta.value.length;
+    ta.value = ta.value.slice(0, p) + c.textContent + ta.value.slice(p); ta.focus();
+  };
+  formKt.onsubmit = function (e) {
+    e.preventDefault();
+    var f = formKt.elements, id = f.id.value;
+    var du = { cau_hoi: f.cau_hoi.value, cau_hoi_khac: f.cau_hoi_khac.value, tu_khoa: f.tu_khoa.value, nhom: f.nhom.value || 'khac',
+      tra_loi: f.tra_loi.value, goi_y: f.goi_y.value, lien_ket: f.lien_ket.value, anh: f.anh.value, uu_tien: f.uu_tien.value,
+      bat: f.bat.checked, nguon: f.nguon.value, cau_goc: f.cau_goc.value };
+    api(id ? '/admin/chatbot/api/kien-thuc/' + id : '/admin/chatbot/api/kien-thuc', { method: id ? 'PUT' : 'POST', json: du })
+      .then(function () {
+        dongModal('#md-kt'); toast('Đã lưu, bot học ngay câu này'); taiKho.daTai = false;
+        if ($('.qt-tab.on').dataset.tab === 'kho') taiKho();
+        // Day tu danh sach tu hoc -> bo dong do khoi bang cho duyet
+        if (du.cau_goc) $$('#khung-tu-hoc tr[data-cau]').forEach(function (tr) { if (tr.dataset.cau === du.cau_goc) tr.remove(); });
+      })
+      .catch(function (er) { $('#md-kt-loi').textContent = er.message; });
+  };
+
+  /* ---------------- NAP FILE ---------------- */
+  var dongNap = [];
+  $('#kt-mo-nap').onclick = function () { dongNap = []; $('#nap-ket-qua').innerHTML = ''; $('#nap-xac-nhan').disabled = true; $('#nap-tep').value = ''; moModal('#md-nap'); };
+  var vung = $('#nap-vung');
+  ['dragenter', 'dragover'].forEach(function (ev) { vung.addEventListener(ev, function (e) { e.preventDefault(); vung.classList.add('dang-keo'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { vung.addEventListener(ev, function (e) { e.preventDefault(); vung.classList.remove('dang-keo'); }); });
+  vung.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) docTep(e.dataTransfer.files[0]); });
+  $('#nap-tep').onchange = function () { if (this.files[0]) docTep(this.files[0]); };
+  function docTep(tep) {
+    var fd = new FormData(); fd.append('tep', tep);
+    $('#nap-ket-qua').innerHTML = '<p class="nh-card__desc"><i class="fas fa-spinner fa-spin"></i> Đang đọc ' + thoat(tep.name) + '…</p>';
+    api('/admin/chatbot/api/kien-thuc/doc-file', { method: 'POST', body: fd }).then(function (d) {
+      dongNap = d.dong;
+      $('#nap-xac-nhan').disabled = false;
+      $('#nap-ket-qua').innerHTML = '<p style="margin:14px 0 0;"><b style="color:var(--nh-ok);"><i class="fas fa-circle-check"></i> Đọc được ' + d.so_dong + ' cặp hỏi–đáp</b> từ <i>' + thoat(d.ten) + '</i>. Xem trước:</p>' +
+        '<div class="pr-xem-file"><table class="nh-table"><thead><tr><th>#</th><th>Câu hỏi</th><th>Trả lời</th><th>Từ khóa</th></tr></thead><tbody>' +
+        d.dong.slice(0, 200).map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td>' + thoat(r.cau_hoi) + '</td><td>' + dd(String(r.tra_loi).slice(0, 160)) + '</td><td>' + thoat(r.tu_khoa || '') + '</td></tr>'; }).join('') +
+        '</tbody></table></div>' + (d.so_dong > 200 ? '<p class="nh-card__desc">… và ' + (d.so_dong - 200) + ' dòng nữa.</p>' : '');
+    }).catch(function (e) { $('#nap-ket-qua').innerHTML = '<p class="canh-bao" style="margin-top:12px;"><i class="fas fa-circle-xmark"></i> ' + thoat(e.message) + '</p>'; });
+  }
+  $('#nap-xac-nhan').onclick = function () {
+    var cheDo = ($('input[name="nap-che-do"]:checked') || {}).value;
+    if (cheDo === 'thay' && !confirm('Xóa TOÀN BỘ kho kiến thức hiện tại rồi nạp file này?')) return;
+    var b = this; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang huấn luyện…';
+    api('/admin/chatbot/api/kien-thuc/nap', { json: { dong: dongNap, che_do: cheDo } }).then(function (d) {
+      dongModal('#md-nap');
+      toast('Đã học ' + d.them + ' câu mới, cập nhật ' + d.cap_nhat + ' câu' + (d.bo_qua ? ', bỏ qua ' + d.bo_qua + ' dòng thiếu dữ liệu' : ''));
+      trangKho = 1; taiKho();
+    }).catch(function (e) { toast(e.message, true); })
+      .then(function () { b.disabled = false; b.innerHTML = '<i class="fas fa-graduation-cap"></i> Huấn luyện ngay'; });
+  };
+
+  /* ---------------- THIET LAP ---------------- */
+  var formTl = $('#form-tl');
+  function docForm() {
+    var o = {};
+    $$('input, select, textarea', formTl).forEach(function (el) {
+      if (!el.name) return;
+      if (el.type === 'checkbox') o[el.name] = el.checked;
+      else if (el.type === 'number' || el.type === 'range') o[el.name] = Number(el.value);
+      else o[el.name] = el.value;
+    });
+    return o;
+  }
+  function xemTruoc() {
+    var o = docForm();
+    var ten = o.ten_bot || 'Trợ lý';
+    var doiXh = function (s) {
+      if (o.xung_ho === 'minh_ban') return s;
+      var k = o.xung_ho === 'em_quykhach' ? ['quý khách', 'Quý khách'] : ['anh/chị', 'Anh/chị'];
+      return s.replace(/(^|[^\p{L}])mình(?![\p{L}])/gu, '$1em').replace(/(^|[^\p{L}])Mình(?![\p{L}])/gu, '$1Em')
+        .replace(/(^|[^\p{L}])bạn(?![\p{L}])/gu, '$1' + k[0]).replace(/(^|[^\p{L}])Bạn(?![\p{L}])/gu, '$1' + k[1]);
+    };
+    var chao = String(o.loi_chao || '').replace(/\{ten_bot\}/g, ten).replace(/\{ten_nha_hang\}/g, o.ten_nha_hang || '')
+      .replace(/\{ten_khach\}/g, 'bạn').replace(/\{hotline\}/g, o.hotline || '').replace(/bạn bạn/g, 'bạn');
+    chao = doiXh(chao);
+    if (!o.dung_emoji) chao = chao.replace(/[\p{Extended_Pictographic}️‍]/gu, '');
+    $('#xt-ten').textContent = ten;
+    $('#xt-cd').textContent = o.chuc_danh || '';
+    $('#xt-chao').innerHTML = dd(chao);
+    $('#xt-av').innerHTML = o.avatar ? '<img src="' + thoat(o.avatar) + '" alt="">' : '<img src="/tro-ly-ao.svg" alt="">';
+  }
+  formTl.addEventListener('input', function (e) {
+    if (e.target.type === 'range') { var b = $('[data-gia-tri="' + e.target.name + '"]'); if (b) b.textContent = e.target.value; }
+    $('#tl-trang-thai').innerHTML = '<b style="color:var(--nh-warn)">Có thay đổi chưa lưu</b>';
+    xemTruoc();
+  });
+  formTl.addEventListener('change', xemTruoc);
+  xemTruoc();
+  formTl.onsubmit = function (e) {
+    e.preventDefault();
+    api('/admin/chatbot/api/thiet-lap', { json: docForm() }).then(function () {
+      $('#tl-trang-thai').innerHTML = '<b style="color:var(--nh-ok)"><i class="fas fa-circle-check"></i> Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN') + '. Khách tải lại trang là thấy thay đổi.</b>';
+      toast('Đã lưu thiết lập trợ lý ảo');
+    }).catch(function (er) { toast(er.message, true); });
+  };
+  $('#tl-mac-dinh').onclick = function () {
+    if (!confirm('Khôi phục toàn bộ thiết lập về mặc định?')) return;
+    api('/admin/chatbot/api/thiet-lap/mac-dinh', { method: 'POST' }).then(function () { location.href = '/admin/chatbot?tab=thiet-lap'; });
+  };
+  $$('.pr-tl__menu a').forEach(function (a) {
+    a.onclick = function (e) { e.preventDefault(); var el = $(a.getAttribute('href')); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 90, behavior: 'smooth' }); };
+  });
+
+  /* ---------------- THU NGHIEM ---------------- */
+  var thuThan = $('#thu-than');
+  function thuTin(vai, html) {
+    var d = document.createElement('div'); d.className = 'pr-tn pr-tn--' + vai; d.innerHTML = html; thuThan.appendChild(d); thuThan.scrollTop = thuThan.scrollHeight; return d;
+  }
+  function thuHoi(cau) {
+    cau = String(cau || '').trim(); if (!cau) return;
+    thuTin('toi', '<div class="pr-tn__noi">' + thoat(cau) + '</div>');
+    $('#thu-o').value = '';
+    var cho = thuTin('bot', '<div class="pr-tn__noi"><i class="fas fa-ellipsis fa-fade"></i></div>');
+    api('/admin/chatbot/api/thu', { json: { cau_hoi: cau, vai_tro: $('#thu-vai').value, ten_khach: $('#thu-ten').value } }).then(function (d) {
+      var h = '<div class="pr-tn__noi">' + dd(d.van_ban || '') + '</div>';
+      if (d.mon && d.mon.length) h += '<div class="pr-mon-nho">' + d.mon.map(function (m) { return '<div><img src="' + thoat(m.anh || '/mon-thay-the.svg') + '" alt=""><p><b>' + thoat(m.ten) + '</b><br>' + Number(m.gia).toLocaleString('vi-VN') + 'đ</p></div>'; }).join('') + '</div>';
+      if (d.lien_ket && d.lien_ket.length) h += '<div class="pr-goi-y-nho">' + d.lien_ket.map(function (l) { return '<span class="pr-the"><i class="fas fa-link"></i> ' + thoat(l.nhan) + '</span>'; }).join('') + '</div>';
+      if (d.goi_y && d.goi_y.length) h += '<div class="pr-goi-y-nho">' + d.goi_y.map(function (g) { var c = typeof g === 'object' ? g.cau_hoi : g; return '<button type="button" data-cau="' + thoat(c) + '">' + thoat(typeof g === 'object' ? g.nhan : g) + '</button>'; }).join('') + '</div>';
+      h += '<div class="pr-tn__meta">' + nguonThe(d.nguon) + (d.tin_cay != null ? ' khớp ' + Math.round(d.tin_cay * 100) + '%' : '') + ' · ' + (d.thoi_gian_ms || 0) + ' ms</div>';
+      cho.innerHTML = h;
+      thuThan.scrollTop = thuThan.scrollHeight;
+      var cd = '<h3><i class="fas fa-magnifying-glass-chart"></i> Phân tích câu trả lời</h3><dl>' +
+        '<dt>Câu hỏi</dt><dd>' + thoat(cau) + '</dd>' +
+        '<dt>Nguồn</dt><dd>' + nguonThe(d.nguon) + '</dd>' +
+        '<dt>Ý định</dt><dd><code>' + thoat(d.y_dinh || '—') + '</code></dd>' +
+        '<dt>Độ khớp</dt><dd>' + (d.tin_cay != null ? Math.round(d.tin_cay * 100) + '%' : '—') + '</dd>' +
+        (d.khop_cau ? '<dt>Khớp với</dt><dd>“' + thoat(d.khop_cau) + '”</dd>' : '') +
+        (d.tu_khoa_khop && d.tu_khoa_khop.length ? '<dt>Từ khóa bắt được</dt><dd>' + d.tu_khoa_khop.map(function (k) { return '<span class="pr-the pr-the--vang">' + thoat(k) + '</span>'; }).join(' ') + '</dd>' : '') +
+        (d.mon && d.mon.length ? '<dt>Món gửi</dt><dd>' + d.mon.map(function (m) { return thoat(m.ten); }).join(', ') + '</dd>' : '') +
+        '<dt>Thời gian</dt><dd>' + (d.thoi_gian_ms || 0) + ' ms</dd></dl>';
+      if (d.ung_vien && d.ung_vien.length) {
+        cd += '<div class="pr-uv"><div class="pr-nho" style="border:0;">Câu gần nhất trong kho</div>' + d.ung_vien.map(function (u) {
+          return '<div><span>' + thoat(u.cau_hoi) + '<br><small style="color:var(--nh-muted)">qua: “' + thoat(u.khop) + '”</small></span><b>' + Math.round(u.diem * 100) + '%</b></div>';
+        }).join('') + '</div>';
+      }
+      cd += '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="nh-btn nho" data-day-bot="' + thoat(cau) + '"><i class="fas fa-graduation-cap"></i> Dạy bot trả lời câu này</button></div>';
+      $('#thu-cd').innerHTML = cd;
+    }).catch(function (e) { cho.innerHTML = '<div class="pr-tn__noi canh-bao">' + thoat(e.message) + '</div>'; });
+  }
+  $('#thu-form').onsubmit = function (e) { e.preventDefault(); thuHoi($('#thu-o').value); };
+  thuThan.addEventListener('click', function (e) { var b = e.target.closest('[data-cau]'); if (b) thuHoi(b.dataset.cau); });
+  $('#thu-moi').onclick = function () { fetch('/admin/chatbot/api/thu/lam-moi', { method: 'POST' }); thuThan.innerHTML = ''; };
+
+  function taiHoiThoai() {
+    taiHoiThoai.daTai = true;
+    api('/admin/chatbot/api/hoi-thoai?khong_hieu=' + ($('#ht-chi-kh').checked ? 1 : 0)).then(function (ds) {
+      $('#ht-ds').innerHTML = ds.length ? ds.map(function (r) {
+        var nguon = r.nguon || (r.khong_hieu ? 'khong_hieu' : 'ml');
+        return '<tr><td style="font-size:12px;color:var(--nh-muted)">' + new Date(r.tao_luc).toLocaleString('vi-VN') + (r.quyen === 'quan_ly' ? '<br><span class="pr-the">quản lý</span>' : '') + '</td>' +
+          '<td><b>' + thoat(r.cau_hoi) + '</b></td>' +
+          '<td><div class="pr-tl">' + dd(r.tra_loi || (r.y_dinh ? '(' + r.y_dinh + ')' : '—')) + '</div></td>' +
+          '<td>' + nguonThe(nguon) + (r.tin_cay != null ? '<div class="pr-phu">' + Math.round(r.tin_cay * 100) + '%</div>' : '') + '</td>' +
+          '<td>' + (r.huu_ich === 1 ? '👍' : r.huu_ich === 0 ? '👎' : '') + '</td>' +
+          '<td style="text-align:right;"><button type="button" class="nh-btn ghost pr-nho-btn" data-day-bot="' + thoat(r.cau_hoi) + '">Dạy bot</button></td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--nh-muted)">Chưa có hội thoại.</td></tr>';
+    });
+  }
+  $('#ht-tai').onclick = taiHoiThoai;
+  $('#ht-chi-kh').onchange = taiHoiThoai;
+
+  /* ---------------- LIEN HE ---------------- */
+  document.addEventListener('change', function (e) {
+    var c = e.target.closest('[data-xu-ly]'); if (!c) return;
+    api('/admin/chatbot/api/lien-he/' + c.dataset.xuLy, { json: { da_xu_ly: c.checked } }).then(function () {
+      c.parentNode.querySelector('b').textContent = c.checked ? 'Đã gọi lại' : 'Chờ gọi lại';
+    });
+  });
+})();
+</script>

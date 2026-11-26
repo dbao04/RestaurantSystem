@@ -28,6 +28,8 @@ module.exports = function ({ gioiHanDN, orderService, personnelService, requireA
       if (!admin) gioiHanDN.ghiThatBai(req, 'admin', adminuser);
       if (admin) {
         gioiHanDN.xoaDem(req, 'admin', adminuser);
+        // Mot trinh duyet mot vai - xem utils/phienDangNhap.js.
+        require('../utils/phienDangNhap').boPhienNhanVien(req.session);
         req.session.adminlogin = true;
         req.session.idadmin = admin.id_admin;
         req.session.adminuser = admin.adminuser;

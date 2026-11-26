@@ -116,6 +116,10 @@ const MAC_DINH = {
   occupied_hold_minutes: 90,
   grace_period_minutes: 15,
   auto_no_show_minutes: 30,
+  // Nhan khach (Da den / Ngoi ban) som nhat bao nhieu phut truoc gio hen.
+  // Truoc day khong chan: luot 08:00 ngay 27 bi bam "da den" luc 22:59 ngay 26,
+  // ban chuyen sang dang phuc vu va bi goi mon tu dem hom truoc.
+  checkin_early_minutes: 60,
   allow_table_combination: 1,
   combine_same_area_only: 1,
   max_tables_per_reservation: 4,
@@ -833,7 +837,30 @@ async function chuanHoaThe(dsThe) {
   return rows.map((r) => r.code);
 }
 
+/**
+ * Khung gio duoc phep NHAN KHACH cho mot luot hen (ngay + gio bat dau [+ gio ket thuc]).
+ *   - som nhat: gio hen - checkin_early_minutes
+ *   - muon nhat: gio ket thuc du kien (khong co thi gio hen + 3 tieng)
+ * Nem LoiDatBan neu ngoai khung. `bayGio` truyen vao de kiem thu.
+ */
+function kiemTraGioNhanKhach({ ngay, gio, gioKetThuc }, ch = MAC_DINH, bayGio = new Date()) {
+  if (!ngay || !gio) return;
+  const batDau = ghepMoc(ngayChuoi(ngay), String(gio));
+  let ketThuc = gioKetThuc ? ghepMoc(ngayChuoi(ngay), String(gioKetThuc)) : null;
+  if (!ketThuc || ketThuc <= batDau) ketThuc = new Date(batDau.getTime() + 180 * 60000);
+  const som = Number(ch.checkin_early_minutes ?? MAC_DINH.checkin_early_minutes);
+  const tuLuc = new Date(batDau.getTime() - som * 60000);
+  const hien = (d) => `${dem2(d.getHours())}:${dem2(d.getMinutes())} ngày ${dem2(d.getDate())}/${dem2(d.getMonth() + 1)}`;
+  if (bayGio < tuLuc) {
+    throw new LoiDatBan(`Chưa đến giờ nhận khách: lượt hẹn lúc ${hien(batDau)}, chỉ nhận khách từ ${hien(tuLuc)} (sớm tối đa ${som} phút).`, 'CHUA_DEN_GIO');
+  }
+  if (bayGio > ketThuc) {
+    throw new LoiDatBan(`Lượt hẹn lúc ${hien(batDau)} đã quá giờ (hết lúc ${hien(ketThuc)}). Đánh dấu "Không đến" hoặc tạo lượt mới cho khách.`, 'QUA_GIO');
+  }
+}
+
 module.exports = {
+  kiemTraGioNhanKhach,
   SLOT_MINUTES,
   TRANG_THAI_GIU_CHO,
   TRANG_THAI_KET_THUC,

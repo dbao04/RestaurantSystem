@@ -166,6 +166,15 @@ app.use('/admin', express.static(path.join(__dirname, 'admin/css')));
 app.use('/admin-js', express.static(path.join(__dirname, 'admin/js')));
 app.use('/admin-img', express.static(path.join(__dirname, 'admin/img')));
 
+// Giao dien tro ly ao (ten bot, anh dai dien, hieu ung go...) cho widget o
+// footer. Doc tu bo nho dem 15 giay nen gan nhu khong ton truy van.
+app.use(async (req, res, next) => {
+  try { res.locals.cbGiaoDien = await require('./services/chatbotTriThuc').thietLapCongKhai(); } catch { /* widget dung mac dinh */ }
+  // Ham dich rieng cho widget chatbot (ten khac `t` de trang nao dung bien t lam bien dem cung khong hong).
+  res.locals.cbDich = (khoa, bien) => require('./services/ngonNgu').t(khoa, req.ngonNgu || 'vi', bien);
+  next();
+});
+
 // Tach ra bien de dung chung cho ca Express lan Socket.IO. Nho vay socket doc
 // duoc phien dang nhap va biet chac nguoi ket noi la ai.
 if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
@@ -233,6 +242,7 @@ app.use(async (req, res, next) => {
     staffName: req.session.staffName || '',
     staffRole: req.session.staffRole || '',
     laShipper: !!req.session.laShipper,
+    cheDoDemo: !!req.session.cheDoDemo,
   };
   const pathHienTai = req.originalUrl || req.url || req.path || '';
   res.locals.currentPath = pathHienTai;
@@ -487,6 +497,27 @@ require('./services/chinhSachGiaoService').batVongQuet();
 require('./services/phanCongGiaoService').batDau();
 
 // --- Frontend Routes ---
+/*
+  Bo nho tam ngan cho trang chu. Ba truy van "ban chay" cong don ca bang hopdong
+  (~110k dong) o MOI lan mo trang chu -> ~0,9 giay/lan. So ban chay doi rat cham
+  nen giu 5 phut la du; phan boc ngau nhien mon van lam moi moi lan tai trang.
+  Loi khong duoc nho (lan sau thu lai).
+*/
+const _nhoTam = new Map();
+async function nhoTam(khoa, ms, lay) {
+  const o = _nhoTam.get(khoa);
+  if (o && Date.now() - o.luc < ms) return o.gt;
+  const gt = await lay();
+  _nhoTam.set(khoa, { gt, luc: Date.now() });
+  return gt;
+}
+const NHO_TRANG_CHU_MS = 5 * 60 * 1000;
+const tronNgauNhien = (ds) => {
+  const a = ds.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+};
+
 app.get('/', async (req, res) => {
   // Lay vai mon dang ban de lam khoi "mon noi bat" tren trang chu.
   let mons = [];
@@ -516,7 +547,7 @@ app.get('/', async (req, res) => {
       Nho vay "noi bat" van co nghia la ban chay that, nhung moi lan tai lai
       trang la mot to hop khac va trai deu nhieu danh muc.
     */
-    const [dep] = await db.query(`
+    const top60 = await nhoTam('trang_chu_top60', NHO_TRANG_CHU_MS, async () => (await db.query(`
       SELECT * FROM (
         SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon,
                COALESCE(SUM(h.soluong), 0) AS da_ban
@@ -531,9 +562,9 @@ app.get('/', async (req, res) => {
         GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
         ORDER BY da_ban DESC
         LIMIT 60
-      ) AS ban_chay
-      ORDER BY RAND()
-      LIMIT 16`);
+      ) AS ban_chay`))[0]);
+    // Boc ngau nhien 16 mon trong nhom ban chay (truoc day ORDER BY RAND() trong SQL).
+    const dep = tronNgauNhien(top60).slice(0, 16);
     // 8 mon dau cho khoi "Mon an dac sac" (du 2 hang, moi hang 4 mon), cac mon con lai de trang tri
     mons = dep.slice(0, 8);
     monTrangTri = dep.slice(8);
@@ -565,13 +596,13 @@ app.get('/', async (req, res) => {
       Neu sau nay bo chi muc `idx_hopdong_tt_sesis` thi PHAI bo ca `FORCE INDEX`
       nay, neu khong truy van se nem loi thay vi chi cham di.
     */
-    const [[tk]] = await db.query(`
+    const tk = await nhoTam('trang_chu_thong_ke', NHO_TRANG_CHU_MS, async () => (await db.query(`
       SELECT (SELECT COUNT(*) FROM monan WHERE tinhtrang = 1)      AS soMon,
              (SELECT COUNT(*) FROM loai_mon)                       AS soDanhMuc,
              (SELECT COUNT(*) FROM nhan_vien WHERE trangthai = 1)  AS soNhanVien,
              (SELECT COUNT(DISTINCT sesis) FROM hopdong
                 FORCE INDEX (idx_hopdong_tt_sesis)
-              WHERE tinhtrang = 3)                                 AS soDon`);
+              WHERE tinhtrang = 3)                                 AS soDon`))[0][0]);
     if (tk) thongKe = { soMon: +tk.soMon, soDanhMuc: +tk.soDanhMuc, soNhanVien: +tk.soNhanVien, soDon: +tk.soDon };
   } catch (err) {
     console.error('Không lấy được dữ liệu trang chủ:', err.message);
@@ -601,7 +632,7 @@ app.get('/', async (req, res) => {
   }
   try {
     // Ban chay THAT (khong ngau nhien): 3 mon an co anh ban nhieu nhat.
-    const [bc] = await db.query(`
+    const bc = await nhoTam('trang_chu_ban_chay', NHO_TRANG_CHU_MS, async () => (await db.query(`
       SELECT m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon, SUM(h.soluong) AS da_ban
         FROM hopdong h
         JOIN monan m ON m.id_mon = h.id_mon
@@ -611,7 +642,7 @@ app.get('/', async (req, res) => {
                 OR name_loai LIKE '%sake%' OR name_loai LIKE '%beer%')
        GROUP BY m.id_mon, m.name_mon, m.gia_mon, m.images, m.ghichu_mon
        ORDER BY da_ban DESC
-       LIMIT 3`);
+       LIMIT 3`))[0]);
     banChay = bc.map((r) => ({ ...r, da_ban: Number(r.da_ban) }));
   } catch (err) {
     console.error('Không lấy được món bán chạy cho banner:', err.message);
@@ -997,16 +1028,19 @@ app.get('/cart', require('./middleware/auth').canKhachDangNhap, async (req, res)
 
     let donGiaoList = [];
     try {
+      // hopdong.sesis la utf8, don_giao_hang.sesis la utf8mb4: so thang hai cot
+      // thi MySQL doi bang ma tung dong va BO chi muc idx_hopdong_sesis -> quet
+      // ca 110k dong hopdong ba lan, trang gio hang mat 2-4 giay. CONVERT ve
+      // utf8 phia don_giao_hang de dung lai chi muc (ma sesis chi la ASCII).
       const [rows] = await db.query(`
         SELECT dg.*,
-               COALESCE((SELECT SUM(thanhtien) FROM hopdong WHERE sesis = dg.sesis), 0) + dg.phi_giao AS tong_tien,
-               (SELECT COUNT(*) FROM hopdong WHERE sesis = dg.sesis) AS so_mon
+               COALESCE((SELECT SUM(h.thanhtien) FROM hopdong h WHERE h.sesis = CONVERT(dg.sesis USING utf8)), 0) + dg.phi_giao AS tong_tien,
+               (SELECT COUNT(*) FROM hopdong h WHERE h.sesis = CONVERT(dg.sesis USING utf8)) AS so_mon
         FROM don_giao_hang dg
-        LEFT JOIN hopdong hd ON hd.sesis = dg.sesis
-        WHERE (hd.id_user = ? OR dg.sdt_nguoi_nhan = ? OR dg.ten_nguoi_nhan = ?)
-        GROUP BY dg.id_giao
+        WHERE dg.sdt_nguoi_nhan = ? OR dg.ten_nguoi_nhan = ?
+           OR EXISTS (SELECT 1 FROM hopdong h WHERE h.sesis = CONVERT(dg.sesis USING utf8) AND h.id_user = ?)
         ORDER BY dg.id_giao DESC LIMIT 6
-      `, [req.session.userId || 0, req.session.usersdt || '', req.session.username || '']);
+      `, [req.session.usersdt || '', req.session.username || '', req.session.userId || 0]);
       donGiaoList = rows || [];
     } catch (e) {
       console.error('Lỗi lấy đơn giao của tôi:', e);
@@ -1720,6 +1754,9 @@ app.post('/staff/login', async (req, res) => {
     if (!staff) gioiHanDN.ghiThatBai(req, 'nhan_vien', username);
     if (staff) {
       gioiHanDN.xoaDem(req, 'nhan_vien', username);
+      // Mot trinh duyet mot vai: dang nhap nhan vien thi thoat quan tri, neu khong
+      // phien quan tri se mo het menu / quyen cho nhan vien (utils/phienDangNhap.js).
+      require('./utils/phienDangNhap').boPhienQuanTri(req.session);
       req.session.stafflogin = true;
       req.session.staffId = staff.id_nv;
       req.session.staffName = staff.ten;
@@ -1744,6 +1781,8 @@ app.post('/staff/login', async (req, res) => {
       try {
         req.session.laShipper = !!(await require('./services/vanChuyenService').shipperCuaNhanVien(staff.id_nv));
       } catch (e) { req.session.laShipper = false; }
+      // Tai khoan demo: hien nhan "CHE DO DEMO" tren thanh tren (services/cheDoDemo.js).
+      req.session.cheDoDemo = await require('./services/cheDoDemo').laDemo(staff.id_nv);
 
       if (tiep) return res.redirect(tiep);
 
@@ -1866,6 +1905,8 @@ app.post('/staff/bookings/create', requireRole(['Phuc vu', 'Quay', 'Quan ly']), 
       message: `Nhân viên [${req.session.staffName}] vừa tạo 1 đơn bàn mới!`,
       sesis: sesis
     });
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis, action: 'tao-don' });
 
     res.redirect('/staff/bookings');
   } catch (err) {
@@ -1877,6 +1918,8 @@ app.post('/staff/bookings/create', requireRole(['Phuc vu', 'Quay', 'Quan ly']), 
 app.post('/staff/bookings/edit/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan ly']), async (req, res) => {
   try {
     await orderService.updateBooking(req.params.sesis, req.body);
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis: req.params.sesis, action: 'sua-don' });
     res.redirect('/staff/bookings');
   } catch (err) {
     console.error(err);
@@ -1941,6 +1984,19 @@ app.post('/staff/bookings/arrive/:sesis', requireRole(['Phuc vu', 'Quay', 'Quan 
     if (don.loai_don === 'giao_hang') return veDanhSachDon(res, 'Đơn giao hàng không nhận khách tại bàn.');
     if (![1, 5, 6].includes(Number(don.tinhtrang))) {
       return veDanhSachDon(res, `Không thể nhận khách: đơn đang ở trạng thái "${NHAN_TINH_TRANG_DON[don.tinhtrang] || don.tinhtrang}".`);
+    }
+    // Chi nhan khach trong khung gio hen (som toi da 60', muon toi da het luot) -
+    // cung quy tac voi Quan ly dat ban (reservationRules.kiemTraGioNhanKhach).
+    if (Number(don.tinhtrang) === 1 && !(await require('./services/cheDoDemo').laDemo(req.session.staffId))) {
+      const qtDb = require('./services/reservationRules');
+      const [[rsv]] = await db.query('SELECT reservation_date, start_time, expected_end_time FROM reservations WHERE reservation_code = ? LIMIT 1', [sesis]);
+      const [[hd]] = await db.query("SELECT DATE_FORMAT(ngay_dat, '%Y-%m-%d') AS ngay, gio_dat FROM hopdong WHERE sesis = ? ORDER BY id LIMIT 1", [sesis]);
+      const hen = rsv ? { ngay: rsv.reservation_date, gio: rsv.start_time, gioKetThuc: rsv.expected_end_time }
+        : (hd && hd.ngay && hd.gio_dat ? { ngay: hd.ngay, gio: hd.gio_dat } : null);
+      if (hen) {
+        try { qtDb.kiemTraGioNhanKhach(hen, await qtDb.docCauHinh()); }
+        catch (e) { return veDanhSachDon(res, e.message); }
+      }
     }
     if (table_id) {
       const [[qr]] = await db.query('SELECT table_id, table_name FROM qr_tables WHERE table_id = ? LIMIT 1', [table_id]);
@@ -2662,6 +2718,10 @@ app.post('/qr/add-dish', async (req, res) => {
       message: `Khách bàn đặt thêm món qua QR! Mã đơn: ${targetSesis.substring(0,8).toUpperCase()}`,
       sesis: targetSesis
     });
+    // So do ban + danh sach don tu cap nhat khi khach goi mon qua QR.
+    io.to('staff_room').emit('ban-cap-nhat');
+    io.to('staff_room').emit('so-do-thay-doi');
+    io.to('staff_room').emit('booking-updated', { sesis: targetSesis, action: 'qr-them-mon' });
 
     res.json({ success: true, sesis: targetSesis });
   } catch (err) {

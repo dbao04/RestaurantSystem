@@ -87,6 +87,23 @@
             a.addEventListener('click', function () { menu.classList.remove('is-open'); });
           });
         }
+        // Menu ngang (>1330px) ma chu tran khoi khung -> de len nut ben phai.
+        // Moc CSS khong luong het (ten khach dai, tieng Nhat, zoom), nen do that:
+        // con tran thi gan .is-hep de an chu ten nha hang (giu logo).
+        var navKhop = document.getElementById('nh-nav');
+        function khopThanhMenu() {
+          if (!navKhop || !menu) return;
+          navKhop.classList.remove('is-hep');
+          if (window.innerWidth <= 1330) return;
+          var act = navKhop.querySelector('.nh-nav__actions');
+          var tran = menu.scrollWidth > menu.clientWidth + 1 ||
+            (act && menu.getBoundingClientRect().right > act.getBoundingClientRect().left);
+          if (tran) navKhop.classList.add('is-hep');
+        }
+        var henKhop;
+        window.addEventListener('resize', function () { clearTimeout(henKhop); henKhop = setTimeout(khopThanhMenu, 120); });
+        khopThanhMenu();
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(khopThanhMenu);
         var els = document.querySelectorAll('.nh-reveal');
         if ('IntersectionObserver' in window && els.length) {
           var io = new IntersectionObserver(function (entries) {

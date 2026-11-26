@@ -182,7 +182,8 @@ module.exports = function (io) {
       const ban = await kds.doiTrangThaiBan(
         Number(req.params.id),
         Number(req.body.trangthai),
-        req.body.sesis || null
+        req.body.sesis || null,
+        req.session.staffId || null
       );
       io.to('staff_room').emit('ban-cap-nhat', ban);
       io.to('kitchen_room').emit('ban-cap-nhat', ban);
@@ -255,6 +256,18 @@ module.exports = function (io) {
       throw e;
     }
 
+    // Kiem tra mon con ban TRUOC khi mo phien: truoc day mon ngung phuc vu lam
+    // addDishToOrder nem loi SAU khi ban da bi chuyen sang "dang phuc vu" ->
+    // ban ket voi mot phien rong va nguoi goi chi thay loi 500.
+    const idsMon = [...new Set(items.map((it) => Number(it.id_mon || it.id)).filter((x) => x > 0))];
+    if (idsMon.length) {
+      const [conBan] = await db.query('SELECT id_mon FROM monan WHERE tinhtrang = 1 AND id_mon IN (?)', [idsMon]);
+      const coSan = new Set(conBan.map((m) => Number(m.id_mon)));
+      if (idsMon.some((x) => !coSan.has(x))) {
+        return res.status(400).json({ ok: false, loi: 'Có món đã ngừng phục vụ hoặc không tồn tại. Vui lòng tải lại thực đơn.' });
+      }
+    }
+
     let sesis = ban.sesis_hien_tai;
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
@@ -269,6 +282,20 @@ module.exports = function (io) {
           WHERE rt.table_id = ? AND r.status = 'ARRIVED' AND r.reservation_date = CURDATE()
           ORDER BY r.arrived_at DESC LIMIT 1`, [idBan]);
       if (luot) sesis = luot.reservation_code;
+    }
+
+    // Rang buoc dat truoc:
+    //  - phien hien tai la ma dat ban nhung luot do CHUA nhan khach -> chua goi mon
+    //  - ban trong ma sap co khach dat (trong occupied_hold_minutes) -> khong mo phien vang lai
+    const laDemo = await require('../services/cheDoDemo').laDemo(req.session.staffId);
+    if (sesis) {
+      const [[rsv]] = await db.query('SELECT status, start_time FROM reservations WHERE reservation_code = ? LIMIT 1', [sesis]);
+      if (rsv && !['ARRIVED', 'SEATED'].includes(rsv.status) && !laDemo) {
+        return res.status(400).json({ ok: false, loi: `Khách đặt bàn (hẹn ${String(rsv.start_time).slice(0, 5)}) chưa được nhận bàn. Bấm "Khách đã đến" ở Quản lý đặt bàn khi khách tới rồi mới gọi món.` });
+      }
+    } else {
+      const hen = await kds.luotDatSapToi(idBan, req.session.staffId);
+      if (hen) return res.status(400).json({ ok: false, loi: hen.thong_bao });
     }
 
     // Nếu bàn chưa có phiên (bàn trống), khởi tạo phiên mới

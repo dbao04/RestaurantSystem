@@ -344,6 +344,12 @@ module.exports = {
   'theo_doi.giao_toi': 'Delivering to',
   'theo_doi.don_hang': 'Your order',
   'theo_doi.dien_bien': 'Progress',
+
+  'theo_doi.da_tim_shipper': 'Courier assignment tried {n} times',
+
+  'theo_doi.hien_them': 'Show {n} more',
+
+  'theo_doi.thu_gon': 'Show less',
   'theo_doi.tu_cap_nhat': 'This page updates itself — no need to refresh.',
   'theo_doi.tra_cuu_khac': 'Track another order',
   'theo_doi.dang_toi': 'Your rider is on the way',
@@ -2427,4 +2433,25 @@ module.exports = {
   'lich_su_tiec.huy_xac_nhan': 'Confirm cancellation',
   'lich_su_tiec.huy_thanh_cong': 'Banquet request {ma} has been cancelled.',
   'lich_su_tiec.huy_loi': 'Could not cancel, please try again.',
+  // The muc coc gon (views/partials/chinh-sach-coc.ejs)
+  'cs_coc.t1_dk': 'Small table · off-peak',
+  'cs_coc.t1_gia': '0 VND',
+  'cs_coc.t1_dv': 'no deposit',
+  'cs_coc.t1_y1': '1 – 5 guests, no pre-order',
+  'cs_coc.t1_y2': 'Outside peak hours {gcd}',
+  'cs_coc.t2_dk': 'Peak hours · 6–{nt1} guests',
+  'cs_coc.t2_gia': '100,000 VND',
+  'cs_coc.t2_dv': '/ guest',
+  'cs_coc.t2_y1': 'Tables booked during peak hours {gcd}',
+  'cs_coc.t2_y2': 'Or groups of 6 – {nt1} at off-peak times',
+  'cs_coc.t3_dk': 'Groups of {nt}+',
+  'cs_coc.t3_gia': '150,000 VND',
+  'cs_coc.t3_dv': '/ guest',
+  'cs_coc.t3_y1': 'Applies at all times',
+  'cs_coc.t3_y2': 'Order less than the deposit: the difference is refunded at checkout',
+  'cs_coc.t4_dk': 'Pre-order',
+  'cs_coc.t4_gia': '100%',
+  'cs_coc.t4_dv': 'of the food',
+  'cs_coc.t4_y1': 'Replaces the table deposit, nothing extra',
+  'cs_coc.t4_y2': 'Groups of {nt}+: minimum 150,000 VND / guest',
 };

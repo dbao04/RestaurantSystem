@@ -481,10 +481,10 @@
       <div class="nh-topbar__titles">
         <h1>
           Trợ lý ảo AI (Chatbot)
-          <span class="nh-badge-layer"><i class="fas fa-microchip"></i> NLP &amp; NLU</span>
+          <span class="nh-badge-layer"><i class="fas fa-robot"></i> Trả lời tự động 24/7</span>
         </h1>
         <div class="nh-topbar__sub">
-          Mô hình phân loại ý định tiếng Việt tự huấn luyện · Chạy offline nội bộ | Quản trị viên: <b><%= tenNguoiDung %></b>
+          Kho kiến thức hỏi–đáp · Nhận diện món kèm ảnh · Mô hình ML tự huấn luyện | Quản trị viên: <b><%= tenNguoiDung %></b>
         </div>
       </div>
     </a>
@@ -521,6 +521,17 @@
     </div>
   <% } %>
 
+  <!-- THANH TAB -->
+  <nav class="qt-tabs" role="tablist">
+    <button type="button" data-tab="tong-quan"><i class="fas fa-gauge"></i> Tổng quan</button>
+    <button type="button" data-tab="kho"><i class="fas fa-book"></i> Kho kiến thức <span class="pr-the" style="font-size:11px;"><%= kho.dang_bat %></span></button>
+    <button type="button" data-tab="thiet-lap"><i class="fas fa-sliders"></i> Thiết lập AI</button>
+    <button type="button" data-tab="thu"><i class="fas fa-vial"></i> Thử nghiệm &amp; hội thoại</button>
+    <button type="button" data-tab="lien-he"><i class="fas fa-address-book"></i> Khách để lại SĐT <% if ((lienHe || []).filter(function (x) { return !x.da_xu_ly; }).length) { %><span class="pr-so"><%= (lienHe || []).filter(function (x) { return !x.da_xu_ly; }).length %></span><% } %></button>
+    <button type="button" data-tab="ml"><i class="fas fa-microchip"></i> Mô hình ML</button>
+  </nav>
+
+  <section class="qt-tab" data-tab="tong-quan">
   <!-- SỐ LIỆU VẬN HÀNH (KPIS) -->
   <div class="nh-kpis">
     <div class="nh-kpi accent">
@@ -560,6 +571,12 @@
     </div>
   </div>
 
+  <%- include('partials/chatbot-tong-quan') %>
+  </section>
+
+  <%- include('partials/chatbot-preny') %>
+
+  <section class="qt-tab" data-tab="ml">
   <!-- THỬ NGHIỆM TRỰC TIẾP -->
   <div class="nh-card">
     <div class="nh-card__header">
@@ -629,52 +646,15 @@
     <div id="kq-train" class="nh-card__desc" style="margin-top:10px; font-weight:600;"></div>
   </div>
 
-  <!-- PHÂN BỐ Ý ĐỊNH & CÂU CHƯA HIỂU -->
-  <div class="nh-grid nh-g2">
-    <div class="nh-card" style="margin-bottom:0;">
-      <div class="nh-card__header">
-        <h2 class="nh-card__title"><i class="fas fa-chart-pie"></i> Phân bố nhóm ý định phổ biến</h2>
-        <p class="nh-card__desc">Thống kê số lượng lượt hỏi theo nhóm nhu cầu trong <%= thongKe.so_ngay %> ngày qua.</p>
-      </div>
-      <div class="chart-box"><canvas id="bd-y-dinh"></canvas></div>
+  <!-- PHÂN BỐ Ý ĐỊNH -->
+  <div class="nh-card">
+    <div class="nh-card__header">
+      <h2 class="nh-card__title"><i class="fas fa-chart-pie"></i> Phân bố nhóm ý định phổ biến (mô hình ML)</h2>
+      <p class="nh-card__desc">Thống kê số lượng lượt hỏi theo nhóm nhu cầu trong <%= thongKe.so_ngay %> ngày qua.</p>
     </div>
-
-    <div class="nh-card" style="margin-bottom:0;">
-      <div class="nh-card__header">
-        <h2 class="nh-card__title"><i class="fas fa-circle-question"></i> Câu hỏi chưa nhận diện được</h2>
-        <p class="nh-card__desc">
-          Các câu hỏi thực tế khách hàng hoặc nhân viên hỏi mà bot chưa hiểu. Thêm vào bộ huấn luyện để tăng độ bao phủ.
-        </p>
-      </div>
-      <div class="nh-scroll">
-        <% if (thongKe.khong_hieu && thongKe.khong_hieu.length) { %>
-          <div class="nh-table-wrap">
-            <table class="nh-table">
-              <thead>
-                <tr>
-                  <th>Nội dung câu hỏi</th>
-                  <th class="so" style="width:100px;">Tần suất</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% thongKe.khong_hieu.forEach(function (r) { %>
-                  <tr>
-                    <td><%= r.cau_hoi %></td>
-                    <td class="so"><span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px;"><%= r.so_lan %> lần</span></td>
-                  </tr>
-                <% }); %>
-              </tbody>
-            </table>
-          </div>
-        <% } else { %>
-          <div style="text-align:center; padding:30px; color:var(--nh-muted);">
-            <i class="fas fa-face-smile" style="font-size:32px; color:var(--nh-ok); margin-bottom:8px; display:block;"></i>
-            Chưa có câu hỏi nào bị từ chối. Bot hoạt động rất tốt!
-          </div>
-        <% } %>
-      </div>
-    </div>
+    <div class="chart-box"><canvas id="bd-y-dinh"></canvas></div>
   </div>
+  </section>
 
 </div>
 

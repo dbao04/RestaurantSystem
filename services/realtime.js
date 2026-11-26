@@ -410,7 +410,9 @@ function khoiTao(_io) {
     // va cac danh sach tu cap nhat. Cho vao phong rieng `quan_tri` va phong
     // `quan_ly` - ho la cap cao nhat nen moi viec canh bao deu den tay.
     if (phien && phien.adminlogin) {
-      socket.join([P.QUAN_TRI, P.QUAN_LY]);
+      // Quan tri cung mo so do ban / KDS -> phai nghe cac phong van hanh cu,
+      // neu khong so do ban hien "da ket noi" ma khong bao gio tu cap nhat.
+      socket.join([P.QUAN_TRI, P.QUAN_LY, 'staff_room', 'kitchen_room']);
       socket.emit('realtime:san-sang', {
         quan_tri: true,
         ten: phien.adminname || 'Quản trị viên',
@@ -448,7 +450,7 @@ function khoiTao(_io) {
 
     // Giu tuong thich voi ma cu: kitchen_room / staff_room van con nguoi nghe.
     if (hoSo.vai_tro_tuong_duong.includes('Bep')) socket.join('kitchen_room');
-    if (hoSo.vai_tro_tuong_duong.some((v) => ['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan'].includes(v))) {
+    if (hoSo.vai_tro_tuong_duong.some((v) => ['Phuc vu', 'Ke toan', 'Quay', 'Thu ngan', 'Quan ly'].includes(v))) {
       socket.join('staff_room');
     }
 

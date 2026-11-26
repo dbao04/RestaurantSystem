@@ -353,6 +353,12 @@ module.exports = {
   'theo_doi.giao_toi': 'お届け先',
   'theo_doi.don_hang': 'ご注文内容',
   'theo_doi.dien_bien': '配達の経過',
+
+  'theo_doi.da_tim_shipper': '配達員の割り当てを{n}回試みました',
+
+  'theo_doi.hien_them': 'さらに{n}件を表示',
+
+  'theo_doi.thu_gon': '閉じる',
   'theo_doi.tu_cap_nhat': 'このページは自動で更新されます。再読み込みは不要です。',
   'theo_doi.tra_cuu_khac': '別の注文を確認する',
   'theo_doi.dang_toi': '配達員が向かっています',
@@ -2433,4 +2439,25 @@ module.exports = {
   'lich_su_tiec.huy_xac_nhan': 'キャンセルを確定',
   'lich_su_tiec.huy_thanh_cong': '宴会予約 {ma} をキャンセルしました。',
   'lich_su_tiec.huy_loi': 'キャンセルできませんでした。もう一度お試しください。',
+  // The muc coc gon (views/partials/chinh-sach-coc.ejs)
+  'cs_coc.t1_dk': '少人数・通常時間',
+  'cs_coc.t1_gia': '0 VND',
+  'cs_coc.t1_dv': '前金不要',
+  'cs_coc.t1_y1': '1〜5名・事前注文なし',
+  'cs_coc.t1_y2': 'ピーク時間 {gcd} 以外',
+  'cs_coc.t2_dk': 'ピーク時間・6〜{nt1}名',
+  'cs_coc.t2_gia': '100,000 VND',
+  'cs_coc.t2_dv': '/ 名',
+  'cs_coc.t2_y1': 'ピーク時間 {gcd} のご予約',
+  'cs_coc.t2_y2': 'または通常時間の6〜{nt1}名',
+  'cs_coc.t3_dk': '{nt}名以上の団体',
+  'cs_coc.t3_gia': '150,000 VND',
+  'cs_coc.t3_dv': '/ 名',
+  'cs_coc.t3_y1': '全時間帯に適用',
+  'cs_coc.t3_y2': 'ご注文が前金未満の場合、差額をお会計時に返金',
+  'cs_coc.t4_dk': '事前注文',
+  'cs_coc.t4_gia': '100%',
+  'cs_coc.t4_dv': '料理代',
+  'cs_coc.t4_y1': 'テーブル前金の代わり・追加料金なし',
+  'cs_coc.t4_y2': '{nt}名以上：1名あたり最低150,000 VND',
 };

@@ -1351,6 +1351,26 @@ async function doiTrangThai(id, trangThaiMoi, ctx = {}) {
     if (!r) throw new LoiDatBan('Không tìm thấy lượt đặt bàn', 'NOT_FOUND');
     qt.batBuocChuyenDuoc(r.status, den);
 
+    // Rang buoc theo gio hen (xem qt.kiemTraGioNhanKhach):
+    //  - nhan khach (Da den / Ngoi ban) chi trong khung [gio hen - 60', gio ket thuc]
+    //  - "Khong den" chi sau gio hen + thoi gian cho tre (grace_period_minutes)
+    const chGio = await qt.docCauHinh();
+    const henLuc = { ngay: r.reservation_date, gio: r.start_time, gioKetThuc: r.expected_end_time };
+    // Tai khoan demo (services/cheDoDemo.js) bo qua rang buoc gio - van ghi log.
+    const demo = ctx.nhanVienId && await require('./cheDoDemo').laDemo(ctx.nhanVienId);
+    if ((den === 'ARRIVED' || (den === 'SEATED' && !r.arrived_at)) && !ctx.boQuaGio) {
+      if (demo) require('./cheDoDemo').ghiBoQua(ctx.nhanVienId, `nhận khách ${r.reservation_code} ngoài khung giờ`);
+      else qt.kiemTraGioNhanKhach(henLuc, chGio);
+    }
+    if (den === 'NO_SHOW' && !ctx.tuDong && !demo) {
+      const moc = qt.ghepMoc(qt.ngayChuoi(r.reservation_date), String(r.start_time));
+      const cho = Number(chGio.grace_period_minutes) || 15;
+      if (Date.now() < moc.getTime() + cho * 60000) {
+        const p = (n) => String(n).padStart(2, '0');
+        throw new LoiDatBan(`Chưa thể đánh dấu "Không đến": khách hẹn ${p(moc.getHours())}:${p(moc.getMinutes())}, phải chờ quá giờ hẹn ${cho} phút.`, 'CHUA_QUA_GIO');
+      }
+    }
+
     const dat = ['status = ?', 'updated_by = ?', 'updated_at = NOW()'];
     const gt = [den, ctx.nhanVienId || null];
     let hoan = null;

@@ -398,6 +398,25 @@ body::-webkit-scrollbar {
   .nh-nav-action-btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
   .nh-nav-action-btn i { font-size: 0.95rem; }
 }
+/* Da dang nhap: hang nut ben phai them chuong thong bao + ten khach (~180px),
+   nen moc 1900px o tren khong du - o 1900-1960px chu muc menu cuoi tran de
+   len nut "Giao tan noi". Giu dang bieu tuong toi 2000px khi co .nh-user. */
+@media (min-width: 1900px) and (max-width: 2049px) {
+  .nh-nav__actions:has(.nh-user) .nh-nav-action-btn span { display: none; }
+  .nh-nav__actions:has(.nh-user) .nh-nav-action-btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
+  .nh-nav__actions:has(.nh-user) .nh-nav-action-btn i { font-size: 0.95rem; }
+}
+/* Da dang nhap va duoi 1900px: o tai khoan chi con avatar (title van la ten),
+   nhuong ~110px cho menu - truoc do o 1366-1700px chu menu de len cac nut. */
+@media (min-width: 1331px) and (max-width: 1899px) {
+  .nh-user .nh-user__name { display: none; }
+  .nh-user { padding: .2rem; }
+}
+/* Lop du phong do JS gan (footer.ejs - khopThanhMenu) khi menu VAN tran:
+   ten dai, tieng Nhat, zoom trinh duyet... An chu ten nha hang, giu logo. */
+@media (min-width: 1331px) {
+  .nh-nav.is-hep .nh-brand__name { display: none; }
+}
 @media (min-width: 1561px) and (max-width: 1699px) {
   .nh-nav__links a { padding: .38rem .44rem; font-size: .9rem; }
 }

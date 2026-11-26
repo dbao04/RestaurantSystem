@@ -1,0 +1,34 @@
+<%
+/*
+  4 THE MUC COC - dung chung cho buoc "Chinh sach" va modal xem nhanh (reservation.ejs).
+  Moi the: bieu tuong + dieu kien (1 dong) + gia to + 2-3 y ngan.
+  Truoc day moi the co nhan + tieu de + gia + doan van dai -> qua nhieu chu.
+  Bien: NT (nguong doan), gcd (gio cao diem).
+*/
+var ntDoan = typeof NT !== 'undefined' ? NT : 15;
+var gioCD = (typeof cauHinh !== 'undefined' && cauHinh && cauHinh.gio_cao_diem) || '18:00-21:00';
+var dsThe = [
+  { mau: 'xanh', icon: 'fa-user-friends', dk: t('cs_coc.t1_dk'), gia: t('cs_coc.t1_gia'), don_vi: t('cs_coc.t1_dv'),
+    y: [t('cs_coc.t1_y1'), t('cs_coc.t1_y2', { gcd: gioCD })] },
+  { mau: 'cam', icon: 'fa-fire', dk: t('cs_coc.t2_dk', { nt1: ntDoan - 1 }), gia: t('cs_coc.t2_gia'), don_vi: t('cs_coc.t2_dv'),
+    y: [t('cs_coc.t2_y1', { gcd: gioCD }), t('cs_coc.t2_y2', { nt1: ntDoan - 1 })] },
+  { mau: 'vang', icon: 'fa-glass-cheers', dk: t('cs_coc.t3_dk', { nt: ntDoan }), gia: t('cs_coc.t3_gia'), don_vi: t('cs_coc.t3_dv'),
+    y: [t('cs_coc.t3_y1'), t('cs_coc.t3_y2')] },
+  { mau: 'lam', icon: 'fa-utensils', dk: t('cs_coc.t4_dk'), gia: t('cs_coc.t4_gia'), don_vi: t('cs_coc.t4_dv'),
+    y: [t('cs_coc.t4_y1'), t('cs_coc.t4_y2', { nt: ntDoan })] },
+];
+%>
+<div class="cs-coc">
+  <% dsThe.forEach(function (c) { %>
+    <div class="cs-coc__the cs-coc__the--<%= c.mau %>">
+      <div class="cs-coc__dau">
+        <span class="cs-coc__icon"><i class="fas <%= c.icon %>"></i></span>
+        <span class="cs-coc__dk"><%= c.dk %></span>
+      </div>
+      <div class="cs-coc__gia"><%= c.gia %> <small><%= c.don_vi %></small></div>
+      <ul class="cs-coc__y">
+        <% c.y.forEach(function (y) { %><li><%= y %></li><% }) %>
+      </ul>
+    </div>
+  <% }) %>
+</div>

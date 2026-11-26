@@ -52,7 +52,8 @@ const kdsService = {
               h.tg, h.ngay_dat, h.gio_dat, h.bep_bat_dau, h.bep_ket_thuc,
               h.noidung, h.ghi_chu_mon, h.so_user, h.id_ban, h.loai_don,
               b.number_ban, dg.ma_giao, dg.trang_thai AS trang_thai_giao,
-              IF(lm.name_loai REGEXP 'DRINK|SAKE|BEER', 'bar', 'bep') AS tram,
+              -- Cung quy tac voi LA_DO_UONG o thongKeBepService: nhom "Đồ uống" cung ve tram bar.
+              IF(lm.name_loai REGEXP 'DRINK|SAKE|BEER|UỐNG', 'bar', 'bep') AS tram,
               COALESCE(k.ten, 'Khách lẻ') AS ten_khach,
               TIMESTAMPDIFF(MINUTE,
                 COALESCE(h.bep_bat_dau, CONCAT(h.ngay_dat, ' ', COALESCE(h.gio_dat, '00:00:00'))),
@@ -322,11 +323,29 @@ const kdsService = {
     return rows;
   },
 
-  doiTrangThaiBan: async (idBan, trangThai, sesis = null) => {
+  doiTrangThaiBan: async (idBan, trangThai, sesis = null, idNv = null) => {
     if (![0, 1, 2, 3].includes(Number(trangThai))) {
       throw new Error('Trạng thái bàn không hợp lệ.');
     }
-    const sesisMoi = Number(trangThai) === 0 ? null : sesis;
+    const tt = Number(trangThai);
+    const [[hienTai]] = await db.query('SELECT number_ban, trangthai, sesis_hien_tai FROM ban WHERE Id_ban = ?', [idBan]);
+    if (!hienTai) throw new Error('Không tìm thấy bàn.');
+
+    // 1. Ban con mon chua thanh toan: khong tra ban / don / doi sang "da dat".
+    //    Truoc day "Dat la Trong" xoa luon lien ket phien -> mon cua khach mat
+    //    khoi ban, khong ai tinh tien duoc nua.
+    if ([0, 2, 3].includes(tt) && hienTai.sesis_hien_tai) {
+      const n = await module.exports.soMonChuaTra(hienTai.sesis_hien_tai);
+      if (n > 0) {
+        throw new Error(`Bàn ${hienTai.number_ban} còn ${n} món chưa thanh toán. Hãy "Tính tiền bàn này" (hoặc chuyển bàn) trước khi ${tt === 3 ? 'dọn bàn' : tt === 0 ? 'trả bàn trống' : 'đổi sang đã đặt'}.`);
+      }
+    }
+    // 2. Xep khach vang lai vao ban sap co khach dat.
+    if (tt === 1 && !hienTai.sesis_hien_tai) {
+      const hen = await module.exports.luotDatSapToi(idBan, idNv);
+      if (hen) throw new Error(hen.thong_bao);
+    }
+    const sesisMoi = tt === 0 ? null : sesis;
     await db.query(
       'UPDATE ban SET trangthai = ?, sesis_hien_tai = ? WHERE Id_ban = ?',
       [trangThai, sesisMoi, idBan]
@@ -336,6 +355,47 @@ const kdsService = {
       [idBan]
     );
     return rows[0];
+  },
+
+  /** So mon (dong hopdong) cua phien chua thanh toan va chua huy. */
+  soMonChuaTra: async (sesis) => {
+    if (!sesis) return 0;
+    const [[r]] = await db.query(
+      `SELECT COUNT(*) AS n FROM hopdong
+        WHERE sesis = ? AND id_mon > 0 AND soluong > 0 AND tinhtrang NOT IN (3, 4)`, [sesis]);
+    return Number(r && r.n) || 0;
+  },
+
+  /**
+   * Luot dat (chua nhan khach) se dung ban nay trong `occupied_hold_minutes` toi,
+   * hoac da toi gio ma con trong thoi gian cho tre. Co -> khong cho xep khach
+   * vang lai / mo phien goi mon moi tren ban (khach dat den se khong con ban).
+   */
+  luotDatSapToi: async (idBan, idNv = null) => {
+    // Tai khoan demo bo qua rang buoc giu ban (services/cheDoDemo.js).
+    if (idNv && await require('./cheDoDemo').laDemo(idNv)) return null;
+    const qt = require('./reservationRules');
+    const ch = await qt.docCauHinh();
+    const truoc = Number(ch.occupied_hold_minutes) || 90;
+    const sau = Number(ch.auto_no_show_minutes) || 30;
+    const [ds] = await db.query(
+      `SELECT r.reservation_code, r.customer_name, r.start_time, DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS ngay
+         FROM reservation_tables rt JOIN reservations r ON r.id = rt.reservation_id
+        WHERE rt.table_id = ? AND r.status IN ('PENDING', 'CONFIRMED')
+          AND r.reservation_date BETWEEN CURDATE() - INTERVAL 1 DAY AND CURDATE() + INTERVAL 1 DAY`, [idBan]);
+    const bayGio = Date.now();
+    for (const r of ds) {
+      const moc = qt.ghepMoc(r.ngay, String(r.start_time)).getTime();
+      if (bayGio >= moc - truoc * 60000 && bayGio <= moc + sau * 60000) {
+        const g = String(r.start_time).slice(0, 5);
+        return {
+          ...r,
+          thong_bao: `Bàn này đã có khách đặt lúc ${g} (${r.customer_name || 'khách'}, mã ${r.reservation_code}). `
+            + `Không xếp khách khác trong vòng ${truoc} phút trước giờ hẹn - chọn bàn khác, hoặc nhận khách đặt trước ở Quản lý đặt bàn.`,
+        };
+      }
+    }
+    return null;
   },
 
   /** Luu vi tri sau khi keo tha ban tren so do. */

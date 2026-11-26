@@ -2,327 +2,361 @@
   var activePage = 'chat';
   var staffName = session.staffName || 'Nhân viên';
   var unreadCount = unread || 0;
+
+  // Mau avatar on dinh theo ten (cung mot khach luon cung mot mau).
+  var BANG_MAU = ['#b8860b', '#7c4a2d', '#2f6f5e', '#8a3b4f', '#3d5a80', '#6b5b95', '#a0522d', '#2e7d6b'];
+  function mauCua(s) { var h = 0; s = String(s || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return BANG_MAU[h % BANG_MAU.length]; }
+  function chuDau(s) { s = String(s || '?').trim(); return s ? s.charAt(0).toUpperCase() : '?'; }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function gioPhut(d) { d = new Date(d); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function khoaNgay(d) { d = new Date(d); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  var homNay = khoaNgay(new Date()), homQua = khoaNgay(new Date(Date.now() - 86400000));
+  function nhanNgay(d) { var k = khoaNgay(d); if (k === homNay) return 'Hôm nay'; if (k === homQua) return 'Hôm qua'; d = new Date(d); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function thoiGianDs(d) { if (!d) return ''; return khoaNgay(d) === homNay ? gioPhut(d) : nhanNgay(d).replace('/' + new Date().getFullYear(), ''); }
+  var tongChuaDoc = (customers || []).reduce(function (t, c) { return t + (Number(c.unread) || 0); }, 0);
 %>
 <%- include('partials/header') %>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-  <h1 class="h3 mb-0 text-gray-800">Chat với khách hàng</h1>
+<style>
+  .ct { --ct-vien: #ece3d5; --ct-nen: #faf7f2; --ct-nau: #2b1a12; --ct-vang: #c8a24b; --ct-chu: #241d18; --ct-mo: #8a7d70;
+        display: grid; grid-template-columns: 340px minmax(0, 1fr); height: calc(100vh - 175px); min-height: 520px;
+        background: #fff; border: 1px solid var(--ct-vien); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 1px 2px rgba(60,40,20,.04), 0 18px 40px -24px rgba(60,40,20,.28); }
+  .ct-dau-trang { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin: .25rem 0 1.1rem; flex-wrap: wrap; }
+  .ct-dau-trang h1 { font-family: var(--qt-serif, Georgia, serif); font-size: 1.7rem; font-weight: 700; color: #241d18; margin: 0; }
+  .ct-dau-trang p { margin: .2rem 0 0; color: #6b5f54; font-size: .86rem; }
+  .ct-tong { display: inline-flex; align-items: center; gap: .45rem; padding: .45rem .9rem; border-radius: 999px; background: #fff; border: 1px solid #e2d6c3; font-size: .82rem; font-weight: 600; color: #4e342e; }
+  .ct-tong b { background: #c0392b; color: #fff; border-radius: 999px; padding: 0 .5rem; font-size: .75rem; }
+
+  /* --- Cot danh sach --- */
+  .ct-ds { display: flex; flex-direction: column; border-right: 1px solid var(--ct-vien); background: var(--ct-nen); min-height: 0; }
+  .ct-ds__dau { padding: 1rem 1rem .75rem; border-bottom: 1px solid var(--ct-vien); }
+  .ct-ds__tieu { display: flex; align-items: center; justify-content: space-between; margin-bottom: .7rem; }
+  .ct-ds__tieu h2 { font-family: var(--qt-serif, Georgia, serif); font-size: 1.05rem; font-weight: 700; color: var(--ct-chu); margin: 0; }
+  .ct-ds__tieu span { font-size: .74rem; color: var(--ct-mo); background: #fff; border: 1px solid var(--ct-vien); padding: .1rem .55rem; border-radius: 999px; }
+  .ct-tim { position: relative; display: block; }
+  .ct-tim i { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: #b0a393; font-size: .8rem; }
+  .ct-tim input { width: 100%; height: 38px; border-radius: 999px; border: 1px solid #e2d8c9; background: #fff; padding: 0 .9rem 0 2.2rem; font-size: .86rem; color: var(--ct-chu); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .ct-tim input:focus { border-color: var(--ct-vang); box-shadow: 0 0 0 3px rgba(200,162,75,.18); }
+  .ct-ds__than { flex: 1; overflow-y: auto; padding: .5rem; }
+  .ct-kh { display: flex; align-items: center; gap: .75rem; padding: .7rem .75rem; border-radius: 14px; text-decoration: none !important; color: inherit; transition: background .15s; position: relative; }
+  .ct-kh:hover { background: #f3ece1; }
+  .ct-kh.is-on { background: #fff; box-shadow: 0 1px 2px rgba(60,40,20,.06), 0 6px 16px -10px rgba(60,40,20,.25); }
+  .ct-kh.is-on::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--ct-vang); }
+  .ct-ava { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 1rem; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
+  .ct-ava--lon { width: 44px; height: 44px; }
+  .ct-kh__giua { flex: 1; min-width: 0; }
+  .ct-kh__dong { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+  .ct-kh__ten { font-weight: 700; font-size: .9rem; color: var(--ct-chu); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ct-kh__gio { flex: none; font-size: .7rem; color: var(--ct-mo); }
+  .ct-kh__tin { font-size: .8rem; color: var(--ct-mo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .1rem; }
+  .ct-kh.co-moi .ct-kh__tin { color: var(--ct-chu); font-weight: 600; }
+  .ct-kh.co-moi .ct-kh__gio { color: #c0392b; font-weight: 700; }
+  .ct-so { flex: none; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #c0392b; color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center; }
+  .ct-rong-ds { text-align: center; color: var(--ct-mo); font-size: .86rem; padding: 2.5rem 1rem; }
+  .ct-rong-ds i { display: block; font-size: 2rem; color: #d9ccb7; margin-bottom: .6rem; }
+
+  /* --- Khung hoi thoai --- */
+  .ct-hoi { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .ct-hoi__dau { display: flex; align-items: center; gap: .8rem; padding: .85rem 1.25rem; border-bottom: 1px solid var(--ct-vien); background: #fff; }
+  .ct-hoi__ten { font-weight: 700; color: var(--ct-chu); font-size: 1rem; line-height: 1.2; }
+  .ct-hoi__phu { font-size: .78rem; color: var(--ct-mo); }
+  .ct-hoi__nut { margin-left: auto; display: flex; gap: .4rem; }
+  .ct-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; border: 1px solid var(--ct-vien); background: #fff; color: #6b5f54; text-decoration: none !important; transition: all .15s; cursor: pointer; }
+  .ct-icon:hover { border-color: var(--ct-vang); color: #8a6a22; background: #fdf8ee; }
+  .ct-lui { display: none; }
+
+  .ct-tin { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; background: #f7f3ec url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23e6dccb'/%3E%3C/svg%3E"); }
+  .ct-ngay { display: flex; justify-content: center; margin: .9rem 0 .7rem; }
+  .ct-ngay span { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a7d70; background: rgba(255,255,255,.85); border: 1px solid var(--ct-vien); padding: .2rem .75rem; border-radius: 999px; }
+  .ct-dong { display: flex; gap: .5rem; margin-bottom: .55rem; align-items: flex-end; }
+  .ct-dong.toi { justify-content: flex-end; }
+  .ct-dong .ct-ava { width: 30px; height: 30px; font-size: .78rem; }
+  .ct-bong { max-width: min(72%, 560px); padding: .6rem .85rem .45rem; border-radius: 18px; font-size: .9rem; line-height: 1.45; box-shadow: 0 1px 1px rgba(60,40,20,.06); }
+  .ct-dong.khach .ct-bong { background: #fff; color: var(--ct-chu); border: 1px solid #eee4d6; border-bottom-left-radius: 6px; }
+  .ct-dong.toi .ct-bong { background: linear-gradient(150deg, #3a2419, #2b1a12); color: #f7efe3; border-bottom-right-radius: 6px; }
+  .ct-bong__chu { white-space: pre-wrap; word-break: break-word; }
+  .ct-bong__gio { display: block; text-align: right; font-size: .68rem; margin-top: .2rem; opacity: .6; }
+  .ct-dong.toi .ct-bong__gio { color: #e6c97a; opacity: .85; }
+  .ct-anh { display: block; margin: .1rem 0 .35rem; }
+  .ct-anh img { display: block; max-width: 260px; max-height: 240px; width: auto; border-radius: 12px; object-fit: cover; border: 1px solid rgba(0,0,0,.06); }
+  .ct-tep { display: inline-flex; align-items: center; gap: .6rem; margin: .1rem 0 .35rem; padding: .55rem .75rem; border-radius: 12px; text-decoration: none !important; max-width: 100%; }
+  .ct-dong.khach .ct-tep { background: #f6f1e9; border: 1px solid #e8dcc8; color: var(--ct-chu); }
+  .ct-dong.toi .ct-tep { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+  .ct-tep__ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--ct-vang); color: #fff; flex: none; }
+  .ct-tep__ten { font-size: .84rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .ct-rong { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--ct-mo); padding: 2rem; }
+  .ct-rong__ico { width: 84px; height: 84px; border-radius: 26px; display: grid; place-items: center; background: #fff; border: 1px solid var(--ct-vien); color: var(--ct-vang); font-size: 2rem; margin-bottom: 1rem; box-shadow: 0 12px 30px -18px rgba(60,40,20,.35); }
+  .ct-rong h3 { font-family: var(--qt-serif, Georgia, serif); font-size: 1.15rem; color: var(--ct-chu); margin: 0 0 .3rem; }
+  .ct-rong p { font-size: .86rem; margin: 0; max-width: 320px; }
+
+  /* --- O soan tin --- */
+  .ct-soan { padding: .75rem 1rem .9rem; border-top: 1px solid var(--ct-vien); background: #fff; }
+  .ct-tep-chon { display: none; align-items: center; gap: .6rem; padding: .45rem .5rem .45rem .75rem; margin-bottom: .6rem; border-radius: 12px; background: #fdf6e6; border: 1px dashed #d9b45c; font-size: .82rem; }
+  .ct-tep-chon i { color: #b8860b; }
+  .ct-tep-chon b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; color: var(--ct-chu); }
+  .ct-tep-chon small { color: var(--ct-mo); }
+  .ct-tep-chon button { margin-left: auto; width: 26px; height: 26px; border-radius: 8px; border: 0; background: transparent; color: #b3352c; font-size: 1.1rem; line-height: 1; }
+  .ct-tep-chon button:hover { background: #fbe9e7; }
+  .ct-o { display: flex; align-items: center; gap: .5rem; padding: .3rem .35rem .3rem .45rem; border: 1px solid #e2d8c9; border-radius: 999px; background: #fdfbf8; transition: border-color .15s, box-shadow .15s; }
+  .ct-o:focus-within { border-color: var(--ct-vang); box-shadow: 0 0 0 3px rgba(200,162,75,.18); background: #fff; }
+  .ct-o .ct-icon { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; }
+  .ct-o .ct-icon:hover { background: #f3ece1; }
+  .ct-o input[type=text] { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: .92rem; color: var(--ct-chu); padding: .45rem .25rem; }
+  .ct-gui { flex: none; height: 40px; padding: 0 1.1rem; border-radius: 999px; border: 0; background: linear-gradient(150deg, #3a2419, #2b1a12); color: #f3dfa6; font-weight: 700; font-size: .88rem; display: inline-flex; align-items: center; gap: .45rem; transition: transform .1s, opacity .15s; }
+  .ct-gui:hover { opacity: .92; }
+  .ct-gui:active { transform: scale(.97); }
+  .ct-gui:disabled { opacity: .55; }
+  .ct-goi-y { font-size: .7rem; color: #b0a393; margin: .45rem 0 0 .9rem; }
+
+  @media (max-width: 991.98px) {
+    .ct { grid-template-columns: minmax(0, 1fr); height: calc(100vh - 150px); }
+    .ct.dang-chat .ct-ds { display: none; }
+    .ct:not(.dang-chat) .ct-hoi { display: none; }
+    .ct-lui { display: grid; }
+    .ct-bong { max-width: 85%; }
+    .ct-tin { padding: 1rem; }
+    .ct-goi-y { display: none; }
+  }
+  @media (max-width: 575.98px) {
+    .ct-gui { width: 40px; padding: 0; justify-content: center; }
+    .ct-gui span { display: none; }
+    .ct-o .ct-icon { width: 32px; height: 32px; }
+    .ct-dau-trang p { display: none; }
+  }
+</style>
+
+<div class="ct-dau-trang">
+  <div>
+    <h1>Chat với khách hàng</h1>
+    <p>Trả lời tin nhắn khách gửi từ trang web. Tin mới hiện ngay, không cần tải lại trang.</p>
+  </div>
+  <% if (tongChuaDoc > 0) { %><span class="ct-tong"><i class="fas fa-envelope"></i> Chưa đọc <b><%= tongChuaDoc %></b></span><% } %>
 </div>
 
-<div class="row" style="height:calc(100vh - 200px);">
-  <!-- Danh sách khách -->
-  <div class="col-md-4 mb-4">
-    <div class="card shadow h-100">
-      <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Khách hàng</h6></div>
-      <div class="card-body p-0" style="overflow-y:auto;">
-        <% if (customers && customers.length > 0) { %>
-          <div class="list-group list-group-flush">
-            <% customers.forEach(c => { %>
-              <a href="/staff/chat/<%= c.id %>" class="list-group-item list-group-item-action <%= selectedId == c.id ? 'active' : '' %>">
-                <div class="d-flex align-items-center">
-                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width:36px;height:36px;flex-shrink:0">
-                    <%= c.ten.charAt(0).toUpperCase() %>
-                  </div>
-                  <div class="flex-grow-1 overflow-hidden">
-                    <div class="d-flex justify-content-between">
-                      <strong style="font-size:14px;"><%= c.ten %></strong>
-                      <% if (c.unread > 0) { %><span class="badge badge-danger"><%= c.unread %></span><% } %>
-                    </div>
-                    <small class="text-truncate d-block" style="max-width:180px; color:<%= selectedId == c.id ? 'rgba(255,255,255,.7)' : '#999' %>"><%= c.last_msg || 'Chưa có tin nhắn' %></small>
-                  </div>
-                </div>
-              </a>
-            <% }) %>
-          </div>
-        <% } else { %>
-          <p class="text-center text-muted p-4">Chưa có khách nào nhắn tin.</p>
-        <% } %>
-      </div>
+<div class="ct <%= selectedCustomer ? 'dang-chat' : '' %>">
+  <!-- Danh sach khach -->
+  <aside class="ct-ds">
+    <div class="ct-ds__dau">
+      <div class="ct-ds__tieu"><h2>Hội thoại</h2><span><%= (customers || []).length %> khách</span></div>
+      <label class="ct-tim mb-0">
+        <i class="fas fa-search"></i>
+        <input type="search" id="ct-tim" placeholder="Tìm theo tên hoặc số điện thoại" autocomplete="off" aria-label="Tìm khách">
+      </label>
     </div>
-  </div>
-
-  <!-- Khu vực chat -->
-  <div class="col-md-8 mb-4">
-    <div class="card shadow h-100 d-flex flex-column">
-      <% if (selectedCustomer) { %>
-        <div class="card-header py-3 d-flex align-items-center">
-          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width:36px;height:36px;">
-            <%= selectedCustomer.ten.charAt(0).toUpperCase() %>
-          </div>
-          <div>
-            <h6 class="m-0 font-weight-bold"><%= selectedCustomer.ten %></h6>
-            <small class="text-muted"><%= selectedCustomer.sodienthoai %></small>
-          </div>
-        </div>
-        <div class="card-body flex-grow-1" id="chat-box" style="overflow-y:auto; background:#f8f9fc; max-height:450px;">
-          <% if (messages && messages.length > 0) { %>
-            <% messages.forEach(m => { %>
-              <% if (m.nguoi_gui === 'khach') { %>
-                <div class="d-flex justify-content-start mb-3">
-                  <div class="p-2 px-3 rounded" style="background:#fff;border:1px solid #ddd;max-width:75%;">
-                    <small class="text-muted d-block"><strong><%= m.ten_kh %></strong></small>
-                    <% if (m.duong_dan_file) { %>
-                      <% if (m.loai_file === 'image') { %>
-                        <div class="my-1">
-                          <a href="<%= m.duong_dan_file %>" target="_blank">
-                            <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" style="max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid #eee;">
-                          </a>
-                        </div>
-                      <% } else { %>
-                        <div class="my-1">
-                          <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="d-inline-flex align-items-center p-2 rounded text-decoration-none" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;">
-                            <i class="fas fa-file-alt mr-2 text-primary"></i>
-                            <span style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;"><%= m.ten_file || 'Tệp đính kèm' %></span>
-                            <i class="fas fa-download ml-2 text-muted" style="font-size:12px;"></i>
-                          </a>
-                        </div>
-                      <% } %>
-                    <% } %>
-                    <% if (m.noi_dung) { %><div style="white-space:pre-wrap;word-break:break-word;"><%= m.noi_dung %></div><% } %>
-                    <small style="color:#999;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
-                  </div>
-                </div>
-              <% } else { %>
-                <div class="d-flex justify-content-end mb-3">
-                  <div class="p-2 px-3 rounded" style="background:#4e342e;color:#fff;max-width:75%;">
-                    <% if (m.duong_dan_file) { %>
-                      <% if (m.loai_file === 'image') { %>
-                        <div class="my-1">
-                          <a href="<%= m.duong_dan_file %>" target="_blank">
-                            <img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" style="max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.2);">
-                          </a>
-                        </div>
-                      <% } else { %>
-                        <div class="my-1">
-                          <a href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" class="d-inline-flex align-items-center p-2 rounded text-decoration-none" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;">
-                            <i class="fas fa-file-alt mr-2"></i>
-                            <span style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;"><%= m.ten_file || 'Tệp đính kèm' %></span>
-                            <i class="fas fa-download ml-2" style="font-size:12px;"></i>
-                          </a>
-                        </div>
-                      <% } %>
-                    <% } %>
-                    <% if (m.noi_dung) { %><div style="white-space:pre-wrap;word-break:break-word;"><%= m.noi_dung %></div><% } %>
-                    <small style="opacity:.7;font-size:11px;"><%= new Date(m.thoigian).toLocaleTimeString('vi-VN') %></small>
-                  </div>
-                </div>
-              <% } %>
-            <% }) %>
-          <% } else { %>
-            <div class="text-center text-muted mt-5">
-              <i class="fas fa-comments fa-3x text-gray-300"></i>
-              <p class="mt-2">Hãy bắt đầu cuộc trò chuyện</p>
-            </div>
-          <% } %>
-        </div>
-        <div class="card-footer">
-          <div id="staff-file-preview" class="align-items-center justify-content-between p-2 mb-2 rounded" style="display:none;background:#fffbeb;border:1px dashed #d97706;">
-            <div class="d-flex align-items-center overflow-hidden">
-              <i class="fas fa-paperclip text-warning mr-2"></i>
-              <span id="staff-file-name" class="text-truncate font-weight-bold" style="max-width:280px;font-size:13px;"></span>
-              <small id="staff-file-size" class="text-muted ml-2"></small>
-            </div>
-            <button type="button" id="staff-file-remove" class="btn btn-sm btn-outline-danger py-0 px-2" title="Gỡ tệp">&times;</button>
-          </div>
-          <form action="/staff/chat/send" method="POST" enctype="multipart/form-data" class="d-flex align-items-center">
-            <input type="hidden" name="id_kh" value="<%= selectedCustomer.id %>">
-            <input type="file" id="staff-input-img" accept="image/*" style="display:none">
-            <input type="file" id="staff-input-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,image/*" style="display:none">
-            <button type="button" id="staff-btn-img" class="btn btn-outline-secondary mr-1" title="Gửi hình ảnh">
-              <i class="fas fa-image"></i>
-            </button>
-            <button type="button" id="staff-btn-file" class="btn btn-outline-secondary mr-2" title="Đính kèm tệp / tài liệu">
-              <i class="fas fa-paperclip"></i>
-            </button>
-            <input type="text" name="noi_dung" class="form-control mr-2" placeholder="Nhập phản hồi hoặc dán ảnh (Ctrl+V)..." autocomplete="off">
-            <button type="submit" class="btn btn-primary px-4">Gửi</button>
-          </form>
-        </div>
+    <div class="ct-ds__than" id="ct-ds">
+      <% if (customers && customers.length > 0) { %>
+        <% customers.forEach(function (c) { var moi = Number(c.unread) > 0; %>
+          <a href="/staff/chat/<%= c.id %>" class="ct-kh <%= selectedId == c.id ? 'is-on' : '' %> <%= moi && selectedId != c.id ? 'co-moi' : '' %>"
+             data-tim="<%= (String(c.ten || '') + ' ' + String(c.sodienthoai || '')).toLowerCase() %>">
+            <span class="ct-ava" style="background:<%= mauCua(c.ten) %>"><%= chuDau(c.ten) %></span>
+            <span class="ct-kh__giua">
+              <span class="ct-kh__dong"><span class="ct-kh__ten"><%= c.ten %></span><span class="ct-kh__gio"><%= thoiGianDs(c.last_time) %></span></span>
+              <span class="ct-kh__dong"><span class="ct-kh__tin"><%= c.last_msg || 'Chưa có tin nhắn' %></span><% if (moi && selectedId != c.id) { %><span class="ct-so"><%= c.unread %></span><% } %></span>
+            </span>
+          </a>
+        <% }) %>
+        <div class="ct-rong-ds" id="ct-khong-thay" hidden><i class="fas fa-user-slash"></i>Không tìm thấy khách phù hợp</div>
       <% } else { %>
-        <div class="card-body d-flex align-items-center justify-content-center">
-          <div class="text-center text-muted">
-            <i class="fas fa-comments fa-4x text-gray-300"></i>
-            <p class="mt-3">Chọn khách hàng để bắt đầu chat</p>
-          </div>
-        </div>
+        <div class="ct-rong-ds"><i class="fas fa-inbox"></i>Chưa có khách nào nhắn tin.</div>
       <% } %>
     </div>
-  </div>
+  </aside>
+
+  <!-- Khung hoi thoai -->
+  <section class="ct-hoi">
+    <% if (selectedCustomer) { %>
+      <div class="ct-hoi__dau">
+        <a href="/staff/chat" class="ct-icon ct-lui" title="Quay lại danh sách" aria-label="Quay lại danh sách"><i class="fas fa-arrow-left"></i></a>
+        <span class="ct-ava ct-ava--lon" style="background:<%= mauCua(selectedCustomer.ten) %>"><%= chuDau(selectedCustomer.ten) %></span>
+        <div style="min-width:0">
+          <div class="ct-hoi__ten"><%= selectedCustomer.ten %></div>
+          <div class="ct-hoi__phu"><i class="fas fa-phone-alt" style="font-size:.7rem"></i> <%= selectedCustomer.sodienthoai || 'Chưa có số' %><% if (selectedCustomer.email) { %> · <%= selectedCustomer.email %><% } %></div>
+        </div>
+        <div class="ct-hoi__nut">
+          <% if (selectedCustomer.sodienthoai) { %><a class="ct-icon" href="tel:<%= selectedCustomer.sodienthoai %>" title="Gọi cho khách"><i class="fas fa-phone"></i></a><% } %>        </div>
+      </div>
+
+      <div class="ct-tin" id="chat-box">
+        <% if (messages && messages.length > 0) { var ngayTruoc = null; %>
+          <% messages.forEach(function (m) { var k = khoaNgay(m.thoigian); var laKhach = m.nguoi_gui === 'khach'; %>
+            <% if (k !== ngayTruoc) { ngayTruoc = k; %><div class="ct-ngay" data-ngay="<%= k %>"><span><%= nhanNgay(m.thoigian) %></span></div><% } %>
+            <div class="ct-dong <%= laKhach ? 'khach' : 'toi' %>">
+              <% if (laKhach) { %><span class="ct-ava" style="background:<%= mauCua(selectedCustomer.ten) %>"><%= chuDau(selectedCustomer.ten) %></span><% } %>
+              <div class="ct-bong">
+                <% if (m.duong_dan_file) { %>
+                  <% if (m.loai_file === 'image') { %>
+                    <a class="ct-anh" href="<%= m.duong_dan_file %>" target="_blank" rel="noopener"><img src="<%= m.duong_dan_file %>" alt="<%= m.ten_file || 'Hình ảnh' %>" loading="lazy"></a>
+                  <% } else { %>
+                    <a class="ct-tep" href="<%= m.duong_dan_file %>" download="<%= m.ten_file || 'tep_dinh_kem' %>" target="_blank" rel="noopener">
+                      <span class="ct-tep__ico"><i class="fas fa-file-lines"></i></span>
+                      <span class="ct-tep__ten"><%= m.ten_file || 'Tệp đính kèm' %></span>
+                      <i class="fas fa-download" style="font-size:.75rem;opacity:.7"></i>
+                    </a>
+                  <% } %>
+                <% } %>
+                <% if (m.noi_dung) { %><div class="ct-bong__chu"><%= m.noi_dung %></div><% } %>
+                <span class="ct-bong__gio"><%= gioPhut(m.thoigian) %></span>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="ct-rong" id="ct-rong-tin">
+            <div class="ct-rong__ico"><i class="fas fa-comment-dots"></i></div>
+            <h3>Chưa có tin nhắn</h3>
+            <p>Gửi lời chào để bắt đầu cuộc trò chuyện với <%= selectedCustomer.ten %>.</p>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="ct-soan">
+        <div id="staff-file-preview" class="ct-tep-chon">
+          <i class="fas fa-paperclip"></i>
+          <b id="staff-file-name"></b>
+          <small id="staff-file-size"></small>
+          <button type="button" id="staff-file-remove" title="Gỡ tệp" aria-label="Gỡ tệp">&times;</button>
+        </div>
+        <form action="/staff/chat/send" method="POST" enctype="multipart/form-data" class="ct-o">
+          <input type="hidden" name="id_kh" value="<%= selectedCustomer.id %>">
+          <input type="file" id="staff-input-img" accept="image/*" hidden>
+          <input type="file" id="staff-input-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,image/*" hidden>
+          <button type="button" id="staff-btn-img" class="ct-icon" title="Gửi hình ảnh" aria-label="Gửi hình ảnh"><i class="fas fa-image"></i></button>
+          <button type="button" id="staff-btn-file" class="ct-icon" title="Đính kèm tệp" aria-label="Đính kèm tệp"><i class="fas fa-paperclip"></i></button>
+          <input type="text" name="noi_dung" placeholder="Nhập tin nhắn…" autocomplete="off" aria-label="Nội dung tin nhắn" maxlength="2000">
+          <button type="submit" class="ct-gui" id="ct-nut-gui"><i class="fas fa-paper-plane"></i> <span>Gửi</span></button>
+        </form>
+        <div class="ct-goi-y">Enter để gửi · Ctrl+V để dán ảnh chụp màn hình</div>
+      </div>
+    <% } else { %>
+      <div class="ct-rong">
+        <div class="ct-rong__ico"><i class="fas fa-comments"></i></div>
+        <h3>Chọn một hội thoại</h3>
+        <p>Chọn khách ở danh sách bên trái để xem và trả lời tin nhắn.</p>
+      </div>
+    <% } %>
+  </section>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
   const selectedCustomerId = '<%= selectedId %>';
+  const TEN_KH = <%- JSON.stringify(selectedCustomer ? selectedCustomer.ten : '').replace(/</g, '\\u003c') %>;
+  const MAU_KH = '<%= selectedCustomer ? mauCua(selectedCustomer.ten) : "#b8860b" %>';
   const chatBox = document.getElementById('chat-box');
   const chatForm = document.querySelector('form[action="/staff/chat/send"]');
 
-  // Join room của khách đang chọn
-  if (selectedCustomerId && selectedCustomerId !== '0') {
-    socket.emit('join-room', selectedCustomerId);
-  }
+  if (selectedCustomerId && selectedCustomerId !== '0') socket.emit('join-room', selectedCustomerId);
 
-  function scrollToBottom() {
-    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-  }
+  function scrollToBottom() { if (chatBox) chatBox.scrollTop = chatBox.scrollHeight; }
   scrollToBottom();
+  // Anh tai xong lam khung cao len -> cuon lai xuong cuoi.
+  if (chatBox) chatBox.querySelectorAll('img').forEach((im) => im.addEventListener('load', scrollToBottom, { once: true }));
 
-  // Xử lý đính kèm ảnh / file và gửi tin nhắn qua AJAX
+  // Tim khach trong danh sach
+  const oTim = document.getElementById('ct-tim');
+  if (oTim) oTim.addEventListener('input', () => {
+    const q = oTim.value.trim().toLowerCase();
+    let thay = 0;
+    document.querySelectorAll('#ct-ds .ct-kh').forEach((a) => { const ok = !q || a.dataset.tim.includes(q); a.hidden = !ok; if (ok) thay++; });
+    const kt = document.getElementById('ct-khong-thay'); if (kt) kt.hidden = thay > 0;
+  });
+
+  // Dinh kem anh / tep
   let staffSelectedFile = null;
   const staffPreview = document.getElementById('staff-file-preview');
   const staffFileName = document.getElementById('staff-file-name');
   const staffFileSize = document.getElementById('staff-file-size');
-  const staffFileRemove = document.getElementById('staff-file-remove');
   const staffInputImg = document.getElementById('staff-input-img');
   const staffInputFile = document.getElementById('staff-input-file');
-  const staffBtnImg = document.getElementById('staff-btn-img');
-  const staffBtnFile = document.getElementById('staff-btn-file');
 
   function chonTepNhanVien(file) {
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) {
-      alert('Kích thước tệp vượt quá giới hạn 15MB.');
-      return;
-    }
+    if (file.size > 15 * 1024 * 1024) { alert('Kích thước tệp vượt quá giới hạn 15MB.'); return; }
     staffSelectedFile = file;
-    if (staffFileName) staffFileName.textContent = file.name;
-    if (staffFileSize) staffFileSize.textContent = '(' + (file.size / 1024).toFixed(1) + ' KB)';
-    if (staffPreview) staffPreview.style.display = 'flex';
+    staffFileName.textContent = file.name || 'Ảnh dán từ bộ nhớ tạm';
+    staffFileSize.textContent = (file.size / 1024 > 1024 ? (file.size / 1048576).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB');
+    staffPreview.style.display = 'flex';
   }
-
   function xoaTepNhanVien() {
     staffSelectedFile = null;
     if (staffInputImg) staffInputImg.value = '';
     if (staffInputFile) staffInputFile.value = '';
     if (staffPreview) staffPreview.style.display = 'none';
   }
-
-  if (staffBtnImg && staffInputImg) {
-    staffBtnImg.onclick = () => staffInputImg.click();
-    staffInputImg.onchange = function() { if (this.files && this.files[0]) chonTepNhanVien(this.files[0]); };
-  }
-  if (staffBtnFile && staffInputFile) {
-    staffBtnFile.onclick = () => staffInputFile.click();
-    staffInputFile.onchange = function() { if (this.files && this.files[0]) chonTepNhanVien(this.files[0]); };
-  }
-  if (staffFileRemove) staffFileRemove.onclick = xoaTepNhanVien;
+  const nutImg = document.getElementById('staff-btn-img'), nutTep = document.getElementById('staff-btn-file'), nutGo = document.getElementById('staff-file-remove');
+  if (nutImg) { nutImg.onclick = () => staffInputImg.click(); staffInputImg.onchange = function () { if (this.files[0]) chonTepNhanVien(this.files[0]); }; }
+  if (nutTep) { nutTep.onclick = () => staffInputFile.click(); staffInputFile.onchange = function () { if (this.files[0]) chonTepNhanVien(this.files[0]); }; }
+  if (nutGo) nutGo.onclick = xoaTepNhanVien;
 
   if (chatForm) {
     const inputMsg = chatForm.querySelector('input[name="noi_dung"]');
-    if (inputMsg) {
-      inputMsg.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || {}).items;
-        if (!items) return;
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].kind === 'file') {
-            const f = items[i].getAsFile();
-            if (f) { chonTepNhanVien(f); break; }
-          }
-        }
-      });
-    }
+    const nutGui = document.getElementById('ct-nut-gui');
+    inputMsg.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || {}).items; if (!items) return;
+      for (let i = 0; i < items.length; i++) if (items[i].kind === 'file') { const f = items[i].getAsFile(); if (f) { chonTepNhanVien(f); break; } }
+    });
+    inputMsg.focus();
 
     chatForm.onsubmit = async (e) => {
       e.preventDefault();
       const idKh = chatForm.querySelector('input[name="id_kh"]').value;
-      const content = inputMsg ? inputMsg.value.trim() : '';
+      const content = inputMsg.value.trim();
       if (!content && !staffSelectedFile) return;
-
+      nutGui.disabled = true;
       try {
         const fd = new FormData();
         fd.append('id_kh', idKh);
         fd.append('noi_dung', content);
         if (staffSelectedFile) fd.append('tep_dinh_kem', staffSelectedFile);
-
-        const response = await fetch('/staff/chat/send', {
-          method: 'POST',
-          headers: { 'Accept': 'application/json' },
-          body: fd
-        });
-        if (response.ok) {
-          if (inputMsg) inputMsg.value = '';
-          xoaTepNhanVien();
-        }
+        const response = await fetch('/staff/chat/send', { method: 'POST', headers: { Accept: 'application/json' }, body: fd });
+        if (response.ok) { inputMsg.value = ''; xoaTepNhanVien(); }
+        else alert('Không gửi được tin nhắn, vui lòng thử lại.');
       } catch (err) {
         console.error('Lỗi gửi tin nhắn (Nhân viên):', err);
-      }
+        alert('Mất kết nối, tin nhắn chưa được gửi.');
+      } finally { nutGui.disabled = false; inputMsg.focus(); }
     };
   }
 
-  function taoThe(the, lop, chu) {
-    const e = document.createElement(the);
-    if (lop) e.className = lop;
-    if (chu !== undefined) e.textContent = chu;
-    return e;
-  }
+  function taoThe(the, lop, chu) { const e = document.createElement(the); if (lop) e.className = lop; if (chu !== undefined) e.textContent = chu; return e; }
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  const khoaNgay = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 
   socket.on('new-message', (data) => {
     if (!chatBox) return;
-
-    const isMe = data.nguoi_gui === 'nhanvien';
+    if (data.id_kh && String(data.id_kh) !== String(selectedCustomerId)) return;
+    const laKhach = data.nguoi_gui !== 'nhanvien';
     const gio = new Date(data.thoigian || Date.now());
 
-    const dong = taoThe('div', 'd-flex mb-3 ' + (isMe ? 'justify-content-end' : 'justify-content-start'));
-    const bong = taoThe('div', 'p-2 px-3 rounded');
-    bong.style.cssText = isMe
-      ? 'background:#4e342e;color:#fff;max-width:75%;'
-      : 'background:#fff;border:1px solid #ddd;max-width:75%;';
-
-    if (!isMe) {
-      const nhan = taoThe('small', 'text-muted d-block');
-      nhan.appendChild(taoThe('strong', null, data.ten_kh || 'Khách hàng'));
-      bong.appendChild(nhan);
+    const rong = document.getElementById('ct-rong-tin'); if (rong) rong.remove();
+    // Vach ngay neu tin nay sang ngay moi
+    const cacNgay = chatBox.querySelectorAll('.ct-ngay');
+    const ngayCuoi = cacNgay.length ? cacNgay[cacNgay.length - 1].dataset.ngay : null;
+    if (ngayCuoi !== khoaNgay(gio)) {
+      const v = taoThe('div', 'ct-ngay'); v.dataset.ngay = khoaNgay(gio); v.appendChild(taoThe('span', null, 'Hôm nay')); chatBox.appendChild(v);
     }
+
+    const dong = taoThe('div', 'ct-dong ' + (laKhach ? 'khach' : 'toi'));
+    if (laKhach) { const av = taoThe('span', 'ct-ava', (TEN_KH || data.ten_kh || '?').charAt(0).toUpperCase()); av.style.background = MAU_KH; dong.appendChild(av); }
+    const bong = taoThe('div', 'ct-bong');
 
     if (data.duong_dan_file) {
-      const wrap = taoThe('div', 'my-1');
       if (data.loai_file === 'image') {
-        const a = taoThe('a');
-        a.href = data.duong_dan_file;
-        a.target = '_blank';
-        const img = taoThe('img');
-        img.src = data.duong_dan_file;
-        img.alt = data.ten_file || 'Hình ảnh';
-        img.style.cssText = 'max-width:240px;max-height:220px;border-radius:8px;object-fit:cover;border:1px solid rgba(0,0,0,.1);';
-        a.appendChild(img);
-        wrap.appendChild(a);
+        const a = taoThe('a', 'ct-anh'); a.href = data.duong_dan_file; a.target = '_blank'; a.rel = 'noopener';
+        const img = taoThe('img'); img.src = data.duong_dan_file; img.alt = data.ten_file || 'Hình ảnh'; img.addEventListener('load', scrollToBottom, { once: true });
+        a.appendChild(img); bong.appendChild(a);
       } else {
-        const a = taoThe('a', 'd-inline-flex align-items-center p-2 rounded text-decoration-none');
-        a.href = data.duong_dan_file;
-        a.target = '_blank';
-        a.setAttribute('download', data.ten_file || 'tep_dinh_kem');
-        a.style.cssText = isMe
-          ? 'background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;'
-          : 'background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;';
-        const ic = taoThe('i', 'fas fa-file-alt mr-2');
-        a.appendChild(ic);
-        const sp = taoThe('span', null, data.ten_file || 'Tệp đính kèm');
-        sp.style.cssText = 'max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;';
-        a.appendChild(sp);
-        const dl = taoThe('i', 'fas fa-download ml-2');
-        dl.style.fontSize = '12px';
-        a.appendChild(dl);
-        wrap.appendChild(a);
+        const a = taoThe('a', 'ct-tep'); a.href = data.duong_dan_file; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('download', data.ten_file || 'tep_dinh_kem');
+        const ic = taoThe('span', 'ct-tep__ico'); ic.appendChild(taoThe('i', 'fas fa-file-lines')); a.appendChild(ic);
+        a.appendChild(taoThe('span', 'ct-tep__ten', data.ten_file || 'Tệp đính kèm'));
+        const dl = taoThe('i', 'fas fa-download'); dl.style.cssText = 'font-size:.75rem;opacity:.7'; a.appendChild(dl);
+        bong.appendChild(a);
       }
-      bong.appendChild(wrap);
     }
-
-    if (data.noi_dung) {
-      const dNoiDung = taoThe('div', null, data.noi_dung);
-      dNoiDung.style.cssText = 'white-space:pre-wrap;word-break:break-word;';
-      bong.appendChild(dNoiDung);
-    }
-
-    const nhanGio = taoThe('small', null, gio.toLocaleTimeString('vi-VN'));
-    nhanGio.style.cssText = isMe ? 'opacity:.7;font-size:11px;' : 'color:#999;font-size:11px;';
-    bong.appendChild(nhanGio);
-
+    if (data.noi_dung) bong.appendChild(taoThe('div', 'ct-bong__chu', data.noi_dung));
+    bong.appendChild(taoThe('span', 'ct-bong__gio', pad(gio.getHours()) + ':' + pad(gio.getMinutes())));
     dong.appendChild(bong);
-
-    // Xoa trang thai rong neu con
-    const rong = chatBox.querySelector('.text-center.text-muted');
-    if (rong) rong.remove();
-
     chatBox.appendChild(dong);
     scrollToBottom();
   });
