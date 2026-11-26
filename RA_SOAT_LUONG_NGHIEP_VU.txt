@@ -941,3 +941,145 @@ party-1, party-3). Da chay tren DB nay; may khac chay: node config/migrations/04
   loc theo ten + loai, mon an truoc do uong; danh sach mon them co anh nho.
   Cap nhat: anh thu 4 tu them khi server khoi dong (services/anhKhongGian.damBao, goi trong
   server.js) - khong can chay migration tay; migration 048 chi con la loi tat goi cung ham.
+
+[25/11/2026] THANH MENU KHACH: CHU TO, DE DOC HON (css/nhahang.css)
+Truoc: 10 muc ep mot hang, chu ~11.5-13px. Sau: 15px (1700-2000px), 16px (>2000),
+14.4px (1600), 13.8px (1536), 13.1px (1440), 12.8px (1331-1400); duoi 1900px nut
+"Giao tan noi / Dat ban" chi con bieu tuong de nhuong cho; <= 1330px dung nut menu
+(truoc 1260). Da do tieng Viet o 1331-1920px: khong tran, khong de nut ben phai.
+
+[25/11/2026] BO LOC THOI GIAN THONG NHAT (js/loc-ngay.js, nap trong footer nhan vien + /analytics)
+- Moi bo loc "tu ngay - den ngay" co hang nut: Hom nay, Hom qua, Tuan nay, Tuan truoc,
+  Thang nay, Thang truoc (tuan = thu Hai -> Chu nhat); van giu 2 o ngay de chon khoang tu do.
+  Bam nut -> dien ngay va tai lai ngay. 15 trang: lai lo, lich su bao cao phuc vu, lich su
+  chot ca, phan tich dat ban, nhat ky huy mon, dong tien, so kho, kiem ke, thong ke bep,
+  phan tich thuc don, lich su thanh toan, so quy thu chi, dat tiec, /analytics.
+- Trang thu chi & thong ke bep da co nut rieng -> bo sung Hom qua/Tuan nay/Tuan truoc vao
+  hang san co (data-loc-ngay="tat" de khong hien 2 hang).
+- Trang xem theo 1 ngay (cham cong, chot so, dat ban, so do ban, cham cong ke toan): Hom nay, Hom qua.
+- Trang theo thang (luong, bao cao ke toan, tong hop cong, tong quan ke toan, cham cong NV): Thang nay, Thang truoc.
+- Quan ly dat tiec: them o "den ngay" (truoc chi co "tu ngay").
+
+[25/11/2026] DAT TIEC - BUOC THUC DON CHIA 2 HUONG (views/dat-tiec.ejs)
+- "Thuc don co san cua nha hang": chon set, gia tron goi/ban, coc ngay (CHO_COC).
+- "Tu chon thuc don theo y muon": chon tung mon le (toi thieu tu_chon_mon_toi_thieu = 6,
+  cau hinh dat_tiec_cau_hinh), so phan/ban, yeu cau rieng; nut "Lay mon tu thuc don mau"
+  dien san mon cua mot set (mon ghep duoc voi mon le). Don -> CHO_BAO_GIA, nha hang bao gia.
+- Server: body.kieu_thuc_don = 'tu_chon' -> thuc_don_id NULL (cot doi sang NULL tu dong),
+  thuc_don_tuy_chinh.tu_chon = true, tien mon tam tinh vao tien_dieu_chinh; ten hien thi
+  "Thực đơn tự chọn". Ke hoach nguyen lieu tiec (tiecVanHanhService) nay tinh ca mon tu
+  chon / mon them va bo mon khach da bo.
+- Bo "tuy chinh tren set co san" (bo mon/them mon) - gop vao huong tu chon.
+
+[25/11/2026] THUC DON TU CHON: GIA TU DONG, COC NGAY (huong B)
+- Don tu chon -> CHO_COC ngay (khong qua CHO_BAO_GIA), giu sanh giu_cho_coc_phut nhu set co san.
+- Gia = gia mon le x so phan/ban x so ban, tru tu_chon_giam_phan_tram (cau hinh, mac dinh 0, toi da 50).
+- Chinh sach, the huong, tom tat, xac nhan doi chu "bao gia" -> "dat coc ngay".
+- SU CO: luc don du lieu test da xoa nham thong bao (bang thong_bao) cua 3 don tiec that
+  TC261121YNEO, TC261121KT8L, TC261123AIAN (LIKE qua rong). Don, thanh toan khong bi anh huong.
+  Khong khoi phuc duoc (log_bin tat).
+
+[25/11/2026] DAT TIEC - KHACH TU CHINH SO BAN
+- Mac dinh van la phuong an A: so ban = ceil(so khach / 10), ban le tinh tron gia.
+- Buoc 2 co o "So ban" (- / +): chon trong khoang moi ban 8-12 khach (cau hinh
+  khach_moi_ban_it_nhat / khach_moi_ban_nhieu_nhat), toi da so ban sanh bay duoc
+  (khach_toi_da / 10). Hien cach xep (VD 4 ban x 12 + 7 ban x 11). Doi so khach -> ve goi y.
+- Server kiem lai: body.so_ban ngoai khoang -> tu choi; dat_tiec.so_ban luu so ban khach chon,
+  tien thuc don / mon tu chon / dich vu theo ban tinh theo so ban nay.
+- Chinh sach muc "Thuc don & dich vu" ghi ro quy tac + vi du 125 khach: 11-15 ban.
+
+[25/11/2026] DAT TIEC TU CHON: bo o chon chung '1/2/3 phan/ban'; moi mon da chon co nut - so + (1-5 phan/ban, khop gioi han server), hien tong phan va tien tung mon.
+
+[25/11/2026] DAT TIEC TU CHON - LAY MON TU THUC DON MAU: thay o select bang dai the anh thuc don mau; bam the -> xem tung mon theo nhom kem anh, tick chon mon muon lay (mon rieng cua set khong ban le: hien xam, khong tick duoc; mon da co: danh dau). Nut 'Lay N mon da chon'.
+
+[25/11/2026] BAT KHACH DANG NHAP TRUOC KHI DAT BAN / DAT TIEC / GIAO HANG
+- middleware/auth.js canKhachDangNhap: GET /dat-ban, /dat-tiec, /cart (va /giao-hang -> /cart)
+  chua dang nhap -> /login?tiep=<trang>; POST /api/dat-ban, /api/dat-tiec, /datban -> 401 JSON
+  {can_dang_nhap, dang_nhap}; form tren trang tu chuyen sang dang nhap neu het phien giua chung.
+- Trang login hien ly do ("Vui long dang nhap de dat tiec...") + link dang ky; dang nhap xong
+  (ke ca vua dang ky) quay lai dung trang (session.tiepSauDangNhap). Chi chap nhan duong noi bo
+  (bat dau "/", khong "//") - chong chuyen huong ra ngoai.
+- Van mo cong khai: tra cuu dat ban theo ma + SDT, theo doi don giao, trang thanh toan theo link,
+  goi mon QR tai ban, them mon vao gio (chi xem gio / dat hang moi can dang nhap).
+- Test cap nhat: test-tinh-nang-moi (140), test-toan-bo-he-thong (177).
+
+[25/11/2026] BIEN LAI THANH TOAN KIEU NGAN HANG (moi cho khach thanh toan)
+- services/bienLaiService.js + GET /api/bien-lai?ma=<sesis|ma tiec|ma dat ban>: giao dich
+  payments.status='success' cua ma do (so tien, bang chu, gio, loai, noi dung, ma GD, phuong thuc,
+  tai khoan nhan cua nha hang). Khong tra ten / SDT khach.
+- js/bien-lai.js (nap trong footer khach + trang QR tai ban): hop noi bien lai - dau tich xanh,
+  so tien lon, so tien bang chu, mep rang cua; nut "Luu anh" (PNG qua html2canvas, loi thi in) va
+  Dong / nut tiep. Nhieu giao dich (coc + thanh toan) -> chon qua lai.
+- Gan vao: thanh toan tiec (tu mo sau khi tra + nut "Xem bien lai thanh toan"), coc dat ban (bien lai
+  roi "Hoan tat" -> /dat-ban/xong), don giao hang (bien lai roi "Theo doi don hang"), coc goi mon
+  (tu mo + nut xem lai), hoa don QR tai ban (tu mo + nut xem lai).
+- Da thu E2E: tao tiec -> gia lap chuyen khoan -> bien lai tu hien dung so tien; du lieu thu da xoa theo id.
+
+[25/11/2026] LICH SU TIEC (my-orders): thanh tien trinh 4 buoc thieu nhan buoc 1 va 3 -> them 'Gui yeu cau' / 'Thanh toan' (vi/en/ja); map trang thai CHO_BAO_GIA, DA_XAC_NHAN... vao dung buoc.
+
+[25/11/2026] DIEU HANH TIEC - DOT 1 (services/dieuHanhTiecService.js, routes/dieuHanhTiec.js,
+views/staff/tiec.ejs, views/staff/tiec-chi-tiet.ejs; menu "Dieu hanh tiec" nhom Chung)
+- Bang moi: tiec_viec (viec chuan bi theo moc), tiec_nhan_su (phan cong) - tu tao khi chay.
+- Tiec DA_COC / DA_XAC_NHAN tu sinh 12-13 viec: T-7 (nguyen lieu - Bep truong, kiem ton - Kho,
+  dich vu ngoai - Quan ly neu co dich vu), T-3 (chot so khach - Le tan [kiem khoang 8-12 khach/ban],
+  chot nguyen lieu - Bep truong), T-1 (phan cong PV + truong tiec - GSPV, phan cong bep/bar,
+  so do ban, so che, do uong - Bar), ngay tiec (checklist setup sanh - Phuc vu, bep san sang,
+  duyet "Sanh san sang" - GSPV, chi duoc khi setup xong). Tiec dat sat ngay: han = bay gio + 12h.
+- /staff/tiec: Viec cua toi, Tiec hom nay (nhan song Sap bat dau / Dang dien ra / Da ket thuc,
+  tien do chuan bi, tien), Can xu ly (chot hoa don, cho khach tra not + copy link, viec tre),
+  Sap toi 7 ngay. /staff/tiec/:id: viec theo moc (hoan thanh / co van de [bat buoc ghi chu] /
+  mo lai), nhan su tiec (phan cong theo bo phan, chi GSPV/Bep truong/QL).
+- Quyen: Ban dieu hanh + PV, BEP, BAR, KHO, LT, TN; nhan vien thuong chi thay tiec duoc phan cong.
+- Thong bao (job 2 phut): mo moc (gom theo bo phan), qua han -> nhac, +12h -> Quan ly
+  (viec ngay tiec: khan ngay cho QL + GSPV), van de, chot khach, phan cong, sanh san sang,
+  tiec het gio chua chot hoa don -> QL + Thu ngan. 7 loai moi trong /staff/thong-bao/luong.
+- Da thu 23 kich ban tren tiec thu (rang buoc, quyen theo role, thong bao), du lieu thu da xoa theo id.
+
+[25/11/2026] DIEU HANH TIEC - PHAN CONG NHAN SU THEO VI TRI (thay o chon vai tro + 1 nguoi)
+- Moi vi tri mot khoi: Truong tiec, Phuc vu, Le tan don khach, Bep, Bar - hien so nguoi CAN theo quy mo
+  (dinhMuc: truong tiec 1; phuc vu 1/2 ban toi thieu 2; le tan 1, >=150 khach 2; bep 1/40 khach toi
+  thieu 2; bar 1/100 khach), da co / thieu / du, nguoi da phan dang the co nut go; tong "x/y vi tri".
+- "+ Chon nguoi" mo hop chon nhieu nguoi cung bo phan: "Co ca 17:00–21:00" (lich_lam_viec trung gio
+  tiec) xep truoc, "Khong co ca – tang ca", "Dang xin nghi"; khoa kem ly do: nghi phep (da duyet),
+  da co tiec khac cung buoi, dang o vi tri khac cua tiec nay, truong tiec chua du cap (> to truong).
+- API nhan ds_nv (nhieu nguoi); server kiem lai tat ca dieu kien tren. Da thu 31 kich ban.
+
+[25/11/2026] DIEU HANH TIEC - DOT 2: TRONG TIEC (services/tiecTrongTiecService.js,
+views/staff/partials/tiec-trong-tiec.ejs; trang chi tiet co 2 tab "Chuan bi & nhan su" / "Trong tiec")
+- Bang moi: tiec_len_mon, tiec_phat_sinh, tiec_nhat_ky; dat_tiec them bat_dau_thuc_te, ket_thuc_thuc_te.
+- Thanh dau: "Ban chot X · phat sinh +Y → tinh Z ban" (tu phat sinh them/bot ban da duyet; bot toi da
+  dao_dong_so_khach_phan_tram % ban chot), tien phat sinh da duyet, Khai tiec / Ket thuc tiec
+  (ket thuc bi chan khi con phat sinh khan). Bo dem khach (khong anh huong hoa don).
+- Len mon theo dot (nhom mon thuc don; tu chon: theo loai mon, bo do uong): Goi dot (GSPV / truong
+  tiec / QL, tu khai tiec) -> bep nhan chuong khan + khung "Bep tiec" tren /staff/tiec (moi bep/bar
+  thay, ke ca chua phan cong) -> Da ra mon (bep) -> Da len ban (phuc vu). Ghi gio + so phut bep ra.
+- Phat sinh: them mon/do uong (chon mon, tu tinh tien, do uong -> Bar), them/bot ban (gia 1 ban),
+  hu hong / khac (tuy chon tinh tien), khieu nai, ky thuat, y te - an ninh (luon khan). Anh tuy chon
+  (public/uploads/tiec). Tinh tien -> cho GSPV/QL duyet; them mon duyet -> bep/bar lam ngay.
+  Trang thai Moi -> Dang xu ly -> Da xu ly (bat buoc ket qua) / Tu choi (bat buoc ly do).
+- Nhat ky tiec tu ghi moi thao tac; tab tu tai khi co thay doi (15s). The tiec hom nay hien so phat sinh.
+- Thong bao moi: tiec_goi_mon, tiec_ra_mon, tiec_phat_sinh, tiec_phat_sinh_kq.
+- Da thu 25 kich ban tren tiec thu dua ve hom nay; du lieu, thong bao, anh thu da xoa theo id.
+
+[25/11/2026] BAR: KDS tach tram Bep / Bar / Tat ca (mon theo loai DRINK|SAKE|BEER -> bar), mac dinh theo bo phan; menu Bar 'Man hinh Bar (do uong)'. CON LAI: tach quyen quan ly mon (bar chi do uong), Dot 3 dieu hanh tiec.
+
+[26/11/2026] BAR - QUAN LY MON THEO TRAM (routes/bepQuanLy.js, views/staff/kitchen/dishes.ejs)
+- Trang Quan ly mon: Bar chi thay do uong (DRINK / SAKE - BEER), Bep chi mon an, Ban dieu hanh tat ca.
+  Them nut "Tam het" / "Ban lai" (tinhtrang 0/1, gui thong bao mon_tam_ngung); server chan sai tram (403)
+  ca o them / xoa mon. Sua: cot "Loai mon" truoc trong (truy van khong lay ten loai); bo nut "Them mon
+  moi" va nut sua khong hoat dong; updateProduct truoc doi tinhtrang 0 thanh 1 (|| 1).
+- Da thu 10 kich ban (KDS tram mac dinh, loc mon, chan sai tram, tam het / ban lai), tra lai trang thai mon.
+
+[26/11/2026] DIEU HANH TIEC - DOT 3: CHOT HOA DON + SAU TIEC + BAO CAO (services/tiecChotService.js,
+views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
+- Hoa don chot dien san: thuc don = gia ban x ban tinh (chot +/- phat sinh ban); mon tu chon / mon them
+  theo ban; dich vu tinh lai (BAN x ban tinh, KHACH x khach chot, GOI); phat sinh tinh tien da duyet
+  (tru them/bot ban); giam tru bat buoc ly do. Dieu kien: tiec da ket thuc, khong con phat sinh cho duyet.
+  Quan ly / Thu ngan chot -> CHO_THANH_TOAN (khach thanh toan online / tai quay); luu dat_tiec.hoa_don_chot,
+  khach thay chi tiet tren trang thanh toan tiec. Nut copy link thanh toan.
+- Viec "Sau tiec" (tinh tu gio ket thuc): thu don sanh (checklist 5 muc - Phuc vu), kiem dem do uong (Bar),
+  bao nguyen lieu du / hao hut (Bep truong). Ket thuc som -> mo ngay. Thong bao quet ca CHO_THANH_TOAN.
+- Bao cao sau tiec: khach / ban dat - chot - tinh, gio khai / ket thuc vs du kien, phut bep ra tung dot
+  + dot cham nhat, phat sinh theo loai / tien / thoi gian xu ly, viec tre, nhan su; danh gia 1-5 sao
+  (Quan ly / Giam sat PV, bang tiec_danh_gia).
+- Da thu tron vong doi tren tiec thu: 37 kich ban (Dot 2 + 3) + 31 (Dot 1); du lieu thu xoa theo id.

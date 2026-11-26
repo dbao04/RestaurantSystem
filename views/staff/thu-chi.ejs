@@ -18,6 +18,8 @@
   var moc = [
     { ten: 'Hôm nay', tu: homNay, den: homNay },
     { ten: 'Hôm qua', tu: cong(-1), den: cong(-1) },
+    { ten: 'Tuần này', tu: cong(-((d0.getDay() + 6) % 7)), den: homNay },
+    { ten: 'Tuần trước', tu: cong(-((d0.getDay() + 6) % 7) - 7), den: cong(-((d0.getDay() + 6) % 7) - 1) },
     { ten: '7 ngày', tu: cong(-6), den: homNay },
     { ten: 'Tháng này', tu: dauThang, den: homNay },
     { ten: 'Tháng trước', tu: dauThangTruoc, den: cuoiThangTruoc },
@@ -122,7 +124,7 @@
         <a class="tc-moc <%= m.tu === loc.tu && m.den === loc.den ? 'is-on' : '' %>" href="?<%= qs({ tu: m.tu, den: m.den }) %>"><%= m.ten %></a>
       <% }) %>
       <span class="mx-1 text-muted d-none d-md-inline">|</span>
-      <input type="date" name="tu" value="<%= loc.tu %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+      <input type="date" name="tu" data-loc-ngay="tat" value="<%= loc.tu %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
       <span class="text-muted">→</span>
       <input type="date" name="den" value="<%= loc.den %>" max="<%= homNay %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
       <input type="hidden" name="pham_vi" value="<%= loc.phamVi %>">

@@ -29,6 +29,10 @@ const MAC_DINH = {
   hoan_tien_giua_phan_tram: 50,
   chot_so_khach_truoc_ngay: 3,
   dao_dong_so_khach_phan_tram: 10,
+  tu_chon_mon_toi_thieu: 6,
+  tu_chon_giam_phan_tram: 0,
+  khach_moi_ban_it_nhat: 8,
+  khach_moi_ban_nhieu_nhat: 12,
 };
 const MO_TA = {
   ty_le_coc: 'Tỷ lệ cọc (%) trên dự toán tiệc',
@@ -39,6 +43,10 @@ const MO_TA = {
   hoan_tien_giua_phan_tram: 'Tỷ lệ hoàn (%) khi hủy ở mốc giữa',
   chot_so_khach_truoc_ngay: 'Chốt số khách / số bàn trước ngày tiệc N ngày',
   dao_dong_so_khach_phan_tram: 'Số bàn thực tế được giảm tối đa (%) so với số đã chốt',
+  tu_chon_mon_toi_thieu: 'Thực đơn tự chọn: số món tối thiểu khách phải chọn',
+  tu_chon_giam_phan_tram: 'Thực đơn tự chọn: giảm (%) trên tổng giá món lẻ (0 = không giảm)',
+  khach_moi_ban_it_nhat: 'Khách tự chỉnh số bàn: mỗi bàn ít nhất N khách',
+  khach_moi_ban_nhieu_nhat: 'Khách tự chỉnh số bàn: mỗi bàn nhiều nhất N khách',
 };
 
 let daCo = false;
@@ -65,6 +73,10 @@ async function damBaoCauTruc() {
   if (ct && /^enum/i.test(ct.t) && !/CHO_THANH_TOAN/.test(ct.t)) {
     await db.query(`ALTER TABLE dat_tiec MODIFY trang_thai ENUM('MOI','DA_LIEN_HE','CHO_BAO_GIA','CHO_COC','DA_XAC_NHAN','DA_COC','CHO_THANH_TOAN','HOAN_THANH','HUY','HET_HAN') NOT NULL DEFAULT 'MOI'`);
   }
+  // Thuc don tu chon: don khong gan thuc don co san -> thuc_don_id duoc phep NULL.
+  const [[cTd]] = await db.query(
+    "SELECT IS_NULLABLE AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'dat_tiec' AND COLUMN_NAME = 'thuc_don_id'");
+  if (cTd && cTd.n === 'NO') await db.query('ALTER TABLE dat_tiec MODIFY thuc_don_id INT(11) NULL');
   for (const [k, v] of Object.entries(MAC_DINH)) {
     await db.query('INSERT IGNORE INTO dat_tiec_cau_hinh (setting_key, setting_value) VALUES (?, ?)', [k, String(v)]);
   }
@@ -97,6 +109,17 @@ async function sanhGala() {
 
 const tien = (n) => `${Math.round(Number(n) || 0).toLocaleString('vi-VN')}đ`;
 
+/** Khoang so ban khach duoc chon cho mot so khach (moi ban tu it_nhat den nhieu_nhat khach). */
+function khoangBan(soKhach, ch) {
+  const k = Math.max(1, Math.floor(Number(soKhach) || 0));
+  const goiY = Math.ceil(k / ch.khach_moi_ban);
+  const min = Math.min(goiY, Math.ceil(k / Math.max(ch.khach_moi_ban, ch.khach_moi_ban_nhieu_nhat)));
+  // Khong vuot so ban sanh bay duoc (suc chua toi da / khach moi ban).
+  const banSanh = Math.ceil((ch.khach_toi_da || k) / ch.khach_moi_ban);
+  const max = Math.max(goiY, Math.min(banSanh, Math.floor(k / Math.max(1, Math.min(ch.khach_moi_ban, ch.khach_moi_ban_it_nhat)))));
+  return { goiY, min, max };
+}
+
 /** Noi dung chinh sach dat tiec (tu cau hinh) - hien o buoc 1, trang thanh toan, lich su. */
 function chinhSach(ch) {
   const ban = (k) => Math.ceil(k / ch.khach_moi_ban);
@@ -108,9 +131,10 @@ function chinhSach(ch) {
       'Mỗi buổi (trưa / tối) sảnh chỉ nhận một tiệc. Lịch trên trang luôn là lịch thực tế.',
     ] },
     { ma: 'thuc_don', tieu_de: 'Thực đơn & dịch vụ', muc: [
-      `Giá thực đơn tính theo bàn ${ch.khach_moi_ban} khách, số bàn = số khách chia ${ch.khach_moi_ban}, làm tròn lên.`,
-      'Thực đơn có sẵn: đặt cọc được ngay sau khi gửi.',
-      `Thực đơn tùy chỉnh (bỏ / thêm món, yêu cầu riêng): nhà hàng báo giá trong ${ch.giu_cho_bao_gia_gio} giờ, quý khách đặt cọc sau khi nhận báo giá. Món thêm tính theo phần mỗi bàn.`,
+      `Giá thực đơn tính theo bàn. Số bàn gợi ý = số khách chia ${ch.khach_moi_ban}, làm tròn lên; bàn lẻ (ít người) vẫn tính trọn giá một bàn.`,
+      `Quý khách có thể tự chỉnh số bàn, miễn mỗi bàn từ ${ch.khach_moi_ban_it_nhat} đến ${ch.khach_moi_ban_nhieu_nhat} khách (VD: 125 khách đặt ${khoangBan(125, ch).min}–${khoangBan(125, ch).max} bàn).`,
+      'Thực đơn có sẵn của nhà hàng: giá trọn gói theo bàn, đặt cọc được ngay sau khi gửi.',
+      `Thực đơn tự chọn: quý khách chọn từng món (tối thiểu ${ch.tu_chon_mon_toi_thieu} món). Giá = giá món × số phần mỗi bàn × số bàn${ch.tu_chon_giam_phan_tram > 0 ? `, giảm ${ch.tu_chon_giam_phan_tram}%` : ''}; đặt cọc được ngay sau khi gửi như thực đơn có sẵn. Yêu cầu riêng được chuyển cho bếp chuẩn bị.`,
       'Dịch vụ (trang trí, MC, âm thanh...) tính theo gói, theo bàn hoặc theo khách như ghi ở từng dịch vụ.',
     ] },
     { ma: 'coc', tieu_de: 'Đặt cọc & giữ sảnh', muc: [
@@ -242,19 +266,19 @@ async function ganAnhThucDon(dsThucDon) {
     ...td,
     mon: (td.mon || []).map((m) => {
       const g = ghepMon(m.ten, dsMon);
-      return { ...m, anh: g ? anhTheoId.get(g.id_mon) || null : null };
+      return { ...m, id_mon: g ? Number(g.id_mon) : null, anh: g ? anhTheoId.get(g.id_mon) || null : null };
     }),
   }));
 }
 
 /** Chuan hoa yeu cau tuy chinh + tinh tien mon them (gia mon x so phan / ban x so ban). */
-async function tinhTuyChinh(raw, thucDon, soBan) {
+async function tinhTuyChinh(raw, thucDon, soBan, { tuChon = false } = {}) {
   const tc = raw && typeof raw === 'object' ? raw : {};
   const monNen = (thucDon.mon || []).map((m) => String(m.ten));
   const boMon = [...new Set((Array.isArray(tc.bo_mon) ? tc.bo_mon : []).map(String).filter((t) => monNen.includes(t)))].slice(0, 20);
   const dsLe = await docMonLe();
   const themMon = [];
-  for (const x of (Array.isArray(tc.them_mon) ? tc.them_mon : []).slice(0, 20)) {
+  for (const x of (Array.isArray(tc.them_mon) ? tc.them_mon : []).slice(0, tuChon ? 40 : 20)) {
     const mon = dsLe.find((m) => Number(m.id) === Number(x.id_mon));
     const sl = Math.min(5, Math.max(1, Math.floor(Number(x.so_phan) || 1)));
     if (mon && !themMon.some((t) => t.id_mon === mon.id)) {
@@ -262,10 +286,11 @@ async function tinhTuyChinh(raw, thucDon, soBan) {
     }
   }
   const yeuCau = String(tc.yeu_cau || '').trim().slice(0, 1000);
-  const coTuyChinh = boMon.length > 0 || themMon.length > 0 || yeuCau.length > 0;
+  const coTuyChinh = tuChon || boMon.length > 0 || themMon.length > 0 || yeuCau.length > 0;
   return {
     co: coTuyChinh,
-    du_lieu: coTuyChinh ? { bo_mon: boMon, them_mon: themMon, yeu_cau: yeuCau } : null,
+    so_mon: themMon.length,
+    du_lieu: coTuyChinh ? { ...(tuChon ? { tu_chon: true } : {}), bo_mon: boMon, them_mon: themMon, yeu_cau: yeuCau } : null,
     tien: themMon.reduce((s, m) => s + m.thanh_tien, 0),
   };
 }
@@ -355,6 +380,7 @@ function baoDaThanhToan(kq) {
 }
 
 module.exports = {
+  khoangBan,
   MAC_DINH, MO_TA, DIEU_KIEN_GIU,
   damBaoCauTruc, cauHinh, sanhGala, chinhSach, phanTramHoan, hetHanGiuCho, buoiDaKin, lichThang, lichNgay,
   docMonLe, ganAnhThucDon, tinhTuyChinh, cocCan, khoanCanTra, ghiNhanChuyenKhoan,

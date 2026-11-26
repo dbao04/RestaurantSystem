@@ -1,0 +1,224 @@
+<%
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var ngayVN = function (s) { if (!s) return ''; var d = String(s).split('-'); return d[2] + '/' + d[1]; };
+  var thu = function (s) { return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][new Date(s + 'T00:00:00').getDay()]; };
+  var hanVN = function (d) { var x = new Date(d), p = function (n) { return String(n).padStart(2, '0'); }; return p(x.getHours()) + ':' + p(x.getMinutes()) + ' ' + p(x.getDate()) + '/' + p(x.getMonth() + 1); };
+  var conLai = function (d) {
+    var ms = new Date(d) - now, am = ms < 0, p = Math.abs(Math.round(ms / 60000));
+    var s = p < 60 ? p + ' phút' : p < 1440 ? Math.floor(p / 60) + ' giờ' + (p % 60 ? ' ' + (p % 60) + 'ph' : '') : Math.floor(p / 1440) + ' ngày';
+    return am ? 'trễ ' + s : 'còn ' + s;
+  };
+  var nhanPha = { sap_toi: 'Sắp tới', sap_bat_dau: 'Sắp bắt đầu', dang_dien_ra: 'Đang diễn ra', da_ket_thuc: 'Đã kết thúc' };
+  var soViec = viecTre.length + canChot.length + choTra.length;
+%>
+<%- include('partials/header') %>
+
+<style>
+  .dht-dau { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .dht-dau h1 { margin: 0; }
+  .dht-dau small { display: block; color: #8a7a6a; }
+  .dht-khoi { margin-bottom: 1.4rem; }
+  .dht-khoi > h2 { font-size: 1.02rem; font-weight: 700; color: #4e342e; margin: 0 0 .6rem; display: flex; align-items: center; gap: .5rem; }
+  .dht-khoi > h2 .so { background: #c8a24b; color: #fff; border-radius: 999px; font-size: .74rem; padding: .05rem .5rem; }
+  .dht-khoi > h2 .so.do { background: #c0392b; }
+  .dht-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .9rem; }
+  .dht-the { background: #fff; border: 1px solid #eadfcf; border-radius: 14px; padding: 1rem 1.05rem; display: flex; flex-direction: column; gap: .55rem; color: inherit; text-decoration: none !important; transition: border-color .15s, box-shadow .15s; }
+  .dht-the:hover { border-color: #c8a24b; box-shadow: 0 4px 16px rgba(78,52,46,.08); }
+  .dht-the__tren { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+  .dht-the__tren b { font-size: 1rem; color: #2b1a12; display: block; }
+  .dht-the__tren small { color: #8a7a6a; }
+  .pha { font-size: .74rem; font-weight: 700; border-radius: 999px; padding: .2rem .6rem; white-space: nowrap; }
+  .pha--sap_toi, .pha--sap_bat_dau { background: #fff4dc; color: #8a5a00; }
+  .pha--dang_dien_ra { background: #e3f6ea; color: #1e7b45; }
+  .pha--dang_dien_ra::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #1e9e54; margin-right: .35rem; animation: nhap 1.2s infinite; vertical-align: 1px; }
+  @keyframes nhap { 50% { opacity: .25; } }
+  .pha--da_ket_thuc { background: #f1ecea; color: #6c5b4b; }
+  .dht-dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; font-size: .85rem; margin: 0; }
+  .dht-dl dt { color: #8a7a6a; font-weight: 500; } .dht-dl dd { margin: 0; color: #2b1a12; font-weight: 600; text-align: right; }
+  .tien-do { height: 7px; background: #f1e9db; border-radius: 99px; overflow: hidden; }
+  .tien-do i { display: block; height: 100%; background: #c8a24b; border-radius: 99px; }
+  .tien-do--du i { background: #1e9e54; }
+  .dht-chan { display: flex; justify-content: space-between; font-size: .78rem; color: #6c5b4b; flex-wrap: wrap; gap: .3rem; }
+  .dht-chan .tre { color: #c0392b; font-weight: 700; }
+  .dht-ds { background: #fff; border: 1px solid #eadfcf; border-radius: 14px; overflow: hidden; }
+  .dht-dong { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-bottom: 1px solid #f3ece2; flex-wrap: wrap; }
+  .dht-dong:last-child { border-bottom: 0; }
+  .dht-dong__ic { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; background: #fff4dc; color: #8a5a00; }
+  .dht-dong__ic.do { background: #fdecea; color: #c0392b; } .dht-dong__ic.xanh { background: #e3f6ea; color: #1e7b45; }
+  .dht-dong__nd { flex: 1 1 220px; min-width: 0; }
+  .dht-dong__nd b { display: block; font-size: .9rem; color: #2b1a12; }
+  .dht-dong__nd small { color: #8a7a6a; }
+  .dht-dong__phai { display: flex; align-items: center; gap: .5rem; margin-left: auto; flex-wrap: wrap; }
+  .han { font-size: .78rem; font-weight: 700; white-space: nowrap; color: #8a5a00; }
+  .han.tre { color: #c0392b; }
+  .dht-rong { background: #fff; border: 1px dashed #e0d3bf; border-radius: 14px; padding: 1.2rem; text-align: center; color: #8a7a6a; font-size: .9rem; }
+  .dht-bang { width: 100%; font-size: .86rem; }
+  .dht-bang th { font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: #8a7a6a; font-weight: 600; }
+  .nhan-nhom { font-size: .7rem; font-weight: 700; border-radius: 6px; padding: .1rem .45rem; background: #f1ecea; color: #4e342e; white-space: nowrap; }
+</style>
+
+<div class="dht-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-champagne-glasses text-warning"></i> Điều hành tiệc</h1>
+    <small>Hôm nay <%= now.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) %> · tự cập nhật mỗi phút</small>
+  </div>
+  <% if (quyen.dieuHanh || (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Quay', 'letan', 'Quan ly']))) { %>
+    <a href="/staff/dat-tiec" class="btn btn-sm btn-outline-secondary"><i class="fas fa-glass-cheers"></i> Quản lý Đặt tiệc</a>
+  <% } %>
+</div>
+
+<% if (viecCuaToi.length) { %>
+<section class="dht-khoi">
+  <h2><i class="fas fa-user-check text-warning"></i> Việc của tôi <span class="so <%= viecCuaToi.some(function (v) { return v.tre; }) ? 'do' : '' %>"><%= viecCuaToi.length %></span></h2>
+  <div class="dht-ds">
+    <% viecCuaToi.slice(0, 12).forEach(function (v) { %>
+      <div class="dht-dong">
+        <span class="dht-dong__ic <%= v.tre ? 'do' : '' %>"><i class="fas <%= v.trang_thai === 'van_de' ? 'fa-triangle-exclamation' : 'fa-list-check' %>"></i></span>
+        <div class="dht-dong__nd"><b><%= v.ten %></b><small><%= v.tiec.ma_tiec %> · <%= ngayVN(v.tiec.ngay) %> <%= v.tiec.gio %> · <%= v.tiec.so_khach %> khách · mốc <%= v.moc %></small></div>
+        <div class="dht-dong__phai"><span class="han <%= v.tre ? 'tre' : '' %>"><%= conLai(v.han) %></span><a class="btn btn-sm btn-warning" href="/staff/tiec/<%= v.dat_tiec_id %>#viec-<%= v.id %>">Làm</a></div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (bep && (bep.dot.length || bep.mon.length)) { %>
+<section class="dht-khoi" id="bep-tiec">
+  <h2><i class="fas fa-fire-burner text-danger"></i> Bếp tiệc – cần ra món <span class="so do"><%= bep.dot.length + bep.mon.length %></span></h2>
+  <div class="dht-ds">
+    <% bep.dot.forEach(function (d) { var ph = Math.round((now - new Date(d.goi_luc)) / 60000); %>
+      <div class="dht-dong">
+        <span class="dht-dong__ic do"><i class="fas fa-bell"></i></span>
+        <div class="dht-dong__nd"><b>Đợt <%= d.thu_tu %> – <%= d.ten_dot %> · <%= d.so_ban %> bàn</b><small><%= d.ma_tiec %> · gọi <%= ph %> phút trước · <%= d.mon.map(function (m) { return m.ten + (m.sl > 1 ? ' ×' + m.sl : ''); }).join(', ') %></small></div>
+        <div class="dht-dong__phai"><button type="button" class="btn btn-sm btn-primary" data-bep-dot="<%= d.id %>"><i class="fas fa-check"></i> Đã ra món</button></div>
+      </div>
+    <% }) %>
+    <% bep.mon.forEach(function (p) { %>
+      <div class="dht-dong">
+        <span class="dht-dong__ic"><i class="fas fa-utensils"></i></span>
+        <div class="dht-dong__nd"><b>Phát sinh: <%= p.tom_tat %></b><small><%= p.ma_tiec %> · <%= p.bo_phan === 'BAR' ? 'Bar' : 'Bếp' %> · đã duyệt</small></div>
+        <div class="dht-dong__phai"><button type="button" class="btn btn-sm btn-success" data-bep-ps="<%= p.id %>"><i class="fas fa-check"></i> Xong</button></div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+<% } %>
+
+<section class="dht-khoi">
+  <h2><i class="fas fa-calendar-day text-warning"></i> Tiệc hôm nay <span class="so"><%= hom.length %></span></h2>
+  <% if (!hom.length) { %>
+    <div class="dht-rong">Hôm nay không có tiệc<%= quyen.dieuHanh || quyen.truongBp ? '' : ' bạn được phân công' %>.</div>
+  <% } else { %>
+    <div class="dht-luoi">
+      <% hom.forEach(function (t) { var pt = t.viec_tong ? Math.round(t.viec_xong * 100 / t.viec_tong) : 0; %>
+        <a class="dht-the" href="/staff/tiec/<%= t.id %>#trong-tiec">
+          <div class="dht-the__tren">
+            <div><b><i class="fas <%= t.icon %> text-warning"></i> <%= t.ten_loai %></b><small><%= t.ma_tiec %> · <%= t.ho_ten %></small></div>
+            <span class="pha pha--<%= t.pha.ma %>" data-bd="<%= t.pha.bd.toISOString() %>" data-kt="<%= t.pha.kt.toISOString() %>"><%= nhanPha[t.pha.ma] %></span>
+          </div>
+          <dl class="dht-dl">
+            <dt>Giờ</dt><dd><%= t.gio %> · <%= t.ten_buoi %></dd>
+            <dt>Sảnh</dt><dd><%= t.ten_sanh || 'Sảnh Gala' %></dd>
+            <dt>Khách</dt><dd><%= t.khach_chot || t.so_khach %> khách · <%= t.so_ban %> bàn<%= t.khach_chot ? ' (đã chốt)' : '' %></dd>
+            <dt>Trưởng tiệc</dt><dd><%= t.truong_tiec.length ? t.truong_tiec.join(', ') : 'Chưa phân công' %></dd>
+            <dt>Tiền</dt><dd>đã thu <%= vnd(t.da_thu) %> · còn <%= vnd(t.con_lai) %></dd>
+          </dl>
+          <div class="tien-do <%= pt === 100 ? 'tien-do--du' : '' %>"><i style="width:<%= pt %>%"></i></div>
+          <div class="dht-chan"><span>Chuẩn bị <%= t.viec_xong %>/<%= t.viec_tong %> việc</span><% if (t.viec_tre) { %><span class="tre"><i class="fas fa-clock"></i> <%= t.viec_tre %> việc trễ</span><% } %><% if (t.viec_van_de) { %><span class="tre"><i class="fas fa-triangle-exclamation"></i> <%= t.viec_van_de %> vấn đề</span><% } %><% if (t.phat_sinh.n) { %><span class="tre"><i class="fas fa-bolt"></i> <%= t.phat_sinh.n %> phát sinh<%= t.phat_sinh.khan ? ' (' + t.phat_sinh.khan + ' khẩn)' : '' %><%= t.phat_sinh.cho_duyet ? ' · ' + t.phat_sinh.cho_duyet + ' chờ duyệt' : '' %></span><% } %></div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<% if (quyen.dieuHanh || quyen.truongBp) { %>
+<section class="dht-khoi">
+  <h2><i class="fas fa-bell text-warning"></i> Cần xử lý <span class="so <%= soViec ? 'do' : '' %>"><%= soViec %></span></h2>
+  <% if (!soViec) { %>
+    <div class="dht-rong"><i class="fas fa-circle-check text-success"></i> Không có việc trễ, tiệc chờ chốt hay khoản chờ thu.</div>
+  <% } else { %>
+    <div class="dht-ds">
+      <% canChot.forEach(function (t) { %>
+        <div class="dht-dong">
+          <span class="dht-dong__ic do"><i class="fas fa-file-invoice-dollar"></i></span>
+          <div class="dht-dong__nd"><b>Chốt hóa đơn tiệc <%= t.ma_tiec %></b><small>Đã kết thúc <%= ngayVN(t.ngay) %> <%= t.gio %> · <%= t.ho_ten %> · <%= t.so_khach %> khách · đã thu <%= vnd(t.da_thu) %></small></div>
+          <div class="dht-dong__phai"><a class="btn btn-sm btn-danger" href="/staff/tiec/<%= t.id %>#chot">Chốt hóa đơn</a></div>
+        </div>
+      <% }) %>
+      <% choTra.forEach(function (t) { var lk = '/dat-tiec/thanh-toan/' + t.ma_tiec + '?dt=' + encodeURIComponent(t.so_dien_thoai); %>
+        <div class="dht-dong">
+          <span class="dht-dong__ic"><i class="fas fa-hourglass-half"></i></span>
+          <div class="dht-dong__nd"><b>Chờ khách trả nốt <%= vnd(t.con_lai) %> – <%= t.ma_tiec %></b><small><%= t.ho_ten %> · <%= t.so_dien_thoai %> · tiệc <%= ngayVN(t.ngay) %></small></div>
+          <div class="dht-dong__phai"><button type="button" class="btn btn-sm btn-outline-secondary" data-copy="<%= lk %>"><i class="fas fa-link"></i> Copy link thanh toán</button></div>
+        </div>
+      <% }) %>
+      <% viecTre.slice(0, 20).forEach(function (v) { %>
+        <div class="dht-dong">
+          <span class="dht-dong__ic do"><i class="fas fa-clock"></i></span>
+          <div class="dht-dong__nd"><b><%= v.ten %></b><small><%= v.tiec.ma_tiec %> · tiệc <%= ngayVN(v.tiec.ngay) %> <%= v.tiec.gio %> · hạn <%= hanVN(v.han) %></small></div>
+          <div class="dht-dong__phai"><span class="nhan-nhom"><%= (NHOM_VIEC[v.nhom] || {}).ten %></span><span class="han tre"><%= conLai(v.han) %></span><a class="btn btn-sm btn-outline-secondary" href="/staff/tiec/<%= v.dat_tiec_id %>#viec-<%= v.id %>">Xem</a></div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+<% } %>
+
+<section class="dht-khoi">
+  <h2><i class="fas fa-calendar-week text-warning"></i> Sắp tới 7 ngày <span class="so"><%= sapToi.length %></span></h2>
+  <% if (!sapToi.length) { %>
+    <div class="dht-rong">Không có tiệc nào trong 7 ngày tới.</div>
+  <% } else { %>
+    <div class="dht-ds table-responsive">
+      <table class="table dht-bang mb-0">
+        <thead><tr><th>Ngày</th><th>Tiệc</th><th class="text-right">Khách</th><th>Trưởng tiệc</th><th>Chuẩn bị</th><th></th></tr></thead>
+        <tbody>
+          <% sapToi.forEach(function (t) { var pt = t.viec_tong ? Math.round(t.viec_xong * 100 / t.viec_tong) : 0; %>
+            <tr>
+              <td><b><%= thu(t.ngay) %> <%= ngayVN(t.ngay) %></b><br><small class="text-muted"><%= t.gio %> · <%= t.ten_buoi %></small></td>
+              <td><%= t.ten_loai %><br><small class="text-muted"><%= t.ma_tiec %> · <%= t.ho_ten %></small></td>
+              <td class="text-right"><%= t.khach_chot || t.so_khach %><br><small class="text-muted"><%= t.khach_chot ? 'đã chốt' : 'chưa chốt' %></small></td>
+              <td><%= t.truong_tiec.length ? t.truong_tiec.join(', ') : '–' %></td>
+              <td style="min-width:130px"><div class="tien-do <%= pt === 100 ? 'tien-do--du' : '' %>"><i style="width:<%= pt %>%"></i></div><small class="<%= t.viec_tre ? 'text-danger font-weight-bold' : 'text-muted' %>"><%= t.viec_xong %>/<%= t.viec_tong %><%= t.viec_tre ? ' · ' + t.viec_tre + ' trễ' : '' %></small></td>
+              <td class="text-right"><a class="btn btn-sm btn-outline-secondary" href="/staff/tiec/<%= t.id %>">Mở</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<script>
+(function () {
+  // Nhan pha song: Sap bat dau (con X phut) / Dang dien ra (X phut) / Da ket thuc.
+  function capNhat() {
+    var now = Date.now();
+    document.querySelectorAll('.pha[data-bd]').forEach(function (el) {
+      var bd = new Date(el.getAttribute('data-bd')).getTime(), kt = new Date(el.getAttribute('data-kt')).getTime(), ma, chu;
+      if (now < bd) { var p = Math.round((bd - now) / 60000); ma = 'sap_bat_dau'; chu = 'Sắp bắt đầu · còn ' + (p >= 60 ? Math.floor(p / 60) + 'g' + (p % 60 ? (p % 60) + 'p' : '') : p + ' phút'); }
+      else if (now <= kt) { var d = Math.round((now - bd) / 60000); ma = 'dang_dien_ra'; chu = 'Đang diễn ra · ' + (d >= 60 ? Math.floor(d / 60) + 'g' + (d % 60) + 'p' : d + ' phút'); }
+      else { ma = 'da_ket_thuc'; chu = 'Đã kết thúc'; }
+      el.className = 'pha pha--' + ma; el.textContent = chu;
+    });
+  }
+  capNhat(); setInterval(capNhat, 30000);
+  setTimeout(function () { location.reload(); }, document.getElementById("bep-tiec") ? 20000 : 60000);
+  async function goi(url, body) {
+    var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) throw new Error(j.thong_bao || 'Không lưu được.');
+  }
+  document.querySelectorAll('[data-bep-dot]').forEach(function (b) { b.addEventListener('click', function () { b.disabled = true; goi('/api/staff/tiec/dot/' + b.getAttribute('data-bep-dot'), { buoc: 'ra' }).then(function () { location.reload(); }).catch(function (e) { alert(e.message); b.disabled = false; }); }); });
+  document.querySelectorAll('[data-bep-ps]').forEach(function (b) { b.addEventListener('click', function () { b.disabled = true; goi('/api/staff/tiec/phat-sinh/' + b.getAttribute('data-bep-ps'), { hanh_dong: 'da_xu_ly' }).then(function () { location.reload(); }).catch(function (e) { alert(e.message); b.disabled = false; }); }); });
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var url = location.origin + b.getAttribute('data-copy');
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { b.innerHTML = '<i class="fas fa-check"></i> Đã copy'; })
+        .catch(function () { window.prompt('Link thanh toán:', url); });
+    });
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

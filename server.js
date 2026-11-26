@@ -444,6 +444,8 @@ app.use('/', require('./routes/vanChuyen'));
 app.use('/', require('./routes/datBan'));
 // Khong gian nha hang + dat tiec (cuoi, sinh nhat, party) - routes/datTiec.js
 app.use('/', require('./routes/datTiec'));
+// Dieu hanh tiec: viec chuan bi theo moc, phan cong, tiec hom nay - routes/dieuHanhTiec.js
+app.use('/', require('./routes/dieuHanhTiec'));
 // Bao cao thu chi / so quy thu ngan - routes/thuChi.js
 app.use('/', require('./routes/thuChi'));
 // Cong no nha cung cap (phieu nhap -> phieu chi tra NCC)
@@ -968,7 +970,7 @@ app.post('/add-to-cart', async (req, res) => {
   }
 });
 
-app.get('/cart', async (req, res) => {
+app.get('/cart', require('./middleware/auth').canKhachDangNhap, async (req, res) => {
   try {
     const vanChuyen = require('./services/vanChuyenService');
     const [cartItems, subtotal, thamSoGiao, nhaHangToaDo, khachHang, chinhSach] = await Promise.all([
@@ -1138,7 +1140,7 @@ app.get('/datban/goi-mon', (req, res) => {
   res.redirect('/giao-hang');
 });
 
-app.post('/datban', requireLogin, async (req, res) => {
+app.post('/datban', require('./middleware/auth').canKhachDangNhap, async (req, res) => {
   const thongTinSession = req.session.thongTinGiao || {};
   const laGiaoHang = String(req.body.hinh_thuc || '') === 'giao_hang' || Boolean(req.session.thongTinGiao);
   const diaChiGiao = req.body.dia_chi_giao || thongTinSession.dia_chi_giao;
@@ -1382,12 +1384,28 @@ app.post('/rating', requireLogin, async (req, res) => {
   }
 });
 
+// Bien lai giao dich thanh cong (kieu bien lai chuyen khoan ngan hang) theo ma don.
+// Khong tra thong tin ca nhan khach - xem services/bienLaiService.js.
+app.get('/api/bien-lai', async (req, res) => {
+  try {
+    const ds = await require('./services/bienLaiService').theoMa(req.query.ma, req.query.id || null);
+    res.set('Cache-Control', 'no-store').json({ ok: true, bien_lai: ds });
+  } catch (e) {
+    console.error('[bien-lai]', e.message);
+    res.status(500).json({ ok: false, bien_lai: [] });
+  }
+});
+
 app.get('/success', (req, res) => {
   res.render('success', { title: res.locals.t('ket_qua.dat_thanh_cong') });
 });
 
 app.get('/login', (req, res) => {
-  res.render('login', { title: res.locals.t('tai_khoan.dang_nhap') });
+  const { duongTiepHopLe, lyDoDangNhap } = require('./middleware/auth');
+  const tiep = duongTiepHopLe(req.query.tiep);
+  if (tiep) req.session.tiepSauDangNhap = tiep;
+  if (req.session.userlogin) return res.redirect(tiep || '/');
+  res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), lyDoDangNhap: tiep ? lyDoDangNhap(tiep) : '' });
 });
 
 app.post('/login', async (req, res) => {
@@ -1414,7 +1432,10 @@ app.post('/login', async (req, res) => {
           'Bạn đang dùng mật khẩu mặc định. Vui lòng đổi mật khẩu mới để tiếp tục sử dụng tài khoản.'
         ) + '&msgType=danger');
       }
-      res.redirect('/');
+      // Quay lai trang khach dang dinh dung (dat tiec / dat ban / gio hang) neu co.
+      const tiep = require('./middleware/auth').duongTiepHopLe(req.session.tiepSauDangNhap);
+      delete req.session.tiepSauDangNhap;
+      res.redirect(tiep || '/');
     } else {
       res.render('login', { title: res.locals.t('tai_khoan.dang_nhap'), error: 'Incorrect phone number or password!' });
     }

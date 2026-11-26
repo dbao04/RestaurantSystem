@@ -37,6 +37,7 @@ const ch = require('../services/reservationConfig');
 const jobs = require('../services/reservationJobs');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
+const { canKhachDangNhap } = require('../middleware/auth');
 const { ngayCucBo } = require('../utils/thoiGian');
 const { dich } = require('../services/dichThongBao');
 
@@ -145,7 +146,7 @@ function bao(suKien, duLieu) {
  * them ba request nua: buoc dau tien cua khach la chon ngay gio, va man hinh
  * phai san sang ngay - khong phai sau ba vong quay.
  */
-router.get('/dat-ban', bat(async (req, res) => {
+router.get('/dat-ban', canKhachDangNhap, bat(async (req, res) => {
   const [khuVuc, danhMuc, cauHinh, danhMucMon, dsMonAn, chinhSach, quyTacCoc] = await Promise.all([
     xb.docKhuVuc(),
     ch.docDanhMuc(),
@@ -381,7 +382,7 @@ router.get('/api/dat-ban/so-do', bat(async (req, res) => {
 }));
 
 /** Khach gui yeu cau dat ban. */
-router.post('/api/dat-ban', bat(async (req, res) => {
+router.post('/api/dat-ban', canKhachDangNhap, bat(async (req, res) => {
   try {
     const kq = await dv.taoLuotDat(
       { ...req.body, source: 'ONLINE', customer_id: (req.session && req.session.userId) || null },

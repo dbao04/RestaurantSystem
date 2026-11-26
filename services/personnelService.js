@@ -203,8 +203,13 @@ const personnelService = {
 
   // ============ PRODUCTS/DISHES MANAGEMENT ============
   getAllProducts: async () => {
-    const [rows] = await db.query('SELECT * FROM monan');
+    const [rows] = await db.query('SELECT m.*, l.name_loai FROM monan m LEFT JOIN loai_mon l ON l.id_loai = m.id_loai ORDER BY l.name_loai, m.name_mon');
     return rows;
+  },
+
+  /** Tam het (0, nhu 'Ngung phuc vu' cua quan tri) / ban lai (1) - dung cho bep / bar. */
+  setTrangThaiMon: async (id, tinhtrang) => {
+    await db.query('UPDATE monan SET tinhtrang = ? WHERE id_mon = ?', [Number(tinhtrang) === 1 ? 1 : 0, id]);
   },
 
   getProductById: async (id) => {
@@ -225,12 +230,12 @@ const personnelService = {
     if (image) {
       await db.query(
         'UPDATE monan SET name_mon = ?, id_loai = ?, ghichu_mon = ?, gia_mon = ?, images = ?, tinhtrang = ? WHERE id_mon = ?',
-        [name, categoryId, note, price, image, tinhtrang || 1, id]
+        [name, categoryId, note, price, image, (tinhtrang === undefined || tinhtrang === null || tinhtrang === '') ? 1 : tinhtrang, id]
       );
     } else {
       await db.query(
         'UPDATE monan SET name_mon = ?, id_loai = ?, ghichu_mon = ?, gia_mon = ?, tinhtrang = ? WHERE id_mon = ?',
-        [name, categoryId, note, price, tinhtrang || 1, id]
+        [name, categoryId, note, price, (tinhtrang === undefined || tinhtrang === null || tinhtrang === '') ? 1 : tinhtrang, id]
       );
     }
   },

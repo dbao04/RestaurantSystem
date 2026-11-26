@@ -44,12 +44,12 @@
     </div>
     <div class="col-md-5">
         <form class="form-inline justify-content-end bg-white p-2 rounded shadow-sm border" method="GET" action="/staff/accountant/reports">
-            <select name="month" class="form-control form-control-sm border-0 bg-light mr-2">
+            <select name="month" data-loc-thang class="form-control form-control-sm border-0 bg-light mr-2">
                 <% for(let m=1; m<=12; m++) { %>
                     <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
                 <% } %>
             </select>
-            <select name="year" class="form-control form-control-sm border-0 bg-light mr-2">
+            <select name="year" data-loc-nam class="form-control form-control-sm border-0 bg-light mr-2">
                 <% for(let y=2024; y<=2026; y++) { %>
                     <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
                 <% } %>

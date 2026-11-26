@@ -6,6 +6,7 @@
  *   /staff/dat-tiec, /api/staff/dat-tiec/*  NHAN VIEN  xu ly yeu cau tiec
  */
 const express = require('express');
+const { canKhachDangNhap } = require('../middleware/auth');
 const dv = require('../services/datTiecService');
 const realtime = require('../services/realtime');
 const phanQuyen = require('../middleware/phanQuyen');
@@ -40,7 +41,7 @@ router.get('/khong-gian', bat(async (req, res) => {
 // Quy trinh dat tiec online: services/datTiecQuyTrinh.js
 const qt = require('../services/datTiecQuyTrinh');
 
-router.get('/dat-tiec', bat(async (req, res) => {
+router.get('/dat-tiec', canKhachDangNhap, bat(async (req, res) => {
   const homNay = ngayCucBo();
   const ch = await qt.cauHinh();
   const [thucDonGoc, dichVu, monLe] = await Promise.all([dv.docThucDon(), dv.docDichVu(), qt.docMonLe()]);
@@ -87,7 +88,7 @@ async function donCuaKhach(req, ma) {
   await qt.damBaoCauTruc();
   const [[don]] = await require('../config/db').query(
     `SELECT t.*, DATE_FORMAT(t.ngay_to_chuc, '%Y-%m-%d') AS ngay, TIME_FORMAT(t.gio_bat_dau, '%H:%i') AS gio,
-            v.Name_vitri AS ten_sanh, d.ten AS ten_thuc_don
+            v.Name_vitri AS ten_sanh, COALESCE(d.ten, 'Thực đơn tự chọn') AS ten_thuc_don
        FROM dat_tiec t LEFT JOIN vitri v ON v.id_vitri = t.khu_vuc_id LEFT JOIN thuc_don_tiec d ON d.id = t.thuc_don_id
       WHERE t.ma_tiec = ?`, [String(ma || '')]);
   if (!don) return null;
@@ -166,7 +167,7 @@ router.post('/dat-tiec/thanh-toan/:ma/gia-lap', bat(async (req, res) => {
   }
 }));
 
-router.post('/api/dat-tiec', bat(async (req, res) => {
+router.post('/api/dat-tiec', canKhachDangNhap, bat(async (req, res) => {
   try {
     const kq = await dv.taoDonTiec(req.body, { customerId: (req.session && req.session.userId) || null });
     realtime.doi(realtime.MIEN.DAT_BAN, { su_kien: 'DAT_TIEC_MOI', ma: kq.ma });
@@ -223,6 +224,7 @@ router.get('/staff/dat-tiec', bat(async (req, res) => {
   const loc = {
     trangThai: String(req.query.trang_thai || ''),
     tuNgay: String(req.query.tu_ngay || ''),
+    denNgay: String(req.query.den_ngay || ''),
     tim: String(req.query.tim || '').trim().slice(0, 60),
   };
   await dv.damBaoCotTien();

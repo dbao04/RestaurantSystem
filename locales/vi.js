@@ -2419,6 +2419,8 @@ module.exports = {
   'lich_su_tiec.buoc_DA_XAC_NHAN': 'Xác nhận',
   'lich_su_tiec.buoc_DA_COC': 'Đặt cọc',
   'lich_su_tiec.buoc_HOAN_THANH': 'Hoàn thành',
+  'lich_su_tiec.buoc_CHO_COC': 'Gửi yêu cầu',
+  'lich_su_tiec.buoc_CHO_THANH_TOAN': 'Thanh toán',
   'lich_su_tiec.tt_MOI': 'Yêu cầu mới',
   'lich_su_tiec.tt_DA_LIEN_HE': 'Đã liên hệ tư vấn',
   'lich_su_tiec.tt_DA_XAC_NHAN': 'Đã xác nhận',

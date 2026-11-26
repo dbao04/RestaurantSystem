@@ -2043,6 +2043,8 @@ var tenMonDich = function (m) {
         body: JSON.stringify(goi)
       });
       var kq = await r.json();
+      // Het phien dang nhap giua chung -> sang dang nhap, xong quay lai trang nay.
+      if (r.status === 401 && kq.can_dang_nhap) { window.location.href = kq.dang_nhap || '/login'; return; }
 
       if (kq.ok) {
         var coMon = itemsList && itemsList.length > 0;

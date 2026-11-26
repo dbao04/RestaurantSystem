@@ -92,17 +92,26 @@ async function congThucMon(idsMon) {
 
 /** Nhu cau nguyen lieu cua MOT tiec: Map id_nl -> so luong, kem bang ghep mon. */
 async function nhuCauCuaTiec(tiec, { dsMon = null, phan = null } = {}) {
-  const [[td]] = await db.query('SELECT mon FROM thuc_don_tiec WHERE id = ?', [tiec.thuc_don_id]);
   let monTiec = [];
-  try { monTiec = JSON.parse((td && td.mon) || '[]'); } catch (e) { monTiec = []; }
+  if (tiec.thuc_don_id) {
+    const [[td]] = await db.query('SELECT mon FROM thuc_don_tiec WHERE id = ?', [tiec.thuc_don_id]);
+    try { monTiec = JSON.parse((td && td.mon) || '[]'); } catch (e) { monTiec = []; }
+  }
+  // Tuy chinh / tu chon cua khach: bo mon khoi thuc don, them mon le (so phan moi ban rieng).
+  let tc = tiec.thuc_don_tuy_chinh;
+  if (typeof tc === 'string') { try { tc = JSON.parse(tc); } catch (e) { tc = null; } }
+  if (tc && Array.isArray(tc.bo_mon)) monTiec = monTiec.filter((m) => !tc.bo_mon.includes(m.ten));
   if (!dsMon) [dsMon] = await db.query('SELECT id_mon, name_mon FROM monan WHERE tinhtrang = 1');
   const soPhan = phan || await phanMoiMonMoiBan();
-  const ghep = monTiec.map((m) => ({ ten: m.ten, nhom: m.nhom, ...(ghepMon(m.ten, dsMon) || {}) }));
+  const ghep = monTiec.map((m) => ({ ten: m.ten, nhom: m.nhom, ...(ghepMon(m.ten, dsMon) || {}), phan: soPhan }));
+  for (const m of (tc && Array.isArray(tc.them_mon) ? tc.them_mon : [])) {
+    if (m && m.id_mon) ghep.push({ ten: m.ten, nhom: tc.tu_chon ? 'Tự chọn' : 'Món thêm', id_mon: Number(m.id_mon), phan: Number(m.so_phan) || 1 });
+  }
   const ct = await congThucMon([...new Set(ghep.filter((g) => g.id_mon).map((g) => g.id_mon))]);
   const can = new Map();
   for (const g of ghep) {
     if (!g.id_mon) continue;
-    for (const c of ct.get(g.id_mon) || []) can.set(c.id_nl, (can.get(c.id_nl) || 0) + c.dl * soPhan * Number(tiec.so_ban || 0));
+    for (const c of ct.get(g.id_mon) || []) can.set(c.id_nl, (can.get(c.id_nl) || 0) + c.dl * g.phan * Number(tiec.so_ban || 0));
   }
   return { can, ghep, soPhan };
 }
@@ -143,7 +152,7 @@ async function nhuCauTiecTheoNgay(tuNgay, soNgay) {
   let tiec = [];
   try {
     [tiec] = await db.query(
-      `SELECT id, thuc_don_id, so_ban, DATEDIFF(ngay_to_chuc, ?) AS cach FROM dat_tiec
+      `SELECT id, thuc_don_id, thuc_don_tuy_chinh, so_ban, DATEDIFF(ngay_to_chuc, ?) AS cach FROM dat_tiec
         WHERE trang_thai IN (?) AND ngay_to_chuc >= ? AND DATEDIFF(ngay_to_chuc, ?) < ?`,
       [tuNgay, GIU_CHO, tuNgay, tuNgay, soNgay]);
   } catch (e) { if (e.code === 'ER_NO_SUCH_TABLE') return new Map(); throw e; }

@@ -501,8 +501,14 @@
     }).catch(function(){});
   }, 3000);
 
+  var daBaoXong = false;
   function chuyenSangThanhCong() {
-    window.location.href = '/dat-ban/xong?ma=' + encodeURIComponent(maDatBan) + '&dt=' + encodeURIComponent(dt);
+    if (daBaoXong) return; daBaoXong = true;
+    clearInterval(checkInterval);
+    var tiep = '/dat-ban/xong?ma=' + encodeURIComponent(maDatBan) + '&dt=' + encodeURIComponent(dt);
+    // Hien bien lai kieu ngan hang; bam "Hoan tat" -> trang xac nhan dat ban.
+    if (window.BienLai) BienLai.mo({ ma: maDatBan, nutTiep: { chu: 'Hoàn tất', href: tiep } });
+    else window.location.href = tiep;
   }
 
   // Nút giả lập thanh toán

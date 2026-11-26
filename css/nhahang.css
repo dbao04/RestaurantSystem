@@ -148,8 +148,9 @@ body::-webkit-scrollbar {
 .nh-nav__links a { 
   font-family: 'Plus Jakarta Sans', 'Montserrat', var(--nh-sans);
   color: rgba(255, 248, 235, 0.9); 
-  font-weight: 600; font-size: clamp(0.74rem, 0.78vw, 0.81rem); 
-  padding: .32rem .52rem; 
+  /* Chu menu de doc (truoc ~12-13px qua nho): 15-16px man lon, giam dan theo moc ben duoi. */
+  font-weight: 600; font-size: clamp(0.9rem, 0.82vw, 1rem); 
+  padding: .42rem .62rem; 
   border-radius: 999px;
   white-space: nowrap; 
   text-decoration: none;
@@ -388,23 +389,33 @@ body::-webkit-scrollbar {
 /* Menu co nhieu muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
    1561-2000px de van vua mot hang; <= 1560px dung quy tac bieu tuong ben duoi. */
 @media (min-width: 1561px) and (max-width: 2000px) {
-  .nh-nav__links a { padding: .36rem .48rem; font-size: .8rem; }
+  .nh-nav__links a { padding: .4rem .55rem; font-size: .94rem; }
 }
-@media (max-width: 1560px) {
+/* Duoi 1900px: nut "Giao tan noi / Dat ban" chi con bieu tuong (title van co ten)
+   de nhuong cho menu chu to, de doc. */
+@media (max-width: 1899px) {
   .nh-nav-action-btn span { display: none; }
   .nh-nav-action-btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
   .nh-nav-action-btn i { font-size: 0.95rem; }
-  .nh-nav__links a { font-size: 0.74rem; padding: 0.28rem 0.44rem; }
+}
+@media (min-width: 1561px) and (max-width: 1699px) {
+  .nh-nav__links a { padding: .38rem .44rem; font-size: .9rem; }
+}
+@media (max-width: 1560px) {
+  .nh-nav__links a { font-size: 0.86rem; padding: 0.34rem 0.4rem; }
+}
+@media (max-width: 1460px) {
+  .nh-nav__links a { font-size: 0.82rem; padding: 0.32rem 0.34rem; }
 }
 @media (max-width: 1400px) {
   .nh-nav .nh-container { padding-inline: 0.75rem; }
   .nh-nav__inner { gap: 0.35rem; }
   .nh-lang__nut span { display: none; }
   .nh-lang__nut { padding: 5px 8px; }
-  .nh-nav__links a { font-size: 0.72rem; padding: 0.25rem 0.4rem; }
+  .nh-nav__links a { font-size: 0.8rem; padding: 0.3rem 0.32rem; }
   .nh-brand__name { font-size: 1.45rem; }
 }
-@media (max-width: 1260px) {
+@media (max-width: 1330px) {
   .nh-burger { display: flex; }
   .nh-nav__links { 
     position: fixed; inset: 0 0 0 auto; width: min(320px, 85%); 
@@ -3182,7 +3193,7 @@ body.nh,
    ========================================================================= */
 
 /* Ngan keo menu dien thoai: nen dang dung var(--nh-espresso) -> sang choi o che do toi. */
-@media (max-width: 1260px) {
+@media (max-width: 1330px) {
   [data-theme="dark"] .nh-nav__links {
     background: #17110d;
     border-left: 1px solid var(--nh-border);

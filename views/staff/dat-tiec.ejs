@@ -28,7 +28,8 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-glass-cheers text-warning"></i> Quản lý Đặt tiệc</h1>
-  <a href="/dat-tiec" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Trang đặt tiệc của khách</a>
+  <span><a href="/staff/tiec" class="btn btn-sm btn-warning"><i class="fas fa-champagne-glasses"></i> Điều hành tiệc</a>
+  <a href="/dat-tiec" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Trang đặt tiệc của khách</a></span>
 </div>
 
 <div class="row mb-3">
@@ -48,7 +49,10 @@
         <option value="">Tất cả trạng thái</option>
         <% Object.keys(trangThai).forEach(function (k) { %><option value="<%= k %>" <%= loc.trangThai === k ? 'selected' : '' %>><%= trangThai[k] %></option><% }) %>
       </select>
+      <label class="small mb-0">Tổ chức từ</label>
       <input type="date" name="tu_ngay" value="<%= loc.tuNgay %>" class="form-control form-control-sm" title="Tổ chức từ ngày">
+      <label class="small mb-0">đến</label>
+      <input type="date" name="den_ngay" value="<%= loc.denNgay || '' %>" class="form-control form-control-sm" title="Tổ chức đến ngày">
       <input type="search" name="tim" value="<%= loc.tim %>" class="form-control form-control-sm" placeholder="Mã, tên, SĐT...">
       <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Lọc</button>
       <a href="/staff/dat-tiec" class="btn btn-sm btn-light">Xóa lọc</a>
@@ -74,7 +78,7 @@
             <td class="text-right"><b><%= vnd(d.tong_du_toan) %></b></td>
             <td><span class="badge badge-<%= mauTT[d.trang_thai] || 'light' %>"><%= d.ten_trang_thai %></span>
               <% if (['CHO_COC','CHO_BAO_GIA'].includes(d.trang_thai) && d.han_giu_cho) { %><br><small class="text-muted">giữ sảnh đến <%= tgVN(d.han_giu_cho) %></small><% } %>
-              <% if (d.thuc_don_tuy_chinh) { %><br><small class="text-warning font-weight-bold">Thực đơn tùy chỉnh</small><% } %></td>
+              <% if (d.thuc_don_tuy_chinh) { %><br><small class="text-warning font-weight-bold"><%= d.thuc_don_tuy_chinh.tu_chon ? 'Thực đơn tự chọn' : 'Thực đơn tùy chỉnh' %></small><% } %></td>
           </tr>
           <tr class="tc-detail" data-chi-tiet="<%= d.id %>" hidden>
             <td colspan="8">
@@ -89,12 +93,12 @@
                 </div>
                 <div class="col-md-4 mb-3">
                   <h6>Dự toán</h6>
-                  <div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div>
+                  <% if (!(d.thuc_don_tuy_chinh && d.thuc_don_tuy_chinh.tu_chon)) { %><div class="tc-kv tc-kv--tien"><span><%= d.ten_thuc_don %><small><%= vnd(d.gia_ban) %> × <%= d.so_ban %> bàn</small></span><span><b><%= vnd(d.tien_thuc_don) %></b></span></div><% } %>
                   <% if (d.thuc_don_tuy_chinh) { var tc = d.thuc_don_tuy_chinh; %>
                     <div class="small border rounded p-2 mb-2" style="background:#fff8e6">
-                      <b>Tùy chỉnh của khách</b>
+                      <b><%= tc.tu_chon ? 'Thực đơn khách tự chọn (' + (tc.them_mon || []).length + ' món' + (tc.giam_phan_tram ? ', giảm ' + tc.giam_phan_tram + '%' : '') + ' · ' + vnd(d.tien_dieu_chinh) + ')' : 'Tùy chỉnh của khách' %></b>
                       <% if (tc.bo_mon && tc.bo_mon.length) { %><div>Bỏ: <%= tc.bo_mon.join(', ') %></div><% } %>
-                      <% (tc.them_mon || []).forEach(function (m) { %><div>Thêm: <%= m.ten %> · <%= m.so_phan %> phần/bàn · <%= vnd(m.thanh_tien) %></div><% }) %>
+                      <% (tc.them_mon || []).forEach(function (m) { %><div><%= tc.tu_chon ? '•' : 'Thêm:' %> <%= m.ten %> · <%= m.so_phan %> phần/bàn · <%= vnd(m.thanh_tien) %></div><% }) %>
                       <% if (tc.yeu_cau) { %><div>Yêu cầu: <%= tc.yeu_cau %></div><% } %>
                     </div>
                   <% } %>

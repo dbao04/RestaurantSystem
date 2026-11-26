@@ -704,6 +704,9 @@
       <div class="qt-side__group">
         <div class="qt-side__label">Chung</div>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dashboard' ? 'active' : '' %>" href="/staff" data-match="/staff"><i class="fas fa-gauge-high"></i><span>Tổng quan</span></a>
+        <% if (_dieuHanh || ['PV', 'BEP', 'BAR', 'KHO', 'LT', 'TN'].indexOf(_hsMenu.ma_bp) >= 0) { %>
+        <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dieu-hanh-tiec' ? 'active' : '' %>" href="/staff/tiec" data-match="/staff/tiec"><i class="fas fa-champagne-glasses"></i><span>Điều hành tiệc</span></a>
+        <% } %>
         <% if (!_dieuHanh && _coQ('dieu_hanh.bang_dieu_khien')) { %>
         <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='dieu-hanh' ? 'active' : '' %>" href="/staff/dieu-hanh" data-match="/staff/dieu-hanh"><i class="fas fa-list-check"></i><span>Việc cần xử lý của bộ phận</span></a>
         <% } %>
@@ -736,7 +739,7 @@
       <% if (typeof dongVaiDuoc === 'function' && dongVaiDuoc(['Bep', 'Quan ly'])) { %>
         <div class="qt-side__group">
           <div class="qt-side__label">Khu vực Bếp &amp; Bar</div>
-          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>" href="/kds" data-match="/kds"><i class="fas fa-fire-burner"></i><span>Màn hình Bếp (KDS)</span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kds' ? 'active' : '' %>" href="<%= _hsMenu.ma_bp === 'BAR' ? '/kds?tram=bar' : '/kds' %>" data-match="/kds"><i class="fas <%= _hsMenu.ma_bp === 'BAR' ? 'fa-martini-glass' : 'fa-fire-burner' %>"></i><span><%= _hsMenu.ma_bp === 'BAR' ? 'Màn hình Bar (đồ uống)' : 'Màn hình Bếp (KDS)' %></span></a>
           <% if (_dieuHanh || _coQ('bep.cong_thuc.xem')) { %>
           <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='recipes' ? 'active' : '' %>" href="/staff/kitchen/recipes" data-match="/staff/kitchen/recipes"><i class="fas fa-scroll"></i><span>Công thức món ăn</span></a>
           <% } %>

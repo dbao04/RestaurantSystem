@@ -1,0 +1,145 @@
+<%
+  // Tab "Chot & bao cao" (Dot 3) - nhan: chot (tiecChotService.tongHop), tiec.
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var hh = function (d) { if (!d) return '–'; var x = new Date(d); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); };
+  var H = chot.hoaDon, BC = chot.baoCao, Q = chot.quyenChot;
+  var nhomTen = { thuc_don: 'Thực đơn', dich_vu: 'Dịch vụ', phat_sinh: 'Phát sinh trong tiệc' };
+%>
+<style>
+  .hd-bang { width: 100%; font-size: .88rem; }
+  .hd-bang td { padding: .4rem .2rem; border-bottom: 1px dashed #efe6d8; vertical-align: top; }
+  .hd-bang td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .hd-bang tr.nhom td { border-bottom: 0; padding-top: .8rem; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: #a07d2c; font-weight: 700; }
+  .hd-bang tr.tong td { border-top: 2px solid #2b1a12; border-bottom: 0; font-size: 1.05rem; font-weight: 800; color: #2b1a12; }
+  .hd-bang tr.phu td { color: #6c5b4b; border-bottom: 0; }
+  .hd-bang tr.con td { font-size: 1.1rem; font-weight: 800; color: #c0392b; border-bottom: 0; }
+  .chi-so { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+  .chi-so div { background: #fffaf1; border: 1px solid #efe6d8; border-radius: 12px; padding: .6rem .75rem; }
+  .chi-so span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: #8a7a6a; }
+  .chi-so b { font-size: 1.15rem; color: #2b1a12; font-variant-numeric: tabular-nums; }
+  .chi-so small { display: block; color: #8a7a6a; font-size: .74rem; }
+  .bc-ds { font-size: .84rem; margin: 0; padding-left: 1.1rem; }
+  .sao { display: flex; gap: .25rem; } .sao button { border: 0; background: none; font-size: 1.6rem; color: #e0d3bf; line-height: 1; padding: 0 .1rem; cursor: pointer; }
+  .sao button.on { color: #c8a24b; }
+</style>
+
+<div class="tt-luoi">
+  <section class="ct-khoi">
+    <h2><span><i class="fas fa-file-invoice-dollar text-warning"></i> Hóa đơn chốt</span>
+      <small class="text-muted"><%= chot.daChot ? 'Đã chốt' + (H.chot_luc ? ' lúc ' + hh(H.chot_luc) : '') : 'Tạm tính – chưa chốt' %></small></h2>
+    <table class="hd-bang"><tbody>
+      <% ['thuc_don', 'dich_vu', 'phat_sinh'].forEach(function (k) { var ds = H.dong.filter(function (d) { return d.nhom === k; }); if (!ds.length) return; %>
+        <tr class="nhom"><td colspan="2"><%= nhomTen[k] %></td></tr>
+        <% ds.forEach(function (d) { %><tr><td><%= d.ten %></td><td><%= vnd(d.tien) %></td></tr><% }) %>
+      <% }) %>
+      <tr class="tong"><td>Tạm tính</td><td id="hdTamTinh"><%= vnd(H.tam_tinh) %></td></tr>
+      <tr class="phu"><td>Giảm trừ<%= chot.daChot && H.ly_do_giam ? ' (' + H.ly_do_giam + ')' : '' %></td><td id="hdGiam">−<%= vnd(H.giam_tru) %></td></tr>
+      <tr class="tong"><td>Tổng chốt</td><td id="hdTong"><%= vnd(H.tong) %></td></tr>
+      <tr class="phu"><td>Đã thu (cọc)</td><td>−<%= vnd(H.da_thu) %></td></tr>
+      <tr class="con"><td>Khách cần trả thêm</td><td id="hdCon"><%= vnd(Math.max(0, H.tong - H.da_thu)) %></td></tr>
+    </tbody></table>
+    <p class="small text-muted mt-2 mb-0">Bàn tính <%= H.ban ? H.ban.tinh : '' %> = chốt <%= H.ban ? H.ban.ban_chot : '' %><%= H.ban && H.ban.them ? ' + ' + H.ban.them + ' phát sinh' : '' %><%= H.ban && H.ban.bot ? ' − ' + H.ban.bot + ' bớt' : '' %> · khách chốt <%= H.khach_chot %> · dự toán ban đầu <%= vnd(H.du_toan) %>.</p>
+
+    <% if (!chot.daChot) { %>
+      <hr>
+      <% if (chot.lyDoChuaChot) { %>
+        <div class="alert alert-light border small mb-0"><i class="fas fa-circle-info text-warning"></i> Chưa chốt được: <%= chot.lyDoChuaChot %></div>
+      <% } else if (Q.chot) { %>
+        <div class="row">
+          <div class="col-sm-5 mb-2"><label class="small font-weight-bold mb-1">Giảm trừ (đ)</label><input type="number" min="0" step="1000" class="form-control form-control-sm" id="chotGiam" value="0"></div>
+          <div class="col-sm-7 mb-2"><label class="small font-weight-bold mb-1">Lý do giảm</label><input type="text" maxlength="300" class="form-control form-control-sm" id="chotLyDo" placeholder="VD: bồi thường món ra chậm"></div>
+        </div>
+        <button type="button" class="btn btn-danger btn-block font-weight-bold" id="nutChot"><i class="fas fa-lock"></i> Chốt hóa đơn & gửi khách thanh toán</button>
+        <small class="text-muted d-block mt-1">Khách nhận thông báo và nút thanh toán online phần còn lại; hoặc thu tại quầy ở trang Quản lý Đặt tiệc.</small>
+        <div class="loi" id="loiChot" hidden></div>
+      <% } else { %>
+        <div class="alert alert-light border small mb-0">Quản lý hoặc Thu ngân chốt hóa đơn.</div>
+      <% } %>
+    <% } else if (chot.trangThai === 'CHO_THANH_TOAN') { %>
+      <hr>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-tt="/dat-tiec/thanh-toan/<%= chot.maTiec %>?dt=<%= encodeURIComponent(chot.sdt) %>"><i class="fas fa-link"></i> Copy link thanh toán gửi khách</button>
+      <span class="small text-muted ml-2">Đang chờ khách trả nốt.</span>
+    <% } else if (chot.trangThai === 'HOAN_THANH') { %>
+      <hr><div class="alert alert-success small mb-0"><i class="fas fa-circle-check"></i> Tiệc đã thanh toán đủ.</div>
+    <% } %>
+  </section>
+
+  <section class="ct-khoi">
+    <h2><span><i class="fas fa-chart-simple text-warning"></i> Báo cáo sau tiệc</span></h2>
+    <div class="chi-so">
+      <div><span>Khách</span><b><%= BC.khach.chot %></b><small>đặt <%= BC.khach.dat %></small></div>
+      <div><span>Bàn tính tiền</span><b><%= BC.khach.ban_tinh %></b><small>đặt <%= BC.khach.ban_dat %></small></div>
+      <div><span>Khai tiệc</span><b><%= hh(BC.gio.bd) %></b><small>dự kiến <%= BC.gio.du_kien_bd %><%= BC.gio.tre_khai_phut > 0 ? ' · trễ ' + BC.gio.tre_khai_phut + 'ph' : '' %></small></div>
+      <div><span>Kết thúc</span><b><%= hh(BC.gio.kt) %></b><small>dự kiến <%= hh(BC.gio.du_kien_kt) %></small></div>
+      <div><span>Bếp ra món TB</span><b><%= BC.phut_bep_tb == null ? '–' : BC.phut_bep_tb + ' ph' %></b><small><%= BC.dot_cham ? 'chậm nhất: ' + BC.dot_cham.ten_dot + ' ' + BC.dot_cham.phut_bep + 'ph' : 'chưa có dữ liệu' %></small></div>
+      <div><span>Phát sinh</span><b><%= BC.phat_sinh.tong %></b><small><%= BC.phat_sinh.khan %> khẩn · <%= vnd(BC.phat_sinh.tien) %><%= BC.phat_sinh.phut_xu_ly_tb != null ? ' · xử lý TB ' + BC.phat_sinh.phut_xu_ly_tb + 'ph' : '' %></small></div>
+      <div><span>Chuẩn bị</span><b><%= BC.viec.xong %>/<%= BC.viec.tong %></b><small><%= BC.viec.tre.length %> việc trễ · <%= BC.viec.van_de %> vấn đề</small></div>
+      <div><span>Nhân sự</span><b><%= BC.nhan_su %></b><small>người được phân công</small></div>
+    </div>
+    <% if (BC.len_mon.length) { %>
+      <b class="small">Lên món theo đợt</b>
+      <ul class="bc-ds mb-2"><% BC.len_mon.forEach(function (d) { %><li><%= d.ten_dot %>: gọi <%= hh(d.goi_luc) %> · bếp <%= d.phut_bep == null ? '–' : d.phut_bep + 'ph' %> · lên bàn <%= d.phut_len == null ? '–' : '+' + d.phut_len + 'ph' %></li><% }) %></ul>
+    <% } %>
+    <% if (Object.keys(BC.phat_sinh.theo_loai).length) { %>
+      <b class="small">Phát sinh theo loại</b>
+      <ul class="bc-ds mb-2"><% Object.keys(BC.phat_sinh.theo_loai).forEach(function (k) { var x = BC.phat_sinh.theo_loai[k]; %><li><%= (chot.LOAI_PS[k] || {}).ten || k %>: <%= x.n %><%= x.tien ? ' · ' + vnd(x.tien) : '' %></li><% }) %></ul>
+    <% } %>
+    <% if (BC.viec.tre.length) { %>
+      <b class="small text-danger">Việc chuẩn bị bị trễ</b>
+      <ul class="bc-ds mb-2"><% BC.viec.tre.forEach(function (v) { %><li><%= v.ten %> <small class="text-muted">(<%= v.moc %> · <%= v.nhom %>)</small></li><% }) %></ul>
+    <% } %>
+
+    <hr>
+    <b class="small d-block mb-1">Đánh giá của quản lý</b>
+    <% if (chot.danhGia) { %><div class="small mb-2"><span style="color:#c8a24b"><%= '★'.repeat(chot.danhGia.diem) %><span style="color:#e0d3bf"><%= '★'.repeat(5 - chot.danhGia.diem) %></span></span> <%= chot.danhGia.nhan_xet || '' %> <span class="text-muted">– <%= chot.danhGia.ten || '' %></span></div><% } %>
+    <% if (Q.danhGia) { %>
+      <div class="sao mb-1" id="saoDg" data-diem="<%= chot.danhGia ? chot.danhGia.diem : 0 %>"><% for (var i = 1; i <= 5; i++) { %><button type="button" data-sao="<%= i %>" aria-label="<%= i %> sao">★</button><% } %></div>
+      <textarea class="form-control form-control-sm mb-1" id="dgNhanXet" rows="2" maxlength="1000" placeholder="Nhận xét: điểm tốt, cần rút kinh nghiệm..."><%= chot.danhGia ? (chot.danhGia.nhan_xet || '') : '' %></textarea>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="nutDg"><%= chot.danhGia ? 'Cập nhật đánh giá' : 'Lưu đánh giá' %></button>
+      <div class="loi" id="loiDg" hidden></div>
+    <% } %>
+  </section>
+</div>
+
+<script>
+(function () {
+  var ID = <%= tiec.id %>;
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  async function goi(url, body) {
+    var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) throw new Error(j.thong_bao || 'Không lưu được, thử lại.');
+    return j;
+  }
+  var giam = document.getElementById('chotGiam');
+  if (giam) giam.addEventListener('input', function () {
+    var tam = <%= H.tam_tinh %>, daThu = <%= H.da_thu %>, g = Math.max(0, Math.round(Number(giam.value) || 0));
+    document.getElementById('hdGiam').textContent = '−' + vnd(g);
+    document.getElementById('hdTong').textContent = vnd(Math.max(0, tam - g));
+    document.getElementById('hdCon').textContent = vnd(Math.max(0, tam - g - daThu));
+  });
+  var nut = document.getElementById('nutChot');
+  if (nut) nut.addEventListener('click', async function () {
+    var l = document.getElementById('loiChot'); l.hidden = true;
+    if (!confirm('Chốt hóa đơn ' + document.getElementById('hdTong').textContent + '? Sau khi chốt khách sẽ nhận yêu cầu thanh toán.')) return;
+    nut.disabled = true;
+    try { await goi('/api/staff/tiec/' + ID + '/chot', { giam_tru: giam.value, ly_do_giam: document.getElementById('chotLyDo').value }); location.hash = 'chot'; location.reload(); }
+    catch (e) { l.textContent = e.message; l.hidden = false; nut.disabled = false; }
+  });
+  var sao = document.getElementById('saoDg'), diem = sao ? Number(sao.getAttribute('data-diem')) : 0;
+  function veSao() { if (sao) sao.querySelectorAll('[data-sao]').forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-sao')) <= diem); }); }
+  if (sao) { sao.addEventListener('click', function (e) { var b = e.target.closest('[data-sao]'); if (b) { diem = Number(b.getAttribute('data-sao')); veSao(); } }); veSao(); }
+  var nutDg = document.getElementById('nutDg');
+  if (nutDg) nutDg.addEventListener('click', async function () {
+    var l = document.getElementById('loiDg'); l.hidden = true; nutDg.disabled = true;
+    try { await goi('/api/staff/tiec/' + ID + '/danh-gia', { diem: diem, nhan_xet: document.getElementById('dgNhanXet').value }); location.hash = 'chot'; location.reload(); }
+    catch (e) { l.textContent = e.message; l.hidden = false; nutDg.disabled = false; }
+  });
+  document.querySelectorAll('[data-copy-tt]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var url = location.origin + b.getAttribute('data-copy-tt');
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { b.innerHTML = '<i class="fas fa-check"></i> Đã copy'; }).catch(function () { window.prompt('Link thanh toán:', url); });
+    });
+  });
+})();
+</script>

@@ -196,12 +196,12 @@
     <div class="d-flex align-items-center bg-white p-2 rounded-lg shadow-sm border" style="border-color: #e7ded0 !important;">
       <form class="form-inline mb-0" method="GET" action="/staff/accountant/salary">
         <span class="text-muted small font-weight-bold mr-2"><i class="far fa-calendar-alt text-warning"></i> Kỳ lương:</span>
-        <select name="month" class="form-control form-control-sm mr-2 font-weight-bold" onchange="this.form.submit()">
+        <select name="month" data-loc-thang class="form-control form-control-sm mr-2 font-weight-bold" onchange="this.form.submit()">
           <% for(let m = 1; m <= 12; m++) { %>
             <option value="<%= m %>" <%= m == month ? 'selected' : '' %>>Tháng <%= m %></option>
           <% } %>
         </select>
-        <select name="year" class="form-control form-control-sm font-weight-bold" onchange="this.form.submit()">
+        <select name="year" data-loc-nam class="form-control form-control-sm font-weight-bold" onchange="this.form.submit()">
           <% for(let y = 2024; y <= 2027; y++) { %>
             <option value="<%= y %>" <%= y == year ? 'selected' : '' %>>Năm <%= y %></option>
           <% } %>

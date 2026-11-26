@@ -77,6 +77,18 @@ const LUONG = {
   dat_tiec_moi:       { nhom: 'Đặt bàn & tiệc', ten: 'Yêu cầu đặt tiệc mới', nhan: ['TRUONG_LE_TAN', 'LE_TAN', 'QUAN_LY'], muc_do: 'quan_trong' },
   dat_tiec_chot:      { nhom: 'Đặt bàn & tiệc', ten: 'Tiệc đã xác nhận / đặt cọc (chuẩn bị nguyên liệu)', nhan: ['BEP_QUAN_LY', 'QUAN_LY'], muc_do: 'quan_trong' },
   dat_tiec_khach:     { nhom: 'Đặt bàn & tiệc', ten: 'Tiệc của khách đổi trạng thái', nhan: ['KHACH'], muc_do: 'tin' },
+  // ---- Dieu hanh tiec (services/dieuHanhTiecService.js)
+  tiec_viec_moi:      { nhom: 'Điều hành tiệc', ten: 'Mở mốc chuẩn bị tiệc (T-7 / T-3 / T-1 / ngày tiệc) - việc của bộ phận', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'quan_trong' },
+  tiec_viec_tre:      { nhom: 'Điều hành tiệc', ten: 'Việc chuẩn bị tiệc quá hạn (quá 12 giờ hoặc trong ngày tiệc: báo Quản lý)', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'quan_trong' },
+  tiec_van_de:        { nhom: 'Điều hành tiệc', ten: 'Bộ phận báo có vấn đề khi chuẩn bị tiệc', nhan: ['QUAN_LY', 'GIAM_SAT_PV'], muc_do: 'khan' },
+  tiec_chot_khach:    { nhom: 'Điều hành tiệc', ten: 'Đã chốt số khách / số bàn tiệc', nhan: ['BEP_QUAN_LY', 'GIAM_SAT_PV', 'QUAN_LY'], muc_do: 'quan_trong' },
+  tiec_phan_cong:     { nhom: 'Điều hành tiệc', ten: 'Bạn được phân công phục vụ / bếp / bar cho tiệc', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'quan_trong' },
+  tiec_san_sang:      { nhom: 'Điều hành tiệc', ten: 'Sảnh tiệc đã sẵn sàng đón khách', nhan: ['QUAN_LY', 'LE_TAN'], muc_do: 'tin' },
+  tiec_can_chot:      { nhom: 'Điều hành tiệc', ten: 'Tiệc đã kết thúc - cần chốt hóa đơn', nhan: ['QUAN_LY', 'THU_NGAN'], muc_do: 'quan_trong' },
+  tiec_goi_mon:       { nhom: 'Điều hành tiệc', ten: 'Gọi đợt món tiệc / phát sinh món đã duyệt - bếp làm ngay', nhan: ['BEP_QUAN_LY'], muc_do: 'khan' },
+  tiec_ra_mon:        { nhom: 'Điều hành tiệc', ten: 'Bếp đã ra đợt món tiệc - phục vụ mang lên bàn', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'khan' },
+  tiec_phat_sinh:     { nhom: 'Điều hành tiệc', ten: 'Phát sinh / sự cố trong tiệc (khẩn: y tế, an ninh)', nhan: ['QUAN_LY', 'GIAM_SAT_PV'], muc_do: 'quan_trong' },
+  tiec_phat_sinh_kq:  { nhom: 'Điều hành tiệc', ten: 'Phát sinh bạn báo đã được duyệt / xử lý', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'tin' },
   // ---- Giao hang
   don_giao_moi:       { nhom: 'Giao hàng', ten: 'Đơn giao hàng chờ phân shipper', nhan: ['DIEU_PHOI'], muc_do: 'quan_trong' },
   don_giao_phan:      { nhom: 'Giao hàng', ten: 'Shipper được phân đơn', nhan: ['NGUOI_LIEN_QUAN'], muc_do: 'khan' },

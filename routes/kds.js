@@ -106,6 +106,9 @@ module.exports = function (io) {
       tenNguoiDung: req.session.adminname || req.session.staffName || 'Nhân viên',
       vaiTro: req.session.staffRole || (req.session.adminlogin ? 'Admin' : ''),
       quyen: quyenKds(req),
+      // Tram: bar chi do uong, bep chi mon an; mac dinh theo bo phan nguoi dung.
+      tramMacDinh: ['bep', 'bar', 'tat_ca'].includes(req.query.tram) ? req.query.tram
+        : (req.hoSo && req.hoSo.ma_bp === 'BAR') ? 'bar' : (req.hoSo && req.hoSo.ma_bp === 'BEP') ? 'bep' : 'tat_ca',
     });
   }));
 

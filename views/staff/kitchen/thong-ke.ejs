@@ -8,10 +8,12 @@
   var h0 = new Date(homNay + 'T00:00:00');
   var lui = function (n) { var d = new Date(h0); d.setDate(d.getDate() - n); return f(d); };
   var moc = [
-    { ten: 'Hôm nay', tu: homNay, den: homNay }, { ten: '7 ngày', tu: lui(6), den: homNay },
-    { ten: '30 ngày', tu: lui(29), den: homNay }, { ten: 'Tháng này', tu: f(new Date(h0.getFullYear(), h0.getMonth(), 1)), den: homNay },
+    { ten: 'Hôm nay', tu: homNay, den: homNay }, { ten: 'Hôm qua', tu: lui(1), den: lui(1) },
+    { ten: 'Tuần này', tu: lui((h0.getDay() + 6) % 7), den: homNay },
+    { ten: 'Tuần trước', tu: lui((h0.getDay() + 6) % 7 + 7), den: lui((h0.getDay() + 6) % 7 + 1) },
+    { ten: 'Tháng này', tu: f(new Date(h0.getFullYear(), h0.getMonth(), 1)), den: homNay },
     { ten: 'Tháng trước', tu: f(new Date(h0.getFullYear(), h0.getMonth() - 1, 1)), den: f(new Date(h0.getFullYear(), h0.getMonth(), 0)) },
-    { ten: '90 ngày', tu: lui(89), den: homNay },
+    { ten: '30 ngày', tu: lui(29), den: homNay }, { ten: '90 ngày', tu: lui(89), den: homNay },
   ];
   var doi = function (v) { return v == null ? '' : '<span class="' + (v >= 0 ? 'kb-tang' : 'kb-giam') + '">' + (v >= 0 ? '▲ ' : '▼ ') + Math.abs(v) + '%</span> so với kỳ trước'; };
   var maxOf = function (a, k) { return Math.max.apply(null, [1].concat(a.map(function (x) { return x[k]; }))); };
@@ -34,7 +36,7 @@
 <div class="card shadow-sm mb-3 kb-khong-in"><div class="card-body py-3">
   <form class="kb-loc" method="get">
     <% moc.forEach(function (m) { %><a class="kb-moc <%= m.tu === tu && m.den === den ? 'is-on' : '' %>" href="?tu=<%= m.tu %>&den=<%= m.den %>"><%= m.ten %></a><% }) %>
-    <input type="date" name="tu" value="<%= tu %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
+    <input type="date" name="tu" data-loc-ngay="tat" value="<%= tu %>" class="form-control form-control-sm" style="width:auto" aria-label="Từ ngày">
     <span class="text-muted">→</span>
     <input type="date" name="den" value="<%= den %>" class="form-control form-control-sm" style="width:auto" aria-label="Đến ngày">
     <button class="btn btn-sm btn-warning"><i class="fas fa-filter"></i> Xem</button>

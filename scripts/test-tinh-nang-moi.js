@@ -311,7 +311,7 @@ async function testQuyMoBan() {
   const nho = ban.filter((b) => b.so_cho <= 2);
   const cap = nho.find((a) => nho.some((b) => b !== a && b.id_vitri === a.id_vitri));
   const ngay = ngayCong(10);
-  const kh = new Phien();
+  const kh = await taoKhach(); // dat ban online can dang nhap
   const base = { customer_name: 'AUTOTEST Quy mo', phone: '0971234567', reservation_date: ngay, start_time: '14:00', guest_count: 2 };
   if (cap) {
     const cap2 = nho.find((b) => b !== cap && b.id_vitri === cap.id_vitri);
@@ -331,7 +331,16 @@ async function testQuyMoBan() {
 // ====================================================================== C
 async function testDatTiec() {
   nhom('C. Không gian nhà hàng & Đặt tiệc');
-  const k = new Phien();
+  const k = await taoKhach(); // dat tiec can dang nhap
+  {
+    const an = new Phien();
+    const g = await an.goi('/dat-tiec');
+    ok('Khách chưa đăng nhập mở /dat-tiec → chuyển sang đăng nhập', g.status === 302 && /\/login\?tiep=/.test(g.location), g.location);
+    const a1 = await an.goi('/api/dat-tiec', { method: 'POST', json: {} });
+    const a2 = await an.goi('/api/dat-ban', { method: 'POST', json: {} });
+    const gh = await an.goi('/cart');
+    ok('API đặt tiệc / đặt bàn chặn khách chưa đăng nhập (401), giỏ giao hàng chuyển đăng nhập', a1.status === 401 && a2.status === 401 && gh.status === 302, `${a1.status}/${a2.status}/${gh.status}`);
+  }
   const kg = await k.goi('/khong-gian');
   ok('Trang không gian nhà hàng (GET /khong-gian)', kg.status === 200);
   const tr = await k.goi('/dat-tiec');
@@ -573,7 +582,7 @@ async function testDoiMonDatTruoc() {
   const [mon] = await db.query('SELECT id_mon, name_mon, gia_mon FROM monan WHERE tinhtrang = 1 ORDER BY id_mon LIMIT 2');
   const it = (m, sl) => ({ dish_id: m.id_mon, dish_name: m.name_mon, price: Number(m.gia_mon), quantity: sl });
   const sdt = `096${String(Date.now()).slice(-7)}`;
-  const k = new Phien();
+  const k = await taoKhach();
   const tao = async (ngay, gio) => {
     const r = await k.goi('/api/dat-ban', { method: 'POST', json: { customer_name: 'AUTOTEST Doi mon', phone: sdt,
       reservation_date: ngay, start_time: gio, guest_count: 2, items: [it(mon[0], 1)] } });

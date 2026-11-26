@@ -673,7 +673,10 @@ function batDinhKy() {
     quetTonKho().catch(loi('ton kho')); quetCongNo().catch(loi('cong no'));
     require('./duyetNhapKhoService').quetPhieuTon().catch(loi('phieu nhap ton'));
   };
-  const nhanh = () => { quetMonTre().catch(loi('mon tre')); quetDatBanSapDen().catch(loi('dat ban sap den')); };
+  const nhanh = () => {
+    quetMonTre().catch(loi('mon tre')); quetDatBanSapDen().catch(loi('dat ban sap den'));
+    require('./dieuHanhTiecService').quet().catch(loi('dieu hanh tiec'));
+  };
   setTimeout(cham, 30 * 1000);
   setTimeout(nhanh, 20 * 1000);
   henGio = setInterval(cham, 15 * 60 * 1000);

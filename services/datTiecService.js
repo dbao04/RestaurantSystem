@@ -17,6 +17,7 @@ const KHACH_MOI_BAN = 10;
 const DAT_TRUOC_TOI_THIEU_NGAY = 3;
 const DAT_TRUOC_TOI_DA_NGAY = 365;
 
+const TEN_TU_CHON = 'Thực đơn tự chọn';
 const LOAI_TIEC = {
   CUOI: {
     ten: 'Tiệc cưới & Đính hôn', icon: 'fa-ring', anh: '/images/khong-gian/tiec-cuoi-3.jpg',
@@ -135,8 +136,8 @@ async function lichDaKin(tuNgay, denNgay) {
  * Tinh du toan. Dung chung cho xem truoc tren trinh duyet (qua API) va khi
  * luu don - gia LUON lay tu CSDL, khong tin con so trinh duyet gui len.
  */
-function tinhDuToan({ thucDon, dsDichVu, soKhach, chonDichVu }) {
-  const soBan = Math.ceil(soKhach / KHACH_MOI_BAN);
+function tinhDuToan({ thucDon, dsDichVu, soKhach, chonDichVu, soBan: banChon = null }) {
+  const soBan = banChon || Math.ceil(soKhach / KHACH_MOI_BAN);
   const tienThucDon = thucDon ? thucDon.gia_ban * soBan : 0;
   const dichVu = [];
   for (const id of chonDichVu || []) {
@@ -181,7 +182,8 @@ async function taoDonTiec(body, { customerId = null } = {}) {
   const buoi = String(body.buoi || '');
   const gio = String(body.gio_bat_dau || '');
   const soKhach = Math.floor(Number(body.so_khach));
-  const thucDonId = Number(body.thuc_don_id);
+  const tuChon = body.kieu_thuc_don === 'tu_chon';
+  const thucDonId = tuChon ? null : Number(body.thuc_don_id);
   const chonDichVu = Array.isArray(body.dich_vu) ? body.dich_vu.map(Number) : [];
 
   if (!body.dong_y_chinh_sach) throw new LoiDatTiec('Vui lòng đọc và đồng ý chính sách đặt tiệc trước khi gửi.');
@@ -201,14 +203,35 @@ async function taoDonTiec(body, { customerId = null } = {}) {
 
   const lich = await qt.lichNgay(ngay);
   if (!lich.nhan) throw new LoiDatTiec(lich.ly_do);
-  const thucDon = (await docThucDon()).find((t) => Number(t.id) === thucDonId);
+  // Hai huong: thuc don co san (gia tron goi / ban) hoac tu chon tung mon (cho bao gia).
+  const thucDon = tuChon
+    ? { id: null, ten: TEN_TU_CHON, gia_ban: 0, mon: [] }
+    : (await docThucDon()).find((t) => Number(t.id) === thucDonId);
   if (!thucDon) throw new LoiDatTiec('Vui lòng chọn thực đơn.');
 
-  const dt = tinhDuToan({ thucDon, dsDichVu: await docDichVu(), soKhach, chonDichVu });
-  const tc = await qt.tinhTuyChinh(body.tuy_chinh, thucDon, dt.soBan);
+  // So ban: mac dinh lam tron len theo KHACH_MOI_BAN; khach duoc tu chinh trong khoang cho phep.
+  const kb = qt.khoangBan(soKhach, ch);
+  let soBanChon = kb.goiY;
+  if (body.so_ban != null && body.so_ban !== '') {
+    soBanChon = Math.floor(Number(body.so_ban));
+    if (!Number.isFinite(soBanChon) || soBanChon < kb.min || soBanChon > kb.max) {
+      throw new LoiDatTiec(`Với ${soKhach} khách, số bàn phải từ ${kb.min} đến ${kb.max} (mỗi bàn ${ch.khach_moi_ban_it_nhat}–${ch.khach_moi_ban_nhieu_nhat} khách).`);
+    }
+  }
+  const dt = tinhDuToan({ thucDon, dsDichVu: await docDichVu(), soKhach, chonDichVu, soBan: soBanChon });
+  const tc = await qt.tinhTuyChinh(tuChon ? body.tuy_chinh : null, thucDon, dt.soBan, { tuChon });
+  if (tuChon && tc.so_mon < ch.tu_chon_mon_toi_thieu) {
+    throw new LoiDatTiec(`Thực đơn tự chọn cần ít nhất ${ch.tu_chon_mon_toi_thieu} món (đang chọn ${tc.so_mon}).`);
+  }
+  // Tu chon: gia tinh tu dong theo gia mon le (tru % giam neu cau hinh) -> coc ngay nhu set co san.
+  if (tuChon && ch.tu_chon_giam_phan_tram > 0) {
+    tc.tien = Math.round(tc.tien * (100 - Math.min(50, ch.tu_chon_giam_phan_tram)) / 100);
+    tc.du_lieu.giam_phan_tram = Math.min(50, ch.tu_chon_giam_phan_tram);
+  }
   const tong = dt.tong + tc.tien;
-  const trangThai = tc.co ? 'CHO_BAO_GIA' : 'CHO_COC';
-  const hanSql = tc.co ? `NOW() + INTERVAL ${Number(ch.giu_cho_bao_gia_gio)} HOUR` : `NOW() + INTERVAL ${Number(ch.giu_cho_coc_phut)} MINUTE`;
+  const canBaoGia = tc.co && !tuChon;
+  const trangThai = canBaoGia ? 'CHO_BAO_GIA' : 'CHO_COC';
+  const hanSql = canBaoGia ? `NOW() + INTERVAL ${Number(ch.giu_cho_bao_gia_gio)} HOUR` : `NOW() + INTERVAL ${Number(ch.giu_cho_coc_phut)} MINUTE`;
 
   // Khoa theo sanh + ngay + buoi: hai khach bam gui cung giay khong cung giu duoc mot buoi.
   const conn = await db.getConnection();
@@ -243,7 +266,7 @@ async function taoDonTiec(body, { customerId = null } = {}) {
   }
   await db.query(
     'INSERT INTO dat_tiec_lich_su (dat_tiec_id, tu_trang_thai, den_trang_thai, ghi_chu, nguoi_doi) VALUES (?, NULL, ?, ?, NULL)',
-    [idMoi, trangThai, tc.co ? 'Khách gửi yêu cầu - thực đơn tùy chỉnh, chờ báo giá' : 'Khách gửi yêu cầu - chờ chuyển cọc']).catch(() => {});
+    [idMoi, trangThai, tuChon ? 'Khách gửi yêu cầu - thực đơn tự chọn, chờ chuyển cọc' : tc.co ? 'Khách gửi yêu cầu - thực đơn tùy chỉnh, chờ báo giá' : 'Khách gửi yêu cầu - chờ chuyển cọc']).catch(() => {});
 
   return {
     id: idMoi, ma, so_ban: dt.soBan, tong_du_toan: tong, tien_coc: Math.ceil(tong * ch.ty_le_coc / 100),
@@ -254,18 +277,19 @@ async function taoDonTiec(body, { customerId = null } = {}) {
 
 // --------------------------------------------------------------- nhan vien
 
-async function danhSach({ trangThai = '', tuNgay = '', tim = '' } = {}) {
+async function danhSach({ trangThai = '', tuNgay = '', denNgay = '', tim = '' } = {}) {
   const dk = [];
   const ts = [];
   if (trangThai && TRANG_THAI[trangThai]) { dk.push('t.trang_thai = ?'); ts.push(trangThai); }
   if (tuNgay && /^\d{4}-\d{2}-\d{2}$/.test(tuNgay)) { dk.push('t.ngay_to_chuc >= ?'); ts.push(tuNgay); }
+  if (denNgay && /^\d{4}-\d{2}-\d{2}$/.test(denNgay)) { dk.push('t.ngay_to_chuc <= ?'); ts.push(denNgay); }
   if (tim) {
     dk.push('(t.ma_tiec LIKE ? OR t.ho_ten LIKE ? OR t.so_dien_thoai LIKE ?)');
     ts.push(`%${tim}%`, `%${tim}%`, `%${tim}%`);
   }
   const [rows] = await db.query(
     `SELECT t.*, DATE_FORMAT(t.ngay_to_chuc, '%Y-%m-%d') AS ngay, TIME_FORMAT(t.gio_bat_dau, '%H:%i') AS gio,
-            v.Name_vitri AS ten_sanh, d.ten AS ten_thuc_don, d.gia_ban
+            v.Name_vitri AS ten_sanh, COALESCE(d.ten, 'Thực đơn tự chọn') AS ten_thuc_don, d.gia_ban
        FROM dat_tiec t
        LEFT JOIN vitri v ON v.id_vitri = t.khu_vuc_id
        LEFT JOIN thuc_don_tiec d ON d.id = t.thuc_don_id
@@ -527,7 +551,7 @@ async function lichSuKhach(userId, phone, { gioiHan = 50 } = {}) {
             t.buoi, t.so_khach, t.so_ban, t.dich_vu, t.tien_thuc_don, t.tien_dich_vu, t.tong_du_toan,
             t.tien_coc, t.da_thu, t.tong_thuc_te, t.ly_do_huy, t.ghi_chu, t.trang_thai, t.created_at,
             t.thuc_don_tuy_chinh, t.tien_dieu_chinh, t.han_giu_cho, t.tien_hoan_du_kien, t.ngay_to_chuc AS ngay_goc,
-            v.Name_vitri AS ten_sanh, d.ten AS ten_thuc_don, d.gia_ban, d.mon AS mon_thuc_don, d.bao_gom
+            v.Name_vitri AS ten_sanh, COALESCE(d.ten, 'Thực đơn tự chọn') AS ten_thuc_don, d.gia_ban, d.mon AS mon_thuc_don, d.bao_gom
        FROM dat_tiec t
        LEFT JOIN vitri v ON v.id_vitri = t.khu_vuc_id
        LEFT JOIN thuc_don_tiec d ON d.id = t.thuc_don_id
@@ -646,7 +670,7 @@ module.exports = {
   lichSuKhach,
   huyBoiKhach,
   KHACH_MOI_BAN, DAT_TRUOC_TOI_THIEU_NGAY, DAT_TRUOC_TOI_DA_NGAY, LOAI_TIEC, BUOI, TRANG_THAI, GIU_CHO,
-  CHUYEN_TIEC, PHUONG_THUC_TIEC, TY_LE_COC, damBaoCotTien,
+  CHUYEN_TIEC, PHUONG_THUC_TIEC, TY_LE_COC, damBaoCotTien, TEN_TU_CHON,
   LoiDatTiec, docKhongGian, docSanhTiec, docThucDon, docDichVu, lichDaKin, tinhDuToan, cong,
   taoDonTiec, danhSach, thongKe, capNhatTrangThai,
 };

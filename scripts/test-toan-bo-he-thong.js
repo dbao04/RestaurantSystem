@@ -292,8 +292,8 @@ async function runMasterTestSuite() {
       { path: '/about', name: 'Trang Giới thiệu nhà hàng (/about)' },
       { path: '/thanh-vien', name: 'Trang Chính sách hội viên (/thanh-vien)' },
       { path: '/blog', name: 'Trang Tin tức & Bài viết (/blog)' },
-      { path: '/huong-dan-dat-ban', name: 'Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)' },
-      { path: '/dat-ban', name: 'Cổng Đặt bàn trực tuyến (/dat-ban)' }
+      { path: '/huong-dan-dat-ban', name: 'Trang Hướng dẫn đặt bàn trực tuyến (/huong-dan-dat-ban)' }
+      // /dat-ban, /dat-tiec, /cart: bat dang nhap truoc - kiem o muc 1.2 (chuyen sang /login).
     ];
 
     for (const p of publicPages) {
@@ -310,7 +310,10 @@ async function runMasterTestSuite() {
     const redirects = [
       { from: '/datban', expected: '/dat-ban', name: 'Alias chuyển hướng /datban -> /dat-ban' },
       { from: '/reservation', expected: '/dat-ban', name: 'Redirect 301 chuẩn SEO /reservation -> /dat-ban' },
-      { from: '/reservation/tra-cuu', expected: '/dat-ban/tra-cuu', name: 'Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu' }
+      { from: '/reservation/tra-cuu', expected: '/dat-ban/tra-cuu', name: 'Redirect 301 /reservation/tra-cuu -> /dat-ban/tra-cuu' },
+      { from: '/dat-ban', expected: '/login?tiep=%2Fdat-ban', name: 'Đặt bàn khi chưa đăng nhập -> trang đăng nhập (quay lại /dat-ban)' },
+      { from: '/dat-tiec', expected: '/login?tiep=%2Fdat-tiec', name: 'Đặt tiệc khi chưa đăng nhập -> trang đăng nhập (quay lại /dat-tiec)' },
+      { from: '/cart', expected: '/login?tiep=%2Fcart', name: 'Giỏ hàng giao tận nơi khi chưa đăng nhập -> trang đăng nhập' }
     ];
 
     for (const r of redirects) {

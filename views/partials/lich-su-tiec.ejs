@@ -189,7 +189,7 @@ var nhanTT = function (tt) { if (TEN_TT_MOI[tt]) return TEN_TT_MOI[tt]; var k = 
   });
   var chuTiec = {};
   ['tong_thuc_te', 'du_toan', 'da_thu', 'con_lai', 'tien_thuc_don', 'tien_dich_vu', 'chua_tt', 'loai_coc', 'loai_tt',
-   'da_hoan', 'khong_dich_vu', 'buoc_MOI', 'buoc_DA_LIEN_HE', 'buoc_DA_XAC_NHAN', 'buoc_DA_COC', 'buoc_HOAN_THANH',
+   'da_hoan', 'khong_dich_vu', 'buoc_MOI', 'buoc_DA_LIEN_HE', 'buoc_DA_XAC_NHAN', 'buoc_DA_COC', 'buoc_HOAN_THANH', 'buoc_CHO_COC', 'buoc_CHO_THANH_TOAN',
    'mo_ta_MOI', 'mo_ta_DA_LIEN_HE', 'mo_ta_DA_COC', 'mo_ta_HOAN_THANH', 'mo_ta_HUY', 'bao_gom']
     .forEach(function (k) { chuTiec[k] = t('lich_su_tiec.' + k); });
   chuTiec.mo_ta_DA_XAC_NHAN = t('lich_su_tiec.mo_ta_DA_XAC_NHAN', { pt: ptCoc });
@@ -216,7 +216,10 @@ var nhanTT = function (tt) { if (TEN_TT_MOI[tt]) return TEN_TT_MOI[tt]; var k = 
     $('tBadge').textContent = d.nhan_tt;
 
     // Thanh tien trinh; don huy thi chi hien dong mo ta.
-    var viTri = BUOC.indexOf(d.trang_thai);
+    // Trang thai -> buoc: moi gui / cho bao gia / cho coc = 1; da coc / da xac nhan = 2;
+    // cho thanh toan phan con lai = 3; hoan thanh = 4.
+    var VI_TRI = { MOI: 0, DA_LIEN_HE: 0, CHO_BAO_GIA: 0, CHO_COC: 0, DA_COC: 1, DA_XAC_NHAN: 1, CHO_THANH_TOAN: 2, HOAN_THANH: 3 };
+    var viTri = VI_TRI[d.trang_thai] == null ? BUOC.indexOf(d.trang_thai) : VI_TRI[d.trang_thai];
     $('tBuoc').innerHTML = d.trang_thai === 'HUY' ? '' : BUOC.map(function (b, k) {
       return '<li class="' + (k < viTri ? 'xong' : k === viTri ? 'dang' : '') + '"><span>' + (k + 1) + '</span>' + esc(CHU['buoc_' + b]) + '</li>';
     }).join('');

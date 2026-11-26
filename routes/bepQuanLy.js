@@ -318,9 +318,41 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
+  // Tram quan ly mon: Bar chi do uong (loai DRINK / SAKE - BEER), Bep chi mon an, Ban dieu hanh tat ca.
+  const LA_DO_UONG = (tenLoai) => /DRINK|SAKE|BEER/i.test(String(tenLoai || ''));
+  const tramMon = (req) => {
+    const phien = req.session || {};
+    if (phien.adminlogin || phien.staffRole === 'Quan ly' || (req.hoSo && req.hoSo.ma_bp === 'DH')) return null;
+    return req.hoSo && req.hoSo.ma_bp === 'BAR' ? 'bar' : 'bep';
+  };
+  const dungTram = (req, tenLoai) => { const t = tramMon(req); return !t || (t === 'bar') === LA_DO_UONG(tenLoai); };
+  const tenLoaiCuaMon = async (idMon) => { const [[r]] = await db.query('SELECT m.name_mon, l.name_loai FROM monan m LEFT JOIN loai_mon l ON l.id_loai = m.id_loai WHERE m.id_mon = ?', [idMon]); return r || null; };
+  const TU_CHOI_TRAM = (req) => (tramMon(req) === 'bar' ? 'Bar chỉ quản lý đồ uống.' : 'Bếp chỉ quản lý món ăn; đồ uống do Bar quản lý.');
+
+  router.post('/staff/kitchen/dish/:id/trang-thai', requireRole(['Bep']), async (req, res) => {
+    try {
+      const m = await tenLoaiCuaMon(Number(req.params.id));
+      if (!m) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy món.' });
+      if (!dungTram(req, m.name_loai)) return res.status(403).json({ ok: false, thong_bao: TU_CHOI_TRAM(req) });
+      const ban = Number((req.body || {}).tinhtrang) === 1;
+      await personnelService.setTrangThaiMon(Number(req.params.id), ban ? 1 : 0);
+      require('../services/thongBaoService').gui('mon_tam_ngung', {
+        tieuDe: `${String(m.name_mon).trim()} ${ban ? 'đã bán lại' : 'tạm hết'}`,
+        noiDung: ban ? 'Món đã có lại trên thực đơn.' : 'Báo khách khi gọi món này; món đã ẩn khỏi thực đơn.',
+        link: '/staff/kitchen/dishes', mucDo: ban ? 'tin' : 'quan_trong', truNv: req.session.staffId,
+      }).catch(() => {});
+      res.json({ ok: true, tinhtrang: ban ? 1 : 0 });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ ok: false, thong_bao: 'Không cập nhật được, thử lại.' });
+    }
+  });
+
   // Dish manage by Kitchen
   router.post('/staff/kitchen/dish/add', requireRole(['Bep']), upload.single('images'), async (req, res) => {
     try {
+      const [[loai]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [req.body.id_loai]);
+      if (!loai || !dungTram(req, loai.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       const image = req.file ? req.file.filename : null;
       await personnelService.addProduct({ name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon, price: req.body.gia_mon, image });
       res.redirect('/staff/kitchen/dishes');
@@ -332,6 +364,8 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
 
   router.post('/staff/kitchen/dish/delete/:id', requireRole(['Bep']), async (req, res) => {
     try {
+      const m = await tenLoaiCuaMon(Number(req.params.id));
+      if (m && !dungTram(req, m.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       await personnelService.deleteProduct(req.params.id);
       res.redirect('/staff/kitchen/dishes');
     } catch (err) {
@@ -403,10 +437,12 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
 
   router.get('/staff/kitchen/dishes', requireRole(['Bep']), async (req, res) => {
     try {
-      const dishes = await personnelService.getAllProducts();
-      const categories = await personnelService.getAllCategories();
+      const tram = tramMon(req);
+      const dishes = (await personnelService.getAllProducts()).filter((d) => dungTram(req, d.name_loai));
+      const categories = (await personnelService.getAllCategories()).filter((c) => dungTram(req, c.name_loai));
       res.render('staff/kitchen/dishes', {
-        title: 'Quản lý Món ăn',
+        title: tram === 'bar' ? 'Quản lý đồ uống' : 'Quản lý Món ăn',
+        tram,
         dishes,
         categories,
         unread: await personnelService.countUnread(req.session.staffId),

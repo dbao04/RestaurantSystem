@@ -1050,7 +1050,9 @@ test('mua hang theo du bao: tao don nhap gom theo NCC, chay lai khong dat trung'
       assert.ok(g.de_xuat > 0);
       // Can dat vi duoi muc an toan truoc khi hang ve, HOAC vi tiec da giu cho can
       // (goiYMuaHang tru ca phan tiec roi sau khi hang ve - 'thieu_cho_tiec').
-      assert.ok(g.kha_dung + g.dang_ve - g.can_truoc_khi_ve < g.dinh_muc_min + 1e-6 || (g.muc_do === 'thieu_cho_tiec' && g.can_cho_tiec > 0),
+      // ...hoac sau khi tru phan tiec da giu, ton con lai duoi muc an toan.
+      assert.ok(g.kha_dung + g.dang_ve - g.can_truoc_khi_ve < g.dinh_muc_min + 1e-6 || (g.muc_do === 'thieu_cho_tiec' && g.can_cho_tiec > 0)
+        || (g.can_cho_tiec > 0 && g.kha_dung + g.dang_ve - g.can_truoc_khi_ve - g.can_cho_tiec < g.dinh_muc_min + 1e-6),
         `${g.ten_nl} dung la can dat`);
     }
     // Dau bep khong lap don mua; quan ly bep de xuat (services/phanQuyenKho.js).

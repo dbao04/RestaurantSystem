@@ -111,6 +111,7 @@
           <%= t('coc.cam_on') %>
         </p>
         <div class="nh-done__actions">
+          <button type="button" class="nh-btn nh-btn--outline" id="xemBienLaiCoc"><i class="fas fa-receipt"></i> Xem biên lai</button>
           <a class="nh-btn nh-btn--gold" href="/my-orders"><%= t('coc.xem_don') %></a>
         </div>
       </div>
@@ -205,7 +206,10 @@
     $('khoi-qr').style.display = 'none';
     $('khoi-xong').style.display = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.BienLai) BienLai.mo({ ma: SESIS });
   }
+  var nutBl = $('xemBienLaiCoc');
+  if (nutBl) nutBl.addEventListener('click', function () { if (window.BienLai) BienLai.mo({ ma: SESIS, thuLai: 1 }); });
 })();
 </script>
 <% } %>
