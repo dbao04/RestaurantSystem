@@ -33,9 +33,20 @@ MO_HINH = [
     ),
 ]
 
+# Mo hinh doc anh mon cho tro ly ao (khach gui anh hoi mon) - nam thu muc rieng.
+THU_MUC_ANH = Path(__file__).resolve().parent / "mo_hinh_anh"
+MO_HINH_ANH = [
+    (
+        "mobilenetv2.onnx",
+        f"{GOC}/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx",
+        10_000_000,
+        "MobileNetV2 - doc anh mon an cho tro ly ao",
+    ),
+]
 
-def tai_mot(ten: str, url: str, toi_thieu: int, mo_ta: str) -> bool:
-    dich = THU_MUC / ten
+
+def tai_mot(ten: str, url: str, toi_thieu: int, mo_ta: str, thu_muc: Path = THU_MUC) -> bool:
+    dich = thu_muc / ten
     if dich.exists() and dich.stat().st_size >= toi_thieu:
         print(f"  = {ten} da co ({dich.stat().st_size / 1e6:.1f} MB)")
         return True
@@ -65,6 +76,9 @@ def main() -> int:
     print("=== Tai mo hinh nhan dien khuon mat ===")
     THU_MUC.mkdir(parents=True, exist_ok=True)
     xong = all(tai_mot(*m) for m in MO_HINH)
+    print("=== Tai mo hinh doc anh mon (tro ly ao) ===")
+    THU_MUC_ANH.mkdir(parents=True, exist_ok=True)
+    xong = all(tai_mot(*m, thu_muc=THU_MUC_ANH) for m in MO_HINH_ANH) and xong
     if xong:
         print(f"\nHoan tat. Mo hinh nam tai: {THU_MUC}")
         return 0

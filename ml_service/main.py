@@ -384,3 +384,41 @@ def api_cb_huan_luyen():
         ],
         "nguong": pl.quet_nguong(kq["mo_hinh_tot"]),
     }
+
+
+# --------------------------------------------------------------------------
+# NHAN DIEN MON TU ANH (tro ly ao: khach gui anh / video hoi mon)
+# --------------------------------------------------------------------------
+try:
+    from . import nhan_dien_mon as ndm
+    _LOI_ANH = None
+except Exception as _loi:  # thieu opencv
+    ndm = None
+    _LOI_ANH = str(_loi)
+
+
+class YeuCauAnh(BaseModel):
+    anh: list[str] = Field(..., min_length=1, max_length=6, description="Anh base64 (data URL hoac chuoi tho)")
+    top: int = Field(5, ge=1, le=10)
+
+
+def _can_anh():
+    if ndm is None:
+        raise HTTPException(503, f"Chua nap duoc module nhan dien anh: {_LOI_ANH}")
+    ok, loi = ndm.san_sang()
+    if not ok:
+        raise HTTPException(503, loi)
+
+
+@app.post("/anh/nhan-dien-mon")
+def api_nhan_dien_mon(yc: YeuCauAnh):
+    """So anh khach gui voi anh tat ca mon trong thuc don, tra ve mon giong nhat."""
+    _can_anh()
+    return ndm.nhan_dien(yc.anh, yc.top)
+
+
+@app.post("/anh/lam-moi")
+def api_lam_moi_anh():
+    """Tinh lai vector anh mon (sau khi doi anh mon hang loat)."""
+    _can_anh()
+    return ndm.lam_moi()

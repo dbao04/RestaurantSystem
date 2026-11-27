@@ -525,6 +525,7 @@
   <nav class="qt-tabs" role="tablist">
     <button type="button" data-tab="tong-quan"><i class="fas fa-gauge"></i> Tổng quan</button>
     <button type="button" data-tab="kho"><i class="fas fa-book"></i> Kho kiến thức <span class="pr-the" style="font-size:11px;"><%= kho.dang_bat %></span></button>
+    <button type="button" data-tab="hieu-y"><i class="fas fa-heart-pulse"></i> Hiểu ý khách</button>
     <button type="button" data-tab="thiet-lap"><i class="fas fa-sliders"></i> Thiết lập AI</button>
     <button type="button" data-tab="thu"><i class="fas fa-vial"></i> Thử nghiệm &amp; hội thoại</button>
     <button type="button" data-tab="lien-he"><i class="fas fa-address-book"></i> Khách để lại SĐT <% if ((lienHe || []).filter(function (x) { return !x.da_xu_ly; }).length) { %><span class="pr-so"><%= (lienHe || []).filter(function (x) { return !x.da_xu_ly; }).length %></span><% } %></button>

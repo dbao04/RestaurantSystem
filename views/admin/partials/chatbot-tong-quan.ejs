@@ -1,9 +1,10 @@
 <%
   /* Phan bo sung cho tab "Tong quan" - nguon tra loi, kho kien thuc, cau chua hieu (day bot). */
   const TEN_NGUON = {
-    kien_thuc: ['Kho kiến thức', '#c8a24b'], thuc_don: ['Thực đơn (gửi món + ảnh)', '#15803d'],
+    y_dinh_ngam: ['Hiểu ý khách (gợi ý theo nhu cầu)', '#db2777'], kien_thuc: ['Kho kiến thức', '#c8a24b'], thuc_don: ['Thực đơn (gửi món + ảnh)', '#15803d'],
     ml: ['Mô hình ML', '#1d4ed8'], goi_y: ['Gợi ý câu gần đúng', '#7c3aed'], khong_hieu: ['Chưa hiểu', '#b91c1c'],
     lien_he: ['Khách để lại SĐT', '#0891b2'], ngoai_gio: ['Ngoài giờ', '#64748b'], tu_cam: ['Từ cấm', '#9f1239'], du_phong: ['Dự phòng', '#b45309'],
+    hinh_anh: ['Ảnh / video khách gửi', '#ea580c'], tri_nho: ['Nhớ ngữ cảnh hội thoại', '#0d9488'], ai: ['AI Claude', '#6d28d9'],
   };
   const tongNguon = (theoNguon || []).reduce((s, x) => s + x.n, 0) || 1;
   const lhChua = (lienHe || []).filter((x) => !x.da_xu_ly).length;

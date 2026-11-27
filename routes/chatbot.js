@@ -25,6 +25,7 @@ const multer = require('multer');
 const taiLen = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 const ngonNgu = require('../services/ngonNgu');
 const daNgonNgu = require('../services/chatbotDaNgonNgu');
+const ai = require('../services/chatbotAI');
 
 const router = express.Router();
 const bat = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -121,6 +122,34 @@ router.post('/chatbot/api/hoi', gioiHanTanSuat, bat(async (req, res) => {
   res.json(kq);
 }));
 
+// Khach gui anh / video. Video da duoc trinh duyet cat san 3-4 khung hinh (khong
+// tai ca tep video len may chu). Body JSON: { anh: [dataURL...], loai, cau_hoi, kenh }.
+router.post('/chatbot/api/tep', gioiHanTanSuat, bat(async (req, res) => {
+  const kenh = layKenh(req.body.kenh);
+  const tl = await triThuc.docThietLap();
+  if (!tl.bat) return res.json({ van_ban: 'Trợ lý ảo hiện đang tạm tắt.', y_dinh: 'tat' });
+  const loai = req.body.loai === 'video' ? 'video' : 'anh';
+  if ((loai === 'anh' && !tl.bat_nhan_anh) || (loai === 'video' && !tl.bat_nhan_video)) {
+    return res.json({ van_ban: `Hiện mình chưa nhận ${loai === 'video' ? 'video' : 'ảnh'} được ạ. Bạn nhắn chữ giúp mình nha!`, y_dinh: 'tep_tat' });
+  }
+  const kq = await chatbot.hoiTep({
+    anh: req.body.anh, loai, cauHoi: String(req.body.cau_hoi || '').trim().slice(0, 500),
+    session: req.session, kenh, ngonNgu: req.ngonNgu, phien: req.sessionID,
+  });
+  if (kq.chuyen_nhan_vien) {
+    const { id_kh, id_nv } = chatbot.suyRaQuyen(req.session, kenh);
+    kq.can_dang_nhap = !(id_kh || id_nv);
+  }
+  res.json(kq);
+}));
+
+// Khach bam "cuoc tro chuyen moi" -> bot quen ngu canh cu cua kenh do.
+router.post('/chatbot/api/quen', (req, res) => {
+  delete req.session[layKenh(req.body && req.body.kenh) === 'noi_bo' ? 'chatbotNhoNoiBo' : 'chatbotNho'];
+  delete req.session.chatbotNguCanh;
+  res.json({ ok: true });
+});
+
 // Loi chao + goi y nhanh + giao dien - widget goi khi khach mo khung chat lan dau.
 router.get('/chatbot/api/khoi-dong', bat(async (req, res) => {
   const kenh = layKenh(req.query.kenh);
@@ -184,6 +213,7 @@ router.post('/chatbot/api/danh-gia', bat(async (req, res) => {
 router.get('/admin/chatbot', requireQuanLy, bat(async (req, res) => {
   // Tu hoc chay truoc de so lieu kho / danh sach cho duyet phan anh ngay ket qua.
   const hoc = await triThuc.deXuatHoc(30);
+  const yDinhNgam = await triThuc.docYDinhNgam().catch(() => []);
   const [trangThai, danhGia, thongKe, thietLap, kho, theoNguon, lienHe] = await Promise.all([
     chatbot.kiemTra(),
     chatbot.danhGiaDaLuu().catch(() => []),
@@ -204,6 +234,8 @@ router.get('/admin/chatbot', requireQuanLy, bat(async (req, res) => {
     theoNguon,
     lienHe,
     hoc,
+    yDinhNgam: yDinhNgam.map(({ cum, ...y }) => y),
+    aiTrangThai: await ai.trangThai(),
     tabMo: String(req.query.tab || 'tong-quan'),
     tenNguoiDung: req.session.adminname || req.session.staffName || 'Quản lý',
   });
@@ -227,6 +259,21 @@ router.post('/admin/chatbot/api/kien-thuc', requireQuanLy, bat(async (req, res) 
     if (laHoc && req.body.cau_goc) await triThuc.danhDauHoc(req.body.cau_goc, 1, id).catch(() => {});
     res.json({ ok: true, id });
   } catch (e) { loiJson(res, e); }
+}));
+
+// ---------------------------------------------------------- hieu y khach (y dinh ngam)
+router.get('/admin/chatbot/api/y-dinh-ngam', requireQuanLy, bat(async (req, res) => {
+  res.json((await triThuc.docYDinhNgam()).map(({ cum, ...y }) => y));
+}));
+
+router.post('/admin/chatbot/api/y-dinh-ngam', requireQuanLy, bat(async (req, res) => {
+  const ds = await triThuc.luuYDinhNgam(req.body.ds || []);
+  res.json({ ok: true, so: ds.length });
+}));
+
+router.post('/admin/chatbot/api/y-dinh-ngam/mac-dinh', requireQuanLy, bat(async (req, res) => {
+  const ds = await triThuc.khoiPhucYDinhNgam();
+  res.json({ ok: true, so: ds.length });
 }));
 
 // ---------------------------------------------------------- tu hoc
@@ -314,6 +361,31 @@ router.post('/admin/chatbot/api/thiet-lap', requireQuanLy, bat(async (req, res) 
 
 router.post('/admin/chatbot/api/thiet-lap/mac-dinh', requireQuanLy, bat(async (req, res) => {
   res.json({ ok: true, thiet_lap: await triThuc.luuThietLap({ ...triThuc.MAC_DINH }) });
+}));
+
+// ---------------------------------------------------------- AI Claude
+router.post('/admin/chatbot/api/ai-khoa', requireQuanLy, bat(async (req, res) => {
+  const khoa = String(req.body.khoa || '').trim();
+  if (khoa && !/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(khoa)) return res.status(400).json({ ok: false, loi: 'Khóa API Claude phải bắt đầu bằng sk-ant-' });
+  await ai.luuKhoa(khoa);
+  res.json({ ok: true, trang_thai: await ai.trangThai() });
+}));
+
+router.post('/admin/chatbot/api/ai-kiem-tra', requireQuanLy, bat(async (req, res) => {
+  const tl = await triThuc.docThietLap();
+  const { mon } = await triThuc.layMenu();
+  res.json({ ...(await ai.kiemTra(tl, mon)), trang_thai: await ai.trangThai() });
+}));
+
+// Thu gui anh trong khung thu nghiem (phien gia, khong lam ban phien that).
+router.post('/admin/chatbot/api/thu-tep', requireQuanLy, bat(async (req, res) => {
+  const phienGia = { username: req.body.ten_khach || '', chatbotNho: req.session.chatbotThuNho };
+  const kq = await chatbot.hoiTep({
+    anh: req.body.anh, loai: req.body.loai === 'video' ? 'video' : 'anh',
+    cauHoi: String(req.body.cau_hoi || '').trim().slice(0, 500), session: phienGia, kenh: 'khach', phien: 'thu-' + req.sessionID,
+  });
+  req.session.chatbotThuNho = phienGia.chatbotNho;
+  res.json(kq);
 }));
 
 // ---------------------------------------------------------- thu nghiem

@@ -289,6 +289,29 @@
     transform: scale(1.06); box-shadow: 0 6px 16px rgba(168, 129, 38, 0.45);
   }
   .cb-chan button:disabled { opacity: .45; cursor: default; transform: none; }
+  /* Nut dinh kem anh / video: nhe, khong tranh chu y voi nut gui */
+  .cb-chan button.cb-dinh-kem {
+    background: transparent; color: #a88126; box-shadow: none; width: 34px; height: 34px; font-size: 17px; flex: 0 0 auto;
+  }
+  .cb-chan button.cb-dinh-kem:hover { background: rgba(200,162,75,.14); transform: none; box-shadow: none; }
+  .cb-xem-truoc {
+    display: flex; align-items: center; gap: 10px; padding: 8px 14px 0; background: #ffffff;
+    border-top: 1px solid rgba(200, 162, 75, 0.28);
+  }
+  .cb-xem-truoc[hidden] { display: none; }
+  .cb-xem-truoc + .cb-chan { border-top: 0; }
+  .cb-xem-truoc__anh { position: relative; width: 58px; height: 58px; border-radius: 10px; overflow: hidden; background: #f3ede4; flex: 0 0 auto; }
+  .cb-xem-truoc__anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cb-xem-truoc__anh .cb-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; background: rgba(0,0,0,.25); }
+  .cb-xem-truoc__chu { flex: 1; font-size: 12.5px; color: #6f6156; line-height: 1.35; min-width: 0; }
+  .cb-xem-truoc__chu b { color: #2b1a12; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cb-xem-truoc__bo { background: none; border: 0; color: #9c8e82; font-size: 18px; cursor: pointer; padding: 4px 6px; }
+  .cb-xem-truoc__bo:hover { color: #c0392b; }
+  .cb-tep-toi { position: relative; display: block; margin: -2px -4px 6px; border-radius: 12px; overflow: hidden; max-width: 220px; }
+  .cb-tep-toi img { display: block; width: 100%; max-height: 240px; object-fit: cover; }
+  .cb-tep-toi .cb-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; background: rgba(0,0,0,.22); }
+  .cb-tep-toi + span:empty { display: none; }
+  [data-theme="dark"] .cb-xem-truoc { background: #1f1712; }
 
   .cb-dangnghi span {
     display: inline-block; width: 6px; height: 6px; margin-right: 3px;
@@ -500,7 +523,17 @@
   </div>
   <% } %>
   <div class="cb-than" id="cb-than" aria-live="polite"></div>
+  <% var cbNhanAnh = cbGd.bat_nhan_anh !== false, cbNhanVideo = cbGd.bat_nhan_video !== false; %>
+  <div class="cb-xem-truoc" id="cb-xem-truoc" hidden>
+    <div class="cb-xem-truoc__anh" id="cb-xt-anh"></div>
+    <div class="cb-xem-truoc__chu" id="cb-xt-chu"></div>
+    <button type="button" class="cb-xem-truoc__bo" id="cb-xt-bo" aria-label="Bỏ tệp">&times;</button>
+  </div>
   <form class="cb-chan" id="cb-form" autocomplete="off">
+    <% if (cbNhanAnh || cbNhanVideo) { %>
+    <button type="button" class="cb-dinh-kem" id="cb-dinh-kem" title="<%= cbNhanVideo && cbNhanAnh ? 'Gửi ảnh hoặc video' : (cbNhanVideo ? 'Gửi video' : 'Gửi ảnh') %>" aria-label="Gửi ảnh hoặc video"><i class="fas fa-<%= cbNhanVideo && !cbNhanAnh ? 'video' : 'image' %>"></i></button>
+    <input type="file" id="cb-tep" accept="<%= [cbNhanAnh ? 'image/*' : '', cbNhanVideo ? 'video/*' : ''].filter(Boolean).join(',') %>" hidden>
+    <% } %>
     <input id="cb-o-nhap" placeholder="<%= cbT('chatbot.nhap_cau_hoi') %>" maxlength="500" aria-label="<%= cbT('chatbot.cau_hoi') %>">
     <button type="submit" id="cb-gui" aria-label="<%= cbT('chatbot.gui') %>"><i class="fas fa-paper-plane"></i></button>
   </form>
@@ -618,6 +651,12 @@
     noi.className = 'cb-tn__noi';
     noi.innerHTML = dinhDang(noiDung);
 
+    if (vaiTro === 'toi' && kem.tep_anh) {
+      var tp = document.createElement('span');
+      tp.className = 'cb-tep-toi';
+      tp.innerHTML = '<img src="' + thoat(kem.tep_anh) + '" alt="">' + (kem.tep_video ? '<span class="cb-play"><i class="fas fa-circle-play"></i></span>' : '');
+      noi.insertBefore(tp, noi.firstChild);
+    }
     if (kem.anh) {
       var im = document.createElement('img');
       im.className = 'cb-anh-kt'; im.src = kem.anh; im.alt = ''; im.loading = 'lazy';
@@ -782,9 +821,140 @@
     return chuoi;
   }
 
+  /* ---------- ảnh / video khách gửi ----------
+     Ảnh: thu nhỏ còn tối đa 1280px (JPEG) ngay trên máy khách cho nhẹ.
+     Video: KHÔNG tải cả tệp lên - trình duyệt cắt 4 khung hình rải đều rồi gửi
+     như ảnh, nên video dài / nặng vẫn gửi nhanh và máy chủ không phải xử lý video. */
+  var tepCho = null;      // { loai, khung: [dataURL], thu_nho, ten, thoi_luong }
+  var oTep = document.getElementById('cb-tep');
+  var xemTruoc = document.getElementById('cb-xem-truoc');
+
+  function veCanvas(nguon, rong, cao, toiDa, chatLuong) {
+    var tl = Math.min(1, toiDa / Math.max(rong, cao));
+    var c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(rong * tl)); c.height = Math.max(1, Math.round(cao * tl));
+    c.getContext('2d').drawImage(nguon, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', chatLuong);
+  }
+  function docAnh(tep) {
+    return new Promise(function (ok, loi) {
+      var url = URL.createObjectURL(tep);
+      var im = new Image();
+      im.onload = function () {
+        try {
+          var lon = veCanvas(im, im.naturalWidth, im.naturalHeight, 1280, 0.85);
+          var nho = veCanvas(im, im.naturalWidth, im.naturalHeight, 320, 0.7);
+          URL.revokeObjectURL(url);
+          ok({ loai: 'anh', khung: [lon], thu_nho: nho, ten: tep.name });
+        } catch (e) { loi(e); }
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); loi(new Error('anh')); };
+      im.src = url;
+    });
+  }
+  function docVideo(tep) {
+    return new Promise(function (ok, loi) {
+      var url = URL.createObjectURL(tep);
+      var v = document.createElement('video');
+      v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+      var xong = false;
+      var hetGio = setTimeout(function () { if (!xong) { xong = true; URL.revokeObjectURL(url); loi(new Error('het gio')); } }, 20000);
+      v.onerror = function () { if (!xong) { xong = true; clearTimeout(hetGio); URL.revokeObjectURL(url); loi(new Error('video')); } };
+      v.onloadedmetadata = function () {
+        var d = isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
+        var moc = d < 2 ? [d / 2] : [0.08, 0.35, 0.62, 0.9].map(function (t) { return t * d; });
+        var khung = []; var nho = '';
+        var chup = function (i) {
+          if (i >= moc.length) {
+            xong = true; clearTimeout(hetGio); URL.revokeObjectURL(url);
+            return khung.length ? ok({ loai: 'video', khung: khung, thu_nho: nho, ten: tep.name, thoi_luong: d }) : loi(new Error('khung'));
+          }
+          v.onseeked = function () {
+            try {
+              khung.push(veCanvas(v, v.videoWidth, v.videoHeight, 768, 0.8));
+              if (!nho) nho = veCanvas(v, v.videoWidth, v.videoHeight, 320, 0.7);
+            } catch (e) { /* khung loi thi bo qua */ }
+            chup(i + 1);
+          };
+          v.currentTime = Math.min(moc[i], Math.max(0, d - 0.05));
+        };
+        chup(0);
+      };
+    });
+  }
+  function hienXemTruoc() {
+    if (!xemTruoc) return;
+    if (!tepCho) { xemTruoc.hidden = true; return; }
+    document.getElementById('cb-xt-anh').innerHTML = '<img src="' + tepCho.thu_nho + '" alt="">' + (tepCho.loai === 'video' ? '<span class="cb-play"><i class="fas fa-play"></i></span>' : '');
+    var tg = tepCho.thoi_luong ? ' · ' + Math.floor(tepCho.thoi_luong / 60) + ':' + ('0' + Math.round(tepCho.thoi_luong % 60)).slice(-2) : '';
+    document.getElementById('cb-xt-chu').innerHTML = '<b>' + thoat(tepCho.ten || (tepCho.loai === 'video' ? 'Video' : 'Ảnh')) + '</b>'
+      + (tepCho.loai === 'video' ? 'Video' + tg : 'Ảnh') + ' · nhắn kèm câu hỏi (không bắt buộc) rồi bấm gửi';
+    xemTruoc.hidden = false;
+    oNhap.placeholder = tepCho.loai === 'video' ? 'Hỏi gì về video này…' : 'Hỏi gì về ảnh này… (vd: món này giá bao nhiêu?)';
+    oNhap.focus();
+  }
+  var goiYGoc = oNhap.placeholder;
+  function boTep() { tepCho = null; if (oTep) oTep.value = ''; oNhap.placeholder = goiYGoc; hienXemTruoc(); }
+  function nhanTep(tep) {
+    if (!tep) return;
+    var laVideo = /^video\//.test(tep.type);
+    if (laVideo && GD.bat_nhan_video === false) return;
+    if (!laVideo && (!/^image\//.test(tep.type) || GD.bat_nhan_anh === false)) return;
+    if (tep.size > (laVideo ? 300 : 25) * 1024 * 1024) {
+      hienBot({ van_ban: laVideo ? 'Video này hơi nặng quá (trên 300MB) 😅 Bạn gửi đoạn ngắn hơn giúp mình nha!' : 'Ảnh này hơi nặng quá (trên 25MB) 😅 Bạn gửi ảnh nhỏ hơn giúp mình nha!' }, true);
+      return;
+    }
+    var nutDk = document.getElementById('cb-dinh-kem');
+    if (nutDk) nutDk.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    (laVideo ? docVideo(tep) : docAnh(tep))
+      .then(function (t) { tepCho = t; hienXemTruoc(); })
+      .catch(function () {
+        hienBot({ van_ban: laVideo ? 'Mình chưa mở được video này 😥 Bạn thử video MP4 hoặc quay lại ngắn hơn giúp mình nha!' : 'Mình chưa mở được ảnh này 😥 Bạn gửi ảnh JPG hoặc PNG giúp mình nha!' }, true);
+      })
+      .then(function () { if (nutDk) nutDk.innerHTML = '<i class="fas fa-' + (GD.bat_nhan_anh === false ? 'video' : 'image') + '"></i>'; });
+  }
+  if (oTep) {
+    document.getElementById('cb-dinh-kem').onclick = function () { oTep.click(); };
+    oTep.onchange = function () { nhanTep(oTep.files && oTep.files[0]); };
+    document.getElementById('cb-xt-bo').onclick = boTep;
+    // Dán ảnh (Ctrl+V) và kéo thả tệp vào khung chat.
+    oNhap.addEventListener('paste', function (e) {
+      var ds = (e.clipboardData && e.clipboardData.files) || [];
+      if (ds.length) { e.preventDefault(); nhanTep(ds[0]); }
+    });
+    khung.addEventListener('dragover', function (e) { e.preventDefault(); });
+    khung.addEventListener('drop', function (e) {
+      var ds = e.dataTransfer && e.dataTransfer.files;
+      if (ds && ds.length) { e.preventDefault(); nhanTep(ds[0]); }
+    });
+  }
+
+  function guiTep(cauHoi) {
+    if (!tepCho || dangBan) return;
+    var t = tepCho;
+    dangBan = true;
+    themTin('toi', cauHoi || '', { tep_anh: t.thu_nho, tep_video: t.loai === 'video' });
+    oNhap.value = '';
+    boTep();
+    nutGui.disabled = true;
+    var yeuCau = fetch('/chatbot/api/tep', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ anh: t.khung, loai: t.loai, cau_hoi: cauHoi || '', kenh: KENH })
+    }).then(function (r) { return r.json(); });
+    // Xem ảnh lâu hơn đọc chữ một chút - như người thật mở ảnh ra nhìn.
+    Promise.all([yeuCau, cho(thoiGianDoc() + (GD.hieu_ung_go === false ? 0 : 700))])
+      .then(function (ds) { return hienBot(ds[0]); })
+      .catch(function () {
+        var go = themDangGo();
+        return cho(900).then(function () { go.remove(); themTin('bot', cbI18n.loiKetNoi); });
+      })
+      .then(function () { dangBan = false; nutGui.disabled = false; oNhap.focus(); });
+  }
+
   /* ---------- gửi câu hỏi ---------- */
   function gui(cauHoi, hienThi) {
     cauHoi = String(cauHoi || '').trim();
+    if (tepCho) return guiTep(cauHoi);
     if (!cauHoi || dangBan) return;
     dangBan = true;
     themTin('toi', hienThi || cauHoi);
@@ -841,6 +1011,8 @@
   document.getElementById('cb-lam-moi').onclick = function () {
     lichSu = []; luu(); than.innerHTML = ''; daChao = false;
     try { sessionStorage.removeItem(KHOA_LS); } catch (e) {}
+    // Bot cũng quên ngữ cảnh cũ (món vừa nói, sở thích...) - đúng nghĩa cuộc trò chuyện mới.
+    fetch('/chatbot/api/quen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kenh: KENH }) }).catch(function () {});
     chaoLanDau();
   };
   form.onsubmit = function (e) { e.preventDefault(); gui(oNhap.value); };

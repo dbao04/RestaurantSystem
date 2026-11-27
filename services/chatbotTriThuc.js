@@ -78,10 +78,27 @@ const MAC_DINH = {
   goi_y_mon_ban_chay: true,
   bat_ml: true,
   bat_tu_khoa: true,              // bat tu khoa: co tu khoa cua chu de la tra loi
+  bat_y_dinh_ngam: true,          // hieu y khach: "doi qua" -> muon an -> goi y mon
   nguong_tu_khoa: 0.6,            // 1 cum tu khoa trung nguyen = 1.0; 1 tu don = 0.75
   tu_hoc: true,                   // tu hoc cau chua tra loi duoc
   nguong_tu_hoc: 0.55,            // du chac -> tu them vao chu de; thap hon -> cho duyet
   nho_ngu_canh: true,
+  // Tri nho hoi thoai
+  nho_lich_su: true,              // hieu cau noi tiep: "con thu 7 thi sao", "mon thu 2", "mon khac"
+  so_luot_nho: 12,                // so luot gan nhat giu trong phien
+  nho_so_thich: true,             // nho "minh an chay", "khong an cay", "di 4 nguoi", ten khach
+  // Anh & video khach gui
+  bat_nhan_anh: true,
+  bat_nhan_video: true,
+  nguong_anh_chac: 0.86,          // diem giong anh mon >= nguong -> khang dinh la mon do
+  nguong_anh_co_the: 0.7,         // tu day den nguong chac -> "co the la mot trong cac mon"
+  tin_anh_khong_ro: 'Mình đã nhận được ảnh của bạn rồi nè 📷 Mình chưa nhận ra món nào trong thực đơn giống ảnh này. Bạn nhắn giúp mình bạn muốn hỏi gì về ảnh (tên món, giá, còn món không…) hoặc bấm **Chat với nhân viên** để được xem trực tiếp nha!',
+  // AI Claude (tuy chon - can khoa API)
+  bat_ai: false,
+  ai_mo_hinh: 'claude-opus-5-5',
+  ai_doc_anh: true,               // dung AI de hieu anh / video (moi loai anh, khong chi mon an)
+  ai_khi_khong_hieu: true,        // bot khong hieu cau chu -> hoi AI kem lich su hoi thoai
+  ai_chi_dan: 'Trả lời ngắn gọn 1–3 câu, thân thiện như nhân viên tư vấn thật. Chỉ nói về nhà hàng, món ăn, đặt bàn, giao hàng. Không bịa giá hay chính sách không có trong dữ liệu.',
   tu_dong_nghia: [
     'gia | bao nhieu tien | gia bao nhieu | gia ca | gia tien | may tien | het bao nhieu | bnhieu tien',
     'dat ban | book ban | dat cho | giu cho | giu ban | booking | reserve',
@@ -125,7 +142,7 @@ const MAC_DINH = {
 };
 
 const KIEU_SO = ['nguong_khop', 'nguong_goi_y', 'nguong_tu_hoc', 'nguong_tu_khoa', 'so_mon_toi_da', 'toc_do_go', 'go_toi_da_ms',
-  'chao_chu_dong_giay', 'so_lan_khong_hieu', 'tre_doc_ms'];
+  'chao_chu_dong_giay', 'so_lan_khong_hieu', 'tre_doc_ms', 'so_luot_nho', 'nguong_anh_chac', 'nguong_anh_co_the'];
 const KIEU_BOOL = Object.keys(MAC_DINH).filter((k) => typeof MAC_DINH[k] === 'boolean');
 const KIEU_MANG = ['tu_dong_nghia', 'goi_y_nhanh', 'tu_cam'];
 
@@ -165,6 +182,10 @@ function chuanHoaThietLap(o) {
   kq.so_lan_khong_hieu = Math.min(10, Math.max(1, Math.round(kq.so_lan_khong_hieu)));
   if (!['minh_ban', 'em_anhchi', 'em_quykhach'].includes(kq.xung_ho)) kq.xung_ho = 'minh_ban';
   if (!['24_7', 'khung_gio'].includes(kq.gio_hoat_dong)) kq.gio_hoat_dong = '24_7';
+  kq.so_luot_nho = Math.min(40, Math.max(2, Math.round(kq.so_luot_nho)));
+  kq.nguong_anh_chac = Math.min(0.99, Math.max(0.5, kq.nguong_anh_chac));
+  kq.nguong_anh_co_the = Math.min(kq.nguong_anh_chac, Math.max(0.4, kq.nguong_anh_co_the));
+  if (!/^claude-[a-z0-9-]+$/.test(kq.ai_mo_hinh)) kq.ai_mo_hinh = 'claude-opus-5-5';
   return kq;
 }
 
@@ -193,6 +214,7 @@ async function thietLapCongKhai() {
     hien_nut_goi: t.hien_nut_goi, hien_nut_nhan_vien: t.hien_nut_nhan_vien, hien_goi_y: t.hien_goi_y,
     luu_lich_su: t.luu_lich_su, cham_diem: t.cham_diem, nut_them_gio: t.nut_them_gio,
     hotline: t.hotline, hotline_so: soDienThoaiGon(t.hotline),
+    bat_nhan_anh: t.bat_nhan_anh, bat_nhan_video: t.bat_nhan_video,
   };
 }
 
@@ -449,6 +471,138 @@ function khopTuKhoa(qt, qPad, k, dauKhach) {
 }
 
 /** Xep chu de theo diem tu khoa. @returns [{muc, diem, tu: [...]}] */
+// ==========================================================================
+// HIEU Y KHACH (y dinh ngam)
+//
+// Khach noi cau the hien nhu cau ma khong hoi thang: "doi qua" -> muon an,
+// "lanh qua" -> muon mon nong, "het tien" -> mon re. Moi y dinh = nhom tu tin hieu
+// + cau dap + hanh dong chon mon (xem config/chatbot-y-dinh-ngam.js). Quan ly sua
+// o tab "Hieu y khach"; luu o cau_hinh 'chatbot.y_dinh_ngam' (JSON).
+//
+// So khop co tinh dau (go co dau phai dung dau, go khong dau van khop) va bo qua
+// cau phu dinh: "khong doi", "het khat", "chua doi", "do doi".
+// ==========================================================================
+const PHU_DINH = new Set(['khong', 'het', 'chang', 'cha', 'chua', 'do', 'bot', 'dau']);
+let ydCache = null;
+let ydLuc = 0;
+
+function chuanHoaYDinh(y, i = 0) {
+  const tuKhoa = (Array.isArray(y.tu_khoa) ? y.tu_khoa : String(y.tu_khoa || '').split(/[,;\n]/))
+    .map((s) => String(s).trim()).filter(Boolean).slice(0, 60);
+  return {
+    ma: String(y.ma || `y_${Date.now().toString(36)}_${i}`).replace(/[^\w-]/g, '_').slice(0, 40),
+    ten: String(y.ten || 'Ý định').slice(0, 80),
+    tu_khoa: tuKhoa,
+    tra_loi: String(y.tra_loi || '').slice(0, 4000),
+    hanh_dong: ['chi_tra_loi', 'ban_chay', 'nhom', 'gia', 'mon_chin', 'ten'].includes(y.hanh_dong) ? y.hanh_dong : 'chi_tra_loi',
+    tham_so: String(y.tham_so || '').slice(0, 200),
+    lien_ket: String(y.lien_ket || '').slice(0, 500),
+    goi_y: String(y.goi_y || '').slice(0, 500),
+    uu_tien: Math.max(0, Math.min(10, Math.round(Number(y.uu_tien) || 0))),
+    bat: y.bat === undefined ? true : !!(y.bat === true || y.bat === 1 || y.bat === '1' || y.bat === 'on' || y.bat === 'true'),
+  };
+}
+
+async function docYDinhNgam() {
+  if (ydCache && Date.now() - ydLuc < 15000) return ydCache;
+  let ds = null;
+  try {
+    const [[r]] = await db.query("SELECT gia_tri FROM cau_hinh WHERE khoa = 'chatbot.y_dinh_ngam'");
+    if (r && r.gia_tri) ds = JSON.parse(r.gia_tri);
+  } catch { /* chua co -> mac dinh */ }
+  if (!Array.isArray(ds)) ds = require('../config/chatbot-y-dinh-ngam');
+  ydCache = ds.map(chuanHoaYDinh).map((y) => ({ ...y, cum: y.tu_khoa.map((k) => tachTuDau(k, false)).filter((c) => c.length) }));
+  ydLuc = Date.now();
+  return ydCache;
+}
+
+async function luuYDinhNgam(ds) {
+  const sach = (Array.isArray(ds) ? ds : []).slice(0, 100).map(chuanHoaYDinh).filter((y) => y.tu_khoa.length && y.tra_loi);
+  await db.query(
+    `INSERT INTO cau_hinh (khoa, gia_tri, mo_ta) VALUES ('chatbot.y_dinh_ngam', ?, 'Y dinh ngam cua tro ly ao (JSON)')
+     ON DUPLICATE KEY UPDATE gia_tri = VALUES(gia_tri)`, [JSON.stringify(sach)]);
+  ydCache = null;
+  return sach;
+}
+
+async function khoiPhucYDinhNgam() {
+  await db.query("DELETE FROM cau_hinh WHERE khoa = 'chatbot.y_dinh_ngam'");
+  ydCache = null;
+  return docYDinhNgam();
+}
+
+/** @returns {Promise<{y, tu: string[]}|null>} y dinh ngam manh nhat trong cau */
+async function timYDinhNgam(cauHoi) {
+  const ds = await docYDinhNgam();
+  const qs = tachTuDau(cauHoi);
+  if (!qs.length) return null;
+  let tot = null;
+  for (const y of ds) {
+    if (!y.bat) continue;
+    const tu = [];
+    let diem = 0;
+    for (let i = 0; i < y.cum.length; i++) {
+      const c = y.cum[i];
+      const vt = timCum(qs, c);
+      if (vt < 0) continue;
+      // "khong doi", "het khat": phu dinh dung ngay truoc (hoac cach 1 tu: "khong con doi")
+      const truoc = [qs[vt - 1], qs[vt - 2]].filter(Boolean).map((t) => t.x);
+      if (PHU_DINH.has(truoc[0]) || (truoc[1] && PHU_DINH.has(truoc[1]) && truoc[0] === 'con')) continue;
+      tu.push(y.tu_khoa[i]);
+      diem += c.length > 1 ? 1.2 : 1;
+    }
+    if (!tu.length) continue;
+    const xep = y.uu_tien * 10 + diem;
+    if (!tot || xep > tot.xep) tot = { y, tu, xep };
+  }
+  return tot;
+}
+
+const LOAI_CHIN = /GRILLED|TEPPAN|HOT POT|NOODLE|^\d+\.\s*RICE$|TEMPURA|SOUP|HOT DISH/;
+const LOAI_UONG = /DRINK|SAKE|BEER/;
+
+/** Chon mon kem theo y dinh ngam. */
+async function chonMonTheoYDinh(y, toiDa) {
+  if (y.hanh_dong === 'chi_tra_loi') return [];
+  const { mon } = await layMenu();
+  const conBan = mon.filter((m) => m.con && !laMonPhu(m));
+  const coAnhTruoc = (a, b) => (!!b.anh - !!a.anh);
+  const thamSo = String(y.tham_so || '').split('|').map((s) => s.trim()).filter(Boolean);
+  let ds = [];
+  if (y.hanh_dong === 'ban_chay') {
+    ds = conBan.filter((m) => !LOAI_UONG.test(m.loai_goc)).sort((a, b) => coAnhTruoc(a, b) || b.ban - a.ban || b.gia - a.gia);
+    return daDang(ds, toiDa);
+  }
+  if (y.hanh_dong === 'nhom') {
+    const res = thamSo.map((s) => new RegExp(s.replace(/[.*+?^${}()[\]\\]/g, '\\$&'), 'i'));
+    ds = conBan.filter((m) => res.some((re) => re.test(m.loai_goc))).sort((a, b) => coAnhTruoc(a, b) || xepGoiY(a, b));
+    return res.length > 1 ? daDang(ds, toiDa) : ds.slice(0, toiDa);
+  }
+  if (y.hanh_dong === 'gia') {
+    const toiDaGia = Number(thamSo[0]) || 100000;
+    ds = conBan.filter((m) => m.gia > 0 && m.gia <= toiDaGia && !LOAI_UONG.test(m.loai_goc)).sort((a, b) => coAnhTruoc(a, b) || xepGoiY(a, b));
+    return daDang(ds, toiDa);
+  }
+  if (y.hanh_dong === 'mon_chin') {
+    ds = conBan.filter((m) => LOAI_CHIN.test(m.loai_goc)).sort((a, b) => coAnhTruoc(a, b) || xepGoiY(a, b));
+    return daDang(ds, toiDa);
+  }
+  if (y.hanh_dong === 'ten') {
+    // So CO TINH DAU: "bò" khong trung "bơ", "cá hồi" khong trung "cà"...
+    // Tu khong dau (salmon, beef) thi so khong dau nhu binh thuong.
+    const cumTu = thamSo.map((s) => tachTuDau(s, false)).filter((c) => c.length);
+    const giongDau = (k, t) => k.x === t.x && (k.d === k.x || k.d === t.d);
+    const coCum = (ms, kim) => {
+      for (let i = 0; i + kim.length <= ms.length; i++) if (kim.every((k, j) => giongDau(k, ms[i + j]))) return true;
+      return false;
+    };
+    ds = conBan.filter((m) => cumTu.some((c) => coCum(m.qTen, c) || coCum(m.qEn, c)))
+      .sort((a, b) => coAnhTruoc(a, b) || xepGoiY(a, b));
+    return ds.slice(0, toiDa);
+  }
+  return [];
+}
+
 async function timTheoTuKhoa(cauHoi, soLuong = 3) {
   const cm = chiMuc || (await xayChiMuc());
   const ds = await layTuDongNghia();
@@ -997,6 +1151,92 @@ function lienKetTuChuoi(s, tl) {
 }
 
 // ==========================================================================
+// TRI NHO HOI THOAI: cau noi tiep ve danh sach mon vua gui
+// ==========================================================================
+async function traLoiTheoTriNho(cauHoi, nc, tl, ctx) {
+  const tn = require('./chatbotTriNho');
+  const truoc = Array.isArray(nc.mon_truoc) ? nc.mon_truoc : [];
+  const { mon } = await layMenu();
+  const theoId = new Map(mon.map((m) => [m.id, m]));
+  const toiDa = tl.so_mon_toi_da || 6;
+  const st = tl.nho_so_thich ? nc.so_thich : null;
+  const goiMon = (ds, vb, y, extra = {}) => ({
+    van_ban: apDung(vb, tl, ctx),
+    mon: ds.map(theMon).map((m) => (tl.hien_anh_mon ? m : { ...m, anh: '' })),
+    lien_ket: [{ nhan: 'Xem toàn bộ thực đơn', url: '/menu' }],
+    y_dinh: y, tin_cay: 1, nguon: 'tri_nho', _khop: 'nhớ ngữ cảnh', ...extra,
+  });
+
+  // "mon thu 2 gia bao nhieu", "cai dau tien con khong"
+  if (truoc.length > 1) {
+    const vi = tn.viTriTheoThuTu(cauHoi);
+    if (vi !== null) {
+      const id = vi === -1 ? truoc[truoc.length - 1] : truoc[vi];
+      const m = theoId.get(id);
+      if (m) {
+        const o = traLoiMon({ kieu: 'ngu_canh', ds: [m], x: chuanHoaCoBan(cauHoi) });
+        o.van_ban = apDung(o.van_ban, tl, ctx);
+        if (!tl.hien_anh_mon) o.mon = o.mon.map((k) => ({ ...k, anh: '' }));
+        return { ...o, y_dinh: 'mon:thu_tu', tin_cay: 1, nguon: 'tri_nho', _khop: `món thứ ${vi === -1 ? 'cuối' : vi + 1} vừa gửi`, _mon_ids: [m.id], _giu_ds: true };
+      }
+    }
+  }
+
+  // "con mon nao khac khong", "xem them"
+  if (nc.xem_them && tn.laXemThem(cauHoi)) {
+    const xt = nc.xem_them;
+    let tatCa = [];
+    if (xt.kieu === 'mon' && xt.cau) {
+      const r = await timMon(xt.cau, {}, { ...tl, so_mon_toi_da: 60 });
+      tatCa = r ? r.ds.map((d) => theoId.get(d.id) || d) : [];
+    } else if (xt.kieu === 'yd' && xt.ma) {
+      const y = (await docYDinhNgam()).find((k) => k.ma === xt.ma);
+      if (y) tatCa = await chonMonTheoYDinh(y, 60).catch(() => []);
+    }
+    const daXem = new Set(xt.da_xem || []);
+    const loc = tn.locTheoSoThich(tatCa.filter((m) => !daXem.has(m.id) && !laMonPhu(m) && m.con !== false), st);
+    const ds = loc.ds.slice(0, toiDa);
+    if (!ds.length) {
+      return {
+        van_ban: apDung('Mình gửi hết các món hợp với yêu cầu lúc nãy rồi đó ạ 😊 Bạn xem toàn bộ thực đơn để chọn thêm, hoặc nói mình nghe bạn thích vị gì để mình gợi ý tiếp nha!', tl, ctx),
+        lien_ket: [{ nhan: 'Xem toàn bộ thực đơn', url: '/menu' }],
+        y_dinh: 'tri_nho:het', tin_cay: 1, nguon: 'tri_nho', _khop: 'nhớ ngữ cảnh',
+      };
+    }
+    return goiMon(ds, `Dạ còn mấy món này nữa nè 👇${tn.cauDaLoc(loc.bo)}`, 'tri_nho:xem_them', { _xem_them_tiep: true, _mon_ids: ds.map((m) => m.id) });
+  }
+
+  // "co mon nao re hon khong", "mon nao xin hon"
+  const ss = truoc.length ? tn.soSanhGia(cauHoi) : null;
+  if (ss) {
+    const goc = truoc.map((id) => theoId.get(id)).filter((m) => m && !laMonPhu(m));
+    if (goc.length) {
+      const moc = ss === 're' ? Math.min(...goc.map((m) => m.gia)) : Math.max(...goc.map((m) => m.gia));
+      const cungNhom = (m) => m.id_loai === goc[0].id_loai;
+      const dk = (m) => m.con && !laMonPhu(m) && !truoc.includes(m.id) && (ss === 're' ? m.gia < moc : m.gia > moc);
+      let ds = mon.filter((m) => dk(m) && cungNhom(m));
+      let ngoaiNhom = false;
+      if (!ds.length) { ds = mon.filter((m) => dk(m) && !/DRINK|SAKE|BEER/.test(m.loai_goc)); ngoaiNhom = true; }
+      ds.sort((a, b) => (ss === 're' ? b.gia - a.gia : a.gia - b.gia));
+      const loc = tn.locTheoSoThich(ds, st);
+      ds = loc.ds.slice(0, toiDa);
+      if (ds.length) {
+        const bien = goc.reduce((a, m) => ((ss === 're' ? m.gia < a.gia : m.gia > a.gia) ? m : a), goc[0]);
+        const vb = ngoaiNhom
+          ? `**${bien.ten}** đã là món *${goc[0].loai}* ${ss === 're' ? 'mềm' : 'cao cấp'} nhất rồi ạ. Bạn tham khảo thêm mấy món ${ss === 're' ? `dưới ${giaVN(moc)}` : `trên ${giaVN(moc)}`} khác nha 👇${tn.cauDaLoc(loc.bo)}`
+          : `${ss === 're' ? `Món mềm hơn ${giaVN(moc)}` : `Món cao cấp hơn ${giaVN(moc)}`} cùng nhóm *${goc[0].loai}* nè 👇${tn.cauDaLoc(loc.bo)}`;
+        return goiMon(ds, vb, `tri_nho:${ss}_hon`, { _mon_ids: ds.map((m) => m.id) });
+      }
+      return {
+        van_ban: apDung(ss === 're' ? `**${goc[0].ten}** là món mềm nhất rồi đó ạ 😊` : `**${goc[0].ten}** đã là món cao cấp nhất rồi đó ạ ✨`, tl, ctx),
+        y_dinh: `tri_nho:${ss}_hon`, tin_cay: 1, nguon: 'tri_nho', _khop: 'nhớ ngữ cảnh',
+      };
+    }
+  }
+  return null;
+}
+
+// ==========================================================================
 // DIEM VAO: tra loi mot cau
 // ==========================================================================
 /**
@@ -1035,6 +1275,14 @@ async function traLoi(cauHoi, ctx = {}) {
     return xong({ van_ban: apDung(tl.tin_ngoai_gio, tl, ctx), y_dinh: 'ngoai_gio', chuyen_nhan_vien: true }, 'ngoai_gio');
   }
 
+  // 0d) TRI NHO: "mon thu 2", "con mon nao khac", "co mon nao re hon" -> dua vao luot truoc.
+  if (tl.nho_lich_su) {
+    const r = await traLoiTheoTriNho(cauHoi, nc, tl, ctx).catch((e) => { console.error('[chatbot] tri nho:', e.message); return null; });
+    if (r) return r;
+  }
+  const triNho = require('./chatbotTriNho');
+  const st = tl.nho_so_thich ? nc.so_thich : null;
+
   // 1) Kho kien thuc + 2) thuc don - tinh ca hai roi chon.
   const [kt, mon] = await Promise.all([
     tl.bat_kien_thuc ? timKienThuc(cauHoi, 4).catch((e) => { console.error('[chatbot] kho kien thuc:', e.message); return []; }) : [],
@@ -1043,6 +1291,47 @@ async function traLoi(cauHoi, ctx = {}) {
   const top = kt[0];
   // "ban chay" bo dau trung "chay" -> mon ban chay / ten mon chinh xac thang kho kien thuc.
   const monChac = mon && ['chinh_xac', 'ngu_canh', 'ban_chay'].includes(mon.kieu);
+
+  // HIEU Y KHACH: "doi qua", "troi lanh", "khat nuoc"... -> nhu cau ngam, kem goi y mon.
+  const yd = tl.bat_y_dinh_ngam ? await timYDinhNgam(cauHoi).catch((e) => { console.error('[chatbot] y dinh ngam:', e.message); return null; }) : null;
+  const traLoiYDinh = async () => {
+    const toiDa = tl.so_mon_toi_da || 6;
+    const loc = triNho.locTheoSoThich(await chonMonTheoYDinh(yd.y, toiDa * 4).catch(() => []), st);
+    const ds = loc.ds.slice(0, toiDa);
+    const o = {
+      van_ban: apDung(chonNgauNhien(yd.y.tra_loi), tl, ctx) + (ds.length ? triNho.cauDaLoc(loc.bo) : ''),
+      _xem_them: ds.length ? { kieu: 'yd', ma: yd.y.ma } : null,
+      mon: ds.map(theMon).map((m) => (tl.hien_anh_mon ? m : { ...m, anh: '' })),
+      lien_ket: lienKetTuChuoi(yd.y.lien_ket, tl),
+      goi_y: tachDanhSach(yd.y.goi_y, '|').slice(0, 4),
+      y_dinh: `ngam:${yd.y.ma}`,
+      tin_cay: 1,
+      tu_khoa_khop: yd.tu,
+      _khop: `hiểu ý: ${yd.y.ten}`,
+      _mon_ids: ds.map((m) => m.id),
+    };
+    if (!o.mon.length) delete o.mon;
+    return xong(o, 'y_dinh_ngam');
+  };
+  // Ten mon cu the ("doi qua, cho minh sashimi ca hoi") -> tra mon do, khong goi y chung chung.
+  const monCuThe = mon && (mon.kieu === 'chinh_xac' || mon.kieu === 'ngu_canh');
+  if (yd && !monCuThe) {
+    // Cau hoi ro ve chu de khac (vd "troi mua co giao hang khong") -> de kho kien thuc tra loi
+    // cau hoi; chi nhuong khi chu de do KHONG phai chao hoi / tan gau.
+    // Khach NOI ("them cay", "doi qua") thi uu tien hieu y; chi khi khach HOI that
+    // ("... co ... khong", "bao nhieu", "o dau", "?") moi nhuong cho kho kien thuc.
+    const laCauHoi = /\?/.test(cauHoi) || /\b(bao nhieu|o dau|the nao|duoc khong|tai sao|vi sao|sao vay)\b/.test(x)
+      || /\bkhong\s*(a|ha|vay|nhi|ta)?\s*$/.test(x) || /\bco\b.*\bkhong\b/.test(x);
+    const hoiChuDeKhac = top && top.muc.dong.nhom !== 'chao_hoi'
+      && top.diem >= (laCauHoi ? tl.nguong_khop : Math.max(tl.nguong_khop, 0.9));
+    let kwKhac = null;
+    if (!hoiChuDeKhac && tl.bat_tu_khoa) {
+      // Cau noi ma trung NGUYEN cum tu khoa cua chu de ("dat ban cho ba me") -> kho kien thuc.
+      kwKhac = (await timTheoTuKhoa(cauHoi, 3).catch(() => []))
+        .find((k) => k.diem >= (laCauHoi ? Math.max(1, tl.nguong_tu_khoa) : 1) && k.muc.dong.nhom !== 'chao_hoi');
+    }
+    if (!hoiChuDeKhac && !kwKhac) return traLoiYDinh();
+  }
 
   if (top && top.diem >= tl.nguong_khop && !(monChac && top.diem < 0.9) && !(mon && top.diem < 0.62)) {
     const d = top.muc.dong;
@@ -1060,11 +1349,22 @@ async function traLoi(cauHoi, ctx = {}) {
     return xong(o, 'kien_thuc');
   }
 
+  // Khach da dan so thich -> lay san danh sach mon rong hon de loc khong bi het mon.
+  const rong = mon && st && Object.keys(st).length && !['chinh_xac', 'ngu_canh'].includes(mon.kieu)
+    ? await timMon(cauHoi, nc, { ...tl, so_mon_toi_da: 40 }).catch(() => null) : null;
   const traLoiMonNgay = () => {
+    // Danh sach goi y (khong phai mon khach goi dich danh) -> bo mon trai so thich da dan.
+    let bo = [];
+    if (st && Object.keys(st).length && !['chinh_xac', 'ngu_canh'].includes(mon.kieu)) {
+      // Loc tren danh sach rong (khong chi 6 mon dau) roi moi cat lai cho du so mon.
+      const loc = triNho.locTheoSoThich(rong && rong.ds.length > mon.ds.length ? rong.ds : mon.ds, st);
+      if (loc.ds.length) { mon.ds = loc.ds.slice(0, tl.so_mon_toi_da || 6); bo = loc.bo; }
+    }
     const o = traLoiMon(mon);
-    o.van_ban = apDung(o.van_ban, tl, ctx);
+    o.van_ban = apDung(o.van_ban, tl, ctx) + triNho.cauDaLoc(bo);
     if (!tl.hien_anh_mon) o.mon = o.mon.map((m) => ({ ...m, anh: '' }));
-    return xong({ ...o, y_dinh: `mon:${mon.kieu}`, tin_cay: 1, _mon_ids: mon.ds.map((m) => m.id) }, 'thuc_don');
+    const xemThem = mon.ds.length > 1 && mon.kieu !== 'ngu_canh' ? { kieu: 'mon', cau: cauHoi } : null;
+    return xong({ ...o, y_dinh: `mon:${mon.kieu}`, tin_cay: 1, _mon_ids: mon.ds.map((m) => m.id), _xem_them: xemThem }, 'thuc_don');
   };
   // Ten mon chinh xac / mon vua noi / mon ban chay: tra loi bang thuc don truoc.
   if (monChac && mon.ds.length) return traLoiMonNgay();
@@ -1196,6 +1496,19 @@ async function ghiNhatKy(o) {
       return kq.insertId;
     } catch { return null; }
   }
+}
+
+// Cot `tep` (anh / video khach gui) - them khi can, may chua chay migration van chay.
+let daCoCotTep = false;
+async function damBaoCotTep() {
+  if (daCoCotTep) return;
+  const [r] = await db.query("SHOW COLUMNS FROM chatbot_hoi_thoai LIKE 'tep'");
+  if (!r.length) await db.query("ALTER TABLE chatbot_hoi_thoai ADD COLUMN tep VARCHAR(255) NULL COMMENT 'anh/khung video khach gui'");
+  daCoCotTep = true;
+}
+async function ganTepNhatKy(id, tep) {
+  if (!id || !tep) return;
+  try { await damBaoCotTep(); await db.query('UPDATE chatbot_hoi_thoai SET tep = ? WHERE id = ?', [tep, id]); } catch (e) { console.error('[chatbot] gan tep:', e.message); }
 }
 
 async function capNhatNhatKyML(id, o) {
@@ -1533,6 +1846,8 @@ async function phanTichHoc(cauHoi, tl) {
   const [kt, mon] = await Promise.all([timKienThuc(cauHoi, 3).catch(() => []), timMon(cauHoi, {}, tl).catch(() => null)]);
   const top = kt[0];
   if (top && top.diem >= tl.nguong_khop) return { kieu: 'da_hieu', id_kien_thuc: top.muc.dong.id, cau_kt: top.muc.dong.cau_hoi, diem: top.diem };
+  // Bot da hieu y ngam ("doi qua" -> goi y mon) -> khong can hoc.
+  if (tl.bat_y_dinh_ngam && await timYDinhNgam(cauHoi).catch(() => null)) return { kieu: 'da_hieu' };
   // Gio da bat duoc bang tu khoa (vd vua them tu khoa) -> coi nhu da hieu.
   if (tl.bat_tu_khoa) {
     const kw = await timTheoTuKhoa(cauHoi, 2).catch(() => []);
@@ -1642,8 +1957,9 @@ async function deXuatHoc(soNgay = 30) {
 
 async function hoiThoaiGanDay({ gioiHan = 80, chiKhongHieu = false } = {}) {
   try {
+    await damBaoCotTep().catch(() => {});
     const [r] = await db.query(
-      `SELECT id, cau_hoi, tra_loi, y_dinh, tin_cay, nguon, quyen, khong_hieu, huu_ich, phien, tao_luc
+      `SELECT id, cau_hoi, tra_loi, y_dinh, tin_cay, nguon, quyen, khong_hieu, huu_ich, phien, tao_luc${daCoCotTep ? ', tep' : ''}
        FROM chatbot_hoi_thoai ${chiKhongHieu ? 'WHERE khong_hieu = 1' : ''} ORDER BY id DESC LIMIT ?`, [gioiHan]);
     return r;
   } catch { return []; }
@@ -1662,8 +1978,9 @@ async function xuLyLienHe(id, daXuLy) {
 
 module.exports = {
   deXuatHoc, hocCau, danhDauHoc, hoanTacHoc, tuHocMotCau, phanTichHoc, timTheoTuKhoa,
+  docYDinhNgam, luuYDinhNgam, khoiPhucYDinhNgam, timYDinhNgam,
   MAC_DINH, docThietLap, luuThietLap, thietLapCongKhai,
-  traLoi, traLoiKhongHieu, loiChao, apDung, ghiNhatKy, capNhatNhatKyML, thongKeMenu,
+  traLoi, traLoiKhongHieu, loiChao, apDung, ghiNhatKy, ganTepNhatKy, capNhatNhatKyML, thongKeMenu, theMon, giaVN, traLoiMon,
   timKienThuc, timMon, layMenu, lamMoiChiMuc, chuanHoaCoBan,
   danhSach, them, sua, xoa, batTat, napNhieu, napBoMau, docFile, taoExcel,
   thongKeKho, theoNguon, hoiThoaiGanDay, dsLienHe, xuLyLienHe,

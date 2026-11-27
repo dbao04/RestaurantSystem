@@ -76,7 +76,7 @@ module.exports = [
 
   // ------------------------------------------------------- THONG TIN QUAN
   ['thong_tin', 'Nhà hàng mở cửa mấy giờ?', ['giờ mở cửa', 'mấy giờ đóng cửa', 'quán mở tới mấy giờ', 'giờ hoạt động', 'sáng mấy giờ mở', 'tối mấy giờ đóng', 'mở cửa chưa', 'còn mở cửa không'],
-    'gio mo cua,dong cua,mo cua,gio hoat dong,may gio,gio giac,lam viec,toi may gio,mo khuya',
+    'gio mo cua,dong cua,mo cua,gio hoat dong,may gio,gio giac,lam viec toi may gio,mo toi may gio,toi may gio,mo khuya',
     'Nhà hàng mở cửa **{gio_mo_cua}** tất cả các ngày trong tuần, kể cả cuối tuần và ngày lễ ạ ⏰. Bếp nhận order cuối trước giờ đóng cửa 30 phút nha.||Dạ {ten_nha_hang} phục vụ **{gio_mo_cua}** mỗi ngày ạ. Bạn muốn mình giữ bàn trước không?',
     'Đặt bàn|Địa chỉ nhà hàng', 'Đặt bàn ngay|/dat-ban'],
   ['thong_tin', 'Lễ Tết có mở cửa không?', ['tết có bán không', 'ngày lễ có mở không', 'mùng 1 có mở cửa', 'nghỉ tết ngày nào', 'chủ nhật có mở không'],

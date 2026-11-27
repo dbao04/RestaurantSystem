@@ -202,6 +202,151 @@
   </div>
 </section>
 
+<!-- =========================================================== HIEU Y KHACH -->
+<%
+  const dsYD = (typeof yDinhNgam !== 'undefined' && yDinhNgam) || [];
+  const TEN_HD = { chi_tra_loi: 'Chỉ trả lời', ban_chay: 'Gửi món bán chạy', nhom: 'Gửi món theo nhóm', gia: 'Gửi món dưới mức giá', mon_chin: 'Gửi món chín', ten: 'Gửi món có tên chứa' };
+%>
+<section class="qt-tab" data-tab="hieu-y">
+  <div class="nh-card">
+    <div class="nh-card__header" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <h2 class="nh-card__title"><i class="fas fa-heart-pulse"></i> Hiểu ý khách</h2>
+        <p class="nh-card__desc">
+          Khách không hỏi thẳng nhưng lời nói cho thấy nhu cầu: <b>“đói quá”</b> → đang muốn ăn → bot gợi ý món kèm ảnh và hỏi đến quán hay giao;
+          <b>“trời lạnh”</b> → gợi ý lẩu, súp; <b>“hết tiền”</b> → món dưới 100k…
+          Bot bỏ qua câu phủ định (<i>“không đói”, “hết khát”</i>) và nếu khách đang <b>hỏi</b> một chủ đề khác (vd “đói quá có giao hàng không”) thì trả lời câu hỏi đó trước.
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="nh-btn" type="button" id="yd-them"><i class="fas fa-plus"></i> Thêm ý định</button>
+        <button class="nh-btn ghost" type="button" id="yd-mac-dinh"><i class="fas fa-rotate-left"></i> Khôi phục bộ mặc định</button>
+      </div>
+    </div>
+    <div class="yd-luoi" id="yd-ds"></div>
+  </div>
+</section>
+
+<div class="pr-modal" id="md-yd" role="dialog" aria-modal="true" aria-labelledby="md-yd-td">
+  <form class="pr-modal__hop" id="form-yd">
+    <div class="pr-modal__dau"><h3 id="md-yd-td">Ý định</h3><button type="button" data-dong>&times;</button></div>
+    <div class="pr-modal__than">
+      <input type="hidden" name="vi_tri">
+      <div class="pr-luoi">
+        <label class="pr-truong"><span>Tên ý định *</span><input class="nh-input" name="ten" required maxlength="80" placeholder="Đói / muốn ăn"></label>
+        <label class="pr-truong"><span>Độ ưu tiên (0–10)</span><input class="nh-input" type="number" name="uu_tien" min="0" max="10" value="3">
+          <small>Khách nói trúng nhiều ý một lúc (“đói mà trời lạnh”) thì ý ưu tiên cao hơn thắng. Ý cụ thể nên cao hơn ý chung chung.</small></label>
+        <label class="pr-truong pr-rong"><span>Từ / cụm từ tín hiệu * (mỗi dòng một cụm)</span>
+          <textarea class="nh-input" name="tu_khoa" rows="5" required placeholder="đói&#10;đói bụng&#10;thèm ăn&#10;chưa ăn gì"></textarea>
+          <small><b>Viết có dấu</b>: khách gõ có dấu thì bot so đúng dấu (“đói” không nhầm “đổi”), khách gõ không dấu vẫn hiểu.</small></label>
+        <label class="pr-truong pr-rong"><span>Câu bot đáp * (nhiều cách cách nhau ||)</span>
+          <textarea class="nh-input" name="tra_loi" rows="4" required></textarea>
+          <small>Dùng được <code>{ten_khach}</code> <code>{hotline}</code> <code>{ten_nha_hang}</code>… In đậm: <code>**chữ**</code>.</small></label>
+        <label class="pr-truong"><span>Gửi kèm</span>
+          <select class="nh-input" name="hanh_dong">
+            <% Object.keys(TEN_HD).forEach(function (k) { %><option value="<%= k %>"><%= TEN_HD[k] %></option><% }) %>
+          </select></label>
+        <label class="pr-truong"><span>Tham số</span><input class="nh-input" name="tham_so" placeholder="HOT POT|SOUP">
+          <small id="yd-goi-y-ts">Nhóm món: tên nhóm tiếng Anh trong thực đơn, cách nhau | (DRINK, DESSERT, HOT POT, SOUP, SALAD, SASHIMI, COMBO…). Mức giá: số tiền tối đa. Tên món: chữ có trong tên, cách nhau |.</small></label>
+        <label class="pr-truong"><span>Nút liên kết (Nhãn|đường dẫn ; …)</span><input class="nh-input" name="lien_ket" placeholder="Đặt món|/menu;Đặt bàn|/dat-ban"></label>
+        <label class="pr-truong"><span>Gợi ý câu tiếp (cách nhau |)</span><input class="nh-input" name="goi_y"></label>
+        <label class="pr-sw pr-rong" style="border:0;"><input type="checkbox" name="bat" checked><span class="pr-sw__nut"></span><span class="pr-sw__chu"><b>Đang bật</b></span></label>
+      </div>
+    </div>
+    <div class="pr-modal__chan">
+      <button type="button" class="nh-btn do pr-trai" id="yd-xoa"><i class="fas fa-trash"></i> Xóa ý định</button>
+      <button type="button" class="nh-btn ghost" data-dong>Hủy</button>
+      <button type="submit" class="nh-btn"><i class="fas fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .yd-luoi { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .yd-the { border:1px solid var(--nh-line); border-radius: 12px; padding: 14px 16px; background:#fff; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition: border-color .2s, box-shadow .2s; }
+  .yd-the:hover { border-color: var(--nh-gold); box-shadow: var(--nh-shadow-sm); }
+  .yd-the.tat { opacity: .5; }
+  .yd-the__dau { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+  .yd-the__dau b { font-size: 14.5px; }
+  .yd-tu { display:flex; flex-wrap:wrap; gap:5px; }
+  .yd-tu span { background:#fbf3e2; border:1px solid #ecdcb8; color:#6b4a1c; border-radius:999px; padding:2px 9px; font-size:12px; }
+  .yd-tl { font-size:12.5px; color: var(--nh-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+</style>
+
+<script>
+(function () {
+  var TEN_HD = <%- JSON.stringify(TEN_HD) %>;
+  var ds = <%- JSON.stringify(dsYD) %>;
+  var hop = document.getElementById('yd-ds');
+  var form = document.getElementById('form-yd');
+  var md = document.getElementById('md-yd');
+  function thoat(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function bao(msg, loi) { var t = document.getElementById('pr-toast'); if (!t) return; t.textContent = msg; t.className = 'pr-toast hien' + (loi ? ' loi' : ''); setTimeout(function () { t.className = 'pr-toast'; }, 2600); }
+  function ve() {
+    var xep = ds.map(function (y, i) { return [y, i]; }).sort(function (a, b) { return (b[0].uu_tien || 0) - (a[0].uu_tien || 0); });
+    hop.innerHTML = xep.length ? xep.map(function (p) {
+      var y = p[0];
+      return '<div class="yd-the' + (y.bat ? '' : ' tat') + '" data-i="' + p[1] + '">' +
+        '<div class="yd-the__dau"><b>' + thoat(y.ten) + '</b><span class="pr-the">' + thoat(TEN_HD[y.hanh_dong] || '') + (y.tham_so ? ': ' + thoat(y.tham_so) : '') + '</span></div>' +
+        '<div class="yd-tu">' + y.tu_khoa.slice(0, 8).map(function (k) { return '<span>' + thoat(k) + '</span>'; }).join('') + (y.tu_khoa.length > 8 ? '<span>+' + (y.tu_khoa.length - 8) + '</span>' : '') + '</div>' +
+        '<div class="yd-tl">' + thoat(String(y.tra_loi).split('||')[0]).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>') + '</div>' +
+        '<div class="pr-phu">Ưu tiên ' + (y.uu_tien || 0) + (y.bat ? '' : ' · <b style="color:var(--nh-danger)">đang tắt</b>') + '</div>' +
+      '</div>';
+    }).join('') : '<p class="nh-card__desc">Chưa có ý định nào.</p>';
+  }
+  function luu(thongBao) {
+    return fetch('/admin/chatbot/api/y-dinh-ngam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ds: ds }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.ok) throw new Error(d.loi || 'Lỗi lưu'); bao(thongBao || 'Đã lưu, bot hiểu ý mới ngay'); ve(); })
+      .catch(function (e) { bao(e.message, true); });
+  }
+  function mo(i) {
+    var y = i == null ? { ten: '', tu_khoa: [], tra_loi: '', hanh_dong: 'ban_chay', tham_so: '', lien_ket: '', goi_y: '', uu_tien: 3, bat: true } : ds[i];
+    form.reset();
+    form.elements.vi_tri.value = i == null ? '' : i;
+    form.elements.ten.value = y.ten;
+    form.elements.tu_khoa.value = (y.tu_khoa || []).join('\n');
+    form.elements.tra_loi.value = y.tra_loi;
+    form.elements.hanh_dong.value = y.hanh_dong;
+    form.elements.tham_so.value = y.tham_so || '';
+    form.elements.lien_ket.value = y.lien_ket || '';
+    form.elements.goi_y.value = y.goi_y || '';
+    form.elements.uu_tien.value = y.uu_tien || 0;
+    form.elements.bat.checked = y.bat !== false;
+    document.getElementById('md-yd-td').textContent = i == null ? 'Thêm ý định' : 'Sửa ý định';
+    document.getElementById('yd-xoa').style.display = i == null ? 'none' : '';
+    md.classList.add('mo');
+  }
+  hop.addEventListener('click', function (e) { var t = e.target.closest('[data-i]'); if (t) mo(Number(t.dataset.i)); });
+  document.getElementById('yd-them').onclick = function () { mo(null); };
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    var f = form.elements;
+    var y = {
+      ma: f.vi_tri.value !== '' ? ds[Number(f.vi_tri.value)].ma : undefined,
+      ten: f.ten.value, tu_khoa: f.tu_khoa.value.split(/\n|,/).map(function (s) { return s.trim(); }).filter(Boolean),
+      tra_loi: f.tra_loi.value, hanh_dong: f.hanh_dong.value, tham_so: f.tham_so.value, lien_ket: f.lien_ket.value,
+      goi_y: f.goi_y.value, uu_tien: Number(f.uu_tien.value) || 0, bat: f.bat.checked
+    };
+    if (f.vi_tri.value !== '') ds[Number(f.vi_tri.value)] = y; else ds.push(y);
+    md.classList.remove('mo');
+    luu();
+  };
+  document.getElementById('yd-xoa').onclick = function () {
+    var i = form.elements.vi_tri.value;
+    if (i === '' || !confirm('Xóa ý định “' + ds[Number(i)].ten + '”?')) return;
+    ds.splice(Number(i), 1);
+    md.classList.remove('mo');
+    luu('Đã xóa ý định');
+  };
+  document.getElementById('yd-mac-dinh').onclick = function () {
+    if (!confirm('Khôi phục bộ ý định mặc định? Các ý định bạn đã sửa sẽ mất.')) return;
+    fetch('/admin/chatbot/api/y-dinh-ngam/mac-dinh', { method: 'POST' }).then(function () { location.href = '/admin/chatbot?tab=hieu-y'; });
+  };
+  ve();
+})();
+</script>
+
 <!-- =========================================================== THIET LAP -->
 <section class="qt-tab" data-tab="thiet-lap">
   <form id="form-tl" autocomplete="off">
@@ -210,6 +355,8 @@
       <a href="#tl-chung"><i class="fas fa-power-off"></i> Bật/tắt &amp; tính cách</a>
       <a href="#tl-nha-hang"><i class="fas fa-store"></i> Thông tin nhà hàng</a>
       <a href="#tl-bo-nao"><i class="fas fa-brain"></i> Bộ não trả lời</a>
+      <a href="#tl-tri-nho"><i class="fas fa-photo-film"></i> Ảnh, video &amp; trí nhớ</a>
+      <a href="#tl-ai"><i class="fas fa-wand-magic-sparkles"></i> AI Claude</a>
       <a href="#tl-giao-dien"><i class="fas fa-comments"></i> Khung chat</a>
       <a href="#tl-gio"><i class="fas fa-clock"></i> Giờ hoạt động</a>
       <a href="#tl-khach"><i class="fas fa-user-plus"></i> Khách &amp; nhân viên</a>
@@ -263,6 +410,7 @@
           <div><%- sw('nut_them_gio', 'Nút “Thêm vào giỏ” trên thẻ món', 'Khách đặt món ngay trong khung chat.') %></div>
           <div><%- sw('goi_y_mon_ban_chay', 'Gợi ý món bán chạy', 'Trả lời “có món gì ngon”, “nên ăn gì” bằng món được gọi nhiều nhất.') %></div>
           <div><%- sw('nho_ngu_canh', 'Nhớ ngữ cảnh', 'Hiểu “món đó giá bao nhiêu”, “còn không” theo món vừa nói.') %></div>
+          <div class="pr-rong"><%- sw('bat_y_dinh_ngam', 'Hiểu ý khách', 'Hiểu nhu cầu ngầm trong lời khách: “đói quá” → gợi ý món, “trời lạnh” → lẩu, súp… Chỉnh danh sách ở tab Hiểu ý khách.') %></div>
           <div class="pr-rong"><%- sw('bat_tu_khoa', 'Bắt từ khóa', 'Câu khách có chứa từ khóa của chủ đề nào là bot trả lời theo chủ đề đó, không cần giống cả câu. Hiểu gõ không dấu, viết tắt, từ đồng nghĩa, từ khóa nằm cách nhau trong câu và gõ sai 1 chữ.') %></div>
           <%- truot('nguong_tu_khoa', 'Độ chắc khi bắt từ khóa', 'Trùng nguyên 1 cụm từ khóa ≈ 1.0, trùng 1 từ đơn ≈ 0.75. Khuyên dùng 0.6. Tăng lên nếu bot bắt nhầm.', 0.3, 1.5, 0.05) %>
           <div></div>
@@ -277,6 +425,49 @@
           <div class="pr-rong"><%- vung('tu_dong_nghia', 'Từ đồng nghĩa (mỗi dòng một nhóm, cách nhau dấu |)', 'Từ đầu dòng là từ chuẩn. Ví dụ: <code>dat ban | book ban | giu cho</code> → khách gõ “giữ chỗ” bot hiểu như “đặt bàn”. Gõ có dấu hay không dấu đều được.', 6) %></div>
           <div class="pr-rong"><%- vung('tin_khong_hieu', 'Câu trả lời khi không hiểu', '', 2) %></div>
           <div class="pr-rong"><%- chu('tin_goi_y_gan_dung', 'Câu mở đầu khi gợi ý câu gần đúng') %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-tri-nho">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-photo-film"></i> Ảnh, video &amp; trí nhớ hội thoại</h2>
+          <p class="nh-card__desc">Khách bấm nút <i class="fas fa-image"></i> trong khung chat (hoặc dán / kéo thả) để gửi ảnh, video. Bot so ảnh với <b>ảnh của tất cả món</b> trong thực đơn
+            để nhận ra món và gửi thông tin, giá. Video được cắt sẵn 4 khung hình ngay trên máy khách nên gửi nhanh, không tải cả tệp lên máy chủ.</p></div>
+        <div class="pr-luoi">
+          <div><%- sw('bat_nhan_anh', 'Cho khách gửi ảnh', 'Ảnh chụp món, ảnh màn hình món trên mạng… Nhận diện cần bật dịch vụ ML (Python).') %></div>
+          <div><%- sw('bat_nhan_video', 'Cho khách gửi video', 'Trình duyệt cắt 4 khung hình rải đều video rồi gửi như ảnh.') %></div>
+          <%- truot('nguong_anh_chac', 'Độ giống để khẳng định “đây là món X”', 'Ảnh chụp lại / ảnh màn hình món của quán thường đạt 0.9–1. Khuyên dùng 0.86.', 0.5, 0.99, 0.01) %>
+          <%- truot('nguong_anh_co_the', 'Độ giống để gợi ý “nhìn giống mấy món này”', 'Thấp hơn mức này bot nói thật là chưa nhận ra và mời khách nhắn thêm / gặp nhân viên.', 0.4, 0.95, 0.01) %>
+          <div class="pr-rong"><%- vung('tin_anh_khong_ro', 'Câu trả lời khi ảnh không giống món nào', '', 2) %></div>
+          <div class="pr-rong"><%- sw('nho_lich_su', 'Nhớ lịch sử cuộc trò chuyện', 'Hiểu câu nói tiếp như người thật: <b>“còn thứ 7 thì sao”</b> (sau khi hỏi giờ mở cửa), <b>“món thứ 2 giá bao nhiêu”</b>, <b>“còn món nào khác không”</b>, <b>“có món nào rẻ hơn không”</b>. Khách bấm “Cuộc trò chuyện mới” thì bot quên.') %></div>
+          <%- so('so_luot_nho', 'Số lượt hỏi–đáp gần nhất bot nhớ', 'Dùng cho AI Claude và câu nói tiếp. 10–15 là vừa.', 2, 40) %>
+          <div></div>
+          <div class="pr-rong"><%- sw('nho_so_thich', 'Nhớ sở thích &amp; tên khách tự kể', 'Khách nói <b>“mình ăn chay”</b>, <b>“không ăn được cay”</b>, <b>“dị ứng hải sản”</b>, <b>“đi 6 người”</b>, <b>“ngân sách 200k”</b>, <b>“mình tên Lan”</b> → các lần gợi ý món sau tự bỏ món không hợp và gọi đúng tên khách.') %></div>
+        </div>
+      </div>
+
+      <div class="nh-card" id="tl-ai">
+        <div class="nh-card__header"><h2 class="nh-card__title"><i class="fas fa-wand-magic-sparkles"></i> AI Claude (tùy chọn)</h2>
+          <p class="nh-card__desc">Không bật thì bot vẫn chạy đầy đủ như trên. Bật thêm AI Claude để bot <b>hiểu mọi loại ảnh / video</b> (hóa đơn, ảnh bàn tiệc, món ở quán khác, ảnh lỗi thanh toán…)
+            và <b>trả lời cả những câu bot không hiểu</b> dựa trên lịch sử trò chuyện + thông tin nhà hàng + toàn bộ thực đơn. Mỗi lượt gọi AI tính phí theo tài khoản Anthropic của bạn.</p></div>
+        <div class="pr-luoi">
+          <div class="pr-rong">
+            <div class="pr-truong">
+              <span>Khóa API Claude</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input class="nh-input" id="ai-khoa" type="password" autocomplete="off" placeholder="<%= aiTrangThai.co_khoa ? aiTrangThai.khoa_an + ' (đã lưu - nhập khóa mới để thay)' : 'sk-ant-...' %>" style="flex:1;min-width:220px;" <%= aiTrangThai.nguon_khoa === 'env' ? 'disabled' : '' %>>
+                <button class="nh-btn ghost" type="button" id="ai-luu-khoa" <%= aiTrangThai.nguon_khoa === 'env' ? 'disabled' : '' %>><i class="fas fa-key"></i> Lưu khóa</button>
+                <% if (aiTrangThai.co_khoa && aiTrangThai.nguon_khoa !== 'env') { %><button class="nh-btn ghost" type="button" id="ai-xoa-khoa"><i class="fas fa-trash"></i></button><% } %>
+                <button class="nh-btn ghost" type="button" id="ai-kiem-tra"><i class="fas fa-plug-circle-check"></i> Kiểm tra kết nối</button>
+              </div>
+              <small id="ai-trang-thai"><%- aiTrangThai.nguon_khoa === 'env' ? 'Đang dùng khóa trong biến môi trường <code>ANTHROPIC_API_KEY</code> của máy chủ.' : (aiTrangThai.co_khoa ? '<b style="color:var(--nh-ok)">Đã có khóa</b> ' + aiTrangThai.khoa_an : 'Chưa có khóa. Tạo khóa tại console.anthropic.com → API Keys. Khóa chỉ lưu trên máy chủ, không bao giờ gửi ra trình duyệt khách.') %><%= aiTrangThai.loi_gan_nhat ? ' · Lỗi gần nhất: ' + aiTrangThai.loi_gan_nhat : '' %></small>
+            </div>
+          </div>
+          <div class="pr-rong"><%- sw('bat_ai', 'Dùng AI Claude', 'Cần có khóa API ở trên.') %></div>
+          <div><%- sw('ai_doc_anh', 'AI đọc ảnh &amp; video khách gửi', 'Kết quả so ảnh với thực đơn được gửi kèm cho AI để trả lời chính xác món, giá.') %></div>
+          <div><%- sw('ai_khi_khong_hieu', 'AI trả lời câu bot không hiểu', 'Chỉ gọi AI khi kho kiến thức, thực đơn, hiểu ý khách đều không trả lời được → tiết kiệm chi phí.') %></div>
+          <%- chon('ai_mo_hinh', 'Mô hình', [['claude-opus-5-5', 'Claude Opus 5.5 (thông minh nhất, mặc định)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (nhanh, rẻ hơn)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (nhanh nhất, rẻ nhất)']]) %>
+          <div></div>
+          <div class="pr-rong"><%- vung('ai_chi_dan', 'Dặn AI cách trả lời', 'Thông tin nhà hàng, thực đơn, xưng hô đã tự gửi kèm - ở đây chỉ cần dặn thêm phong cách, điều cần tránh.', 3) %></div>
         </div>
       </div>
 
@@ -357,7 +548,9 @@
         <div class="pr-tn pr-tn--bot"><div class="pr-tn__noi">Gõ thử câu khách hay hỏi, ví dụ: <b>“sashimi cá hồi bao nhiêu”</b>, <b>“có chỗ đậu ô tô k”</b>, <b>“quán mở tới mấy h”</b>, <b>“món dưới 100k”</b>. Bên phải hiện bot đã lấy câu trả lời từ đâu.</div></div>
       </div>
       <form class="pr-chat__chan" id="thu-form">
-        <input class="nh-input" id="thu-o" placeholder="Nhập câu hỏi như khách hàng…" maxlength="500">
+        <button class="nh-btn ghost" type="button" id="thu-anh" title="Thử gửi ảnh như khách"><i class="fas fa-image"></i></button>
+        <input type="file" id="thu-tep" accept="image/*" hidden>
+        <input class="nh-input" id="thu-o" placeholder="Nhập câu hỏi như khách hàng… (hoặc bấm 🖼 để thử gửi ảnh)" maxlength="500">
         <button class="nh-btn" type="submit"><i class="fas fa-paper-plane"></i></button>
       </form>
     </div>
@@ -486,7 +679,7 @@
 <script>
 (function () {
   var TEN_NHOM = <%- JSON.stringify(TEN_NHOM) %>;
-  var TEN_NGUON = { kien_thuc: ['Kho kiến thức', 'pr-the--vang'], thuc_don: ['Thực đơn', 'pr-the--xanh'], ml: ['Mô hình ML', 'pr-the--lam'], goi_y: ['Gợi ý gần đúng', ''], khong_hieu: ['Chưa hiểu', 'pr-the--do'], lien_he: ['Để lại SĐT', 'pr-the--lam'], ngoai_gio: ['Ngoài giờ', ''], tu_cam: ['Từ cấm', 'pr-the--do'], du_phong: ['Dự phòng', 'pr-the--vang'] };
+  var TEN_NGUON = { y_dinh_ngam: ['Hiểu ý khách', 'pr-the--xanh'], kien_thuc: ['Kho kiến thức', 'pr-the--vang'], thuc_don: ['Thực đơn', 'pr-the--xanh'], ml: ['Mô hình ML', 'pr-the--lam'], goi_y: ['Gợi ý gần đúng', ''], khong_hieu: ['Chưa hiểu', 'pr-the--do'], lien_he: ['Để lại SĐT', 'pr-the--lam'], ngoai_gio: ['Ngoài giờ', ''], tu_cam: ['Từ cấm', 'pr-the--do'], du_phong: ['Dự phòng', 'pr-the--vang'], hinh_anh: ['Ảnh / video', 'pr-the--vang'], tri_nho: ['Nhớ ngữ cảnh', 'pr-the--xanh'], ai: ['AI Claude', 'pr-the--lam'] };
   function $(s, g) { return (g || document).querySelector(s); }
   function $$(s, g) { return Array.prototype.slice.call((g || document).querySelectorAll(s)); }
   function thoat(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -718,6 +911,30 @@
     if (!confirm('Khôi phục toàn bộ thiết lập về mặc định?')) return;
     api('/admin/chatbot/api/thiet-lap/mac-dinh', { method: 'POST' }).then(function () { location.href = '/admin/chatbot?tab=thiet-lap'; });
   };
+  /* ---------------- AI CLAUDE ---------------- */
+  function aiBao(html) { $('#ai-trang-thai').innerHTML = html; }
+  if ($('#ai-luu-khoa')) $('#ai-luu-khoa').onclick = function () {
+    var k = $('#ai-khoa').value.trim();
+    if (!k) { toast('Nhập khóa API trước đã', true); return; }
+    api('/admin/chatbot/api/ai-khoa', { json: { khoa: k } }).then(function (d) {
+      $('#ai-khoa').value = ''; $('#ai-khoa').placeholder = d.trang_thai.khoa_an + ' (đã lưu - nhập khóa mới để thay)';
+      aiBao('<b style="color:var(--nh-ok)">Đã lưu khóa</b> ' + thoat(d.trang_thai.khoa_an) + '. Bấm “Kiểm tra kết nối” để thử.');
+      toast('Đã lưu khóa API');
+    }).catch(function (e) { toast(e.message, true); });
+  };
+  if ($('#ai-xoa-khoa')) $('#ai-xoa-khoa').onclick = function () {
+    if (!confirm('Xóa khóa API Claude? Bot sẽ ngừng dùng AI.')) return;
+    api('/admin/chatbot/api/ai-khoa', { json: { khoa: '' } }).then(function () { location.href = '/admin/chatbot?tab=thiet-lap'; });
+  };
+  if ($('#ai-kiem-tra')) $('#ai-kiem-tra').onclick = function () {
+    var b = this; b.disabled = true; aiBao('<i class="fas fa-spinner fa-spin"></i> Đang hỏi thử AI…');
+    api('/admin/chatbot/api/ai-kiem-tra', { method: 'POST' }).then(function (d) {
+      aiBao(d.ok ? '<b style="color:var(--nh-ok)"><i class="fas fa-circle-check"></i> Kết nối tốt.</b> AI trả lời thử: “' + dd(d.tra_loi) + '”'
+        : '<b style="color:var(--nh-danger)"><i class="fas fa-circle-xmark"></i> ' + thoat(d.loi) + '</b>');
+    }).catch(function (e) { aiBao('<b style="color:var(--nh-danger)">' + thoat(e.message) + '</b>'); })
+      .then(function () { b.disabled = false; });
+  };
+
   $$('.pr-tl__menu a').forEach(function (a) {
     a.onclick = function (e) { e.preventDefault(); var el = $(a.getAttribute('href')); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 90, behavior: 'smooth' }); };
   });
@@ -727,12 +944,29 @@
   function thuTin(vai, html) {
     var d = document.createElement('div'); d.className = 'pr-tn pr-tn--' + vai; d.innerHTML = html; thuThan.appendChild(d); thuThan.scrollTop = thuThan.scrollHeight; return d;
   }
-  function thuHoi(cau) {
-    cau = String(cau || '').trim(); if (!cau) return;
-    thuTin('toi', '<div class="pr-tn__noi">' + thoat(cau) + '</div>');
+  $('#thu-anh').onclick = function () { $('#thu-tep').click(); };
+  $('#thu-tep').onchange = function () {
+    var tep = this.files && this.files[0]; this.value = '';
+    if (!tep) return;
+    var url = URL.createObjectURL(tep); var im = new Image();
+    im.onload = function () {
+      var tl = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight));
+      var c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * tl); c.height = Math.round(im.naturalHeight * tl);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      thuHoi($('#thu-o').value, c.toDataURL('image/jpeg', 0.85));
+    };
+    im.src = url;
+  };
+  function thuHoi(cau, anh) {
+    cau = String(cau || '').trim(); if (!cau && !anh) return;
+    thuTin('toi', '<div class="pr-tn__noi">' + (anh ? '<img src="' + anh + '" alt="" style="max-width:180px;border-radius:10px;display:block;margin-bottom:' + (cau ? 6 : 0) + 'px;">' : '') + thoat(cau) + '</div>');
     $('#thu-o').value = '';
     var cho = thuTin('bot', '<div class="pr-tn__noi"><i class="fas fa-ellipsis fa-fade"></i></div>');
-    api('/admin/chatbot/api/thu', { json: { cau_hoi: cau, vai_tro: $('#thu-vai').value, ten_khach: $('#thu-ten').value } }).then(function (d) {
+    var goi = anh
+      ? api('/admin/chatbot/api/thu-tep', { json: { anh: [anh], loai: 'anh', cau_hoi: cau, ten_khach: $('#thu-ten').value } })
+      : api('/admin/chatbot/api/thu', { json: { cau_hoi: cau, vai_tro: $('#thu-vai').value, ten_khach: $('#thu-ten').value } });
+    goi.then(function (d) {
+      if (anh) cau = '[Ảnh]' + (cau ? ' ' + cau : '');
       var h = '<div class="pr-tn__noi">' + dd(d.van_ban || '') + '</div>';
       if (d.mon && d.mon.length) h += '<div class="pr-mon-nho">' + d.mon.map(function (m) { return '<div><img src="' + thoat(m.anh || '/mon-thay-the.svg') + '" alt=""><p><b>' + thoat(m.ten) + '</b><br>' + Number(m.gia).toLocaleString('vi-VN') + 'đ</p></div>'; }).join('') + '</div>';
       if (d.lien_ket && d.lien_ket.length) h += '<div class="pr-goi-y-nho">' + d.lien_ket.map(function (l) { return '<span class="pr-the"><i class="fas fa-link"></i> ' + thoat(l.nhan) + '</span>'; }).join('') + '</div>';
@@ -768,7 +1002,7 @@
       $('#ht-ds').innerHTML = ds.length ? ds.map(function (r) {
         var nguon = r.nguon || (r.khong_hieu ? 'khong_hieu' : 'ml');
         return '<tr><td style="font-size:12px;color:var(--nh-muted)">' + new Date(r.tao_luc).toLocaleString('vi-VN') + (r.quyen === 'quan_ly' ? '<br><span class="pr-the">quản lý</span>' : '') + '</td>' +
-          '<td><b>' + thoat(r.cau_hoi) + '</b></td>' +
+          '<td>' + (r.tep ? '<a href="' + thoat(r.tep) + '" target="_blank"><img src="' + thoat(r.tep) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px;"></a>' : '') + '<b>' + thoat(r.cau_hoi) + '</b></td>' +
           '<td><div class="pr-tl">' + dd(r.tra_loi || (r.y_dinh ? '(' + r.y_dinh + ')' : '—')) + '</div></td>' +
           '<td>' + nguonThe(nguon) + (r.tin_cay != null ? '<div class="pr-phu">' + Math.round(r.tin_cay * 100) + '%</div>' : '') + '</td>' +
           '<td>' + (r.huu_ich === 1 ? '👍' : r.huu_ich === 0 ? '👎' : '') + '</td>' +

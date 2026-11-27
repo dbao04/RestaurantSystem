@@ -12,8 +12,13 @@
  *   khach chi can sua JSON la doc duoc doanh thu nha hang.
  */
 const db = require('../config/db');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const daNgonNgu = require('./chatbotDaNgonNgu');
 const triThuc = require('./chatbotTriThuc');
+const triNho = require('./chatbotTriNho');
+const ai = require('./chatbotAI');
 
 const MAC_DINH_URL = 'http://127.0.0.1:8000';
 const TIMEOUT_MS = 15000;        // mot luot hoi phai nhanh; qua lau thi du phong
@@ -105,20 +110,36 @@ const chatbotService = {
     const tl = await triThuc.docThietLap();
     // Tri nho tach theo kenh: hoi o trang nhan vien khong lan sang khung chat khach.
     const khoaNho = laKhach ? 'chatbotNho' : 'chatbotNhoNoiBo';
-    const nho = (session && session[khoaNho]) || {};
+    const nho = { ...((session && session[khoaNho]) || {}) };
+    // Khach tu ke so thich / ten ("minh an chay", "minh ten Lan") -> nho ngay tu luot nay.
+    const soThich = tl.nho_so_thich ? triNho.docSoThich(cauHoi) : null;
+    if (soThich) triNho.capNhatSoThich(nho, soThich);
     const ctx = {
       quyen: boiCanh.quyen, id_kh: boiCanh.id_kh, phien, nguCanh: nho,
       // Trang khach chi goi ten tai khoan khach, khong goi ten nhan vien / quan tri.
-      ten_khach: session && (laKhach ? session.username : (session.staffName || session.adminname || session.username)),
+      ten_khach: (session && (laKhach ? session.username : (session.staffName || session.adminname || session.username))) || nho.ten,
     };
     const cauKt = ngonNgu === 'vi' ? cauHoi : cauDaChuanHoa;
 
-    // Ghi nho phien: mon vua gioi thieu (hieu "mon do bao nhieu") + so lan khong hieu lien tiep.
-    const nhoLai = (kq) => {
+    // Ghi nho phien: mon vua gioi thieu (dung thu tu tren khung chat -> hieu "mon thu 2"),
+    // danh sach de "xem them", cau truoc (hieu cau noi tiep), lich su, so lan khong hieu.
+    const nhoLai = (kq, meta = {}) => {
       if (!session) return;
       const moi = { ...nho };
-      if (kq.mon && kq.mon.length) moi.mon_truoc = kq.mon.slice(0, 3).map((m) => m.id);
-      moi.khong_hieu_lien = kq.khong_hieu || kq.y_dinh === 'khong_hieu' ? (nho.khong_hieu_lien || 0) + 1 : 0;
+      const khongHieu = kq.khong_hieu || kq.y_dinh === 'khong_hieu';
+      if (kq.mon && kq.mon.length && !meta.giuDs) moi.mon_truoc = kq.mon.slice(0, 8).map((m) => m.id);
+      if (meta.xemThem) moi.xem_them = { ...meta.xemThem, da_xem: (kq.mon || []).map((m) => m.id) };
+      else if (meta.xemThemTiep && moi.xem_them) {
+        moi.xem_them = { ...moi.xem_them, da_xem: [...(moi.xem_them.da_xem || []), ...(kq.mon || []).map((m) => m.id)].slice(-120) };
+      }
+      if (!khongHieu && !meta.noiTiep && kq.nguon !== 'tri_nho' && kq.nguon !== 'lien_he') {
+        moi.cau_truoc = cauKt; moi.cau_truoc_luc = Date.now();
+      }
+      moi.khong_hieu_lien = khongHieu ? (nho.khong_hieu_lien || 0) + 1 : 0;
+      if (tl.nho_lich_su) {
+        triNho.ghiLuot(moi, 'khach', meta.cauGhi || cauHoi, meta.tep ? { tep: meta.tep } : {}, tl.so_luot_nho);
+        triNho.ghiLuot(moi, 'bot', kq.van_ban, kq.mon && kq.mon.length ? { mon: kq.mon.map((m) => `#${m.id} ${m.ten}`).join(', ') } : {}, tl.so_luot_nho);
+      }
       session[khoaNho] = moi;
     };
     const hoanTat = async (kq, { daGhi = false } = {}) => {
@@ -139,7 +160,11 @@ const chatbotService = {
         }));
       }
       const khop = sach._khop;
-      delete sach._khop; delete sach._mon_ids; delete sach._chua_tra_loi; delete sach._goi_y_gan_dung;
+      const meta = {
+        xemThem: sach._xem_them || null, xemThemTiep: !!sach._xem_them_tiep, giuDs: !!sach._giu_ds,
+        noiTiep: !!sach._noi_tiep,
+      };
+      for (const k of Object.keys(sach)) if (k.startsWith('_')) delete sach[k];
       if (boiCanh.quyen === 'quan_ly' && khop) sach.khop_cau = khop;
       if (!daGhi) {
         sach.id_nhat_ky = await triThuc.ghiNhatKy({
@@ -151,7 +176,7 @@ const chatbotService = {
         });
       }
       sach.thoi_gian_ms = Date.now() - batDau;
-      nhoLai(sach);
+      nhoLai(sach, meta);
       // Tu hoc: cau vua tra loi hong -> doi chieu kho kien thuc, du chac thi hoc
       // ngay de lan sau tra loi duoc. Chay nen, khong lam cham khach.
       if (laKhach && (sach.khong_hieu || sach.y_dinh === 'khong_hieu' || sach.y_dinh === 'goi_y_gan_dung')) {
@@ -189,7 +214,28 @@ const chatbotService = {
       }
     }
 
-    const kt = await triThuc.traLoi(cauKt, { ...ctx, kenh });
+    let kt = await triThuc.traLoi(cauKt, { ...ctx, kenh });
+    // Cau noi tiep ngan ("con thu 7 thi sao", "vay giao hang?") -> ghep voi cau truoc roi hieu lai.
+    if (kt._chua_tra_loi && tl.nho_lich_su && !soThich) {
+      const ghep = triNho.ghepCauNoiTiep(cauKt, nho);
+      if (ghep) {
+        const kt2 = await triThuc.traLoi(ghep, { ...ctx, kenh });
+        if (!kt2._chua_tra_loi && kt2.nguon !== 'lien_he') {
+          kt = { ...kt2, _noi_tiep: true, _khop: `nối tiếp câu trước: “${nho.cau_truoc}”${kt2._khop ? ` · ${kt2._khop}` : ''}` };
+        }
+      }
+    }
+    // Khach vua ke so thich ma bot khong co cau nao hop -> xac nhan da nho, nhu nguoi that.
+    if (kt._chua_tra_loi && soThich) {
+      const chiTen = soThich.thay_doi.ten && Object.keys(soThich.thay_doi).length === 1;
+      kt = {
+        van_ban: triThuc.apDung(chiTen
+          ? `Dạ rất vui được trò chuyện với bạn **${soThich.thay_doi.ten}** 😊 Mình có thể giúp gì cho bạn nè?`
+          : `Dạ mình nhớ rồi nha: ${soThich.nhac_lai.join(', ')} 👌 Lát mình gợi ý món sẽ theo ý bạn. Bạn muốn xem thực đơn hay món bán chạy trước ạ?`, tl, ctx),
+        y_dinh: 'nho_so_thich', tin_cay: 1, nguon: 'tri_nho', _khop: 'nhớ sở thích',
+        goi_y: ['Món bán chạy nhất', 'Xem thực đơn', 'Đặt bàn'],
+      };
+    }
     if (!kt._chua_tra_loi) {
       if (kt.nguon === 'ngoai_gio' || kt.nguon === 'lien_he') {
         kt.can_dang_nhap = !(boiCanh.id_kh || boiCanh.id_nv);
@@ -204,6 +250,18 @@ const chatbotService = {
       return hoanTat(ketQuaML, { daGhi: !!ketQuaML.id_nhat_ky });
     }
 
+    // AI Claude (neu bat): hieu cau kho dua tren lich su hoi thoai + du lieu nha hang.
+    if (tl.bat_ai && tl.ai_khi_khong_hieu) {
+      const kqAI = await chatbotService.traLoiBangAI({ tl, nho, cauHoi, ctx, ganDung: kt._goi_y_gan_dung || [] });
+      if (kqAI) {
+        if (ketQuaML && ketQuaML.id_nhat_ky) {
+          triThuc.capNhatNhatKyML(ketQuaML.id_nhat_ky, { nguon: 'ai', tra_loi: kqAI.van_ban, phien });
+          return hoanTat(kqAI, { daGhi: true });
+        }
+        return hoanTat(kqAI);
+      }
+    }
+
     // Khong nguon nao chac chan: goi y cau gan dung, khong hieu nhieu lan -> moi gap nhan vien.
     const kh = await triThuc.traLoiKhongHieu({ ...ctx, kenh }, kt._goi_y_gan_dung || [], (nho.khong_hieu_lien || 0) + 1);
     kh.can_dang_nhap = !(boiCanh.id_kh || boiCanh.id_nv);
@@ -212,6 +270,164 @@ const chatbotService = {
       return hoanTat(kh, { daGhi: true });
     }
     return hoanTat(kh);
+  },
+
+  /**
+   * Hoi AI Claude kem lich su + du lieu nha hang. Tra ve phan hoi chuan cua bot
+   * (van_ban, mon co anh...) hoac null khi chua co khoa / AI loi.
+   */
+  traLoiBangAI: async ({ tl, nho, cauHoi, ctx, anh = [], loaiTep = null, ghiChu = '', ganDung = [] }) => {
+    if (!(await ai.coKhoa())) return null;
+    const { mon } = await triThuc.layMenu();
+    let them = ghiChu;
+    if (ganDung.length) them += `${them ? '\n' : ''}Chủ đề kho kiến thức gần với câu khách: ${ganDung.map((g) => g.cau_hoi).join(' | ')}`;
+    if (nho.so_thich && Object.keys(nho.so_thich).length) them += `${them ? '\n' : ''}Sở thích khách đã nói: ${JSON.stringify(nho.so_thich)}`;
+    if (nho.ten) them += `${them ? '\n' : ''}Khách tên: ${nho.ten}`;
+    const kq = await ai.hoi({ tl, menu: mon, lichSu: triNho.lichSuGanDay(nho, tl.so_luot_nho), cauHoi, anh, loaiTep, ghiChu: them });
+    if (!kq || !kq.tra_loi) return null;
+    const theoId = new Map(mon.map((m) => [m.id, m]));
+    const ds = kq.mon_ids.map((id) => theoId.get(id)).filter(Boolean);
+    const o = {
+      van_ban: triThuc.apDung(kq.tra_loi, tl, ctx),
+      y_dinh: anh.length ? `ai:${loaiTep || 'anh'}` : 'ai:tra_loi',
+      tin_cay: 1, nguon: 'ai', _khop: `AI Claude (${tl.ai_mo_hinh})`,
+    };
+    if (ds.length) {
+      o.mon = ds.map(triThuc.theMon).map((m) => (tl.hien_anh_mon ? m : { ...m, anh: '' }));
+      o._mon_ids = ds.map((m) => m.id);
+    }
+    if (kq.chuyen_nhan_vien) o.chuyen_nhan_vien = true;
+    return o;
+  },
+
+  /**
+   * Khach gui anh / video (video da duoc trinh duyet cat thanh vai khung hinh).
+   * @param {object} o { anh: [dataURL], loai: 'anh'|'video', cauHoi, session, kenh, ngonNgu, phien }
+   */
+  hoiTep: async ({ anh, loai = 'anh', cauHoi = '', session, kenh = 'khach', ngonNgu = 'vi', phien = null }) => {
+    const batDau = Date.now();
+    const tl = await triThuc.docThietLap();
+    const laKhach = kenh === 'khach';
+    const boiCanh = suyRaQuyen(session, kenh);
+    const khoaNho = laKhach ? 'chatbotNho' : 'chatbotNhoNoiBo';
+    const nho = { ...((session && session[khoaNho]) || {}) };
+    const ctx = {
+      quyen: boiCanh.quyen, id_kh: boiCanh.id_kh, phien, nguCanh: nho, kenh,
+      ten_khach: (session && (laKhach ? session.username : (session.staffName || session.adminname || session.username))) || nho.ten,
+    };
+    const laVideo = loai === 'video';
+    const nhan = laVideo ? 'Video' : 'Ảnh';
+
+    // 1) Giai ma + kiem tra: chi JPEG/PNG/WEBP, toi da 6 khung, moi khung <= 4 MB.
+    const khung = [];
+    for (const d of (Array.isArray(anh) ? anh : []).slice(0, 6)) {
+      const m = String(d || '').match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+      if (m && m[2].length <= 4 * 1024 * 1024 * 1.37) khung.push({ media_type: m[1], data: m[2] });
+    }
+    if (!khung.length) return { van_ban: 'Mình chưa mở được tệp này 😥 Bạn gửi lại ảnh dạng JPG/PNG hoặc video ngắn giúp mình nha!', y_dinh: 'tep_loi' };
+
+    // 2) Luu khung dau de quan ly xem lai trong nhat ky hoi thoai.
+    let urlTep = null;
+    try {
+      const thang = new Date().toISOString().slice(0, 7);
+      const thuMuc = path.join(__dirname, '..', 'public', 'uploads', 'chatbot', thang);
+      fs.mkdirSync(thuMuc, { recursive: true });
+      const duoi = khung[0].media_type === 'image/png' ? 'png' : (khung[0].media_type === 'image/webp' ? 'webp' : 'jpg');
+      const ten = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${duoi}`;
+      fs.writeFileSync(path.join(thuMuc, ten), Buffer.from(khung[0].data, 'base64'));
+      urlTep = `/uploads/chatbot/${thang}/${ten}`;
+    } catch (e) { console.error('[chatbot] luu anh:', e.message); }
+
+    // 3) So anh voi anh mon trong thuc don (MobileNet ben ML service).
+    const { mon } = await triThuc.layMenu();
+    const theoId = new Map(mon.map((m) => [m.id, m]));
+    let soKhop = [];
+    let moTa = [];
+    try {
+      const r = await goi('/anh/nhan-dien-mon', { method: 'POST', body: { anh: khung.map((k) => k.data), top: 5 }, timeout: 30000 });
+      soKhop = (r.ket_qua || []).map((k) => ({ m: theoId.get(k.id_mon), diem: k.diem })).filter((k) => k.m);
+      moTa = r.mo_ta || [];
+    } catch (e) { console.error('[chatbot] nhan dien anh:', e.message); }
+    const chac = soKhop[0] && soKhop[0].diem >= tl.nguong_anh_chac
+      && (!soKhop[1] || soKhop[0].diem - soKhop[1].diem >= 0.04 || soKhop[1].m.ten === soKhop[0].m.ten) ? soKhop[0] : null;
+    const coThe = soKhop.filter((k) => k.diem >= tl.nguong_anh_co_the).slice(0, 4);
+
+    // 4) Tra loi
+    let kq = null;
+    if (tl.bat_ai && tl.ai_doc_anh) {
+      const ghiChu = soKhop.length
+        ? `Hệ thống so ảnh với ảnh món trong thực đơn (điểm 0–1, ≥${tl.nguong_anh_chac} là gần như chắc chắn): `
+          + soKhop.slice(0, 3).map((k) => `#${k.m.id} ${k.m.ten} (${k.diem})`).join(', ')
+        : '';
+      kq = await chatbotService.traLoiBangAI({ tl, nho, cauHoi, ctx, anh: khung, loaiTep: loai, ghiChu });
+    }
+    if (!kq && chac) {
+      const m = chac.m;
+      // Khach co hoi kem ("mon nay bao nhieu", "con khong") -> tra loi cau do ve dung mon nay.
+      let r = null;
+      if (cauHoi.trim()) {
+        r = await triThuc.traLoi(cauHoi, { ...ctx, nguCanh: { ...nho, mon_truoc: [m.id] } }).catch(() => null);
+        if (r && (r._chua_tra_loi || !(r.mon && r.mon.some((k) => k.id === m.id)))) r = null;
+      }
+      if (!r) {
+        r = triThuc.traLoiMon({ kieu: 'ngu_canh', ds: [m], x: '' });
+        r.van_ban = `${laVideo ? 'Trong video' : 'Ảnh này'} là món **${m.ten}** của quán nè 😋 ${m.con ? `Giá **${triThuc.giaVN(m.gia)}**/${m.don_vi}.` : 'Món này hiện đang **tạm hết** ạ.'}\nBạn muốn mình thêm vào giỏ hàng hay đặt bàn để thưởng thức tại quán không?`;
+        if (!tl.hien_anh_mon) r.mon = r.mon.map((k) => ({ ...k, anh: '' }));
+      }
+      kq = { ...r, van_ban: triThuc.apDung(r.van_ban, tl, ctx), y_dinh: `${loai}:mon`, tin_cay: chac.diem, nguon: 'hinh_anh',
+        _khop: `${nhan.toLowerCase()} giống món #${m.id} (${chac.diem})` };
+    }
+    if (!kq && coThe.length) {
+      const ds = coThe.map((k) => k.m);
+      kq = {
+        van_ban: triThuc.apDung(`${laVideo ? 'Món trong video' : 'Ảnh này'} nhìn giống ${ds.length > 1 ? 'mấy món này' : 'món này'} của quán nè 👇 Bạn xem có đúng món bạn đang tìm không ạ?`, tl, ctx),
+        mon: ds.map(triThuc.theMon).map((k) => (tl.hien_anh_mon ? k : { ...k, anh: '' })),
+        lien_ket: [{ nhan: 'Xem toàn bộ thực đơn', url: '/menu' }],
+        y_dinh: `${loai}:co_the`, tin_cay: coThe[0].diem, nguon: 'hinh_anh',
+        _khop: `${nhan.toLowerCase()} gần giống: ${coThe.map((k) => `#${k.m.id} (${k.diem})`).join(', ')}`,
+      };
+    }
+    if (!kq) {
+      // Khong giong mon nao: con chu kem theo thi tra loi chu; khong thi noi that + moi gap nhan vien.
+      let r = null;
+      if (cauHoi.trim()) {
+        r = await triThuc.traLoi(cauHoi, { ...ctx, kenh }).catch(() => null);
+        if (r && r._chua_tra_loi) r = null;
+      }
+      const toi = moTa.length && moTa[0].do_sang < 0.15;
+      const mo = moTa.length && moTa[0].do_net < 25;
+      const ghiChuAnh = toi ? ' (ảnh hơi tối nên mình nhìn chưa rõ lắm)' : (mo ? ' (ảnh hơi mờ nên mình nhìn chưa rõ lắm)' : '');
+      kq = r
+        ? { ...r, van_ban: `Mình đã nhận ${nhan.toLowerCase()} của bạn rồi nha 📷\n${r.van_ban}` }
+        : {
+          van_ban: triThuc.apDung(tl.tin_anh_khong_ro, tl, ctx).replace('ảnh này', `${nhan.toLowerCase()} này${ghiChuAnh}`).replace('ảnh của bạn', `${nhan.toLowerCase()} của bạn`),
+          y_dinh: `${loai}:khong_ro`, chuyen_nhan_vien: true, nguon: 'hinh_anh',
+          _khop: soKhop[0] ? `không giống món nào (cao nhất #${soKhop[0].m.id}: ${soKhop[0].diem})` : 'chưa so được ảnh',
+        };
+    }
+
+    // 5) Nhat ky + tri nho phien
+    const cauGhi = `[${nhan}]${cauHoi.trim() ? ` ${cauHoi.trim()}` : ''}`;
+    const khop = kq._khop;
+    for (const k of Object.keys(kq)) if (k.startsWith('_')) delete kq[k];
+    if (boiCanh.quyen === 'quan_ly' && khop) kq.khop_cau = khop;
+    kq.id_nhat_ky = await triThuc.ghiNhatKy({
+      cau_hoi: cauGhi, y_dinh: kq.y_dinh, tin_cay: kq.tin_cay, quyen: laKhach || boiCanh.quyen === 'quan_ly' ? boiCanh.quyen : 'noi_bo',
+      id_kh: boiCanh.id_kh, id_nv: boiCanh.id_nv, thoi_gian_ms: Date.now() - batDau,
+      khong_hieu: /khong_ro$/.test(kq.y_dinh || ''), nguon: kq.nguon, tra_loi: kq.van_ban, phien,
+    });
+    triThuc.ganTepNhatKy(kq.id_nhat_ky, urlTep);
+    if (session) {
+      if (kq.mon && kq.mon.length) nho.mon_truoc = kq.mon.slice(0, 8).map((m) => m.id);
+      if (tl.nho_lich_su) {
+        triNho.ghiLuot(nho, 'khach', cauGhi + (kq.mon && kq.mon.length ? '' : ''), { tep: nhan.toLowerCase() }, tl.so_luot_nho);
+        triNho.ghiLuot(nho, 'bot', kq.van_ban, kq.mon && kq.mon.length ? { mon: kq.mon.map((m) => `#${m.id} ${m.ten}`).join(', ') } : {}, tl.so_luot_nho);
+      }
+      session[khoaNho] = nho;
+    }
+    kq.thoi_gian_ms = Date.now() - batDau;
+    kq.tep = urlTep;
+    return kq;
   },
 
   /** Ban cu (chi ML + du phong) - giu de doi chieu / kiem thu. */

@@ -60,6 +60,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.2",
     "chart.js": "^4.5.1",
