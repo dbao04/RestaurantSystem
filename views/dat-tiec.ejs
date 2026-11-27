@@ -96,7 +96,17 @@ var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
   .td-them { margin-top: .8rem; }
   .td__dai { display: flex; gap: 3px; padding: 3px; background: var(--nh-surface); }
   .td__dai img { flex: 1; min-width: 0; height: 38px; object-fit: cover; border-radius: 5px; }
-  .td__than { padding: .7rem .85rem .85rem; }
+  .td__than { padding: .7rem .85rem .85rem; display: flex; flex-direction: column; gap: .2rem; flex: 1; }
+  .td__mota { font-size: .8rem; line-height: 1.45; color: var(--nh-muted); margin: .25rem 0 0; }
+  .td__hop { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+  .td__hop span { font-size: .7rem; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--nh-line); color: var(--nh-ink); background: var(--nh-bg, transparent); white-space: nowrap; }
+  .td__so { margin-top: auto; padding-top: .35rem; }
+  .gt { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .7rem 1.2rem; margin: .6rem 0 .2rem; }
+  .gt__muc { font-size: .88rem; line-height: 1.55; color: var(--nh-ink); }
+  .gt__muc > b { display: flex; align-items: center; gap: .4rem; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--nh-gold); margin-bottom: .2rem; }
+  .gt__muc ul { margin: 0; padding-left: 1.1rem; }
+  .gt__muc--rong { grid-column: 1 / -1; }
+  .gt__luu { border-left: 3px solid var(--nh-gold); padding: .45rem .7rem; background: rgba(200,162,75,.08); border-radius: 0 8px 8px 0; }
   .td b { display: block; font-size: .98rem; } .td .gia { color: var(--nh-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
   .td small { color: var(--nh-muted); display: block; }
   .chon-ban { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-top: .8rem; padding: .8rem 1rem; border: 1px solid var(--nh-line); border-radius: 12px; background: var(--nh-surface); }
@@ -309,13 +319,19 @@ var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
                 <button type="button" class="td" role="radio" aria-checked="false" data-td="<%= m.id %>" data-loai-td="<%= m.loai_tiec || '' %>">
                   <span class="td__anh"><img src="<%= m.hinh_anh || '/images/khong-gian/tiec-cuoi-1.jpg' %>" alt="" loading="lazy"><span class="td__chon"><i class="fas fa-check"></i></span></span>
                   <% if (anhMon.length) { %><span class="td__dai"><% anhMon.forEach(function (x) { %><img src="<%= x.anh %>" alt="" loading="lazy"><% }) %></span><% } %>
-                  <span class="td__than"><b><%= m.ten %></b><span class="gia"><%= vnd(m.gia_ban) %>/bàn</span><small><%= (m.mon || []).length %> món · <%= vnd(m.gia_khach) %>/khách</small></span>
+                  <span class="td__than">
+                    <b><%= m.ten %></b>
+                    <% if (m.mo_ta) { %><span class="td__mota"><%= m.mo_ta %></span><% } %>
+                    <% if (m.gioi_thieu && m.gioi_thieu.hop_voi) { %><span class="td__hop" aria-label="Phù hợp với"><% m.gioi_thieu.hop_voi.forEach(function (h) { %><span><%= h %></span><% }) %></span><% } %>
+                    <span class="td__so"><span class="gia"><%= vnd(m.gia_ban) %>/bàn</span><br><small><%= (m.mon || []).length %> món · <%= vnd(m.gia_khach) %>/khách</small></span>
+                  </span>
                 </button>
               <% }) %>
             </div>
             <button type="button" class="dtw__btn dtw__btn--phu td-them" id="xemThemTd" hidden></button>
             <div class="td-ct" id="tdChiTiet" hidden>
               <b id="tdTen"></b>
+              <div id="tdGioiThieu"></div>
               <div id="tdMon"></div>
               <p class="phu" style="margin:.8rem 0 0">Muốn đổi món trong set này? Chọn <a href="#" id="sangTuChon">Tự chọn thực đơn</a> và bấm "Lấy món từ thực đơn mẫu".</p>
             </div>
@@ -400,7 +416,7 @@ var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
 (function () {
   var LOAI = <%- JSON.stringify(loaiTiec).replace(/</g, '\\u003c') %>;
   var BUOI = <%- JSON.stringify(buoi).replace(/</g, '\\u003c') %>;
-  var THUC_DON = <%- JSON.stringify(thucDon.map(function (m) { return { id: m.id, ten: m.ten, gia: m.gia_ban, anh: m.hinh_anh || '/images/khong-gian/tiec-cuoi-1.jpg', mon: m.mon }; })).replace(/</g, '\\u003c') %>;
+  var THUC_DON = <%- JSON.stringify(thucDon.map(function (m) { return { id: m.id, ten: m.ten, gia: m.gia_ban, anh: m.hinh_anh || '/images/khong-gian/tiec-cuoi-1.jpg', mon: m.mon, mo_ta: m.mo_ta || '', bao_gom: m.bao_gom || [], gt: m.gioi_thieu }; })).replace(/</g, '\\u003c') %>;
   var DICH_VU = <%- JSON.stringify(dichVu.map(function (d) { return { id: d.id, ten: d.ten, gia: d.gia, don_vi: d.don_vi }; })).replace(/</g, '\\u003c') %>;
   var MON_LE = <%- JSON.stringify(monLe).replace(/</g, '\\u003c') %>;
   var CH = { min: <%= ch.khach_toi_thieu %>, max: <%= ch.khach_toi_da %>, moiBan: <%= khachMoiBan %>, coc: <%= ch.ty_le_coc %>, tuChonMin: <%= ch.tu_chon_mon_toi_thieu %>, tuChonGiam: <%= Math.min(50, ch.tu_chon_giam_phan_tram || 0) %>, banIt: <%= ch.khach_moi_ban_it_nhat %>, banNhieu: <%= ch.khach_moi_ban_nhieu_nhat %> };
@@ -560,6 +576,15 @@ var donVi = { GOI: 'gói', BAN: 'bàn', KHACH: 'khách' };
   function veMon() {
     var td = THUC_DON.filter(function (t) { return t.id === S.thucDon; })[0]; if (!td) return;
     $('tdChiTiet').hidden = false; $('tdTen').textContent = td.ten + ' · ' + (td.mon || []).length + ' món';
+    var gt = td.gt || {}, muc = function (icon, ten, nd, lop) { return nd ? '<div class="gt__muc' + (lop ? ' ' + lop : '') + '"><b><i class="fas ' + icon + '" aria-hidden="true"></i>' + ten + '</b>' + nd + '</div>' : ''; };
+    $('tdGioiThieu').innerHTML = (td.mo_ta ? '<p class="phu" style="margin:.4rem 0 0">' + esc(td.mo_ta) + '</p>' : '') + '<div class="gt">' +
+      muc('fa-heart', 'Phù hợp với', (gt.hop_voi || []).length ? esc(gt.hop_voi.join(' · ')) : '') +
+      muc('fa-users', 'Quy mô gợi ý', gt.quy_mo ? esc(gt.quy_mo) : '') +
+      muc('fa-bowl-food', 'Hương vị', gt.huong_vi ? esc(gt.huong_vi) : '') +
+      muc('fa-star', 'Vì sao nên chọn', gt.diem_nhan ? esc(gt.diem_nhan) : '', 'gt__muc--rong') +
+      muc('fa-gift', 'Đã bao gồm trong giá', (td.bao_gom || []).length ? '<ul>' + td.bao_gom.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '', 'gt__muc--rong') +
+      muc('fa-circle-info', 'Lưu ý', gt.luu_y ? esc(gt.luu_y) : '', 'gt__muc--rong gt__luu') +
+      '</div>';
     var nhom = [];
     (td.mon || []).forEach(function (m) { var g = nhom.filter(function (x) { return x.ten === m.nhom; })[0]; if (!g) nhom.push(g = { ten: m.nhom || 'Món', ds: [] }); g.ds.push(m); });
     $('tdMon').innerHTML = nhom.map(function (g) {

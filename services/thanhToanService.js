@@ -269,14 +269,17 @@ async function layHoaDon(sesis, { maGiamGia = null, diemDung = 0, kenh = null, g
   // Doi chieu them bang reservations (truong hop khach da thanh toan truoc/dat coc
   // khi dat ban tren web nhung chua co dong trong payments).
   const [[rsvCoc]] = await db.query(
-    `SELECT COALESCE(deposit_amount, 0) AS tong
+    `SELECT COALESCE(deposit_amount, 0) AS tong, COALESCE(dich_vu_kem_tong, 0) AS dv
        FROM reservations
       WHERE reservation_code = ? AND deposit_status = 'PAID'
       LIMIT 1`,
     [sesis]
   ).catch(() => [[{ tong: 0 }]]);
 
-  const tienDaCoc = Math.max(Number(daCoc.tong || 0), Number(rsvCoc && rsvCoc.tong || 0));
+  // Tien dich vu kem theo (banh kem, trang tri...) nam trong khoan tra truoc nhung KHONG
+  // phai tien mon -> khong dem vao phan cấn tru hoa don mon.
+  const tienDvKem = Number(rsvCoc && rsvCoc.dv || 0);
+  const tienDaCoc = Math.max(0, Math.max(Number(daCoc.tong || 0), Number(rsvCoc && rsvCoc.tong || 0)) - tienDvKem);
   const daThuTien = Number(daTra.tong_tien || 0) + tienDaCoc;
   const daGiamTruocDo = Number(daTra.tong_giam || 0)
     + Number(daTra.tong_diem || 0) * Number(ch.gia_tri_1_diem);
@@ -1105,6 +1108,8 @@ async function danhSachCanThanhToan() {
              WHERE p.sesis = h.sesis AND p.status = 'success' AND p.loai = 'dat_coc') AS da_coc,
            (SELECT COALESCE(r.deposit_amount, 0) FROM reservations r
              WHERE r.reservation_code = h.sesis AND r.deposit_status = 'PAID' LIMIT 1) AS rsv_coc,
+           (SELECT COALESCE(r.dich_vu_kem_tong, 0) FROM reservations r
+             WHERE r.reservation_code = h.sesis AND r.deposit_status = 'PAID' LIMIT 1) AS rsv_dv,
            (SELECT COALESCE(SUM(p.discount_amount), 0) FROM payments p
              WHERE p.sesis = h.sesis AND p.status = 'success' AND p.loai = 'thanh_toan') AS da_giam,
            (SELECT COALESCE(SUM(p.loyalty_points_used), 0) FROM payments p
@@ -1124,7 +1129,7 @@ async function danhSachCanThanhToan() {
   const ch = await layCauHinh();
   return rows.map((r) => {
     const tamTinh = Number(r.tam_tinh) || 0;
-    const tienDaCoc = Math.max(Number(r.da_coc || 0), Number(r.rsv_coc || 0));
+    const tienDaCoc = Math.max(0, Math.max(Number(r.da_coc || 0), Number(r.rsv_coc || 0)) - Number(r.rsv_dv || 0));
     const daTraThanhToan = Math.max(0, Number(r.da_thanh_toan || 0) - Number(r.da_coc || 0));
     const daThuTien = daTraThanhToan + tienDaCoc;
     const phanChuaTraTruoc = Math.max(0, tamTinh - tienDaCoc);

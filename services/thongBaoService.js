@@ -96,6 +96,7 @@ const LUONG = {
   don_giao_bep_xong:  { nhom: 'Giao hàng', ten: 'Bếp làm xong đơn giao - shipper đến lấy', nhan: ['SHIPPER_DON', 'DIEU_PHOI'], muc_do: 'khan' },
   don_giao_hoan_thanh:{ nhom: 'Giao hàng', ten: 'Giao hàng thành công (kèm tiền thu hộ phải nộp)', nhan: ['DIEU_PHOI', 'THU_NGAN_THU_HO'], muc_do: 'tin' },
   don_giao_ket:       { nhom: 'Giao hàng', ten: 'Đơn giao không ai nhận sau nhiều lần tự phân - cần điều phối xử lý', nhan: ['DIEU_PHOI'], muc_do: 'khan' },
+  giao_cho_shipper_lau: { nhom: 'Giao hàng', ten: 'Đơn đã thanh toán chờ shipper quá lâu', nhan: ['DIEU_PHOI', 'QUAN_LY'], muc_do: 'khan' },
   don_giao_huy:       { nhom: 'Giao hàng', ten: 'Đơn giao bị hủy', nhan: ['SHIPPER_DON', 'DIEU_PHOI', 'BEP_QUAN_LY'], muc_do: 'khan' },
   don_giao_su_co:     { nhom: 'Giao hàng', ten: 'Giao thất bại / shipper từ chối đơn', nhan: ['DIEU_PHOI'], muc_do: 'khan' },
   don_giao_khach:     { nhom: 'Giao hàng', ten: 'Đơn giao của khách: đang giao / đã giao', nhan: ['KHACH'], muc_do: 'tin' },

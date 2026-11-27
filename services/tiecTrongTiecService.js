@@ -171,6 +171,17 @@ async function khaiTiec(idTiec, hanhDong, ngu) {
   if (!qy.khaiTiec) throw new Loi('Chỉ Giám sát phục vụ, Trưởng tiệc hoặc Quản lý.', 403);
   if (hanhDong === 'bat_dau') {
     if (t.bat_dau_thuc_te) throw new Loi('Tiệc đã khai tiệc.');
+    // Khung khai tiec: tu (gio bat dau - 60 phut) toi het ngay to chuc. Truoc day chi chan
+    // ngay tuong lai: khai luc 6h sang cho tiec 18h, hay khai tiec cua ngay da qua deu duoc.
+    const SOM_TOI_DA = 60;
+    const moc = new Date(`${t.ngay}T${t.gio || '00:00'}:00`);
+    const bayGio = new Date();
+    const homNay = `${bayGio.getFullYear()}-${String(bayGio.getMonth() + 1).padStart(2, '0')}-${String(bayGio.getDate()).padStart(2, '0')}`;
+    if (t.ngay < homNay) throw new Loi(`Tiệc ngày ${t.ngay.split('-').reverse().join('/')} đã qua - không khai tiệc được. Liên hệ quản lý để xử lý tiệc này.`);
+    if (bayGio.getTime() < moc.getTime() - SOM_TOI_DA * 60000) {
+      const tu = new Date(moc.getTime() - SOM_TOI_DA * 60000);
+      throw new Loi(`Chưa đến giờ khai tiệc: tiệc bắt đầu ${t.gio}, chỉ khai tiệc từ ${String(tu.getHours()).padStart(2, '0')}:${String(tu.getMinutes()).padStart(2, '0')} (sớm tối đa ${SOM_TOI_DA} phút).`);
+    }
     await db.query('UPDATE dat_tiec SET bat_dau_thuc_te = NOW() WHERE id = ?', [idTiec]);
     await ghi(idTiec, 'khai_tiec', 'Khai tiệc', ngu.idNv);
   } else if (hanhDong === 'ket_thuc') {

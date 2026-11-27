@@ -1,6 +1,8 @@
 <%
-  var activePage = 'kitchen-menu';
+  var activePage = 'kitchen-dishes';
   var staffName = session.staffName || 'Bếp trưởng';
+  // Server chua nap route moi (chua khoi dong lai) thi khong co duocSua: coi nhu khong duoc sua.
+  var duocSua = typeof duocSua !== 'undefined' && !!duocSua;
 %>
 <%- include('../partials/header') %>
 
@@ -9,6 +11,11 @@
         <h1 class="h3 mb-0 text-gray-800"><%= tram === 'bar' ? 'Quản lý đồ uống (Bar)' : tram === 'bep' ? 'Quản lý món ăn (Bếp)' : 'Quản lý món ăn & đồ uống' %></h1>
         <small class="text-muted"><%= tram === 'bar' ? 'Bar chỉ thấy và báo tạm hết các món đồ uống, sake, bia.' : tram === 'bep' ? 'Bếp quản lý món ăn; đồ uống do Bar quản lý.' : 'Ban điều hành thấy tất cả.' %> Báo "Tạm hết" thì món ẩn khỏi thực đơn và phục vụ, thu ngân nhận thông báo.</small>
     </div>
+    <% if (duocSua) { %>
+    <div class="col-md-4 text-right">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#themMonModal"><i class="fas fa-plus mr-1"></i> <%= tram === 'bar' ? 'Thêm đồ uống' : 'Thêm món' %></button>
+    </div>
+    <% } %>
 </div>
 
 <div class="card shadow mb-4">
@@ -55,6 +62,10 @@
                             <% } else { %>
                               <button type="button" class="btn btn-sm btn-success" data-mon-tt="<%= d.id_mon %>" data-tt="1"><i class="fas fa-rotate-left"></i> Bán lại</button>
                             <% } %>
+                            <% if (duocSua) { %>
+                              <button type="button" class="btn btn-sm btn-outline-primary ml-1" title="Sửa" data-toggle="modal" data-target="#suaMonModal<%= d.id_mon %>"><i class="fas fa-edit"></i></button>
+                              <a data-post href="/staff/kitchen/dish/delete/<%= d.id_mon %>" class="btn btn-sm btn-outline-danger ml-1" title="Xóa" onclick="return confirm('Xóa hẳn món này khỏi thực đơn? Muốn tạm ngưng bán thì dùng nút Tạm hết.')"><i class="fas fa-trash"></i></a>
+                            <% } %>
                         </td>
                     </tr>
                     <% }) %>
@@ -63,6 +74,57 @@
         </div>
     </div>
 </div>
+
+<% if (duocSua) {
+  /* Mot form dung cho ca Them va Sua: `m` rong la them moi. */
+  function formMon(id, tieuDe, action, m) { %>
+<div class="modal fade" id="<%= id %>" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="<%= action %>" method="POST" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title"><%= tieuDe %></h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Tên món</label>
+            <input type="text" name="name_mon" class="form-control" value="<%= m.name_mon || '' %>" required maxlength="255">
+          </div>
+          <div class="form-group">
+            <label>Loại món</label>
+            <select name="id_loai" class="form-control" required>
+              <option value="">-- Chọn loại --</option>
+              <% categories.forEach(function (c) { %>
+                <option value="<%= c.id_loai %>" <%= Number(m.id_loai) === Number(c.id_loai) ? 'selected' : '' %>><%= c.name_loai %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Giá bán (đ)</label>
+            <input type="number" name="gia_mon" class="form-control" min="1" step="1000" value="<%= m.gia_mon || '' %>" required>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea name="ghichu_mon" class="form-control" rows="2"><%= m.ghichu_mon || '' %></textarea>
+          </div>
+          <div class="form-group mb-0">
+            <label>Hình ảnh <% if (m.id_mon) { %><small class="text-muted">(bỏ trống để giữ ảnh cũ)</small><% } %></label>
+            <input type="file" name="images" class="form-control-file" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary"><%= m.id_mon ? 'Cập nhật' : 'Thêm' %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% }
+  formMon('themMonModal', tram === 'bar' ? 'Thêm đồ uống' : 'Thêm món', '/staff/kitchen/dish/add', {});
+  dishes.forEach(function (d) { formMon('suaMonModal' + d.id_mon, 'Sửa món', '/staff/kitchen/dish/edit/' + d.id_mon, d); });
+} %>
 
 <script>
 document.querySelectorAll('[data-mon-tt]').forEach(function (b) {

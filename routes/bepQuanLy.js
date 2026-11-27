@@ -21,6 +21,10 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
   const phanQuyenSv = require('../services/phanQuyenService');
   const canXemCongThuc = vaiTroPq.canHoac((req) => phanQuyenSv.coQuyen(req.hoSo, 'bep.cong_thuc.xem'), 'Công thức món dành cho bộ phận chế biến (bếp, bar).');
   const canTruongBep = vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Chốt ca bếp dành cho trưởng bộ phận Bếp / Bar.');
+  // Du lieu danh muc (mon, loai mon, gia ban): chi truong bep / bar va ban dieu hanh
+  // duoc them, sua, xoa. Dau bep thuong chi bao "Tam het" tren trang mon.
+  const canSuaThucDon = vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Thêm, sửa, xóa món và loại món dành cho Bếp trưởng / Trưởng bar.');
+  const duocSuaThucDon = (req) => vaiTroPq.laDieuHanh(req.session || {}, req.hoSo) || vaiTroPq.laTruongBep(req.hoSo);
 
   const phanQuyen = require('../services/phanQuyenService');
   const quyenKho = (req) => {
@@ -349,10 +353,11 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
   });
 
   // Dish manage by Kitchen
-  router.post('/staff/kitchen/dish/add', requireRole(['Bep']), upload.single('images'), async (req, res) => {
+  router.post('/staff/kitchen/dish/add', canSuaThucDon, upload.single('images'), async (req, res) => {
     try {
       const [[loai]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [req.body.id_loai]);
       if (!loai || !dungTram(req, loai.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
+      if (!(Number(req.body.gia_mon) > 0)) return res.status(400).send('<script>alert("Giá món phải lớn hơn 0!"); history.back();</script>');
       const image = req.file ? req.file.filename : null;
       await personnelService.addProduct({ name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon, price: req.body.gia_mon, image });
       res.redirect('/staff/kitchen/dishes');
@@ -362,7 +367,32 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/dish/delete/:id', requireRole(['Bep']), async (req, res) => {
+  // Sua mon: kiem tra tram ca loai CU lan loai MOI - Bar khong duoc keo mon an
+  // sang loai do uong de sua (va nguoc lai). Giu nguyen trang thai ban hien tai;
+  // bat / tat ban da co nut "Tam het" rieng.
+  router.post('/staff/kitchen/dish/edit/:id', canSuaThucDon, upload.single('images'), async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const mon = await personnelService.getProductById(id);
+      if (!mon) return res.status(404).send('Không tìm thấy món.');
+      const [[loaiCu]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [mon.id_loai]);
+      const [[loaiMoi]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [req.body.id_loai]);
+      if (!loaiMoi || !dungTram(req, loaiMoi.name_loai) || (loaiCu && !dungTram(req, loaiCu.name_loai))) {
+        return res.status(403).send(TU_CHOI_TRAM(req));
+      }
+      if (!(Number(req.body.gia_mon) > 0)) return res.status(400).send('<script>alert("Giá món phải lớn hơn 0!"); history.back();</script>');
+      await personnelService.updateProduct(id, {
+        name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon,
+        price: req.body.gia_mon, image: req.file ? req.file.filename : null, tinhtrang: mon.tinhtrang,
+      });
+      res.redirect('/staff/kitchen/dishes');
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+    }
+  });
+
+  router.post('/staff/kitchen/dish/delete/:id', canSuaThucDon, async (req, res) => {
     try {
       const m = await tenLoaiCuaMon(Number(req.params.id));
       if (m && !dungTram(req, m.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
@@ -374,9 +404,16 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
+  // Loai mon cung chia tram nhu mon: Bar chi them / sua / xoa loai do uong.
+  const loaiDungTram = async (req, idLoai) => {
+    const [[l]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [idLoai]);
+    return !!l && dungTram(req, l.name_loai);
+  };
+
   // Category CRUD by Kitchen
-  router.post('/staff/kitchen/categories/add', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/categories/add', canSuaThucDon, async (req, res) => {
     try {
+      if (!dungTram(req, req.body.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       await personnelService.addCategory(req.body.name_loai, req.body.ghichu);
       res.redirect('/staff/kitchen/categories');
     } catch (err) {
@@ -385,8 +422,9 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/categories/edit/:id', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/categories/edit/:id', canSuaThucDon, async (req, res) => {
     try {
+      if (!(await loaiDungTram(req, req.params.id)) || !dungTram(req, req.body.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
       await personnelService.updateCategory(req.params.id, req.body.name_loai, req.body.ghichu);
       res.redirect('/staff/kitchen/categories');
     } catch (err) {
@@ -395,8 +433,9 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.post('/staff/kitchen/categories/delete/:id', requireRole(['Bep']), async (req, res) => {
+  router.post('/staff/kitchen/categories/delete/:id', canSuaThucDon, async (req, res) => {
     try {
+      if (!(await loaiDungTram(req, req.params.id))) return res.status(403).send(TU_CHOI_TRAM(req));
       await personnelService.deleteCategory(req.params.id);
       res.redirect('/staff/kitchen/categories');
     } catch (err) {
@@ -420,14 +459,14 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     }
   });
 
-  router.get('/staff/kitchen/categories', requireRole(['Bep']), async (req, res) => {
+  router.get('/staff/kitchen/categories', canSuaThucDon, async (req, res) => {
     try {
-      const categories = await personnelService.getAllCategories();
+      const categories = (await personnelService.getAllCategories()).filter((c) => dungTram(req, c.name_loai));
       res.render('staff/kitchen/categories', {
         title: 'Quản lý Loại món',
         categories,
         unread: await personnelService.countUnread(req.session.staffId),
-        activePage: 'kitchen-menu'
+        activePage: 'kitchen-categories'
       });
     } catch (err) {
       console.error(err);
@@ -445,8 +484,9 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
         tram,
         dishes,
         categories,
+        duocSua: duocSuaThucDon(req),
         unread: await personnelService.countUnread(req.session.staffId),
-        activePage: 'kitchen-menu'
+        activePage: 'kitchen-dishes'
       });
     } catch (err) {
       console.error(err);

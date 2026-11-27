@@ -94,7 +94,8 @@ async function datDonGiao(p, { dongY = true, toaDo = TRONG_VUNG } = {}) {
     dia_chi_giao: '1 Nguyễn Văn Bảo, Gò Vấp, TP.HCM', ten_nguoi_nhan: p.kh.ten,
     sdt_nguoi_nhan: p.kh.sodienthoai, ...toaDo, ghi_chu_giao: 'AUTOTEST' } });
   const form = { hinh_thuc: 'giao_hang', dia_chi_giao: '1 Nguyễn Văn Bảo, Gò Vấp, TP.HCM', ...toaDo,
-    datebook: ngayCong(0), timebook: '18:00' };
+    // Gio nhan = bay gio -> "giao ngay" (gio hen trong tuong lai se thanh don hen gio, chua len bep).
+    datebook: ngayCong(0), timebook: new Date().toTimeString().slice(0, 5) };
   if (dongY) form.dong_y_chinh_sach = '1';
   const r = await p.goi('/datban', { method: 'POST', form });
   const m = /\/thanh-toan\/don-hang\/([^/?#]+)/.exec(r.location);
@@ -141,6 +142,15 @@ async function testGiaoHang(nv) {
   const ngoaiVung = await datDonGiao(kh, { toaDo: NGOAI_VUNG });
   ok('Đặt đơn giao tới địa chỉ ngoài khu vực bị chặn', !ngoaiVung.sesis && /khu vực/i.test(ngoaiVung.r.text));
 
+  // Ngoai khung nhan don (gio mo cua - 45 phut truoc dong cua): don phai bi tu choi dung thong bao,
+  // cac buoc sau can mot don that nen dung o day.
+  const ngoaiGio = await chinhSach.kiemTraGioGiao(ngayCong(0), new Date().toTimeString().slice(0, 5)).then(() => null, (e) => e.message);
+  if (ngoaiGio) {
+    const d0 = await datDonGiao(kh);
+    ok('Ngoài giờ nhận đơn giao → từ chối, báo khung giờ', !d0.sesis && /nhận đơn giao từ/.test(d0.r.text || ''), ngoaiGio);
+    console.log('  (đang ngoài giờ nhận đơn giao - bỏ qua các bước thanh toán / bếp / shipper của đơn giao)');
+    return;
+  }
   const d1 = await datDonGiao(kh);
   ok('Đặt đơn giao hợp lệ → chuyển sang trang thanh toán trước (không COD)', !!d1.sesis, d1.r.location);
   if (!d1.sesis) return;

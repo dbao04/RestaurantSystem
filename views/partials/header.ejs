@@ -70,9 +70,12 @@
           <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.mon_an') %></a></li>
           <li><a href="/combos" class="<%= (typeof activeNav !== 'undefined' && activeNav==='combos') ? 'is-active' : '' %>"><%= t('dieu_huong.thuc_don') %></a></li>
           <li><a href="/khong-gian" class="<%= (typeof activeNav !== 'undefined' && activeNav==='khonggian') ? 'is-active' : '' %>"><%= t('dieu_huong.khong_gian') %></a></li>
+          <li><a href="/datban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='datban') ? 'is-active' : '' %>"><%= t('chung.dat_ban') %></a></li>
           <li><a href="/dat-tiec" class="<%= (typeof activeNav !== 'undefined' && activeNav==='dattiec') ? 'is-active' : '' %>"><%= t('dieu_huong.dat_tiec') %></a></li>
           <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
+          <% if (!session.username) { %>
           <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
+          <% } %>
           <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
           <li><a href="/my-orders" class="<%= (typeof activeNav !== 'undefined' && activeNav==='myorders') ? 'is-active' : '' %>"><%= t('dieu_huong.don_cua_toi') %></a></li>
           <%# Chat voi nhan vien: vao tu khung chatbot (nut "Chat voi nhan vien") - khong chiem cho tren menu. %>
@@ -84,12 +87,13 @@
           <li class="nh-menu-mobile">
             <a href="/cart" style="color:var(--nh-gold); font-weight:700;"><i class="fas fa-motorcycle"></i> <%= t('gio_hang.dat_mon_giao_tan_noi') %></a>
           </li>
-          <li class="nh-menu-mobile">
-            <a href="/datban"><i class="fas fa-utensils"></i> <%= t('chung.dat_ban') %></a>
-          </li>
+
           <% if (session.username) { %>
             <li class="nh-menu-mobile">
               <a href="/profile"><i class="fas fa-user"></i> <%= t('dieu_huong.tai_khoan') %></a>
+            </li>
+            <li class="nh-menu-mobile">
+              <a href="/thanh-vien"><i class="fas fa-crown"></i> <%= t('dieu_huong.thanh_vien') %></a>
             </li>
             <li class="nh-menu-mobile">
               <a href="/logout"><i class="fas fa-sign-out-alt"></i> <%= t('dieu_huong.dang_xuat') %></a>
@@ -107,10 +111,6 @@
             <i class="fas fa-motorcycle"></i>
             <span><%= t('dat_ban.giao_hang') %></span>
           </a>
-          <a href="/datban" class="nh-nav-action-btn nh-nav-action-btn--booking d-none-mobile" title="<%= t('chung.dat_ban') %>">
-            <i class="fas fa-utensils"></i>
-            <span><%= t('chung.dat_ban') %></span>
-          </a>
 
           <% if (session.userlogin) { %>
             <%- include('chuong-thong-bao', { laTb: 'khach', trangTb: '/tai-khoan/thong-bao', toiTb: true }) %>
@@ -125,10 +125,20 @@
             <% if (session.sum) { %><span class="nh-cart__badge">•</span><% } %>
           </a>
           <% if (session.username) { %>
-            <a href="/profile" class="nh-user" title="<%= t('dieu_huong.tai_khoan') %>">
-              <span class="nh-user__avatar"><%= session.username.charAt(0).toUpperCase() %></span>
-              <span class="nh-user__name d-none-mobile"><%= session.username %></span>
-            </a>
+            <div class="nh-tk" id="nh-tk">
+              <a href="/profile" class="nh-user" id="nh-tk-nut" title="<%= session.username %>" aria-haspopup="true" aria-expanded="false">
+                <span class="nh-user__avatar"><%= session.username.charAt(0).toUpperCase() %></span>
+                <span class="nh-user__name d-none-mobile"><%= session.username %></span>
+                <i class="fas fa-chevron-down nh-tk__mui d-none-mobile" aria-hidden="true"></i>
+              </a>
+              <ul class="nh-tk__menu" role="menu">
+                <li class="nh-tk__ten"><b><%= session.username %></b></li>
+                <li><a href="/profile" role="menuitem"><i class="fas fa-user"></i><%= t('dieu_huong.tai_khoan') %></a></li>
+                <li><a href="/thanh-vien" role="menuitem" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><i class="fas fa-crown"></i><%= t('dieu_huong.thanh_vien') %></a></li>
+                <li><a href="/my-orders" role="menuitem"><i class="fas fa-clock-rotate-left"></i><%= t('dieu_huong.don_cua_toi') %></a></li>
+                <li class="nh-tk__vach"><a href="/logout" role="menuitem"><i class="fas fa-sign-out-alt"></i><%= t('dieu_huong.dang_xuat') %></a></li>
+              </ul>
+            </div>
           <% } %>
           <%
             /*
@@ -166,8 +176,6 @@
           </div>
           <% if (!session.username) { %>
             <a href="/login" class="nh-icon-btn d-none-mobile" title="<%= t('dieu_huong.dang_nhap') %>"><i class="fas fa-user"></i></a>
-          <% } else { %>
-            <a href="/logout" class="nh-icon-btn d-none-mobile" title="<%= t('dieu_huong.dang_xuat') %>"><i class="fas fa-sign-out-alt"></i></a>
           <% } %>
         </div>
 

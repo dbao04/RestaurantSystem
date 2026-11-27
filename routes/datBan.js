@@ -165,6 +165,7 @@ router.get('/dat-ban', canKhachDangNhap, bat(async (req, res) => {
     homNay: ngayCucBo(),
     khuVuc,
     theYeuCau: danhMuc.the_yeu_cau,
+    dichVuKem: require('../config/dich-vu-kem-dat-ban').DANH_MUC,
     danhMucMon: danhMucMon || [],
     dsMonAn: dsMon || [],
     chinhSachHuy: (chinhSach || []).filter((c) => c.is_active),

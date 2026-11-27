@@ -67,7 +67,7 @@ const kdsService = {
        WHERE h.id_mon > 0 AND h.soluong > 0
          AND h.trangthai_bep < 3
          AND (
-           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND TIMESTAMP(h.ngay_dat, COALESCE(h.gio_dat, '00:00:00')) <= NOW() + INTERVAL COALESCE((SELECT CAST(gia_tri AS UNSIGNED) FROM cau_hinh WHERE khoa = 'giao_hang.phut_len_bep_truoc' LIMIT 1), 60) MINUTE AND h.tinhtrang NOT IN (2, 3, 4))
            OR
            (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
          )
@@ -214,7 +214,7 @@ const kdsService = {
        WHERE h.id_mon > 0 AND h.soluong > 0
          AND h.trangthai_bep < 3
          AND (
-           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND h.tinhtrang NOT IN (2, 3, 4))
+           (h.loai_don = 'giao_hang' AND (dg.trang_thai IS NULL OR dg.trang_thai NOT IN ('da_giao', 'huy', 'cho_thanh_toan')) AND TIMESTAMP(h.ngay_dat, COALESCE(h.gio_dat, '00:00:00')) <= NOW() + INTERVAL COALESCE((SELECT CAST(gia_tri AS UNSIGNED) FROM cau_hinh WHERE khoa = 'giao_hang.phut_len_bep_truoc' LIMIT 1), 60) MINUTE AND h.tinhtrang NOT IN (2, 3, 4))
            OR
            (h.loai_don <> 'giao_hang' AND h.tinhtrang IN (0, 1, 5, 6) AND h.ngay_dat = CURDATE())
          )`
@@ -338,6 +338,15 @@ const kdsService = {
       const n = await module.exports.soMonChuaTra(hienTai.sesis_hien_tai);
       if (n > 0) {
         throw new Error(`Bàn ${hienTai.number_ban} còn ${n} món chưa thanh toán. Hãy "Tính tiền bàn này" (hoặc chuyển bàn) trước khi ${tt === 3 ? 'dọn bàn' : tt === 0 ? 'trả bàn trống' : 'đổi sang đã đặt'}.`);
+      }
+    }
+    // 2a. Gan MA LUOT DAT BAN (RSV-...) cho ban = nhan khach. Chi duoc khi luot do da
+    //     "Khach da den" / dang ngoi - neu khong, luot 29/11 bi danh dau co khach tu 28/11
+    //     (bo qua rang buoc gio nhan khach o reservationService.doiTrangThai).
+    if (tt === 1 && sesis && /^RSV-/i.test(String(sesis)) && sesis !== hienTai.sesis_hien_tai) {
+      const [[r]] = await db.query('SELECT status, start_time, DATE_FORMAT(reservation_date, "%d/%m") AS ngay FROM reservations WHERE reservation_code = ? LIMIT 1', [sesis]);
+      if (r && !['ARRIVED', 'SEATED'].includes(r.status) && !(idNv && await require('./cheDoDemo').laDemo(idNv))) {
+        throw new Error(`Lượt đặt ${sesis} (hẹn ${String(r.start_time).slice(0, 5)} ngày ${r.ngay}) chưa nhận khách. Bấm "Khách đã đến" ở Quản lý đặt bàn khi khách tới - hệ thống chỉ cho nhận sớm tối đa 60 phút.`);
       }
     }
     // 2. Xep khach vang lai vao ban sap co khach dat.

@@ -3335,3 +3335,38 @@ html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
 @media (max-width: 600px) {
   .nh-btn { white-space: normal; max-width: 100%; justify-content: center; text-align: center; }
 }
+
+
+/* ==========================================================================
+   MENU TAI KHOAN - tro / bam vao ten khach se so ra (Tai khoan, Thanh vien,
+   Lich su dat ban, Dang xuat). Hover cho chuot, bam cho dien thoai, focus cho
+   ban phim.
+   ========================================================================== */
+.nh-tk { position: relative; flex-shrink: 0; }
+.nh-tk .nh-user { cursor: pointer; }
+.nh-tk__mui { font-size: .6rem; color: var(--nh-gold-soft); transition: transform .2s var(--nh-ease); }
+.nh-tk:hover .nh-tk__mui, .nh-tk.is-open .nh-tk__mui { transform: rotate(180deg); }
+.nh-tk__menu {
+  position: absolute; right: 0; top: 100%; min-width: 210px; z-index: 70;
+  margin: 0; padding: 6px; list-style: none;
+  background: var(--nh-surface, #fff); border: 1px solid var(--nh-line, rgba(0,0,0,.08));
+  border-radius: 12px; box-shadow: var(--nh-shadow, 0 12px 30px rgba(0,0,0,.25));
+  opacity: 0; visibility: hidden; transform: translateY(4px);
+  transition: opacity .18s var(--nh-ease), transform .18s var(--nh-ease), visibility .18s;
+}
+/* cau noi trong suot de chuot di tu ten xuong menu khong bi tat */
+.nh-tk__menu::before { content: ''; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
+.nh-tk:hover .nh-tk__menu, .nh-tk:focus-within .nh-tk__menu, .nh-tk.is-open .nh-tk__menu {
+  opacity: 1; visibility: visible; transform: translateY(8px);
+}
+.nh-tk__ten { padding: 8px 12px 6px; font-size: .78rem; color: var(--nh-muted); border-bottom: 1px solid var(--nh-line, rgba(0,0,0,.08)); margin-bottom: 4px; }
+.nh-tk__ten b { color: var(--nh-ink); font-size: .9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.nh-tk__menu a {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+  font-size: .9rem; color: var(--nh-ink); text-decoration: none; white-space: nowrap;
+  transition: background .15s var(--nh-ease);
+}
+.nh-tk__menu a i { width: 16px; text-align: center; color: var(--nh-gold); font-size: .85rem; }
+.nh-tk__menu a:hover, .nh-tk__menu a:focus-visible { background: var(--nh-cream-2, rgba(200,162,75,.12)); color: var(--nh-ink); }
+.nh-tk__menu a.is-active { color: var(--nh-gold); font-weight: 600; }
+.nh-tk__vach { border-top: 1px solid var(--nh-line, rgba(0,0,0,.08)); margin-top: 4px; padding-top: 4px; }

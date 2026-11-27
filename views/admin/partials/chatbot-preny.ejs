@@ -154,6 +154,13 @@
   .pr-modal__chan .pr-trai { margin-right:auto; }
   .pr-xem-file { max-height: 360px; overflow:auto; border:1px solid var(--nh-line); border-radius:10px; margin-top:12px; }
   .pr-goi-y-bien { display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
+  /* Thanh nut chen bien tren moi o soan tin */
+  .pr-bien { display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 6px; align-items:center; }
+  .pr-bien__nhan { font-size:11.5px; color:#8a7a66; margin-right:2px; }
+  .pr-bien [role="button"] { display:inline-flex; align-items:center; gap:4px; border:1px solid #e3d6bf; background:#fbf7ef; color:#5a4430; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:600; cursor:pointer; user-select:none; transition:background .15s, border-color .15s; }
+  .pr-bien [role="button"]:hover, .pr-bien [role="button"]:focus-visible { background:#f1e4c8; border-color:#c8a24b; outline:none; }
+  .pr-bien [role="button"] code { background:none; padding:0; font-size:10.5px; color:#a08a6c; }
+  .pr-bien .pr-bien__dam { font-weight:800; }
   .pr-goi-y-bien code { background:#f2ece1; border-radius:5px; padding:2px 6px; font-size:11.5px; cursor:pointer; }
 
   .pr-toast { position: fixed; right: 20px; bottom: 20px; z-index: 2000; background: var(--nh-espresso); color:#fff; padding: 12px 18px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: 13.5px; transform: translateY(120%); transition: transform .25s; }
@@ -625,8 +632,7 @@
           <datalist id="dl-nhom"><% Object.keys(TEN_NHOM).forEach(function (k) { %><option value="<%= k %>"><%= TEN_NHOM[k] %></option><% }) %></datalist>
         </div>
         <label class="pr-truong pr-rong"><span>Câu trả lời *</span><textarea class="nh-input" name="tra_loi" rows="5" required placeholder="Có ạ 🚗 Nhà hàng có bãi đậu ô tô miễn phí…"></textarea>
-          <small>Viết nhiều cách trả lời cách nhau bằng <code>||</code> để bot trả lời tự nhiên, không lặp lại. In đậm: <code>**chữ**</code>. Bấm để chèn biến:</small>
-          <span class="pr-goi-y-bien" id="kt-bien"><% ['{ten_bot}','{ten_nha_hang}','{hotline}','{dia_chi}','{gio_mo_cua}','{email}','{wifi}','{ten_khach}','{so_mon}','{gia_thap}'].forEach(function (b) { %><code><%= b %></code><% }) %></span>
+          <small>Viết nhiều cách trả lời cách nhau bằng <code>||</code> để bot trả lời tự nhiên, không lặp lại. In đậm: <code>**chữ**</code>.</small>
         </label>
         <label class="pr-truong"><span>Gợi ý câu hỏi tiếp (cách nhau dấu |)</span><input class="nh-input" name="goi_y" placeholder="Đặt bàn|Xem thực đơn"></label>
         <label class="pr-truong"><span>Nút liên kết (Nhãn|đường dẫn ; …)</span><input class="nh-input" name="lien_ket" placeholder="Đặt bàn ngay|/dat-ban"></label>
@@ -810,11 +816,6 @@
     setTimeout(function () { formKt.elements[macDinh.cau_hoi ? 'tra_loi' : 'cau_hoi'].focus(); }, 50);
   }
   window.prMoSuaKienThuc = moSua;
-  $('#kt-bien').onclick = function (e) {
-    var c = e.target.closest('code'); if (!c) return;
-    var ta = formKt.elements.tra_loi, p = ta.selectionStart || ta.value.length;
-    ta.value = ta.value.slice(0, p) + c.textContent + ta.value.slice(p); ta.focus();
-  };
   formKt.onsubmit = function (e) {
     e.preventDefault();
     var f = formKt.elements, id = f.id.value;
@@ -1012,6 +1013,65 @@
   }
   $('#ht-tai').onclick = taiHoiThoai;
   $('#ht-chi-kh').onchange = taiHoiThoai;
+
+  /* ---------------- NUT CHEN BIEN tren cac o soan tin ----------------
+     Bam nut -> chen {bien} vao dung cho con tro (thay doan dang boi den).
+     Dung <span role=button> (khong phai <button>) vi o nam trong <label>:
+     button la phan tu "labelable" nen bam chu tieu de se kich nham nut dau tien. */
+  var BIEN = [
+    ['ten_khach', 'Tên khách'], ['ten_bot', 'Tên bot'], ['ten_nha_hang', 'Tên nhà hàng'], ['hotline', 'Hotline'],
+    ['dia_chi', 'Địa chỉ'], ['gio_mo_cua', 'Giờ mở cửa'], ['email', 'Email'], ['wifi', 'Wifi'], ['buoi', 'Buổi (sáng/trưa/tối)'],
+    ['so_mon', 'Số món'], ['gia_thap', 'Giá thấp nhất'], ['gia_cao', 'Giá cao nhất']
+  ];
+  var O_BIEN = ['loi_chao', 'loi_chao_quan_ly', 'tin_khong_hieu', 'tin_anh_khong_ro', 'tin_ngoai_gio', 'tin_cam_on_sdt', 'tin_chuyen_nv', 'tin_tu_cam', 'tra_loi'];
+  function chenVao(ta, truoc, sau) {
+    var a = ta.selectionStart, b = ta.selectionEnd;
+    if (a == null) { a = b = ta.value.length; }
+    var giua = ta.value.slice(a, b), chen, p;
+    if (sau) {
+      // In dam: boc doan dang chon; chua chon gi thi con tro nam giua ** **
+      chen = truoc + giua + sau;
+      p = giua ? a + chen.length : a + truoc.length;
+    } else {
+      // Bien: thay doan dang chon bang {bien}
+      chen = truoc;
+      p = a + chen.length;
+    }
+    ta.value = ta.value.slice(0, a) + chen + ta.value.slice(b);
+    ta.focus(); ta.setSelectionRange(p, p);
+    ta.dispatchEvent(new Event('input', { bubbles: true })); // cap nhat xem truoc
+  }
+  function ganThanhBien(ta) {
+    if (ta.dataset.coBien) return; ta.dataset.coBien = '1';
+    var ds = BIEN.slice();
+    if (ta.name === 'tin_cam_on_sdt') ds.unshift(['sdt', 'SĐT khách vừa nhập']);
+    var thanh = document.createElement('div');
+    thanh.className = 'pr-bien';
+    thanh.innerHTML = '<span class="pr-bien__nhan">Chèn:</span>';
+    ds.forEach(function (x) {
+      var n = document.createElement('span');
+      n.setAttribute('role', 'button'); n.tabIndex = 0; n.dataset.bien = x[0];
+      n.title = 'Chèn {' + x[0] + '}';
+      n.appendChild(document.createTextNode(x[1] + ' '));
+      var c = document.createElement('code'); c.textContent = '{' + x[0] + '}'; n.appendChild(c);
+      thanh.appendChild(n);
+    });
+    var dam = document.createElement('span');
+    dam.setAttribute('role', 'button'); dam.tabIndex = 0; dam.dataset.dam = '1'; dam.className = 'pr-bien__dam';
+    dam.title = 'In đậm đoạn đang chọn (**chữ**)'; dam.textContent = 'B  In đậm';
+    thanh.appendChild(dam);
+    var bam = function (e) {
+      var n = e.target.closest('[role="button"]'); if (!n) return;
+      e.preventDefault(); e.stopPropagation();
+      if (n.dataset.dam) chenVao(ta, '**', '**'); else chenVao(ta, '{' + n.dataset.bien + '}');
+    };
+    // mousedown: giu nguyen vung chon trong o truoc khi mat focus
+    thanh.addEventListener('mousedown', function (e) { if (e.target.closest('[role="button"]')) e.preventDefault(); });
+    thanh.addEventListener('click', bam);
+    thanh.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') bam(e); });
+    ta.parentNode.insertBefore(thanh, ta);
+  }
+  O_BIEN.forEach(function (ten) { document.querySelectorAll('textarea[name="' + ten + '"]').forEach(ganThanhBien); });
 
   /* ---------------- LIEN HE ---------------- */
   document.addEventListener('change', function (e) {

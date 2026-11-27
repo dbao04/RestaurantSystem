@@ -792,6 +792,11 @@ module.exports = function (io) {
     const tongTienMon = preorders.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
     const tienCoc = Number(r.deposit_amount) || 0;
     const tongThanhToan = Math.max(tienCoc, tongTienMon);
+    // Dich vu kem theo dip (banh kem, trang tri...) - nam trong tienCoc, liet ke rieng.
+    let dichVuKem = [];
+    try { dichVuKem = JSON.parse(r.dich_vu_kem || '[]') || []; } catch (_) { dichVuKem = []; }
+    const tongDvKem = Number(r.dich_vu_kem_tong) || 0;
+    const tienCocBan = Math.max(0, tienCoc - tongDvKem);
 
     // Nếu không cần cọc và không có món gọi trước hoặc đã thanh toán cọc
     if (tongThanhToan <= 0 || r.deposit_status === 'PAID') {
@@ -816,7 +821,9 @@ module.exports = function (io) {
       r,
       preorders,
       tongTienMon,
-      tienCoc,
+      tienCoc: tienCocBan,
+      dichVuKem,
+      tongDvKem,
       tongThanhToan,
       taiKhoan,
       qr,

@@ -100,6 +100,8 @@ async function docSanhTiec() {
     .sort((a, b) => b.tiec_toi_da - a.tiec_toi_da);
 }
 
+const GIOI_THIEU_TD = require('../config/thuc-don-tiec-gioi-thieu');
+
 async function docThucDon({ chiDangBan = true } = {}) {
   const [rows] = await db.query(
     `SELECT * FROM thuc_don_tiec ${chiDangBan ? 'WHERE trang_thai = 1' : ''} ORDER BY thu_tu, id`);
@@ -110,6 +112,7 @@ async function docThucDon({ chiDangBan = true } = {}) {
     mon: docJson(r.mon, []),
     bao_gom: docJson(r.bao_gom, []),
     noi_bat: !!r.noi_bat,
+    gioi_thieu: GIOI_THIEU_TD[r.ma] || null,
   }));
 }
 

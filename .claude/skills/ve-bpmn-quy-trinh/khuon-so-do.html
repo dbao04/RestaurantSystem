@@ -1,0 +1,550 @@
+<title>Quy trình Nhà Hàng Bảo Đoàn</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+  /* Bo cuc: tieu de trang -> tab quy trinh -> so do BPMN kieu ban in (den trang, cuon ngang) -> quy tac nghiep vu.
+     So do co y giu mot dien mao duy nhat (nen trang, net den) o ca hai giao dien, nhu mot ban ve in. */
+  :root {
+    --bg: #f3f4f6;
+    --surface: #ffffff;
+    --ink: #1d2128;
+    --muted: #5e6672;
+    --line: #d4d8de;
+    --accent: #1d2128;
+    --chip: #eceef1;
+    --f-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+    /* So do: dung dung kieu chu va mau cua ban mau */
+    --d-paper: #ffffff;
+    --d-ink: #1f1f1f;
+    --d-soft: #555555;
+    --d-font: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #14171c; --surface: #1c2027; --ink: #e7e9ec; --muted: #a2a9b4; --line: #333a44; --accent: #e7e9ec; --chip: #262b33; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #14171c; --surface: #1c2027; --ink: #e7e9ec; --muted: #a2a9b4; --line: #333a44; --accent: #e7e9ec; --chip: #262b33; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 56px; display: grid; gap: 20px; }
+  header h1 { font-size: clamp(1.45rem, 2.5vw, 2rem); line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); max-width: 72ch; }
+  .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: .9rem; }
+  .tabs a:hover { border-color: var(--ink); }
+  .tabs a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .tabs a[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .thanh { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  .thanh p { margin: 0; color: var(--muted); max-width: 80ch; }
+  .zoom { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+  .zoom button { border: 0; background: transparent; color: var(--ink); padding: 6px 12px; font: 600 .82rem var(--f-body); cursor: pointer; }
+  .zoom button + button { border-left: 1px solid var(--line); }
+  .zoom button[aria-pressed="true"] { background: var(--chip); }
+  .zoom button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+  .canvas { background: var(--d-paper); border: 1px solid var(--line); border-radius: 4px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  .canvas svg { display: block; }
+  .goi-y { font-size: .8rem; color: var(--muted); margin: -8px 0 0; }
+
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .rule { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+  .rule h3 { margin: 0 0 6px; font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .rule ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: .9rem; }
+  footer { color: var(--muted); font-size: .82rem; }
+
+  /* ---- So do (mau co dinh nhu ban in) ---- */
+  .d-khung { fill: none; stroke: var(--d-ink); stroke-width: 1.2; }
+  .d-vach { stroke: #9a9a9a; stroke-width: 1; }
+  .d-tieu-de { fill: var(--d-paper); stroke: var(--d-ink); stroke-width: 1; }
+  .d-tieu-de-chu { fill: var(--d-ink); font: 700 13px var(--d-font); }
+  .d-be { fill: var(--d-ink); font: 700 13px var(--d-font); }
+  .d-lan { fill: var(--d-ink); font: 700 12.5px var(--d-font); }
+  .d-viec { fill: var(--d-paper); stroke: var(--d-ink); stroke-width: 1.6; }
+  .d-chu { fill: var(--d-ink); font: 400 12px var(--d-font); }
+  .d-cong { fill: var(--d-paper); stroke: var(--d-ink); stroke-width: 1.6; }
+  .d-cong-chu { fill: var(--d-ink); font: 700 12px var(--d-font); }
+  .d-bd { fill: var(--d-paper); stroke: var(--d-ink); stroke-width: 1.8; }
+  .d-kt { fill: var(--d-paper); stroke: var(--d-ink); stroke-width: 4; }
+  .d-su-kien { fill: var(--d-ink); font: 400 11px var(--d-font); }
+  .d-luong { fill: none; stroke: var(--d-ink); stroke-width: 1.3; }
+  .d-muitên { fill: var(--d-ink); }
+  .d-nhan { fill: var(--d-soft); font: 400 10.5px var(--d-font); paint-order: stroke; stroke: var(--d-paper); stroke-width: 5px; stroke-linejoin: round; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">BPMN · Nhà Hàng Bảo Đoàn</div>
+    <h1>Quy trình vận hành chính</h1>
+    <p>Tám quy trình vẽ theo luồng thật của hệ thống. Mỗi làn là một bộ phận; mỗi cổng hình thoi là một điều kiện mà hệ thống đang kiểm tra. Chọn quy trình bên dưới.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Chọn quy trình"></nav>
+
+  <div class="thanh">
+    <p id="moTa"></p>
+    <div class="zoom" role="group" aria-label="Thu phóng sơ đồ">
+      <button type="button" id="zVua" aria-pressed="false">Vừa khung</button>
+      <button type="button" id="z100" aria-pressed="true">100%</button>
+    </div>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <p class="goi-y" id="goiY">Kéo ngang trong khung để xem hết sơ đồ.</p>
+  <div class="rules" id="rules"></div>
+
+  <footer>Luồng đọc từ mã nguồn hệ thống và cấu hình hiện tại. Các con số (60 phút, 30 giây, 1.000.000đ…) là giá trị đang cấu hình, quản lý đổi được.</footer>
+</div>
+
+<script>
+(function () {
+  /*
+    DU LIEU: moi quy trinh
+      lan  : ten cac lan tu tren xuong
+      nut  : [id, loai, lan, cot, nhan, lech]
+             loai: bd (bat dau) | kt (ket thuc) | viec | cong
+             nhan viec: "Dong 1|Dong 2" ; '|' = xuong dong ep
+             lech: -1/0/1 dich len/xuong trong lan (khi hai viec chung o)
+      canh : [tu, den, nhan, 'tren']  'tren' = vong len phia tren roi roi xuong
+  */
+  var QT = [
+    {
+      ma: 'dat-ban', ten: 'Quy Trình Đặt Bàn – Nhận Khách', tab: 'Đặt bàn',
+      moTa: 'Từ lúc khách muốn đặt bàn trên web tới khi được xếp vào bàn, hoặc bị ghi nhận không đến.',
+      lan: ['Khách Hàng', 'Hệ Thống Đặt Bàn', 'Lễ Tân'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Khách Muốn Đặt Bàn'],
+        ['a1', 'viec', 0, 1, 'Đăng Nhập & Chọn|Ngày, Giờ, Số Khách'],
+        ['a2', 'viec', 0, 2, 'Chọn Khu Vực & Bàn|(Hoặc Để Nhà Hàng Xếp)'],
+        ['a3', 'viec', 0, 3, 'Gọi Món Trước|& Dịch Vụ Kèm (Tùy Chọn)'],
+        ['b1', 'viec', 1, 3, 'Kiểm Tra Ràng Buộc|(Giờ, Quy Mô Bàn, No-show)'],
+        ['g1', 'cong', 1, 4, 'Còn Bàn?'],
+        ['c1', 'viec', 2, 4, 'Xếp Vào|Danh Sách Chờ'],
+        ['e0', 'kt', 2, 3, 'Chờ Có Bàn'],
+        ['b2', 'viec', 1, 5, 'Tính Khoản Trả Trước|(Cọc + Món + Dịch Vụ)'],
+        ['g2', 'cong', 1, 6, 'Cần Trả Trước?'],
+        ['a4', 'viec', 0, 6, 'Chuyển Khoản VietQR|(Hạn 60 Phút)'],
+        ['g3', 'cong', 1, 8, 'Thành Viên / VIP?'],
+        ['b3', 'viec', 1, 9, 'Tự Động|Xác Nhận Lượt Đặt'],
+        ['c2', 'viec', 2, 8, 'Lễ Tân Duyệt|(Xác Nhận / Từ Chối)'],
+        ['g4', 'cong', 2, 10, 'Khách Đến Đúng Hẹn?|(Nhắc Trước 120 Phút)'],
+        ['c3', 'viec', 2, 11, 'Nhận Khách & Xếp Bàn|(Sớm Tối Đa 60 Phút)'],
+        ['e1', 'kt', 2, 12, 'Chuyển Sang|Gọi Món'],
+        ['b4', 'viec', 1, 10, 'Chờ Hết Giờ Giữ Bàn|(15 + 30 Phút)'],
+        ['e2', 'kt', 1, 11, 'Không Đến|(No-show)']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'a2'], ['a2', 'a3'], ['a3', 'b1'], ['b1', 'g1'],
+        ['g1', 'c1', 'Không'], ['c1', 'e0'], ['g1', 'b2', 'Có'], ['b2', 'g2'],
+        ['g2', 'a4', 'Có'], ['a4', 'g3'], ['g2', 'g3', 'Không'],
+        ['g3', 'b3', 'Có'], ['g3', 'c2', 'Không'], ['b3', 'g4'], ['c2', 'g4'],
+        ['g4', 'c3', 'Có'], ['c3', 'e1'], ['g4', 'b4', 'Không'], ['b4', 'e2']
+      ],
+      quyTac: [
+        ['Trước khi đặt', ['Bắt buộc đăng nhập; đặt online tối đa 30 khách.', 'Đặt trước ít nhất 30 phút, xa nhất 90 ngày; ngừng nhận 60 phút trước giờ đóng cửa.', 'Số điện thoại có từ 3 lần không đến bị chặn đặt online.']],
+        ['Chọn bàn', ['Nhóm ≤ 4 khách chỉ được 1 bàn; không thừa bàn, không thừa quá nhiều ghế.', 'Ghép tối đa 4 bàn, cùng một khu; giờ cao điểm bàn phải đúng cỡ.']],
+        ['Trả trước & xác nhận', ['Món trước trả 100%; ≥ 15 khách 150.000đ/khách; cao điểm hoặc ≥ 6 khách 100.000đ/khách; dịch vụ kèm cộng thêm.', 'Quá 60 phút chưa chuyển khoản thì lượt tự hủy.', 'Thành viên / VIP / doanh nghiệp được tự xác nhận.']],
+        ['Ngày đến', ['Giữ bàn 15 phút; tự đóng "Không đến" sau thêm 30 phút.', 'Hủy ≥ 24h hoàn 100%; 6–24h hoàn 70% (đoàn 50%); 2–6h hoàn 50% (đoàn 0%).']]
+      ]
+    },
+    {
+      ma: 'goi-mon', ten: 'Quy Trình Gọi Món – Thanh Toán Tại Bàn', tab: 'Gọi món & thanh toán',
+      moTa: 'Khách ngồi vào bàn, món qua màn hình bếp tách trạm Bếp / Bar, tính tiền bằng tiền mặt hoặc VietQR rồi trả bàn.',
+      lan: ['Khách Hàng', 'Phục Vụ', 'Bếp / Bar', 'Thu Ngân'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Khách Vào Bàn'],
+        ['a1', 'viec', 0, 1, 'Quét QR Gọi Món|(Hoặc Gọi Qua Phục Vụ)'],
+        ['b1', 'viec', 1, 1, 'Xác Nhận Order|Trên POS'],
+        ['c1', 'viec', 2, 2, 'Màn Hình Bếp Tách Trạm|(Món Ăn / Đồ Uống)'],
+        ['c2', 'viec', 2, 3, 'Chế Biến Món Ăn|& Pha Đồ Uống'],
+        ['b2', 'viec', 1, 4, 'Lên Món Cho Bàn|(Ghi Người Lên Món)'],
+        ['g1', 'cong', 0, 5, 'Gọi Thêm Món?'],
+        ['a2', 'viec', 0, 6, 'Yêu Cầu|Tính Tiền'],
+        ['d1', 'viec', 3, 6, 'Lập Hóa Đơn|(Phí, VAT, Trừ Cọc)'],
+        ['g2', 'cong', 3, 7, 'Thanh Toán VietQR?'],
+        ['d2', 'viec', 3, 8, 'Đối Soát Chuyển Khoản|(Webhook Ngân Hàng)'],
+        ['g3', 'cong', 3, 9, 'Khớp Số Tiền?'],
+        ['c3', 'viec', 2, 9, 'Đối Soát Thủ Công|Tại Quầy'],
+        ['d3', 'viec', 3, 10, 'Đóng Đơn, Tích Điểm|& In Biên Lai'],
+        ['b3', 'viec', 1, 11, 'Dọn Bàn|(Đang Dọn → Trống)'],
+        ['e', 'kt', 1, 12, 'Bàn Sẵn Sàng']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'b1'], ['b1', 'c1'], ['c1', 'c2'], ['c2', 'b2'], ['b2', 'g1'],
+        ['g1', 'a1', 'Có', 'tren'], ['g1', 'a2', 'Không'], ['a2', 'd1'], ['d1', 'g2'],
+        ['g2', 'd2', 'Có'], ['g2', 'd3', 'Tiền mặt', 'tren'], ['d2', 'g3'], ['g3', 'd3', 'Có'], ['g3', 'c3', 'Không'], ['c3', 'd3'],
+        ['d3', 'b3'], ['b3', 'e']
+      ],
+      quyTac: [
+        ['Gọi món', ['Món "Tạm hết" bị ẩn khỏi thực đơn và POS.', 'Đồ uống (Drink, Sake – Beer) sang trạm Bar, còn lại sang Bếp.', 'Sửa order đã gửi bếp phải ghi giải trình xóa món.']],
+        ['Hóa đơn', ['Phí phục vụ và VAT chỉ tính trên phần chưa trả trước.', 'Tiền cọc / món trả trước được trừ; dịch vụ kèm đã trả riêng thì không trừ.', 'Trừ điểm khách dùng trước, rồi mới cộng điểm mới.']],
+        ['Thanh toán', ['Mỗi đơn một mã VietQR còn hiệu lực, hạn 900 giây.', 'Chuyển thiếu: đánh dấu không khớp để đối soát tay; chuyển dư: ghi phần dư.']],
+        ['Trả bàn', ['Không dọn bàn được khi còn món chưa thanh toán.']]
+      ]
+    },
+    {
+      ma: 'dat-tiec', ten: 'Quy Trình Đặt Tiệc – Điều Hành Tiệc', tab: 'Đặt tiệc',
+      moTa: 'Khách đặt tiệc online, hệ thống sinh việc chuẩn bị theo mốc, điều hành trong tiệc rồi chốt hóa đơn sau tiệc.',
+      lan: ['Khách Hàng', 'Hệ Thống', 'Quản Lý Tiệc', 'Bếp · Bar · Phục Vụ', 'Thu Ngân'],
+      cao: [200, 152, 152, 152, 152],
+      nut: [
+        ['s', 'bd', 0, 0, 'Khách Muốn Đặt Tiệc'],
+        ['a1', 'viec', 0, 1, 'Chọn Loại Tiệc,|Ngày & Sảnh'],
+        ['g1', 'cong', 0, 2, 'Dùng Thực Đơn Có Sẵn?'],
+        ['a2', 'viec', 0, 3, 'Chọn Set|Thực Đơn', -1],
+        ['a3', 'viec', 0, 3, 'Tự Chọn Món|& Số Bàn', 1],
+        ['a4', 'viec', 0, 4, 'Chọn Dịch Vụ|& Đặt Cọc 30%'],
+        ['b1', 'viec', 1, 4, 'Sinh Việc T-7 / T-3 / T-1|& Gửi Thông Báo'],
+        ['c1', 'viec', 2, 5, 'Phân Công Nhân Sự|Theo Vị Trí'],
+        ['d1', 'viec', 3, 6, 'Chuẩn Bị Nguyên Liệu|& Setup Sảnh'],
+        ['c2', 'viec', 2, 7, 'Khai Tiệc'],
+        ['d2', 'viec', 3, 8, 'Ra Món Theo Đợt|& Báo Phát Sinh'],
+        ['g2', 'cong', 2, 9, 'Có Phát Sinh Tính Tiền?'],
+        ['c3', 'viec', 2, 10, 'Duyệt|Phát Sinh'],
+        ['c4', 'viec', 2, 11, 'Kết Thúc Tiệc'],
+        ['d3', 'viec', 3, 11, 'Thu Dọn & Kiểm Đếm|Sau Tiệc'],
+        ['f1', 'viec', 4, 12, 'Chốt Hóa Đơn Sau Tiệc|(Không Còn Chờ Duyệt)'],
+        ['a5', 'viec', 0, 13, 'Thanh Toán|Phần Còn Lại'],
+        ['c5', 'viec', 2, 14, 'Đánh Giá|& Báo Cáo Sau Tiệc'],
+        ['e', 'kt', 2, 15, 'Hoàn Thành']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'g1'], ['g1', 'a2', 'Có'], ['g1', 'a3', 'Không'], ['a2', 'a4'], ['a3', 'a4'],
+        ['a4', 'b1'], ['b1', 'c1'], ['c1', 'd1'], ['d1', 'c2'], ['c2', 'd2'], ['d2', 'g2'],
+        ['g2', 'c3', 'Có'], ['c3', 'c4'], ['g2', 'c4', 'Không', 'tren'], ['c4', 'd3'], ['c4', 'f1'],
+        ['f1', 'a5'], ['a5', 'c5'], ['d3', 'c5'], ['c5', 'e']
+      ],
+      quyTac: [
+        ['Đặt tiệc', ['Bắt buộc đăng nhập. Thực đơn tự chọn cũng cọc ngay, giá tính tự động.', 'Số bàn gợi ý 10 khách/bàn, khách chỉnh trong 8–12 khách/bàn, không vượt sức chứa sảnh.']],
+        ['Trước ngày tiệc', ['Việc theo mốc T-7, T-3, T-1 và ngày tiệc; việc trễ báo cho nhóm phụ trách.', 'Người đang nghỉ, khác ca hoặc ở tiệc khác không được phân công.']],
+        ['Trong tiệc', ['Món theo đợt: gọi → ra → lên, đo số phút bếp ra món.', 'Phát sinh tính tiền phải được Quản lý duyệt mới vào hóa đơn.']],
+        ['Chốt', ['Hóa đơn = giá set × bàn tính + món tự chọn + dịch vụ + phát sinh đã duyệt − giảm trừ (bắt buộc lý do).', 'Chốt xong tiệc chuyển "Chờ thanh toán"; khách trả phần còn lại trên trang của mình.']]
+      ]
+    },
+    {
+      ma: 'giao-hang', ten: 'Quy Trình Giao Hàng – Thu Tiền', tab: 'Giao hàng',
+      moTa: 'Đơn giao được hệ thống tự chia đều cho shipper, kiểm hàng trước khi đi, xác nhận bằng mã nhận hàng và đối soát tiền thu hộ.',
+      lan: ['Khách Hàng', 'Điều Phối', 'Bếp / Bar', 'Shipper', 'Kế Toán – Thu Hộ'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Khách Đặt|Giao Tận Nơi'],
+        ['a1', 'viec', 0, 1, 'Đặt Món|& Chọn Trả Trước / COD'],
+        ['b1', 'viec', 1, 1, 'Tự Phân Shipper|(Chia Đều Tải)'],
+        ['g1', 'cong', 1, 2, 'Có Shipper Rảnh?'],
+        ['d1', 'viec', 3, 2, 'Shipper|Nhận Đơn'],
+        ['g2', 'cong', 3, 3, 'Đồng Ý Nhận?'],
+        ['c1', 'viec', 2, 4, 'Chế Biến|& Đóng Gói'],
+        ['d2', 'viec', 3, 5, 'Lấy Hàng, Kiểm Món|& Niêm Phong'],
+        ['d3', 'viec', 3, 6, 'Giao Hàng|& Báo Đã Đến Nơi'],
+        ['g3', 'cong', 3, 7, 'Giao Thành Công?|(Khách Đọc Mã 4 Số)'],
+        ['g4', 'cong', 3, 8, 'Hẹn Giao Lại?'],
+        ['d4', 'viec', 3, 9, 'Mang Hàng Về Quán|& Hủy Đơn'],
+        ['e1', 'kt', 3, 10, 'Kết Thúc|(Hủy Đơn)'],
+        ['f1', 'viec', 4, 7, 'Ghi Nhận|Thanh Toán Đơn Hàng'],
+        ['g5', 'cong', 4, 8, 'Thu Tiền Mặt (COD)?'],
+        ['f2', 'viec', 4, 9, 'Đối Soát Tiền Thu Hộ|Khi Chốt Ca'],
+        ['e2', 'kt', 4, 10, 'Hoàn Tất|Thu Tiền']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'b1'], ['b1', 'g1'], ['g1', 'b1', 'Không – Chờ 30 Giây', 'tren'], ['g1', 'd1', 'Có'], ['d1', 'g2'],
+        ['g2', 'b1', 'Từ Chối / Quá Hạn', 'tren'], ['g2', 'c1', 'Có'], ['c1', 'd2'], ['d2', 'd3'], ['d3', 'g3'],
+        ['g3', 'g4', 'Thất bại'], ['g4', 'd3', 'Có – Giao lại', 'tren'], ['g4', 'd4', 'Không'], ['d4', 'e1'],
+        ['g3', 'f1', 'Thành công'], ['f1', 'g5'], ['g5', 'f2', 'Có'], ['f2', 'e2'], ['g5', 'e2', 'Đã trả trước', 'tren']
+      ],
+      quyTac: [
+        ['Phân đơn', ['Chỉ xét shipper trong ca, còn sức chứa, chưa từ chối đơn này.', 'Ưu tiên: tải trong ngày ít nhất → đang cầm ít đơn → GPS online → chờ lâu nhất → gần quán.']],
+        ['Giao', ['Chưa kiểm món và niêm phong thì không bấm "Đi giao" được.', 'Xác nhận bằng mã 4 số; không có mã thì chốt bằng GPS kèm lý do.', '"Khách không nghe máy" chỉ nhận khi đã đến nơi và gọi ≥ 2 lần.']],
+        ['Thất bại', ['Hàng mang về quán phải được quầy xác nhận nhận lại.', '"Hủy" đi được từ mọi trạng thái trừ "Đã giao".']],
+        ['Chốt ca', ['Không cho tan ca khi còn đơn đang cầm, hàng chưa trả về hoặc tiền thu hộ chưa nộp.']]
+      ]
+    },
+    {
+      ma: 'mua-hang', ten: 'Quy Trình Mua Hàng – Nhận Hàng', tab: 'Mua hàng',
+      moTa: 'Hệ thống gợi ý nguyên liệu cần mua theo dự báo tiêu hao, đơn mua được duyệt rồi đặt nhà cung cấp và nhận hàng theo đơn.',
+      lan: ['Hệ Thống Kho', 'Bếp Trưởng / Thủ Kho', 'Quản Lý', 'Nhà Cung Cấp'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Tồn Dưới Mức|Dự Báo'],
+        ['a1', 'viec', 0, 1, 'Gợi Ý Mua Hàng|(Tiêu Hao + Tiệc Đã Giữ)'],
+        ['b1', 'viec', 1, 1, 'Lập Đơn Mua|(Tự Động Hoặc Thủ Công)'],
+        ['c1', 'viec', 2, 2, 'Duyệt Đơn Mua|(Không Tự Duyệt Đơn Mình)'],
+        ['g1', 'cong', 2, 3, 'Đồng Ý Đơn?'],
+        ['e0', 'kt', 2, 4, 'Đơn Bị Hủy|(Ghi Lý Do)'],
+        ['b2', 'viec', 1, 4, 'Đặt Hàng|Nhà Cung Cấp'],
+        ['d1', 'viec', 3, 5, 'Giao Hàng|Kèm Hóa Đơn'],
+        ['b3', 'viec', 1, 6, 'Nhận Hàng Theo Đơn|(Lập Phiếu Nhập)'],
+        ['g2', 'cong', 1, 7, 'Nhận Đủ Số Lượng?'],
+        ['e1', 'kt', 1, 8, 'Chuyển Sang|Nhập Kho 4 Bước']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'b1'], ['b1', 'c1'], ['c1', 'g1'], ['g1', 'e0', 'Không'], ['g1', 'b2', 'Có'],
+        ['b2', 'd1'], ['d1', 'b3'], ['b3', 'g2'], ['g2', 'd1', 'Không – Nhận một phần', 'tren'], ['g2', 'e1', 'Có']
+      ],
+      quyTac: [
+        ['Gợi ý mua', ['Nhu cầu = dự báo tiêu hao từng ngày + nguyên liệu cho các tiệc đã giữ chỗ.', 'Mua khi tồn khả dụng + hàng đang về không đủ dùng tới lúc hàng về (2 ngày giao) cộng mức an toàn.', 'Lượng đề xuất đủ dùng 2 ngày giao + 7 ngày dự trữ; hai thông số này quản lý đổi được.']],
+        ['Lập đơn', ['Đơn tự động gom theo nhà cung cấp gần nhất, đơn giá = giá nhập gần nhất.', 'Hàng đã nằm trong đơn mở được tính là "đang về" nên chạy lại không đặt trùng.', 'Người lập: Quản lý bếp, Bếp trưởng, Bếp phó, Trưởng bar, Thủ kho.']],
+        ['Duyệt & đặt', ['Chỉ quản lý nhà hàng duyệt; người lập không tự duyệt đơn của mình.', 'Hủy đơn phải ghi lý do; đơn đã nhận hàng không hủy được.']],
+        ['Nhận hàng', ['Nhận thiếu: đơn "Nhận một phần", chờ nhà cung cấp giao tiếp.', 'Nhận đủ: đơn "Đã nhận đủ"; hàng chỉ vào kho sau bước kiểm chất lượng của quy trình nhập kho.']]
+      ]
+    },
+    {
+      ma: 'nhap-kho', ten: 'Quy Trình Nhập Kho – Duyệt Phiếu', tab: 'Nhập kho',
+      moTa: 'Hàng nhà cung cấp về được kiểm chất lượng trước khi vào kho, rồi mới đối chiếu và duyệt về mặt tài chính.',
+      lan: ['Thủ Kho', 'Bếp Trưởng / Trưởng Bar', 'Kế Toán', 'Quản Lý'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Hàng Nhà Cung Cấp Về'],
+        ['a1', 'viec', 0, 1, 'Lập Phiếu Nhận Hàng|(Số Hóa Đơn, Ảnh)'],
+        ['b1', 'viec', 1, 1, 'Kiểm Tra Chất Lượng|Từng Dòng'],
+        ['g1', 'cong', 1, 2, 'Có Hàng Đạt?'],
+        ['a2', 'viec', 0, 2, 'Trả Hàng|Nhà Cung Cấp'],
+        ['e0', 'kt', 0, 3, 'Phiếu|Trả Hàng'],
+        ['b2', 'viec', 1, 3, 'Cộng Tồn Phần Đạt|(Tạo Lô, Giá Vốn)'],
+        ['c1', 'viec', 2, 3, 'Đối Chiếu Số Lượng|& Đơn Giá'],
+        ['g2', 'cong', 2, 4, 'Tổng > 1.000.000đ?'],
+        ['d1', 'viec', 3, 4, 'Quản Lý|Duyệt Cuối'],
+        ['g3', 'cong', 3, 5, 'Đồng Ý?'],
+        ['g4', 'cong', 2, 6, ''],
+        ['c2', 'viec', 2, 7, 'Khóa Phiếu & Mở|Thanh Toán Công Nợ'],
+        ['c3', 'viec', 2, 8, 'Trả Công Nợ NCC|(Lập Phiếu Chi)'],
+        ['e', 'kt', 2, 9, 'Hoàn Tất|Thanh Toán NCC']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'b1'], ['b1', 'g1'], ['g1', 'a2', 'Không'], ['a2', 'e0'], ['g1', 'b2', 'Có'], ['b2', 'c1'], ['c1', 'g2'],
+        ['g2', 'd1', 'Có'], ['d1', 'g3'], ['g3', 'c1', 'Không – Trả về', 'tren'], ['g3', 'g4', 'Có'], ['g2', 'g4', 'Không'],
+        ['g4', 'c2'], ['c2', 'c3'], ['c3', 'e']
+      ],
+      quyTac: [
+        ['Kiểm soát hàng hóa', ['QC chặn nhập kho: chỉ phần đạt được cộng tồn, cộng ngay để bếp dùng.', 'Trả lại toàn bộ thì phiếu kết thúc ở "Trả hàng".']],
+        ['Kiểm soát tài chính', ['Phiếu chưa "Đã duyệt" không trả công nợ, không lập phiếu chi.', 'Lệch giá > 5% so với đơn mua phải sửa theo hóa đơn; ≤ 1.000.000đ duyệt ngay sau đối chiếu.']],
+        ['Tách nhiệm vụ', ['Người lập, người QC, người đối chiếu, người duyệt phải khác nhau.']],
+        ['Công nợ', ['Chỉ phiếu "Đã duyệt" mới trả được; không trả vượt số còn nợ, tối thiểu 1.000đ.', 'Mỗi lần trả tạo phiếu chi trong sổ thu chi.']],
+        ['Cấu hình', ['Nhà hàng nhỏ có thể tắt bước QC hoặc đối chiếu; ngưỡng duyệt đổi được.']]
+      ]
+    },
+    {
+      ma: 'xuat-kho', ten: 'Quy Trình Xuất Kho – Trừ Tồn', tab: 'Xuất kho',
+      moTa: 'Kho tự trừ khi bếp hoàn thành món theo công thức; các trường hợp hư hỏng, hết hạn, dùng nội bộ, trả nhà cung cấp do thủ kho lập phiếu xuất.',
+      lan: ['Bếp / Bar', 'Hệ Thống Kho', 'Thủ Kho'],
+      nut: [
+        ['s', 'bd', 0, 0, 'Có Nhu Cầu|Xuất Nguyên Liệu'],
+        ['g1', 'cong', 0, 1, 'Xuất Do Bán Món?'],
+        ['a1', 'viec', 0, 2, 'Hoàn Thành Món|Trên Màn Hình Bếp'],
+        ['b1', 'viec', 1, 3, 'Trừ Tồn Theo Công Thức|(Định Lượng × Số Phần)'],
+        ['c1', 'viec', 2, 1, 'Lập Phiếu Xuất|(Chọn Lý Do)'],
+        ['g2', 'cong', 2, 2, 'Xuất Hủy / Hao Hụt?'],
+        ['c2', 'viec', 2, 3, 'Ghi Rõ Nguyên Nhân|(Bắt Buộc)'],
+        ['g3', 'cong', 2, 4, 'Đủ Tồn Kho?'],
+        ['e0', 'kt', 2, 5, 'Từ Chối Phiếu|(Báo Tồn Còn Lại)'],
+        ['b2', 'viec', 1, 5, 'Trừ Lô Hết Hạn Trước|& Ghi Giá Vốn Lúc Xuất'],
+        ['g4', 'cong', 1, 6, 'Còn Đủ Cho Món?'],
+        ['a2', 'viec', 0, 7, 'Món Báo Hết Trên|Thực Đơn & POS'],
+        ['e2', 'kt', 0, 8, 'Chờ Mua|Bổ Sung'],
+        ['e1', 'kt', 1, 7, 'Tồn Kho|Đã Cập Nhật']
+      ],
+      canh: [
+        ['s', 'g1'], ['g1', 'a1', 'Có'], ['a1', 'b1'], ['g1', 'c1', 'Không'], ['c1', 'g2'],
+        ['g2', 'c2', 'Có'], ['c2', 'g3'], ['g2', 'g3', 'Không (Dùng Nội Bộ / Trả NCC)', 'tren'],
+        ['g3', 'e0', 'Không'], ['g3', 'b2', 'Có'], ['b1', 'b2'], ['b2', 'g4'],
+        ['g4', 'a2', 'Không'], ['a2', 'e2'], ['g4', 'e1', 'Có']
+      ],
+      quyTac: [
+        ['Xuất do bán món', ['Bếp bấm hoàn thành món → trừ từng nguyên liệu theo công thức × số phần.', 'Món chưa có công thức thì không trừ kho; tồn không xuống dưới 0.', 'Mỗi lần trừ ghi nhật ký xuất "bán hàng" kèm giá vốn lúc đó, dùng cho dự báo và thống kê bếp.']],
+        ['Xuất thủ công', ['Lý do: hư hỏng, hết hạn, hao hụt / đổ vỡ, chế biến lỗi, dùng nội bộ, trả nhà cung cấp, điều chỉnh kiểm kê.', 'Xuất hủy / hao hụt bắt buộc ghi nguyên nhân (≥ 3 ký tự).', 'Không xuất quá tồn hiện có.']],
+        ['Lô & giá vốn', ['Trừ lô có hạn dùng gần nhất trước (FIFO) để cảnh báo hạn dùng phản ánh hàng còn thật.', 'Giá trị xuất chụp theo giá vốn bình quân lúc xuất, không tính lại về sau.']],
+        ['Báo hết món', ['Nguyên liệu không đủ cho một phần món → món hiện "Hết" trên thực đơn khách và POS.']]
+      ]
+    },
+    {
+      ma: 'kiem-ke', ten: 'Quy Trình Kiểm Kê – Điều Chỉnh Tồn', tab: 'Kiểm kê',
+      moTa: 'Kiểm kê định kỳ: chụp tồn sổ sách, đếm thực tế, chốt bởi người khác người lập, rồi điều chỉnh thiếu / thừa và báo cáo hao hụt.',
+      lan: ['Thủ Kho', 'Bếp', 'Quản Lý', 'Hệ Thống Kho'],
+      cao: [152, 152, 152, 210],
+      nut: [
+        ['s', 'bd', 0, 0, 'Đến Kỳ|Kiểm Kê'],
+        ['a1', 'viec', 0, 1, 'Lập Phiếu Kiểm Kê|(Chụp Tồn Sổ Sách)'],
+        ['b1', 'viec', 1, 2, 'Đếm & Nhập Tồn Thực Tế|(Lưu Nhiều Lần)'],
+        ['c1', 'viec', 2, 3, 'Chốt Kiểm Kê|(Người Lập Không Tự Chốt)'],
+        ['d1', 'viec', 3, 4, 'Tính Chênh Lệch|(Thực Tế − Tồn Lúc Chụp)'],
+        ['g1', 'cong', 3, 5, 'Chênh Lệch?'],
+        ['d2', 'viec', 3, 6, 'Lập Phiếu Xuất|(Lý Do Kiểm Kê, FIFO)', -1],
+        ['d3', 'viec', 3, 6, 'Lập Phiếu Nhập Điều Chỉnh|(Không Phát Sinh Công Nợ)', 1],
+        ['g2', 'cong', 3, 7, ''],
+        ['d4', 'viec', 3, 8, 'Báo Cáo Hao Hụt|(% So Với Bán Hàng)'],
+        ['e', 'kt', 3, 9, 'Tồn Khớp|Thực Tế']
+      ],
+      canh: [
+        ['s', 'a1'], ['a1', 'b1'], ['b1', 'c1'], ['c1', 'd1'], ['d1', 'g1'],
+        ['g1', 'd2', 'Thiếu'], ['g1', 'd3', 'Thừa'], ['g1', 'g2', 'Khớp'], ['d2', 'g2'], ['d3', 'g2'],
+        ['g2', 'd4'], ['d4', 'e']
+      ],
+      quyTac: [
+        ['Đếm', ['Phiếu chụp lại tồn sổ sách của mọi nguyên liệu lúc lập.', 'Bếp nhập số đếm, lưu được nhiều lần khi phiếu còn "Đang đếm".']],
+        ['Chốt', ['Chỉ quản lý nhà hàng / trợ lý quản lý được chốt; người lập không tự chốt (trừ Quản lý).', 'Phải có ít nhất một nguyên liệu đã đếm; hai người không chốt trùng một phiếu.']],
+        ['Điều chỉnh', ['Chênh lệch tính theo tồn lúc chụp, không theo tồn hiện tại (trong lúc đếm bếp vẫn bán hàng).', 'Thiếu → phiếu xuất lý do kiểm kê (trừ lô FIFO, ghi giá trị).', 'Thừa → phiếu nhập điều chỉnh không nhà cung cấp, đơn giá = giá vốn hiện tại.']]
+      ]
+    }
+  ];
+
+  // ---------------------------------------------------------------- VE (phong cach ban mau)
+  var NS = 'http://www.w3.org/2000/svg';
+  var CW = 190, LH = 152, BE = 34, LAN = 34, TW = 152, TH = 60, GW = 20, ER = 18, SUB = 50, TOP = 46, PADR = 40, PADB = 14;
+  function el(t, a, cha) { var n = document.createElementNS(NS, t); for (var k in a) n.setAttribute(k, a[k]); if (cha) cha.appendChild(n); return n; }
+  function dong(nhan, toiDa) {
+    var ra = [];
+    String(nhan).split('|').forEach(function (p) {
+      var cur = '';
+      p.split(' ').forEach(function (w) { if ((cur + ' ' + w).trim().length > toiDa && cur) { ra.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+      if (cur) ra.push(cur);
+    });
+    return ra;
+  }
+  function viet(cha, x, y, ds, lop, cao) {
+    var t = el('text', { x: x, y: y, class: lop, 'text-anchor': 'middle' }, cha);
+    ds.forEach(function (d, i) { var s = el('tspan', { x: x, dy: i ? (cao || 14) : 0 }, t); s.textContent = d; });
+  }
+
+  function ve(q) {
+    var cao = q.cao || q.lan.map(function () { return LH; });
+    var dinhLan = []; var acc = TOP;
+    cao.forEach(function (h) { dinhLan.push(acc); acc += h; });
+    var soCot = Math.max.apply(null, q.nut.map(function (n) { return n[3]; })) + 1;
+    var W = BE + LAN + soCot * CW + PADR, H = acc + PADB;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': q.ten });
+    el('rect', { x: 0, y: 0, width: W, height: H, fill: 'var(--d-paper)' }, svg);
+    var mk = el('marker', { id: 'm-' + q.ma, viewBox: '0 0 10 10', refX: 9.5, refY: 5, markerWidth: 8, markerHeight: 8, orient: 'auto-start-reverse' }, el('defs', {}, svg));
+    el('path', { d: 'M0 0 10 5 0 10Z', class: 'd-muitên' }, mk);
+
+    // o tieu de goc tren trai
+    var tdW = Math.max(300, q.ten.length * 7.6 + 40);
+    el('rect', { x: 0.5, y: 0.5, width: tdW, height: 30, class: 'd-tieu-de' }, svg);
+    var tt = el('text', { x: 16, y: 20, class: 'd-tieu-de-chu' }, svg); tt.textContent = q.ten;
+
+    // be + lan (chu doc)
+    var day = acc;
+    el('rect', { x: 0.5, y: TOP + 0.5, width: W - 1, height: day - TOP - 1, class: 'd-khung' }, svg);
+    el('line', { x1: BE, y1: TOP, x2: BE, y2: day, class: 'd-khung' }, svg);
+    el('line', { x1: BE + LAN, y1: TOP, x2: BE + LAN, y2: day, class: 'd-vach' }, svg);
+    var tb = el('text', { class: 'd-be', 'text-anchor': 'middle', transform: 'translate(' + (BE / 2 + 5) + ',' + ((TOP + day) / 2) + ') rotate(-90)' }, svg);
+    tb.textContent = 'Hệ Thống Nhà Hàng Bảo Đoàn';
+    q.lan.forEach(function (ten, i) {
+      var y = dinhLan[i];
+      if (i) el('line', { x1: BE, y1: y, x2: W, y2: y, class: 'd-vach' }, svg);
+      var tl = el('text', { class: 'd-lan', 'text-anchor': 'middle', transform: 'translate(' + (BE + LAN / 2 + 4.5) + ',' + (y + cao[i] / 2) + ') rotate(-90)' }, svg);
+      tl.textContent = ten;
+    });
+
+    // toa do nut
+    var N = {};
+    q.nut.forEach(function (a) {
+      var n = { id: a[0], loai: a[1], lan: a[2], cot: a[3], nhan: a[4], lech: a[5] || 0 };
+      n.x = BE + LAN + n.cot * CW + CW / 2;
+      n.y = dinhLan[n.lan] + cao[n.lan] / 2 + n.lech * SUB;
+      n.hw = n.loai === 'viec' ? TW / 2 : n.loai === 'cong' ? GW : ER;
+      n.hh = n.loai === 'viec' ? TH / 2 : n.loai === 'cong' ? GW : ER;
+      N[n.id] = n;
+    });
+    // cong nao co nhanh di len tren -> nhan cong dat ben duoi
+    q.canh.forEach(function (c) {
+      var a = N[c[0]], b = N[c[1]]; if (a.loai !== 'cong') return;
+      if (c[3] === 'tren' || b.y < a.y - 1) a.raTren = true;
+      if (c[3] !== 'tren' && b.y > a.y + 1) a.raDuoi = true;
+    });
+    var soVongVe = {}; // so vong lap cung roi vao mot dich -> tach diem roi de khong chong net
+
+    var gL = el('g', {}, svg), gN = el('g', {}, svg), gT = el('g', {}, svg);
+    function nhanDuong(x, y, chu, neo) { var t = el('text', { x: x, y: y + 3.5, class: 'd-nhan', 'text-anchor': neo || 'middle' }, gT); t.textContent = chu; }
+
+    q.canh.forEach(function (c, idx) {
+      var a = N[c[0]], b = N[c[1]], nhan = c[2], tren = c[3] === 'tren', d, lp;
+      var laCong = a.loai === 'cong';
+      if (tren || (b.cot < a.cot && Math.abs(a.y - b.y) > 1)) {
+        // vong len tren: ra dinh nguon -> len sat mep tren lan cao hon -> ngang -> roi xuong dinh dich
+        var k = soVongVe[b.id] = (soVongVe[b.id] || 0) + 1;
+        var yt = dinhLan[Math.min(a.lan, b.lan)] + 8 + k * 12;
+        var xd = b.x + (b.loai === 'viec' ? (b.cot < a.cot ? 1 : -1) * (58 - (k - 1) * 28) : 0);
+        if (b.loai === 'viec' && b.cot === a.cot) xd = b.x;
+        d = 'M' + a.x + ' ' + (a.y - a.hh) + 'V' + yt + 'H' + xd + 'V' + (b.y - b.hh);
+        lp = [(a.x + xd) / 2, yt];
+      } else if (Math.abs(a.y - b.y) < 1) {
+        var trai = b.x < a.x;
+        var x1 = trai ? a.x - a.hw : a.x + a.hw, x2 = trai ? b.x + b.hw : b.x - b.hw;
+        d = 'M' + x1 + ' ' + a.y + 'H' + x2;
+        lp = [(x1 + x2) / 2, a.y];
+      } else if (a.cot === b.cot) {
+        var xuong = b.y > a.y;
+        var y1 = xuong ? a.y + a.hh : a.y - a.hh, y2 = xuong ? b.y - b.hh : b.y + b.hh;
+        d = 'M' + a.x + ' ' + y1 + 'V' + y2;
+        lp = [a.x, (y1 + y2) / 2];
+      } else if (laCong) {
+        // cong: ra dinh tren/duoi -> doc toi hang dich -> ngang vao canh trai
+        var len = b.y < a.y, sy = len ? a.y - a.hh : a.y + a.hh;
+        d = 'M' + a.x + ' ' + sy + 'V' + b.y + 'H' + (b.x - b.hw);
+        lp = [a.x, (sy + b.y) / 2];
+      } else {
+        // viec / su kien: ngang toi cot dich -> doc vao dinh tren / duoi cua dich
+        var xuong2 = b.y > a.y;
+        d = 'M' + (a.x + a.hw) + ' ' + a.y + 'H' + b.x + 'V' + (xuong2 ? b.y - b.hh : b.y + b.hh);
+        lp = [(a.x + a.hw + b.x) / 2, a.y];
+      }
+      el('path', { d: d, class: 'd-luong', 'marker-end': 'url(#m-' + q.ma + ')' }, gL);
+      if (nhan) nhanDuong(lp[0], lp[1], nhan);
+    });
+
+    q.nut.forEach(function (a) {
+      var n = N[a[0]];
+      if (n.loai === 'viec') {
+        el('rect', { x: n.x - TW / 2, y: n.y - TH / 2, width: TW, height: TH, rx: 5, class: 'd-viec' }, gN);
+        var ds = dong(n.nhan, 24).slice(0, 3);
+        viet(gN, n.x, n.y - (ds.length - 1) * 7 + 4, ds, 'd-chu', 14);
+      } else if (n.loai === 'cong') {
+        el('path', { d: 'M' + n.x + ' ' + (n.y - GW) + 'L' + (n.x + GW) + ' ' + n.y + 'L' + n.x + ' ' + (n.y + GW) + 'L' + (n.x - GW) + ' ' + n.y + 'Z', class: 'd-cong' }, gN);
+        if (n.nhan) {
+          var dc = dong(n.nhan, 26);
+          // Vi tri nhan cong: tranh cac nhanh doc. Co nhanh xuong -> ben phai phia duoi; chi nhanh len -> duoi giua; khong -> tren.
+          if (n.raDuoi) {
+            // duoi-trai: ben trai cong chi co luong vao o giua, khong vuong hop phia sau
+            var tR = el('text', { x: n.x - 10, y: n.y + GW + 16, class: 'd-cong-chu', 'text-anchor': 'end' }, gT);
+            dc.forEach(function (s, i) { var sp = el('tspan', { x: n.x - 10, dy: i ? 14 : 0 }, tR); sp.textContent = s; });
+          } else if (n.raTren) viet(gT, n.x, n.y + GW + 18, dc, 'd-cong-chu', 14);
+          else viet(gT, n.x + 18, n.y - GW - 10 - (dc.length - 1) * 14, dc, 'd-cong-chu', 14);
+        }
+      } else {
+        el('circle', { cx: n.x, cy: n.y, r: n.loai === 'kt' ? ER - 1.5 : ER, class: n.loai === 'kt' ? 'd-kt' : 'd-bd' }, gN);
+        viet(gT, n.x, n.y + ER + 16, dong(n.nhan, 18), 'd-su-kien', 13);
+      }
+    });
+    return svg;
+  }
+
+  // ---------------------------------------------------------------- giao dien
+  var tabs = document.getElementById('tabs'), canvas = document.getElementById('canvas');
+  var vua = false;
+  try { vua = localStorage.getItem('bpmn-vua') === '1'; } catch (e) { /* bo qua */ }
+  QT.forEach(function (q) { var a = document.createElement('a'); a.href = '#' + q.ma; a.dataset.ma = q.ma; a.textContent = q.tab; tabs.appendChild(a); });
+  function apZoom() {
+    var s = canvas.querySelector('svg'); if (!s) return;
+    s.style.width = vua ? '100%' : s.getAttribute('width') + 'px'; s.style.height = 'auto';
+    document.getElementById('zVua').setAttribute('aria-pressed', String(vua));
+    document.getElementById('z100').setAttribute('aria-pressed', String(!vua));
+    document.getElementById('goiY').hidden = vua;
+  }
+  function hien() {
+    var ma = (location.hash || '').slice(1);
+    var q = QT.filter(function (x) { return x.ma === ma; })[0] || QT[0];
+    tabs.querySelectorAll('a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.ma === q.ma)); });
+    document.getElementById('moTa').textContent = q.moTa;
+    canvas.innerHTML = ''; canvas.appendChild(ve(q)); apZoom();
+    var r = document.getElementById('rules'); r.innerHTML = '';
+    q.quyTac.forEach(function (k) {
+      var d = document.createElement('div'); d.className = 'rule';
+      var h = document.createElement('h3'); h.textContent = k[0]; d.appendChild(h);
+      var ul = document.createElement('ul');
+      k[1].forEach(function (s) { var li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+      d.appendChild(ul); r.appendChild(d);
+    });
+  }
+  document.getElementById('zVua').addEventListener('click', function () { vua = true; try { localStorage.setItem('bpmn-vua', '1'); } catch (e) {} apZoom(); });
+  document.getElementById('z100').addEventListener('click', function () { vua = false; try { localStorage.setItem('bpmn-vua', '0'); } catch (e) {} apZoom(); });
+  window.addEventListener('hashchange', hien);
+  hien();
+})();
+</script>

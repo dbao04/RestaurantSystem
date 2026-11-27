@@ -1148,6 +1148,10 @@ app.post('/giao-hang', requireLogin, async (req, res) => {
       }
     }
 
+    // Bao som neu gio nhan / luc dat ngoai khung (kiem tra lai luc dat don o POST /datban).
+    try { await require('./services/chinhSachGiaoService').kiemTraGioGiao(datebook, timebook); }
+    catch (e) { return baoKhachQuayLai(req, res, e.message); }
+
     req.session.thongTinGiao = {
       dia_chi_giao: String(dia_chi_giao).trim(),
       ten_nguoi_nhan: ten_nguoi_nhan || req.session.username,
@@ -1190,6 +1194,7 @@ app.post('/datban', require('./middleware/auth').canKhachDangNhap, async (req, r
 
   const soKhach = '1';
   const dipDat  = 'Giao hàng tận nơi';
+  let gioGiaoChuan = null; // { ngay, gio } sau kiem tra khung gio don giao
 
   try {
     const phanTichNgay = (s) => {
@@ -1236,10 +1241,18 @@ app.post('/datban', require('./middleware/auth').canKhachDangNhap, async (req, r
       if (!req.body.dong_y_chinh_sach) {
         return baoKhachQuayLai(req, res, 'Vui lòng đọc và đồng ý Chính sách giao hàng trước khi đặt đơn.');
       }
+      // Khung gio: chi nhan trong gio mo cua, hen giao toi da N ngay; gio da qua -> giao ngay.
+      try {
+        const kh = await require('./services/chinhSachGiaoService').kiemTraGioGiao(datebook, timebook);
+        gioGiaoChuan = kh;
+      } catch (e) {
+        return baoKhachQuayLai(req, res, e.message);
+      }
     }
 
     // createOrderFromCart giờ trả về uniqueSesis để redirect đúng đơn vừa đặt
-    const uniqueSesis = await orderService.createOrderFromCart(req.sessionID, req.session.userId, timebook, datebook, soKhach, dipDat);
+    const uniqueSesis = await orderService.createOrderFromCart(req.sessionID, req.session.userId,
+      gioGiaoChuan ? gioGiaoChuan.gio : timebook, gioGiaoChuan ? gioGiaoChuan.ngay : datebook, soKhach, dipDat);
 
     // Notify Kitchen Real-time
     io.to('kitchen_room').emit('new-order-to-kitchen', {
@@ -3019,6 +3032,8 @@ function inBangDiaChi(dsLan, coHttps) {
 }
 
 (async () => {
+  // Dat ban: cot dich vu kem theo (banh kem, trang tri...) - thanh toan doc cot nay.
+  try { await require('./services/reservationService').damBaoCotDichVu(); } catch (e) { console.error('[dat-ban] dich vu kem:', e.message); }
   // Phan quyen kho: thu kho nhap/xuat/kiem ke, quan ly chot & duyet (chay 1 lan).
   try {
     if (await require('./services/phanQuyenKho').damBao()) console.log('[phan-quyen] Đã áp dụng phân quyền kho mới.');

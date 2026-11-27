@@ -1083,3 +1083,65 @@ views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
   + dot cham nhat, phat sinh theo loai / tien / thoi gian xu ly, viec tre, nhan su; danh gia 1-5 sao
   (Quan ly / Giam sat PV, bang tiec_danh_gia).
 - Da thu tron vong doi tren tiec thu: 37 kich ban (Dot 2 + 3) + 31 (Dot 1); du lieu thu xoa theo id.
+
+[27/11/2026] Dat tiec - buoc 4 thuc don: gioi thieu chi tiet tung thuc don
+- config/thuc-don-tiec-gioi-thieu.js (moi): theo ma thuc don -> hop_voi, quy_mo, huong_vi, diem_nhan, luu_y (12 thuc don).
+- services/datTiecService.js docThucDon gan gioi_thieu; views/dat-tiec.ejs: the hien mo ta + the "phu hop voi"; khung chi tiet khi chon hien Phu hop voi / Quy mo goi y / Huong vi / Vi sao nen chon / Da bao gom trong gia / Luu y.
+- Khong doi CSDL. Thuc don moi chua co trong file van hien binh thuong (chi mo ta ngan).
+
+[27/11/2026] Thanh dieu huong khach
+- "Dat Ban" len thanh ngang (giua Khong Gian va Dat Tiec); bo nut tron Dat ban ben phai va muc trung trong menu dien thoai.
+- Da dang nhap: tro / bam vao ten khach -> menu so xuong (Tai khoan, Thanh Vien, Lich Su Dat Ban, Dang xuat); bo nut dang xuat rieng. "Thanh Vien" chi con tren thanh ngang khi chua dang nhap. Menu dien thoai them muc Thanh Vien.
+- views/partials/header.ejs, css/nhahang.css (.nh-tk), views/partials/footer.ejs (bam de mo tren dien thoai, Esc / bam ngoai de dong).
+
+[27/11/2026] Dat ban (khach) - gio het ban + chon khu o buoc chon ban
+- Buoc 1: gio het ban to do (vien do, nen hong, chu "Het ban" do dam) thay cho xam gach ngang. Khung gio buoc 1 xet moi khu (khong loc theo khu nua).
+- Bo o "Khu vuc" o buoc 1 (giu input an dbKhuVuc de ?khu_vuc= tu trang Khong gian van mo san khu do).
+- Buoc 2: thay tab ngang bang danh sach khu dang xo (ten, so ban, "con N ban trong" xanh / "Het ban" do). Bam khu nao -> so do ban cua khu do xo ngay ben duoi; bam lai de thu gon. Chua chon khu thi chi hien danh sach + goi y "De nha hang xep ban".
+- Locale moi vi/en/ja: dat_ban_moi.chon_khu_xem_so_do, khu_con_ban, khu_het_ban, khu_bam_xem, khu_thu_gon. vi: het_ban -> "Het ban".
+- Sua tran ngang tren dien thoai (grid minmax(0,1fr)).
+
+[27/11/2026] Sua loi dat ban buoc 2: mo roi dong mot khu -> mat 2 khu cuoi + mat so do / tom tat
+- Nguyen nhan: ve lai danh sach xoa sach #dbTabs trong khi so do dang nam trong khu dang mo -> so do bi xoa theo; lan tai sau tim #dbSoDo = null, loi giua vong lap.
+- Sua: giu tham chieu co dinh EL_SO_DO / EL_TOM_TAT, dua ve cho cu (veChoSoDo) TRUOC khi xoa danh sach; bam lien tiep chi ve ket qua lan moi nhat (luotTaiSoDo).
+
+[27/11/2026] Dat ban buoc Goi mon: nut 'Bo qua buoc nay' doi thanh 'Khong dat mon truoc' (icon fa-ban); en 'No pre-order', ja '事前注文しない'; sua ca loi nhac trong trang Huong dan dat ban.
+
+[27/11/2026] Dat ban - dich vu kem theo dip (chon option + tinh tien)
+- config/dich-vu-kem-dat-ban.js (moi): danh muc theo the (BIRTHDAY, ANNIVERSARY, PROPOSAL, CORPORATE, KIDS, ELDERLY, WHEELCHAIR, ALLERGY); don_vi lan/khach/cai; nhom chon 1 (banh kem). tinh() chuan hoa + tinh gia phia may chu (chi nhan dich vu cua the da tich, bo ma gia, gioi han so luong).
+- reservations them cot dich_vu_kem (JSON), dich_vu_kem_tong (tu them khi khoi dong: damBaoCotDichVu).
+- Khoan tra truoc = coc theo quy tac + tien dich vu (congDichVu) o kha-dung, tao luot, doi gio, doi mon. Dong "Dich vu kem: ..." ghi dau special_requests cho nhan vien.
+- thanhToanService: tienDaCoc tru dich_vu_kem_tong (dich vu da tra rieng, khong can tru tien mon) - ca layHoaDon va danhSachCanThanhToan.
+- views/reservation.ejs: o tuy chon duoi the da tich, so luong +/-, tong; tom tat + xem lai; gui addons. Trang thanh toan dat ban liet ke dich vu + dong tong.
+- Kiem thu thu_dvk.js 7/7 (bao gia 590.000, bo muc sai, luu, trang thanh toan, hoa don tai ban khong can tru dich vu). Du lieu thu xoa dung id.
+- npm test: bai 21 hong san (tu nhanh doan); bai 42 chap chon (chay rieng dat, lan chay lai dat).
+
+[27/11/2026] Quan ly dat ban (nhan vien) - bam vao ban tren so do
+- Bo window.alert khi bam ban khong co luot dat. Thay bang modal #mBan: trang thai luc nay + luc dang xem, ly do khong nhan, thuoc tinh ban, lich ban trong ngay (mo tung luot).
+- Nut theo trang thai: trong -> Xep khach vang lai vao ban nay (chi hom nay) / Dat truoc ban nay luc <gio dang xem> (form tao luot nhan san ban + gio + khu, gui table_ids); dang don -> Don xong tra ban trong; co khach khong luot -> Khach da ve chuyen sang dang don; co khach/dang don -> link So do ban (goi mon, chuyen ban, tinh tien); co luot -> Mo luot dat; giu tiec -> link Dieu hanh tiec; bao tri -> huong dan.
+- Doi trang thai ban dung /so-do-ban/api/trang-thai/:id (may chu chan neu con mon chua thanh toan).
+- Kiem thu: dang nhap le tan, bam S09 (trong), S02 (dang don), S01 (co khach) - khong con alert; tao luot chi dinh S09 -> dung ban S09; du lieu thu xoa dung id.
+
+[27/11/2026] Trung tam dat ban (nhan vien) - bam vao o chi so xem chi tiet
+- 8 o (Tong luot, Cho xac nhan, Da xac nhan, Dang ngoi, Tong khach, Ty le lap day, No-show, Da huy) bam / Enter duoc -> modal #mChiSo: cach tinh con so (kem phep tinh that), o chia nho, bang cac luot thuoc o (nut Mo -> ngan chi tiet luot).
+- bangDieuKhien tra them ghe_gio, so_gio_mo de giai thich ty le lap day. Du lieu luot trong ngay nhung san (DS_NGAY), khong goi them API.
+- Kiem thu le tan ngay 27/11 va 28/11: so trong modal khop so tren o; khong loi JS.
+
+[27/11/2026] Admin chatbot - nut chen bien tren o soan tin
+- views/admin/partials/chatbot-preny.ejs: thanh nut "Chen:" tren cac o loi_chao, loi_chao_quan_ly, tin_khong_hieu, tin_anh_khong_ro, tin_ngoai_gio, tin_cam_on_sdt (them {sdt}), tin_chuyen_nv, tin_tu_cam va 2 o tra_loi (y dinh, kien thuc). Bien: ten_khach, ten_bot, ten_nha_hang, hotline, dia_chi, gio_mo_cua, email, wifi, buoi, so_mon, gia_thap, gia_cao (dung danh sach apDung o chatbotTriThuc). Nut In dam boc **...**.
+- Chen dung vi tri con tro (thay doan boi den), cap nhat xem truoc. Dung span role=button vi o nam trong label. Bo chip cu #kt-bien.
+
+[27/11/2026] Rang buoc thoi gian
+- Kiem thu luot dat ngay mai, hom nay thu 6 cua: Khach da den / Xep ban / nut cu / gan ban tren So do ban / goi mon / quet QR.
+- LO: So do ban cho doi ban sang "Co khach" gan ma luot dat RSV- chua nhan khach -> sua kdsService.doiTrangThaiBan: chi gan khi luot ARRIVED/SEATED (tai khoan demo bo qua).
+- LO: khai tiec chi chan ngay tuong lai -> tiecTrongTiecService.khaiTiec: chi tu (gio bat dau - 60 phut), khong khai tiec ngay da qua.
+- Giao hang (chua sua, cho chot chinh sach): khong kiem gio mo cua / gio nhan hang; don hen ngay khac van phan shipper + len bep ngay; don cho shipper khong co han -> treo vo han. Luong huy co san (chinhSachGiaoService.LY_DO_HUY, hoan diem khi loi nha hang, bao khach).
+- Du lieu thu xoa dung id (luot 395-399, phien vang lai TB_MWZ7NSJR do kich ban vo tinh tao). test tinh nang moi 140/140, npm test 42/43 (bai 21 hong san).
+
+[28/11/2026] Rang buoc thoi gian don giao hang (nguoi dung dong y de xuat)
+- chinhSachGiaoService: tham so moi trong cau_hinh: giao_hang.phut_ngung_truoc_dong (45), so_ngay_hen_toi_da (3), phut_len_bep_truoc (60), phut_canh_bao_cho_shipper (10), phut_tu_huy_cho_shipper (20).
+- kiemTraGioGiao: luc dat trong gio mo cua (lichMoCua), ngung nhan 45 phut truoc dong cua; gio nhan trong gio mo cua cua ngay do, toi da 3 ngay; gio da qua -> giao ngay. Goi o POST /giao-hang (bao som) va POST /datban (chuan hoa ngay/gio truoc khi tao don).
+- Don hen gio: KDS (2 truy van layDonBep) va tuDongPhan chi nhan don tu (gio hen - 60 phut).
+- quetChoShipper (vong 60s): tinh tu max(cho_phan_luc, gio hen - 60); 10 phut -> thong bao giao_cho_shipper_lau (DIEU_PHOI, QUAN_LY), 20 phut -> huyDon ly do khong_co_shipper (loi nha hang, hoan diem, bao khach). Cot moi don_giao_hang.cho_phan_luc, canh_bao_shipper_luc; chi xet don co cho_phan_luc (2 don cu 07/11 khong bi dong).
+- scripts/test-tinh-nang-moi.js: gio nhan = bay gio; ngoai gio thi kiem tra bi tu choi va bo qua phan don giao.
+- Kiem thu thu_giao_tg.js 14/14 (du lieu thu xoa dung id). Luu y: chua chay duoc nhanh trong gio cua test tinh nang moi (chay luc gan 0h).

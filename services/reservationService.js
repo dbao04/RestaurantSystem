@@ -29,6 +29,39 @@ const xb = require('./reservationTables');
 const { ngayCucBo } = require('../utils/thoiGian');
 
 const { LoiDatBan } = qt;
+const dichVuKem = require('../config/dich-vu-kem-dat-ban');
+
+/** Cot luu dich vu kem theo (banh kem, trang tri...) - them 1 lan neu CSDL cu chua co. */
+let _damBaoDv = null;
+function damBaoCotDichVu() {
+  if (!_damBaoDv) {
+    _damBaoDv = (async () => {
+      const [c] = await db.query("SHOW COLUMNS FROM reservations LIKE 'dich_vu_kem_tong'");
+      if (!c.length) {
+        await db.query('ALTER TABLE reservations ADD COLUMN dich_vu_kem TEXT NULL, ADD COLUMN dich_vu_kem_tong DECIMAL(12,0) NOT NULL DEFAULT 0');
+      }
+    })().catch((e) => { _damBaoDv = null; throw e; });
+  }
+  return _damBaoDv;
+}
+/** Khoan tra truoc = coc (theo quy tac) + tien dich vu kem. Dich vu khong tru vao tien mon luc thanh toan tai ban. */
+function congDichVu(coc, tongDv) {
+  const dv = Math.round(Number(tongDv) || 0);
+  if (!dv) return coc;
+  return {
+    ...coc,
+    soTien: (Number(coc.soTien) || 0) + dv,
+    tienCocMon: Number(coc.soTien) || 0,
+    dichVuKem: dv,
+    lyDo: (coc.soTien > 0 ? coc.lyDo + ' + ' : '') + `Dịch vụ kèm theo: ${dv.toLocaleString('vi-VN')}đ`,
+  };
+}
+/** Doc lua chon dich vu tu body / query (mang hoac chuoi JSON). */
+function docLuaChonDv(v) {
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'string' && v.trim()) { try { const j = JSON.parse(v); return Array.isArray(j) ? j : []; } catch (_) { return []; } }
+  return [];
+}
 
 /** Cot cua `reservations` duoc tra ve moi noi - giu mot cho de khong lech nhau. */
 const COT_RSV = `
@@ -37,6 +70,7 @@ const COT_RSV = `
   r.guest_count, r.area_id, r.customer_type, r.source, r.status,
   r.deposit_status, r.deposit_amount, r.deposit_due_at,
   r.special_requests, r.occasion, r.tags, r.notes, r.manual_tables,
+  r.dich_vu_kem, r.dich_vu_kem_tong,
   r.assigned_staff_id, r.created_by, r.updated_by,
   r.hold_until, r.confirmed_at, r.arrived_at, r.seated_at, r.completed_at, r.closed_at,
   r.cancel_reason, r.cancelled_by, r.refund_percent, r.refund_amount,
@@ -604,12 +638,13 @@ async function kiemTraKhaDung(input, { laOnline = true, boQuaId = null } = {}) {
   });
 
   const tongTienMonKhaDung = Number(input.preorder_total) || 0;
-  const coc = await qt.tinhTienCoc({
+  const dvKhaDung = dichVuKem.tinh(dsThe, docLuaChonDv(input.addons), khach.soKhach);
+  const coc = congDichVu(await qt.tinhTienCoc({
     soKhach: khach.soKhach,
     gioBatDau: khung.batDau,
     loaiKhach: khach.loaiKhach,
     tongTienMon: tongTienMonKhaDung,
-  });
+  }), dvKhaDung.tong);
 
   const kq = {
     khung: {
@@ -725,7 +760,9 @@ async function taoLuotDat(input, ctx = {}) {
   const dsMonTruoc = await chuanHoaMonDatTruoc(input.items);
   const tongTienMon = dsMonTruoc.reduce((sum, m) => sum + m.price * m.qty, 0);
 
-  const coc = await qt.tinhTienCoc({ soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach, tongTienMon });
+  const dvKem = dichVuKem.tinh(dsThe, docLuaChonDv(input.addons), khach.soKhach);
+  const coc = congDichVu(await qt.tinhTienCoc({ soKhach: khach.soKhach, gioBatDau: khung.batDau, loaiKhach, tongTienMon }), dvKem.tong);
+  if (dvKem.ds.length) await damBaoCotDichVu();
 
   /*
     VONG THU LAI KHI MAT BAN DO DUA.
@@ -820,7 +857,7 @@ async function taoLuotDat(input, ctx = {}) {
             khung.ngay, khung.batDau, khung.ketThuc, khung.thoiLuong, khung.demDon,
             khach.soKhach, input.area_id || null, loaiKhach, khach.nguon, trangThai,
             coc.soTien > 0 ? 'UNPAID' : 'NOT_REQUIRED', coc.soTien, hanCoc,
-            String(input.special_requests || '').trim() || null,
+            [dichVuKem.moTa(dvKem.ds), String(input.special_requests || '').trim()].filter(Boolean).join('\n') || null,
             String(input.occasion || '').trim() || null,
             JSON.stringify(dsThe),
             String(input.notes || '').trim() || null,
@@ -831,6 +868,10 @@ async function taoLuotDat(input, ctx = {}) {
             ho ? ho.no_show_count : 0]);
 
         const id = ketQua.insertId;
+        if (dvKem.ds.length) {
+          await conn.query('UPDATE reservations SET dich_vu_kem = ?, dich_vu_kem_tong = ? WHERE id = ?',
+            [JSON.stringify(dvKem.ds), dvKem.tong, id]);
+        }
 
         if (!vaoWaitlist) {
           // Hai lenh nay phai di lien nhau va trong cung transaction: chiemO la cai
@@ -1077,8 +1118,8 @@ async function capNhat(id, input, ctx = {}) {
         loaiKhach: khach.loaiKhach,
         tongTienMon: Number(monRow && monRow.tong_mon) || 0,
       });
-      soTienCoc = coc.soTien;
-      trangThaiCoc = coc.soTien > 0 ? 'UNPAID' : 'NOT_REQUIRED';
+      soTienCoc = coc.soTien + (Number(hienTai.dich_vu_kem_tong) || 0);
+      trangThaiCoc = soTienCoc > 0 ? 'UNPAID' : 'NOT_REQUIRED';
     }
 
     // Doi o luoi: nha het roi chiem lai. Trong cung transaction nen khong co
@@ -1198,12 +1239,12 @@ async function capNhatMonDatTruoc(id, items, ctx = {}) {
     // hoan roi thi khong dong vao nua, do la viec cua ke toan.
     if (hienTai.deposit_status !== 'PAID' && hienTai.deposit_status !== 'REFUNDED') {
       const tongTienMon = chuanBi.reduce((s, m) => s + m.price * m.qty, 0);
-      const coc = await qt.tinhTienCoc({
+      const coc = congDichVu(await qt.tinhTienCoc({
         soKhach: hienTai.guest_count,
         gioBatDau: String(hienTai.start_time),
         loaiKhach: hienTai.customer_type,
         tongTienMon,
-      });
+      }), hienTai.dich_vu_kem_tong);
       await conn.query(
         'UPDATE reservations SET deposit_amount = ?, deposit_status = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
         [coc.soTien, coc.soTien > 0 ? 'UNPAID' : 'NOT_REQUIRED', ctx.nhanVienId || null, id]
@@ -1652,6 +1693,9 @@ async function bangDieuKhien(ngay) {
     ty_le_huy: daKetThuc ? Math.round(((dem.CANCELLED + dem.REJECTED) / daKetThuc) * 100) : 0,
     quy_mo_trung_binh: ds.length ? Math.round((ds.reduce((s, r) => s + Number(r.guest_count), 0) / ds.length) * 10) / 10 : 0,
     tong_cho: Number(tongCho),
+    // So trung gian cua ty le lap day - de man hinh giai thich duoc con so.
+    ghe_gio: Math.round(gheGio * 10) / 10,
+    so_gio_mo: Math.round(soGioMo * 10) / 10,
     canh_bao: canhBao,
     sap_het_gio: sapHetGio,
     sap_den: sapDen,
@@ -1843,6 +1887,7 @@ async function phanTich(tuNgay, denNgay, { chiNhanh = null } = {}) {
 }
 
 module.exports = {
+  damBaoCotDichVu,
   // doc
   danhSach,
   chiTiet,

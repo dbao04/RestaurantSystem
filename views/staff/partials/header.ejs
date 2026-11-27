@@ -750,6 +750,16 @@
         </div>
       <% } %>
 
+      <%# Du lieu danh muc: mon va loai mon. Truong bep / bar (va ban dieu hanh) them,
+          sua, xoa - routes/bepQuanLy.js canSuaThucDon. Bar chi thay do uong. %>
+      <% if (_dieuHanh || _truongBep) { %>
+        <div class="qt-side__group">
+          <div class="qt-side__label">Dữ liệu danh mục</div>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kitchen-dishes' ? 'active' : '' %>" href="/staff/kitchen/dishes" data-match="/staff/kitchen/dishes"><i class="fas fa-bowl-food"></i><span><%= _hsMenu.ma_bp === 'BAR' ? 'Danh mục đồ uống' : 'Danh mục món ăn' %></span></a>
+          <a class="qt-nav__item <%= typeof activePage !== 'undefined' && activePage==='kitchen-categories' ? 'active' : '' %>" href="/staff/kitchen/categories" data-match="/staff/kitchen/categories"><i class="fas fa-layer-group"></i><span>Loại món</span></a>
+        </div>
+      <% } %>
+
       <%# KHO NGUYEN LIEU: theo QUYEN kho.xem (bep, bar, thu kho, nv kho, ke toan, quan ly)
           - services/phanQuyenKho.js. Thu kho / nv kho khong thuoc vai tro Bep
           nen phai la nhom rieng, khong nam trong "Khu vuc Bep & Bar". %>

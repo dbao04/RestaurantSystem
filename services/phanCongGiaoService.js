@@ -234,6 +234,12 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
     const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper, ma_khu_vuc FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
     if (!don) return { phan: false, ly_do: 'Không tìm thấy đơn.' };
     if (don.trang_thai !== 'cho_phan' || don.id_shipper) return { phan: false, ly_do: 'Đơn đã có người nhận.' };
+    // Don hen gio: chi phan tu (gio hen - phut_len_bep_truoc) - khong de shipper cam don cua ngay mai.
+    const [[sd]] = await db.query('SELECT sesis FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+    const chuaToi = sd && await require('./chinhSachGiaoService').henChuaToi(sd.sesis);
+    if (chuaToi && !batBuoc) {
+      return { phan: false, hen_gio: true, ly_do: `Đơn hẹn giờ – tự phân shipper từ ${String(chuaToi.getHours()).padStart(2, '0')}:${String(chuaToi.getMinutes()).padStart(2, '0')} ngày ${chuaToi.getDate()}/${chuaToi.getMonth() + 1}.` };
+    }
     const dung = await lyDoDungTuPhan(idGiao, ts);
     if (dung) return { phan: false, can_xu_ly_tay: true, ly_do: `Dừng tự phân (${dung}) – chờ điều phối xử lý.` };
 
@@ -270,7 +276,7 @@ async function phanHangCho() {
   for (const d of cho) {
     const kq = await tuDongPhan(d.id_giao);
     if (kq.phan) daPhan++;
-    else if (/Không có shipper/.test(kq.ly_do)) break; // het nguoi ranh, dung som
+    else if (/Không có shipper/.test(kq.ly_do || '')) break; // het nguoi ranh, dung som
   }
   return { da_phan: daPhan, con_cho: cho.length - daPhan };
 }

@@ -396,6 +396,18 @@
           </div>
         <% } %>
 
+        <% if (typeof dichVuKem !== 'undefined' && dichVuKem.length) { %>
+          <div class="spf-card-title" style="margin-top:14px">
+            <i class="fas fa-gift" style="color:var(--spf-gold)"></i> <%= t('dat_ban_moi.dv_tom_tat') %> (<%= dichVuKem.length %>)
+          </div>
+          <% dichVuKem.forEach(function (x) { %>
+            <div class="spf-item-row">
+              <div><span class="spf-item-name"><%= x.ten %></span><% if (Number(x.so_luong) > 1) { %> <span class="spf-item-qty">x<%= x.so_luong %></span><% } %></div>
+              <div class="spf-item-price"><%= Number(x.thanh_tien) ? Number(x.thanh_tien).toLocaleString('vi-VN') + ' ₫' : t('dat_ban_moi.dv_mien_phi') %></div>
+            </div>
+          <% }) %>
+        <% } %>
+
         <div class="spf-total-summary">
           <% if (tongTienMon > 0) { %>
             <div class="spf-sum-row">
@@ -407,6 +419,12 @@
             <div class="spf-sum-row">
               <span><%= t('tt_dat_ban.tien_coc_giu_ban') %></span>
               <span><%= Number(tienCoc).toLocaleString('vi-VN') %> ₫</span>
+            </div>
+          <% } %>
+          <% if (typeof tongDvKem !== 'undefined' && tongDvKem > 0) { %>
+            <div class="spf-sum-row">
+              <span><%= t('dat_ban_moi.dv_tong') %></span>
+              <span><%= Number(tongDvKem).toLocaleString('vi-VN') %> ₫</span>
             </div>
           <% } %>
           <div class="spf-sum-final">

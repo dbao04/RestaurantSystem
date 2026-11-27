@@ -53,11 +53,18 @@ const MAC_DINH_BAC = [{ tu_km: 5, he_so: 0.8 }, { tu_km: 8, he_so: 0.6 }];
 let _cache = null;
 let _cacheLuc = 0;
 
+function soTrong(v, macDinh, min, max) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && v !== null && v !== '' ? Math.min(max, Math.max(min, n)) : macDinh;
+}
+
 async function docThamSo() {
   if (_cache && Date.now() - _cacheLuc < 30000) return _cache;
   const [rows] = await db.query(
     `SELECT khoa, gia_tri FROM cau_hinh WHERE khoa IN
-       ('giao_hang.bac_giam_km','giao_hang.phut_giu_thanh_toan','giao_hang.ty_le_hoan_diem','giao_hang.mien_phi_tu')`
+       ('giao_hang.bac_giam_km','giao_hang.phut_giu_thanh_toan','giao_hang.ty_le_hoan_diem','giao_hang.mien_phi_tu',
+        'giao_hang.phut_ngung_truoc_dong','giao_hang.so_ngay_hen_toi_da','giao_hang.phut_len_bep_truoc',
+        'giao_hang.phut_canh_bao_cho_shipper','giao_hang.phut_tu_huy_cho_shipper')`
   );
   const c = Object.fromEntries(rows.map((r) => [r.khoa, r.gia_tri]));
   let bac = MAC_DINH_BAC;
@@ -76,6 +83,12 @@ async function docThamSo() {
     phut_giu_thanh_toan: Math.max(5, Number(c['giao_hang.phut_giu_thanh_toan']) || 15),
     ty_le_hoan_diem: Math.min(100, Math.max(0, Number(c['giao_hang.ty_le_hoan_diem'] ?? 100))),
     mien_phi_tu: Number(c['giao_hang.mien_phi_tu']) || 0,
+    // Rang buoc thoi gian don giao (quan ly doi trong cau_hinh):
+    phut_ngung_truoc_dong: soTrong(c['giao_hang.phut_ngung_truoc_dong'], 45, 0, 240),       // ngung nhan don truoc gio dong cua
+    so_ngay_hen_toi_da: soTrong(c['giao_hang.so_ngay_hen_toi_da'], 3, 0, 30),             // hen giao xa nhat
+    phut_len_bep_truoc: soTrong(c['giao_hang.phut_len_bep_truoc'], 60, 15, 240),          // don hen gio: len bep / phan shipper truoc gio hen
+    phut_canh_bao_cho_shipper: soTrong(c['giao_hang.phut_canh_bao_cho_shipper'], 10, 1, 120),
+    phut_tu_huy_cho_shipper: soTrong(c['giao_hang.phut_tu_huy_cho_shipper'], 20, 2, 240),
     gia_tri_1_diem: Number(tt.gia_tri_1_diem) || 1000,
     toi_da_diem_moi_don: Number(tt.toi_da_diem_moi_don) || 50,
   };
@@ -181,11 +194,12 @@ async function sauKhiThanhToan(sesis, conPhaiTra) {
   if (don.trang_thai === 'cho_thanh_toan' && conPhaiTra <= 0) {
     const vc = require('./vanChuyenService');
     await db.query(
-      "UPDATE don_giao_hang SET trang_thai = 'cho_phan', han_thanh_toan = NULL WHERE id_giao = ? AND trang_thai = 'cho_thanh_toan'",
+      "UPDATE don_giao_hang SET trang_thai = 'cho_phan', han_thanh_toan = NULL, cho_phan_luc = NOW() WHERE id_giao = ? AND trang_thai = 'cho_thanh_toan'",
       [don.id_giao]
     );
     // Xac nhan don goc de bep (KDS) bat dau nau.
     await db.query('UPDATE hopdong SET tinhtrang = 1 WHERE sesis = ? AND tinhtrang = 0', [sesis]);
+    await damBaoCotThoiGian();
     await vc.ghiNhatKy(don.id_giao, 'cho_thanh_toan', 'cho_phan', { ten: 'Hệ thống' },
       `Khách đã thanh toán đủ ${daTra.tien.toLocaleString('vi-VN')}đ — chuyển xuống bếp`);
     setImmediate(() => require('./phanCongGiaoService').tuDongPhan(don.id_giao).catch(() => {}));
@@ -382,9 +396,138 @@ async function quetQuaHan() {
 }
 
 let _vong = null;
+/* ========================================================================== */
+/* RANG BUOC THOI GIAN DON GIAO                                                */
+/* ========================================================================== */
+
+let _cotTg = null;
+/** Cot moc thoi gian cho don giao - tu them 1 lan. */
+function damBaoCotThoiGian() {
+  if (!_cotTg) {
+    _cotTg = (async () => {
+      for (const [ten, kieu] of [['cho_phan_luc', 'DATETIME NULL'], ['canh_bao_shipper_luc', 'DATETIME NULL']]) {
+        const [c] = await db.query('SHOW COLUMNS FROM don_giao_hang LIKE ?', [ten]);
+        if (!c.length) await db.query(`ALTER TABLE don_giao_hang ADD COLUMN ${ten} ${kieu}`);
+      }
+    })().catch((e) => { _cotTg = null; throw e; });
+  }
+  return _cotTg;
+}
+
+const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+const ngayStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Khung mo cua cua mot ngay -> { dong, lyDo, mo: Date, dongCua: Date }. */
+async function khungMoCua(ngay) {
+  const qt = require('./reservationRules');
+  const l = await qt.lichMoCua(ngay);
+  if (l.dong) return { dong: true, lyDo: l.lyDo || 'Nhà hàng nghỉ trong ngày này' };
+  const mo = qt.ghepMoc(ngay, String(l.mo));
+  let dongCua = qt.ghepMoc(ngay, String(l.dong_cua));
+  if (dongCua <= mo) dongCua = new Date(dongCua.getTime() + 86400000);
+  return { dong: false, mo, dongCua };
+}
+
+/**
+ * Kiem tra luc DAT va gio NHAN cua don giao. Nem Error (thong diep cho khach) neu sai.
+ *   - Luc dat: trong gio mo cua hom nay, ngung nhan phut_ngung_truoc_dong phut truoc gio dong.
+ *   - Gio nhan: trong gio mo cua cua ngay do, hen xa nhat so_ngay_hen_toi_da ngay.
+ *   - Gio nhan som hon bay gio -> coi la "giao ngay" (doi gio nhan thanh bay gio).
+ * Tra ve { ngay, gio, giaoNgay } da chuan hoa.
+ */
+async function kiemTraGioGiao(ngay, gio, bayGio = new Date()) {
+  const ts = await docThamSo();
+  const homNay = ngayStr(bayGio);
+  const k0 = await khungMoCua(homNay);
+  if (k0.dong) throw new Error(`Hôm nay nhà hàng không nhận đơn giao (${k0.lyDo}).`);
+  const chotNhan = new Date(k0.dongCua.getTime() - ts.phut_ngung_truoc_dong * 60000);
+  if (bayGio < k0.mo || bayGio > chotNhan) {
+    throw new Error(`Nhà hàng nhận đơn giao từ ${hhmm(k0.mo)} đến ${hhmm(chotNhan)} (ngừng nhận ${ts.phut_ngung_truoc_dong} phút trước giờ đóng cửa ${hhmm(k0.dongCua)}). Vui lòng đặt lại trong khung giờ này.`);
+  }
+  const ngayNhan = /^\d{4}-\d{2}-\d{2}$/.test(String(ngay || '')) ? String(ngay) : homNay;
+  const gioNhan = /^\d{1,2}:\d{2}/.test(String(gio || '')) ? String(gio).slice(0, 5).padStart(5, '0') : hhmm(bayGio);
+  const xaNhat = new Date(bayGio); xaNhat.setHours(0, 0, 0, 0); xaNhat.setDate(xaNhat.getDate() + ts.so_ngay_hen_toi_da);
+  if (ngayNhan < homNay) throw new Error('Ngày nhận hàng không được ở quá khứ.');
+  if (ngayNhan > ngayStr(xaNhat)) throw new Error(`Chỉ nhận hẹn giao trước tối đa ${ts.so_ngay_hen_toi_da} ngày.`);
+  const k = ngayNhan === homNay ? k0 : await khungMoCua(ngayNhan);
+  if (k.dong) throw new Error(`Ngày ${ngayNhan.split('-').reverse().join('/')} nhà hàng nghỉ (${k.lyDo}).`);
+  const moc = require('./reservationRules').ghepMoc(ngayNhan, `${gioNhan}:00`);
+  if (moc <= bayGio) return { ngay: homNay, gio: hhmm(bayGio), giaoNgay: true };
+  if (moc < k.mo || moc > k.dongCua) {
+    throw new Error(`Giờ nhận hàng phải trong giờ mở cửa ${hhmm(k.mo)} – ${hhmm(k.dongCua)}.`);
+  }
+  return { ngay: ngayNhan, gio: gioNhan, giaoNgay: false };
+}
+
+/** Gio hen nhan cua don (tu hopdong.ngay_dat + gio_dat). */
+async function henCuaSesis(sesis) {
+  const [[r]] = await db.query(
+    "SELECT MIN(TIMESTAMP(ngay_dat, COALESCE(gio_dat, '00:00:00'))) AS hen FROM hopdong WHERE sesis = ? AND ngay_dat IS NOT NULL", [sesis]);
+  return r && r.hen ? new Date(r.hen) : null;
+}
+
+/** Don hen gio chua toi luc len bep / phan shipper -> tra ve moc bat dau; da toi -> null. */
+async function henChuaToi(sesis, bayGio = new Date()) {
+  const ts = await docThamSo();
+  const hen = await henCuaSesis(sesis);
+  if (!hen) return null;
+  const batDau = new Date(hen.getTime() - ts.phut_len_bep_truoc * 60000);
+  return bayGio < batDau ? batDau : null;
+}
+
+/**
+ * Don da thanh toan ma chua co shipper NHAN: canh bao sau phut_canh_bao_cho_shipper,
+ * tu huy (ly do "khong co shipper", loi nha hang -> hoan diem 100%, bao khach) sau
+ * phut_tu_huy_cho_shipper. Tinh tu khi don duoc phep phan:
+ *     max(luc vao hang cho, gio hen - phut_len_bep_truoc).
+ * Chi xet don co cho_phan_luc (don tao tu khi co rang buoc nay).
+ */
+async function quetChoShipper(bayGio = new Date()) {
+  await damBaoCotThoiGian();
+  const ts = await docThamSo();
+  const [ds] = await db.query(
+    `SELECT d.id_giao, d.ma_giao, d.sesis, d.cho_phan_luc, d.canh_bao_shipper_luc,
+            (SELECT MIN(TIMESTAMP(h.ngay_dat, COALESCE(h.gio_dat, '00:00:00'))) FROM hopdong h WHERE h.sesis = d.sesis AND h.ngay_dat IS NOT NULL) AS hen
+       FROM don_giao_hang d
+      WHERE d.cho_phan_luc IS NOT NULL
+        AND (d.trang_thai = 'cho_phan' OR (d.trang_thai = 'da_phan' AND d.xac_nhan_luc IS NULL))
+      LIMIT 100`);
+  const kq = { canh_bao: 0, tu_huy: 0 };
+  for (const d of ds) {
+    let moc = new Date(d.cho_phan_luc);
+    if (d.hen) { const len = new Date(new Date(d.hen).getTime() - ts.phut_len_bep_truoc * 60000); if (len > moc) moc = len; }
+    const phut = (bayGio - moc) / 60000;
+    try {
+      if (phut >= ts.phut_tu_huy_cho_shipper) {
+        await huyDon(d.id_giao, {
+          ma_ly_do: 'khong_co_shipper',
+          ghi_chu: `Tự hủy: quá ${ts.phut_tu_huy_cho_shipper} phút không có shipper nhận đơn`,
+          nguoi: { ten: 'Hệ thống', heThong: true },
+        });
+        kq.tu_huy++;
+      } else if (phut >= ts.phut_canh_bao_cho_shipper && !d.canh_bao_shipper_luc) {
+        await db.query('UPDATE don_giao_hang SET canh_bao_shipper_luc = NOW() WHERE id_giao = ?', [d.id_giao]);
+        await require('./thongBaoService').gui('giao_cho_shipper_lau', {
+          tieuDe: `Đơn ${d.ma_giao} chờ shipper ${Math.floor(phut)} phút`,
+          noiDung: `Chưa có shipper nhận. Phân tay hoặc gọi thêm shipper - quá ${ts.phut_tu_huy_cho_shipper} phút hệ thống tự hủy và hoàn điểm cho khách.`,
+          link: '/staff/giao-hang', mucDo: 'khan',
+        }).catch(() => {});
+        kq.canh_bao++;
+      }
+    } catch (e) {
+      console.error('[chinh-sach-giao] quet cho shipper loi:', d.id_giao, (e.message || String(e)));
+    }
+  }
+  if (kq.tu_huy || kq.canh_bao) baoThayDoi();
+  return kq;
+}
+
 function batVongQuet() {
   if (_vong) return;
-  _vong = setInterval(() => quetQuaHan().catch((e) => console.error('[chinh-sach-giao]', (e.message || e.code || String(e)))), 60000);
+  _vong = setInterval(() => {
+    quetQuaHan().catch((e) => console.error('[chinh-sach-giao]', (e.message || e.code || String(e))));
+    quetChoShipper().catch((e) => console.error('[chinh-sach-giao] cho shipper:', (e.message || e.code || String(e))));
+  }, 60000);
   console.log('[giao-hang] vòng quét đơn quá hạn thanh toán đã bật (mỗi 60s)');
 }
 
@@ -415,4 +558,5 @@ module.exports = {
   tienDaTra, sauKhiThanhToan,
   huyDon, sauKhiHuy, hoanDiemMotPhan, lichSuHoan, tongDaHoan,
   quetQuaHan, batVongQuet,
+  damBaoCotThoiGian, kiemTraGioGiao, henCuaSesis, henChuaToi, quetChoShipper,
 };

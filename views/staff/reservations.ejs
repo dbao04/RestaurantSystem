@@ -199,23 +199,33 @@ var dem = bang.dem || {};
   <% } %>
 </div>
 
+<style>
+  .db-chiso [data-chiso] { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+  .db-chiso [data-chiso]:hover, .db-chiso [data-chiso]:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); outline: none; }
+  .db-chiso [data-chiso] .p::after { content: ' · xem chi tiết ›'; opacity: .55; }
+  .cs-bang td, .cs-bang th { padding: .45rem .5rem; vertical-align: middle; }
+  .cs-chia { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .5rem; }
+  .cs-chia > div { border: 1px solid rgba(0,0,0,.08); border-radius: 10px; padding: .5rem .7rem; }
+  .cs-chia b { display: block; font-size: 1.15rem; }
+  .cs-chia small { color: #6c757d; }
+</style>
 <!-- ==================================================== CHỈ SỐ ======== -->
 <div class="db-chiso">
-  <div class="o tong"><div class="n">Tổng lượt</div><div class="v"><%= bang.tong_luot %></div>
+  <div role="button" tabindex="0" data-chiso="tong" title="Bấm để xem chi tiết" class="o tong"><div class="n">Tổng lượt</div><div class="v"><%= bang.tong_luot %></div>
     <div class="p"><%= bang.online %> online · <%= bang.walk_in %> vãng lai</div></div>
-  <div class="o cho"><div class="n">Chờ xác nhận</div><div class="v"><%= dem.PENDING || 0 %></div>
+  <div role="button" tabindex="0" data-chiso="cho" title="Bấm để xem chi tiết" class="o cho"><div class="n">Chờ xác nhận</div><div class="v"><%= dem.PENDING || 0 %></div>
     <div class="p"><%= dem.WAITLIST || 0 %> trong danh sách chờ</div></div>
-  <div class="o"><div class="n">Đã xác nhận</div><div class="v"><%= dem.CONFIRMED || 0 %></div>
+  <div role="button" tabindex="0" data-chiso="xacnhan" title="Bấm để xem chi tiết" class="o"><div class="n">Đã xác nhận</div><div class="v"><%= dem.CONFIRMED || 0 %></div>
     <div class="p"><%= bang.sap_den.length %> sắp đến trong 1 giờ</div></div>
-  <div class="o ngoi"><div class="n">Đang ngồi</div><div class="v"><%= dem.SEATED || 0 %></div>
+  <div role="button" tabindex="0" data-chiso="ngoi" title="Bấm để xem chi tiết" class="o ngoi"><div class="n">Đang ngồi</div><div class="v"><%= dem.SEATED || 0 %></div>
     <div class="p"><%= dem.ARRIVED || 0 %> đã đến, chờ xếp</div></div>
-  <div class="o khach"><div class="n">Tổng khách</div><div class="v"><%= bang.tong_khach %></div>
+  <div role="button" tabindex="0" data-chiso="khach" title="Bấm để xem chi tiết" class="o khach"><div class="n">Tổng khách</div><div class="v"><%= bang.tong_khach %></div>
     <div class="p">trung bình <%= bang.quy_mo_trung_binh %> khách/lượt</div></div>
-  <div class="o day"><div class="n">Tỷ lệ lấp đầy</div><div class="v"><%= bang.ty_le_lap_day %>%</div>
+  <div role="button" tabindex="0" data-chiso="lapday" title="Bấm để xem chi tiết" class="o day"><div class="n">Tỷ lệ lấp đầy</div><div class="v"><%= bang.ty_le_lap_day %>%</div>
     <div class="p"><%= bang.tong_cho %> chỗ khả dụng</div></div>
-  <div class="o xau"><div class="n">No-show</div><div class="v"><%= dem.NO_SHOW || 0 %></div>
+  <div role="button" tabindex="0" data-chiso="noshow" title="Bấm để xem chi tiết" class="o xau"><div class="n">No-show</div><div class="v"><%= dem.NO_SHOW || 0 %></div>
     <div class="p"><%= bang.ty_le_no_show %>% lượt đã đóng</div></div>
-  <div class="o xau"><div class="n">Đã hủy</div><div class="v"><%= (dem.CANCELLED || 0) + (dem.REJECTED || 0) %></div>
+  <div role="button" tabindex="0" data-chiso="huy" title="Bấm để xem chi tiết" class="o xau"><div class="n">Đã hủy</div><div class="v"><%= (dem.CANCELLED || 0) + (dem.REJECTED || 0) %></div>
     <div class="p"><%= bang.ty_le_huy %>% lượt đã đóng</div></div>
 </div>
 
@@ -371,6 +381,42 @@ var dem = bang.dem || {};
 </aside>
 
 <!-- ==================================================== MODAL ========== -->
+<!-- Bam vao o chi so: giai thich cach tinh + danh sach luot thuoc o do -->
+<div class="modal fade" id="mChiSo" tabindex="-1" role="dialog" aria-labelledby="csTieuDe" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+    <div class="modal-header" style="align-items:center">
+      <div><h5 class="modal-title mb-0" id="csTieuDe">Chi tiết</h5><small class="text-muted" id="csPhu"></small></div>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <div id="csCach" class="alert alert-light border small mb-3"></div>
+      <div id="csChia" class="cs-chia mb-3"></div>
+      <div id="csDs"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- Bam vao ban tren so do: thao tac cua le tan theo trang thai ban -->
+<div class="modal fade" id="mBan" tabindex="-1" role="dialog" aria-labelledby="mBanTen" aria-hidden="true">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header" style="align-items:center">
+      <div>
+        <h5 class="modal-title mb-0" id="mBanTen">Bàn</h5>
+        <small class="text-muted" id="mBanPhu"></small>
+      </div>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <div id="mBanTrangThai" class="mb-3"></div>
+      <div id="mBanThuocTinh" class="mb-3"></div>
+      <h6 class="text-uppercase text-muted small font-weight-bold mb-2">Lịch bàn ngày <span id="mBanNgay"></span></h6>
+      <div id="mBanLich" class="mb-3 small">Đang tải…</div>
+      <div id="mBanBao"></div>
+      <div id="mBanNut" class="d-flex flex-wrap" style="gap:.5rem"></div>
+    </div>
+  </div></div>
+</div>
+
 <div class="modal fade" id="mForm" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title" id="mFormTieuDe">Đặt bàn mới</h5>
@@ -409,6 +455,7 @@ var dem = bang.dem || {};
         <div class="form-group col-md-8"><label>Yêu cầu đặc biệt</label>
           <input class="form-control" id="fYeuCau" placeholder="Sinh nhật, cần ghế trẻ em, bàn gần cửa sổ…"></div>
       </div>
+      <div id="fBanChiDinh" class="alert alert-info py-2 small" hidden></div>
       <div id="fKiemTra" class="small"></div>
     </div>
     <div class="modal-footer">
@@ -440,6 +487,9 @@ var dem = bang.dem || {};
   'use strict';
 
   var NGAY = '<%= ngay %>';
+  // Luot dat trong ngay (gon) cho cac o chi so.
+  var DS_NGAY = <%- JSON.stringify((bang.ds || []).map(function (r) { return { id: r.id, ma: r.reservation_code, gio: r.gio, den: r.gio_ket_thuc, ten: r.customer_name, dt: r.phone, khach: Number(r.guest_count) || 0, phut: Number(r.duration_minutes) || 0, ban: r.ban || [], tt: r.status, nhan: r.nhan_trang_thai, nguon: r.source, loai: r.customer_type, ly_do_huy: r.cancel_reason, con_lai: r.con_lai_phut, giu: !!r.dang_hieu_luc }; })).replace(/</g, '\\u003c') %>;
+  var BANG_NGAY = <%- JSON.stringify({ tong_cho: bang.tong_cho, ghe_gio: bang.ghe_gio, so_gio_mo: bang.so_gio_mo, ty_le_lap_day: bang.ty_le_lap_day, ty_le_no_show: bang.ty_le_no_show, ty_le_huy: bang.ty_le_huy, sap_den: (bang.sap_den || []).map(function (r) { return r.id; }) }) %>;
   var KHU = <%- JSON.stringify(khuVuc) %>;
   var TRANG_THAI = <%- JSON.stringify(danhMuc.trang_thai) %>;
   var MAU = {};
@@ -533,12 +583,219 @@ var dem = bang.dem || {};
 
     SoDoDatBan.ve(khung, kq, {
       hienKhach: true,
-      onBam: function (b) {
-        if (b.reservation) moNgan(b.reservation.id);
-        else window.alert(b.ten + ' — ' + b.so_cho + ' chỗ · '
-          + (b.kha_dung ? 'đang trống' : (b.ly_do ? b.ly_do.mo_ta : 'không khả dụng')));
-      }
+      onBam: function (b) { moBan(b); }
     });
+  }
+
+  // ------------------------------------------------- o chi so -> chi tiet
+  var NGUON = { ONLINE: 'Trực tuyến', STAFF: 'Nhân viên', WALK_IN: 'Vãng lai', PHONE: 'Điện thoại', PARTNER: 'Đối tác' };
+  var MAU_TT = { PENDING: 'warning', WAITLIST: 'warning', CONFIRMED: 'primary', ARRIVED: 'info', SEATED: 'success', COMPLETED: 'secondary', CANCELLED: 'danger', REJECTED: 'danger', NO_SHOW: 'dark' };
+  function demTheo(ds, f) { var o = {}; ds.forEach(function (r) { var k = f(r); o[k] = (o[k] || 0) + 1; }); return o; }
+  function oChia(muc) {
+    var hop = $('csChia'); hop.innerHTML = '';
+    muc.forEach(function (m) { var d = chu('div'); d.appendChild(chu('b', null, String(m[1]))); d.appendChild(chu('small', null, m[0])); hop.appendChild(d); });
+  }
+  function bangLuot(ds, them) {
+    var o = $('csDs'); o.innerHTML = '';
+    if (!ds.length) { o.appendChild(chu('p', 'text-muted mb-0', 'Không có lượt nào.')); return; }
+    var t = chu('table', 'table table-sm table-hover cs-bang mb-0');
+    t.innerHTML = '<thead class="thead-light"><tr><th>Giờ</th><th>Khách hàng</th><th class="text-center">Khách</th><th>Bàn</th><th>Nguồn</th><th>Trạng thái</th>' + (them ? '<th>' + them.tieuDe + '</th>' : '') + '<th></th></tr></thead>';
+    var tb = chu('tbody');
+    ds.slice().sort(function (a, b) { return String(a.gio).localeCompare(String(b.gio)); }).forEach(function (r) {
+      var tr = chu('tr');
+      var g = chu('td'); g.appendChild(chu('b', null, r.gio)); g.appendChild(chu('div', 'small text-muted', '→ ' + r.den)); tr.appendChild(g);
+      var k = chu('td'); k.appendChild(chu('div', 'font-weight-bold', r.ten)); k.appendChild(chu('div', 'small text-muted', r.dt + ' · ' + r.ma)); tr.appendChild(k);
+      tr.appendChild(chu('td', 'text-center', String(r.khach)));
+      tr.appendChild(chu('td', null, r.ban.join(', ') || '—'));
+      tr.appendChild(chu('td', 'small', NGUON[r.nguon] || r.nguon));
+      var s = chu('td'); s.appendChild(chu('span', 'badge badge-' + (MAU_TT[r.tt] || 'light'), r.nhan)); tr.appendChild(s);
+      if (them) tr.appendChild(chu('td', 'small', them.giaTri(r)));
+      var c = chu('td', 'text-right'); var b = chu('button', 'btn btn-sm btn-outline-primary', 'Mở'); b.type = 'button';
+      b.addEventListener('click', function () { window.jQuery && window.jQuery('#mChiSo').modal('hide'); setTimeout(function () { moNgan(r.id); }, 250); });
+      c.appendChild(b); tr.appendChild(c);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); o.appendChild(t);
+  }
+  function moChiSo(k) {
+    var ds = DS_NGAY, ngay = NGAY.split('-').reverse().join('/');
+    var loc = function (dsTt) { return ds.filter(function (r) { return dsTt.indexOf(r.tt) >= 0; }); };
+    var cach = '', chia = [], luot = ds, tieuDe = '', them = null;
+    var daDong = loc(['COMPLETED', 'CANCELLED', 'NO_SHOW', 'REJECTED']);
+    if (k === 'tong') {
+      tieuDe = 'Tổng lượt đặt';
+      cach = 'Tất cả lượt đặt bàn của ngày ' + ngay + ', kể cả lượt đã hủy / không đến.';
+      var n = demTheo(ds, function (r) { return NGUON[r.nguon] || r.nguon; });
+      chia = Object.keys(n).map(function (x) { return [x, n[x]]; });
+    } else if (k === 'cho') {
+      tieuDe = 'Chờ xác nhận'; luot = loc(['PENDING', 'WAITLIST']);
+      cach = 'Lượt khách đặt online đang chờ lễ tân duyệt, và lượt nằm trong danh sách chờ (lúc đặt đã hết bàn). Mở từng lượt để xác nhận / từ chối / xếp bàn.';
+      chia = [['Chờ duyệt', loc(['PENDING']).length], ['Danh sách chờ', loc(['WAITLIST']).length]];
+    } else if (k === 'xacnhan') {
+      tieuDe = 'Đã xác nhận'; luot = loc(['CONFIRMED']);
+      cach = 'Lượt đã được xác nhận, khách chưa đến. "Sắp đến" = giờ hẹn trong vòng 1 giờ tới.';
+      chia = [['Đã xác nhận', luot.length], ['Sắp đến (≤ 1 giờ)', BANG_NGAY.sap_den.length], ['Đã quá giờ hẹn', luot.filter(function (r) { return r.con_lai < 0; }).length]];
+      them = { tieuDe: 'Còn', giaTri: function (r) { return r.con_lai >= 0 ? r.con_lai + ' phút' : 'trễ ' + (-r.con_lai) + ' phút'; } };
+    } else if (k === 'ngoi') {
+      tieuDe = 'Đang ngồi'; luot = loc(['SEATED', 'ARRIVED']);
+      cach = 'Khách đang ngồi tại bàn, và khách đã đến nhưng chưa được xếp bàn.';
+      chia = [['Đang ngồi', loc(['SEATED']).length], ['Đã đến, chờ xếp', loc(['ARRIVED']).length], ['Số khách', luot.reduce(function (s, r) { return s + r.khach; }, 0)]];
+    } else if (k === 'khach') {
+      tieuDe = 'Tổng khách';
+      var tong = ds.reduce(function (s, r) { return s + r.khach; }, 0);
+      var conGiu = ds.filter(function (r) { return r.giu; }).reduce(function (s, r) { return s + r.khach; }, 0);
+      cach = 'Cộng số khách của mọi lượt trong ngày (kể cả lượt đã hủy). Trung bình = tổng khách ÷ số lượt = ' + tong + ' ÷ ' + ds.length + '.';
+      chia = [['Tổng khách', tong], ['Khách của lượt còn hiệu lực', conGiu], ['Khách của lượt đã hủy / không đến', ds.filter(function (r) { return ['CANCELLED', 'REJECTED', 'NO_SHOW'].indexOf(r.tt) >= 0; }).reduce(function (s, r) { return s + r.khach; }, 0)]];
+    } else if (k === 'lapday') {
+      tieuDe = 'Tỷ lệ lấp đầy'; luot = ds.filter(function (r) { return r.giu; });
+      var tongGG = BANG_NGAY.tong_cho * BANG_NGAY.so_gio_mo;
+      cach = 'Tỷ lệ lấp đầy = (số khách × số giờ ngồi của các lượt còn hiệu lực) ÷ (tổng chỗ nhận đặt × số giờ mở cửa) = '
+        + BANG_NGAY.ghe_gio + ' ghế·giờ ÷ (' + BANG_NGAY.tong_cho + ' chỗ × ' + BANG_NGAY.so_gio_mo + ' giờ = ' + Math.round(tongGG) + ' ghế·giờ) = ' + BANG_NGAY.ty_le_lap_day + '%. Lượt đã hủy / không đến / hoàn tất không tính.';
+      chia = [['Ghế·giờ đang giữ', BANG_NGAY.ghe_gio], ['Tổng chỗ nhận đặt', BANG_NGAY.tong_cho], ['Giờ mở cửa', BANG_NGAY.so_gio_mo], ['Lấp đầy', BANG_NGAY.ty_le_lap_day + '%']];
+      them = { tieuDe: 'Ghế·giờ', giaTri: function (r) { return r.khach + ' × ' + (Math.round(r.phut / 6) / 10) + 'h = ' + (Math.round(r.khach * r.phut / 6) / 10); } };
+    } else if (k === 'noshow') {
+      tieuDe = 'Không đến (No-show)'; luot = loc(['NO_SHOW']);
+      cach = 'Lượt khách không đến sau thời gian giữ bàn. Tỷ lệ = số no-show ÷ số lượt đã đóng (hoàn tất + hủy + từ chối + no-show) = ' + luot.length + ' ÷ ' + daDong.length + ' = ' + BANG_NGAY.ty_le_no_show + '%.';
+      chia = [['No-show', luot.length], ['Lượt đã đóng', daDong.length], ['Tỷ lệ', BANG_NGAY.ty_le_no_show + '%']];
+    } else if (k === 'huy') {
+      tieuDe = 'Đã hủy / từ chối'; luot = loc(['CANCELLED', 'REJECTED']);
+      cach = 'Lượt khách hoặc nhà hàng đã hủy, và lượt bị từ chối. Tỷ lệ = số hủy ÷ số lượt đã đóng = ' + luot.length + ' ÷ ' + daDong.length + ' = ' + BANG_NGAY.ty_le_huy + '%.';
+      chia = [['Đã hủy', loc(['CANCELLED']).length], ['Từ chối', loc(['REJECTED']).length], ['Tỷ lệ', BANG_NGAY.ty_le_huy + '%']];
+      them = { tieuDe: 'Lý do', giaTri: function (r) { return r.ly_do_huy || '—'; } };
+    }
+    $('csTieuDe').textContent = tieuDe;
+    $('csPhu').textContent = 'Ngày ' + ngay + ' · ' + luot.length + ' lượt';
+    $('csCach').textContent = cach;
+    oChia(chia);
+    bangLuot(luot, them);
+    window.jQuery && window.jQuery('#mChiSo').modal('show');
+  }
+  document.querySelectorAll('[data-chiso]').forEach(function (o) {
+    o.addEventListener('click', function () { moChiSo(o.getAttribute('data-chiso')); });
+    o.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); moChiSo(o.getAttribute('data-chiso')); } });
+  });
+
+  // ------------------------------------------------- bang thao tac ban
+  var TT_BAN = {
+    0: { ten: 'Đang trống', mau: 'success', icon: 'fa-check-circle' },
+    1: { ten: 'Đang có khách', mau: 'danger', icon: 'fa-user' },
+    2: { ten: 'Đã đặt trước', mau: 'warning', icon: 'fa-bookmark' },
+    3: { ten: 'Đang dọn', mau: 'secondary', icon: 'fa-broom' },
+    4: { ten: 'Bảo trì', mau: 'dark', icon: 'fa-tools' }
+  };
+  function homNay() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function nutBan(nhan, icon, lop, fn) {
+    var n = chu('button', 'btn btn-sm ' + lop);
+    n.type = 'button';
+    n.innerHTML = '<i class="fas ' + icon + ' mr-1" aria-hidden="true"></i>';
+    n.appendChild(document.createTextNode(nhan));
+    n.addEventListener('click', fn);
+    return n;
+  }
+  function baoBan(lop, chuoi) { var o = $('mBanBao'); o.className = 'alert alert-' + lop + ' py-2 small'; o.textContent = chuoi; }
+  async function doiTrangThaiBan(b, tt, xong) {
+    $('mBanBao').className = ''; $('mBanBao').textContent = '';
+    var r = await fetch('/so-do-ban/api/trang-thai/' + b.id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trangthai: tt }) });
+    var kq = await r.json().catch(function () { return {}; });
+    if (!r.ok || !kq.ok) { baoBan('danger', kq.loi || 'Không đổi được trạng thái bàn.'); return; }
+    baoBan('success', xong);
+    setTimeout(function () { window.jQuery && window.jQuery('#mBan').modal('hide'); taiSoDo(); }, 700);
+  }
+
+  async function moBan(b) {
+    var tt = TT_BAN[b.trang_thai_ban] || TT_BAN[0];
+    var r = b.reservation;
+    $('mBanTen').textContent = 'Bàn ' + b.ten;
+    $('mBanPhu').textContent = b.so_cho + ' chỗ · ' + (b.khu_vuc || '');
+    $('mBanNgay').textContent = NGAY.split('-').reverse().join('/');
+    $('mBanBao').className = ''; $('mBanBao').textContent = '';
+
+    // Trang thai + ly do khong dat duoc (neu co)
+    var st = $('mBanTrangThai'); st.innerHTML = '';
+    var the = chu('span', 'badge badge-' + tt.mau + ' p-2');
+    the.innerHTML = '<i class="fas ' + tt.icon + ' mr-1" aria-hidden="true"></i>';
+    the.appendChild(document.createTextNode(tt.ten + ' (lúc này)'));
+    st.appendChild(the);
+    var gioXem = $('sdGio').value || gioHienTai();
+    var dong = chu('div', 'small mt-2');
+    dong.textContent = 'Lúc ' + gioXem + ': ' + (b.kha_dung ? 'còn trống — nhận được khách / lượt đặt.' : (b.ly_do ? b.ly_do.mo_ta : 'không nhận được khách.'));
+    dong.className = 'small mt-2 ' + (b.kha_dung ? 'text-success' : 'text-danger');
+    st.appendChild(dong);
+    if (b.ghi_chu) st.appendChild(chu('div', 'small text-muted mt-1', 'Ghi chú bàn: ' + b.ghi_chu));
+
+    var tTinh = b.thuoc_tinh || {}, nhan = [];
+    if (tTinh.gan_cua_so) nhan.push('Gần cửa sổ');
+    if (tTinh.yen_tinh) nhan.push('Yên tĩnh');
+    if (tTinh.phong_rieng) nhan.push('Phòng riêng');
+    if (tTinh.xe_lan) nhan.push('Lối xe lăn');
+    if (tTinh.uu_tien_vip) nhan.push('Ưu tiên VIP');
+    if (tTinh.co_the_ghep) nhan.push('Ghép được');
+    if (!tTinh.cho_dat_truoc) nhan.push('Không nhận đặt trước');
+    $('mBanThuocTinh').innerHTML = '';
+    nhan.forEach(function (x) { $('mBanThuocTinh').appendChild(chu('span', 'badge badge-light border mr-1 mb-1', x)); });
+
+    // Nut thao tac theo trang thai
+    var nut = $('mBanNut'); nut.innerHTML = '';
+    if (r) {
+      nut.appendChild(nutBan('Mở lượt đặt ' + r.ma, 'fa-folder-open', 'btn-primary', function () {
+        window.jQuery && window.jQuery('#mBan').modal('hide'); moNgan(r.id);
+      }));
+    }
+    var laHomNay = NGAY === homNay();
+    if (b.kha_dung && laHomNay) {
+      nut.appendChild(nutBan('Xếp khách vãng lai vào bàn này', 'fa-walking', 'btn-success', function () { moFormTuBan(true, b); }));
+    }
+    if (b.kha_dung) {
+      nut.appendChild(nutBan('Đặt trước bàn này lúc ' + gioXem, 'fa-calendar-plus', 'btn-outline-primary', function () { moFormTuBan(false, b); }));
+    }
+    if (b.trang_thai_ban === 3) {
+      nut.appendChild(nutBan('Dọn xong — trả bàn trống', 'fa-check', 'btn-success', function () { doiTrangThaiBan(b, 0, 'Bàn ' + b.ten + ' đã sẵn sàng đón khách.'); }));
+    }
+    if (b.trang_thai_ban === 1 && !r) {
+      nut.appendChild(nutBan('Khách đã về — chuyển sang đang dọn', 'fa-broom', 'btn-outline-secondary', function () { doiTrangThaiBan(b, 3, 'Đã chuyển bàn ' + b.ten + ' sang đang dọn.'); }));
+    }
+    if (b.trang_thai_ban === 1 || b.trang_thai_ban === 3) {
+      var lk = chu('a', 'btn btn-sm btn-outline-dark', '');
+      lk.href = '/staff/so-do-ban';
+      lk.innerHTML = '<i class="fas fa-chair mr-1" aria-hidden="true"></i>Gọi món / chuyển bàn / tính tiền';
+      nut.appendChild(lk);
+    }
+    if (b.trang_thai_ban === 4) {
+      nut.appendChild(chu('div', 'small text-muted', 'Bàn đang bảo trì — quản lý bật lại trong Cấu hình đặt bàn.'));
+    }
+    if (b.ly_do && b.ly_do.ma === 'EVENT') {
+      var lt = chu('a', 'btn btn-sm btn-outline-warning', '');
+      lt.href = '/staff/tiec';
+      lt.innerHTML = '<i class="fas fa-glass-cheers mr-1" aria-hidden="true"></i>Xem tiệc đang giữ sảnh';
+      nut.appendChild(lt);
+    }
+
+    window.jQuery && window.jQuery('#mBan').modal('show');
+
+    // Lich cua ban trong ngay dang xem
+    var lich = $('mBanLich'); lich.textContent = 'Đang tải…';
+    try {
+      var kq = await api('/api/reservations?tu_ngay=' + NGAY + '&den_ngay=' + NGAY + '&dang_hieu_luc=1');
+      var ds = (kq.ds || []).filter(function (x) {
+        return String(x.table_ids || '').split(',').map(Number).indexOf(Number(b.id)) >= 0;
+      }).sort(function (a, c) { return String(a.gio).localeCompare(String(c.gio)); });
+      lich.innerHTML = '';
+      if (!ds.length) { lich.appendChild(chu('span', 'text-muted', 'Chưa có lượt đặt nào cho bàn này.')); return; }
+      var ul = chu('ul', 'list-unstyled mb-0');
+      ds.forEach(function (x) {
+        var li = chu('li', 'd-flex align-items-center py-1 border-bottom');
+        li.style.gap = '.5rem';
+        li.appendChild(chu('b', null, x.gio + '–' + x.gio_ket_thuc));
+        li.appendChild(chu('span', 'flex-grow-1', x.customer_name + ' · ' + x.guest_count + ' khách'));
+        li.appendChild(chu('span', 'badge badge-light border', x.nhan_trang_thai));
+        var mo = chu('button', 'btn btn-link btn-sm p-0', 'Mở');
+        mo.type = 'button';
+        mo.addEventListener('click', function () { window.jQuery && window.jQuery('#mBan').modal('hide'); moNgan(x.id); });
+        li.appendChild(mo);
+        ul.appendChild(li);
+      });
+      lich.appendChild(ul);
+    } catch (e) { lich.textContent = 'Không tải được lịch bàn.'; }
   }
 
   // ------------------------------------------------------- timeline
@@ -850,8 +1107,22 @@ var dem = bang.dem || {};
 
   var chuDoWalkIn = false;
 
-  function moForm(walkIn) {
+  var banChiDinh = null; // { id, ten, so_cho } khi mo form tu so do ban
+  function veBanChiDinh() {
+    var o = $('fBanChiDinh');
+    if (!banChiDinh) { o.hidden = true; o.innerHTML = ''; return; }
+    o.hidden = false;
+    o.innerHTML = '';
+    o.appendChild(chu('span', null, 'Xếp vào bàn ' + banChiDinh.ten + ' (' + banChiDinh.so_cho + ' chỗ). '));
+    var bo = chu('a', null, 'Bỏ chọn bàn này');
+    bo.href = '#';
+    bo.addEventListener('click', function (e) { e.preventDefault(); banChiDinh = null; veBanChiDinh(); });
+    o.appendChild(bo);
+  }
+  function moForm(walkIn, ban) {
     chuDoWalkIn = walkIn;
+    banChiDinh = ban || null;
+    veBanChiDinh();
     $('mFormTieuDe').textContent = walkIn ? 'Khách vãng lai — xếp bàn ngay' : 'Đặt bàn mới';
     $('fLuu').textContent = walkIn ? 'Xếp bàn ngay' : 'Tạo lượt đặt';
     document.querySelectorAll('.js-lich').forEach(function (n) { n.style.display = walkIn ? 'none' : ''; });
@@ -862,6 +1133,14 @@ var dem = bang.dem || {};
   }
   $('btnTaoMoi').addEventListener('click', function () { moForm(false); });
   $('btnWalkIn').addEventListener('click', function () { moForm(true); });
+  // Tao luot tu so do ban: form nhan ban + gio dang xem tren so do.
+  function moFormTuBan(walkIn, b) {
+    window.jQuery && window.jQuery('#mBan').modal('hide');
+    $('fSoKhach').value = Math.min(b.so_cho, Math.max(1, Number($('fSoKhach').value) || 2));
+    if (!walkIn) { $('fNgay').value = NGAY; $('fGio').value = $('sdGio').value || '19:00'; }
+    if (b.khu_vuc_id) $('fKhuVuc').value = String(b.khu_vuc_id);
+    setTimeout(function () { moForm(walkIn, { id: b.id, ten: b.ten, so_cho: b.so_cho }); }, 250);
+  }
 
   // Nhan vien go xong so dien thoai thi hien ngay lich su khach - de biet phai
   // doi xu the nao (VIP? tung no-show?) TRUOC khi nhan don.
@@ -893,6 +1172,7 @@ var dem = bang.dem || {};
       area_id: $('fKhuVuc').value || null,
       customer_type: $('fLoaiKhach').value,
       special_requests: $('fYeuCau').value.trim() || null,
+      table_ids: banChiDinh ? [banChiDinh.id] : undefined,
       source: 'STAFF'
     };
   }
