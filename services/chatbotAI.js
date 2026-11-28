@@ -209,4 +209,4 @@ async function kiemTra(tl, menu) {
   return kq ? { ok: true, tra_loi: kq.tra_loi } : { ok: false, loi: loiGanNhat || 'Chưa có khóa API' };
 }
 
-module.exports = { layKhoa, luuKhoa, trangThai, hoi, kiemTra, coKhoa: async () => !!(await layKhoa()) };
+module.exports = { layKhoa, layClient, luuKhoa, trangThai, hoi, kiemTra, coKhoa: async () => !!(await layKhoa()) };

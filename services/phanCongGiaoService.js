@@ -11,6 +11,14 @@
  *   4. Doi lau nhat ke tu lan duoc phan gan nhat - xoay vong khi bang tai.
  *   5. Gan nha hang hon (lay hang nhanh hon).
  *
+ * GHEP DON (bat/tat trong cau hinh, xem `danhGiaGhep`):
+ *   Shipper DANG CHO LAY don o quan (moi don cua ho con 'da_phan'/'dang_lay',
+ *   chua ai xuat phat) ma don moi tien duong - chen vao lo trinh toi uu chi
+ *   phai di vong them <= `ghep_them_km` km va chuyen chua qua `ghep_so_diem`
+ *   diem - thi duoc uu tien ngay sau tieu chi "dang mo app". Mot chuyen giao
+ *   2-3 nha gan nhau nhanh hon hai shipper chay hai chuyen rieng.
+ *   Shipper da roi quan (co don 'dang_giao') khong ghep them: phai quay ve lay.
+ *
  * XAC NHAN: don phan tu dong o trang thai cho shipper bam "Nhan don" trong N
  * phut. Tu choi / qua han -> go ra, ghi lai, phan cho nguoi KE TIEP (loai tru
  * nguoi vua tu choi). Don bi tu choi KHONG tinh vao tai cua nguoi do vi
@@ -42,6 +50,10 @@ async function thamSo() {
     // da qua X gio ke tu luc tao, dung tu phan va bao dieu phoi xu ly tay.
     so_lan_toi_da: Math.min(20, Math.max(1, Number(c['giao_hang.so_lan_tu_phan_toi_da']) || 3)),
     gio_toi_da: Math.min(72, Math.max(1, Number(c['giao_hang.gio_toi_da_tu_phan']) || 12)),
+    // Ghep don cung huong vao mot chuyen.
+    ghep_bat: c['giao_hang.ghep_bat'] !== '0',
+    ghep_them_km: Math.min(10, Math.max(0.3, Number(c['giao_hang.ghep_them_km']) || 2)),
+    ghep_so_diem: Math.min(8, Math.max(2, Math.round(Number(c['giao_hang.ghep_so_diem'])) || 3)),
   };
 }
 
@@ -51,6 +63,9 @@ async function luuThamSo(d) {
   if (d.chi_trong_khu_vuc !== undefined) ghi.push(['giao_hang.chi_trong_khu_vuc', d.chi_trong_khu_vuc ? '1' : '0']);
   if (['so_don', 'thu_nhap'].includes(d.tieu_chi)) ghi.push(['giao_hang.tieu_chi_chia', d.tieu_chi]);
   if (Number(d.phut_xac_nhan) >= 1) ghi.push(['giao_hang.phut_cho_xac_nhan', String(Math.min(30, Math.round(d.phut_xac_nhan)))]);
+  if (d.ghep_bat !== undefined) ghi.push(['giao_hang.ghep_bat', d.ghep_bat ? '1' : '0']);
+  if (Number(d.ghep_them_km) > 0) ghi.push(['giao_hang.ghep_them_km', String(Math.min(10, Math.max(0.3, Math.round(Number(d.ghep_them_km) * 10) / 10)))]);
+  if (Number(d.ghep_so_diem) >= 2) ghi.push(['giao_hang.ghep_so_diem', String(Math.min(8, Math.round(Number(d.ghep_so_diem))))]);
   for (const [k, v] of ghi) {
     await db.query('INSERT INTO cau_hinh (khoa, gia_tri) VALUES (?, ?) ON DUPLICATE KEY UPDATE gia_tri = VALUES(gia_tri)', [k, v]);
   }
@@ -126,11 +141,45 @@ function xepHang(ds, loaiTru = new Set()) {
       // Nguoi DANG MO APP (GPS moi) truoc: phan cho nguoi khong cam may chi
       // lam don mat 3 phut cho xac nhan roi lai chuyen.
       Number(b.online) - Number(a.online) ||
+      // Ghep chuyen: nguoi dang cho lay don cung huong, it phai di vong nhat.
+      Number(!!b.ghep) - Number(!!a.ghep) ||
+      (a.ghep && b.ghep ? a.ghep.them_km - b.ghep.them_km : 0) ||
       a.tai - b.tai ||
       a.dang_cam - b.dang_cam ||
       (a.phan_gan_nhat ? new Date(a.phan_gan_nhat).getTime() : 0) - (b.phan_gan_nhat ? new Date(b.phan_gan_nhat).getTime() : 0) ||
       (a.km_toi_nha_hang ?? 99) - (b.km_toi_nha_hang ?? 99) ||
       a.id_shipper - b.id_shipper);
+}
+
+/**
+ * Danh dau shipper nao GHEP duoc don moi vao chuyen dang cho lay (s.ghep).
+ * Dieu kien: dang cam >= 1 don, MOI don con o quan ('da_phan'/'dang_lay'),
+ * them don moi khong vuot `ghep_so_diem`, va so km di vong them (lo trinh toi
+ * uu truoc / sau khi chen) <= `ghep_them_km`. Thieu toa do -> khong ghep.
+ */
+async function danhGiaGhep(ds, don, ts) {
+  if (!ts.ghep_bat || !don) return;
+  const lt = require('./loTrinhGiao');
+  if (!lt.coToaDo(don)) return;
+  const coDon = ds.filter((s) => s.dang_cam > 0);
+  if (!coDon.length) return;
+  const goc = await vc.toaDoNhaHang();
+  if (!lt.coToaDo(goc)) return;
+  const [rows] = await db.query(
+    `SELECT id_giao, id_shipper, trang_thai, vi_do, kinh_do, du_kien_luc FROM don_giao_hang
+      WHERE id_shipper IN (?) AND trang_thai IN ('da_phan','dang_lay','dang_giao') AND id_giao <> ?`,
+    [coDon.map((s) => s.id_shipper), don.id_giao]);
+  const han = (d) => (d.du_kien_luc ? new Date(d.du_kien_luc).getTime() : null);
+  for (const s of coDon) {
+    const cua = rows.filter((r) => Number(r.id_shipper) === Number(s.id_shipper));
+    if (!cua.length || cua.some((r) => r.trang_thai === 'dang_giao')) continue;   // da roi quan
+    if (cua.length + 1 > ts.ghep_so_diem) continue;
+    const kq = lt.kmThemKhiGhep(goc,
+      cua.map((r) => ({ id: r.id_giao, vi_do: r.vi_do, kinh_do: r.kinh_do, han: han(r) })),
+      { id: don.id_giao, vi_do: don.vi_do, kinh_do: don.kinh_do, han: han(don) });
+    if (!kq || kq.them_km > ts.ghep_them_km) continue;
+    s.ghep = { them_km: Math.round(kq.them_km * 10) / 10, so_don: cua.length, km_chuyen: Math.round(kq.km_sau * 10) / 10 };
+  }
 }
 
 function lyDoChon(s, ts, soUngVien) {
@@ -142,6 +191,7 @@ function lyDoChon(s, ts, soUngVien) {
     s.online ? 'đang online' : 'chưa có GPS gần đây',
   ];
   if (s.km_toi_nha_hang != null) p.push(`cách nhà hàng ${s.km_toi_nha_hang} km`);
+  if (s.ghep) p.unshift(`ghép chuyến với ${s.ghep.so_don} đơn đang chờ lấy (đi vòng thêm ~${s.ghep.them_km} km, cả chuyến ~${s.ghep.km_chuyen} km)`);
   return `Chọn trong ${soUngVien} người: ${p.join(' · ')}`.slice(0, 300);
 }
 
@@ -231,7 +281,7 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
   const ts = await thamSo();
   if (!ts.tu_dong && !batBuoc) return { phan: false, ly_do: 'Đang tắt tự động phân đơn.' };
   return voiKhoa(async () => {
-    const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper, ma_khu_vuc FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+    const [[don]] = await db.query('SELECT id_giao, trang_thai, id_shipper, ma_khu_vuc, vi_do, kinh_do, du_kien_luc FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
     if (!don) return { phan: false, ly_do: 'Không tìm thấy đơn.' };
     if (don.trang_thai !== 'cho_phan' || don.id_shipper) return { phan: false, ly_do: 'Đơn đã có người nhận.' };
     // Don hen gio: chi phan tu (gio hen - phut_len_bep_truoc) - khong de shipper cam don cua ngay mai.
@@ -244,6 +294,7 @@ async function tuDongPhan(idGiao, { batBuoc = false } = {}) {
     if (dung) return { phan: false, can_xu_ly_tay: true, ly_do: `Dừng tự phân (${dung}) – chờ điều phối xử lý.` };
 
     const ds = await bangShipper(ts);
+    await danhGiaGhep(ds, don, ts);
     const loaiTru = await nguoiDaLoaiTru(idGiao);
     // Thu trong shipper dung khu truoc; khong ai ranh moi toi shipper giao moi khu.
     let ung = xepHang(locTheoKhu(ds, don.ma_khu_vuc, ts), loaiTru);
@@ -449,6 +500,6 @@ async function ganKhuVuc(idShipper, dsMa) {
 }
 
 module.exports = {
-  thamSo, luuThamSo, bangShipper, xepHang, locTheoKhu, ganKhuVuc, tuDongPhan, phanHangCho, ghiPhanTay,
+  thamSo, luuThamSo, bangShipper, xepHang, danhGiaGhep, locTheoKhu, ganKhuVuc, tuDongPhan, phanHangCho, ghiPhanTay,
   xacNhan, tuChoi, quetHetHan, tongQuan, batDau,
 };

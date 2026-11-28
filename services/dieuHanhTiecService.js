@@ -326,8 +326,18 @@ async function chiTiet(id, { phien, hoSo, idNv }) {
     mo: new Date(v.mo_luc) <= now, tre: v.trang_thai !== 'xong' && new Date(v.han) < now,
     lam_duoc: q.nhom.includes(v.nhom), ten_nhom: (NHOM_VIEC[v.nhom] || {}).ten || v.nhom,
   }));
+  // Ban dieu hanh (quan ly) thay MOI viec. Bo phan chi thay viec cua nhom minh lam duoc -
+  // tranh roi mat voi viec cua bep / kho / le tan khong lien quan. Tien do chung van tinh
+  // tren toan bo viec de ai cung biet tiec dang toi dau.
+  const hien = q.dieuHanh ? viec : viec.filter((v) => v.lam_duoc);
   const moc = [];
-  for (const v of viec) { let g = moc.find((x) => x.ten === v.moc); if (!g) moc.push(g = { ten: v.moc, viec: [] }); g.viec.push(v); }
+  for (const v of hien) { let g = moc.find((x) => x.ten === v.moc); if (!g) moc.push(g = { ten: v.moc, viec: [] }); g.viec.push(v); }
+  const tienDo = {
+    hien: hien.length, hien_xong: hien.filter((v) => v.trang_thai === 'xong').length,
+    tong: viec.length, tong_xong: viec.filter((v) => v.trang_thai === 'xong').length,
+    loc_theo_nhom: !q.dieuHanh,
+    ten_nhom: q.nhom.map((k) => (NHOM_VIEC[k] || {}).ten || k),
+  };
   // Nhan vien co the phan cong (theo bo phan cua tung vai tro).
   const [dsNv] = await db.query(
     `SELECT n.id_nv, n.ten, bp.ma_bp, cd.ten_cd, cd.cap_bac FROM nhan_vien n
@@ -339,7 +349,7 @@ async function chiTiet(id, { phien, hoSo, idNv }) {
   const ungVien = dsNv.map((n) => ({ ...n, ...tinhTrang.get(Number(n.id_nv)) }));
   return {
     tiec: { ...t, pha: pha(t, now), khach_chot: khachChot, ban_chot: banChot },
-    moc, viec, nhanSu: ns, dsNv: ungVien, quyen: q, VAI_TRO_NS, NHOM_VIEC,
+    moc, viec, tienDo, nhanSu: ns, dsNv: ungVien, quyen: q, VAI_TRO_NS, NHOM_VIEC,
     dinhMuc: dinhMuc(khachChot || t.so_khach, banChot || t.so_ban),
     phanCongDuoc: Object.keys(VAI_TRO_NS).filter((k) => q.dieuHanh || q.nhom.includes(VAI_TRO_NS[k].nhomQuyen)),
   };

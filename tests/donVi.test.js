@@ -173,3 +173,80 @@ test('tiec: ghep ten mon thuc don tiec voi mon an (bo dau, bo ma, token dinh dan
   assert.equal(ghepMon('Lẩu Sukiyaki bò', ds).id_mon, 4);
   assert.equal(ghepMon('Nigiri tổng hợp', ds), null);
 });
+
+// ---------------------------------------------------------------- lo trinh giao / ghep don
+test('lo trinh: thu tu ngan nhat, don tien duong ghep duoc, don nguoc huong thi khong', () => {
+  const lt = require('../services/loTrinhGiao');
+  const quan = { vi_do: 10.7769, kinh_do: 106.7009 };
+  // Ba diem tren cung mot truc ve phia bac: thu tu dung la gan -> xa.
+  const a = { id: 1, vi_do: 10.800, kinh_do: 106.710 };
+  const b = { id: 2, vi_do: 10.780, kinh_do: 106.705 };
+  const c = { id: 3, vi_do: 10.790, kinh_do: 106.708 };
+  const r = lt.toiUu(quan, [a, b, c], { batDau: 0 });
+  assert.deepEqual(r.thu_tu, [2, 3, 1]);
+  assert.ok(r.km > 0);
+  // Diem nam giua duong toi diem cu -> gan nhu khong phai di vong.
+  assert.ok(lt.kmThemKhiGhep(quan, [a, b], c).them_km < 0.2);
+  // Diem phia tay nam, nguoc huong -> phai di vong nhieu km.
+  assert.ok(lt.kmThemKhiGhep(quan, [a, b], { id: 4, vi_do: 10.76, kinh_do: 106.68 }).them_km > 4);
+  // Thieu toa do -> khong danh gia, khong ghep.
+  assert.equal(lt.kmThemKhiGhep(quan, [a], { id: 5, vi_do: null, kinh_do: null }), null);
+  // Diem khong toa do van nam trong lo trinh, o cuoi.
+  assert.deepEqual(lt.toiUu(quan, [{ id: 9, vi_do: null, kinh_do: null }, b]).thu_tu, [2, 9]);
+});
+
+test('lo trinh: don khach hen som duoc dua len truoc du khong nam tren duong ngan nhat', () => {
+  const lt = require('../services/loTrinhGiao');
+  const quan = { vi_do: 10.7769, kinh_do: 106.7009 };
+  const gan = { id: 1, vi_do: 10.7725, kinh_do: 106.7009 };   // ~0.5 km phia nam
+  const xa = { id: 2, vi_do: 10.7949, kinh_do: 106.7009 };    // ~2 km phia bac
+  // Khach o xa hen dung luc toi neu di thang (+1 phut du).
+  const han = ((lt.kmDuong(quan, xa) / lt.TOC_DO_KMH) * 60 + 1) * 60000;
+  assert.deepEqual(lt.toiUu(quan, [gan, xa], { batDau: 0 }).thu_tu, [1, 2], 'khong hen gio: gan truoc');
+  assert.deepEqual(lt.toiUu(quan, [gan, { ...xa, han }], { batDau: 0 }).thu_tu, [2, 1], 'hen gio: xa truoc cho kip');
+});
+
+test('lo trinh: nhieu hon 7 diem dung 2-opt, van ra du diem va link Google Maps qua nhieu diem', () => {
+  const lt = require('../services/loTrinhGiao');
+  const quan = { vi_do: 10.7769, kinh_do: 106.7009 };
+  const ds = Array.from({ length: 10 }, (_, i) => ({ id: i + 1, vi_do: 10.77 + (i % 5) * 0.006, kinh_do: 106.69 + Math.floor(i / 5) * 0.012 }));
+  const r = lt.toiUu(quan, ds);
+  assert.equal(new Set(r.thu_tu).size, 10);
+  const url = lt.linkGoogleMaps([quan, ds[0], ds[1]]);
+  assert.match(url, /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1/);
+  assert.match(url, /waypoints=/);
+  assert.match(url, /destination=10\.776/);
+});
+
+test('phan don: shipper ghep chuyen duoc uu tien sau "dang mo app", it di vong truoc', () => {
+  const { xepHang } = require('../services/phanCongGiaoService');
+  const nen = { trong_ca: true, con_suc_chua: true, online: true, dang_cam: 0, tai: 0, phan_gan_nhat: null, km_toi_nha_hang: 1 };
+  const ds = [
+    { ...nen, id_shipper: 1, tai: 0 },
+    { ...nen, id_shipper: 2, tai: 5, dang_cam: 1, ghep: { them_km: 1.5 } },
+    { ...nen, id_shipper: 3, tai: 6, dang_cam: 1, ghep: { them_km: 0.4 } },
+    { ...nen, id_shipper: 4, tai: 0, online: false, ghep: { them_km: 0 } },
+  ];
+  assert.deepEqual(xepHang(ds).map((s) => s.id_shipper), [3, 2, 1, 4]);
+  // Khong ai ghep -> van chia deu nhu cu.
+  assert.deepEqual(xepHang(ds.map(({ ghep, ...s }) => s)).map((s) => s.id_shipper), [1, 2, 3, 4]);
+});
+
+test('nha cung cap: chon noi re nhat dat muc dat toi thieu, phan nhom mat hang', () => {
+  const { chonNcc, nhomCua } = require('../services/nhaCungCapService');
+  const ds = [
+    { id_ncc: 1, ten_ncc: 'A', don_gia: 100, moq: 50 },
+    { id_ncc: 2, ten_ncc: 'B', don_gia: 110, moq: 0 },
+    { id_ncc: 3, ten_ncc: 'C', don_gia: 120, moq: 5 },
+  ];
+  assert.equal(chonNcc(ds, 60).id_ncc, 1, 'du MOQ -> re nhat');
+  assert.equal(chonNcc(ds, 10).id_ncc, 2, 'chua du MOQ cua A -> noi re ke tiep khong doi MOQ');
+  assert.equal(chonNcc([ds[0]], 10).duoi_moq, true, 'khong noi nao dat MOQ -> bao duoi_moq');
+  assert.equal(chonNcc([], 10), null);
+  assert.equal(nhomCua('Cà chua'), 'rau');
+  assert.equal(nhomCua('Cá hồi phi lê'), 'hai_san');
+  assert.equal(nhomCua('Dưa hấu'), 'rau');
+  assert.equal(nhomCua('Coca-Cola'), 'do_uong');
+  assert.equal(nhomCua('Thịt bò'), 'thit');
+  assert.equal(nhomCua('Nước mắm'), 'kho');
+});

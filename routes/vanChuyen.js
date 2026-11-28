@@ -347,6 +347,8 @@ router.post('/staff/giao-hang/dieu-phoi/cau-hinh', canPhan, bat(async (req, res)
     tu_dong: b.tu_dong === undefined ? undefined : !!b.tu_dong,
     chi_trong_khu_vuc: b.chi_trong_khu_vuc === undefined ? undefined : !!b.chi_trong_khu_vuc,
     tieu_chi: b.tieu_chi, phut_xac_nhan: b.phut_xac_nhan,
+    ghep_bat: b.ghep_bat === undefined ? undefined : !!b.ghep_bat,
+    ghep_them_km: b.ghep_them_km, ghep_so_diem: b.ghep_so_diem,
   });
   let kq = null;
   if (b.tu_dong) kq = await pc.phanHangCho();   // vua bat lai -> phan ngay don dang cho
@@ -620,6 +622,54 @@ function laAnToan(req) {
   return LOOPBACK.has(may.toLowerCase());
 }
 
+/**
+ * Lo trinh cho cac don shipper dang cam (services/loTrinhGiao.js).
+ * Diem xuat phat: QUAN neu con don chua lay hang (phai ghe quan truoc), nguoc
+ * lai la vi tri GPS moi nhat (<= 10 phut), khong co thi lay quan.
+ * Don cho shipper bam "Nhan don" van tinh vao - ho can thay chuyen se ra sao.
+ */
+async function loTrinhShipper(idShipper, don) {
+  const lt = require('../services/loTrinhGiao');
+  const diem = don.filter((g) => ['da_phan', 'dang_lay', 'dang_giao'].includes(g.trang_thai) && g.hoan_hang !== 'dang_mang_ve');
+  if (!diem.length) return null;
+  const quan = await vc.toaDoNhaHang();
+  const conLay = diem.some((g) => g.trang_thai !== 'dang_giao');
+  let goc = quan;
+  let tuQuan = true;
+  if (!conLay) {
+    const [[v]] = await db.query(
+      'SELECT vi_do, kinh_do FROM vi_tri_shipper_moi_nhat WHERE id_shipper = ? AND luc > NOW() - INTERVAL 10 MINUTE', [idShipper]);
+    if (v && lt.coToaDo(v)) { goc = v; tuQuan = false; }
+  }
+  const han = (g) => {
+    const t = g.hen_gio || g.du_kien_luc;
+    return t ? new Date(t).getTime() : null;
+  };
+  const kq = lt.toiUu(goc, diem.map((g) => ({ id: g.id_giao, vi_do: g.vi_do, kinh_do: g.kinh_do, han: han(g) })));
+  const theoId = new Map(diem.map((g) => [g.id_giao, g]));
+  const chang = new Map(kq.chang.map((c) => [c.id, c]));
+  const thuTu = kq.thu_tu.map((id, i) => {
+    const g = theoId.get(id);
+    const c = chang.get(id);
+    return {
+      stt: i + 1, id_giao: id, ma_giao: g.ma_giao, dia_chi: g.dia_chi_giao,
+      km_chang: c ? Math.round(c.km * 10) / 10 : null,
+      den_luc: c ? new Date(c.den_luc).toISOString() : null,
+      tre: !!(c && han(g) && c.den_luc > han(g)),
+    };
+  });
+  const dsLink = (conLay && quan ? [{ vi_do: quan.vi_do, kinh_do: quan.kinh_do }] : [])
+    .concat(thuTu.map((p) => { const g = theoId.get(p.id_giao); return { vi_do: g.vi_do, kinh_do: g.kinh_do, dia_chi: g.dia_chi_giao }; }));
+  return {
+    tu_quan: tuQuan, ghe_quan: conLay,
+    tong_km: Math.round(kq.km * 10) / 10,
+    xong_luc: kq.chang.length ? new Date(kq.chang[kq.chang.length - 1].den_luc).toISOString() : null,
+    diem: thuTu,
+    link: lt.linkGoogleMaps(dsLink),
+    he_so_duong: lt.HE_SO_DUONG,
+  };
+}
+
 /** Don dang cam cua chinh minh - ung dung goi lai sau moi thao tac. */
 router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
   const nvGiao = require('../services/shipperNghiepVu');
@@ -668,6 +718,7 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
     ly_do_that_bai: Object.entries(nvGiao.LY_DO_THAT_BAI).map(([ma, v]) => ({ ma, nhan: v.nhan, can_den_noi: !!v.canDenNoi, can_ghi_chu: !!v.canGhiChu })),
     loai_su_co: Object.entries(nvGiao.LOAI_SU_CO).map(([ma, nhan]) => ({ ma, nhan })),
     hom_nay: { so_don: Number(lai.n || 0), tien_phi: Number(lai.phi || 0) },
+    lo_trinh: await loTrinhShipper(req.shipper.id_shipper, don).catch((e) => { console.error('[lo-trinh]', e.message); return null; }),
     // Tien mat da thu cua khach, chua nop ve quay.
     dang_giu: await require('../services/thuHoShipperService').tienDangGiu(req.shipper.id_shipper)
       .then((g) => ({ tong: g.tong, so_don: g.don.length })).catch(() => ({ tong: 0, so_don: 0 })),

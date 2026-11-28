@@ -1191,3 +1191,84 @@ views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
   (truoc 1320px - man 1920px trong ~300px moi ben); anh mon ban chay va ve giam gia to hon;
   tieu de slide ban chay gon lai; nut chuyen slide thang hang voi chu.
 - Kiem tra 1917px va 1440px: ca 5 slide khong bi che, khong tran ngang. Dien thoai khong doi.
+
+[28/11] Trang Thuc don combo - loc 5-6 / 7-9 / 10+ khach the bi lech trai
+- Nguyen nhan: luoi auto-fill ... 1fr giu san 4 cot, loc con 3 the -> trong cot ben phai.
+- Sua (views/combos.ejs): auto-fit, the rong 340-360px, justify-content: center.
+  Tat ca van 4 cot (1917px); loc con 3 the -> can giua; 1366px 3 cot; dien thoai 1 cot, khong tran ngang.
+
+[28/11] Chat voi khach hang - nhan vien phai tai lai trang moi thay tin
+- Nguyen nhan: trang /staff/chat/:id_kh emit 'join-room' de vao phong room_<id_kh>, nhung
+  services/realtime.js chi dang ky handler nay cho KHACH; nhanh nhan vien khong co -> nhan vien
+  khong o trong phong: khong thay tin khach gui, va ca tin minh gui (trang cho socket tra ve moi ve).
+- Sua: dang ky 'join-room' cho nhan vien TRUOC cac await (tranh mat su kien), chi nhan id so
+  nguyen duong, moi socket giu mot phong chat (doi khach thi roi phong cu).
+- Kiem tra: headless gui tin cho khach vang lai #583 -> tin hien ngay khong tai lai; da xoa tin thu
+  (id_chat 46). npm test 43/43.
+
+[28/11] Giao hang - GHEP DON cung huong + LO TRINH nhieu diem cho shipper
+- services/loTrinhGiao.js (moi): km duong pho uoc tinh = chim bay x 1.3; toi uu thu tu giao
+  (<= 7 diem thu het hoan vi, > 7 diem lang gieng gan nhat + 2-opt), chi phi = km + 0.5 km / phut tre
+  so voi gio hen / gio du kien; kmThemKhiGhep; link Google Maps qua nhieu diem (khong can khoa API).
+- phanCongGiaoService: danhGiaGhep - shipper dang cam don ma MOI don con o quan (da_phan/dang_lay),
+  chuyen chua qua ghep_so_diem (mac dinh 3), chen don moi chi di vong them <= ghep_them_km (mac dinh 2km)
+  -> uu tien ngay sau "dang mo app", it di vong nhat truoc. Da roi quan (dang_giao) thi khong ghep.
+  Ly do chon ghi "ghep chuyen voi N don ... di vong them ~X km".
+- Cau hinh (Dieu phoi > Cau hinh chia don): bat/tat ghep, km di vong toi da, so diem / chuyen
+  (cau_hinh giao_hang.ghep_bat / ghep_them_km / ghep_so_diem).
+- App shipper: the "Lo trinh chuyen nay" (tu 2 diem): ghe quan lay hang, thu tu giao, km tung chang,
+  gio toi du kien, canh bao tre gio hen, nut mo ca lo trinh tren Google Maps; the don sap theo thu tu,
+  nhan "Diem 1/2/3". API /api/shipper/don-cua-toi tra them lo_trinh.
+- Vet GPS (vetCuaDon): lay them diem cua shipper trong khoang giao_luc -> hoan_tat_luc, de don thu 2, 3
+  trong chuyen co vet duong (truoc moi diem chi gan duoc mot id_giao).
+- Test: 4 test don vi + 1 test tich hop (ghep / khong ghep / tat / da roi quan / API lo trinh). npm test 48/48.
+  Chup app shipper voi 2 don tam (id_giao 370, 371 + 2 dong hopdong KTLT_*) - da xoa theo id.
+
+[28/11] Don mua nguyen lieu - cho SUA DON, bat buoc co NCC truoc khi dat hang
+- Van de: don lap tay (vd DM261128-003) khong co NCC / ngay giao, trang chi tiet khong sua duoc gi,
+  van duyet va "Da dat NCC" duoc du chua co nha cung cap.
+- khoBepService.capNhatDonMua: sua NCC (phai dang hop tac), ngay giao, ghi chu, danh sach nguyen lieu
+  (so luong > 0, don gia >= 0, khong lap) khi don con nhap / cho_duyet / da_duyet. Don da duyet ma doi
+  nguyen lieu / so luong / don gia -> ve "Cho duyet", xoa nguoi duyet (khong lach buoc duyet).
+  Doi NCC / ngay / ghi chu giu trang thai. Da dat NCC / nhan hang / huy -> khong sua.
+- doiTrangThaiDon 'dat_hang': chan neu chua co NCC.
+- Route POST /api/kitchen/mua-hang/:id/cap-nhat (quyen kho.mua.de_xuat hoac kho.mua.duyet), dang ky
+  truoc /:id/:buoc.
+- Trang chi tiet: nut "Sua don", hop sua (NCC + goi y NCC da giao nhieu nguyen lieu cua don nhat o lan
+  nhap gan nhat, ngay giao, bang nguyen lieu sua so luong / don gia / bo dong / them dong voi gia nhap
+  gan nhat, ghi chu); canh bao "Chua chon nha cung cap"; nut "Da dat hang voi NCC" mo khoa khi co NCC.
+- Test tich hop moi; npm test 49/49. Xem giao dien tren don 201 (chi mo hop, khong luu).
+
+[28/11] Nha cung cap + BANG GIA theo NCC, TRO LY DU BAO NVL lap phieu
+- Bang moi ncc_bang_gia (id_ncc, id_nl duy nhat, don_gia, so_luong_toi_thieu, so_ngay_giao, ghi_chu) -
+  services/nhaCungCapService.js tu tao bang. Lan dau dien san: mat hang chia theo nhom (do uong -> Suntory
+  PepsiCo; sua/kem/pho mai -> Sua Viet Nam; rau cu trai cay -> HTX Da Lat + cho Binh Dien; thit/trung ->
+  Vissan + cho; hai san, do kho -> cho Binh Dien), gia = TB gia nhap 90 ngay; lich su mau cung gia cho moi
+  NCC nen tao chenh lech MAU (cho: rau -8%, thit +6%) - can quan ly sua theo bao gia that. 177 dong.
+- Trang /staff/kitchen/nha-cung-cap: danh sach NCC (them / sua / ngung hop tac), bang gia tung NCC (them,
+  sua, bo mat hang; so voi noi khac: re nhat / dat hon x% / noi duy nhat; MOQ; so ngay giao; tim kiem).
+- Goi y mua (khoBepService.goiYMuaHang): moi mat hang chon NCC re nhat dat MOQ (khong noi nao dat MOQ ->
+  lam tron len MOQ cua noi re nhat); taoDonTuDong gom theo NCC do, gia theo bang gia.
+- Sua don mua: doi NCC -> don gia tu dien theo bang gia, mat hang NCC khong ban to vang; goi y NCC theo
+  bang gia (ban nhieu mat hang cua don nhat, tong re nhat).
+- Tro ly du bao NVL (/staff/kitchen/tro-ly-mua, services/troLyMuaHangService.js):
+  so luong = mo hinh thong ke san co (tieu hao theo thu 8 tuan x he so mua vu + tiec, diem dat hang,
+  L + C ngay, ton toi thieu, dang ve); moi dong co giai thich phep tinh; chon / doi NCC, sua so luong,
+  "Lap phieu mua" -> moi NCC mot don Cho duyet, gia lay tu bang gia tren may chu.
+  Nhan xet: Claude (claude-opus-5-5, structured output, effort low, du phong khi tu choi) doc bang so va
+  viet tom tat / uu tien / canh bao - KHONG doi so luong; khong co khoa / loi -> nhan xet tu dong.
+  Dung chung khoa API voi tro ly ao (chatbotAI.layClient). Hien chua co khoa -> chua goi Claude that.
+- Menu Kho: them "Tro ly du bao NVL", "Nha cung cap & bang gia"; nut tren trang Mua hang.
+- Test: 1 don vi + 1 tich hop moi; npm test 51/51. Giao dien tro ly kiem tra bang du lieu gia lap trong
+  trinh duyet an (kho that hien du hang vi 3 don mua dang cho duyet da tinh vao dang ve).
+
+[28/11] Tro ly du bao NVL - khi khong de xuat gi: ghi ro ly do, liet ke cac don mua chua nhan (cho duyet /
+  da duyet / da dat / nhan mot phan) da tinh vao 'hang dang ve' kem link; an bang trong va nut Lap phieu.
+
+[28/11] Dieu hanh tiec - viec chuan bi loc theo bo phan
+- Truoc: moi nguoi vao chi tiet tiec deu thay ca 16 viec cua moi bo phan (bep, kho, le tan, bar...).
+- Nay (dieuHanhTiecService.chiTiet -> tienDo, views/staff/tiec-chi-tiet.ejs): Ban dieu hanh (quan ly)
+  thay toan bo; bo phan chi thay viec thuoc nhom minh lam duoc (lam_duoc), tieu de "Viec cua bo phan
+  ban", dong ghi "Chi hien viec cua <nhom>. Tien do ca tiec x/y"; bo phan khong co viec -> bao ro.
+  Tinh so khach chot / bao cao van dung toan bo viec.
+- Kiem tra tiec 225: quan ly 16 viec; giamsatpv 5 (Giam sat PV 3 + Phuc vu 2); beptruong 6; thukho 1.

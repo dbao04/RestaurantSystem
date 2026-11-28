@@ -5,7 +5,8 @@
   var ngayVN = function (s) { var d = String(s).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
   var nhanPha = { sap_toi: 'Sắp tới', sap_bat_dau: 'Sắp bắt đầu', dang_dien_ra: 'Đang diễn ra', da_ket_thuc: 'Đã kết thúc' };
   var t = tiec, dangChay = ['DA_XAC_NHAN', 'DA_COC', 'CHO_THANH_TOAN'].indexOf(t.trang_thai) >= 0;
-  var tongViec = viec.length, xong = viec.filter(function (v) { return v.trang_thai === 'xong'; }).length;
+  // Quan ly: moi viec. Bo phan: chi viec cua nhom minh (dieuHanhTiecService.chiTiet -> tienDo).
+  var tongViec = tienDo.hien, xong = tienDo.hien_xong;
   var tongCan = 0, tongCo = 0;
   Object.keys(VAI_TRO_NS).forEach(function (k) { tongCan += dinhMuc[k] || 0; tongCo += Math.min(dinhMuc[k] || 0, nhanSu.filter(function (s) { return s.vai_tro === k; }).length); });
 %>
@@ -148,9 +149,14 @@
 <div data-tab="chuan-bi">
 <div class="ct-luoi">
   <section class="ct-khoi">
-    <h2><span><i class="fas fa-list-check text-warning"></i> Việc chuẩn bị</span><small class="text-muted"><%= xong %>/<%= tongViec %> xong</small></h2>
-    <% if (!tongViec) { %>
+    <h2><span><i class="fas fa-list-check text-warning"></i> <%= tienDo.loc_theo_nhom ? 'Việc của bộ phận bạn' : 'Việc chuẩn bị' %></span><small class="text-muted"><%= xong %>/<%= tongViec %> xong</small></h2>
+    <% if (tienDo.loc_theo_nhom && tienDo.tong) { %>
+      <div class="small text-muted mb-2"><i class="fas fa-filter"></i> Chỉ hiện việc của <b><%= tienDo.ten_nhom.join(', ') || 'bộ phận bạn' %></b>. Tiến độ cả tiệc: <b><%= tienDo.tong_xong %>/<%= tienDo.tong %></b> việc xong – quản lý xem được toàn bộ.</div>
+    <% } %>
+    <% if (!tienDo.tong) { %>
       <p class="text-muted mb-0">Việc chuẩn bị được tạo khi tiệc đã đặt cọc. Tiệc đang ở trạng thái "<%= t.ten_trang_thai %>".</p>
+    <% } else if (!tongViec) { %>
+      <p class="text-muted mb-0"><i class="fas fa-circle-check text-success"></i> Bộ phận bạn không có việc chuẩn bị nào trong tiệc này.</p>
     <% } else { %>
       <div class="tien-do <%= xong === tongViec ? 'tien-do--du' : '' %>"><i style="width:<%= Math.round(xong * 100 / tongViec) %>%"></i></div>
       <% moc.forEach(function (g) { %>

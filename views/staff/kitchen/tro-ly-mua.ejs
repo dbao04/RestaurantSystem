@@ -1,0 +1,229 @@
+<% var activePage = 'tro-ly-mua'; %>
+<%- include('../partials/header') %>
+<link rel="stylesheet" href="/kho-bep.css">
+<style>
+  .tl-buoc { counter-reset: b; list-style: none; padding: 0; margin: 0; }
+  .tl-buoc li { position: relative; padding: .45rem 0 .45rem 2.4rem; border-top: 1px dashed rgba(0,0,0,.08); font-size: .92rem; }
+  .tl-buoc li:first-child { border-top: 0; }
+  .tl-buoc li::before { counter-increment: b; content: counter(b); position: absolute; left: 0; top: .45rem; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+    background: #c8a24b; color: #2b1a12; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: .85rem; }
+  .tl-cong { font-family: ui-monospace, Consolas, monospace; background: rgba(200,162,75,.12); padding: .1rem .35rem; border-radius: 6px; font-size: .85em; }
+  .tl-nx { border-left: 4px solid #c8a24b; }
+  .tl-nx ul { margin: .3rem 0 0; padding-left: 1.1rem; }
+  .tl-nhom td { background: rgba(200,162,75,.10) !important; font-weight: 700; }
+  .tl-gt td { background: #fffaf0 !important; font-size: .85rem; color: #5b4a3d; }
+  .tl-sl { width: 92px; }
+  .tl-ncc { min-width: 190px; }
+  .tl-chan { position: sticky; bottom: 0; z-index: 5; background: #fff; border-top: 1px solid rgba(0,0,0,.08); padding: .7rem 1rem; border-radius: 0 0 14px 14px;
+    display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; box-shadow: 0 -8px 20px rgba(0,0,0,.05); }
+  [data-theme="dark"] .tl-chan { background: var(--nh-surface, #221a14); }
+  [data-theme="dark"] .tl-gt td { background: rgba(200,162,75,.06) !important; color: inherit; }
+</style>
+
+<div class="kb-dau">
+  <div>
+    <h1 class="h3 text-gray-800"><i class="fas fa-wand-magic-sparkles text-warning"></i> Trợ lý dự báo nguyên vật liệu</h1>
+    <div class="kb-phu">Dự báo lượng cần dùng, chọn nhà cung cấp rẻ nhất, rồi lập phiếu mua chỉ bằng một lần bấm. Phiếu tạo ra ở trạng thái <b>Chờ duyệt</b>.</div>
+  </div>
+  <div class="kb-nut">
+    <a href="/staff/kitchen/nha-cung-cap" class="btn btn-sm btn-outline-secondary"><i class="fas fa-store"></i> Bảng giá NCC</a>
+    <a href="/staff/kitchen/mua-hang" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cart-flatbed"></i> Đơn mua</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mb-3">
+    <div class="kb-the h-100">
+      <div class="d-flex align-items-center flex-wrap" style="gap:.75rem">
+        <button type="button" class="btn btn-warning font-weight-bold" id="nutPhanTich"><i class="fas fa-chart-line"></i> Phân tích &amp; đề xuất</button>
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="dungAI" <%= coAI ? 'checked' : 'disabled' %>>
+          <label class="custom-control-label small" for="dungAI">Nhờ AI Claude viết nhận xét<%= coAI ? '' : ' (chưa có khóa API – vào Thiết lập AI của trợ lý ảo)' %></label>
+        </div>
+        <span class="small text-muted" id="trangThai" aria-live="polite"></span>
+      </div>
+      <div id="nhanXet" class="mt-3"></div>
+    </div>
+  </div>
+  <div class="col-lg-4 mb-3">
+    <details class="kb-the h-100" open>
+      <summary class="font-weight-bold" style="cursor:pointer"><i class="fas fa-circle-question text-warning"></i> Trợ lý dự báo như thế nào?</summary>
+      <ol class="tl-buoc mt-2">
+        <li><b>Lượng dùng mỗi ngày</b>: lấy lượng xuất kho để bán hàng của <b>8 tuần gần nhất</b>, tính trung bình <b>riêng từng thứ</b> (thứ 7, CN thường dùng nhiều hơn ngày thường).</li>
+        <li><b>Mùa vụ</b>: nhân với hệ số tháng = số đơn bình quân của tháng sắp tới ÷ của các tháng làm nền (tính từ toàn bộ lịch sử bán).</li>
+        <li><b>Tiệc đã đặt</b>: cộng nguyên liệu theo thực đơn tiệc vào đúng ngày tổ chức.</li>
+        <li><b>Còn bao nhiêu</b>: tồn còn dùng được (trừ phần đã giữ) + hàng <b>đang về</b> từ đơn mua chưa nhận.</li>
+        <li><b>Có cần đặt không</b>: nếu <span class="tl-cong">còn + đang về − dùng trong <%= thamSo.so_ngay_giao %> ngày chờ hàng &lt; tồn tối thiểu</span> thì cần đặt ngay, không đợi tới lúc hết.</li>
+        <li><b>Đặt bao nhiêu</b>: <span class="tl-cong">dùng trong <%= thamSo.so_ngay_giao + thamSo.so_ngay_du_tru %> ngày (<%= thamSo.so_ngay_giao %> chờ + <%= thamSo.so_ngay_du_tru %> dự trữ) + tồn tối thiểu − còn − đang về</span>, làm tròn lên mức đặt tối thiểu của nhà cung cấp nếu cần.</li>
+        <li><b>Mua ở đâu</b>: nơi <b>rẻ nhất</b> trong bảng giá có bán mặt hàng đó và đáp ứng mức đặt tối thiểu.</li>
+        <li><b>AI Claude</b> (tùy chọn) đọc bảng số trên rồi viết tóm tắt, thứ tự ưu tiên và cảnh báo. <b>AI không đổi số lượng</b> – mọi con số đều do công thức trên tính, bấm <i class="fas fa-circle-info"></i> ở từng dòng để xem phép tính.</li>
+      </ol>
+    </details>
+  </div>
+</div>
+
+<div class="kb-the p-0" id="khungKq" hidden>
+  <div class="p-3 pb-2 d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
+    <h6 class="mb-0"><i class="fas fa-list-check"></i> Đề xuất mua <span class="small text-muted" id="thamSoTxt"></span></h6>
+    <div class="small"><a href="#" id="chonHet">Chọn tất cả</a> · <a href="#" id="chonGap">Chỉ mặt hàng gấp</a> · <a href="#" id="boChon">Bỏ chọn</a></div>
+  </div>
+  <div class="table-responsive"><table class="table table-sm kb-bang mb-0">
+    <thead class="thead-light"><tr>
+      <th style="width:34px"><span class="sr-only">Chọn</span></th><th>Mặt hàng</th><th class="so">Còn / dùng mỗi ngày</th>
+      <th class="so">Mua</th><th class="tl-ncc">Nhà cung cấp</th><th class="so">Đơn giá</th><th class="so">Thành tiền</th><th style="width:30px"></th>
+    </tr></thead>
+    <tbody id="bangKq"></tbody>
+  </table></div>
+  <div class="tl-chan">
+    <div><b id="tongChon">0 mặt hàng · 0đ</b> <span class="small text-muted" id="soPhieu"></span></div>
+    <% if ((typeof quyenKho !== 'undefined' && quyenKho ? quyenKho : {}).deXuatMua) { %>
+      <button type="button" class="btn btn-primary font-weight-bold" id="nutLap" disabled><i class="fas fa-file-circle-plus"></i> Lập phiếu mua</button>
+    <% } else { %>
+      <span class="small text-muted">Lập phiếu do Quản lý bếp / Bếp trưởng / Thủ kho thực hiện.</span>
+    <% } %>
+  </div>
+</div>
+<div id="ketQuaLap" class="mt-3"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var vnd = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN') + 'đ'; };
+  var so = function (n) { return (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('vi-VN'); };
+  var thoat = function (s) { var e = document.createElement('span'); e.textContent = s == null ? '' : String(s); return e.innerHTML; };
+  var MAU = { het: 'do', het_truoc_khi_ve: 'do', thieu_cho_tiec: 'do', duoi_dinh_muc: 'cam', sap_het: 'xam' };
+  var GAP = { het: 1, het_truoc_khi_ve: 1, thieu_cho_tiec: 1 };
+  var KQ = null, CHON = {};
+
+  function veNhanXet(nx, loiAI) {
+    var tenHang = {}; (KQ.mat_hang || []).forEach(function (g) { tenHang[g.id_nl] = g.ten_nl; });
+    var h = '<div class="kb-the tl-nx mb-0" style="box-shadow:none">' +
+      '<div class="small text-muted mb-1">' + (nx.nguon === 'ai' ? '<i class="fas fa-robot"></i> Nhận xét của AI Claude' : '<i class="fas fa-calculator"></i> Nhận xét tự động từ số liệu') + '</div>' +
+      '<p class="mb-2">' + thoat(nx.tom_tat) + '</p>';
+    if (nx.uu_tien && nx.uu_tien.length) h += '<b class="small">Đặt trước:</b><ul class="small">' + nx.uu_tien.map(function (u) { return '<li><b>' + thoat(tenHang[u.id_nl] || ('#' + u.id_nl)) + '</b> – ' + thoat(u.ly_do) + '</li>'; }).join('') + '</ul>';
+    if (nx.canh_bao && nx.canh_bao.length) h += '<b class="small text-danger mt-2 d-block">Cần chú ý:</b><ul class="small">' + nx.canh_bao.map(function (c) { return '<li>' + thoat(c) + '</li>'; }).join('') + '</ul>';
+    if (nx.goi_y && nx.goi_y.length) h += '<b class="small mt-2 d-block">Gợi ý:</b><ul class="small">' + nx.goi_y.map(function (c) { return '<li>' + thoat(c) + '</li>'; }).join('') + '</ul>';
+    if (loiAI) h += '<div class="small text-warning mt-2"><i class="fas fa-triangle-exclamation"></i> Không dùng được AI: ' + thoat(loiAI) + ' – đang hiện nhận xét tự động.</div>';
+    $('nhanXet').innerHTML = h + '</div>';
+  }
+
+  function giaCua(g) {
+    var c = CHON[g.id_nl];
+    var bg = (g.bao_gia || []).filter(function (b) { return b.id_ncc === c.id_ncc; })[0];
+    return bg ? bg.don_gia : g.don_gia;
+  }
+
+  function veBang() {
+    var nhom = {};
+    KQ.mat_hang.forEach(function (g) {
+      var k = CHON[g.id_nl].id_ncc || 0;
+      (nhom[k] = nhom[k] || []).push(g);
+    });
+    var tenNcc = function (k) {
+      if (!Number(k)) return 'Chưa có nhà cung cấp trong bảng giá';
+      for (var i = 0; i < KQ.mat_hang.length; i++) { var b = (KQ.mat_hang[i].bao_gia || []).filter(function (x) { return String(x.id_ncc) === String(k); })[0]; if (b) return b.ten_ncc; }
+      return 'NCC #' + k;
+    };
+    var html = '';
+    Object.keys(nhom).sort(function (a, b) { return (Number(a) ? 0 : 1) - (Number(b) ? 0 : 1); }).forEach(function (k) {
+      var ds = nhom[k];
+      var tong = ds.reduce(function (s, g) { return s + (CHON[g.id_nl].chon ? CHON[g.id_nl].sl * giaCua(g) : 0); }, 0);
+      html += '<tr class="tl-nhom"><td colspan="8"><i class="fas fa-store"></i> ' + thoat(tenNcc(k)) + ' <span class="small font-weight-normal text-muted">· ' + ds.length + ' mặt hàng · đã chọn ' + vnd(tong) + '</span></td></tr>';
+      ds.forEach(function (g) {
+        var c = CHON[g.id_nl];
+        var opts = (g.bao_gia || []).map(function (b, i) {
+          return '<option value="' + b.id_ncc + '"' + (b.id_ncc === c.id_ncc ? ' selected' : '') + '>' + thoat(b.ten_ncc) + ' – ' + vnd(b.don_gia) + (i === 0 ? ' (rẻ nhất)' : '') + '</option>';
+        }).join('');
+        html += '<tr>' +
+          '<td><input type="checkbox" data-chon="' + g.id_nl + '"' + (c.chon ? ' checked' : '') + ' aria-label="Chọn ' + thoat(g.ten_nl) + '"></td>' +
+          '<td><b>' + thoat(g.ten_nl) + '</b> <span class="kb-nhan ' + MAU[g.muc_do] + '">' + thoat(g.ten_muc) + '</span>' +
+            (g.ngay_het_du_kien ? '<div class="small text-muted">dự kiến hết ' + g.ngay_het_du_kien.slice(8, 10) + '/' + g.ngay_het_du_kien.slice(5, 7) + '</div>' : '') + '</td>' +
+          '<td class="so small">' + so(g.kha_dung) + ' / ' + so(g.tieu_hao_ngay) + ' <span class="text-muted">' + thoat(g.ten_dvt || '') + '</span></td>' +
+          '<td class="so"><input type="number" class="form-control form-control-sm text-right tl-sl d-inline-block" min="0.001" step="any" data-sl="' + g.id_nl + '" value="' + c.sl + '" aria-label="Số lượng mua ' + thoat(g.ten_nl) + '"></td>' +
+          '<td>' + (opts ? '<select class="form-control form-control-sm" data-ncc="' + g.id_nl + '" aria-label="Nhà cung cấp cho ' + thoat(g.ten_nl) + '">' + opts + '</select>' : '<span class="small text-danger">Chưa có trong bảng giá</span>') + '</td>' +
+          '<td class="so">' + vnd(giaCua(g)) + '</td>' +
+          '<td class="so">' + vnd(c.sl * giaCua(g)) + '</td>' +
+          '<td><button type="button" class="btn btn-sm btn-link p-0" data-gt="' + g.id_nl + '" aria-expanded="false" aria-label="Xem cách tính ' + thoat(g.ten_nl) + '"><i class="fas fa-circle-info"></i></button></td>' +
+        '</tr>' +
+        '<tr class="tl-gt" id="gt-' + g.id_nl + '" hidden><td></td><td colspan="7">' + thoat(g.giai_thich) + '</td></tr>';
+      });
+    });
+    var trong = !html;
+    document.querySelector('#khungKq thead').hidden = trong;
+    document.querySelector('#khungKq .tl-chan').hidden = trong;
+    document.querySelectorAll('#chonHet, #chonGap, #boChon').forEach(function (a) { a.parentNode.hidden = trong; });
+    if (trong) {
+      var mo = KQ.don_mo || [];
+      html = '<tr><td colspan="8" class="py-4 px-3"><div class="text-center mb-2"><i class="fas fa-circle-check text-success"></i> <b>Chưa cần đặt thêm mặt hàng nào.</b></div>' +
+        '<div class="small text-muted text-center">Tồn kho cộng hàng đang về đủ dùng tới khi lô hàng kế tiếp về và vẫn trên tồn tối thiểu.</div>' +
+        (mo.length ? '<div class="small mt-3 mx-auto" style="max-width:640px"><b>' + mo.length + ' đơn mua chưa nhận hàng đã được tính vào "hàng đang về"</b> (để không đặt trùng):<ul class="mb-1 mt-1">' +
+          mo.map(function (d) { return '<li><a href="/staff/kitchen/mua-hang/' + d.id_dmh + '">' + thoat(d.ma_don) + '</a> – ' + thoat(d.ten_trang_thai || d.trang_thai) + ' · ' + d.so_dong + ' mặt hàng · ' + thoat(d.ten_ncc || 'chưa chọn NCC') + '</li>'; }).join('') +
+          '</ul>Hủy đơn nào không còn đúng thì bấm Phân tích lại – trợ lý sẽ đề xuất phần đó.</div>' : '') +
+        '</td></tr>';
+    }
+    $('bangKq').innerHTML = html;
+    tinhTong();
+  }
+
+  function tinhTong() {
+    var n = 0, tong = 0, ncc = {};
+    KQ.mat_hang.forEach(function (g) { var c = CHON[g.id_nl]; if (c.chon) { n++; tong += c.sl * giaCua(g); ncc[c.id_ncc || 0] = 1; } });
+    $('tongChon').textContent = n + ' mặt hàng · ' + vnd(tong);
+    var p = Object.keys(ncc).length;
+    $('soPhieu').textContent = p ? '→ ' + p + ' phiếu (mỗi nhà cung cấp một phiếu)' : '';
+    if ($('nutLap')) $('nutLap').disabled = !n;
+  }
+
+  $('bangKq').addEventListener('change', function (e) {
+    var t = e.target, id;
+    if ((id = t.getAttribute('data-chon'))) { CHON[id].chon = t.checked; tinhTong(); return; }
+    if ((id = t.getAttribute('data-sl'))) { CHON[id].sl = Math.max(0, Number(t.value) || 0); veBang(); return; }
+    if ((id = t.getAttribute('data-ncc'))) { CHON[id].id_ncc = Number(t.value); veBang(); }
+  });
+  $('bangKq').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-gt]'); if (!b) return;
+    var r = $('gt-' + b.getAttribute('data-gt')); r.hidden = !r.hidden; b.setAttribute('aria-expanded', String(!r.hidden));
+  });
+  var chonTheo = function (f) { return function (e) { e.preventDefault(); if (!KQ) return; KQ.mat_hang.forEach(function (g) { CHON[g.id_nl].chon = f(g); }); veBang(); }; };
+  $('chonHet').addEventListener('click', chonTheo(function () { return true; }));
+  $('chonGap').addEventListener('click', chonTheo(function (g) { return !!GAP[g.muc_do]; }));
+  $('boChon').addEventListener('click', chonTheo(function () { return false; }));
+
+  $('nutPhanTich').addEventListener('click', async function () {
+    var nut = this; nut.disabled = true;
+    $('trangThai').textContent = $('dungAI').checked ? 'Đang tính dự báo và nhờ AI nhận xét…' : 'Đang tính dự báo…';
+    $('ketQuaLap').innerHTML = '';
+    try {
+      var r = await fetch('/api/kitchen/tro-ly-mua/phan-tich', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ai: $('dungAI').checked }) });
+      var j = await r.json(); if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+      KQ = j; CHON = {};
+      j.mat_hang.forEach(function (g) { CHON[g.id_nl] = { chon: true, sl: g.so_luong_mua, id_ncc: g.ncc_de_xuat ? g.ncc_de_xuat.id_ncc : 0 }; });
+      var ts = j.tham_so;
+      $('thamSoTxt').textContent = '· chờ hàng ' + ts.so_ngay_giao + ' ngày + dự trữ ' + ts.so_ngay_du_tru + ' ngày · hệ số mùa ' + ts.he_so_mua_vu + (ts.du_lieu_den_ngay ? ' · dữ liệu bán tới ' + ts.du_lieu_den_ngay.split('-').reverse().join('/') : '');
+      veNhanXet(j.nhan_xet, j.ai_loi);
+      $('khungKq').hidden = false; veBang();
+      $('trangThai').textContent = 'Xong lúc ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch (err) { $('trangThai').textContent = ''; alert(err.message); }
+    finally { nut.disabled = false; }
+  });
+
+  if ($('nutLap')) $('nutLap').addEventListener('click', async function () {
+    var dong = KQ.mat_hang.filter(function (g) { return CHON[g.id_nl].chon && CHON[g.id_nl].sl > 0; })
+      .map(function (g) { var c = CHON[g.id_nl]; return { id_nl: g.id_nl, so_luong: c.sl, id_ncc: c.id_ncc || null, don_gia: giaCua(g) }; });
+    if (!dong.length) return;
+    if (!(await window.xacNhan('Lập ' + $('soPhieu').textContent.replace('→ ', '') + ' cho ' + dong.length + ' mặt hàng? Phiếu ở trạng thái Chờ duyệt, quản lý duyệt rồi mới đặt hàng.', { tieuDe: 'Lập phiếu mua', dongY: 'Lập phiếu' }))) return;
+    var nut = this; nut.disabled = true;
+    try {
+      var r = await fetch('/api/kitchen/tro-ly-mua/lap-phieu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dong: dong }) });
+      var j = await r.json(); if (!j.ok) throw new Error(j.thong_bao || 'Lỗi');
+      $('ketQuaLap').innerHTML = '<div class="kb-canh xanh"><i class="fas fa-circle-check"></i><div><b>Đã lập ' + j.don.length + ' phiếu mua (Chờ duyệt):</b><ul class="mb-0 mt-1">' +
+        j.don.map(function (d) { return '<li><a href="/staff/kitchen/mua-hang/' + d.id + '">' + thoat(d.ma_don) + '</a> – ' + d.so_dong + ' mặt hàng · ' + vnd(d.tong) + (d.id_ncc ? '' : ' <span class="text-danger">(chưa có NCC)</span>') + '</li>'; }).join('') +
+        '</ul></div></div>';
+      $('ketQuaLap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('khungKq').hidden = true; KQ = null;
+    } catch (err) { alert(err.message); nut.disabled = false; }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

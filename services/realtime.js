@@ -434,6 +434,20 @@ function khoiTao(_io) {
       return;
     }
 
+    // Trang /staff/chat/:id_kh xin vao phong chat cua khach dang mo de nhan tin
+    // khach gui toi ngay. Dang ky TRUOC moi await ben duoi: trang emit ngay khi
+    // ket noi, dang ky muon thi su kien bi mat (truoc day nhanh nhan vien khong
+    // co handler nay -> nhan vien phai tai lai trang moi thay tin khach).
+    // Chi giu mot phong chat moi socket: doi khach thi roi phong cu.
+    let phongChat = null;
+    socket.on('join-room', (data) => {
+      const idKh = Number(data);
+      if (!Number.isInteger(idKh) || idKh <= 0) return;
+      if (phongChat) socket.leave(phongChat);
+      phongChat = `room_${idKh}`;
+      socket.join(phongChat);
+    });
+
     const idNv = Number(phien.staffId);
     let hoSo;
     try {

@@ -440,6 +440,9 @@ async function goiYMuaHang({ homNay = null } = {}) {
      WHERE d.trang_thai IN ('cho_duyet','da_duyet','da_dat','nhan_mot_phan') GROUP BY c.id_nl`);
   const mapVe = new Map(dangVe.map((r) => [Number(r.id_nl), Number(r.sl)]));
   const cong = (mang, a, b) => mang.slice(a, b).reduce((s, x) => s + x, 0);
+  // Bang gia theo nha cung cap (nhaCungCapService): moi mat hang chon noi re nhat dat MOQ.
+  const nccSvc = require('./nhaCungCapService');
+  const bangGia = await nccSvc.giaTheoNl().catch(() => new Map());
 
   const ra = [];
   for (const n of nvl) {
@@ -463,7 +466,13 @@ async function goiYMuaHang({ homNay = null } = {}) {
       if (conLai < 0) { ngayHet = ngayCong(ngay0, i); break; }
     }
     const tieuHaoNgay = cong(ngayDb, 0, 7) / 7;
+    const dsGia = bangGia.get(Number(n.id_nl)) || [];
+    const chon = nccSvc.chonNcc(dsGia, deXuat);
+    // Khong noi nao ban duoi MOQ -> lam tron len muc dat toi thieu cua noi re nhat.
+    const mua = chon && chon.duoi_moq ? Math.max(deXuat, chon.moq) : deXuat;
     ra.push({
+      ncc_de_xuat: chon, bao_gia: dsGia.slice(0, 4),
+      so_luong_mua: Math.ceil(mua * 10) / 10,
       ...n, kha_dung: lamTron(kd, 2), tieu_hao_ngay: lamTron(tieuHaoNgay, 2), dang_ve: lamTron(ve),
       can_truoc_khi_ve: lamTron(canL, 2), can_ky_toi: lamTron(canLC, 2), can_cho_tiec: lamTron(choTiec, 2), diem_dat: lamTron(canL + anToan, 2),
       de_xuat: Math.ceil(deXuat * 10) / 10,
@@ -490,9 +499,13 @@ async function taoDonTuDong(idNv, { homNay = null } = {}) {
   if (!goiY.length) return { don: [], thong_bao: 'Tồn kho đang đủ theo dự báo - không cần đặt thêm.' };
   const theoNcc = new Map();
   for (const g of goiY) {
-    const k = g.ncc_gan_nhat || 0;
+    // Noi re nhat trong bang gia NCC; mat hang chua co bang gia -> NCC nhap gan nhat.
+    const k = (g.ncc_de_xuat && g.ncc_de_xuat.id_ncc) || g.ncc_gan_nhat || 0;
     if (!theoNcc.has(k)) theoNcc.set(k, []);
-    theoNcc.get(k).push({ id_nl: g.id_nl, so_luong: g.de_xuat, don_gia: Number(g.gia_nhap_gan_nhat) || Number(g.gia_von) || 0 });
+    theoNcc.get(k).push({
+      id_nl: g.id_nl, so_luong: g.so_luong_mua || g.de_xuat,
+      don_gia: (g.ncc_de_xuat && g.ncc_de_xuat.don_gia) || Number(g.gia_nhap_gan_nhat) || Number(g.gia_von) || 0,
+    });
   }
   const ngayGiao = ngayCong(homNay || new Date().toISOString().slice(0, 10), goiY.thamSo.so_ngay_giao);
   const don = [];
@@ -567,6 +580,77 @@ async function taoDonMua(body, idNv) {
   }
 }
 
+/**
+ * Sua don mua khi CHUA dat voi NCC (nhap / cho_duyet / da_duyet): nha cung cap,
+ * ngay giao du kien, ghi chu, va (neu gui `dong`) danh sach nguyen lieu.
+ *
+ * Don DA DUYET ma doi so luong / don gia / nguyen lieu -> quay ve "Cho duyet":
+ * nguoi duyet da dong y mot so tien khac, sua xong ma giu "Da duyet" la lach
+ * qua buoc duyet. Doi NCC / ngay giao / ghi chu thi giu nguyen trang thai.
+ */
+const SUA_DUOC = ['nhap', 'cho_duyet', 'da_duyet'];
+async function capNhatDonMua(id, body = {}) {
+  const don = await chiTietDon(id);
+  if (!don) throw new LoiKho('Không tìm thấy đơn mua.', 'NOT_FOUND');
+  if (!SUA_DUOC.includes(don.trang_thai)) {
+    throw new LoiKho(`Đơn đang ở trạng thái "${TRANG_THAI_DON[don.trang_thai]}" – không sửa được nữa. Cần thay đổi thì hủy đơn và lập đơn mới.`);
+  }
+  let idNcc = don.id_ncc;
+  if (body.id_ncc !== undefined) {
+    idNcc = Number(body.id_ncc) || null;
+    if (idNcc) {
+      const [[n]] = await db.query('SELECT id_ncc FROM nha_cung_cap WHERE id_ncc = ? AND trangthai = 1', [idNcc]);
+      if (!n) throw new LoiKho('Nhà cung cấp không tồn tại hoặc đã ngừng hợp tác.');
+    }
+  }
+  let ngayGiao = don.ngay_giao_du_kien;
+  if (body.ngay_giao_du_kien !== undefined) {
+    const v = String(body.ngay_giao_du_kien || '');
+    if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new LoiKho('Ngày giao dự kiến không hợp lệ.');
+    ngayGiao = v || null;
+  }
+  const ghiChu = body.ghi_chu !== undefined ? (String(body.ghi_chu || '').trim().slice(0, 500) || null) : don.ghi_chu;
+
+  let dongMoi = null;
+  if (Array.isArray(body.dong)) {
+    dongMoi = body.dong
+      .map((d) => ({ id_nl: Number(d.id_nl), so_luong: so(d.so_luong), don_gia: so(d.don_gia) || 0 }))
+      .filter((d) => d.id_nl);
+    if (!dongMoi.length) throw new LoiKho('Đơn mua cần ít nhất một nguyên liệu.');
+    if (dongMoi.some((d) => !(d.so_luong > 0))) throw new LoiKho('Số lượng đặt phải lớn hơn 0.');
+    if (dongMoi.some((d) => d.don_gia < 0)) throw new LoiKho('Đơn giá không được âm.');
+    if (new Set(dongMoi.map((d) => d.id_nl)).size !== dongMoi.length) throw new LoiKho('Một nguyên liệu bị lặp trong đơn – gộp lại thành một dòng.');
+    if (don.dong.some((d) => d.so_luong_da_nhan > 0)) throw new LoiKho('Đơn đã nhận một phần hàng – không sửa danh sách nguyên liệu được.');
+  }
+  const khoa = (ds) => ds.map((d) => `${d.id_nl}|${Number(d.so_luong)}|${Number(d.don_gia)}`).sort().join(';');
+  const doiDong = !!dongMoi && khoa(dongMoi) !== khoa(don.dong);
+  const veChoDuyet = doiDong && don.trang_thai === 'da_duyet';
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    if (doiDong) {
+      await conn.query('DELETE FROM chi_tiet_don_mua WHERE id_dmh = ?', [id]);
+      for (const d of dongMoi) {
+        await conn.query('INSERT INTO chi_tiet_don_mua (id_dmh, id_nl, so_luong, don_gia) VALUES (?, ?, ?, ?)', [id, d.id_nl, d.so_luong, d.don_gia]);
+      }
+    }
+    const tong = (doiDong ? dongMoi : don.dong).reduce((s, d) => s + Number(d.so_luong) * Number(d.don_gia), 0);
+    await conn.query(
+      `UPDATE don_mua_hang SET id_ncc = ?, ngay_giao_du_kien = ?, ghi_chu = ?, tong_tien = ?
+         ${veChoDuyet ? ", trang_thai = 'cho_duyet', id_nv_duyet = NULL, duyet_luc = NULL" : ''}
+       WHERE id_dmh = ?`,
+      [idNcc, ngayGiao, ghiChu, Math.round(tong), id]);
+    await conn.commit();
+    return { ok: true, doi_dong: doiDong, ve_cho_duyet: veChoDuyet };
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
 /** Chuyen trang thai don. Ai duoc lam gi do route kiem tra. */
 const BUOC_DON = {
   duyet: { tu: ['cho_duyet'], den: 'da_duyet' },
@@ -580,6 +664,10 @@ async function doiTrangThaiDon(id, buoc, { idNv, lyDo } = {}) {
   if (!d) throw new LoiKho('Không tìm thấy đơn mua.', 'NOT_FOUND');
   if (!b.tu.includes(d.trang_thai)) throw new LoiKho(`Đơn đang ở trạng thái "${TRANG_THAI_DON[d.trang_thai]}", không thể ${buoc === 'duyet' ? 'duyệt' : buoc === 'huy' ? 'hủy' : 'đánh dấu đã đặt'}.`);
   if (buoc === 'huy' && String(lyDo || '').trim().length < 3) throw new LoiKho('Ghi lý do hủy đơn.');
+  if (buoc === 'dat_hang') {
+    const [[n]] = await db.query('SELECT id_ncc FROM don_mua_hang WHERE id_dmh = ?', [id]);
+    if (!n.id_ncc) throw new LoiKho('Đơn chưa có nhà cung cấp – bấm "Sửa đơn" chọn nhà cung cấp trước khi đánh dấu đã đặt hàng.');
+  }
   await db.query(
     `UPDATE don_mua_hang SET trang_thai = ?,
        id_nv_duyet = IF(? = 'da_duyet', ?, id_nv_duyet), duyet_luc = IF(? = 'da_duyet', NOW(), duyet_luc),
@@ -591,5 +679,5 @@ async function doiTrangThaiDon(id, buoc, { idNv, lyDo } = {}) {
 module.exports = {
   LY_DO_XUAT, LY_DO_BAN_HANG, TRANG_THAI_DON, LoiKho,
   danhSachNVL, danhSachNCC, loHang, truLoFIFO, taoPhieuNhap, nhapDongVaoKho, capNhatTrangThaiDonSauNhan, taoPhieuXuat, soKho, chiTietPhieu,
-  tieuHaoBinhQuan, goiYMuaHang, thamSoMua, duBaoTieuHao, taoDonTuDong, danhSachDon, chiTietDon, taoDonMua, doiTrangThaiDon,
+  tieuHaoBinhQuan, goiYMuaHang, thamSoMua, duBaoTieuHao, taoDonTuDong, danhSachDon, chiTietDon, taoDonMua, capNhatDonMua, doiTrangThaiDon,
 };

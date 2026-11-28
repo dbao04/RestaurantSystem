@@ -89,7 +89,7 @@ async function chung(req) {
 // tung thao tac ghi kiem quyen rieng ben duoi. Thong ke bep van theo vai tro Bep.
 const vaiTroPq = require('../services/phanQuyenVaiTro');
 router.use('/staff/kitchen/thong-ke', vaiTroPq.canHoac((req) => vaiTroPq.laTruongBep(req.hoSo), 'Thống kê bếp dành cho Ban điều hành và trưởng bộ phận Bếp / Bar.'));
-router.use(['/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/api/kitchen'], phanQuyenMw.canQuyen('kho.xem'));
+router.use(['/staff/kitchen/kho', '/staff/kitchen/mua-hang', '/staff/kitchen/nha-cung-cap', '/staff/kitchen/tro-ly-mua', '/api/kitchen'], phanQuyenMw.canQuyen('kho.xem'));
 
 // ------------------------------------------------------------------ thong ke
 router.get('/staff/kitchen/thong-ke', bat(async (req, res) => {
@@ -273,9 +273,26 @@ router.get('/staff/kitchen/mua-hang/:id', bat(async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(404).send('Không tìm thấy đơn');
   const don = await kho.chiTietDon(Number(req.params.id));
   if (!don) return res.status(404).send('Không tìm thấy đơn');
+  const [nvl, ncc, bangGia] = await Promise.all([kho.danhSachNVL(), kho.danhSachNCC(), require('../services/nhaCungCapService').giaTheoNl()]);
+  // Goi y NCC theo BANG GIA: noi ban duoc nhieu mat hang cua don nhat, bang nhau thi tong re hon.
+  const dem = new Map();
+  for (const d of don.dong) {
+    for (const g of bangGia.get(Number(d.id_nl)) || []) {
+      const x = dem.get(g.id_ncc) || { so: 0, tong: 0 };
+      x.so += 1; x.tong += g.don_gia * d.so_luong;
+      dem.set(g.id_ncc, x);
+    }
+  }
+  const [tot] = [...dem.entries()].sort((a, b) => b[1].so - a[1].so || a[1].tong - b[1].tong || a[0] - b[0]).map(([id, x]) => [id, x.so]);
+  const nccGoiY = tot && ncc.find((n) => Number(n.id_ncc) === Number(tot[0]));
+  // id_nl -> { id_ncc: don_gia } cho hop sua don (doi NCC thi tu dien gia).
+  const giaNl = {};
+  for (const [id, ds] of bangGia) giaNl[id] = Object.fromEntries(ds.map((g) => [g.id_ncc, g.don_gia]));
   res.render('staff/kitchen/mua-hang-chi-tiet', {
     title: `Đơn mua ${don.ma_don}`, activePage: 'mua-hang', ...(await chung(req)),
     don, duocDuyet: duocDuyet(req), idNv: req.session.staffId || null,
+    nvl, ncc, giaNl, goiYNcc: nccGoiY ? { id_ncc: nccGoiY.id_ncc, ten_ncc: nccGoiY.ten_ncc, so: tot[1], tren: don.dong.length } : null,
+    suaDuoc: ['nhap', 'cho_duyet', 'da_duyet'].includes(don.trang_thai) && (co(req, 'kho.mua.de_xuat') || duocDuyet(req)),
   });
 }));
 
@@ -286,6 +303,65 @@ router.post('/api/kitchen/mua-hang/tu-dong', can('kho.mua.de_xuat', 'lập đơn
 
 router.post('/api/kitchen/mua-hang', can('kho.mua.de_xuat', 'lập đơn mua'), bat(async (req, res) => {
   try { res.status(201).json({ ok: true, ...(await kho.taoDonMua(req.body, req.session.staffId || null)) }); } catch (e) { traLoi(res, e); }
+}));
+
+// ------------------------------------------------------------------ nha cung cap + bang gia
+const nccSvc = require('../services/nhaCungCapService');
+router.get('/staff/kitchen/nha-cung-cap', bat(async (req, res) => {
+  const ds = await nccSvc.dsNcc();
+  const idChon = /^\d+$/.test(String(req.query.id || '')) ? Number(req.query.id) : (ds[0] && ds[0].id_ncc);
+  const [chon, nvl] = await Promise.all([idChon ? nccSvc.chiTietNcc(idChon) : null, kho.danhSachNVL()]);
+  res.render('staff/kitchen/nha-cung-cap', {
+    title: 'Nhà cung cấp & bảng giá', activePage: 'nha-cung-cap', ...(await chung(req)),
+    ds, chon, nvl, duocSua: co(req, 'kho.mua.de_xuat') || duocDuyet(req),
+  });
+}));
+const canSuaNcc = (req, res, next) => (co(req, 'kho.mua.de_xuat') || duocDuyet(req) ? next()
+  : res.status(403).json({ ok: false, thong_bao: 'Chức danh của bạn không được sửa nhà cung cấp / bảng giá.' }));
+router.post('/api/kitchen/ncc', canSuaNcc, bat(async (req, res) => {
+  try { res.status(201).json({ ok: true, ...(await nccSvc.luuNcc(req.body || {})) }); } catch (e) { traLoi(res, e); }
+}));
+router.post('/api/kitchen/ncc/:id', canSuaNcc, bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
+  try { res.json({ ok: true, ...(await nccSvc.luuNcc(req.body || {}, Number(req.params.id))) }); } catch (e) { traLoi(res, e); }
+}));
+router.post('/api/kitchen/ncc/:id/gia', canSuaNcc, bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
+  try { res.json(await nccSvc.luuGia(Number(req.params.id), req.body || {})); } catch (e) { traLoi(res, e); }
+}));
+router.post('/api/kitchen/ncc/:id/gia/:idNl/xoa', canSuaNcc, bat(async (req, res) => {
+  if (!/^\d+$/.test(req.params.id) || !/^\d+$/.test(req.params.idNl)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy' });
+  try { res.json(await nccSvc.boMatHang(Number(req.params.id), Number(req.params.idNl))); } catch (e) { traLoi(res, e); }
+}));
+
+// ------------------------------------------------------------------ tro ly du bao NVL
+router.get('/staff/kitchen/tro-ly-mua', bat(async (req, res) => {
+  const coAI = await require('../services/chatbotAI').coKhoa().catch(() => false);
+  res.render('staff/kitchen/tro-ly-mua', {
+    title: 'Trợ lý dự báo nguyên vật liệu', activePage: 'tro-ly-mua', ...(await chung(req)),
+    coAI, thamSo: await kho.thamSoMua(),
+  });
+}));
+router.post('/api/kitchen/tro-ly-mua/phan-tich', bat(async (req, res) => {
+  try {
+    res.json({ ok: true, ...(await require('../services/troLyMuaHangService').phanTich({ dungAI: !!(req.body || {}).ai })) });
+  } catch (e) { traLoi(res, e); }
+}));
+router.post('/api/kitchen/tro-ly-mua/lap-phieu', can('kho.mua.de_xuat', 'lập đơn mua'), bat(async (req, res) => {
+  try {
+    res.status(201).json({ ok: true, ...(await require('../services/troLyMuaHangService').lapPhieu((req.body || {}).dong, req.session.staffId || null)) });
+  } catch (e) { traLoi(res, e); }
+}));
+
+// Sua don (NCC, ngay giao, ghi chu, nguyen lieu) - dang ky TRUOC route /:id/:buoc.
+router.post('/api/kitchen/mua-hang/:id/cap-nhat', bat(async (req, res) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ ok: false, thong_bao: 'Không tìm thấy đơn' });
+    if (!co(req, 'kho.mua.de_xuat') && !duocDuyet(req)) {
+      return res.status(403).json({ ok: false, thong_bao: 'Chức danh của bạn không được sửa đơn mua.' });
+    }
+    res.json(await kho.capNhatDonMua(Number(req.params.id), req.body || {}));
+  } catch (e) { traLoi(res, e); }
 }));
 
 router.post('/api/kitchen/mua-hang/:id/:buoc', bat(async (req, res) => {

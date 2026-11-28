@@ -142,6 +142,20 @@
         <label class="dp-cong mb-0"><input type="checkbox" id="cKhuVuc" <%= ts.chi_trong_khu_vuc ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Chỉ nhận đơn trong khu vực"><i></i></label>
         <span class="small">Chỉ nhận đơn có địa chỉ trong khu vực giao hàng (bên phải)</span>
       </div>
+      <div class="form-group d-flex align-items-center mb-2" style="gap:.6rem">
+        <label class="dp-cong mb-0" style="flex-shrink:0"><input type="checkbox" id="cGhep" <%= ts.ghep_bat ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Ghép đơn cùng hướng"><i></i></label>
+        <span class="small"><b>Ghép đơn cùng hướng</b>: shipper đang chờ lấy đơn ở quán nhận thêm đơn tiện đường, giao chung một chuyến</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label for="cGhepKm" class="small font-weight-bold">Đi vòng thêm tối đa (km)</label>
+          <input type="number" id="cGhepKm" class="form-control form-control-sm" min="0.3" max="10" step="0.1" value="<%= ts.ghep_them_km %>" <%= duocSua ? '' : 'disabled' %>>
+        </div>
+        <div class="form-group col-6">
+          <label for="cGhepDiem" class="small font-weight-bold">Tối đa điểm giao / chuyến</label>
+          <input type="number" id="cGhepDiem" class="form-control form-control-sm" min="2" max="8" value="<%= ts.ghep_so_diem %>" <%= duocSua ? '' : 'disabled' %>>
+        </div>
+      </div>
       <% if (duocSua) { %><button class="btn btn-sm btn-primary" id="luuCauHinh"><i class="fas fa-save"></i> Lưu cấu hình</button> <small class="ml-2" id="kqLuu"></small><% } %>
       <hr>
       <h6 class="font-weight-bold small text-uppercase text-muted">Quy tắc chọn shipper</h6>
@@ -149,6 +163,7 @@
         <li><b>Đủ điều kiện:</b> đang trong ca, chưa đầy số đơn tối đa, chưa từ chối / bỏ lỡ đơn này trong 15 phút qua.</li>
         <li><b>Đúng khu vực:</b> shipper phụ trách khu của địa chỉ giao trước; không ai rảnh mới tới người “giao mọi khu”.</li>
         <li><b>Đang mở app</b> (GPS mới) trước người mất tín hiệu.</li>
+        <li><b>Ghép chuyến</b> (nếu bật): shipper còn đang chờ lấy hàng ở quán mà đơn mới tiện đường (đi vòng thêm ≤ <%= ts.ghep_them_km %> km, chuyến ≤ <%= ts.ghep_so_diem %> điểm) được ưu tiên — ít đi vòng nhất trước.</li>
         <li><b>Ít tải nhất hôm nay</b> (số đơn hoặc phí ship) → chia đều.</li>
         <li>Đang cầm ít đơn hơn → đơn tới tay khách nhanh hơn.</li>
         <li>Chờ lâu nhất kể từ lần nhận đơn trước → xoay vòng khi bằng tải.</li>
@@ -245,7 +260,8 @@
   });
   if ($('luuCauHinh')) $('luuCauHinh').addEventListener('click', async function () {
     try {
-      await goi('/staff/giao-hang/dieu-phoi/cau-hinh', { tieu_chi: $('cTieuChi').value, phut_xac_nhan: Number($('cPhut').value), chi_trong_khu_vuc: $('cKhuVuc').checked });
+      await goi('/staff/giao-hang/dieu-phoi/cau-hinh', { tieu_chi: $('cTieuChi').value, phut_xac_nhan: Number($('cPhut').value), chi_trong_khu_vuc: $('cKhuVuc').checked,
+        ghep_bat: $('cGhep').checked, ghep_them_km: Number($('cGhepKm').value), ghep_so_diem: Number($('cGhepDiem').value) });
       $('kqLuu').className = 'ml-2 text-success'; $('kqLuu').textContent = 'Đã lưu';
       setTimeout(function () { location.reload(); }, 700);
     } catch (e) { $('kqLuu').className = 'ml-2 text-danger'; $('kqLuu').textContent = e.message; }

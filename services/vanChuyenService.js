@@ -1285,9 +1285,17 @@ const banDo = async () => {
 
 /** Vet duong di cua mot don, de ve lai lo trinh sau khi giao xong. */
 const vetCuaDon = async (idGiao) => {
+  // Shipper cam nhieu don mot chuyen: moi diem GPS chi gan duoc MOT id_giao
+  // (don dang giao dau tien). Nen lay them moi diem cua chinh shipper do trong
+  // khoang don nay dang giao (giao_luc -> hoan_tat_luc) - vet cua don thu 2, 3
+  // trong chuyen khong con trong.
   const [rows] = await db.query(
-    `SELECT vi_do, kinh_do, toc_do_kmh, luc FROM vi_tri_shipper
-     WHERE id_giao = ? ORDER BY luc, id`, [idGiao]
+    `SELECT v.vi_do, v.kinh_do, v.toc_do_kmh, v.luc FROM vi_tri_shipper v
+       JOIN don_giao_hang g ON g.id_giao = ?
+      WHERE v.id_giao = g.id_giao
+         OR (g.id_shipper IS NOT NULL AND g.giao_luc IS NOT NULL AND v.id_shipper = g.id_shipper
+             AND v.luc BETWEEN g.giao_luc AND COALESCE(g.hoan_tat_luc, NOW()))
+      ORDER BY v.luc, v.id`, [idGiao]
   );
   return rows;
 };
