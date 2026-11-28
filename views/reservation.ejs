@@ -88,7 +88,7 @@ var tenMonDich = function (m) {
   .db-buoc__o[data-xong="1"] { border-color: rgba(22,163,74,.4); color: #14532d; background: #f0fdf4; }
   .db-buoc__o[aria-current="step"] { background: var(--nh-espresso); border-color: var(--nh-espresso); color: var(--nh-cream); }
   .db-buoc__so { width: 22px; height: 22px; border-radius: 50%; display: grid; place-content: center;
-    background: rgba(0,0,0,.07); font-size: .74rem; font-weight: 800; flex: none; }
+    background: rgba(0,0,0,.07); font-size: .74rem; font-weight: 700; flex: none; }
   .db-buoc__o[aria-current="step"] .db-buoc__so { background: var(--nh-gold); color: var(--nh-espresso); }
 
   /* ---------- Bo cuc ---------- */
@@ -290,7 +290,7 @@ var tenMonDich = function (m) {
   .db-cs-badge--green { background: #dcfce7; color: #166534; }
   .db-cs-badge--gold { background: var(--nh-espresso); color: var(--nh-gold-soft); }
   .db-cs-card h4 { font-size: 1rem; font-weight: 750; color: var(--nh-espresso); margin: 0 0 .35rem; line-height: 1.35; }
-  .db-cs-price { font-size: 1.18rem; font-weight: 800; color: #b45309; margin-bottom: .35rem; display: block; }
+  .db-cs-price { font-size: 1.18rem; font-weight: 700; color: #b45309; margin-bottom: .35rem; display: block; }
   .db-cs-price--free { color: #15803d; }
   .db-cs-card p { font-size: .85rem; color: var(--nh-muted); margin: 0; line-height: 1.5; }
   .db-cs-note { margin-top: .5rem; padding: .5rem .7rem; border-radius: 0 8px 8px 0; background: rgba(255,255,255,0.85); border-left: 3px solid var(--nh-gold); font-size: .81rem; color: #7c2d12; font-weight: 600; }
@@ -313,7 +313,7 @@ var tenMonDich = function (m) {
   .cs-coc__icon { width: 34px; height: 34px; border-radius: 10px; background: var(--nen); color: var(--mau);
     display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; flex: none; }
   .cs-coc__dk { font-family: var(--nh-sans); font-size: .88rem; font-weight: 700; color: var(--nh-espresso); line-height: 1.3; }
-  .cs-coc__gia { font-family: var(--nh-sans); font-size: 1.55rem; font-weight: 800; color: var(--mau); line-height: 1.1; }
+  .cs-coc__gia { font-family: var(--nh-sans); font-size: 1.55rem; font-weight: 700; color: var(--mau); line-height: 1.1; }
   .cs-coc__gia small { font-size: .82rem; font-weight: 600; color: var(--nh-muted); }
   .cs-coc__y { list-style: none; margin: 0; padding: .7rem 0 0; border-top: 1px dashed var(--nh-line, #ece4d6);
     display: flex; flex-direction: column; gap: .4rem; font-family: var(--nh-sans); font-size: .84rem; color: #57534e; line-height: 1.45; }
@@ -327,7 +327,9 @@ var tenMonDich = function (m) {
 
   .db-cs-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .6rem; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid var(--nh-line); }
   .db-cs-table th, .db-cs-table td { padding: .65rem .85rem; text-align: left; border-bottom: 1px solid var(--nh-line); }
-  .db-cs-table th { background: #f8f5ee; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--nh-espresso); font-weight: 800; }
+  .db-cs-table th { background: #f8f5ee; font-size: .82rem; letter-spacing: 0; color: var(--nh-espresso); font-weight: 700; }
+  /* Bang hoan coc: truoc o nao cung dam 700 -> roi mat; ha xuong 600, mau van giu de phan biet muc hoan. */
+  .db-cs-table td > b, .db-cs-table td[style*="font-weight"] { font-weight: 600 !important; }
   .db-cs-table tr:last-child td { border-bottom: none; }
 
   .db-cs-agree { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem 1.15rem; border-radius: 12px; background: #f0fdf4; border: 1.5px solid rgba(22, 163, 74, 0.35); margin-top: 1.3rem; cursor: pointer; font-size: .92rem; color: #14532d; font-weight: 600; }

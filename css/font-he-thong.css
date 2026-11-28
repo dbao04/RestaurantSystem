@@ -1,0 +1,47 @@
+/* =========================================================================
+   FONT CHUNG TOAN HE THONG (28/11): Inter - gon, de doc, kieu giao dien quan ly
+   (giong app.socialcrm.vn). Nap o CUOI <head> cua moi trang (khach, nhan vien,
+   admin, trang in).
+
+   GIU NGUYEN (khong ep Inter):
+   - Chu kieu cua nha hang: ten nha hang (Dancing Script), chu viet tay
+     "eyebrow"/chu ky (Great Vibes).
+   - Bieu tuong: Font Awesome, flaticon, icomoon, ionicons, open-iconic...
+   - Chu ma/so lieu dang monospace (code, pre, kbd).
+   Muon doi font ca he thong: chi sua --he-font o duoi.
+   ========================================================================= */
+:root {
+  --he-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Bien font cu cua cac khu (khach / nhan vien / admin) tro ve cung mot font */
+  --nh-sans: var(--he-font);
+  --nh-serif: var(--he-font);
+  --qt-sans: var(--he-font);
+  --qt-serif: var(--he-font);
+  --font-sans: var(--he-font);
+  --font-serif: var(--he-font);
+  --nh-font-heading: var(--he-font);
+  --nh-font-display: var(--he-font);
+}
+
+html, body { font-family: var(--he-font); }
+
+body :not(:is(
+    /* bieu tuong */
+    i, .fa, .fas, .far, .fab, .fal, .fad, .fat, .fa-solid, .fa-regular, .fa-brands, .fa-light,
+    [class^="fa-"], [class*=" fa-"], [class^="icon-"], [class*=" icon-"],
+    [class^="flaticon-"], [class*=" flaticon-"], [class^="ion-"], [class*=" ion-"], .ion, .icon,
+    .oi, [class^="oi-"], .material-icons, .glyphicon,
+    /* chu kieu cua nha hang */
+    .nh-brand__name, .nh-footer__brand, .nh-eyebrow, .nh-sign, .sk-eyebrow, .ticket-eyebrow,
+    .home-slider .subheading,
+    /* chu ma */
+    code, pre, kbd, samp, .font-monospace, [style*="monospace"]
+  ), :is(.nh-brand__name, .nh-footer__brand, .nh-eyebrow, .nh-sign, .sk-eyebrow, .ticket-eyebrow, code, pre) *) {
+  font-family: var(--he-font) !important;
+}
+
+/* Tieu de: Inter dam vua (600) nhu anh mau - truoc la Playfair 700/900 */
+body :is(h1, h2, h3, h4, h5, h6):not(:is(.nh-brand__name, .nh-footer__brand, .nh-eyebrow, .nh-sign, .sk-eyebrow, .ticket-eyebrow)) {
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+}

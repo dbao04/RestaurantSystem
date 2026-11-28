@@ -120,6 +120,14 @@
     .kiem input { width:22px; height:22px; flex:none; accent-color:var(--xanh); margin:0; }
     .kiem small { display:block; opacity:.7; font-size:12px; }
     .kiem .niem { color:#ffe08a; font-weight:700; }
+    .kiem .nut--nho { margin:10px 0 2px; padding:10px; font-size:14px; }
+    .kiem .bu { display:inline-block; font-size:11px; font-weight:800; padding:1px 7px; border-radius:999px; background:#c2410c; color:#fff; vertical-align:middle; }
+    .kiem .bu--xong { background:#15803d; }
+    .kiem label.chua-xong { opacity:.55; }
+    .tm-mon { display:flex; gap:10px; align-items:flex-start; padding:10px 4px; border-bottom:1px solid rgba(255,255,255,.08); font-size:14.5px; }
+    .tm-mon input { width:22px; height:22px; flex:none; margin:0; accent-color:#ff8a80; }
+    .tm-loai { display:flex; gap:8px; margin:10px 0; }
+    .tm-loai label { flex:1; }
 
     /* đến nơi */
     .den { background:rgba(32,201,151,.14); border:1px solid rgba(32,201,151,.45); border-radius:12px;
@@ -150,6 +158,18 @@
            transform:translateY(30px); transition:transform .2s; }
     .man.mo .tam { transform:none; }
     .tam h3 { margin:0 0 4px; font-size:17px; }
+    .the--bam { display:block; width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+    .the--bam:active { transform:scale(.99); }
+    .the__xem { display:block; margin-top:6px; font-size:12.5px; font-weight:700; color:var(--vang); }
+    .tong--bam { width:100%; font:inherit; color:inherit; cursor:pointer; text-align:left; }
+    .ct-tieu { margin:14px 0 6px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; opacity:.7; }
+    .ct-khoi { background:rgba(0,0,0,.22); border-radius:12px; padding:4px 12px; }
+    .ct-dong { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.07); font-size:14px; }
+    .ct-dong:last-child { border-bottom:0; }
+    .ct-dong span { opacity:.85; }
+    .ct-dong small { display:block; opacity:.65; font-size:12px; margin-top:2px; }
+    .ct-dong b { text-align:right; }
+    .ct-bo { opacity:.45; text-decoration:line-through; }
     .tam p.phu { margin:0 0 12px; font-size:13px; opacity:.75; line-height:1.5; }
     .chon { display:flex; align-items:center; gap:10px; padding:12px; margin-bottom:7px; border-radius:11px;
             background:rgba(255,255,255,.07); border:1.5px solid transparent; cursor:pointer; font-size:14.5px; }
@@ -171,6 +191,8 @@
   </style>
   <script src="/thong-bao-dep.js?v=3"></script>
   <script src="/hien-mat-khau.js?v=3"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/font-he-thong.css?v=1">
 </head>
 <body>
 <div class="boc">
@@ -203,10 +225,10 @@
     </div>
   <% } %>
 
-  <div class="tong">
-    <span>Hôm nay đã giao</span>
+  <button type="button" class="tong tong--bam" id="hn-tong" title="Xem các đơn đã giao">
+    <span>Hôm nay đã giao <i class="fas fa-chevron-right" style="font-size:11px;opacity:.7"></i></span>
     <span><b id="hn-don">0</b> đơn · <b id="hn-phi">0</b>đ phí ship</span>
-  </div>
+  </button>
   <div class="tong tong--do" id="giu-tien" style="display:none">
     <span><i class="fas fa-sack-dollar"></i> Tiền thu hộ đang giữ</span>
     <span><b id="giu-tong">0</b>đ · nộp ở quầy thu ngân</span>
@@ -428,6 +450,8 @@
     return h + '</div>';
   }
 
+  function laMonBu(m) { return /^\[LÀM BÙ\]/.test(m.ghi_chu_mon || ''); }
+
   function veKiemHang(g) {
     var ds = monDon[g.id_giao];
     if (!ds) { taiMon(g.id_giao); return '<div class="kiem"><div class="kiem__dau">Đang tải danh sách món…</div></div>'; }
@@ -436,12 +460,21 @@
     return '<div class="kiem" data-kiem="' + g.id_giao + '">' +
       '<div class="kiem__dau"><i class="fas fa-clipboard-check"></i> Đối chiếu từng món với phiếu, tick khi đã có trong túi</div>' +
       mon.map(function (m) {
-        return '<label><input type="checkbox" data-mon-id="' + m.id + '"' + (tam[m.id] ? ' checked' : '') + '>' +
+        // Bep chua lam xong mon nay: khong cho tick (server cung chan).
+        var chuaXong = Number(m.trangthai_bep) < 2;
+        if (chuaXong) delete tam[m.id];
+        return '<label' + (chuaXong ? ' class="chua-xong"' : '') + '><input type="checkbox" data-mon-id="' + m.id + '"' +
+          (tam[m.id] ? ' checked' : '') + (chuaXong ? ' disabled' : '') + '>' +
           '<span><b>' + thoat((m.name_mon || '').trim()) + '</b> × ' + m.soluong +
+          (laMonBu(m) ? ' <span class="bu' + (Number(m.trangthai_bep) >= 2 ? ' bu--xong' : '') + '">' +
+            (Number(m.trangthai_bep) >= 2 ? 'đã làm bù xong' : 'bếp đang làm bù') + '</span>'
+            : (Number(m.trangthai_bep) < 2 ? ' <span class="bu">' + (Number(m.trangthai_bep) === 1 ? 'bếp đang nấu' : 'chờ bếp') + '</span>' : '')) +
           (m.ghi_chu_mon ? '<small>' + thoat(m.ghi_chu_mon) + '</small>' : '') + '</span></label>';
       }).join('') +
       '<label class="niem"><input type="checkbox" data-niem="1"' + (tam.niem ? ' checked' : '') + '>' +
         '<span>Đã niêm phong / buộc kín túi, có kèm đũa muỗng, nước chấm</span></label>' +
+      '<button type="button" class="nut nut--hong nut--nho" data-viec="thieu-mon" data-id="' + g.id_giao + '">' +
+        '<i class="fas fa-circle-exclamation"></i> Báo thiếu / sai món</button>' +
     '</div>';
   }
 
@@ -474,8 +507,9 @@
         hanhDong = '<button class="nut nut--chinh" data-viec="toi-quay" data-id="' + g.id_giao + '"><i class="fas fa-store"></i> Tôi đã tới quầy lấy hàng</button>';
       } else if (g.trang_thai === 'dang_lay' && !g.da_kiem_hang) {
         hanhDong = veKiemHang(g) +
-          (g.bep_da_xong ? '' : '<p class="mon" style="color:#ffcf99"><i class="fas fa-fire-burner"></i> Bếp đang nấu — kiểm trước những món đã có, đợi bếp báo xong.</p>') +
-          '<button class="nut nut--chinh" data-viec="kiem-hang" data-id="' + g.id_giao + '"><i class="fas fa-clipboard-check"></i> Xác nhận đủ hàng</button>';
+          (g.bep_da_xong ? '' : '<p class="mon" style="color:#ffcf99"><i class="fas fa-fire-burner"></i> Bếp chưa làm xong hết món — chờ bếp báo xong mới nhận và kiểm hàng được.</p>') +
+          '<button class="nut nut--chinh" data-viec="kiem-hang" data-id="' + g.id_giao + '"' + (g.bep_da_xong ? '' : ' disabled') + '>' +
+          '<i class="fas fa-clipboard-check"></i> ' + (g.bep_da_xong ? 'Xác nhận đủ hàng' : 'Chờ bếp làm xong') + '</button>';
       } else if (g.trang_thai === 'dang_lay') {
         hanhDong = (g.bep_da_xong ? '' : '<p class="mon" style="color:#ffcf99"><i class="fas fa-fire-burner"></i> Bếp chưa báo xong hết món.</p>') +
           '<button class="nut nut--chinh" data-viec="di-giao" data-id="' + g.id_giao + '"' + (g.bep_da_xong ? '' : ' disabled') + '>' +
@@ -502,8 +536,13 @@
           '<span class="tt" style="background:' + g.mau + '">' + thoat(g.nhan) + '</span></div>' +
         (b.so > 0 ? veThanhBuoc(b.so) : '') +
         (b.chu ? '<div class="buoc-chu">' + thoat(b.chu) + '</div>' : '') +
-        (g.su_co ? '<p class="mon" style="color:#ffb3ab"><i class="fas fa-triangle-exclamation"></i> Đã báo sự cố: ' + thoat(g.su_co) + '</p>' : '') +
+        (g.thieu_mon
+          ? '<p class="mon" style="color:#ffcf99"><i class="fas fa-utensils"></i> Đã báo bếp làm bù — ' + thoat(g.thieu_mon.replace(/^Thiếu\/sai món\s*/, '')) +
+            '. Đợi bếp làm xong rồi tick lại món.</p>'
+          : (g.su_co ? '<p class="mon" style="color:#ffb3ab"><i class="fas fa-triangle-exclamation"></i> Đã báo sự cố: ' + thoat(g.su_co) + '</p>' : '')) +
         '<p class="dc">' + thoat(g.dia_chi_giao) + '</p>' +
+        (g.hen_gio ? '<p class="dc" style="color:#f0c75e;font-weight:600"><i class="fas fa-calendar-check"></i> Khách hẹn nhận lúc ' +
+          new Date(g.hen_gio).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + '</p>' : '') +
         '<p class="nguoi">' + thoat(g.ten_nguoi_nhan) + ' · ' + thoat(g.sdt_nguoi_nhan) + '</p>' +
         '<div class="so">' +
           (g.khoang_cach_km !== null ? '<span><b>' + g.khoang_cach_km + '</b> km</span>' : '') +
@@ -544,6 +583,11 @@
       if (!k.ok) return;
       var d = k.d;
       DU_LIEU = d;
+      // Don dang lam bu mon: tai lai danh sach mon de thay mon nao bep da lam xong.
+      // Don dang cho bep (hoac dang lam bu): tai lai danh sach mon de mo khoa mon bep vua xong.
+      (d.don || []).forEach(function (g) {
+        if ((g.thieu_mon || (g.trang_thai === 'dang_lay' && !g.bep_da_xong)) && monDon[g.id_giao]) delete monDon[g.id_giao];
+      });
       CA = d.ca; veNutCa();
       document.getElementById('hn-don').textContent = d.hom_nay.so_don;
       document.getElementById('hn-phi').textContent = tien(d.hom_nay.tien_phi);
@@ -608,6 +652,38 @@
   }
 
   var VIEC = {
+    // Thieu / sai mon: chon mon -> mon quay lai bep lam bu, bao bep + quay + dieu phoi.
+    'thieu-mon': function (id) {
+      var mon = (monDon[id] || []).filter(function (m) { return Number(m.soluong) > 0 && Number(m.trangthai_bep) >= 2; });
+      if (!mon.length) return bao('Chưa có món nào bếp báo xong — chờ bếp làm xong rồi mới kiểm / báo thiếu.');
+      var g = DU_LIEU.don.filter(function (x) { return String(x.id_giao) === String(id); })[0] || {};
+      moTam(
+        '<h3><i class="fas fa-circle-exclamation" style="color:#ff8a80"></i> Báo thiếu / sai món</h3>' +
+        '<p class="phu">Đơn ' + thoat(g.ma_giao || '') + '. Chọn món không có trong túi hoặc bị làm sai — bếp và quầy nhận được ngay để làm bù.</p>' +
+        '<div class="tm-loai"><label class="chon"><input type="radio" name="tm-loai" value="thieu" checked> Thiếu món</label>' +
+        '<label class="chon"><input type="radio" name="tm-loai" value="sai"> Sai / hỏng món</label></div>' +
+        mon.map(function (m) {
+          return '<label class="tm-mon"><input type="checkbox" data-tm="' + m.id + '"><span><b>' + thoat((m.name_mon || '').trim()) + '</b> × ' + m.soluong + '</span></label>';
+        }).join('') +
+        '<textarea id="tm-gc" maxlength="150" placeholder="Ghi chú cho bếp: thiếu nước chấm, nhầm vị, đổ vỡ…"></textarea>' +
+        '<button class="nut nut--chinh" id="tm-gui">Gửi cho bếp làm bù</button><button class="nut nut--phu" data-dong>Huỷ</button>',
+        function (tam, dong) {
+          tam.querySelector('#tm-gui').onclick = function () {
+            var ids = [].map.call(tam.querySelectorAll('input[data-tm]:checked'), function (c) { return Number(c.getAttribute('data-tm')); });
+            if (!ids.length) return bao('Chọn ít nhất một món.');
+            var nut = this; nut.disabled = true;
+            var loai = tam.querySelector('input[name=tm-loai]:checked');
+            goi('/api/shipper/don/' + id + '/thieu-mon', {
+              mon_ids: ids, loai: loai ? loai.value : 'thieu', ghi_chu: tam.querySelector('#tm-gc').value,
+            }).then(function (r) {
+              if (!r.ok) { bao(r.d.thong_bao || 'Không gửi được.'); nut.disabled = false; return; }
+              ids.forEach(function (x) { delete (kiemTam[id] || {})[x]; });
+              delete monDon[id];
+              dong(); bao('Đã báo bếp làm bù. Đợi bếp xong rồi tick lại món.'); taiDon();
+            }).catch(function () { bao('Mất kết nối, thử lại.'); nut.disabled = false; });
+          };
+        });
+    },
     'nhan': function (id, nut) {
       nut.disabled = true;
       goi('/api/shipper/don/' + id + '/xac-nhan', {}).then(function (k) {
@@ -784,13 +860,70 @@
         var luc = g.hoan_tat_luc ? new Date(g.hoan_tat_luc) : null;
         var thuHo = Number(g.tien_thu_ho) > 0 && Number(g.da_thu_ho)
           ? ' · thu hộ ' + tien(g.tien_thu_ho) + 'đ ' + (g.nop_tien_luc ? '<span style="color:#1cc88a">(đã nộp)</span>' : '<span style="color:#ff8a80">(chưa nộp)</span>') : '';
-        return '<div class="the" style="border-left-color:' + tt.mau + '">' +
+        return '<button type="button" class="the the--bam" data-ct="' + g.id_giao + '" style="border-left-color:' + tt.mau + '">' +
           '<div class="the__dau"><span class="ma">' + thoat(g.ma_giao) + '</span><span class="tt" style="background:' + tt.mau + '">' + thoat(tt.nhan) + '</span></div>' +
           '<p class="dc">' + thoat(g.dia_chi_giao) + '</p>' +
           '<p class="nguoi">' + (luc ? luc.toLocaleString('vi-VN') : '') + ' · ship ' + tien(g.phi_giao) + 'đ' + thuHo + '</p>' +
-          (g.ly_do ? '<p class="mon">' + thoat(g.ly_do) + '</p>' : '') + '</div>';
+          (g.ly_do ? '<p class="mon">' + thoat(g.ly_do) + '</p>' : '') +
+          '<span class="the__xem">Xem chi tiết <i class="fas fa-chevron-right"></i></span></button>';
       }).join('');
     }).catch(function () { o.innerHTML = ''; bao('Mất kết nối.'); });
+  });
+
+  // ------------------------------------------------------------------ chi tiết đơn đã giao
+  function gioNgay(d) { return d ? new Date(d).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : ''; }
+  function moChiTiet(id) {
+    var dong = moTam('<p class="phu">Đang tải chi tiết đơn…</p>');
+    goi('/api/shipper/don/' + id + '/chi-tiet').then(function (k) {
+      dong();
+      if (!k.ok || !k.d.ok) return bao((k.d && k.d.thong_bao) || 'Không tải được chi tiết đơn.');
+      var g = k.d.don, mon = k.d.mon, nk = k.d.nhat_ky;
+      var moc = [
+        ['Tạo đơn', g.tao_luc], ['Được phân', g.phan_luc], ['Bấm nhận đơn', g.xac_nhan_luc], ['Tới quầy lấy hàng', g.lay_luc],
+        ['Kiểm hàng & niêm phong', g.kiem_hang_luc], ['Rời quán đi giao', g.giao_luc], ['Đến nơi', g.den_noi_luc], ['Hoàn tất', g.hoan_tat_luc],
+      ].filter(function (m) { return m[1]; });
+      var thuHo = g.tien_thu_ho > 0
+        ? '<div class="ct-dong"><span>Thu hộ</span><b>' + tien(g.tien_thu_ho) + 'đ ' +
+          (g.da_thu_ho ? (g.nop_tien_luc ? '<span style="color:#1cc88a">(đã nộp quầy)</span>' : '<span style="color:#ff8a80">(chưa nộp)</span>') : '(chưa thu)') + '</b></div>'
+        : '<div class="ct-dong"><span>Thu hộ</span><b style="color:#1cc88a">Không – khách đã trả trước</b></div>';
+      moTam(
+        '<div class="the__dau" style="margin-bottom:6px"><h3 style="margin:0">' + thoat(g.ma_giao) + '</h3>' +
+          '<span class="tt" style="background:' + g.mau + '">' + thoat(g.nhan) + '</span></div>' +
+        '<p class="phu">' + thoat(g.dia_chi_giao) + (g.khoang_cach_km ? ' · ' + g.khoang_cach_km + ' km' : '') + '</p>' +
+        '<div class="ct-khoi"><div class="ct-dong"><span>Người nhận</span><b>' + thoat(g.ten_nguoi_nhan || '') + ' · ' + thoat(g.sdt_nguoi_nhan || '') + '</b></div>' +
+          (g.hen_gio ? '<div class="ct-dong"><span>Khách hẹn nhận</span><b>' + gioNgay(g.hen_gio) + '</b></div>' : '') +
+          (g.ghi_chu ? '<div class="ct-dong"><span>Ghi chú</span><b>' + thoat(g.ghi_chu) + '</b></div>' : '') +
+          (g.xac_nhan_giao ? '<div class="ct-dong"><span>Xác nhận giao</span><b>' + thoat(g.xac_nhan_giao) + '</b></div>' : '') +
+          (g.ly_do ? '<div class="ct-dong"><span>Lý do</span><b style="color:#ff8a80">' + thoat(g.ly_do) + '</b></div>' : '') +
+        '</div>' +
+        '<div class="ct-tieu">Món (' + mon.filter(function (m) { return m.soluong > 0; }).length + ')</div><div class="ct-khoi">' +
+          mon.map(function (m) {
+            return '<div class="ct-dong' + (m.soluong > 0 ? '' : ' ct-bo') + '"><span>' + thoat(m.name_mon) + ' × ' + m.soluong +
+              (m.ghi_chu_mon ? '<small>' + thoat(m.ghi_chu_mon) + '</small>' : '') + '</span><b>' + tien(m.thanhtien) + 'đ</b></div>';
+          }).join('') +
+          '<div class="ct-dong"><span>Tiền món</span><b>' + tien(g.tien_hang) + 'đ</b></div>' +
+          '<div class="ct-dong"><span>Phí ship (của bạn)</span><b style="color:#f0c75e">' + tien(g.phi_giao) + 'đ</b></div>' +
+          thuHo +
+        '</div>' +
+        '<div class="ct-tieu">Thời gian</div><div class="ct-khoi">' +
+          moc.map(function (m) { return '<div class="ct-dong"><span>' + m[0] + '</span><b>' + gioNgay(m[1]) + '</b></div>'; }).join('') +
+          '<div class="ct-dong"><span>Số lần gọi khách</span><b>' + g.so_lan_goi + '</b></div>' +
+        '</div>' +
+        (nk.length ? '<div class="ct-tieu">Diễn biến</div><div class="ct-khoi">' + nk.map(function (r) {
+          return '<div class="ct-dong"><span><i class="fas fa-circle" style="color:' + r.mau + ';font-size:8px"></i> ' + thoat(r.nhan) +
+            (r.ghi_chu ? '<small>' + thoat(r.ghi_chu) + '</small>' : '') + '</span><b>' + gioNgay(r.luc) + '</b></div>';
+        }).join('') + '</div>' : '') +
+        '<button class="nut nut--phu" data-dong>Đóng</button>');
+    }).catch(function () { dong(); bao('Mất kết nối, thử lại.'); });
+  }
+  document.getElementById('lich-su').addEventListener('click', function (e) {
+    var o = e.target.closest('[data-ct]'); if (o) moChiTiet(o.getAttribute('data-ct'));
+  });
+  // Bam "Hom nay da giao" -> mo lich su de xem tung don.
+  document.getElementById('hn-tong').addEventListener('click', function () {
+    var o = document.getElementById('lich-su');
+    if (!o.innerHTML) document.getElementById('nut-lich-su').click();
+    o.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   // ------------------------------------------------------------------ khởi động
@@ -802,6 +935,8 @@
     var socket = io({ transports: ['websocket', 'polling'] });
     socket.on('giao-hang:doi-trang-thai', function () { taiDon(); });
     socket.on('giao-hang:doi', function () { taiDon(); });
+    // "Bep da lam xong - den lay hang" va cac thong bao don giao khac: tai lai ngay, khong doi 45 giay.
+    socket.on('thong-bao:moi', function (tb) { if (tb && /^don_giao/.test(tb.loai || '')) taiDon(); });
   }
   setInterval(taiDon, 45000);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/shipper/sw.js').catch(function () {});

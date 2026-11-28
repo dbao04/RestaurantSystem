@@ -501,6 +501,21 @@ router.post('/staff/giao-hang/:id/xu-ly-su-co', laSo, canPhan, bat(async (req, r
   veDieuPhoi(res, `/staff/giao-hang/${id}`, 'Đã đánh dấu xử lý xong sự cố.');
 }));
 
+/** Mon het han, khong lam bu duoc: bo khoi don + hoan diem dung gia mon. */
+router.post('/staff/giao-hang/:id/bo-mon', laSo, canPhan, bat(async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const kq = await require('../services/shipperNghiepVu').boMonThieu(id, Number((req.body || {}).id_dong), nguoiDung(req));
+    const don = await vc.donGiao(id);
+    realtime.doi(realtime.MIEN.GIAO_HANG, { duong_dan: '/staff/giao-hang' });
+    realtime.donGiaoDoi({ ...don, nhan: don.tt.nhan });
+    veDieuPhoi(res, `/staff/giao-hang/${id}`,
+      `Đã bỏ ${kq.ten_mon} khỏi đơn ${kq.ma_giao} và hoàn ${kq.so_diem} điểm (${kq.so_tien.toLocaleString('vi-VN')}đ) cho khách.`);
+  } catch (e) {
+    veDieuPhoi(res, `/staff/giao-hang/${id}`, e.message, 'danger');
+  }
+}));
+
 /** Hoan diem MOT PHAN (giao thieu / sai mon, mon hu...) - chi loi nha hang. */
 router.post('/staff/giao-hang/:id/hoan-diem', laSo, canPhan, bat(async (req, res) => {
   const id = Number(req.params.id);
@@ -635,6 +650,8 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
       tien_hang: g.tien_hang, tien_thu_ho: g.tien_thu_ho, tong_thu: g.tong_thu,
       so_mon: g.so_mon, ghi_chu: g.ghi_chu, bep_da_xong: g.bep_da_xong,
       du_kien_luc: g.du_kien_luc,
+      hen_gio: g.hen_gio,
+      thieu_mon: g.thieu_mon || null,
       // Don phan tu dong, shipper chua bam "Nhan don": hien nut Nhan / Tu choi + dong ho.
       cho_xac_nhan: g.trang_thai === 'da_phan' && !!g.phan_tu_dong && !g.xac_nhan_luc,
       han_xac_nhan: g.phan_luc ? new Date(new Date(g.phan_luc).getTime() + phutXN * 60000).toISOString() : null,
@@ -661,6 +678,41 @@ router.get('/api/shipper/don-cua-toi', canShipper, bat(async (req, res) => {
 router.get('/api/shipper/lich-su', canShipper, bat(async (req, res) => {
   const kq = await require('../services/thuHoShipperService').lichSu(req.shipper.id_shipper, req.query.ngay);
   res.json({ ok: true, ...kq, TT: vc.TT });
+}));
+
+/**
+ * Chi tiet MOT don shipper da / dang giao: mon, tien, cac moc thoi gian, nhat ky.
+ * Chi chu don (id_shipper) xem duoc. So dien thoai khach che bot khi don da
+ * ket thuc - shipper khong can goi lai khach sau khi giao xong.
+ */
+router.get('/api/shipper/don/:id/chi-tiet', laSo, canShipper, bat(async (req, res) => {
+  const don = await vc.donGiao(Number(req.params.id));
+  if (!don || Number(don.id_shipper) !== Number(req.shipper.id_shipper)) {
+    return res.status(403).json({ ok: false, thong_bao: 'Đơn này không phải của bạn.' });
+  }
+  const [mon, nk] = await Promise.all([vc.monCuaDon(don.sesis), vc.nhatKy(don.id_giao)]);
+  const sdt = String(don.sdt_nguoi_nhan || '');
+  const XN = { otp: 'Mã nhận hàng (khách đọc)', gps: 'GPS tại điểm giao', ly_do: 'Ngoài vùng GPS – có ghi lý do', dieu_phoi: 'Điều phối xác nhận', khong_gps: 'Không có GPS' };
+  res.json({
+    ok: true,
+    don: {
+      id_giao: don.id_giao, ma_giao: don.ma_giao, trang_thai: don.trang_thai,
+      nhan: don.tt.nhan, mau: don.tt.mau, da_xong: don.da_xong,
+      ten_nguoi_nhan: don.ten_nguoi_nhan,
+      sdt_nguoi_nhan: don.da_xong && sdt.length > 4 ? sdt.slice(0, -4).replace(/\d/g, '•') + sdt.slice(-4) : sdt,
+      dia_chi_giao: don.dia_chi_giao, ghi_chu: don.ghi_chu, khoang_cach_km: don.khoang_cach_km,
+      tien_hang: Number(don.tien_hang || 0), phi_giao: Number(don.phi_giao || 0), tong_thu: don.tong_thu,
+      da_thanh_toan: Number(don.da_thanh_toan || 0),
+      tien_thu_ho: Number(don.tien_thu_ho || 0), da_thu_ho: !!Number(don.da_thu_ho), nop_tien_luc: don.nop_tien_luc,
+      tao_luc: don.tao_luc, phan_luc: don.phan_luc, xac_nhan_luc: don.xac_nhan_luc, lay_luc: don.lay_luc,
+      kiem_hang_luc: don.kiem_hang_luc, giao_luc: don.giao_luc, den_noi_luc: don.den_noi_luc, hoan_tat_luc: don.hoan_tat_luc,
+      hen_gio: don.hen_gio, so_lan_goi: Number(don.so_lan_goi || 0),
+      xac_nhan_giao: XN[don.xac_nhan_giao] || don.xac_nhan_giao || null,
+      ly_do: don.ly_do, su_co: don.su_co,
+    },
+    mon: mon.map((m) => ({ name_mon: String(m.name_mon || '').trim(), soluong: Number(m.soluong), thanhtien: Number(m.thanhtien || 0), ghi_chu_mon: m.ghi_chu_mon })),
+    nhat_ky: nk.map((r) => ({ luc: r.luc, nhan: r.tt.nhan, mau: r.tt.mau, ghi_chu: r.ghi_chu, ten_nguoi: r.ten_nguoi })),
+  });
 }));
 
 /** Cac mon cua mot don - shipper mo ra doi chieu truoc khi roi bep. */
@@ -786,6 +838,25 @@ router.post('/api/shipper/don/:id/kiem-hang', laSo, canShipper, bat(async (req, 
     await require('../services/shipperNghiepVu').kiemHang(Number(req.params.id), req.shipper.id_shipper,
       { monIds: b.mon_ids, niemPhong: !!b.niem_phong }, nguoiShipper(req));
     await phatDon(Number(req.params.id));
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
+}));
+
+/** Bao thieu / sai mon khi kiem hang: mon quay lai bep, bao bep + quay + dieu phoi. */
+router.post('/api/shipper/don/:id/thieu-mon', laSo, canShipper, bat(async (req, res) => {
+  try {
+    const b = req.body || {};
+    const kq = await require('../services/shipperNghiepVu').baoThieuMon(Number(req.params.id), req.shipper.id_shipper,
+      { monIds: b.mon_ids, loai: b.loai, ghiChu: b.ghi_chu }, nguoiShipper(req));
+    await phatDon(Number(req.params.id));
+    const io = realtime.io;
+    if (io) {
+      // Man hinh bep tai lai ngay de thay mon "[LAM BU]".
+      io.to('kitchen_room').emit('new-order-to-kitchen', { message: `Làm bù món cho đơn giao ${kq.ma_giao}` });
+      io.to([realtime.P.bp('GH'), realtime.P.QUAN_LY, realtime.P.QUAN_TRI]).emit('giao-hang:su-co', {
+        ten: nguoiShipper(req).ten, noi_dung: kq.noi_dung, don: [Number(req.params.id)],
+      });
+    }
     res.json({ ok: true });
   } catch (e) { res.status(400).json({ ok: false, thong_bao: e.message }); }
 }));
@@ -1135,6 +1206,7 @@ router.get('/theo-doi/:ma', bat(async (req, res) => {
       tong_thu: don.tong_thu,
       tien_thu_ho: Number(don.tien_thu_ho || 0),
       du_kien_luc: don.du_kien_luc,
+      hen_gio: don.hen_gio, cho_hen: don.cho_hen,
       hoan_tat_luc: don.hoan_tat_luc,
       ten_dv: don.ten_dv,
       // Ten rieng cua shipper, khong kem so dien thoai: du de khach yen tam

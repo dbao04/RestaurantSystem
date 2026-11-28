@@ -475,7 +475,7 @@ async function taoDonThu({ tinhtrang, loaiDon = 'tai_cho', idUser }) {
   await db.query(
     `INSERT INTO hopdong (sesis, id_mon, name_mon, id_user, dates, tg, soluong, noidung, so_user, gia, thanhtien,
                           images, tinhtrang, ngay_dat, gio_dat, loai_don)
-     VALUES (?, ?, ?, ?, CURDATE(), '12:00', 1, 'kiem thu', '2', ?, ?, '', ?, CURDATE(), '12:00:00', ?)`,
+     VALUES (?, ?, ?, ?, CURDATE(), DATE_FORMAT(NOW(), '%H:%i'), 1, 'kiem thu', '2', ?, ?, '', ?, CURDATE(), CURTIME(), ?)`,
     [sesis, mon.id_mon, mon.name_mon, idUser, mon.gia_mon, mon.gia_mon, tinhtrang, loaiDon]);
   khoiPhuc.sesis.add(sesis);
   return sesis;

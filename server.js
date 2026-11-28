@@ -1110,6 +1110,9 @@ app.get('/giao-hang', (req, res) => {
 app.post('/giao-hang', requireLogin, async (req, res) => {
   try {
     let { dia_chi_giao, ten_nguoi_nhan, sdt_nguoi_nhan, ghi_chu_giao, vi_do, kinh_do, datebook, timebook } = req.body;
+    // "Giao ngay" (mac dinh): bo ngay/gio -> kiemTraGioGiao lay gio hien tai.
+    const cheDoGiao = req.body.che_do_giao === 'hen_gio' ? 'hen_gio' : 'ngay';
+    if (cheDoGiao === 'ngay') { datebook = ''; timebook = ''; }
     const vanChuyen = require('./services/vanChuyenService');
     const [ts, nhaHangToaDo] = await Promise.all([
       vanChuyen.thamSo(),
@@ -1162,8 +1165,9 @@ app.post('/giao-hang', requireLogin, async (req, res) => {
       ghi_chu_giao: ghi_chu_giao || '',
       vi_do,
       kinh_do,
-      datebook: datebook || new Date().toISOString().slice(0, 10),
-      timebook: timebook || '18:00',
+      che_do_giao: cheDoGiao,
+      datebook: datebook || '',
+      timebook: timebook || '',
       khoang_cach_km: baoGia.khoang_cach_km || 1.5,
       phi_co_ban: baoGia.phi !== undefined ? baoGia.phi : 15000,
       don_vi: baoGia.don_vi || { ten_dv: 'Giao hàng tiêu chuẩn' }
@@ -1192,8 +1196,15 @@ app.post('/datban', require('./middleware/auth').canKhachDangNhap, async (req, r
   const tenNguoiNhan = req.body.ten_nguoi_nhan || thongTinSession.ten_nguoi_nhan || req.session.username;
   const sdtNguoiNhan = req.body.sdt_nguoi_nhan || thongTinSession.sdt_nguoi_nhan || req.session.usersdt;
   const ghiChuGiao = req.body.ghi_chu_giao || thongTinSession.ghi_chu_giao || '';
-  const datebook = req.body.datebook || thongTinSession.datebook || new Date().toISOString().slice(0, 10);
-  const timebook = req.body.timebook || thongTinSession.timebook || '18:00';
+  // Thoi diem nhan cua DON GIAO: form gui che_do_giao ('ngay' | 'hen_gio'); khong
+  // gui thi theo lua chon da luu o /giao-hang. Giao ngay = de trong ngay/gio,
+  // kiemTraGioGiao se lay gio hien tai. TRUOC DAY mac dinh '18:00' -> moi don dat
+  // tu gio hang thanh don hen 18:00 (bep + shipper doi toi 17:00 moi lam).
+  const cheDoGiao = req.body.che_do_giao || thongTinSession.che_do_giao || 'ngay';
+  const datebookGui = cheDoGiao === 'hen_gio' ? (req.body.datebook || thongTinSession.datebook) : '';
+  const timebookGui = cheDoGiao === 'hen_gio' ? (req.body.timebook || thongTinSession.timebook) : '';
+  const datebook = datebookGui || req.body.datebook || require('./utils/thoiGian').ngayCucBo();
+  const timebook = timebookGui || (laGiaoHang ? '' : (req.body.timebook || thongTinSession.timebook || '18:00'));
 
   const soKhach = '1';
   const dipDat  = 'Giao hàng tận nơi';
@@ -2073,10 +2084,12 @@ app.use(require('./routes/bepQuanLy')({ db, equipmentService, menuService, perso
 
 app.get('/staff/customers', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
-    const customers = await orderService.getAllCustomers();
+    const hoSoKhach = require('./services/hoSoKhachService');
+    const customers = await hoSoKhach.danhSach();
     res.render('staff/customers', {
       title: 'Quản lý Khách hàng',
       customers,
+      tomTat: hoSoKhach.tomTat(customers),
       msg: req.query.msg || '',
       msgType: req.query.msgType || '',
       // Cung dieu kien voi requireRole(['Quan ly']) cua route xoa: vai tro cu
@@ -2087,6 +2100,35 @@ app.get('/staff/customers', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async 
       unread: await personnelService.countUnread(req.session.staffId),
       activePage: 'customers'
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Ho so chi tiet mot khach (CRM): thong tin, diem & hang, lich su dung bua, dat ban, tiec, giao hang.
+app.get('/staff/customers/:id', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res, next) => {
+  if (!/^\d+$/.test(req.params.id)) return next();
+  try {
+    const hs = await require('./services/hoSoKhachService').chiTiet(Number(req.params.id));
+    if (!hs) return res.redirect('/staff/customers?msg=' + encodeURIComponent('Không tìm thấy khách hàng.') + '&msgType=danger');
+    res.render('staff/customer-detail', {
+      title: 'Hồ sơ khách hàng - ' + hs.kh.ten,
+      hs,
+      msg: req.query.msg || '',
+      unread: await personnelService.countUnread(req.session.staffId),
+      activePage: 'customers',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+app.post('/staff/customers/:id/ghi-chu', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
+  try {
+    await require('./services/hoSoKhachService').luuGhiChu(Number(req.params.id), req.body.ghichu);
+    res.redirect('/staff/customers/' + Number(req.params.id) + '?msg=' + encodeURIComponent('Đã lưu ghi chú.'));
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -2108,7 +2150,7 @@ app.post('/staff/customers/add', requireRole(['Quay', 'Thu ngan', 'Quan ly']), a
 app.post('/staff/customers/edit/:id', requireRole(['Quay', 'Thu ngan', 'Quan ly']), async (req, res) => {
   try {
     await orderService.updateCustomer(req.params.id, req.body);
-    res.redirect('/staff/customers');
+    res.redirect(req.body.quay_ve === 'chi_tiet' ? '/staff/customers/' + Number(req.params.id) + '?msg=' + encodeURIComponent('Đã cập nhật thông tin.') : '/staff/customers');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');

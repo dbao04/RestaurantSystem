@@ -2,8 +2,41 @@
   var activePage = 'customers';
   var staffName = session.staffName || 'Nhân viên';
   var unreadCount = unread || 0;
+  var tt = (typeof tomTat !== 'undefined' && tomTat) || { tong: 0, vang_lai: 0, theo_hang: {}, quay_lai_30n: 0, tong_diem: 0 };
+  var so = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); };
+  var ngay = function (d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; };
+  var HANG_ICON = { bronze: 'fa-medal', silver: 'fa-medal', gold: 'fa-crown', platinum: 'fa-gem' };
 %>
 <%- include('partials/header') %>
+
+<style>
+  .crm-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .9rem; margin-bottom: 1.25rem; }
+  .crm-kpi__o { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 14px; padding: .9rem 1.1rem; }
+  .crm-kpi__nhan { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: #8a7d6b; font-weight: 700; }
+  .crm-kpi__so { font-size: 1.6rem; font-weight: 800; color: #2b1d12; line-height: 1.2; margin-top: .2rem; }
+  .crm-kpi__phu { font-size: .8rem; color: #8a7d6b; }
+  .crm-loc { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+  .crm-loc .crm-tim input[type=search] { width: 100%; border-radius: 999px; padding-left: 2.5rem !important; }
+  .crm-loc .crm-tim { position: relative; flex: 1 1 260px; max-width: 420px; }
+  .crm-loc .crm-tim i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #a2937e; }
+  .crm-chip { border: 1px solid rgba(0,0,0,.14); background: #fff; border-radius: 999px; padding: .35rem .85rem; font-size: .88rem; font-weight: 600; color: #4b3a2a; cursor: pointer; }
+  .crm-chip.is-chon { background: #2b1d12; color: #f3d48a; border-color: #2b1d12; }
+  .crm-bang tbody tr { cursor: pointer; }
+  .crm-bang tbody tr:hover { background: #fbf6ec; }
+  .crm-bang td { vertical-align: middle; }
+  .crm-ten { font-weight: 700; color: #2b1d12; }
+  .crm-ten small { display: block; font-weight: 400; color: #8a7d6b; }
+  .crm-hang { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .2rem .65rem; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+  .crm-hang--bronze { background: #f4e4d4; color: #8a4b1c; }
+  .crm-hang--silver { background: #eceff3; color: #4b5563; }
+  .crm-hang--gold { background: #fbefc6; color: #8a6200; }
+  .crm-hang--platinum { background: #e3ecf7; color: #234a7a; }
+  .crm-the { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 6px; padding: .1rem .4rem; margin-left: .3rem; vertical-align: middle; }
+  .crm-the--qr { background: #eee; color: #666; }
+  .crm-the--ns { background: #fde2e1; color: #a12a22; }
+  .crm-thao-tac { white-space: nowrap; }
+  @media (max-width: 760px) { .crm-an-dt { display: none; } }
+</style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
   <h1 class="h3 mb-0 text-gray-800">Quản lý Khách hàng</h1>
@@ -19,88 +52,129 @@
   </div>
 <% } %>
 
+<div class="crm-kpi">
+  <div class="crm-kpi__o">
+    <div class="crm-kpi__nhan">Khách thành viên</div>
+    <div class="crm-kpi__so"><%= so(tt.tong) %></div>
+    <div class="crm-kpi__phu">+ <%= so(tt.vang_lai) %> khách vãng lai (QR)</div>
+  </div>
+  <div class="crm-kpi__o">
+    <div class="crm-kpi__nhan">Quay lại 30 ngày</div>
+    <div class="crm-kpi__so"><%= so(tt.quay_lai_30n) %></div>
+    <div class="crm-kpi__phu">có bữa đã thanh toán gần đây</div>
+  </div>
+  <div class="crm-kpi__o">
+    <div class="crm-kpi__nhan">Theo hạng</div>
+    <div class="crm-kpi__so" style="font-size:1.05rem; padding-top:.35rem">
+      Đồng <%= so(tt.theo_hang.bronze) %> · Bạc <%= so(tt.theo_hang.silver) %><br>Vàng <%= so(tt.theo_hang.gold) %> · Bạch kim <%= so(tt.theo_hang.platinum) %>
+    </div>
+  </div>
+  <div class="crm-kpi__o">
+    <div class="crm-kpi__nhan">Điểm đang lưu hành</div>
+    <div class="crm-kpi__so"><%= so(tt.tong_diem) %></div>
+    <div class="crm-kpi__phu">tổng điểm khách chưa dùng</div>
+  </div>
+</div>
+
 <div class="card shadow mb-4">
   <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">Danh sách Khách hàng</h6>
+    <div class="crm-loc">
+      <label class="crm-tim mb-0">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input type="search" id="crmTim" class="form-control" placeholder="Tìm tên, số điện thoại, email…" aria-label="Tìm khách hàng">
+      </label>
+      <button type="button" class="crm-chip is-chon" data-hang="">Tất cả</button>
+      <button type="button" class="crm-chip" data-hang="bronze">Đồng</button>
+      <button type="button" class="crm-chip" data-hang="silver">Bạc</button>
+      <button type="button" class="crm-chip" data-hang="gold">Vàng</button>
+      <button type="button" class="crm-chip" data-hang="platinum">Bạch kim</button>
+      <label class="mb-0 ml-1 small text-muted" style="cursor:pointer"><input type="checkbox" id="crmVangLai"> Hiện khách vãng lai</label>
+      <select id="crmSapXep" class="form-control form-control-sm" style="width:auto; border-radius:999px" aria-label="Sắp xếp">
+        <option value="gan">Ghé gần đây</option>
+        <option value="lan">Đến nhiều nhất</option>
+        <option value="diem">Điểm cao nhất</option>
+        <option value="moi">Mới tạo</option>
+      </select>
+    </div>
   </div>
   <div class="card-body">
+    <p class="small text-muted mb-2"><i class="fas fa-hand-pointer"></i> Bấm vào một khách để xem hồ sơ: lịch sử dùng bữa, điểm, hạng, đặt bàn, tiệc, giao hàng. <span id="crmDem"></span></p>
     <div class="table-responsive">
-      <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+      <table class="table crm-bang mb-0" width="100%" cellspacing="0">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Tên</th>
+            <th>Khách hàng</th>
             <th>Số điện thoại</th>
-            <th>Email</th>
-            <th>Địa chỉ</th>
-            <th>Thao tác</th>
+            <th>Hạng</th>
+            <th class="text-right">Điểm</th>
+            <th class="text-right crm-an-dt">Số lần dùng bữa</th>
+            <th class="crm-an-dt">Lần gần nhất</th>
+            <th class="text-right">Thao tác</th>
           </tr>
         </thead>
-        <tbody>
-          <% if(customers && customers.length > 0) { %>
-            <% customers.forEach(c => { %>
-              <tr>
-                <td><%= c.id %></td>
-                <td><%= c.ten %></td>
-                <td><%= c.sodienthoai %></td>
-                <td><%= c.email || 'N/A' %></td>
-                <td><%= c.diachi || 'N/A' %></td>
+        <tbody id="crmThan">
+          <% if (customers && customers.length > 0) { %>
+            <% customers.forEach(function (c) { %>
+              <tr data-href="/staff/customers/<%= c.id %>" data-hang="<%= c.hang %>" data-vl="<%= c.vang_lai ? 1 : 0 %>"
+                  data-tim="<%= [c.ten, c.sodienthoai, c.email].join(' ').toLowerCase() %>"
+                  data-id="<%= c.id %>" data-lan="<%= c.so_lan %>" data-diem="<%= c.diem %>" data-gan="<%= c.lan_cuoi ? new Date(c.lan_cuoi).getTime() : 0 %>"
+                  <%- c.vang_lai ? 'hidden' : '' %> tabindex="0">
                 <td>
-                  <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editModal<%= c.id %>"><i class="fas fa-edit"></i></button>
+                  <div class="crm-ten"><%= c.ten %>
+                    <% if (c.vang_lai) { %><span class="crm-the crm-the--qr">Vãng lai</span><% } %>
+                    <% if (c.no_show > 0) { %><span class="crm-the crm-the--ns" title="Số lần đặt bàn không đến"><%= c.no_show %> lần không đến</span><% } %>
+                    <small>#<%= c.id %><%= c.email ? ' · ' + c.email : '' %></small>
+                  </div>
+                </td>
+                <td><%= c.vang_lai ? '—' : c.sodienthoai %></td>
+                <td><span class="crm-hang crm-hang--<%= c.hang %>"><i class="fas <%= HANG_ICON[c.hang] || 'fa-medal' %>"></i><%= c.ten_hang %></span></td>
+                <td class="text-right font-weight-bold"><%= so(c.diem) %></td>
+                <td class="text-right crm-an-dt"><%= so(c.so_lan) %></td>
+                <td class="crm-an-dt"><%= ngay(c.lan_cuoi) %></td>
+                <td class="text-right crm-thao-tac">
+                  <a class="btn btn-sm btn-outline-dark" href="/staff/customers/<%= c.id %>" title="Xem hồ sơ"><i class="fas fa-id-card"></i></a>
+                  <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editModal<%= c.id %>" title="Sửa"><i class="fas fa-edit"></i></button>
                   <% if (typeof coQuyenXoa !== 'undefined' && coQuyenXoa) { %>
                   <form action="/staff/customers/delete/<%= c.id %>" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa khách hàng này? Chỉ xóa được khách chưa có đơn hàng, đặt bàn hay điểm tích lũy.')">
                     <button type="submit" class="btn btn-sm btn-danger" title="Xóa (chỉ khách chưa có lịch sử)"><i class="fas fa-trash"></i></button>
                   </form>
                   <% } %>
-
-                  <!-- Edit Modal -->
-                  <div class="modal fade" id="editModal<%= c.id %>" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                      <div class="modal-content">
-                        <form action="/staff/customers/edit/<%= c.id %>" method="POST">
-                          <div class="modal-header">
-                            <h5 class="modal-title">Sửa thông tin khách hàng</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <div class="form-group">
-                              <label>Tên</label>
-                              <input type="text" name="ten" class="form-control" value="<%= c.ten %>" required>
-                            </div>
-                            <div class="form-group">
-                              <label>Số điện thoại</label>
-                              <input type="text" name="sodienthoai" class="form-control" value="<%= c.sodienthoai %>" required>
-                            </div>
-                            <div class="form-group">
-                              <label>Email</label>
-                              <input type="email" name="email" class="form-control" value="<%= c.email %>">
-                            </div>
-                            <div class="form-group">
-                              <label>Địa chỉ</label>
-                              <input type="text" name="diachi" class="form-control" value="<%= c.diachi %>">
-                            </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
                 </td>
               </tr>
             <% }) %>
-          <% } else { %>
-            <tr><td colspan="6" class="text-center">Chưa có khách hàng nào</td></tr>
           <% } %>
+          <tr id="crmRong" <%- customers && customers.length ? 'hidden' : '' %>><td colspan="7" class="text-center text-muted py-4">Không có khách hàng phù hợp</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
+<%# Hop sua: dat ngoai bang (modal trong <tr> lam vo bo cuc va bi bat su kien bam dong). %>
+<% (customers || []).forEach(function (c) { %>
+  <div class="modal fade" id="editModal<%= c.id %>" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="/staff/customers/edit/<%= c.id %>" method="POST">
+          <div class="modal-header">
+            <h5 class="modal-title">Sửa thông tin khách hàng</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group"><label>Tên</label><input type="text" name="ten" class="form-control" value="<%= c.ten %>" required></div>
+            <div class="form-group"><label>Số điện thoại</label><input type="text" name="sodienthoai" class="form-control" value="<%= c.sodienthoai %>" required></div>
+            <div class="form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<%= c.email %>"></div>
+            <div class="form-group"><label>Địa chỉ</label><input type="text" name="diachi" class="form-control" value="<%= c.diachi %>"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+<% }) %>
 
 <!-- Add Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -109,27 +183,13 @@
       <form action="/staff/customers/add" method="POST">
         <div class="modal-header">
           <h5 class="modal-title">Thêm Khách hàng mới</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
-          <div class="form-group">
-            <label>Tên</label>
-            <input type="text" name="ten" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>Số điện thoại</label>
-            <input type="text" name="sodienthoai" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Địa chỉ</label>
-            <input type="text" name="diachi" class="form-control">
-          </div>
+          <div class="form-group"><label>Tên</label><input type="text" name="ten" class="form-control" required></div>
+          <div class="form-group"><label>Số điện thoại</label><input type="text" name="sodienthoai" class="form-control" required></div>
+          <div class="form-group"><label>Email</label><input type="email" name="email" class="form-control"></div>
+          <div class="form-group"><label>Địa chỉ</label><input type="text" name="diachi" class="form-control"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
@@ -139,5 +199,49 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  var than = document.getElementById('crmThan');
+  var dong = [].slice.call(than.querySelectorAll('tr[data-href]'));
+  var tim = document.getElementById('crmTim'), vl = document.getElementById('crmVangLai'), sx = document.getElementById('crmSapXep');
+  var rong = document.getElementById('crmRong'), dem = document.getElementById('crmDem');
+  var hang = '';
+  function boDau(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase(); }
+  function loc() {
+    var q = boDau(tim.value.trim()), n = 0;
+    var khoa = sx.value, ds = dong.slice();
+    ds.sort(function (a, b) {
+      var k = { moi: 'id', lan: 'lan', diem: 'diem', gan: 'gan' }[khoa];
+      return (Number(b.dataset[k]) - Number(a.dataset[k])) || (Number(b.dataset.id) - Number(a.dataset.id));
+    });
+    ds.forEach(function (tr) {
+      var hien = (!hang || tr.dataset.hang === hang) && (vl.checked || tr.dataset.vl !== '1') && (!q || boDau(tr.dataset.tim).indexOf(q) >= 0);
+      tr.hidden = !hien; if (hien) n++;
+      than.insertBefore(tr, rong);
+    });
+    rong.hidden = n > 0;
+    dem.textContent = '— đang hiện ' + n + ' khách.';
+  }
+  tim.addEventListener('input', loc); vl.addEventListener('change', loc); sx.addEventListener('change', loc);
+  document.querySelectorAll('.crm-chip').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.crm-chip').forEach(function (x) { x.classList.toggle('is-chon', x === b); });
+      hang = b.dataset.hang; loc();
+    });
+  });
+  // Bam dong -> ho so (tru khi bam vao nut / form trong dong)
+  than.addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-href]');
+    if (!tr || e.target.closest('a, button, form, input')) return;
+    location.href = tr.dataset.href;
+  });
+  than.addEventListener('keydown', function (e) {
+    var tr = e.target.closest('tr[data-href]');
+    if (tr && e.key === 'Enter' && e.target === tr) location.href = tr.dataset.href;
+  });
+  loc();
+})();
+</script>
 
 <%- include('partials/footer') %>

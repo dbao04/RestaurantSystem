@@ -82,10 +82,54 @@
         var burger = document.getElementById('nh-burger');
         var menu = document.getElementById('nh-menu');
         if (burger && menu) {
-          burger.addEventListener('click', function () { menu.classList.toggle('is-open'); });
-          menu.querySelectorAll('a').forEach(function (a) {
-            a.addEventListener('click', function () { menu.classList.remove('is-open'); });
+          // Ngan keo menu (dien thoai / may tinh bang): nut Dong trong ngan, cham nen toi,
+          // phim Esc, vuot sang phai, hoac nut Quay lai cua trinh duyet deu dong duoc.
+          var nenNgan = document.getElementById('nh-ngan-nen');
+          var nutDong = document.getElementById('nh-ngan-dong');
+          var bieuTuong = burger.querySelector('i');
+          burger.setAttribute('aria-controls', 'nh-menu');
+          burger.setAttribute('aria-expanded', 'false');
+          var dongNgan = function (boQuaLichSu) {
+            if (!menu.classList.contains('is-open')) return;
+            menu.classList.remove('is-open');
+            document.documentElement.classList.remove('nh-ngan-mo');
+            burger.setAttribute('aria-expanded', 'false');
+            if (bieuTuong) bieuTuong.className = 'fas fa-bars';
+            if (nenNgan) { nenNgan.classList.remove('is-mo'); setTimeout(function () { if (!menu.classList.contains('is-open')) nenNgan.hidden = true; }, 300); }
+            if (!boQuaLichSu && history.state && history.state.nhNgan) history.back();
+          };
+          var moNgan = function () {
+            menu.classList.add('is-open');
+            document.documentElement.classList.add('nh-ngan-mo');
+            burger.setAttribute('aria-expanded', 'true');
+            if (bieuTuong) bieuTuong.className = 'fas fa-xmark';
+            if (nenNgan) { nenNgan.hidden = false; requestAnimationFrame(function () { nenNgan.classList.add('is-mo'); }); }
+            // Nut Quay lai (vuot cạnh / phim back Android) dong menu thay vi roi trang.
+            try { history.pushState({ nhNgan: 1 }, ''); } catch (e) { /* bo qua */ }
+          };
+          burger.addEventListener('click', function () { if (menu.classList.contains('is-open')) dongNgan(); else moNgan(); });
+          if (nutDong) nutDong.addEventListener('click', function () { dongNgan(); });
+          if (nenNgan) nenNgan.addEventListener('click', function () { dongNgan(); });
+          document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dongNgan(); });
+          window.addEventListener('popstate', function () { dongNgan(true); });
+          var x0 = null, y0 = 0;
+          menu.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+          menu.addEventListener('touchend', function (e) {
+            if (x0 == null) return;
+            var dx = e.changedTouches[0].clientX - x0, dy = Math.abs(e.changedTouches[0].clientY - y0);
+            if (dx > 70 && dx > dy * 1.5) dongNgan();
+            x0 = null;
           });
+          menu.querySelectorAll('a').forEach(function (a) {
+            a.addEventListener('click', function () {
+              if (!menu.classList.contains('is-open')) return;
+              var h = a.getAttribute('href') || '';
+              // Chuyen trang: bo muc lich su tam (history.back() luc nay se huy dieu huong).
+              if (h && h.indexOf('javascript') !== 0 && history.state && history.state.nhNgan) { try { history.replaceState(null, ''); } catch (e) { /* */ } dongNgan(true); }
+              else dongNgan();
+            });
+          });
+          window.addEventListener('resize', function () { if (window.innerWidth > 1330) dongNgan(); });
         }
         // Menu ngang (>1330px) ma chu tran khoi khung -> de len nut ben phai.
         // Moc CSS khong luong het (ten khach dai, tieng Nhat, zoom), nen do that:

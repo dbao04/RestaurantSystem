@@ -55,6 +55,8 @@
     </style>
     <script src="/thong-bao-dep.js?v=3"></script>
   <script src="/hien-mat-khau.js?v=3"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/font-he-thong.css?v=1">
 </head>
 
   <body class="nh">
@@ -66,7 +68,14 @@
           <span class="nh-brand__name"><%= t('chung.ten_nha_hang') %></span>
         </a>
 
-        <ul class="nh-nav__links" id="nh-menu">
+        <ul class="nh-nav__links" id="nh-menu" aria-label="Menu">
+          <%# Dau ngan keo (chi khi menu thanh ngan keo <= 1330px): ten + nut Dong - ngan keo che mat nut burger. %>
+          <li class="nh-ngan-dau">
+            <span class="nh-ngan-dau__ten"><img src="/logo.svg" alt="" width="28" height="28"> Menu</span>
+            <button type="button" class="nh-ngan-dong" id="nh-ngan-dong" aria-label="<%= t('dieu_huong.dong_menu') %>">
+              <i class="fas fa-xmark" aria-hidden="true"></i><span><%= t('dieu_huong.dong_menu') %></span>
+            </button>
+          </li>
           <li><a href="/" class="<%= (typeof activeNav !== 'undefined' && activeNav==='home') ? 'is-active' : '' %>"><%= t('dieu_huong.trang_chu') %></a></li>
           <li><a href="/about" class="<%= (typeof activeNav !== 'undefined' && activeNav==='about') ? 'is-active' : '' %>"><%= t('dieu_huong.gioi_thieu') %></a></li>
           <li><a href="/menu" class="<%= (typeof activeNav !== 'undefined' && activeNav==='menu') ? 'is-active' : '' %>"><%= t('dieu_huong.mon_an') %></a></li>
@@ -93,6 +102,9 @@
               <a href="/profile"><i class="fas fa-user"></i> <%= t('dieu_huong.tai_khoan') %></a>
             </li>
             <li class="nh-menu-mobile">
+              <a href="/my-orders"><i class="fas fa-clock-rotate-left"></i> <%= t('dieu_huong.don_cua_toi') %></a>
+            </li>
+            <li class="nh-menu-mobile">
               <a href="/thanh-vien"><i class="fas fa-crown"></i> <%= t('dieu_huong.thanh_vien') %></a>
             </li>
             <li class="nh-menu-mobile">
@@ -104,6 +116,7 @@
             </li>
           <% } %>
         </ul>
+        <div class="nh-ngan-nen" id="nh-ngan-nen" hidden></div>
 
         <div class="nh-nav__actions">
           <!-- Nut Dat mon Giao hang & Dat ban -->

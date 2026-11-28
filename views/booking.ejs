@@ -417,20 +417,7 @@
           <!-- Thời gian nhận hàng mong muốn -->
           <div class="nh-panel nh-reveal">
             <h3 class="nh-panel__title"><i class="fas fa-clock"></i> <%= t('dat_ban.thoi_gian_nhan_mong_muon') %></h3>
-            <div class="nh-fields">
-              <div class="nh-field">
-                <label id="nhan-ngay"><%= t('dat_ban.ngay_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
-                <input class="nh-input" type="date" name="datebook" id="o-ngay" required
-                       value="<%= ngayMacDinh %>"
-                       min="<%= new Date().toISOString().slice(0,10) %>">
-                <span class="nh-hint" id="hint-ngay"><%= t('dat_ban.chi_tu_hom_nay') %></span>
-              </div>
-              <div class="nh-field">
-                <label id="nhan-gio"><%= t('dat_ban.gio_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
-                <input class="nh-input" type="time" name="timebook" id="o-gio" required value="<%= gioMacDinh %>">
-                <span class="nh-hint"><%= t('dat_ban.gio_phuc_vu') %></span>
-              </div>
-            </div>
+            <%- include('partials/chon-gio-giao') %>
           </div>
         </div>
 
@@ -515,15 +502,9 @@
   var yyyymmdd = homNay.getFullYear() + '-' +
     String(homNay.getMonth() + 1).padStart(2, '0') + '-' +
     String(homNay.getDate()).padStart(2, '0');
-  if (!oNgay.value) oNgay.value = yyyymmdd;
-
-  if (!oGio.value || oGio.value === '18:00') {
-    var gioHen = new Date(Date.now() + 45 * 60 * 1000);
-    var gioStr = String(gioHen.getHours()).padStart(2, '0') + ':' + String(gioHen.getMinutes()).padStart(2, '0');
-    oGio.value = gioStr;
-  }
-
+  // Ngay/gio chi dung khi khach chon "Hen gio" (partials/chon-gio-giao.ejs tu dien goi y).
   function kiemTra() {
+    if (!window.ghLaHenGio || !window.ghLaHenGio()) return true;
     if (oNgay.value !== yyyymmdd) { hint.textContent = I18N.chiTuHomNay; hint.style.color = ''; return true; }
     var g = (oGio.value || '').split(':');
     if (g.length < 2) return true;

@@ -641,7 +641,13 @@ const taoDonGiao = async (sesis, d = {}) => {
              (sesis, ma_giao, id_dv, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao,
               vi_do, kinh_do, khoang_cach_km, phi_giao, tien_thu_ho, ghi_chu,
               du_kien_luc, trang_thai, ma_khu_vuc, han_thanh_toan)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?, ?,
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,
+                   -- Du kien giao: giao ngay = bay gio + cam ket; HEN GIO = dung gio hen
+                   -- (truoc day luon la bay gio + cam ket -> don hen 18:00 van bao "giao truoc 17:12").
+                   GREATEST(DATE_ADD(NOW(), INTERVAL ? MINUTE),
+                            COALESCE((SELECT MIN(TIMESTAMP(h.ngay_dat, COALESCE(h.gio_dat, '00:00:00')))
+                                        FROM hopdong h WHERE h.sesis = ? AND h.ngay_dat IS NOT NULL), NOW())),
+                   ?, ?,
                    ${choThanhToan ? 'DATE_ADD(NOW(), INTERVAL ? MINUTE)' : 'NULL'})`,
           [sesis, maGiao, bao.id_dv,
            String(d.ten_nguoi_nhan || don.ten || '').trim() || 'Khách hàng',
@@ -651,7 +657,7 @@ const taoDonGiao = async (sesis, d = {}) => {
            bao.khoang_cach_km, bao.phi,
            choThanhToan ? 0 : (Number(d.tien_thu_ho) || 0),
            String(d.ghi_chu || '').trim() || null,
-           camKet + (phutGiu || 0), trangThaiDau, bao.khu_vuc ? bao.khu_vuc.ma : null,
+           camKet + (phutGiu || 0), sesis, trangThaiDau, bao.khu_vuc ? bao.khu_vuc.ma : null,
            ...(choThanhToan ? [phutGiu] : [])]
         );
         break;
@@ -714,6 +720,9 @@ const CHON_DON = `
          (SELECT COUNT(*) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS so_mon,
          (SELECT MIN(h.tinhtrang) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8)) AS tinhtrang_don,
          (SELECT MIN(h.trangthai_bep) FROM hopdong h WHERE h.sesis = CONVERT(g.sesis USING utf8) AND h.id_mon > 0 AND h.soluong > 0) AS bep_xong,
+         (SELECT MIN(TIMESTAMP(h.ngay_dat, COALESCE(h.gio_dat, '00:00:00'))) FROM hopdong h
+           WHERE h.sesis = CONVERT(g.sesis USING utf8) AND h.ngay_dat IS NOT NULL) AS hen_luc,
+         (SELECT gia_tri FROM cau_hinh WHERE khoa = 'giao_hang.phut_len_bep_truoc' LIMIT 1) AS phut_len_bep_cfg,
          v.vi_do AS shipper_vi_do, v.kinh_do AS shipper_kinh_do, v.luc AS shipper_luc,
          TIMESTAMPDIFF(MINUTE, v.luc, NOW()) AS shipper_phut_truoc
   FROM don_giao_hang g
@@ -725,11 +734,32 @@ const CHON_DON = `
   LEFT JOIN vi_tri_shipper_moi_nhat v ON v.id_shipper = g.id_shipper
 `;
 
+/**
+ * Don HEN GIO hay giao ngay - mot noi tinh cho moi man hinh.
+ * Gio hen = hopdong.ngay_dat + gio_dat. Giao ngay thi gio do ~ luc tao don, nen
+ * chi coi la hen khi hen sau luc tao tren 15 phut.
+ *   hen_gio     : Date | null - gio khach hen nhan
+ *   tu_phan_luc : Date | null - luc bep nhan mon + tu phan shipper
+ *                 (= hen - giao_hang.phut_len_bep_truoc, giong chinhSachGiaoService.henChuaToi)
+ *   cho_hen     : true khi chua toi tu_phan_luc (don dang "doi gio hen")
+ */
+function henGiao(r) {
+  const hen = r.hen_luc ? new Date(r.hen_luc) : null;
+  const tao = r.tao_luc ? new Date(r.tao_luc) : null;
+  if (!hen || isNaN(hen) || !tao || hen.getTime() - tao.getTime() <= 15 * 60000) {
+    return { hen_gio: null, tu_phan_luc: null, cho_hen: false };
+  }
+  const phut = Math.min(240, Math.max(15, Number(r.phut_len_bep_cfg) || 60));
+  const tuPhan = new Date(hen.getTime() - phut * 60000);
+  return { hen_gio: hen, tu_phan_luc: tuPhan, cho_hen: Date.now() < tuPhan.getTime() };
+}
+
 /** Bo sung cac truong tinh toan ma view nao cung can. */
 function tomTat(r) {
   if (!r) return null;
   return {
     ...r,
+    ...henGiao(r),
     ten_shipper: String(r.ten_nv_shipper || r.ten_shipper_luu || '').trim() || null,
     tt: TT[r.trang_thai] || { nhan: r.trang_thai, mau: '#6c757d', icon: 'fa-question' },
     dang_chay: DANG_CHAY.includes(r.trang_thai),
@@ -794,7 +824,7 @@ const dsDonGiao = async ({ trangThai = null, idShipper = null, idDv = null,
 /** Cac mon trong don - shipper can biet minh dang cam gi. */
 const monCuaDon = async (sesis) => {
   const [rows] = await db.query(
-    `SELECT id, name_mon, soluong, gia, thanhtien, ghi_chu_mon, images
+    `SELECT id, name_mon, soluong, gia, thanhtien, ghi_chu_mon, images, trangthai_bep
      FROM hopdong WHERE sesis = ? ORDER BY id`, [sesis]
   );
   return rows;
@@ -934,6 +964,16 @@ const doiTrangThai = async (idGiao, moi, nguoi = {}, tuyChon = {}) => {
       const e = new Error('Hãy kiểm đủ từng món và niêm phong túi trước khi đi giao.');
       e.ma = 'CHUA_KIEM_HANG';
       throw e;
+    }
+    // Don bi them / bo mon SAU khi shipper kiem -> kiem lai (tui khong con khop phieu).
+    if (laShipperBam && don.kiem_hang_mon) {
+      const [dongNay] = await db.query('SELECT id FROM hopdong WHERE sesis = ? AND soluong > 0', [don.sesis]);
+      if (require('./shipperNghiepVu').dauVanMon(dongNay) !== don.kiem_hang_mon) {
+        await db.query('UPDATE don_giao_hang SET kiem_hang_luc = NULL, kiem_hang_mon = NULL WHERE id_giao = ?', [idGiao]);
+        const e = new Error('Đơn vừa thay đổi món sau khi bạn kiểm hàng — kiểm lại từng món rồi mới đi giao.');
+        e.ma = 'CHUA_KIEM_HANG';
+        throw e;
+      }
     }
   }
 

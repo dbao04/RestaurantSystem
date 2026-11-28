@@ -138,6 +138,11 @@
             <% if (!g.da_xong && g.du_kien_luc && new Date(g.du_kien_luc) < new Date()) { %>
               <span class="gh-tre"><i class="fas fa-clock"></i> trễ hẹn</span>
             <% } %>
+            <% if (g.hen_gio && !g.da_xong) { %>
+              <span class="badge badge-info" title="Đơn hẹn giờ: bếp nhận món và tự phân shipper từ <%= new Date(g.tu_phan_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>">
+                <i class="fas fa-calendar-check"></i> Hẹn <%= new Date(g.hen_gio).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %><% if (g.cho_hen) { %> · tự phân <%= new Date(g.tu_phan_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %><% } %>
+              </span>
+            <% } %>
           </div>
           <div class="text-right" style="white-space:nowrap">
             <div class="font-weight-bold"><%= formatMoney(g.tong_thu) %>đ</div>

@@ -360,6 +360,41 @@ async function nhatKyHomNay(gioiHan = 60) {
   return rows;
 }
 
+/**
+ * Vi sao tung don dang nam o 'cho_phan' - de man hinh dieu phoi ghi DUNG ly do
+ * (truoc day luon ghi "chua co shipper ranh", ke ca khi shipper ranh ca).
+ *   hen_gio : don hen gio, chua toi luc tu phan (gio hen - phut_len_bep_truoc)
+ *   ket     : da dung tu phan (qua gio_toi_da gio / so_lan_toi_da lan khong ai nhan) -> can xu ly tay
+ *   dang_tim: dang cho shipper du dieu kien (het suc chua, ngoai khu, ...)
+ * Cung dieu kien voi lyDoDungTuPhan / tuDongPhan, nhung chi DOC - khong gui thong bao.
+ */
+async function phanLoaiDonCho(ts) {
+  const ds = await vc.dsDonGiao({ trangThai: 'cho_phan', dangChay: false, gioiHan: 100 });
+  if (!ds.length) return [];
+  const [lo] = await db.query(
+    `SELECT p.id_giao, COUNT(*) AS n FROM phan_cong_giao p
+      WHERE p.id_giao IN (?) AND p.kieu = 'tu_dong' AND p.ket_qua IN ('tu_choi', 'het_han')
+        AND p.id > COALESCE((SELECT MAX(t.id) FROM phan_cong_giao t WHERE t.id_giao = p.id_giao AND t.kieu = 'thu_cong'), 0)
+      GROUP BY p.id_giao`, [ds.map((d) => d.id_giao)]);
+  const soLo = new Map(lo.map((r) => [Number(r.id_giao), Number(r.n)]));
+  const gio = (d) => new Date(d).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  return ds.map((d) => {
+    const n = soLo.get(Number(d.id_giao)) || 0;
+    const phutTuoi = (Date.now() - new Date(d.tao_luc).getTime()) / 60000;
+    let loai = 'dang_tim';
+    let lyDo = 'Đang chờ shipper đủ điều kiện (còn suất, đúng khu)';
+    if (d.cho_hen) {
+      loai = 'hen_gio';
+      lyDo = `Hẹn giao ${gio(d.hen_gio)} – tự phân lúc ${gio(d.tu_phan_luc)}`;
+    } else if (n >= ts.so_lan_toi_da) {
+      loai = 'ket'; lyDo = `${n} lần tự phân liên tiếp không shipper nào nhận`;
+    } else if (phutTuoi > ts.gio_toi_da * 60) {
+      loai = 'ket'; lyDo = `Đơn đã tạo quá ${ts.gio_toi_da} giờ`;
+    }
+    return { id_giao: d.id_giao, ma_giao: d.ma_giao, dia_chi_giao: d.dia_chi_giao, tao_luc: d.tao_luc, loai, ly_do: lyDo };
+  });
+}
+
 async function tongQuan() {
   const ts = await thamSo();
   const [bang, [[dem]], nhatKy] = await Promise.all([
@@ -372,8 +407,12 @@ async function tongQuan() {
   ]);
   const trongCa = bang.filter((s) => s.trong_ca);
   const tai = trongCa.map((s) => s.tai);
+  const donCho = await phanLoaiDonCho(ts);
   return {
-    ts, bang,
+    ts, bang, don_cho: donCho,
+    so_cho_hen: donCho.filter((d) => d.loai === 'hen_gio').length,
+    so_ket: donCho.filter((d) => d.loai === 'ket').length,
+    so_dang_tim: donCho.filter((d) => d.loai === 'dang_tim').length,
     cho_phan: Number(dem.cho_phan) || 0, cho_xac_nhan: Number(dem.cho_xac_nhan) || 0, dang_chay: Number(dem.dang_chay) || 0,
     chenh_lech: tai.length ? Math.max(...tai) - Math.min(...tai) : 0,
     thu_tu_tiep: xepHang(bang).map((s) => s.id_shipper),

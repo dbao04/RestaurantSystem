@@ -20,7 +20,7 @@
   --nh-serif: 'Playfair Display', Georgia, serif;
   --nh-script: 'Great Vibes', cursive;
   --nh-brand-font: 'Dancing Script', 'Great Vibes', cursive;  /* tên nhà hàng */
-  --nh-sans: 'Poppins', 'Inter', system-ui, sans-serif;
+  --nh-sans: 'Inter', system-ui, sans-serif;
   --nh-ease: cubic-bezier(.22, .61, .36, 1);
 }
 
@@ -68,7 +68,7 @@ body::-webkit-scrollbar {
 
 /* -------- Nút -------- */
 .nh-btn { display: inline-flex; align-items: center; gap: .65rem; white-space: nowrap; padding: .88rem 2.1rem; border-radius: 999px;
-  font-family: var(--nh-sans); font-weight: 600; font-size: .86rem; letter-spacing: 1.5px; text-transform: uppercase;
+  font-family: var(--nh-sans); font-weight: 600; font-size: .92rem; letter-spacing: .01em; text-transform: none;
   border: 1.5px solid transparent; cursor: pointer; transition: all .25s var(--nh-ease); box-sizing: border-box; }
 .nh-btn--gold { background: linear-gradient(135deg, var(--nh-gold), var(--nh-gold-soft)); color: var(--nh-espresso); box-shadow: none; }
 .nh-btn--gold:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -6px rgba(200, 162, 75, .6); color: var(--nh-espresso); }
@@ -146,7 +146,7 @@ body::-webkit-scrollbar {
   box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 .nh-nav__links a { 
-  font-family: 'Plus Jakarta Sans', 'Montserrat', var(--nh-sans);
+  font-family: var(--nh-sans);
   color: rgba(255, 248, 235, 0.9); 
   /* Chu menu de doc (truoc ~12-13px qua nho): 15-16px man lon, giam dan theo moc ben duoi. */
   font-weight: 600; font-size: clamp(1.2rem, 1.1vw, 1.34rem); 
@@ -3468,4 +3468,44 @@ html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
 @media (min-width: 1331px) {
   .nh-tk .nh-user .nh-user__name { display: none; }
   .nh-tk .nh-user { padding: .2rem .45rem .2rem .2rem; }
+}
+
+/* ---- Ngan keo menu tren dien thoai: hang dau co nut Dong + nen toi (28/11) ---- */
+.nh-ngan-dau, .nh-ngan-nen { display: none; }
+@media (max-width: 1330px) {
+  .nh-nav__links { padding-top: 0 !important; }
+  .nh-nav__links > li.nh-ngan-dau {
+    display: flex !important; align-items: center; justify-content: space-between; gap: .75rem;
+    position: sticky; top: 0; z-index: 2; width: calc(100% + 4rem); margin: 0 -2rem .25rem;
+    padding: max(.9rem, env(safe-area-inset-top)) 1.25rem .9rem 2rem; flex-shrink: 0;
+    background: var(--nh-espresso); border-bottom: 1px solid rgba(255, 255, 255, .14);
+  }
+  .nh-ngan-dau__ten { display: inline-flex; align-items: center; gap: .55rem; color: var(--nh-gold);
+    font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: .95rem; }
+  .nh-ngan-dong {
+    display: inline-flex; align-items: center; gap: .45rem; min-height: 44px; padding: .45rem .95rem;
+    border: 1px solid rgba(255, 255, 255, .28); border-radius: 999px; background: rgba(255, 255, 255, .06);
+    color: #fff; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  .nh-ngan-dong i { font-size: 1.15rem; }
+  .nh-ngan-dong:hover, .nh-ngan-dong:focus-visible { background: rgba(200, 162, 75, .2); border-color: var(--nh-gold); outline: none; }
+  .nh-ngan-nen { display: block; position: fixed; inset: 0; z-index: 19; background: rgba(0, 0, 0, .55);
+    opacity: 0; transition: opacity .3s ease; }
+  .nh-ngan-nen.is-mo { opacity: 1; }
+  .nh-ngan-nen[hidden] { display: none; }
+  html.nh-ngan-mo, html.nh-ngan-mo body { overflow: hidden; }
+}
+@media (max-width: 1330px) { [data-theme="dark"] .nh-nav__links > li.nh-ngan-dau { background: #17110d; } }
+
+/* ---- Canh menu ra GIUA thanh nav tren may tinh (28/11) ----
+   Luoi 3 cot: logo | menu | nut ben phai. Hai cot ben bang nhau (1fr) nen menu
+   nam dung giua man hinh; neu mot ben qua rong thi luoi tu nhuong, khong de chong. */
+@media (min-width: 1331px) {
+  .nh-nav__inner { display: grid; grid-template-columns: 1fr auto 1fr; }
+  .nh-nav__inner > .nh-brand { grid-column: 1; justify-self: start; }
+  .nh-nav__inner > .nh-nav__links { grid-column: 2; justify-self: center; }
+  .nh-nav__inner > .nh-nav__actions { grid-column: 3; justify-self: end; margin-left: 0; }
+  /* Dau ngan keo (nut Dong) chi danh cho dien thoai: quy tac li:not(.nh-menu-mobile){display:flex}
+     o tren manh hon .nh-ngan-dau{display:none} nen no lo ra tren menu may tinh. */
+  .nh-nav__links > li.nh-ngan-dau { display: none; }
 }

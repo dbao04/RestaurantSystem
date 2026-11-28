@@ -1,0 +1,308 @@
+<%
+  var activePage = 'customers';
+  var kh = hs.kh, tv = hs.thanh_vien, tk = hs.thong_ke;
+  var so = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN'); };
+  var tien = function (n) { return so(n) + 'đ'; };
+  var ngay = function (d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; };
+  var ngayGio = function (d) { return d ? new Date(d).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'; };
+  var gio = function (g) { return g ? String(g).slice(0, 5) : ''; };
+  var HANG_ICON = { bronze: 'fa-medal', silver: 'fa-medal', gold: 'fa-crown', platinum: 'fa-gem' };
+  var chuCai = String(kh.ten || '?').trim().split(/\s+/).slice(-2).map(function (x) { return x[0]; }).join('').toUpperCase();
+  var TT_TIEC = { MOI: 'Yêu cầu mới', DA_LIEN_HE: 'Đã liên hệ', CHO_BAO_GIA: 'Chờ báo giá', CHO_COC: 'Chờ cọc', DA_XAC_NHAN: 'Đã xác nhận', DA_COC: 'Đã đặt cọc', CHO_THANH_TOAN: 'Chờ thanh toán', HOAN_THANH: 'Hoàn thành', HUY: 'Đã hủy', HET_HAN: 'Hết hạn giữ chỗ' };
+  var TT_GIAO = { cho_xac_nhan: 'Chờ xác nhận', cho_phan: 'Chờ phân shipper', da_phan: 'Đã phân', dang_lay: 'Đang lấy hàng', dang_giao: 'Đang giao', da_giao: 'Đã giao', that_bai: 'Giao thất bại', huy: 'Đã hủy', cho_thanh_toan: 'Chờ thanh toán' };
+  var mauTT = function (t) { return /hủy|không đến|thất bại|từ chối|hết hạn/i.test(t) ? 'danger' : /^chờ/i.test(t) ? 'warning' : /thanh toán|hoàn|đã giao|đã đến|nhận bàn|đã đặt cọc|đã xác nhận/i.test(t) ? 'success' : 'secondary'; };
+%>
+<%- include('partials/header') %>
+
+<style>
+  .hs-dau { display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: center; background: linear-gradient(135deg, #2b1d12, #4a3220); color: #f6ead2; border-radius: 18px; padding: 1.4rem 1.6rem; margin-bottom: 1.2rem; }
+  .hs-anh { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 1.6rem; font-weight: 800; background: #f3d48a; color: #2b1d12; flex-shrink: 0; }
+  .hs-dau .hs-ten { font-size: 1.55rem; font-weight: 800; margin: 0; color: #fff !important; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+  .hs-lh { font-size: .92rem; opacity: .9; display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; margin-top: .3rem; }
+  .hs-lh i { color: #f3d48a; width: 1rem; }
+  .hs-dau__phai { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+  .hs-hang { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .25rem .8rem; font-size: .85rem; font-weight: 800; }
+  .hs-hang--bronze { background: #f4e4d4; color: #8a4b1c; }
+  .hs-hang--silver { background: #eceff3; color: #4b5563; }
+  .hs-hang--gold { background: #fbefc6; color: #8a6200; }
+  .hs-hang--platinum { background: #e3ecf7; color: #234a7a; }
+  .hs-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .8rem; margin-bottom: 1.2rem; }
+  .hs-kpi > div { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 14px; padding: .85rem 1rem; }
+  .hs-kpi b { display: block; font-size: 1.45rem; color: #2b1d12; line-height: 1.25; }
+  .hs-kpi span { font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: #8a7d6b; font-weight: 700; }
+  .hs-kpi small { display: block; color: #8a7d6b; }
+  .hs-luoi { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 1.1rem; margin-bottom: 1.2rem; }
+  @media (max-width: 991px) { .hs-luoi { grid-template-columns: minmax(0, 1fr); } }
+  .hs-the { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 16px; padding: 1.1rem 1.2rem; }
+  .hs-the h2 { font-size: 1.05rem; font-weight: 800; color: #2b1d12; margin: 0 0 .8rem; display: flex; align-items: center; gap: .5rem; }
+  .hs-the h2 i { color: #b8892e; }
+  .hs-thanh { height: 10px; border-radius: 999px; background: #efe6d6; overflow: hidden; }
+  .hs-thanh > i { display: block; height: 100%; background: linear-gradient(90deg, #c8a24b, #e6c675); border-radius: 999px; }
+  .hs-cac-hang { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }
+  .hs-cac-hang > div { border: 1px solid rgba(0,0,0,.1); border-radius: 12px; padding: .6rem .5rem; text-align: center; font-size: .8rem; color: #6b5b48; }
+  .hs-cac-hang > div.is-hien { border: 2px solid #c8a24b; background: #fbf6ec; color: #2b1d12; }
+  .hs-cac-hang b { display: block; font-size: .92rem; }
+  @media (max-width: 575px) { .hs-cac-hang { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .hs-mon { display: flex; justify-content: space-between; gap: .5rem; padding: .45rem 0; border-bottom: 1px dashed rgba(0,0,0,.1); font-size: .92rem; }
+  .hs-mon:last-child { border-bottom: 0; }
+  .hs-tab .nav-link { font-weight: 700; color: #6b5b48; }
+  .hs-tab .nav-link.active { color: #2b1d12; border-bottom: 3px solid #c8a24b; }
+  .hs-tab .badge { font-size: .72rem; vertical-align: middle; }
+  .hs-bang td, .hs-bang th { vertical-align: middle; font-size: .9rem; }
+  .hs-mon-ds { font-size: .82rem; color: #6b5b48; max-width: 420px; }
+  .hs-rong { text-align: center; color: #8a7d6b; padding: 2rem 1rem; }
+  .hs-sao { color: #e0a82e; }
+  .hs-luu-y { background: #fff7e6; border: 1px solid #f3d48a; border-radius: 12px; padding: .7rem .9rem; font-size: .88rem; color: #6b4b10; margin-bottom: .8rem; }
+</style>
+
+<div class="mb-3">
+  <a href="/staff/customers" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Danh sách khách hàng</a>
+</div>
+
+<% if (msg) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert"><%= msg %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Đóng"><span aria-hidden="true">&times;</span></button></div>
+<% } %>
+
+<section class="hs-dau">
+  <div class="hs-anh" aria-hidden="true"><%= chuCai %></div>
+  <div>
+    <h1 class="hs-ten"><%= kh.ten %> <span class="hs-hang hs-hang--<%= tv.hang %>"><i class="fas <%= HANG_ICON[tv.hang] %>"></i>Hạng <%= tv.ten_hang %></span></h1>
+    <div class="hs-lh">
+      <span><i class="fas fa-hashtag"></i>Mã KH <%= kh.id %></span>
+      <span><i class="fas fa-phone"></i><%= kh.vang_lai ? 'Khách vãng lai (QR)' : kh.sodienthoai %></span>
+      <% if (kh.email) { %><span><i class="fas fa-envelope"></i><%= kh.email %></span><% } %>
+      <% if (kh.diachi) { %><span><i class="fas fa-location-dot"></i><%= kh.diachi %></span><% } %>
+    </div>
+  </div>
+  <div class="hs-dau__phai">
+    <% if (!kh.vang_lai) { %><a class="btn btn-sm btn-light" href="tel:<%= kh.sodienthoai %>"><i class="fas fa-phone"></i> Gọi</a><% } %>
+    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#hsSua"><i class="fas fa-edit"></i> Sửa thông tin</button>
+  </div>
+</section>
+
+<% if (hs.dat_ban_kh && hs.dat_ban_kh.is_blocked) { %>
+  <div class="alert alert-danger"><i class="fas fa-ban"></i> Khách đang bị <b>chặn đặt bàn trực tuyến</b> (không đến nhiều lần).</div>
+<% } %>
+
+<div class="hs-kpi">
+  <div><span>Điểm hiện có</span><b><%= so(tv.diem) %></b><small>đã đổi <%= so(tv.da_doi) %> điểm</small></div>
+  <div><span>Số lần dùng bữa</span><b><%= so(tk.so_lan) %></b><small>hóa đơn đã thanh toán</small></div>
+  <div><span>Tổng hóa đơn</span><b><%= tien(tk.tong) %></b><small>TB <%= tien(tk.tb_moi_lan) %> / lần</small></div>
+  <div><span>Lần gần nhất</span><b style="font-size:1.15rem"><%= ngay(tk.lan_cuoi) %></b><small>lần đầu <%= ngay(tk.lan_dau) %></small></div>
+  <div><span>Đặt bàn</span><b><%= so(tk.so_dat_ban) %></b><small><%= tk.no_show %> lần không đến · <%= tk.huy %> lần hủy</small></div>
+</div>
+
+<div class="hs-luoi">
+  <div class="hs-the">
+    <h2><i class="fas fa-crown"></i>Hạng thành viên &amp; điểm</h2>
+    <div class="d-flex justify-content-between flex-wrap" style="gap:.5rem">
+      <div>Hạng hiện tại: <span class="hs-hang hs-hang--<%= tv.hang %>"><i class="fas <%= HANG_ICON[tv.hang] %>"></i><%= tv.ten_hang %></span></div>
+      <div class="small text-muted">Chi tiêu tích lũy xét hạng: <b class="text-dark"><%= tien(tv.tong_chi) %></b></div>
+    </div>
+    <div class="mt-3">
+      <% if (tv.tien_do.ke) { %>
+        <div class="d-flex justify-content-between small mb-1"><span><%= tv.ten_hang %></span><span>Còn <b><%= tien(tv.tien_do.con_thieu) %></b> để lên <b><%= tv.tien_do.ten_ke %></b></span></div>
+        <div class="hs-thanh" role="progressbar" aria-valuenow="<%= tv.tien_do.phan_tram %>" aria-valuemin="0" aria-valuemax="100"><i style="width:<%= tv.tien_do.phan_tram %>%"></i></div>
+      <% } else { %>
+        <div class="small"><i class="fas fa-gem text-primary"></i> Khách đang ở hạng cao nhất.</div>
+      <% } %>
+    </div>
+    <div class="small mt-3">Quyền lợi hiện tại: tích <b><%= tv.uu_dai.pointsPerSpent %>×</b> điểm<% if (tv.uu_dai.discount) { %>, giảm <b><%= tv.uu_dai.discount %>%</b> hóa đơn<% } %>.</div>
+    <div class="hs-cac-hang">
+      <% tv.cac_hang.forEach(function (h) { %>
+        <div class="<%= h.ma === tv.hang ? 'is-hien' : '' %>">
+          <b><%= h.ten %></b>từ <%= h.nguong ? so(h.nguong / 1000000) + ' triệu' : '0đ' %><br><%= h.pointsPerSpent %>× điểm<%= h.discount ? ' · -' + h.discount + '%' : '' %>
+        </div>
+      <% }) %>
+    </div>
+    <% if (Math.abs(tv.tong_chi - tk.tong) > 1000) { %>
+      <p class="small text-muted mt-3 mb-0"><i class="fas fa-circle-info"></i> Hạng xét theo chi tiêu tích lũy trong ví điểm (cộng khi khách thanh toán bằng tài khoản thành viên), nên có thể khác tổng hóa đơn <%= tien(tk.tong) %>.</p>
+    <% } %>
+  </div>
+
+  <div>
+    <div class="hs-the mb-3">
+      <h2><i class="fas fa-heart"></i>Món khách hay gọi</h2>
+      <% if (hs.mon_yeu_thich.length) { %>
+        <% hs.mon_yeu_thich.forEach(function (m, i) { %>
+          <div class="hs-mon"><span><%= i + 1 %>. <%= m.name_mon %></span><span class="text-muted"><b class="text-dark"><%= so(m.so_luong) %></b> phần · <%= m.so_lan %> lần</span></div>
+        <% }) %>
+      <% } else { %><div class="hs-rong py-2">Chưa có món nào.</div><% } %>
+    </div>
+    <div class="hs-the">
+      <h2><i class="fas fa-note-sticky"></i>Ghi chú nội bộ</h2>
+      <% if (hs.dat_ban_kh && (hs.dat_ban_kh.preferences || hs.dat_ban_kh.internal_note)) { %>
+        <div class="hs-luu-y">
+          <% if (hs.dat_ban_kh.preferences) { %><div><b>Sở thích khi đặt bàn:</b> <%= hs.dat_ban_kh.preferences %></div><% } %>
+          <% if (hs.dat_ban_kh.internal_note) { %><div><b>Ghi chú lễ tân:</b> <%= hs.dat_ban_kh.internal_note %></div><% } %>
+        </div>
+      <% } %>
+      <form method="POST" action="/staff/customers/<%= kh.id %>/ghi-chu">
+        <textarea name="ghichu" class="form-control" rows="3" maxlength="1000" placeholder="Dị ứng, món kiêng, chỗ ngồi ưa thích, dịp đặc biệt…"><%= kh.ghichu || '' %></textarea>
+        <div class="text-right mt-2"><button class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Lưu ghi chú</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white">
+    <ul class="nav nav-tabs card-header-tabs hs-tab" role="tablist">
+      <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tBua" role="tab">Lịch sử dùng bữa <span class="badge badge-light"><%= hs.lich_su_bua.length %></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tDatBan" role="tab">Đặt bàn <span class="badge badge-light"><%= hs.dat_ban.length %></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tTiec" role="tab">Tiệc <span class="badge badge-light"><%= hs.tiec.length %></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tGiao" role="tab">Giao hàng <span class="badge badge-light"><%= hs.giao.length %></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tDiem" role="tab">Lịch sử điểm <span class="badge badge-light"><%= hs.diem.length %></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tDanhGia" role="tab">Đánh giá <span class="badge badge-light"><%= hs.danh_gia.length %></span></a></li>
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <div class="tab-pane fade show active" id="tBua" role="tabpanel">
+      <% if (hs.lich_su_bua.length) { %>
+        <div class="table-responsive"><table class="table hs-bang mb-0">
+          <thead><tr><th>Ngày</th><th>Hình thức</th><th>Bàn</th><th>Món đã gọi</th><th class="text-right">Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <% hs.lich_su_bua.forEach(function (b) { %>
+              <tr>
+                <td class="text-nowrap"><%= ngay(b.ngay) %><br><small class="text-muted"><%= gio(b.gio) %></small></td>
+                <td><%= b.ten_loai %></td>
+                <td><%= b.ban ? 'Bàn ' + b.ban : '—' %></td>
+                <td><div class="hs-mon-ds"><b><%= b.so_mon %> món</b> · <%= (b.mon || '').length > 140 ? b.mon.slice(0, 140) + '…' : b.mon %></div></td>
+                <td class="text-right font-weight-bold text-nowrap"><%= tien(b.tien) %></td>
+                <td><span class="badge badge-<%= mauTT(b.ten_tt) %>"><%= b.ten_tt %></span></td>
+                <td class="text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="/staff/thanh-toan/<%= encodeURIComponent(b.sesis) %>/hoa-don" title="Xem hóa đơn"><i class="fas fa-receipt"></i></a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table></div>
+        <% if (hs.lich_su_bua.length >= 60) { %><p class="small text-muted mt-2 mb-0">Hiện 60 lần gần nhất.</p><% } %>
+      <% } else { %><div class="hs-rong"><i class="fas fa-utensils fa-2x mb-2 d-block"></i>Khách chưa có lần dùng bữa nào.</div><% } %>
+    </div>
+
+    <div class="tab-pane fade" id="tDatBan" role="tabpanel">
+      <% if (hs.dat_ban.length) { %>
+        <div class="table-responsive"><table class="table hs-bang mb-0">
+          <thead><tr><th>Mã</th><th>Ngày giờ</th><th>Số khách</th><th>Dịp</th><th class="text-right">Tiền cọc</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            <% hs.dat_ban.forEach(function (r) { %>
+              <tr>
+                <td><code><%= r.reservation_code %></code></td>
+                <td class="text-nowrap"><%= ngay(r.reservation_date) %> <%= gio(r.start_time) %></td>
+                <td><%= r.guest_count %></td>
+                <td><%= r.occasion || '—' %><% if (r.special_requests) { %><br><small class="text-muted"><%= r.special_requests %></small><% } %></td>
+                <td class="text-right text-nowrap"><%= Number(r.deposit_amount) ? tien(r.deposit_amount) : '—' %></td>
+                <td><span class="badge badge-<%= mauTT(r.ten_tt) %>"><%= r.ten_tt %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table></div>
+      <% } else { %><div class="hs-rong"><i class="fas fa-calendar-xmark fa-2x mb-2 d-block"></i>Chưa có lần đặt bàn nào.</div><% } %>
+    </div>
+
+    <div class="tab-pane fade" id="tTiec" role="tabpanel">
+      <% if (hs.tiec.length) { %>
+        <div class="table-responsive"><table class="table hs-bang mb-0">
+          <thead><tr><th>Mã tiệc</th><th>Loại</th><th>Ngày tổ chức</th><th>Quy mô</th><th class="text-right">Giá trị</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <% hs.tiec.forEach(function (t) { var ttt = TT_TIEC[t.trang_thai] || t.trang_thai; %>
+              <tr>
+                <td><code><%= t.ma_tiec %></code></td>
+                <td><%= t.loai_tiec %></td>
+                <td><%= ngay(t.ngay_to_chuc) %></td>
+                <td><%= t.so_khach %> khách · <%= t.so_ban %> bàn</td>
+                <td class="text-right text-nowrap"><%= tien(t.tong) %></td>
+                <td><span class="badge badge-<%= mauTT(ttt) %>"><%= ttt %></span></td>
+                <td><a class="btn btn-sm btn-outline-secondary" href="/staff/tiec/<%= t.id %>" title="Xem tiệc"><i class="fas fa-eye"></i></a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table></div>
+      <% } else { %><div class="hs-rong"><i class="fas fa-champagne-glasses fa-2x mb-2 d-block"></i>Chưa đặt tiệc lần nào.</div><% } %>
+    </div>
+
+    <div class="tab-pane fade" id="tGiao" role="tabpanel">
+      <% if (hs.giao.length) { %>
+        <div class="table-responsive"><table class="table hs-bang mb-0">
+          <thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Địa chỉ giao</th><th class="text-right">Tiền món + phí</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <% hs.giao.forEach(function (g) { var ttg = TT_GIAO[g.trang_thai] || g.trang_thai; %>
+              <tr>
+                <td><code><%= g.ma_giao %></code></td>
+                <td class="text-nowrap"><%= ngayGio(g.tao_luc) %></td>
+                <td><small><%= g.dia_chi_giao %></small></td>
+                <td class="text-right text-nowrap"><%= tien(Number(g.tien_mon || 0) + Number(g.phi_giao || 0)) %></td>
+                <td><span class="badge badge-<%= mauTT(ttg) %>"><%= ttg %></span></td>
+                <td><a class="btn btn-sm btn-outline-secondary" href="/staff/giao-hang/<%= g.id_giao %>" title="Xem đơn giao"><i class="fas fa-eye"></i></a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table></div>
+      <% } else { %><div class="hs-rong"><i class="fas fa-motorcycle fa-2x mb-2 d-block"></i>Chưa có đơn giao hàng.</div><% } %>
+    </div>
+
+    <div class="tab-pane fade" id="tDiem" role="tabpanel">
+      <% if (hs.diem.length) { %>
+        <div class="table-responsive"><table class="table hs-bang mb-0">
+          <thead><tr><th>Thời gian</th><th>Loại</th><th>Nội dung</th><th class="text-right">Điểm</th></tr></thead>
+          <tbody>
+            <% hs.diem.forEach(function (d) { var cong = d.type === 'earn' || d.type === 'refund' || d.type === 'hoan'; %>
+              <tr>
+                <td class="text-nowrap"><%= ngayGio(d.created_at) %></td>
+                <td><%= { earn: 'Tích điểm', redeem: 'Đổi điểm', refund: 'Hoàn điểm', expire: 'Hết hạn', adjust: 'Điều chỉnh' }[d.type] || d.type %></td>
+                <td><small><%= d.description || '—' %></small></td>
+                <td class="text-right font-weight-bold text-<%= cong ? 'success' : 'danger' %>"><%= cong ? '+' : '−' %><%= so(Math.abs(d.points)) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table></div>
+      <% } else { %><div class="hs-rong"><i class="fas fa-coins fa-2x mb-2 d-block"></i>Chưa có giao dịch điểm.</div><% } %>
+    </div>
+
+    <div class="tab-pane fade" id="tDanhGia" role="tabpanel">
+      <% if (hs.danh_gia.length) { %>
+        <% hs.danh_gia.forEach(function (d) { %>
+          <div class="hs-mon d-block">
+            <div><span class="hs-sao"><%= '★'.repeat(Number(d.sao) || 0) %><span class="text-muted"><%= '★'.repeat(5 - (Number(d.sao) || 0)) %></span></span> <small class="text-muted ml-2"><%= ngayGio(d.thoigian) %></small></div>
+            <div><%= d.noi_dung || '(Không có nhận xét)' %></div>
+          </div>
+        <% }) %>
+      <% } else { %><div class="hs-rong"><i class="fas fa-star fa-2x mb-2 d-block"></i>Khách chưa để lại đánh giá.</div><% } %>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="hsSua" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form action="/staff/customers/edit/<%= kh.id %>" method="POST">
+        <input type="hidden" name="quay_ve" value="chi_tiet">
+        <div class="modal-header">
+          <h5 class="modal-title">Sửa thông tin khách hàng</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"><label>Tên</label><input type="text" name="ten" class="form-control" value="<%= kh.ten %>" required></div>
+          <div class="form-group"><label>Số điện thoại</label><input type="text" name="sodienthoai" class="form-control" value="<%= kh.sodienthoai %>" required></div>
+          <div class="form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<%= kh.email %>"></div>
+          <div class="form-group"><label>Địa chỉ</label><input type="text" name="diachi" class="form-control" value="<%= kh.diachi %>"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Giu tab dang xem khi tai lai (vd sau khi luu ghi chu)
+(function () {
+  var h = location.hash;
+  if (h && window.jQuery && document.querySelector('.hs-tab a[href="' + h + '"]')) jQuery('.hs-tab a[href="' + h + '"]').tab('show');
+  if (window.jQuery) jQuery('.hs-tab a').on('shown.bs.tab', function (e) { history.replaceState(null, '', e.target.getAttribute('href')); });
+})();
+</script>
+
+<%- include('partials/footer') %>

@@ -67,7 +67,8 @@
     <small class="text-muted">
       Tạo lúc <%= new Date(don.tao_luc).toLocaleString('vi-VN') %>
       <% if (don.du_kien_luc) { %>
-        · hẹn giao trước <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
+        · <%= don.hen_gio ? 'khách hẹn nhận lúc' : 'dự kiến giao trước' %> <%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %>
+        <% if (don.cho_hen) { %><span class="badge badge-info">tự phân shipper lúc <%= new Date(don.tu_phan_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %></span><% } %>
         <% if (tre) { %><span class="text-danger font-weight-bold">— đã trễ</span><% } %>
       <% } %>
     </small>
@@ -178,7 +179,28 @@
           <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list-check"></i> Tiến độ giao của shipper</h6>
         </div>
         <div class="card-body small">
-          <% if (don.su_co) { %>
+          <% if (don.thieu_mon) {
+               var monBu = (mon || []).filter(function (m) { return Number(m.soluong) > 0 && String(m.ghi_chu_mon || '').indexOf('[LÀM BÙ]') === 0; }); %>
+            <div class="alert alert-warning py-2 mb-2">
+              <i class="fas fa-utensils"></i> <b>Shipper báo thiếu / sai món<%= don.thieu_mon_luc ? ' lúc ' + gioPhut(don.thieu_mon_luc) : '' %>:</b>
+              <%= don.thieu_mon.replace('Thiếu/sai món ', '') %>
+              <div class="mt-1">Các món đã quay lại bếp để làm bù. Bếp làm xong thì shipper tick lại và đi giao.
+                Nếu món <b>hết hẳn</b>, bấm "Bỏ món" — món bị bỏ khỏi đơn và khách được hoàn điểm đúng giá món.</div>
+              <% monBu.forEach(function (m) { %>
+                <div class="d-flex flex-wrap align-items-center justify-content-between border-top mt-2 pt-2" style="gap:.5rem">
+                  <span><b><%= m.name_mon %></b> × <%= m.soluong %> · <%= formatMoney(m.thanhtien) %>đ
+                    <span class="badge badge-<%= Number(m.trangthai_bep) >= 2 ? 'success' : 'warning' %>"><%= Number(m.trangthai_bep) >= 2 ? 'Bếp đã làm bù xong' : (Number(m.trangthai_bep) === 1 ? 'Bếp đang làm' : 'Chờ bếp') %></span></span>
+                  <% if (phanCongDuoc && Number(m.trangthai_bep) < 2) { %>
+                    <form action="/staff/giao-hang/<%= don.id_giao %>/bo-mon" method="POST" class="m-0"
+                          data-xac-nhan="<%= 'Bỏ ' + m.name_mon + ' khỏi đơn và hoàn điểm ' + formatMoney(m.thanhtien) + 'đ cho khách? Không hoàn tác được.' %>" onsubmit="return confirm(this.dataset.xacNhan);">
+                      <input type="hidden" name="id_dong" value="<%= m.id %>">
+                      <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-ban"></i> Bỏ món (hết hàng) &amp; hoàn điểm</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+          <% } else if (don.su_co) { %>
             <div class="alert alert-danger py-2 mb-2">
               <i class="fas fa-triangle-exclamation"></i> <b>Sự cố<%= don.su_co_luc ? ' lúc ' + gioPhut(don.su_co_luc) : '' %>:</b> <%= don.su_co %>
               <% if (phanCongDuoc) { %>

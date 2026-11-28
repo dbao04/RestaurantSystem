@@ -1,0 +1,90 @@
+<%#
+  Chon thoi diem nhan hang cho DON GIAO: "Giao ngay" (mac dinh) hoac "Hen gio".
+  Dung chung cho gio hang (/cart) va trang thong tin giao hang (/giao-hang).
+
+  Truoc day o gio nhan dien san 18:00 (va gio hang khong co o nay nen server tu
+  dien 18:00) -> khach bam tiep la thanh don HEN 18:00: bep va shipper doi toi
+  17:00 moi lam, trong khi trang theo doi bao "giao truoc 17:12".
+
+  Gui len server:
+    che_do_giao = 'ngay' | 'hen_gio'
+    datebook / timebook - chi co gia tri khi hen gio (giao ngay: de trong, server
+    lay gio hien tai).
+  Bien vao: thongTinGiao (tuy chon) - giu lua chon cu khi khach quay lai.
+%>
+<%
+  var _tt = (typeof thongTinGiao !== 'undefined' && thongTinGiao) ? thongTinGiao : null;
+  var _hen = !!(_tt && _tt.che_do_giao === 'hen_gio' && _tt.timebook);
+  var _homNay = new Date();
+  var _ngayMin = _homNay.getFullYear() + '-' + String(_homNay.getMonth() + 1).padStart(2, '0') + '-' + String(_homNay.getDate()).padStart(2, '0');
+%>
+<style>
+  .gg-chon { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 520px) { .gg-chon { grid-template-columns: 1fr; } }
+  .gg-o { position: relative; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid #e8decb;
+    border-radius: 12px; background: #fff; cursor: pointer; transition: border-color .2s, background .2s; }
+  .gg-o input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .gg-o i { color: #c8a24b; margin-top: 3px; }
+  .gg-o b { display: block; color: #2c1810; font-size: .95rem; }
+  .gg-o small { display: block; color: #7a6a5c; font-size: .8rem; line-height: 1.4; margin-top: 2px; }
+  .gg-o:has(input:checked) { border-color: #c8a24b; background: #fffaf0; box-shadow: 0 0 0 3px rgba(200, 162, 75, .15); }
+  .gg-o:has(input:focus-visible) { outline: 2px solid #c8a24b; outline-offset: 2px; }
+  .gg-hen[hidden] { display: none !important; }
+  [data-theme="dark"] .gg-o { background: #1f1915; border-color: #3a3029; }
+  [data-theme="dark"] .gg-o b { color: #f5ead6; }
+  [data-theme="dark"] .gg-o small { color: #b8ab9c; }
+  [data-theme="dark"] .gg-o:has(input:checked) { background: #2a2119; border-color: #c8a24b; }
+</style>
+<div class="gg-chon" role="radiogroup" aria-label="<%= t('dat_ban.thoi_gian_nhan_mong_muon') %>">
+  <label class="gg-o">
+    <input type="radio" name="che_do_giao" value="ngay" <%= _hen ? '' : 'checked' %>>
+    <i class="fas fa-bolt" aria-hidden="true"></i>
+    <span><b><%= t('giao.che_do_ngay') %></b><small><%= t('giao.che_do_ngay_mo_ta') %></small></span>
+  </label>
+  <label class="gg-o">
+    <input type="radio" name="che_do_giao" value="hen_gio" <%= _hen ? 'checked' : '' %>>
+    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+    <span><b><%= t('giao.che_do_hen') %></b><small><%= t('giao.che_do_hen_mo_ta') %></small></span>
+  </label>
+</div>
+<div class="nh-fields gg-hen" id="gg-hen" <%= _hen ? '' : 'hidden' %>>
+  <div class="nh-field">
+    <label for="o-ngay"><%= t('dat_ban.ngay_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
+    <input class="nh-input" type="date" name="datebook" id="o-ngay" min="<%= _ngayMin %>"
+           value="<%= _hen ? _tt.datebook : '' %>" <%= _hen ? 'required' : 'disabled' %>>
+    <span class="nh-hint" id="hint-ngay"><%= t('dat_ban.chi_tu_hom_nay') %></span>
+  </div>
+  <div class="nh-field">
+    <label for="o-gio"><%= t('dat_ban.gio_nhan') %> <span class="req" style="color:#c0392b">*</span></label>
+    <input class="nh-input" type="time" name="timebook" id="o-gio"
+           value="<%= _hen ? _tt.timebook : '' %>" <%= _hen ? 'required' : 'disabled' %>>
+    <span class="nh-hint"><%= t('dat_ban.gio_phuc_vu') %></span>
+  </div>
+</div>
+<script>
+(function () {
+  var khung = document.getElementById('gg-hen');
+  var ngay = document.getElementById('o-ngay');
+  var gio = document.getElementById('o-gio');
+  var radios = document.querySelectorAll('input[name="che_do_giao"]');
+  function dd(n) { return String(n).padStart(2, '0'); }
+  // Giao ngay: an + disabled (khong gui len) -> server lay gio hien tai.
+  window.ghLaHenGio = function () {
+    var r = document.querySelector('input[name="che_do_giao"]:checked');
+    return !!r && r.value === 'hen_gio';
+  };
+  function capNhat() {
+    var hen = window.ghLaHenGio();
+    khung.hidden = !hen;
+    [ngay, gio].forEach(function (o) { o.disabled = !hen; o.required = hen; });
+    if (hen) {
+      var d = new Date();
+      if (!ngay.value) ngay.value = d.getFullYear() + '-' + dd(d.getMonth() + 1) + '-' + dd(d.getDate());
+      // Goi y gio hen som nhat co y nghia: 90 phut nua, lam tron 15 phut.
+      if (!gio.value) { var g = new Date(Date.now() + 90 * 60000); g.setMinutes(Math.ceil(g.getMinutes() / 15) * 15); gio.value = dd(g.getHours()) + ':' + dd(g.getMinutes()); }
+    }
+  }
+  radios.forEach(function (r) { r.addEventListener('change', capNhat); });
+  capNhat();
+})();
+</script>

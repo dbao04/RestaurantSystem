@@ -47,11 +47,34 @@
       <label class="dp-cong mb-0"><input type="checkbox" id="cTuDong" <%= ts.tu_dong ? 'checked' : '' %> <%= duocSua ? '' : 'disabled' %> aria-label="Bật tự động phân đơn"><i></i></label>
       <b style="font-size:1.1rem;display:inline" id="nhanTuDong"><%= ts.tu_dong ? 'Đang bật' : 'Đang tắt' %></b>
     </div></div></div>
-  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Đơn chờ phân</span><b class="<%= tq.cho_phan ? 'text-danger' : '' %>"><%= tq.cho_phan %></b><small><%= tq.cho_phan ? 'chưa có shipper rảnh' : 'không có đơn tồn' %></small></div></div>
+  <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Đơn chờ phân</span><b class="<%= tq.so_ket ? 'text-danger' : (tq.cho_phan ? 'text-warning' : '') %>"><%= tq.cho_phan %></b><small><%
+      var _p = [];
+      if (tq.so_ket) _p.push(tq.so_ket + ' cần xử lý tay');
+      if (tq.so_cho_hen) _p.push(tq.so_cho_hen + ' đơn hẹn giờ');
+      if (tq.so_dang_tim) _p.push(tq.so_dang_tim + ' đang tìm shipper');
+    %><%= _p.length ? _p.join(' · ') : 'không có đơn tồn' %></small></div></div>
   <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Chờ shipper nhận</span><b><%= tq.cho_xac_nhan %></b><small>quá <%= ts.phut_xac_nhan %> phút tự chuyển</small></div></div>
   <div class="col-6 col-lg mb-3"><div class="dp-o"><span>Đơn đang chạy</span><b><%= tq.dang_chay %></b><small>đã phân, đang lấy / giao</small></div></div>
   <div class="col-12 col-lg mb-3"><div class="dp-o"><span>Chênh lệch tải hôm nay</span><b class="<%= tq.chenh_lech > (ts.tieu_chi === 'thu_nhap' ? 50000 : 2) ? 'text-warning' : 'text-success' %>"><%= ts.tieu_chi === 'thu_nhap' ? vnd(tq.chenh_lech) : tq.chenh_lech + ' đơn' %></b><small>giữa shipper nhiều nhất và ít nhất (đang trong ca)</small></div></div>
 </div>
+
+<% if (tq.don_cho && tq.don_cho.length) { %>
+<!-- ============ DON DANG CHO PHAN: ly do tung don ============ -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white"><h6 class="m-0 font-weight-bold"><i class="fas fa-hourglass-half text-warning"></i> Đơn đang chờ phân</h6></div>
+  <div class="list-group list-group-flush">
+    <% tq.don_cho.forEach(function (d) {
+         var mau = d.loai === 'ket' ? 'danger' : (d.loai === 'hen_gio' ? 'info' : 'warning');
+         var nhan = d.loai === 'ket' ? 'Cần xử lý tay' : (d.loai === 'hen_gio' ? 'Hẹn giờ' : 'Đang tìm shipper'); %>
+      <a class="list-group-item list-group-item-action d-flex flex-wrap align-items-center justify-content-between" style="gap:.5rem" href="/staff/giao-hang/<%= d.id_giao %>">
+        <span><b><%= d.ma_giao %></b> <span class="badge badge-<%= mau %>"><%= nhan %></span>
+          <small class="d-block text-muted"><%= d.dia_chi_giao %></small></span>
+        <span class="small text-<%= d.loai === 'ket' ? 'danger' : 'muted' %>"><%= d.ly_do %><% if (d.loai === 'ket') { %> · <u>phân tay hoặc hủy</u><% } %></span>
+      </a>
+    <% }) %>
+  </div>
+</div>
+<% } %>
 
 <!-- ============ BANG CHIA DEU ============ -->
 <div class="card shadow-sm mb-4">

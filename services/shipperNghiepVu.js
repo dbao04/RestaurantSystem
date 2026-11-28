@@ -41,6 +41,12 @@ const COT_MOI = [
   ['nhan_lai_boi', 'VARCHAR(120) NULL'],
   ['su_co', 'VARCHAR(300) NULL'],
   ['su_co_luc', 'DATETIME NULL'],
+  // Shipper bao thieu / sai mon khi kiem hang tai quay (baoThieuMon).
+  ['thieu_mon', 'VARCHAR(500) NULL'],
+  ['thieu_mon_luc', 'DATETIME NULL'],
+  // Danh sach dong mon (id hopdong) luc shipper kiem hang - xuat phat thi doi chieu
+  // lai, don bi them / bo mon sau khi kiem thi phai kiem lai.
+  ['kiem_hang_mon', 'VARCHAR(1000) NULL'],
 ];
 
 let _damBao = null;
@@ -113,6 +119,8 @@ const SU_KIEN = {
   goi_khach:     { nhan: 'Shipper gọi cho khách', mau: '#6c757d', icon: 'fa-phone', noiBo: true },
   su_co:         { nhan: 'Báo sự cố', mau: '#dc3545', icon: 'fa-triangle-exclamation', noiBo: true },
   nhan_lai_hang: { nhan: 'Quầy đã nhận lại hàng hoàn', mau: '#0d6efd', icon: 'fa-box', noiBo: true },
+  thieu_mon:     { nhan: 'Nhà hàng đang làm bù món còn thiếu', mau: '#fd7e14', icon: 'fa-utensils' },
+  bo_mon:        { nhan: 'Món đã hết - bỏ khỏi đơn và hoàn điểm cho khách', mau: '#dc3545', icon: 'fa-ban' },
 };
 
 async function thamSo() {
@@ -169,18 +177,138 @@ async function layMaNhanHang(idGiao) {
  * Kiem hang tai quay. `monIds` la cac dong hopdong shipper da tick; phai du
  * MOI mon cua don. `niemPhong` = da dan niem phong / buoc tui.
  */
+/** "Dau van" danh sach mon: id cac dong con so luong, sap xep - de biet don co doi mon sau khi kiem. */
+function dauVanMon(dong) {
+  return dong.map((m) => Number(m.id)).sort((a, b) => a - b).join(',').slice(0, 1000);
+}
+
 async function kiemHang(idGiao, idShipper, { monIds = [], niemPhong = false } = {}, nguoi = {}) {
   const d = await layDonCuaShipper(idGiao, idShipper);
   if (d.trang_thai !== 'dang_lay') throw loi('Chỉ kiểm hàng khi đang ở quầy lấy hàng.');
+  // RANG BUOC: bep phai lam xong HET mon (trangthai_bep >= 2) thi shipper moi duoc
+  // nhan hang. Truoc day tick + "Xac nhan du hang" duoc ca khi mon con dang nau.
+  const [chuaXong] = await db.query(
+    'SELECT name_mon, soluong FROM hopdong WHERE sesis = ? AND id_mon > 0 AND soluong > 0 AND trangthai_bep < 2', [d.sesis]);
+  if (chuaXong.length) {
+    const ds = chuaXong.slice(0, 4).map((m) => `${String(m.name_mon).trim()} x${m.soluong}`).join(', ');
+    throw loi(`Bếp chưa làm xong: ${ds}${chuaXong.length > 4 ? '…' : ''}. Chờ bếp báo xong hết món rồi mới nhận hàng.`);
+  }
   const [mon] = await db.query(
     'SELECT id FROM hopdong WHERE sesis = ? AND soluong > 0', [d.sesis]);
   const daTick = new Set((Array.isArray(monIds) ? monIds : []).map(Number));
   const thieu = mon.filter((m) => !daTick.has(Number(m.id)));
   if (thieu.length) throw loi(`Còn ${thieu.length} món chưa kiểm. Đối chiếu đủ từng món với phiếu rồi tick lại.`);
   if (!niemPhong) throw loi('Hãy niêm phong / buộc kín túi hàng rồi tick xác nhận.');
-  await db.query('UPDATE don_giao_hang SET kiem_hang_luc = NOW() WHERE id_giao = ?', [idGiao]);
+  await db.query(
+    `UPDATE don_giao_hang SET kiem_hang_luc = NOW(), kiem_hang_mon = ?, thieu_mon = NULL, thieu_mon_luc = NULL,
+            su_co = IF(su_co LIKE ?, NULL, su_co), su_co_luc = IF(su_co IS NULL, NULL, su_co_luc)
+      WHERE id_giao = ?`, [dauVanMon(mon), `${TIEN_TO_THIEU}%`, idGiao]);
   await ghiSuKien(idGiao, d.trang_thai, 'kiem_hang', nguoi, `Đã kiểm ${mon.length} món, túi đã niêm phong`);
   return { ok: true };
+}
+
+/* ---------------------------------------------------------------------------
+ * THIEU / SAI MON khi kiem hang tai quay.
+ *
+ * Truoc day shipper chi chon duoc "Su co khac" va go tay: bep / quay khong
+ * duoc bao, don dung im o buoc 2. Gio:
+ *   1. Shipper danh dau mon thieu / sai (+ ghi chu) -> baoThieuMon:
+ *      - mon do quay lai hang cho cua BEP (trangthai_bep = 0) kem ghi chu
+ *        "[LAM BU] ..." de bep biet la mon lam lai cho don giao;
+ *      - don gan co thieu_mon + su_co (dieu phoi thay), bo dau "da kiem hang",
+ *        du kien giao lui them PHUT_BU phut;
+ *      - bao bep + quan ly bep + dieu phoi + thu ngan.
+ *   2. Bep lam xong -> shipper tick lai -> kiemHang go co.
+ *   3. Mon HET han, khong lam duoc -> quay / dieu phoi boMonThieu: bo mon khoi
+ *      don + hoan diem dung gia mon (loi nha hang, ly do het_mon).
+ * ------------------------------------------------------------------------- */
+const TIEN_TO_THIEU = 'Thiếu/sai món';
+const TIEN_TO_BU = '[LÀM BÙ]';
+const PHUT_BU = 15;
+
+async function baoThieuMon(idGiao, idShipper, { monIds = [], loai = 'thieu', ghiChu = '' } = {}, nguoi = {}) {
+  const d = await layDonCuaShipper(idGiao, idShipper);
+  if (d.trang_thai !== 'dang_lay') throw loi('Chỉ báo thiếu / sai món khi đang ở quầy lấy hàng.');
+  const ids = [...new Set((Array.isArray(monIds) ? monIds : [monIds]).map(Number).filter((x) => x > 0))];
+  if (!ids.length) throw loi('Chọn ít nhất một món bị thiếu hoặc sai.');
+  const [mon] = await db.query(
+    'SELECT id, name_mon, soluong, ghi_chu_mon FROM hopdong WHERE sesis = ? AND soluong > 0 AND id IN (?)', [d.sesis, ids]);
+  if (mon.length !== ids.length) throw loi('Có món không thuộc đơn này - tải lại trang rồi chọn lại.');
+  const [[bep]] = await db.query(
+    "SELECT GROUP_CONCAT(name_mon SEPARATOR ', ') AS ds FROM hopdong WHERE id IN (?) AND trangthai_bep < 2", [ids]);
+  if (bep && bep.ds) throw loi(`Bếp chưa làm xong ${String(bep.ds).trim()} - chờ bếp báo xong, chưa phải thiếu món.`);
+
+  const kieu = loai === 'sai' ? 'sai món' : 'thiếu';
+  const ghi = String(ghiChu || '').trim().slice(0, 150);
+  const ghiBep = `${TIEN_TO_BU} Shipper báo ${kieu}${ghi ? ': ' + ghi : ''}`;
+  const dsTen = mon.map((m) => `${m.name_mon} x${m.soluong}`).join(', ');
+  const noiDung = `${TIEN_TO_THIEU} (${kieu}): ${dsTen}${ghi ? ' - ' + ghi : ''}`.slice(0, 500);
+
+  // Mon quay lai bep. Ghi chu cu cua khach (it cay...) van giu, chen "[LAM BU]" len dau.
+  for (const m of mon) {
+    const cu = String(m.ghi_chu_mon || '').replace(/^\[LÀM BÙ\][^|]*\|\s*/, '');
+    await db.query('UPDATE hopdong SET trangthai_bep = 0, ghi_chu_mon = ? WHERE id = ?',
+      [(ghiBep + (cu ? ' | ' + cu : '')).slice(0, 255), m.id]);
+  }
+  await db.query(
+    `UPDATE don_giao_hang
+        SET thieu_mon = ?, thieu_mon_luc = NOW(), kiem_hang_luc = NULL,
+            su_co = ?, su_co_luc = NOW(),
+            du_kien_luc = GREATEST(COALESCE(du_kien_luc, NOW()), NOW()) + INTERVAL ? MINUTE
+      WHERE id_giao = ?`, [noiDung, noiDung.slice(0, 300), PHUT_BU, idGiao]);
+  await ghiSuKien(idGiao, d.trang_thai, 'thieu_mon', nguoi, noiDung);
+
+  try {
+    await require('./thongBaoService').gui('don_giao_thieu_mon', {
+      tieuDe: `Đơn giao ${d.ma_giao}: shipper báo ${kieu} món - làm bù gấp`,
+      noiDung: `${dsTen}${ghi ? ' · ' + ghi : ''}. Shipper đang chờ ở quầy.`,
+      link: `/staff/giao-hang/${idGiao}`, nguoiGui: nguoi.ten || 'Shipper',
+    });
+  } catch (e) { console.error('[thieu-mon] thong bao:', e.message); }
+  return { ok: true, ma_giao: d.ma_giao, mon: mon.map((m) => m.id), noi_dung: noiDung };
+}
+
+/**
+ * Mon het han (khong lam bu duoc): bo khoi don + hoan diem dung gia dong mon.
+ * Chi bo duoc mon cua don CHUA roi nha hang.
+ */
+async function boMonThieu(idGiao, idDong, nguoi = {}) {
+  await damBaoCauTruc();
+  const [[d]] = await db.query('SELECT * FROM don_giao_hang WHERE id_giao = ?', [idGiao]);
+  if (!d) throw loi('Không tìm thấy đơn giao hàng.');
+  if (!['cho_phan', 'da_phan', 'dang_lay'].includes(d.trang_thai)) {
+    throw loi('Đơn đã rời nhà hàng hoặc đã kết thúc - không bỏ món được nữa.');
+  }
+  const [[m]] = await db.query('SELECT id, name_mon, soluong, thanhtien FROM hopdong WHERE id = ? AND sesis = ? AND soluong > 0', [idDong, d.sesis]);
+  if (!m) throw loi('Món không thuộc đơn này hoặc đã bỏ rồi.');
+  const [[con]] = await db.query('SELECT COUNT(*) AS n FROM hopdong WHERE sesis = ? AND id_mon > 0 AND soluong > 0 AND id <> ?', [d.sesis, idDong]);
+  if (!Number(con.n)) throw loi('Đây là món cuối cùng của đơn - hãy HỦY ĐƠN (lý do "Nhà hàng hết món") thay vì bỏ món.');
+
+  const tien = Math.round(Number(m.thanhtien) || 0);
+  let soDiem = 0;
+  if (tien > 0) {
+    const kq = await require('./chinhSachGiaoService').hoanDiemMotPhan(idGiao, {
+      so_tien: tien, ma_ly_do: 'het_mon', ghi_chu: `Bỏ món ${m.name_mon} x${m.soluong}`, nguoi,
+    });
+    soDiem = kq.so_diem;
+  }
+  await db.query(
+    `UPDATE hopdong SET soluong = 0, thanhtien = 0,
+            ghi_chu_mon = LEFT(CONCAT('[ĐÃ BỎ - hết món, hoàn điểm] ', COALESCE(ghi_chu_mon, '')), 255)
+      WHERE id = ?`, [idDong]);
+  await db.query('UPDATE don_giao_hang SET kiem_hang_luc = NULL, kiem_hang_mon = NULL WHERE id_giao = ?', [idGiao]);
+  await ghiSuKien(idGiao, d.trang_thai, 'bo_mon', nguoi, `Bỏ ${m.name_mon} x${m.soluong} (hết món) - hoàn ${soDiem} điểm`);
+
+  // Het mon con thieu -> go co thieu mon.
+  const [[conBu]] = await db.query(
+    "SELECT COUNT(*) AS n FROM hopdong WHERE sesis = ? AND soluong > 0 AND ghi_chu_mon LIKE ? AND trangthai_bep < 2",
+    [d.sesis, `${TIEN_TO_BU}%`]);
+  if (!Number(conBu.n)) {
+    await db.query(
+      `UPDATE don_giao_hang SET thieu_mon = NULL, thieu_mon_luc = NULL,
+              su_co = IF(su_co LIKE ?, NULL, su_co) WHERE id_giao = ?`, [`${TIEN_TO_THIEU}%`, idGiao]);
+  }
+  return { ok: true, ten_mon: m.name_mon, so_tien: tien, so_diem: soDiem, ma_giao: d.ma_giao };
 }
 
 /** Shipper ghi nhan da den diem giao. */
@@ -328,5 +456,5 @@ async function chotCa(idShipper, ghiChu = null) {
 module.exports = {
   damBaoCauTruc, LY_DO_THAT_BAI, LOAI_SU_CO, SU_KIEN, thamSo,
   layMaNhanHang, kiemHang, denNoi, ghiCuocGoi, kiemTraThatBai, nhanLaiHang,
-  baoSuCo, xuLyXongSuCo, batDauCa, tongKetCa, chotCa,
+  baoSuCo, xuLyXongSuCo, batDauCa, tongKetCa, chotCa, baoThieuMon, boMonThieu, TIEN_TO_BU, dauVanMon,
 };

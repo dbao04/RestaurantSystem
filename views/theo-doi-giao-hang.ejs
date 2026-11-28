@@ -259,6 +259,8 @@
   </style>
   <script src="/thong-bao-dep.js?v=3"></script>
   <script src="/hien-mat-khau.js?v=3"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/font-he-thong.css?v=1">
 </head>
 <style>
   .cs-hop { border-radius:14px; padding:14px 16px; font-size:13.8px; line-height:1.6; margin-bottom:16px; }
@@ -295,6 +297,9 @@
         <span class="live-dot"></span><%= t('theo_doi.dang_toi') %>
       <% } else if (don.trang_thai === 'da_giao') { %>
         <%= t('theo_doi.cam_on') %>
+      <% } else if (don.hen_gio && !don.da_xong) { %>
+        <%= t('theo_doi.hen_giao') %>
+        <b style="color:#d4af37;"><%= new Date(don.hen_gio).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) %></b>
       <% } else if (don.du_kien_luc && !don.da_xong) { %>
         <%= t('theo_doi.du_kien') %>
         <b style="color:#d4af37;"><%= new Date(don.du_kien_luc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) %></b>

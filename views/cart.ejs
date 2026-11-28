@@ -523,6 +523,12 @@
                 <input class="nh-input" name="ghi_chu_giao" value="<%= ghiChuMacDinh %>" placeholder="<%= t('gio_hang.g_ghi_chu_vd') %>">
               </div>
 
+              <!-- Thoi diem nhan hang: Giao ngay (mac dinh) / Hen gio -->
+              <div class="nh-field" style="margin-bottom:14px;">
+                <label><i class="fas fa-clock" style="color:#c8a24b"></i> <%= t('dat_ban.thoi_gian_nhan_mong_muon') %></label>
+                <%- include('partials/chon-gio-giao') %>
+              </div>
+
               <!-- Bản đồ ghim vị trí Leaflet -->
               <div class="gh-map-box">
                 <div id="gh-cart-map"></div>
