@@ -16,7 +16,7 @@ set -euo pipefail
 TEN_MIEN="${1:?Thieu ten mien. vd: bash cai-dat-vps.sh nhahangbaodoan.vn ban@gmail.com}"
 EMAIL_SSL="${2:?Thieu email nhan thong bao chung chi SSL}"
 REPO="${REPO:-https://github.com/dbao04/RestaurantSystem.git}"
-NHANH="${NHANH:-doan}"
+NHANH="${NHANH:-main}"
 NGUOI_CHAY="nhahang"                 # user he thong chay ung dung (khong chay bang root)
 THU_MUC="/home/$NGUOI_CHAY/app"
 GOI="${GOI:-/root/deploy-goi.zip}"   # goi du lieu tao bang deploy/dong-goi-du-lieu.ps1

@@ -73,11 +73,11 @@
           <li><a href="/datban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='datban') ? 'is-active' : '' %>"><%= t('chung.dat_ban') %></a></li>
           <li><a href="/dat-tiec" class="<%= (typeof activeNav !== 'undefined' && activeNav==='dattiec') ? 'is-active' : '' %>"><%= t('dieu_huong.dat_tiec') %></a></li>
           <li><a href="/blog" class="<%= (typeof activeNav !== 'undefined' && activeNav==='blog') ? 'is-active' : '' %>"><%= t('dieu_huong.tin_tuc') %></a></li>
-          <% if (!session.username) { %>
-          <li><a href="/thanh-vien" class="<%= (typeof activeNav !== 'undefined' && activeNav==='thanhvien') ? 'is-active' : '' %>"><%= t('dieu_huong.thanh_vien') %></a></li>
-          <% } %>
+          <%# "Thanh Vien" khong nam tren thanh ngang: da dang nhap thi xem o menu so xuong cua ten khach. %>
           <li><a href="/huong-dan-dat-ban" class="<%= (typeof activeNav !== 'undefined' && activeNav==='huongdandatban') ? 'is-active' : '' %>"><%= t('dieu_huong.huong_dan_dat_ban') %></a></li>
+          <% if (session.username) { %>
           <li><a href="/my-orders" class="<%= (typeof activeNav !== 'undefined' && activeNav==='myorders') ? 'is-active' : '' %>"><%= t('dieu_huong.don_cua_toi') %></a></li>
+          <% } %>
           <%# Chat voi nhan vien: vao tu khung chatbot (nut "Chat voi nhan vien") - khong chiem cho tren menu. %>
 
           <%# Chi hien trong ngan keo tren dien thoai - xem chu thich .nh-menu-mobile o tren %>
@@ -182,4 +182,4 @@
         <button class="nh-burger" id="nh-burger" aria-label="Menu"><i class="fas fa-bars"></i></button>
       </div>
     </nav>
-    <% if (!heroNav) { %><div style="height:66px"></div><% } %>
+    <% if (!heroNav) { %><div style="height:62px"></div><% } %>

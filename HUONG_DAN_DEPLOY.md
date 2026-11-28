@@ -77,4 +77,5 @@ Xong thì mở `https://tenmien.vn`.
 - Cookie phiên tự gắn `Secure` qua HTTPS; phiên lưu trong bảng `phien_dang_nhap`.
 - Web chỉ chạy **1 tiến trình** (Socket.IO và các tác vụ nền giữ trạng thái trong bộ
   nhớ) — muốn chịu tải lớn hơn thì nâng cấu hình VPS, không bật cluster.
-- Nhánh được deploy mặc định là `doan`; đổi bằng `NHANH=main bash cai-dat-vps.sh ...`.
+- Nhánh được deploy mặc định là `main` (nhánh gộp code của cả nhóm); muốn chạy thử nhánh khác thì `NHANH=<tên nhánh> bash cai-dat-vps.sh ...`.
+- VPS đã cài theo nhánh cũ (ví dụ `doan`): chuyển một lần bằng `sudo -u nhahang git -C /home/nhahang/app fetch origin main && sudo -u nhahang git -C /home/nhahang/app checkout main`, rồi chạy `cap-nhat.sh`.

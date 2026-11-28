@@ -1145,3 +1145,11 @@ views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
 - quetChoShipper (vong 60s): tinh tu max(cho_phan_luc, gio hen - 60); 10 phut -> thong bao giao_cho_shipper_lau (DIEU_PHOI, QUAN_LY), 20 phut -> huyDon ly do khong_co_shipper (loi nha hang, hoan diem, bao khach). Cot moi don_giao_hang.cho_phan_luc, canh_bao_shipper_luc; chi xet don co cho_phan_luc (2 don cu 07/11 khong bi dong).
 - scripts/test-tinh-nang-moi.js: gio nhan = bay gio; ngoai gio thi kiem tra bi tu choi va bo qua phan don giao.
 - Kiem thu thu_giao_tg.js 14/14 (du lieu thu xoa dung id). Luu y: chua chay duoc nhanh trong gio cua test tinh nang moi (chay luc gan 0h).
+
+[28/11/2026] Thanh menu khach to hon: chu muc menu ~+10% moi moc (16.5px o 1920, 14-15px o 1366-1600), dem lon hon, logo 40px; 1331-1700 thu gon ten nha hang (1.22rem) + khoang cach nut phai; 1331-1460 giam dem ngang chu. Do 1920/1600/1536/1440/1366: vua mot hang, khong an ten (khach chua dang nhap o 1340 van an ten). Dem duoi nav 61px.
+
+[28/11/2026] Thanh menu khach: bo muc "Thanh Vien" khoi thanh ngang (ca khach chua dang nhap; da dang nhap xem o menu so xuong cua ten). "Lich Su Dat Ban" chi hien khi da dang nhap. Menu dien thoai giu muc Thanh vien cho khach da dang nhap.
+
+[28/11/2026] Thanh menu khach to them: chu ~18px o 1920, 15-17px o 1366-1600 (khach chua dang nhap); da dang nhap thu dem ngang o 1331-1700, chu 14.7px o 1331-1400. Vua mot hang, khong an ten nha hang tu 1366 (da dang nhap o 1340 van an ten). Dem duoi nav 62px.
+
+[28/11/2026] Deploy: deploy/cai-dat-vps.sh mac dinh nhanh main (truoc la doan); HUONG_DAN_DEPLOY.md cap nhat + cach chuyen VPS da cai theo nhanh cu sang main.

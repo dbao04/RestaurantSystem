@@ -101,7 +101,7 @@ body::-webkit-scrollbar {
 .nh-nav.is-solid { 
   background: rgba(22, 13, 8, 0.94); 
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  padding: .5rem 0; 
+  padding: .7rem 0; 
   box-shadow: 0 10px 32px -10px rgba(0, 0, 0, 0.7);
   border-bottom: 1px solid rgba(200, 162, 75, 0.2);
 }
@@ -123,7 +123,7 @@ body::-webkit-scrollbar {
 }
 .nh-brand:hover { transform: scale(1.02); }
 .nh-brand img { 
-  height: 36px; width: auto; flex-shrink: 0; 
+  height: 40px; width: auto; flex-shrink: 0; 
   filter: drop-shadow(0 2px 8px rgba(200, 162, 75, 0.5));
 }
 .nh-brand__name { 
@@ -149,8 +149,8 @@ body::-webkit-scrollbar {
   font-family: 'Plus Jakarta Sans', 'Montserrat', var(--nh-sans);
   color: rgba(255, 248, 235, 0.9); 
   /* Chu menu de doc (truoc ~12-13px qua nho): 15-16px man lon, giam dan theo moc ben duoi. */
-  font-weight: 600; font-size: clamp(0.9rem, 0.82vw, 1rem); 
-  padding: .42rem .62rem; 
+  font-weight: 600; font-size: clamp(1.08rem, 1vw, 1.2rem); 
+  padding: .56rem .8rem; 
   border-radius: 999px;
   white-space: nowrap; 
   text-decoration: none;
@@ -389,7 +389,7 @@ body::-webkit-scrollbar {
 /* Menu co nhieu muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
    1561-2000px de van vua mot hang; <= 1560px dung quy tac bieu tuong ben duoi. */
 @media (min-width: 1561px) and (max-width: 2000px) {
-  .nh-nav__links a { padding: .4rem .55rem; font-size: .94rem; }
+  .nh-nav__links a { padding: .54rem .68rem; font-size: 1.12rem; }
 }
 /* Duoi 1900px: nut "Giao tan noi / Dat ban" chi con bieu tuong (title van co ten)
    de nhuong cho menu chu to, de doc. */
@@ -418,20 +418,20 @@ body::-webkit-scrollbar {
   .nh-nav.is-hep .nh-brand__name { display: none; }
 }
 @media (min-width: 1561px) and (max-width: 1699px) {
-  .nh-nav__links a { padding: .38rem .44rem; font-size: .9rem; }
+  .nh-nav__links a { padding: .52rem .56rem; font-size: 1.07rem; }
 }
 @media (max-width: 1560px) {
-  .nh-nav__links a { font-size: 0.86rem; padding: 0.34rem 0.4rem; }
+  .nh-nav__links a { font-size: 1.03rem; padding: 0.48rem 0.5rem; }
 }
 @media (max-width: 1460px) {
-  .nh-nav__links a { font-size: 0.82rem; padding: 0.32rem 0.34rem; }
+  .nh-nav__links a { font-size: 0.98rem; padding: 0.46rem 0.44rem; }
 }
 @media (max-width: 1400px) {
   .nh-nav .nh-container { padding-inline: 0.75rem; }
   .nh-nav__inner { gap: 0.35rem; }
   .nh-lang__nut span { display: none; }
   .nh-lang__nut { padding: 5px 8px; }
-  .nh-nav__links a { font-size: 0.8rem; padding: 0.3rem 0.32rem; }
+  .nh-nav__links a { font-size: 0.96rem; padding: 0.44rem 0.4rem; }
   .nh-brand__name { font-size: 1.45rem; }
 }
 @media (max-width: 1330px) {
@@ -3370,3 +3370,26 @@ html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
 .nh-tk__menu a:hover, .nh-tk__menu a:focus-visible { background: var(--nh-cream-2, rgba(200,162,75,.12)); color: var(--nh-ink); }
 .nh-tk__menu a.is-active { color: var(--nh-gold); font-weight: 600; }
 .nh-tk__vach { border-top: 1px solid var(--nh-line, rgba(0,0,0,.08)); margin-top: 4px; padding-top: 4px; }
+
+/* Menu chu to hon (28/11): o 1331-1700px nhuong cho menu bang cach thu gon ten
+   nha hang va khoang cach cac nut ben phai, de khong phai an ten nha hang. */
+@media (min-width: 1331px) and (max-width: 1700px) {
+  .nh-brand__name, .nh-nav.is-solid .nh-brand__name { font-size: 1.22rem; letter-spacing: 0; }
+  .nh-brand img { height: 34px; }
+  .nh-nav__actions { gap: .3rem; }
+  .nh-nav__links { padding: 2px 3px; gap: 0; }
+}
+@media (min-width: 1331px) and (max-width: 1460px) {
+  .nh-nav__links a { padding-left: .3rem; padding-right: .3rem; }
+  .nh-nav .nh-container { padding-inline: .6rem; }
+}
+/* Da dang nhap (them Lich Su Dat Ban + chuong + avatar): giu co chu to, chi thu dem ngang. */
+@media (min-width: 1331px) and (max-width: 1700px) {
+  .nh-nav:has(.nh-user) .nh-nav__links a { padding-left: .42rem; padding-right: .42rem; }
+}
+@media (min-width: 1331px) and (max-width: 1460px) {
+  .nh-nav:has(.nh-user) .nh-nav__links a { padding-left: .28rem; padding-right: .28rem; }
+}
+@media (min-width: 1331px) and (max-width: 1400px) {
+  .nh-nav:has(.nh-user) .nh-nav__links a { font-size: .92rem; }
+}
