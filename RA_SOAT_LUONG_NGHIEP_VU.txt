@@ -1184,3 +1184,10 @@ views/staff/partials/tiec-chot.ejs; tab thu 3 "Chot & bao cao")
 [28/11/2026] Ngan keo menu dien thoai/may tinh bang (<=1330px) truoc day che mat nut burger, khong co cach dong. Them hang dau ngan (logo + MENU + nut "Dong", dinh khi cuon), nen toi cham de dong, phim Esc, vuot sang phai, nut Quay lai cua trinh duyet/Android dong menu (pushState) thay vi roi trang; khoa cuon trang khi mo; icon burger doi thanh X. Them muc Lich su dat ban vao ngan cho khach da dang nhap. Locale dieu_huong.dong_menu (vi/en/ja). Kiem thu headless 390px/900px: 5 cach dong deu dat.
 
 [28/11/2026] CRM khach hang (staff): /staff/customers them the tong quan (khach thanh vien, quay lai 30 ngay, theo hang, diem luu hanh), tim khong dau, loc hang, an/hien khach vang lai QR, sap xep; bam dong -> /staff/customers/:id (views/staff/customer-detail.ejs, services/hoSoKhachService.js): thong tin + goi/sua, diem hien co/da doi, hang + tien do len hang + bang 4 hang & quyen loi, so lan dung bua / tong hoa don / TB moi lan / lan dau-cuoi, dat ban (no-show, huy, chan), mon hay goi, ghi chu noi bo (khach_hang.ghichu, POST /:id/ghi-chu) + so thich/ghi chu le tan; tab Lich su dung bua (link hoa don), Dat ban, Tiec, Giao hang, Lich su diem, Danh gia. Them chi muc phu hopdong.idx_hd_user (id_user, tinhtrang, sesis, ngay_dat, soluong, id_mon, thanhtien) + FORCE INDEX: tong hop 112k dong 8.9s -> 0.05s. Modal sua dua ra ngoai bang.
+
+[28/11] Banner trang chu - chu "Best Seller" bi che, hai ben trong
+- Nguyen nhan: thanh menu co dinh cao ~73px de len banner, chu chi cach mep tren 35-60px.
+- Sua (css/nhahang.css, man >= 1001px): dem tren 104px cho chu; khung rong toi da 1600px / 88vw
+  (truoc 1320px - man 1920px trong ~300px moi ben); anh mon ban chay va ve giam gia to hon;
+  tieu de slide ban chay gon lai; nut chuyen slide thang hang voi chu.
+- Kiem tra 1917px va 1440px: ca 5 slide khong bi che, khong tran ngang. Dien thoai khong doi.

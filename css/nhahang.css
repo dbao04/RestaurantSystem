@@ -3509,3 +3509,22 @@ html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
      o tren manh hon .nh-ngan-dau{display:none} nen no lo ra tren menu may tinh. */
   .nh-nav__links > li.nh-ngan-dau { display: none; }
 }
+
+/* ---- Banner trang chu: chu khong chui duoi thanh menu + bot trong hai ben (28/11) ----
+   Thanh menu co dinh cao ~73px de len banner, ma chu chi cach mep tren 35-60px
+   -> dong "Best Seller" bi che. Khung 1320px tren man 1920px de trong ~300px moi ben. */
+@media (min-width: 1001px) {
+  .nh-hero--slider {
+    --nh-hero-w: min(1600px, 88vw);
+    min-height: clamp(640px, 92vh, 920px);
+  }
+  .nh-hero--slider .nh-hero__inner { padding-top: 104px; padding-bottom: 112px; }
+  .nh-hero--slider .nh-km-ve { width: min(34vw, 540px); }
+  .nh-hero--slider .nh-bc-mon { width: min(36vw, 640px); }
+  .nh-slide--km .nh-hero__inner { max-width: min(760px, calc(var(--nh-hero-w) - min(34vw, 540px) - 64px)); }
+  .nh-slide--bc .nh-hero__inner { max-width: min(760px, calc(var(--nh-hero-w) - min(36vw, 640px) - 64px)); }
+  .nh-slide--bc h1 { font-size: clamp(2.4rem, 3.3vw, 3.8rem); margin-bottom: .9rem; }
+  .nh-slide--bc .nh-bc-ds { max-width: none; margin-bottom: 1.6rem; }
+  /* Nut chuyen slide thang hang voi chu (cong phan dem trong cua khung) */
+  .nh-hero--slider .nh-slider-nav { left: calc(var(--nh-hero-le) + clamp(1.2rem, 3vw, 3.5rem)); }
+}
