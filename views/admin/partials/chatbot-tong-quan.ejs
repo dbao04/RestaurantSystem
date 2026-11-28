@@ -177,13 +177,13 @@
     }
   });
   var het = document.getElementById('hoc-duyet-het');
-  if (het) het.onclick = function () {
+  if (het) het.onclick = async function () {
     var ds = [];
     khung.querySelectorAll('tbody tr[data-cau]').forEach(function (tr) {
       var b = tr.querySelector('button[data-hoc]');
       if (b) ds.push({ cau_hoi: tr.dataset.cau, id_kien_thuc: b.dataset.hoc });
     });
-    if (!ds.length || !confirm('Cho bot học tất cả ' + ds.length + ' câu theo chủ đề bot đề xuất?')) return;
+    if (!ds.length || !await window.xacNhan('Cho bot học tất cả ' + ds.length + ' câu theo chủ đề bot đề xuất?')) return;
     goi('/admin/chatbot/api/hoc/nhieu', { ds: ds }).then(function (d) { bao('Bot đã học ' + d.so_hoc + ' câu'); setTimeout(function () { location.reload(); }, 800); });
   };
 })();

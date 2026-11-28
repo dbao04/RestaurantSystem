@@ -126,6 +126,13 @@ const HTML = `<!doctype html>
   <li>Trường hợp quý khách kẹt xe hoặc đến trễ hơn dự kiến, vui lòng gọi điện báo trước cho nhà hàng để nhân viên gia hạn thời gian giữ bàn.</li>
   <li>Nếu quá <b>30 phút</b> sau giờ hẹn mà nhà hàng không nhận được thông báo từ quý khách, lượt đặt bàn sẽ tự động chuyển sang trạng thái <i>“Không đến (No-show)”</i> và nhả bàn.</li>
 </ul>
+<h3>4. Phiếu đặt bàn (vé) và nhận bàn</h3>
+<ul>
+  <li>Sau khi đặt bàn thành công, quý khách nhận <b>Phiếu đặt bàn (vé)</b> gồm mã đặt bàn và <b>mã QR check-in</b>.</li>
+  <li>Xem lại vé bất cứ lúc nào: đăng nhập, bấm vào <b>tên tài khoản</b> ở góc phải → <b>Lịch Sử Đặt Bàn</b> → <b>Xem vé</b>; hoặc vào trang Tra cứu đặt bàn bằng mã đặt bàn và số điện thoại.</li>
+  <li>Khi đến nhà hàng, vui lòng đưa mã QR check-in cho lễ tân quét hoặc đọc mã đặt bàn. Nhà hàng nhận khách <b>sớm tối đa 60 phút</b> trước giờ hẹn.</li>
+  <li>Nếu quý khách muốn đổi bàn khi đến, lễ tân sẽ sắp xếp bàn khác còn trống phù hợp số khách (tùy tình trạng bàn tại thời điểm đó).</li>
+</ul>
 
 <h2>III. Chính sách đổi lịch, hủy bàn và hoàn tiền cọc</h2>
 

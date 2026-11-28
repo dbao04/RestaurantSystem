@@ -456,7 +456,7 @@
   var idHuy = null;
   document.querySelectorAll('[data-duyet]').forEach(function (b) {
     b.addEventListener('click', async function () {
-      if (!confirm('Duyệt phiếu chi ' + b.getAttribute('data-ma') + '? Phiếu sẽ được tính vào sổ quỹ.')) return;
+      if (!await window.xacNhan('Duyệt phiếu chi ' + b.getAttribute('data-ma') + '? Phiếu sẽ được tính vào sổ quỹ.')) return;
       b.disabled = true;
       try {
         var r = await fetch('/api/staff/thu-chi/phieu/' + b.getAttribute('data-duyet') + '/duyet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });

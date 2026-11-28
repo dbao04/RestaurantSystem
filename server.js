@@ -5,6 +5,7 @@ process.on('uncaughtException', (err) => {
   console.error('[Safety] Uncaught Exception:', err && err.message ? err.message : err);
 });
 
+const baoLoiQuayLai = require('./utils/baoLoiQuayLai');
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -495,6 +496,8 @@ require('./services/reservationJobs').batDau();
 require('./services/chinhSachGiaoService').batVongQuet();
 // Tu dong phan don giao hang: quet don qua han xac nhan + hang cho moi 30 giay.
 require('./services/phanCongGiaoService').batDau();
+// Chot cuoi ngay: huy mon tai cho chua che bien cua ngay da qua, bao hoa don con no.
+require('./services/chotCuoiNgayService').batVong();
 
 // --- Frontend Routes ---
 /*
@@ -1909,7 +1912,7 @@ app.post('/staff/bookings/create', requireRole(['Phuc vu', 'Quay', 'Quan ly']), 
     const { dates } = req.body;
     const today = new Date().toISOString().split('T')[0];
     if (dates < today) {
-      return res.send('<script>alert("Ngày đặt bàn không được ở quá khứ!"); history.back();</script>');
+      return baoLoiQuayLai(res, 'Ngày đặt bàn không được ở quá khứ!');
     }
     const sesis = await orderService.createStaffBooking(req.body);
 
@@ -2395,7 +2398,7 @@ app.post('/staff/leave/add', requireStaff, async (req, res) => {
       await nghiPhep.taoDon(req.session.staffId, req.body);
     } catch (e) {
       if (e instanceof nghiPhep.LoiNghiPhep) {
-        return res.send(`<script>alert(${JSON.stringify(e.message)}); history.back();</script>`);
+        return baoLoiQuayLai(res, e.message);
       }
       throw e;
     }
@@ -2919,7 +2922,8 @@ app.get('/staff/huy-mon/don/:sesis', requireRole(['Phuc vu', 'Quay', 'Thu ngan',
     res.json({
       success: true,
       la_quan_ly: laQuanLyPhien(req),
-      ly_do: huyMonService.LY_DO,
+      // 'het_ngay' chi danh cho he thong (chot cuoi ngay) - khong cho nhan vien chon.
+      ly_do: Object.fromEntries(Object.entries(huyMonService.LY_DO).filter(([k]) => k !== 'het_ngay')),
       lich_su: await huyMonService.lichSuCuaDon(req.params.sesis),
     });
   } catch (err) {

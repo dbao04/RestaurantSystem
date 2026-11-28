@@ -447,7 +447,7 @@ cauHinh.forEach(function (c) { theoKhoa[c.khoa] = c; });
     var n;
 
     if ((n = e.target.closest('[data-xoa-nghi]'))) {
-      if (!window.confirm('Xóa ngày nghỉ này?')) return;
+      if (!await window.xacNhan('Xóa ngày nghỉ này?')) return;
       await api('/api/reservation-config/ngay-nghi/' + n.dataset.xoaNghi, { method: 'DELETE' });
       window.location.reload();
       return;
@@ -469,7 +469,7 @@ cauHinh.forEach(function (c) { theoKhoa[c.khoa] = c; });
     }
 
     if ((n = e.target.closest('[data-xoa-cs]'))) {
-      if (!window.confirm('Tắt chính sách này? Chính sách cũ vẫn được giữ để tra cứu các lần hủy trước đây.')) return;
+      if (!await window.xacNhan('Tắt chính sách này? Chính sách cũ vẫn được giữ để tra cứu các lần hủy trước đây.')) return;
       await api('/api/reservation-config/chinh-sach-huy/' + n.dataset.xoaCs, { method: 'DELETE' });
       window.location.reload();
       return;
@@ -492,7 +492,7 @@ cauHinh.forEach(function (c) { theoKhoa[c.khoa] = c; });
     }
 
     if ((n = e.target.closest('[data-xoa-coc]'))) {
-      if (!window.confirm('Tắt quy tắc cọc này?')) return;
+      if (!await window.xacNhan('Tắt quy tắc cọc này?')) return;
       await api('/api/reservation-config/quy-tac-coc/' + n.dataset.xoaCoc, { method: 'DELETE' });
       window.location.reload();
       return;

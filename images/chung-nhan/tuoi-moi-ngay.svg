@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 424" width="600" height="424" role="img" aria-label="CAM KẾT CHẤT LƯỢNG: Hải sản tươi mỗi ngày">
+  <defs>
+    <linearGradient id="giay" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf5e6"/><stop offset="1" stop-color="#f1e5c8"/>
+    </linearGradient>
+    <linearGradient id="vang" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e6c56f"/><stop offset=".5" stop-color="#b8892e"/><stop offset="1" stop-color="#8a6420"/>
+    </linearGradient>
+    <pattern id="van" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M0 14 Q7 4 14 14 T28 14" fill="none" stroke="#c8a24b" stroke-opacity=".10" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="424" fill="url(#giay)"/>
+  <rect width="600" height="424" fill="url(#van)"/>
+  <rect x="14" y="14" width="572" height="396" fill="none" stroke="url(#vang)" stroke-width="6"/>
+  <rect x="28" y="28" width="544" height="368" fill="none" stroke="#b8892e" stroke-width="1.2"/>
+  <g fill="none" stroke="#b8892e" stroke-width="1.6">
+    <path d="M28 70 Q28 28 70 28"/><path d="M572 70 Q572 28 530 28"/>
+    <path d="M28 354 Q28 396 70 396"/><path d="M572 354 Q572 396 530 396"/>
+  </g>
+  <g fill="#b8892e"><circle cx="40" cy="40" r="3"/><circle cx="560" cy="40" r="3"/><circle cx="40" cy="384" r="3"/><circle cx="560" cy="384" r="3"/></g>
+
+  <text x="300" y="84" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="15" letter-spacing="6" fill="#8a6420">CAM KẾT CHẤT LƯỢNG</text>
+  <line x1="220" y1="98" x2="380" y2="98" stroke="#b8892e" stroke-width="1"/>
+  <text x="300" y="150" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-style="italic" font-weight="700" fill="#2b1a12">Hải sản tươi mỗi ngày</text>
+  <text x="300" y="190" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" fill="#4a3a2c">Kiểm tra từng lô hàng tại quầy nhận</text>
+  <text x="300" y="214" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" fill="#4a3a2c">trước khi lên thớt – sashimi thái khi khách gọi</text>
+
+  <!-- con dau vang -->
+  <g transform="translate(460 300)">
+    <path d="M-22 30 L-34 78 L-16 66 L-6 84 L4 36 Z" fill="#9b2b22"/>
+    <path d="M22 30 L34 78 L16 66 L6 84 L-4 36 Z" fill="#7d211a"/>
+    <circle r="48" fill="url(#vang)"/>
+    <circle r="40" fill="none" stroke="#fbf5e6" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <circle r="33" fill="#c99a3e"/>
+    <text y="12" text-anchor="middle" font-family="'Yu Mincho','MS Mincho','Noto Serif JP',serif" font-size="32" font-weight="700" fill="#fbf5e6">鮮</text>
+  </g>
+
+  <line x1="80" y1="330" x2="260" y2="330" stroke="#4a3a2c" stroke-width=".8"/>
+  <path d="M95 320 q20 -22 38 -4 t36 -6 t34 2" fill="none" stroke="#2b1a12" stroke-width="1.4"/>
+  <text x="170" y="350" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" fill="#4a3a2c">Ban điều hành</text>
+  <text x="170" y="370" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" font-weight="700" fill="#2b1a12">Nhà Hàng Bảo Đoàn</text>
+  <text x="300" y="392" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="10.5" letter-spacing="1.5" fill="#8a6420">CHỨNG NHẬN NỘI BỘ · SỐ BD-CL-01</text>
+</svg>

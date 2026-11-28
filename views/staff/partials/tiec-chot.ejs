@@ -121,7 +121,7 @@
   var nut = document.getElementById('nutChot');
   if (nut) nut.addEventListener('click', async function () {
     var l = document.getElementById('loiChot'); l.hidden = true;
-    if (!confirm('Chốt hóa đơn ' + document.getElementById('hdTong').textContent + '? Sau khi chốt khách sẽ nhận yêu cầu thanh toán.')) return;
+    if (!await window.xacNhan('Chốt hóa đơn ' + document.getElementById('hdTong').textContent + '? Sau khi chốt khách sẽ nhận yêu cầu thanh toán.')) return;
     nut.disabled = true;
     try { await goi('/api/staff/tiec/' + ID + '/chot', { giam_tru: giam.value, ly_do_giam: document.getElementById('chotLyDo').value }); location.hash = 'chot'; location.reload(); }
     catch (e) { l.textContent = e.message; l.hidden = false; nut.disabled = false; }

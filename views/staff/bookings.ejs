@@ -820,7 +820,7 @@
 
   // Xác nhận đơn đặt bàn
   async function confirmOrder(sesis) {
-    if (!confirm('Bạn có chắc muốn xác nhận đơn bàn #' + sesis.substring(0,6).toUpperCase() + '?')) return;
+    if (!await window.xacNhan('Bạn có chắc muốn xác nhận đơn bàn #' + sesis.substring(0,6).toUpperCase() + '?')) return;
     try {
       const res = await fetch('/staff/bookings/confirm/' + sesis, { method: 'POST' });
       if (res.ok) {

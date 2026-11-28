@@ -177,6 +177,27 @@ module.exports = function (io) {
     res.json({ ban, vi_tri: viTri, thong_ke: thongKe });
   }));
 
+  /*
+    Chi tiet o "Doanh thu hom nay" tren so do ban: tung luot da thanh toan
+    (tinhtrang = 3) trong ngay, cung dieu kien voi thongKeBan nen tong khop so tren o.
+  */
+  router.get('/so-do-ban/api/doanh-thu-ngay', requireVanHanh, bat(async (req, res) => {
+    const ngay = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.ngay || '')) ? req.query.ngay : new Date().toISOString().slice(0, 10);
+    const db = require('../config/db');
+    const [ds] = await db.query(
+      `SELECT h.sesis, MAX(h.loai_don) AS loai_don, MAX(b.number_ban) AS so_ban,
+              MIN(h.gio_dat) AS gio, MAX(h.so_user) AS so_khach,
+              SUM(h.soluong) AS so_mon, SUM(h.thanhtien) AS tong_tien
+         FROM hopdong h
+         LEFT JOIN ban b ON b.Id_ban = h.id_ban
+        WHERE h.tinhtrang = 3 AND h.id_mon > 0 AND h.ngay_dat = ?
+        GROUP BY h.sesis
+        ORDER BY gio DESC`,
+      [ngay]
+    );
+    res.json({ ok: true, ngay, ds });
+  }));
+
   router.post('/so-do-ban/api/trang-thai/:id', requireVanHanh, bat(async (req, res) => {
     try {
       const ban = await kds.doiTrangThaiBan(

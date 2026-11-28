@@ -93,6 +93,17 @@ II. QUY ĐỊNH VỀ THỜI GIAN ĐẶT BÀN, THANH TOÁN CỌC & GIỮ BÀN
      khách, lượt đặt bàn sẽ tự động chuyển sang trạng thái "Không đến (No-show)"
      và nhả bàn.
 
+4. Phiếu đặt bàn (vé) và nhận bàn:
+   - Sau khi đặt bàn thành công, quý khách nhận Phiếu đặt bàn (vé) gồm mã đặt
+     bàn và mã QR check-in.
+   - Xem lại vé bất cứ lúc nào: đăng nhập, bấm vào tên tài khoản ở góc phải →
+     "Lịch Sử Đặt Bàn" → "Xem vé"; hoặc vào trang Tra cứu đặt bàn bằng mã đặt
+     bàn và số điện thoại.
+   - Khi đến nhà hàng, vui lòng đưa mã QR check-in cho lễ tân quét hoặc đọc mã
+     đặt bàn. Nhà hàng nhận khách sớm tối đa 60 phút trước giờ hẹn.
+   - Nếu quý khách muốn đổi bàn khi đến, lễ tân sẽ sắp xếp bàn khác còn trống
+     phù hợp số khách (tùy tình trạng bàn tại thời điểm đó).
+
 --------------------------------------------------------------------------------
 III. CHÍNH SÁCH ĐỔI LỊCH, HỦY BÀN VÀ HOÀN TIỀN CỌC
 --------------------------------------------------------------------------------

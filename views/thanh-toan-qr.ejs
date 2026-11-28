@@ -134,6 +134,8 @@
     .an { display:none !important; }
   </style>
   <%- include('partials/thong-bao') %>
+  <script src="/thong-bao-dep.js?v=3"></script>
+  <script src="/hien-mat-khau.js?v=3"></script>
 </head>
 <body>
 
@@ -390,11 +392,11 @@
 
   var nutGiaLap = $('nut-gia-lap');
   if (nutGiaLap) {
-    nutGiaLap.onclick = function () {
+    nutGiaLap.onclick = async function () {
       var nut = this;
       var soTien = Number($('so-tien').value) || 0;
       if (soTien <= 0 || soTien > conPhaiTra) return alert(<%- JSON.stringify(t('ttqr.t_so_tien_sai')) %>);
-      if (!confirm('<%= t('ttqr.xac_nhan_gia_lap') %>')) return;
+      if (!await window.xacNhan('<%= t('ttqr.xac_nhan_gia_lap') %>')) return;
 
       nut.disabled = true;
       fetch('/qr/thanh-toan/' + encodeURIComponent(SESIS) + '/gia-lap', {

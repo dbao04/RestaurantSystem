@@ -339,15 +339,15 @@
     md.classList.remove('mo');
     luu();
   };
-  document.getElementById('yd-xoa').onclick = function () {
+  document.getElementById('yd-xoa').onclick = async function () {
     var i = form.elements.vi_tri.value;
-    if (i === '' || !confirm('Xóa ý định “' + ds[Number(i)].ten + '”?')) return;
+    if (i === '' || !await window.xacNhan('Xóa ý định “' + ds[Number(i)].ten + '”?')) return;
     ds.splice(Number(i), 1);
     md.classList.remove('mo');
     luu('Đã xóa ý định');
   };
-  document.getElementById('yd-mac-dinh').onclick = function () {
-    if (!confirm('Khôi phục bộ ý định mặc định? Các ý định bạn đã sửa sẽ mất.')) return;
+  document.getElementById('yd-mac-dinh').onclick = async function () {
+    if (!await window.xacNhan('Khôi phục bộ ý định mặc định? Các ý định bạn đã sửa sẽ mất.')) return;
     fetch('/admin/chatbot/api/y-dinh-ngam/mac-dinh', { method: 'POST' }).then(function () { location.href = '/admin/chatbot?tab=hieu-y'; });
   };
   ve();
@@ -780,20 +780,20 @@
         .catch(function (er) { toast(er.message, true); });
     }
   });
-  $('#kt-ds').addEventListener('click', function (e) {
+  $('#kt-ds').addEventListener('click', async function (e) {
     var s = e.target.closest('[data-sua]'); if (s) moSua(duLieuKho[s.dataset.sua]);
     var x = e.target.closest('[data-xoa]');
-    if (x && confirm('Xóa câu hỏi này khỏi kho kiến thức?')) {
+    if (x && await window.xacNhan('Xóa câu hỏi này khỏi kho kiến thức?')) {
       api('/admin/chatbot/api/kien-thuc/xoa', { json: { ids: [Number(x.dataset.xoa)] } }).then(function () { toast('Đã xóa'); taiKho(); });
     }
   });
-  $('#kt-xoa-chon').onclick = function () {
+  $('#kt-xoa-chon').onclick = async function () {
     var ids = $$('.kt-chon:checked').map(function (x) { return Number(x.value); });
-    if (!ids.length || !confirm('Xóa ' + ids.length + ' câu hỏi đã chọn?')) return;
+    if (!ids.length || !await window.xacNhan('Xóa ' + ids.length + ' câu hỏi đã chọn?')) return;
     api('/admin/chatbot/api/kien-thuc/xoa', { json: { ids: ids } }).then(function (d) { toast('Đã xóa ' + d.so_xoa + ' câu hỏi'); taiKho(); });
   };
-  $('#kt-nap-mau').onclick = function () {
-    if (!confirm('Nạp lại bộ câu mẫu ngành nhà hàng? Câu mẫu đã bị sửa sẽ được ghi đè bằng bản gốc, câu bạn tự thêm giữ nguyên.')) return;
+  $('#kt-nap-mau').onclick = async function () {
+    if (!await window.xacNhan('Nạp lại bộ câu mẫu ngành nhà hàng? Câu mẫu đã bị sửa sẽ được ghi đè bằng bản gốc, câu bạn tự thêm giữ nguyên.')) return;
     api('/admin/chatbot/api/kien-thuc/nap-mau', { method: 'POST' }).then(function (d) { toast('Thêm ' + d.them + ', cập nhật ' + d.cap_nhat + ' câu mẫu'); taiKho(); });
   };
   $('#kt-them').onclick = function () { moSua(null); };
@@ -852,9 +852,9 @@
         '</tbody></table></div>' + (d.so_dong > 200 ? '<p class="nh-card__desc">… và ' + (d.so_dong - 200) + ' dòng nữa.</p>' : '');
     }).catch(function (e) { $('#nap-ket-qua').innerHTML = '<p class="canh-bao" style="margin-top:12px;"><i class="fas fa-circle-xmark"></i> ' + thoat(e.message) + '</p>'; });
   }
-  $('#nap-xac-nhan').onclick = function () {
+  $('#nap-xac-nhan').onclick = async function () {
     var cheDo = ($('input[name="nap-che-do"]:checked') || {}).value;
-    if (cheDo === 'thay' && !confirm('Xóa TOÀN BỘ kho kiến thức hiện tại rồi nạp file này?')) return;
+    if (cheDo === 'thay' && !await window.xacNhan('Xóa TOÀN BỘ kho kiến thức hiện tại rồi nạp file này?')) return;
     var b = this; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang huấn luyện…';
     api('/admin/chatbot/api/kien-thuc/nap', { json: { dong: dongNap, che_do: cheDo } }).then(function (d) {
       dongModal('#md-nap');
@@ -908,8 +908,8 @@
       toast('Đã lưu thiết lập trợ lý ảo');
     }).catch(function (er) { toast(er.message, true); });
   };
-  $('#tl-mac-dinh').onclick = function () {
-    if (!confirm('Khôi phục toàn bộ thiết lập về mặc định?')) return;
+  $('#tl-mac-dinh').onclick = async function () {
+    if (!await window.xacNhan('Khôi phục toàn bộ thiết lập về mặc định?')) return;
     api('/admin/chatbot/api/thiet-lap/mac-dinh', { method: 'POST' }).then(function () { location.href = '/admin/chatbot?tab=thiet-lap'; });
   };
   /* ---------------- AI CLAUDE ---------------- */
@@ -923,8 +923,8 @@
       toast('Đã lưu khóa API');
     }).catch(function (e) { toast(e.message, true); });
   };
-  if ($('#ai-xoa-khoa')) $('#ai-xoa-khoa').onclick = function () {
-    if (!confirm('Xóa khóa API Claude? Bot sẽ ngừng dùng AI.')) return;
+  if ($('#ai-xoa-khoa')) $('#ai-xoa-khoa').onclick = async function () {
+    if (!await window.xacNhan('Xóa khóa API Claude? Bot sẽ ngừng dùng AI.')) return;
     api('/admin/chatbot/api/ai-khoa', { json: { khoa: '' } }).then(function () { location.href = '/admin/chatbot?tab=thiet-lap'; });
   };
   if ($('#ai-kiem-tra')) $('#ai-kiem-tra').onclick = function () {

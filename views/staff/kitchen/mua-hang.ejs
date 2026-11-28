@@ -240,7 +240,7 @@
     var nut = document.getElementById('taoTuDong');
     if (!nut) return;
     nut.addEventListener('click', async function () {
-      if (!confirm('Tạo đơn mua (chờ duyệt) cho tất cả gợi ý, gom theo nhà cung cấp gần nhất?')) return;
+      if (!await window.xacNhan('Tạo đơn mua (chờ duyệt) cho tất cả gợi ý, gom theo nhà cung cấp gần nhất?')) return;
       nut.disabled = true;
       var bao = document.getElementById('baoTuDong');
       try {

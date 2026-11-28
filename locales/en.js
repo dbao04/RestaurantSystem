@@ -62,6 +62,7 @@ module.exports = {
   'dieu_huong.dat_tiec': 'Parties & Events',
   'dieu_huong.tin_tuc': 'News',
   'dieu_huong.don_cua_toi': 'My Orders',
+  'dieu_huong.lich_su_ngan': 'History',
   'dieu_huong.gio_hang': 'Cart',
   'dieu_huong.tai_khoan': 'Account',
   'dieu_huong.dang_nhap': 'Sign in',
@@ -632,6 +633,7 @@ module.exports = {
   'don.tien_coc': 'Deposit',
   'don.yeu_cau': 'Special requests',
   'don.xem_chi_tiet_btn': 'View details',
+  'don.xem_ve': 'View ticket',
   'don.sua_dat_ban': 'Modify reservation',
   'don.huy_dat_ban': 'Cancel reservation',
   'don.thanh_toan_vietqr': 'Pay via VietQR',
@@ -1229,7 +1231,7 @@ module.exports = {
   'huong_dan_dat_ban.b3_mo_ta': 'Enter your name and phone number. Select special occasion tags (Birthday, Anniversary, Gathering, Baby chairs, Wheelchair access, Window seats...) and add custom notes for our team.',
   'huong_dan_dat_ban.b4': 'Step 5: Review, check deposit & Get booking code',
   'huong_dan_dat_ban.b4_mo_ta': 'Review your full reservation and pre-ordered dishes. Check applicable deposit terms (if booking for large groups or peak times), submit, and instantly receive your Booking Code.',
-  'huong_dan_dat_ban.buoc_ma': '<b>Save your booking code:</b> Together with your phone number, use it at <a href="/dat-ban/tra-cuu">Find my booking</a> or My Orders to check status, reschedule, or cancel online without needing to call.',
+  'huong_dan_dat_ban.buoc_ma': 'After booking you receive a <b>booking ticket</b> with your booking code and a <b>check-in QR code</b>. Open it any time: click your <b>account name</b> at the top right → <a href="/my-orders">Booking History</a> → <b>View ticket</b>. From there you can also check status, reschedule or cancel without calling.',
 
   'huong_dan_dat_ban.gio_dan': 'A booking has to <b>finish</b> before closing time. We also stop taking bookings for the <b>last {n} minutes</b>, so no one has to eat in a hurry.',
   'huong_dan_dat_ban.gio_nghi': 'Closed all day',
@@ -1283,7 +1285,7 @@ module.exports = {
   'huong_dan_dat_ban.huy_khong_coc': 'Bookings without a deposit can be cancelled at any time, free of charge. We only ask that you tell us early so the table can go to someone else.',
 
   'huong_dan_dat_ban.h1': 'Do I have to create an account?',
-  'huong_dan_dat_ban.h1_dap': 'No. You can book directly with your name and phone number. When logged in, your details auto-fill and you earn membership loyalty points.',
+  'huong_dan_dat_ban.h1_dap': 'Yes. To keep bookings reliable you need to <b>log in</b> (or sign up quickly with your phone number) before booking a table, a banquet or delivery. Your details auto-fill, your ticket is saved in Booking History and you earn loyalty points.',
   'huong_dan_dat_ban.h2': 'What if I arrive late?',
   'huong_dan_dat_ban.h2_dap': 'We hold the table for <b>{n} minutes</b> past the booked time. Running later than that? One phone call and we keep it longer.',
   'huong_dan_dat_ban.h3': 'My group is bigger than the limit — what then?',
@@ -1293,7 +1295,9 @@ module.exports = {
   'huong_dan_dat_ban.h5': 'Can I choose dishes or set combos in advance?',
   'huong_dan_dat_ban.h5_dap': 'Absolutely! In Step 3, you can choose curated Set Combos or select individual menu items so the kitchen prepares everything ahead. You can also click "No pre-order" to order at the table.',
   'huong_dan_dat_ban.h6': 'How do I check or modify my reservation?',
-  'huong_dan_dat_ban.h6_dap': 'Your booking code appears on screen once submitted. Use it at <a href="/dat-ban/tra-cuu">Find my booking</a> or in My Orders to check status, reschedule, or cancel online.',
+  'huong_dan_dat_ban.h6_dap': 'Click your <b>account name</b> at the top right → <a href="/my-orders">Booking History</a>. Each booking has <b>View ticket</b> (with the check-in QR code), <b>Edit booking</b> to change the time, and <b>Cancel booking</b>. You can also use <a href="/dat-ban/tra-cuu">Find my booking</a> with your booking code and phone number.',
+  'huong_dan_dat_ban.h7': 'What do I show when I arrive?',
+  'huong_dan_dat_ban.h7_dap': 'Open your <b>booking ticket</b> (account name → Booking History → <b>View ticket</b>) and let the host scan the <b>check-in QR code</b>, or read out your booking code (RSV-…). We seat guests <b>up to 60 minutes early</b>; if you would like another table on arrival, the host can move you to a free one.',
 
   'huong_dan_dat_ban.bat_dau_dat': 'Start booking now',
 
@@ -1701,6 +1705,7 @@ module.exports = {
   'dat_ban_moi.cs_hoan100': '100% refund',
   'dat_ban_moi.cs_hoan50_ngan': '50% refund',
   'dat_ban_moi.cs_giu_ban': '<b>Table holding & rescheduling:</b> we hold your table for up to <b>{phut} minutes</b> after the booking time (if you\'re running late, please call ahead to extend). You can <b>change the time or date for free (keeping 100% of your deposit)</b> with at least <b>4 hours\'</b> notice (regular tables) or <b>12 hours\'</b> notice (banquets / pre-orders).',
+  'dat_ban_moi.cs_ve': '<b>Booking ticket & check-in:</b> After booking you get a ticket with a <b>check-in QR code</b>. Find it again at <b>account name → Booking History → View ticket</b>. Show the QR code to the host on arrival; we seat guests up to <b>60 minutes</b> early.',
   'dat_ban_moi.cs_dong_y': 'I have read, understood and agree to the booking and deposit policy (100k/guest at peak hours or for 6+ guests; 150k/guest for banquets of {nt}+; 100% for pre-ordered food) and the cancellation policy of Bao Doan Restaurant.',
   'dat_ban_moi.cs_xem_hd': 'Read the full guide',
   'dat_ban_moi.cs_bat_dau': 'Agree & start booking',

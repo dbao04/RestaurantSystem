@@ -716,7 +716,7 @@ router.put('/api/reservations/:id/mon-dat-truoc', laSo, bat(async (req, res) => 
 
 router.post('/api/reservations/:id/assign-table', laSo, bat(async (req, res) => {
   try {
-    const kq = await dv.ganBan(req.params.id, req.body.table_ids ?? req.body.ban, nguoiDung(req));
+    const kq = await dv.ganBan(req.params.id, req.body.table_ids ?? req.body.ban, { ...nguoiDung(req), lyDo: req.body.ly_do });
     bao('TABLE_ASSIGNED', { reservation_id: Number(req.params.id) });
     res.json({ ok: true, ...kq });
   } catch (e) { traLoi(res, e, 409); }

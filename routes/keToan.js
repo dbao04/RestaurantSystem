@@ -7,6 +7,7 @@
  * de khong tao ban sao thu hai. Mount o DUNG vi tri cu trong server.js nen thu
  * tu middleware khong doi.
  */
+const baoLoiQuayLai = require('../utils/baoLoiQuayLai');
 const express = require('express');
 
 module.exports = function ({ db, personnelService, requireRole }) {
@@ -180,7 +181,7 @@ module.exports = function ({ db, personnelService, requireRole }) {
     try {
       const { luong_cung, thuong, phu_cap, phat, thang, nam } = req.body;
       if (Number(luong_cung) < 0 || Number(thuong) < 0 || Number(phu_cap) < 0 || Number(phat || 0) < 0) {
-        return res.send('<script>alert("Các khoản lương, thưởng, phụ cấp không được nhỏ hơn 0!"); history.back();</script>');
+        return baoLoiQuayLai(res, 'Các khoản lương, thưởng, phụ cấp không được nhỏ hơn 0!');
       }
       try { await ktLuong.upsertSalary(req.body); } catch (e) { return xuLyLoiLuong(res, thang, nam, e); }
       res.redirect(`/staff/accountant/salary?month=${thang}&year=${nam}&msg=${encodeURIComponent('Đã lưu thông tin bảng lương!')}&msgType=success`);

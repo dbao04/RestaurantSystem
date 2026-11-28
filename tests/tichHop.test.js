@@ -1272,6 +1272,8 @@ test('webhook SePay: xac thuc, dung tai khoan, tra muon sau het han, coc dat ban
     // 6. Nut gia lap cua admin di qua webhook that.
     const [[ad]] = await db.query("SELECT id_admin FROM tb_admin WHERE adminuser = 'admin'");
     await giuMatKhau('tb_admin', 'id_admin', ad.id_admin, 'adminpass');
+    // Admin that co the da doi mat khau rieng - dat tam MK kiem thu, hash goc tra lai o test.after.
+    await db.query('UPDATE tb_admin SET adminpass = ? WHERE id_admin = ?', [md5(MK), ad.id_admin]);
     const A = client();
     const dn = await A('/admin/login', form({ adminuser: 'admin', adminpass: MK }));
     assert.equal(dn.status, 302);

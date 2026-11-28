@@ -515,8 +515,8 @@ function showToast(msg) {
 
   var nutHuy = document.getElementById('nut-huy-don-spf');
   if (nutHuy) {
-    nutHuy.onclick = function () {
-      if (!confirm(<%- JSON.stringify(t('tt_don.js_xac_nhan_huy')) %>)) return;
+    nutHuy.onclick = async function () {
+      if (!await window.xacNhan(<%- JSON.stringify(t('tt_don.js_xac_nhan_huy')) %>)) return;
       nutHuy.disabled = true;
       fetch('/thanh-toan/don-hang/' + SESIS + '/huy', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
         .then(function (r) { return r.json(); })

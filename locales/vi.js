@@ -67,6 +67,7 @@ module.exports = {
   'dieu_huong.thanh_vien': 'Thành Viên',
   'dieu_huong.huong_dan_dat_ban': 'Hướng Dẫn Đặt Bàn',
   'dieu_huong.don_cua_toi': 'Lịch Sử Đặt Bàn',
+  'dieu_huong.lich_su_ngan': 'Lịch Sử',
   'dieu_huong.gio_hang': 'Giỏ hàng',
   'dieu_huong.tai_khoan': 'Tài khoản',
   'dieu_huong.dang_nhap': 'Đăng nhập',
@@ -636,6 +637,7 @@ module.exports = {
   'don.tien_coc': 'Tiền cọc',
   'don.yeu_cau': 'Yêu cầu',
   'don.xem_chi_tiet_btn': 'Xem chi tiết',
+  'don.xem_ve': 'Xem vé',
   'don.sua_dat_ban': 'Sửa đặt bàn',
   'don.huy_dat_ban': 'Hủy đặt bàn',
   'don.thanh_toan_vietqr': 'Thanh toán VietQR',
@@ -1243,7 +1245,7 @@ module.exports = {
   'huong_dan_dat_ban.b3_mo_ta': 'Nhập họ tên và số điện thoại liên hệ. Bạn có thể tích chọn thêm các dịp đặc biệt (Sinh nhật, kỷ niệm, họp mặt, có trẻ nhỏ, ghế ăn dặm, lối đi xe lăn, bàn gần cửa sổ...) và ghi chú riêng để nhà hàng phục vụ chu đáo nhất.',
   'huong_dan_dat_ban.b4': 'Bước 5: Xem lại, kiểm tra cọc & Nhận mã đặt bàn',
   'huong_dan_dat_ban.b4_mo_ta': 'Đối chiếu lại toàn bộ thông tin đặt bàn & danh sách món đã gọi trước. Hệ thống hiển thị rõ ràng chính sách cọc (nếu có đối với đoàn đông hoặc khung giờ cao điểm) và cung cấp ngay Mã đặt bàn để bạn dễ dàng tra cứu, đổi lịch hoặc hủy bất cứ lúc nào.',
-  'huong_dan_dat_ban.buoc_ma': '<b>Lưu lại mã đặt bàn:</b> Cùng với số điện thoại, mã đặt bàn giúp bạn tra cứu trạng thái, đổi giờ hoặc hủy đặt bàn trực tuyến tại trang <a href="/dat-ban/tra-cuu">Tra cứu đặt bàn</a> hoặc mục Đơn của tôi mà không cần gọi điện thoại.',
+  'huong_dan_dat_ban.buoc_ma': 'Sau khi đặt xong, bạn nhận <b>Phiếu đặt bàn (vé)</b> có mã đặt bàn và <b>mã QR check-in</b>. Mở lại vé bất cứ lúc nào: bấm vào <b>tên tài khoản</b> ở góc phải → <a href="/my-orders">Lịch Sử Đặt Bàn</a> → <b>Xem vé</b>. Cũng từ đó bạn tra cứu trạng thái, đổi giờ hoặc hủy đặt bàn mà không cần gọi điện.',
 
   'huong_dan_dat_ban.gio_dan': 'Lượt đặt phải <b>kết thúc</b> trước giờ đóng cửa. Nhà hàng cũng ngừng nhận đặt trong <b>{n} phút cuối</b>, để bạn không phải ăn vội.',
   'huong_dan_dat_ban.gio_nghi': 'Nghỉ cả ngày',
@@ -1299,7 +1301,7 @@ module.exports = {
   'huong_dan_dat_ban.huy_khong_coc': 'Lượt đặt không có tiền cọc thì hủy lúc nào cũng được, không mất phí. Chỉ mong bạn báo sớm để nhà hàng nhường bàn cho khách khác.',
 
   'huong_dan_dat_ban.h1': 'Tôi có bắt buộc phải tạo tài khoản để đặt bàn không?',
-  'huong_dan_dat_ban.h1_dap': 'Không bắt buộc. Bạn có thể đặt bàn trực tiếp chỉ với Họ tên và Số điện thoại. Khi đăng nhập tài khoản thành viên, thông tin sẽ được tự động điền và bạn được tích lũy điểm thưởng cho hóa đơn.',
+  'huong_dan_dat_ban.h1_dap': 'Có. Để giữ chỗ chắc chắn và tránh đặt ảo, bạn cần <b>đăng nhập</b> (hoặc đăng ký nhanh bằng số điện thoại) trước khi đặt bàn, đặt tiệc hay đặt món giao tận nơi. Thông tin liên hệ sẽ tự điền, vé đặt bàn được lưu trong Lịch Sử Đặt Bàn và bạn được tích điểm thành viên.',
   'huong_dan_dat_ban.h2': 'Tôi đến muộn thì có mất bàn không?',
   'huong_dan_dat_ban.h2_dap': 'Nhà hàng giữ bàn <b>{n} phút</b> sau giờ hẹn. Nếu bạn có việc đột xuất và đến muộn hơn, hãy gọi cho nhà hàng để chúng tôi hỗ trợ giữ bàn thêm cho bạn.',
   'huong_dan_dat_ban.h3': 'Đoàn tôi đông hơn số cho phép thì sao?',
@@ -1309,7 +1311,9 @@ module.exports = {
   'huong_dan_dat_ban.h5': 'Tôi có thể chọn món ăn hoặc combo trước khi đến nhà hàng không?',
   'huong_dan_dat_ban.h5_dap': 'Hoàn toàn được! Ở Bước 3 của quy trình đặt bàn, bạn có thể chọn các Set Combo gợi ý phù hợp theo số lượng khách hoặc chọn từng món ăn theo sở thích để bếp chuẩn bị sẵn sàng khi bạn tới. Nếu muốn đến nhà hàng rồi mới gọi món, bạn chỉ cần bấm "Không đặt món trước".',
   'huong_dan_dat_ban.h6': 'Làm thế nào để kiểm tra lại thông tin hoặc đổi giờ đặt bàn?',
-  'huong_dan_dat_ban.h6_dap': 'Ngay sau khi đặt bàn thành công, hệ thống sẽ cấp cho bạn một Mã đặt bàn. Bạn có thể vào mục <a href="/dat-ban/tra-cuu">Tra cứu đặt bàn</a> hoặc <a href="/my-orders">Đơn của tôi</a> để kiểm tra trạng thái, đổi giờ hoặc hủy đặt bàn trực tuyến tiện lợi.',
+  'huong_dan_dat_ban.h6_dap': 'Bấm vào <b>tên tài khoản</b> ở góc phải → <a href="/my-orders">Lịch Sử Đặt Bàn</a>. Mỗi lượt đặt có nút <b>Xem vé</b> (phiếu có mã QR check-in), <b>Sửa đặt bàn</b> để đổi giờ và <b>Hủy đặt bàn</b>. Bạn cũng có thể dùng <a href="/dat-ban/tra-cuu">Tra cứu đặt bàn</a> bằng mã đặt bàn và số điện thoại.',
+  'huong_dan_dat_ban.h7': 'Khi đến nhà hàng tôi cần xuất trình gì?',
+  'huong_dan_dat_ban.h7_dap': 'Mở <b>vé đặt bàn</b> (tên tài khoản → Lịch Sử Đặt Bàn → <b>Xem vé</b>) và đưa <b>mã QR check-in</b> cho lễ tân quét, hoặc đọc mã đặt bàn (dạng RSV-…). Lễ tân nhận khách <b>sớm tối đa 60 phút</b> trước giờ hẹn; nếu khách muốn đổi bàn khi đến, lễ tân sẽ xếp bàn khác còn trống.',
 
   'huong_dan_dat_ban.bat_dau_dat': 'Bắt đầu đặt bàn ngay',
 
@@ -1717,6 +1721,7 @@ module.exports = {
   'dat_ban_moi.cs_hoan100': 'Hoàn 100%',
   'dat_ban_moi.cs_hoan50_ngan': 'Hoàn 50%',
   'dat_ban_moi.cs_giu_ban': '<b>Quy định giữ bàn & Đổi lịch:</b> Nhà hàng giữ bàn tối đa <b>{phut} phút</b> kể từ giờ hẹn (nếu đến trễ vui lòng gọi báo trước để gia hạn). Quý khách được <b>miễn phí đổi giờ/ngày (bảo lưu 100% tiền cọc)</b> khi báo trước ít nhất <b>4 giờ</b> (bàn thường) hoặc <b>12 giờ</b> (bàn tiệc / đặt món trước).',
+  'dat_ban_moi.cs_ve': '<b>Vé đặt bàn & nhận bàn:</b> Đặt xong bạn nhận vé có <b>mã QR check-in</b>. Xem lại vé tại <b>tên tài khoản → Lịch Sử Đặt Bàn → Xem vé</b>. Khi đến, đưa mã QR cho lễ tân quét; nhà hàng nhận khách sớm tối đa <b>60 phút</b> trước giờ hẹn.',
   'dat_ban_moi.cs_dong_y': 'Tôi đã đọc, hiểu rõ và đồng ý với Chính sách đặt bàn, đặt cọc (100k/người giờ cao điểm hoặc ≥ 6 người; 150k/người cho tiệc ≥ {nt} người; 100% tiền món đặt trước) và Chính sách hoàn hủy của Nhà hàng Bảo Đoàn.',
   'dat_ban_moi.cs_xem_hd': 'Xem hướng dẫn chi tiết',
   'dat_ban_moi.cs_bat_dau': 'Đồng ý & Bắt đầu đặt bàn',

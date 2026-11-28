@@ -169,6 +169,28 @@
   .sdb-kpi-card.d::before { background: var(--sdb-dat); }
   .sdb-kpi-card.gold::before { background: var(--sdb-gold); }
 
+  /* O KPI bam duoc -> mo danh sach chi tiet */
+  .sdb-kpi-card[data-kpi] { cursor: pointer; }
+  .sdb-kpi-card[data-kpi]:focus-visible { outline: 2px solid var(--sdb-gold); outline-offset: 2px; }
+  .sdb-kpi-xem { position: absolute; top: .85rem; right: 1rem; font-size: .7rem; color: var(--sdb-muted); opacity: 0; transition: opacity .2s; }
+  .sdb-kpi-card[data-kpi]:hover .sdb-kpi-xem, .sdb-kpi-card[data-kpi]:focus-visible .sdb-kpi-xem { opacity: 1; }
+  @media (hover: none) { .sdb-kpi-xem { opacity: .8; } }
+
+  .ct-tom { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .ct-tom span { background: #fbf7f0; border: 1px solid var(--sdb-line); border-radius: 999px; padding: 4px 10px; font-size: .78rem; color: var(--sdb-ink); }
+  .ct-ds { overflow-y: auto; max-height: 56vh; border: 1px solid var(--sdb-line); border-radius: 10px; margin-bottom: 14px; }
+  .ct-dong { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--sdb-line); background: #fff; text-align: left; font-size: .85rem; color: var(--sdb-ink); }
+  .ct-dong:last-child { border-bottom: 0; }
+  button.ct-dong { cursor: pointer; }
+  button.ct-dong:hover, button.ct-dong:focus-visible { background: #fbf7f0; outline: none; }
+  .ct-dong b.so { font-size: .95rem; }
+  .ct-dong small { color: var(--sdb-muted); display: block; margin-top: 2px; }
+  .ct-dong .tien { font-weight: 700; color: var(--sdb-gold-dark); white-space: nowrap; }
+  .ct-khu { padding: 7px 12px; background: #f6f1ea; font-size: .72rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--sdb-muted); position: sticky; top: 0; }
+  .ct-thanh { display: block; height: 6px; border-radius: 3px; background: #efe7da; margin-top: 6px; overflow: hidden; }
+  .ct-thanh span { display: block; height: 100%; background: var(--sdb-gold); }
+  .ct-rong { padding: 30px; text-align: center; color: var(--sdb-muted); }
+
   .sdb-kpi-title {
     font-size: .72rem;
     font-weight: 700;
@@ -731,6 +753,20 @@
   </div>
 </div>
 
+<!-- Modal chi tiết từng ô thống kê -->
+<div class="lop" id="lopChiTiet" style="z-index: 1055;">
+  <div class="hop" role="dialog" aria-modal="true" aria-labelledby="ctTieuDe" style="width: min(620px, 96vw);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <h3 id="ctTieuDe">Chi tiết</h3>
+      <button type="button" id="ctNutDong" onclick="dongChiTiet()" aria-label="Đóng" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--sdb-muted); line-height:1;">&times;</button>
+    </div>
+    <div class="p" id="ctMoTa" style="margin-bottom:10px;"></div>
+    <div class="ct-tom" id="ctTom"></div>
+    <div class="ct-ds" id="ctDs"></div>
+    <button class="dong" onclick="dongChiTiet()">Đóng cửa sổ</button>
+  </div>
+</div>
+
 <!-- Modal Gọi Món Trực Tiếp Cho Bàn (Menu popup) -->
 <div class="lop" id="lopOrder" style="z-index: 1060;">
   <div class="hop" style="width: min(760px, 96vw); max-height: 90vh; display: flex; flex-direction: column; padding: 20px 24px;">
@@ -828,31 +864,197 @@ function veChiSo() {
   const nhanDoanhThu = isHomNay ? 'Doanh thu hôm nay' : `Doanh thu (${ngayDangXem})`;
 
   $('chiSo').innerHTML = `
-    <div class="sdb-kpi-card t">
+    <div class="sdb-kpi-card t" data-kpi="trong">
       <div class="sdb-kpi-title">Bàn trống</div>
       <div class="sdb-kpi-val">${t.trong || 0}<span style="font-size:14px;color:var(--sdb-muted);font-weight:500;">/${t.tong || 0}</span></div>
     </div>
-    <div class="sdb-kpi-card p">
+    <div class="sdb-kpi-card p" data-kpi="phucvu">
       <div class="sdb-kpi-title">Đang phục vụ</div>
       <div class="sdb-kpi-val">${t.dang_phuc_vu || 0}</div>
     </div>
-    <div class="sdb-kpi-card d">
+    <div class="sdb-kpi-card d" data-kpi="dat">
       <div class="sdb-kpi-title">Đã đặt trước</div>
       <div class="sdb-kpi-val">${t.da_dat || 0}</div>
     </div>
-    <div class="sdb-kpi-card gold">
+    <div class="sdb-kpi-card gold" data-kpi="lapday">
       <div class="sdb-kpi-title">Tỷ lệ lấp đầy</div>
       <div class="sdb-kpi-val">${t.ty_le_lap_day || 0}% <span style="font-size:13px;color:var(--sdb-muted);font-weight:500;">· ${t.so_cho || 0} chỗ</span></div>
     </div>
-    <div class="sdb-kpi-card">
+    <div class="sdb-kpi-card" data-kpi="dangmo">
       <div class="sdb-kpi-title">Doanh thu đang mở</div>
       <div class="sdb-kpi-val" style="font-size:1.2rem; color:var(--sdb-gold-dark);">${tien(t.doanh_thu_dang_mo)}đ</div>
     </div>
-    <div class="sdb-kpi-card">
+    <div class="sdb-kpi-card" data-kpi="doanhthu">
       <div class="sdb-kpi-title">${nhanDoanhThu}</div>
       <div class="sdb-kpi-val" style="font-size:1.2rem; color:var(--sdb-ink);">${tien(t.doanh_thu_hom_nay)}đ</div>
     </div>`;
+  // Moi o la mot nut: bam / Enter / Space mo danh sach chi tiet.
+  $('chiSo').querySelectorAll('[data-kpi]').forEach((o) => {
+    o.setAttribute('role', 'button');
+    o.tabIndex = 0;
+    o.setAttribute('aria-label', o.querySelector('.sdb-kpi-title').textContent + ' - xem chi tiết');
+    o.insertAdjacentHTML('beforeend', '<span class="sdb-kpi-xem">Xem chi tiết <i class="fas fa-chevron-right"></i></span>');
+  });
 }
+
+/* ---------------- Chi tiết các ô thống kê ---------------- */
+const escCt = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const gio5 = (g) => (g ? String(g).slice(0, 5) : '');
+let kpiDangMo = null;
+
+$('chiSo').addEventListener('click', (e) => {
+  const o = e.target.closest('[data-kpi]');
+  if (o) moChiTiet(o.dataset.kpi);
+});
+$('chiSo').addEventListener('keydown', (e) => {
+  const o = e.target.closest('[data-kpi]');
+  if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); moChiTiet(o.dataset.kpi); }
+});
+
+// Mot dong ban: bam vao thi dong cua so nay va mo hop thao tac cua ban do.
+function dongBanCt(b, phu, phai) {
+  return `<button type="button" class="ct-dong" onclick="chonBanTuChiTiet(${Number(b.Id_ban)})">
+      <b class="so">${escCt(b.number_ban)}</b>
+      <span>${phu}</span>
+      <span class="tien">${phai || ''}</span>
+    </button>`;
+}
+
+// Gom theo khu, giu thu tu khu nhu tren so do.
+function dsTheoKhu(ds, veDong) {
+  if (!ds.length) return '<div class="ct-rong">Không có bàn nào.</div>';
+  const nhom = new Map();
+  ds.forEach((b) => {
+    const k = b.name_vitri || 'Khác';
+    if (!nhom.has(k)) nhom.set(k, []);
+    nhom.get(k).push(b);
+  });
+  let html = '';
+  nhom.forEach((dsKhu, khu) => {
+    html += `<div class="ct-khu">${escCt(khu)} · ${dsKhu.length} bàn</div>` + dsKhu.map(veDong).join('');
+  });
+  return html;
+}
+
+function moTaDatTruoc(b) {
+  if (!b.dat_truoc) return 'Giữ chỗ (đánh dấu tay trên sơ đồ)';
+  const d = b.dat_truoc;
+  return `<b>${escCt(d.ten_khach)}</b> · ${escCt(d.so_khach || '?')} khách · đến <b>${gio5(d.gio)}</b><small>Mã ${escCt(d.ma)}</small>`;
+}
+
+function moTaPhucVu(b) {
+  const mon = b.so_mon ? `${b.so_mon} món` : 'Chưa gọi món';
+  const khach = b.so_khach ? ` · ${b.so_khach} khách` : '';
+  const tu = b.bat_dau ? `<small>Mở bàn lúc ${gio5(String(b.bat_dau).slice(11))}</small>` : '';
+  return mon + khach + tu;
+}
+
+async function moChiTiet(loai) {
+  kpiDangMo = loai;
+  const ban = duLieu.ban || [];
+  const t = duLieu.thong_ke || {};
+  const isHomNay = ngayDangXem === new Date().toISOString().slice(0, 10);
+  const ngayChu = isHomNay ? 'hôm nay' : 'ngày ' + ngayDangXem.split('-').reverse().join('/');
+  let tieuDe = '', moTa = '', tom = [], html = '';
+
+  if (loai === 'trong') {
+    const ds = ban.filter((b) => b.trangthai === 0);
+    const cho = ds.reduce((s, b) => s + Number(b.so_cho || 0), 0);
+    tieuDe = 'Bàn trống';
+    moTa = `Các bàn đang trống ${ngayChu}. Bấm vào một bàn để mở bàn và gọi món.`;
+    tom = [`${ds.length} bàn`, `${cho} chỗ`];
+    // Ban nhieu cho len truoc de le tan xep khach dong nguoi nhanh.
+    html = dsTheoKhu(ds.slice().sort((a, b) => b.so_cho - a.so_cho), (b) => dongBanCt(b, `${b.so_cho} chỗ`));
+  } else if (loai === 'phucvu') {
+    const ds = ban.filter((b) => b.trangthai === 1);
+    const khach = ds.reduce((s, b) => s + Number(b.so_khach || 0), 0);
+    const tong = ds.reduce((s, b) => s + Number(b.tong_tien || 0), 0);
+    tieuDe = 'Bàn đang phục vụ';
+    moTa = `Bàn đang có khách ${ngayChu}, bàn mở sớm nhất ở trên.`;
+    tom = [`${ds.length} bàn`, khach ? `${khach} khách` : null, `Tạm tính ${tien(tong)}đ`].filter(Boolean);
+    const sx = ds.slice().sort((a, b) => String(a.bat_dau || '9').localeCompare(String(b.bat_dau || '9')));
+    html = dsTheoKhu(sx, (b) => dongBanCt(b, moTaPhucVu(b), b.tong_tien ? tien(b.tong_tien) + 'đ' : ''));
+  } else if (loai === 'dat') {
+    const ds = ban.filter((b) => b.trangthai === 2);
+    const khach = ds.reduce((s, b) => s + Number((b.dat_truoc && b.dat_truoc.so_khach) || 0), 0);
+    tieuDe = 'Bàn đã đặt trước';
+    moTa = `Lượt giữ chỗ ${ngayChu}, khách đến sớm nhất ở trên.`;
+    tom = [`${ds.length} bàn`, khach ? `${khach} khách dự kiến` : null].filter(Boolean);
+    const gioDat = (b) => String((b.dat_truoc && b.dat_truoc.gio) || '99');
+    const sx = ds.slice().sort((a, b) => gioDat(a).localeCompare(gioDat(b)));
+    html = dsTheoKhu(sx, (b) => dongBanCt(b, moTaDatTruoc(b), b.dat_truoc ? gio5(b.dat_truoc.gio) : ''));
+  } else if (loai === 'lapday') {
+    tieuDe = 'Tỷ lệ lấp đầy theo khu';
+    moTa = 'Tính trên số bàn đang phục vụ và đã đặt trước. Bấm một khu để xem riêng khu đó trên sơ đồ.';
+    tom = [`${t.ty_le_lap_day || 0}% toàn nhà hàng`, `${(t.dang_phuc_vu || 0) + (t.da_dat || 0)}/${t.tong || 0} bàn`, `${t.so_cho || 0} chỗ`];
+    html = (duLieu.vi_tri || []).map((v) => {
+      const ds = ban.filter((b) => String(b.id_vitri) === String(v.id_vitri));
+      const pv = ds.filter((b) => b.trangthai === 1).length;
+      const dat = ds.filter((b) => b.trangthai === 2).length;
+      const tl = ds.length ? Math.round(((pv + dat) / ds.length) * 100) : 0;
+      return `<button type="button" class="ct-dong" style="grid-template-columns:1fr auto;" onclick="chonKhuTuChiTiet('${escCt(v.id_vitri)}')">
+          <span><b>${escCt(tenKhu(v))}</b><small>${pv} đang phục vụ · ${dat} đã đặt · ${ds.length - pv - dat} còn lại / ${ds.length} bàn</small>
+            <span class="ct-thanh"><span style="width:${tl}%"></span></span></span>
+          <span class="tien">${tl}%</span>
+        </button>`;
+    }).join('') || '<div class="ct-rong">Chưa có khu vực nào.</div>';
+  } else if (loai === 'dangmo') {
+    const ds = ban.filter((b) => b.trangthai === 1 && Number(b.tong_tien) > 0).sort((a, b) => b.tong_tien - a.tong_tien);
+    tieuDe = 'Doanh thu đang mở';
+    moTa = 'Tiền tạm tính của các bàn đang phục vụ, chưa thanh toán. Bàn nhiều tiền nhất ở trên.';
+    tom = [`${ds.length} bàn`, `Tổng ${tien(t.doanh_thu_dang_mo)}đ`];
+    html = ds.length
+      ? ds.map((b) => dongBanCt(b, `${escCt(b.name_vitri || '')} · ${moTaPhucVu(b)}`, tien(b.tong_tien) + 'đ')).join('')
+      : '<div class="ct-rong">Không có bàn nào đang mở hóa đơn.</div>';
+  } else if (loai === 'doanhthu') {
+    tieuDe = isHomNay ? 'Doanh thu hôm nay' : `Doanh thu ${ngayChu}`;
+    moTa = 'Các lượt đã thanh toán trong ngày (tại bàn, mang về, giao hàng), mới nhất ở trên.';
+    tom = [`Tổng ${tien(t.doanh_thu_hom_nay)}đ`];
+    html = '<div class="ct-rong">Đang tải…</div>';
+  }
+
+  $('ctTieuDe').textContent = tieuDe;
+  $('ctMoTa').innerHTML = moTa;
+  $('ctTom').innerHTML = tom.map((x) => `<span>${x}</span>`).join('');
+  $('ctDs').innerHTML = html;
+  $('lopChiTiet').style.display = 'flex';
+  $('ctNutDong').focus({ preventScroll: true });
+
+  if (loai !== 'doanhthu') return;
+  try {
+    const r = await fetch('/so-do-ban/api/doanh-thu-ngay?ngay=' + encodeURIComponent(ngayDangXem));
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error();
+    if (kpiDangMo !== 'doanhthu') return; // da dong / mo o khac trong luc cho
+    const TEN = { tai_cho: 'Tại bàn', giao_hang: 'Giao hàng', mang_ve: 'Mang về' };
+    const tong = j.ds.reduce((s, d) => s + Number(d.tong_tien || 0), 0);
+    $('ctTom').innerHTML = [`${j.ds.length} lượt`, `Tổng ${tien(tong)}đ`].map((x) => `<span>${x}</span>`).join('');
+    $('ctDs').innerHTML = j.ds.length ? j.ds.map((d) => `
+      <div class="ct-dong">
+        <b class="so">${escCt(d.so_ban || '—')}</b>
+        <span>${escCt(TEN[d.loai_don] || d.loai_don || 'Tại bàn')} · ${Number(d.so_mon) || 0} món${d.so_khach ? ' · ' + escCt(d.so_khach) + ' khách' : ''}
+          <small>${gio5(d.gio) ? 'Lúc ' + gio5(d.gio) + ' · ' : ''}Mã ${escCt(d.sesis)}</small></span>
+        <span class="tien">${tien(d.tong_tien)}đ</span>
+      </div>`).join('') : '<div class="ct-rong">Chưa có lượt nào thanh toán trong ngày.</div>';
+  } catch (e) {
+    if (kpiDangMo === 'doanhthu') $('ctDs').innerHTML = '<div class="ct-rong">Không tải được danh sách, thử lại sau.</div>';
+  }
+}
+
+function dongChiTiet() {
+  $('lopChiTiet').style.display = 'none';
+  const o = kpiDangMo && $('chiSo').querySelector(`[data-kpi="${kpiDangMo}"]`);
+  kpiDangMo = null;
+  if (o) o.focus({ preventScroll: true });
+}
+function chonBanTuChiTiet(id) { $('lopChiTiet').style.display = 'none'; kpiDangMo = null; moHop(id); }
+function chonKhuTuChiTiet(id) {
+  dongChiTiet();
+  chonViTri(id);
+  $('san').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('lopChiTiet').addEventListener('click', (e) => { if (e.target.id === 'lopChiTiet') dongChiTiet(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('lopChiTiet').style.display === 'flex') dongChiTiet(); });
 
 const tenKhu = (v) => v.Name_vitri || v.name_vitri || 'Khu';
 
@@ -1259,7 +1461,7 @@ async function chuyenGopBan(loai) {
   const cau = loai === 'gop-ban'
     ? `Gộp toàn bộ món của Bàn ${banDangChon.number_ban} vào hóa đơn của Bàn ${banDich ? banDich.number_ban : den}?`
     : `Chuyển khách từ Bàn ${banDangChon.number_ban} sang Bàn ${banDich ? banDich.number_ban : den}?`;
-  if (!confirm(cau)) return;
+  if (!await window.xacNhan(cau)) return;
   try {
     const r = await fetch('/so-do-ban/api/' + loai, {
       method: 'POST',

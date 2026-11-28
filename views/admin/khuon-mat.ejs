@@ -381,8 +381,8 @@
     }).join('') || '<tr><td colspan="5" class="qt-center" style="padding: 2rem; color: var(--qt-muted);">Không có nhân viên nào phù hợp.</td></tr>';
 
     document.querySelectorAll('.xoa').forEach(function(b) {
-      b.onclick = function() {
-        if (!confirm('Xóa toàn bộ mẫu khuôn mặt của ' + b.getAttribute('data-ten') + '?')) return;
+      b.onclick = async function() {
+        if (!await window.xacNhan('Xóa toàn bộ mẫu khuôn mặt của ' + b.getAttribute('data-ten') + '?')) return;
         b.disabled = true;
         RT.gui('/api/khuon-mat/xoa', { id_nv: Number(b.getAttribute('data-id')) })
           .then(function() { RT.thongBao('Đã xóa mẫu nhận diện thành công.', 'thanh-cong'); taiDanhSach(); })

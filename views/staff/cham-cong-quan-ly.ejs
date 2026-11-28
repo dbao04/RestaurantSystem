@@ -349,12 +349,12 @@
     };
 
     // ---- Xoá ----
-    document.getElementById('s-xoa').onclick = function () {
+    document.getElementById('s-xoa').onclick = async function () {
       var ly = document.getElementById('s-ly-do').value;
       if (String(ly).trim().length < 8) {
         return bao('s-bao', 'Phải ghi lý do (ít nhất 8 ký tự) trước khi xoá.', 'danger');
       }
-      if (!confirm('Xoá hẳn bản ghi chấm công này? Thao tác được ghi lại kèm tên bạn.')) return;
+      if (!await window.xacNhan('Xoá hẳn bản ghi chấm công này? Thao tác được ghi lại kèm tên bạn.')) return;
       var nut = this; nut.disabled = true;
       RT.gui('/api/cham-cong/xoa', {
         id_cc: Number(document.getElementById('s-id-cc').value), ly_do: ly,

@@ -468,6 +468,8 @@
       font-weight: 600;
     }
   </style>
+  <script src="/thong-bao-dep.js?v=3"></script>
+  <script src="/hien-mat-khau.js?v=3"></script>
 </head>
 <body>
 
@@ -750,8 +752,8 @@
   (function () {
     var nut = document.getElementById('nut-train');
     var kq = document.getElementById('kq-train');
-    nut.onclick = function () {
-      if (!confirm('Khởi chạy huấn luyện lại bộ phân loại ý định tiếng Việt?')) return;
+    nut.onclick = async function () {
+      if (!await window.xacNhan('Khởi chạy huấn luyện lại bộ phân loại ý định tiếng Việt?')) return;
       nut.disabled = true;
       kq.innerHTML = '<span style="color:var(--nh-gold-dark);"><i class="fas fa-spinner fa-spin"></i> Đang huấn luyện toàn bộ mô hình (vui lòng giữ nguyên trang)…</span>';
       fetch('/admin/chatbot/huan-luyen', { method: 'POST' })

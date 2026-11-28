@@ -1325,8 +1325,10 @@ async function ganBan(id, dsBanId, ctx = {}) {
     await conn.query('UPDATE reservations SET manual_tables = 1, updated_by = ?, updated_at = NOW() WHERE id = ?',
       [ctx.nhanVienId || null, id]);
 
+    const lyDoDoi = String(ctx.lyDo || '').trim().slice(0, 200);
     await ghiNhatKy(conn, id, r.status, r.status,
-      `Đổi bàn: ${banCu.map((b) => b.ten).join(', ') || '—'} → ${goi.chon.ban.map((b) => b.ten).join(', ')}`,
+      `Đổi bàn: ${banCu.map((b) => b.ten).join(', ') || '—'} → ${goi.chon.ban.map((b) => b.ten).join(', ')}`
+        + (lyDoDoi ? ` (lý do: ${lyDoDoi})` : ''),
       ctx.nhanVienId);
     await dongBoHopDong(conn, id);
 

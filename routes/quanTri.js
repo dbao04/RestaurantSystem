@@ -7,6 +7,7 @@
  * de khong tao ban sao thu hai. Mount o DUNG vi tri cu trong server.js nen thu
  * tu middleware khong doi.
  */
+const baoLoiQuayLai = require('../utils/baoLoiQuayLai');
 const express = require('express');
 
 module.exports = function ({ gioiHanDN, orderService, personnelService, requireAdmin, upload }) {
@@ -142,7 +143,7 @@ module.exports = function ({ gioiHanDN, orderService, personnelService, requireA
     try {
       const { gia } = req.body;
       if (Number(gia) <= 0) {
-        return res.send('<script>alert("Giá món ăn phải lớn hơn 0!"); history.back();</script>');
+        return baoLoiQuayLai(res, 'Giá món ăn phải lớn hơn 0!');
       }
       const productData = {
         name: req.body.name_mon,
@@ -177,7 +178,7 @@ module.exports = function ({ gioiHanDN, orderService, personnelService, requireA
       const image = req.file ? req.file.filename : null;
 
       if (Number(gia) <= 0) {
-        return res.send('<script>alert("Giá món ăn phải lớn hơn 0!"); history.back();</script>');
+        return baoLoiQuayLai(res, 'Giá món ăn phải lớn hơn 0!');
       }
 
       await personnelService.updateProduct(req.params.id, {

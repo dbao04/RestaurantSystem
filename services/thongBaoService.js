@@ -59,6 +59,7 @@ const TEN_NHOM = {
  */
 const LUONG = {
   // ---- Ban hang & bep
+  chot_cuoi_ngay:     { nhom: 'Bán hàng & bếp', ten: 'Chốt cuối ngày: món tự hủy, hóa đơn còn nợ', nhan: ['QUAN_LY', 'THU_NGAN'], muc_do: 'quan_trong' },
   huy_mon:            { nhom: 'Bán hàng & bếp', ten: 'Xóa món đã order (kèm giải trình)', nhan: ['QUAN_LY', 'GIAM_SAT_PV', 'GIAM_SAT_TN'], quan_tri: true, muc_do: 'khan' },
   mon_tam_ngung:      { nhom: 'Bán hàng & bếp', ten: 'Món tạm ngưng / bán lại', nhan: ['PHUC_VU', 'THU_NGAN', 'LE_TAN'], muc_do: 'quan_trong' },
   // ---- Van hanh tai ban (phuc vu): ai can biet ngay de lam viec

@@ -7,6 +7,7 @@
  * de khong tao ban sao thu hai. Mount o DUNG vi tri cu trong server.js nen thu
  * tu middleware khong doi.
  */
+const baoLoiQuayLai = require('../utils/baoLoiQuayLai');
 const express = require('express');
 
 module.exports = function ({ db, equipmentService, menuService, personnelService, requireRole, upload }) {
@@ -76,7 +77,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     try {
       const { id_nl, so_luong, gia_nhap, han_su_dung } = req.body;
       if (Number(so_luong) <= 0 || Number(gia_nhap) <= 0) {
-        return res.send('<script>alert("Số lượng và Giá nhập phải lớn hơn 0!"); history.back();</script>');
+        return baoLoiQuayLai(res, 'Số lượng và Giá nhập phải lớn hơn 0!');
       }
       /*
         Nhap nhanh tu trang kho cung phai sinh PHIEU NHAP that (khoBepService):
@@ -96,7 +97,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
         }, req.session.staffId);
       } catch (e) {
         if (e instanceof kho.LoiKho) {
-          return res.send(`<script>alert(${JSON.stringify(e.message)}); history.back();</script>`);
+          return baoLoiQuayLai(res, e.message);
         }
         throw e;
       }
@@ -357,7 +358,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     try {
       const [[loai]] = await db.query('SELECT name_loai FROM loai_mon WHERE id_loai = ?', [req.body.id_loai]);
       if (!loai || !dungTram(req, loai.name_loai)) return res.status(403).send(TU_CHOI_TRAM(req));
-      if (!(Number(req.body.gia_mon) > 0)) return res.status(400).send('<script>alert("Giá món phải lớn hơn 0!"); history.back();</script>');
+      if (!(Number(req.body.gia_mon) > 0)) return baoLoiQuayLai(res, 'Giá món phải lớn hơn 0!', 400);
       const image = req.file ? req.file.filename : null;
       await personnelService.addProduct({ name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon, price: req.body.gia_mon, image });
       res.redirect('/staff/kitchen/dishes');
@@ -380,7 +381,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
       if (!loaiMoi || !dungTram(req, loaiMoi.name_loai) || (loaiCu && !dungTram(req, loaiCu.name_loai))) {
         return res.status(403).send(TU_CHOI_TRAM(req));
       }
-      if (!(Number(req.body.gia_mon) > 0)) return res.status(400).send('<script>alert("Giá món phải lớn hơn 0!"); history.back();</script>');
+      if (!(Number(req.body.gia_mon) > 0)) return baoLoiQuayLai(res, 'Giá món phải lớn hơn 0!', 400);
       await personnelService.updateProduct(id, {
         name: req.body.name_mon, categoryId: req.body.id_loai, note: req.body.ghichu_mon,
         price: req.body.gia_mon, image: req.file ? req.file.filename : null, tinhtrang: mon.tinhtrang,
@@ -523,7 +524,7 @@ module.exports = function ({ db, equipmentService, menuService, personnelService
     try {
       const { ngay, ca, tong_tien, ghi_chu } = req.body;
       if (!ngay || !ca) {
-        return res.send('<script>alert("Vui lòng điền đầy đủ thông tin chốt ca!"); history.back();</script>');
+        return baoLoiQuayLai(res, 'Vui lòng điền đầy đủ thông tin chốt ca!');
       }
       await db.query(
         'INSERT INTO chot_ca (staff_id, ngay, ca, tong_tien, ghi_chu) VALUES (?, ?, ?, ?, ?)',

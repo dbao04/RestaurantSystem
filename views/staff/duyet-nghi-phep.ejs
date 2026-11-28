@@ -56,11 +56,11 @@
 <script>
 (function () {
   document.querySelectorAll('.nut-xl').forEach(function (n) {
-    n.addEventListener('click', function () {
+    n.addEventListener('click', async function () {
       var dongY = n.dataset.dongY === '1';
       var lyDo = '';
       if (dongY) {
-        if (!confirm('Duyệt đơn nghỉ của ' + n.dataset.ten + '?')) return;
+        if (!await window.xacNhan('Duyệt đơn nghỉ của ' + n.dataset.ten + '?')) return;
       } else {
         lyDo = prompt('Lý do từ chối đơn nghỉ của ' + n.dataset.ten + ':', '');
         if (lyDo === null) return;

@@ -283,6 +283,13 @@
                     <i class="fas fa-eye"></i> <%= t('don.xem_chi_tiet_btn') %>
                   </button>
 
+                  <% if (r.phone && !['CANCELLED', 'REJECTED', 'NO_SHOW'].includes(r.status)) { %>
+                    <%# Ve (phieu dat ban) co ma QR check-in - khach mo lai bat cu luc nao de dua le tan quet. %>
+                    <a href="/dat-ban/xong?ma=<%= encodeURIComponent(r.reservation_code) %>&dt=<%= encodeURIComponent(r.phone) %>" class="nh-btn nh-btn--gold nh-btn--sm">
+                      <i class="fas fa-ticket-alt"></i> <%= t('don.xem_ve') %>
+                    </a>
+                  <% } %>
+
                   <% 
                     var tongTienPreorder = (r.mon_dat_truoc || []).reduce(function(sum, m) { return sum + (Number(m.price||0) * Number(m.quantity||1)); }, 0);
                     var canThanhToan = (Number(r.deposit_amount) > 0 || tongTienPreorder > 0) && r.deposit_status !== 'PAID' && ['PENDING', 'CONFIRMED'].includes(r.status);

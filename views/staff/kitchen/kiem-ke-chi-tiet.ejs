@@ -119,7 +119,7 @@
     catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
   });
   document.getElementById('chot').addEventListener('click', async function () {
-    if (!confirm('Chốt kiểm kê? Hệ thống sẽ sinh phiếu xuất cho phần thiếu và phiếu nhập điều chỉnh cho phần thừa. Không sửa được sau khi chốt.')) return;
+    if (!await window.xacNhan('Chốt kiểm kê? Hệ thống sẽ sinh phiếu xuất cho phần thiếu và phiếu nhập điều chỉnh cho phần thừa. Không sửa được sau khi chốt.')) return;
     try {
       await goi('/api/kitchen/kiem-ke/' + ID + '/dem', { dong: soDem() });
       await goi('/api/kitchen/kiem-ke/' + ID + '/chot');
@@ -127,7 +127,7 @@
     } catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
   });
   document.getElementById('huy').addEventListener('click', async function () {
-    if (!confirm('Hủy phiếu kiểm kê này? Không điều chỉnh tồn kho.')) return;
+    if (!await window.xacNhan('Hủy phiếu kiểm kê này? Không điều chỉnh tồn kho.')) return;
     try { await goi('/api/kitchen/kiem-ke/' + ID + '/huy'); location.href = '/staff/kitchen/kho/kiem-ke'; }
     catch (e) { bao.className = 'small mb-2 text-danger'; bao.textContent = e.message; }
   });

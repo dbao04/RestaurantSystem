@@ -392,9 +392,13 @@ function xacNhanHuy(form) {
   var opt = form.ma_ly_do.options[form.ma_ly_do.selectedIndex];
   if (!opt || !opt.value) { alert('Hãy chọn lý do hủy.'); return false; }
   var ben = opt.getAttribute('data-ben');
-  return confirm(ben === 'nha_hang'
+  // Hop xac nhan moi khong chan trang: chan gui, Dong y thi form.submit() (khong goi lai onsubmit).
+  window.xacNhan(ben === 'nha_hang'
     ? 'Hủy do LỖI NHÀ HÀNG: khách sẽ được hoàn điểm toàn bộ số tiền đã trả. Tiếp tục?'
-    : 'Hủy do LỖI KHÁCH: theo chính sách khách KHÔNG được hoàn tiền/điểm. Tiếp tục?');
+    : 'Hủy do LỖI KHÁCH: theo chính sách khách KHÔNG được hoàn tiền/điểm. Tiếp tục?',
+    { tieuDe: 'Hủy đơn giao hàng', dongY: 'Hủy đơn', huy: 'Quay lại', nguyHiem: true })
+    .then(function (ok) { if (ok) form.submit(); });
+  return false;
 }
 
 function xinLyDo(form) {

@@ -149,7 +149,7 @@ body::-webkit-scrollbar {
   font-family: 'Plus Jakarta Sans', 'Montserrat', var(--nh-sans);
   color: rgba(255, 248, 235, 0.9); 
   /* Chu menu de doc (truoc ~12-13px qua nho): 15-16px man lon, giam dan theo moc ben duoi. */
-  font-weight: 600; font-size: clamp(1.08rem, 1vw, 1.2rem); 
+  font-weight: 600; font-size: clamp(1.2rem, 1.1vw, 1.34rem); 
   padding: .56rem .8rem; 
   border-radius: 999px;
   white-space: nowrap; 
@@ -389,7 +389,7 @@ body::-webkit-scrollbar {
 /* Menu co nhieu muc (them Khong gian, Dat tiec): thu gon khoang dem o man hinh
    1561-2000px de van vua mot hang; <= 1560px dung quy tac bieu tuong ben duoi. */
 @media (min-width: 1561px) and (max-width: 2000px) {
-  .nh-nav__links a { padding: .54rem .68rem; font-size: 1.12rem; }
+  .nh-nav__links a { padding: .54rem .62rem; font-size: 1.24rem; }
 }
 /* Duoi 1900px: nut "Giao tan noi / Dat ban" chi con bieu tuong (title van co ten)
    de nhuong cho menu chu to, de doc. */
@@ -418,20 +418,20 @@ body::-webkit-scrollbar {
   .nh-nav.is-hep .nh-brand__name { display: none; }
 }
 @media (min-width: 1561px) and (max-width: 1699px) {
-  .nh-nav__links a { padding: .52rem .56rem; font-size: 1.07rem; }
+  .nh-nav__links a { padding: .52rem .5rem; font-size: 1.18rem; }
 }
 @media (max-width: 1560px) {
-  .nh-nav__links a { font-size: 1.03rem; padding: 0.48rem 0.5rem; }
+  .nh-nav__links a { font-size: 1.13rem; padding: 0.48rem 0.44rem; }
 }
 @media (max-width: 1460px) {
-  .nh-nav__links a { font-size: 0.98rem; padding: 0.46rem 0.44rem; }
+  .nh-nav__links a { font-size: 1.08rem; padding: 0.46rem 0.38rem; }
 }
 @media (max-width: 1400px) {
   .nh-nav .nh-container { padding-inline: 0.75rem; }
   .nh-nav__inner { gap: 0.35rem; }
   .nh-lang__nut span { display: none; }
   .nh-lang__nut { padding: 5px 8px; }
-  .nh-nav__links a { font-size: 0.96rem; padding: 0.44rem 0.4rem; }
+  .nh-nav__links a { font-size: 1.05rem; padding: 0.44rem 0.34rem; }
   .nh-brand__name { font-size: 1.45rem; }
 }
 @media (max-width: 1330px) {
@@ -3390,6 +3390,82 @@ html:not([data-theme="dark"]) .nh-auth-link { color: #7a5a1c !important; }
 @media (min-width: 1331px) and (max-width: 1460px) {
   .nh-nav:has(.nh-user) .nh-nav__links a { padding-left: .28rem; padding-right: .28rem; }
 }
-@media (min-width: 1331px) and (max-width: 1400px) {
-  .nh-nav:has(.nh-user) .nh-nav__links a { font-size: .92rem; }
+
+/* ==========================================================================
+   KHOP BO VIEN MENU (28/11): truoc day <a> la inline nen padding doc khong lam
+   khung .nh-nav__links gian theo -> muc (40px) cao hon khung (36px), muc dang
+   chon them vien 1px lai lo ra ngoai mep bo tron cua khung.
+   - <a> thanh inline-flex: khung boc khit muc.
+   - Moi muc co san vien 1px trong suot: muc dang chon chi doi MAU vien, khong
+     doi kich thuoc.
+   - Khung dem deu 3px: hai duong bo tron dong tam (khe ho bang nhau quanh vien).
+   ========================================================================== */
+@media (min-width: 1331px) {
+  .nh-nav__links { padding: 3px; align-items: center; }
+  .nh-nav__links > li:not(.nh-menu-mobile) { display: flex; }
+  .nh-nav__links a {
+    display: inline-flex; align-items: center; line-height: 1.2;
+    border: 1px solid transparent;
+    padding-top: .36rem; padding-bottom: .36rem;
+  }
+  .nh-nav__links a.is-active { border-color: rgba(200, 162, 75, 0.5) !important; }
+}
+
+/* "Vi sao chon chung toi": anh that + giay chung nhan noi bo dat nghieng o goc anh
+   (thay cho icon tron). Giay nam trong mep khung anh, khong lo ra ngoai bo tron. */
+.nh-features--anh .nh-feature { padding: 0 0 1.6rem; overflow: hidden; display: flex; flex-direction: column; }
+.nh-features--anh .nh-feature h3 { padding: 0 1.2rem; margin-top: 1.1rem; }
+.nh-features--anh .nh-feature p { padding: 0 1.2rem; }
+.nh-feature__anh { position: relative; aspect-ratio: 16 / 11; max-width: 100%; background: #1a120c; }
+.nh-feature__hinh { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.92) brightness(.82); transition: transform .5s var(--nh-ease), filter .5s var(--nh-ease); }
+.nh-feature__anh::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,12,8,0) 45%, rgba(20,12,8,.55) 100%); pointer-events: none; }
+.nh-feature__cn { position: absolute; right: 12px; bottom: 12px; width: 52%; max-width: 190px; height: auto; z-index: 1;
+  transform: rotate(-4deg); border-radius: 3px; box-shadow: 0 10px 24px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);
+  transition: transform .4s var(--nh-ease); }
+.nh-feature:hover .nh-feature__hinh { transform: scale(1.05); filter: saturate(1) brightness(.9); }
+.nh-feature:hover .nh-feature__cn { transform: rotate(-1deg) scale(1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .nh-feature__hinh, .nh-feature__cn { transition: none; }
+  .nh-feature:hover .nh-feature__hinh, .nh-feature:hover .nh-feature__cn { transform: none; }
+}
+
+/* ==========================================================================
+   BANNER TRANG CHU CAN DOI (28/11)
+   Truoc: chu bam mep trai (container 1560px), hinh ben phai bam mep phai man
+   hinh (right: 4-5%) -> man rong ho mot khoang lon o giua; banner cao 100vh.
+   Nay: moi slide dung chung mot khung giua --nh-hero-w (toi da 1320px); chu,
+   ve giam gia / mon noi bat / mon ban chay va nut chuyen slide cung bam khung.
+   ========================================================================== */
+@media (min-width: 1001px) {
+  .nh-hero--slider {
+    --nh-hero-w: min(1320px, 92vw);
+    --nh-hero-le: calc((100vw - var(--nh-hero-w)) / 2);
+    min-height: clamp(600px, 88vh, 840px);
+  }
+  .nh-hero--slider .nh-container { width: var(--nh-hero-w); }
+  .nh-hero--slider .nh-hero__showcase { right: var(--nh-hero-le); }
+  .nh-hero--slider .nh-km-ve { right: var(--nh-hero-le); width: min(36vw, 500px); }
+  .nh-hero--slider .nh-bc-mon { right: var(--nh-hero-le); width: min(40vw, 560px); }
+  .nh-slide--km .nh-hero__inner, .nh-slide--bc .nh-hero__inner { max-width: min(640px, calc(var(--nh-hero-w) - 560px)); }
+  .nh-hero--slider .nh-slider-nav { left: var(--nh-hero-le); }
+  .nh-hero--slider .nh-hero__inner { padding-bottom: 104px; }
+}
+/* Ma giam gia khong ngat dong (truoc: "CHAOBAN50 / K") */
+.nh-km-ve__phai b { white-space: nowrap; word-break: normal; font-size: clamp(1rem, 1.35vw, 1.4rem); letter-spacing: .05em; }
+@media (min-width: 1001px) {
+  /* Slide dau (anh mon noi bat ben phai): cot chu chua cho cho anh, khong de len mon */
+  .nh-hero--slider .nh-slide:first-child .nh-hero__inner { max-width: calc(var(--nh-hero-w) - min(43vw, 65vh, 560px) - 48px); }
+}
+@media (min-width: 1001px) {
+  /* Tieu de banner: duoc xuong dong (truoc nowrap -> tran sang anh mon) */
+  .nh-hero--slider h1 { white-space: normal; text-wrap: balance; }
+  .nh-hero--slider .nh-slide:first-child h1 { font-size: clamp(2.4rem, 3.25vw, 3.9rem); }
+}
+
+/* Menu chu to hon nua (28/11): da dang nhap thieu 60-100px -> lay lai cho:
+   - "Lich Su Dat Ban" rut gon "Lich Su" o 1331-1899px (title giu ten day du)
+   - avatar khong kem ten khach tren thanh (ten van o menu so xuong) */
+@media (min-width: 1331px) {
+  .nh-tk .nh-user .nh-user__name { display: none; }
+  .nh-tk .nh-user { padding: .2rem .45rem .2rem .2rem; }
 }

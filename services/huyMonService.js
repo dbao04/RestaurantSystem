@@ -31,6 +31,7 @@ const LY_DO = {
   mon_loi: 'Món bị lỗi',
   phuc_vu_lau: 'Chờ quá lâu',
   khac: 'Lý do khác',
+  het_ngay: 'Hết ngày – chưa chế biến (hệ thống tự hủy)',
 };
 
 const TEN_BEP = { 0: 'Chờ chế biến', 1: 'Đang chế biến', 2: 'Hoàn thành', 3: 'Đã phục vụ' };
@@ -78,7 +79,7 @@ async function huyMon(idDong, { soLuong, maLyDo, ghiChu = '', nhanVien }) {
   await damBaoBang();
   const id = Number(idDong);
   if (!Number.isInteger(id) || id <= 0) throw new LoiHuyMon('Món không hợp lệ.');
-  if (!LY_DO[maLyDo]) throw new LoiHuyMon('Vui lòng chọn lý do hủy món.');
+  if (!LY_DO[maLyDo] || maLyDo === 'het_ngay') throw new LoiHuyMon('Vui lòng chọn lý do hủy món.');
   const ghiChuSach = String(ghiChu || '').trim().slice(0, 255);
   // MOI lan xoa mon deu phai GIAI TRINH (khong chi khi chon "Ly do khac"):
   // quan ly / giam sat nhan thong bao kem giai trinh nay de kiem soat.

@@ -396,6 +396,50 @@ var dem = bang.dem || {};
   </div></div>
 </div>
 
+<!-- Xep khach vao ban: mac dinh ban da dat, cho le tan doi sang ban khac neu khach doi y / ban chua san sang -->
+<div class="modal fade" id="mXepBan" tabindex="-1" role="dialog" aria-labelledby="xbTieuDe" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document"><div class="modal-content">
+    <div class="modal-header" style="align-items:center">
+      <div><h5 class="modal-title mb-0" id="xbTieuDe">Xếp khách vào bàn</h5><small class="text-muted" id="xbPhu"></small></div>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Đóng"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <h6 class="text-uppercase text-muted small font-weight-bold mb-2">Bàn khách đã đặt</h6>
+      <div id="xbBanDat" class="d-flex flex-wrap mb-2" style="gap:.5rem"></div>
+      <div id="xbCanhBao"></div>
+      <div class="d-flex flex-wrap mt-3" style="gap:.5rem">
+        <button type="button" class="btn btn-success" id="xbXepDat"><i class="fas fa-chair mr-1"></i><span>Xếp vào bàn đã đặt</span></button>
+        <button type="button" class="btn btn-outline-primary" id="xbMoDoi"><i class="fas fa-exchange-alt mr-1"></i>Đổi sang bàn khác</button>
+      </div>
+      <div id="xbDoi" hidden class="mt-4">
+        <h6 class="text-uppercase text-muted small font-weight-bold mb-2">Chọn bàn mới trên sơ đồ</h6>
+        <div class="form-row">
+          <div class="form-group col-md-6 mb-2">
+            <label for="xbLyDo" class="small mb-1">Lý do đổi bàn</label>
+            <select id="xbLyDo" class="form-control form-control-sm">
+              <option value="Khách yêu cầu đổi bàn">Khách yêu cầu đổi bàn</option>
+              <option value="Bàn đã đặt chưa dọn xong">Bàn đã đặt chưa dọn xong</option>
+              <option value="Bàn đã đặt đang có khách ngồi lâu hơn dự kiến">Bàn đã đặt đang có khách ngồi lâu hơn dự kiến</option>
+              <option value="Bàn hỏng / cần bảo trì">Bàn hỏng / cần bảo trì</option>
+              <option value="Khách đi thêm người, cần ghép bàn">Khách đi thêm người, cần ghép bàn</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6 mb-2" id="xbLyDoKhacO" hidden>
+            <label for="xbLyDoKhac" class="small mb-1">Ghi rõ lý do</label>
+            <input id="xbLyDoKhac" class="form-control form-control-sm" maxlength="150" placeholder="Ví dụ: khách muốn ngồi gần cửa sổ">
+          </div>
+        </div>
+        <div id="xbTabs"></div>
+        <div id="xbSoDo" class="sdb"></div>
+        <div class="sdb__tomtat" id="xbTomTat">Chưa chọn bàn nào.</div>
+        <div class="mt-3"><button type="button" class="btn btn-primary" id="xbXepMoi" disabled><i class="fas fa-check mr-1"></i>Xếp vào bàn đã chọn</button></div>
+      </div>
+      <div id="xbBao" class="mt-3"></div>
+    </div>
+  </div></div>
+</div>
+
 <!-- Bam vao ban tren so do: thao tac cua le tan theo trang thai ban -->
 <div class="modal fade" id="mBan" tabindex="-1" role="dialog" aria-labelledby="mBanTen" aria-hidden="true">
   <div class="modal-dialog" role="document"><div class="modal-content">
@@ -977,6 +1021,7 @@ var dem = bang.dem || {};
   var xnCho = null;
 
   async function thaoTac(id, hd, nhan, hoi, r) {
+    if (hd === 'seat') return moXepBan(id);
     if (hd === 'giu-them') {
       var kq0 = await api('/api/reservations/' + id + '/giu-them',
         { method: 'POST', body: JSON.stringify({ phut: 15 }) });
@@ -1042,6 +1087,128 @@ var dem = bang.dem || {};
     }
     var m = e.target.closest('[data-mo]');
     if (m) moNgan(m.dataset.mo);
+  });
+
+  // ------------------------------------------------ xếp khách vào bàn
+  var TT_BAN_XB = { 0: ['Trống', 'success'], 1: ['Đang có khách', 'danger'], 2: ['Đã đặt trước', 'warning'], 3: ['Đang dọn', 'secondary'], 4: ['Bảo trì', 'dark'] };
+  var xb = null; // { r, banDat:[id], chon:[id], tongCho }
+
+  function xbBao(lop, chuoi) { var o = $('xbBao'); o.className = chuoi ? 'alert alert-' + lop + ' py-2 small mt-3' : 'mt-3'; o.textContent = chuoi || ''; }
+
+  async function moXepBan(id) {
+    xbBao('', '');
+    $('xbDoi').hidden = true; $('xbBanDat').innerHTML = ''; $('xbCanhBao').innerHTML = '';
+    $('xbSoDo').innerHTML = ''; $('xbTabs').innerHTML = ''; $('xbTomTat').textContent = 'Chưa chọn bàn nào.';
+    $('xbXepMoi').disabled = true; $('xbLyDo').selectedIndex = 0; $('xbLyDoKhacO').hidden = true; $('xbLyDoKhac').value = '';
+    var kq = await api('/api/reservations/' + id);
+    if (!kq.ok) return loi(kq.thong_bao);
+    var r = kq.r;
+    var banDat = String(r.table_ids || '').split(',').filter(Boolean).map(Number);
+    xb = { r: r, banDat: banDat, chon: [], tongCho: 0 };
+    $('xbPhu').textContent = r.customer_name + ' · ' + r.guest_count + ' khách · ' + r.gio + '–' + r.gio_ket_thuc + ' · ' + r.reservation_code;
+    window.jQuery && window.jQuery('#mXepBan').modal('show');
+
+    // Tinh trang ban LUC NAY (bo qua chinh luot nay de ban cua no khong bi tinh la "da dat")
+    var q = new URLSearchParams({ ngay: r.reservation_date, gio: r.gio, so_khach: r.guest_count, bo_qua: id });
+    var sd = await api('/api/tables/floor-plan?' + q);
+    xb.soDo = sd.ok ? sd : null;
+    var theoId = {};
+    (sd.ban || []).forEach(function (b) { theoId[b.id] = b; });
+    var canhBao = [];
+    if (!banDat.length) {
+      $('xbBanDat').appendChild(chu('span', 'text-muted small', 'Lượt này chưa được gán bàn — chọn bàn ở bên dưới.'));
+    }
+    banDat.forEach(function (bid) {
+      var b = theoId[bid] || { ten: '#' + bid, so_cho: '?', trang_thai_ban: 0 };
+      var tt = TT_BAN_XB[b.trang_thai_ban] || TT_BAN_XB[0];
+      var the = chu('span', 'badge badge-light border p-2');
+      the.style.fontSize = '.9rem';
+      the.appendChild(document.createTextNode(b.ten + ' · ' + b.so_cho + ' chỗ '));
+      the.appendChild(chu('span', 'badge badge-' + tt[1] + ' ml-1', tt[0]));
+      $('xbBanDat').appendChild(the);
+      if (Number(b.trang_thai_ban) !== 0) canhBao.push('Bàn ' + b.ten + ': ' + tt[0].toLowerCase());
+      if (b.khu_vuc_id && !xb.khu) xb.khu = String(b.khu_vuc_id);
+    });
+    if (canhBao.length) {
+      var c = chu('div', 'alert alert-warning py-2 small mb-0');
+      c.textContent = canhBao.join(', ') + ' — nên đổi sang bàn khác cho khách.';
+      $('xbCanhBao').appendChild(c);
+    }
+    var tenDat = banDat.map(function (bid) { return (theoId[bid] || {}).ten || ('#' + bid); }).join(', ');
+    $('xbXepDat').querySelector('span').textContent = banDat.length ? 'Xếp vào bàn ' + tenDat : 'Xếp vào bàn đã đặt';
+    $('xbXepDat').disabled = !banDat.length;
+    $('xbXepDat').className = 'btn ' + (canhBao.length ? 'btn-outline-success' : 'btn-success');
+    if (!banDat.length || canhBao.length) moDoiBan();
+  }
+
+  // Ve so do theo khu (mac dinh khu cua ban da dat) - ca nha hang mot luc qua dai.
+  async function veSoDoKhu() {
+    var r = xb.r;
+    var q = new URLSearchParams({ ngay: r.reservation_date, gio: r.gio, so_khach: r.guest_count, bo_qua: r.id });
+    if (xb.khu) q.set('khu_vuc', xb.khu);
+    $('xbSoDo').innerHTML = '<div class="sdb__khung sdb__khung--tai">Đang tải sơ đồ…</div>';
+    var sd = await api('/api/tables/floor-plan?' + q);
+    if (!sd.ok) { $('xbSoDo').textContent = sd.thong_bao || 'Không tải được sơ đồ bàn.'; return; }
+    var dem = {};
+    SoDoDatBan.veTabs($('xbTabs'), KHU, xb.khu || '', null, function (khu) { xb.khu = khu; xb.chon = []; $('xbXepMoi').disabled = true; $('xbTomTat').textContent = 'Chưa chọn bàn nào.'; $('xbTomTat').className = 'sdb__tomtat'; veSoDoKhu(); });
+    SoDoDatBan.ve($('xbSoDo'), sd, {
+      choChon: true,
+      soKhach: r.guest_count,
+      daChon: [],
+      onChon: function (ds, tongCho) {
+        xb.chon = ds; xb.tongCho = tongCho;
+        var du = tongCho >= Number(r.guest_count);
+        var o = $('xbTomTat');
+        o.className = 'sdb__tomtat ' + (ds.length ? (du ? 'sdb__tomtat--du' : 'sdb__tomtat--thieu') : '');
+        o.textContent = ds.length
+          ? ds.length + ' bàn · ' + tongCho + ' chỗ' + (du ? ' — đủ chỗ' : ' — còn thiếu ' + (r.guest_count - tongCho) + ' chỗ')
+          : 'Chưa chọn bàn nào.';
+        $('xbXepMoi').disabled = !ds.length || !du;
+      }
+    });
+  }
+  function moDoiBan() {
+    if (!xb) return;
+    $('xbDoi').hidden = false;
+    veSoDoKhu();
+  }
+
+  async function xepKhach(id) {
+    var kq = await api('/api/reservations/' + id + '/seat', { method: 'POST', body: JSON.stringify({}) });
+    return kq;
+  }
+
+  $('xbMoDoi').addEventListener('click', moDoiBan);
+  $('xbLyDo').addEventListener('change', function () { $('xbLyDoKhacO').hidden = this.value !== 'Khác'; });
+
+  $('xbXepDat').addEventListener('click', async function () {
+    if (!xb) return;
+    var nut = this; nut.disabled = true; xbBao('', '');
+    var kq = await xepKhach(xb.r.id);
+    nut.disabled = false;
+    if (!kq.ok) return xbBao('danger', kq.thong_bao || 'Chưa xếp được bàn.');
+    window.jQuery && window.jQuery('#mXepBan').modal('hide');
+    taiLai();
+  });
+
+  $('xbXepMoi').addEventListener('click', async function () {
+    if (!xb || !xb.chon.length) return;
+    var lyDo = $('xbLyDo').value === 'Khác' ? ($('xbLyDoKhac').value.trim() || 'Khác') : $('xbLyDo').value;
+    var nut = this; nut.disabled = true; xbBao('', '');
+    // 1) Gan ban moi (kiem tra ban trong o may chu)
+    var g = await api('/api/reservations/' + xb.r.id + '/assign-table', { method: 'POST', body: JSON.stringify({ table_ids: xb.chon, ly_do: lyDo }) });
+    if (!g.ok) { nut.disabled = false; return xbBao('danger', g.thong_bao || 'Không đổi được bàn.'); }
+    // 2) Xep khach; bi tu choi (vd chua toi gio nhan khach) -> tra lai ban cu, khong doi nua voi
+    var s = await xepKhach(xb.r.id);
+    if (!s.ok) {
+      if (xb.banDat.length) {
+        await api('/api/reservations/' + xb.r.id + '/assign-table', { method: 'POST', body: JSON.stringify({ table_ids: xb.banDat, ly_do: 'Hoàn tác: chưa xếp được khách' }) });
+      }
+      nut.disabled = false;
+      return xbBao('danger', (s.thong_bao || 'Chưa xếp được khách.') + (xb.banDat.length ? ' Bàn đã trả về như cũ.' : ''));
+    }
+    window.jQuery && window.jQuery('#mXepBan').modal('hide');
+    taiLai();
   });
 
   // ------------------------------------------------ đổi bàn qua sơ đồ
@@ -1238,8 +1405,19 @@ var dem = bang.dem || {};
         cb.appendChild(chu('div', null, d.thong_diep));
         $('daiCanhBao').prepend(cb);
       }
-      henTaiLai = setTimeout(taiLai, 2500);
+      henTaiLai = setTimeout(taiLaiKhiRanh, 2500);
     });
+    // Dang mo hop / ngan chi tiet (xep ban, form, xac nhan...) thi CHO dong roi moi tai lai:
+    // truoc day trang tu tai lai giua chung -> mat thong bao loi lan lua chon dang lam.
+    var choTaiLai = false;
+    function dangBan() {
+      return !!document.querySelector('.modal.show') || ($('ngan') && $('ngan').classList.contains('mo')) || !!document.querySelector('.tbd-nen');
+    }
+    function taiLaiKhiRanh() {
+      if (dangBan()) { choTaiLai = true; return; }
+      taiLai();
+    }
+    setInterval(function () { if (choTaiLai && !dangBan()) { choTaiLai = false; taiLai(); } }, 1000);
   } catch (e) { /* Socket.IO khong nap duoc - trang van dung duoc, chi khong tu tai lai. */ }
 })();
 </script>
